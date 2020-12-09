@@ -28,9 +28,11 @@ object StrategyUtils {
     return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("Strategy is not registered")
   }
 
-  internal fun getTextDomainOrDefault(root: PsiElement, default: TextDomain): TextDomain {
-    val parser = LanguageParserDefinitions.INSTANCE.forLanguage(root.language) ?: return default
+  internal fun getTextDomainOrDefault(strategy: GrammarCheckingStrategy, root: PsiElement, default: TextDomain): TextDomain {
+    val extension = getStrategyExtensionPoint(strategy)
+    if (extension.language != root.language.id) return default
 
+    val parser = LanguageParserDefinitions.INSTANCE.forLanguage(root.language) ?: return default
     return when {
       parser.stringLiteralElements.contains(root.elementType) -> TextDomain.LITERALS
       parser.commentTokens.contains(root.elementType) -> TextDomain.COMMENTS

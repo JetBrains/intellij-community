@@ -126,7 +126,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final @NlsContexts.TabTitle String myTitle;
   @Nullable private final String myWorkingDir;
   private final Consumer<? super String> myRerunAction;
-  @Nullable private final Sdk mySdk;
+  @Nullable private Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
   protected PythonConsoleExecuteActionHandler myConsoleExecuteActionHandler;
@@ -236,6 +236,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       runSync(true);
     }
   }
+
 
   @Override
   public void runSync(boolean requestEditorFocus) {
@@ -1028,6 +1029,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
       }
     }.queue();
+  }
+
+  @Override
+  @TestOnly
+  public void setSdk(@Nullable Sdk sdk) {
+    mySdk = sdk;
   }
 
   private static final class CommandLineProcess {

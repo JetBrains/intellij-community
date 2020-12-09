@@ -265,7 +265,7 @@ public class Runner {
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
       try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()));
-           ZipInputStream in = new ZipInputStream(new FileInputStream(new File(spec.getJarFile())))) {
+           ZipInputStream in = new ZipInputStream(new FileInputStream(spec.getJarFile()))) {
         ZipEntry e;
         while ((e = in.getNextEntry()) != null) {
           out.zipEntry(e, in);

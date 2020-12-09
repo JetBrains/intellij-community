@@ -75,7 +75,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
       @Override
       protected void hideToolWindow() {
-        toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
+        toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false, true, ToolWindowEventSource.HideButton);
       }
     };
 

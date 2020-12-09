@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -249,7 +250,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   private boolean processIntentions(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
     Matcher matcher = buildMatcher(pattern);
-    Map<String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
+    Map<@ActionText String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
       .filterMap(intentionText -> {
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);

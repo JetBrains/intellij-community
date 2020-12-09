@@ -2,12 +2,12 @@
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
-import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ final class ProjectRootSearchUtil {
   private ProjectRootSearchUtil() {
   }
 
-  static @Nullable VirtualFile findProjectRoot(@NotNull VirtualFile sourceFile) {
+  static @Nullable VirtualFile findProjectRoot(@NotNull Project project, @NotNull VirtualFile sourceFile) {
     Ref<VirtualFile> result = Ref.create();
     Ref<Boolean> requiresConfirmation = Ref.create(false);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -43,10 +43,10 @@ final class ProjectRootSearchUtil {
       },
       ApplicationBundle.message("light.edit.open.in.project.progress.message"),
       true,
-      LightEditUtil.getProject()
+      project
     );
     if (requiresConfirmation.get()) {
-      final VirtualFile newProjectRoot = confirmOrChooseProjectDir(result.get());
+      final VirtualFile newProjectRoot = confirmOrChooseProjectDir(project, result.get());
       if (newProjectRoot != null) {
         LightEditFeatureUsagesUtil.logOpenFileInProject(New);
       }
@@ -58,11 +58,11 @@ final class ProjectRootSearchUtil {
     return result.get();
   }
 
-  private static @Nullable VirtualFile confirmOrChooseProjectDir(@Nullable VirtualFile suggestedRoot) {
+  private static @Nullable VirtualFile confirmOrChooseProjectDir(@NotNull Project project, @Nullable VirtualFile suggestedRoot) {
     if (suggestedRoot != null) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       descriptor.setTitle(ApplicationBundle.message("light.edit.open.in.project.dialog.title"));
-      return FileChooser.chooseFile(descriptor, LightEditUtil.getProject(), suggestedRoot);
+      return FileChooser.chooseFile(descriptor, project, suggestedRoot);
     }
     return null;
   }

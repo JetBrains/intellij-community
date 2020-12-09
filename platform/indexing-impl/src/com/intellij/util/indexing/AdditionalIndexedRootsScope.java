@@ -15,7 +15,7 @@ public final class AdditionalIndexedRootsScope extends GlobalSearchScope {
   private final IndexableFileSet myFileSet;
 
   public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope) {
-    this(baseScope, new AdditionalIndexableFileSet());
+    this(baseScope, new AdditionalIndexableFileSet(null));
   }
 
   public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope, @NotNull Class<? extends IndexableSetContributor> providerClass) {

@@ -2,6 +2,7 @@
 
 import sys
 from typing import List, Optional, Sequence, Tuple, Union, overload
+
 from _tracemalloc import *
 
 def get_object_traceback(obj: object) -> Optional[Traceback]: ...
@@ -21,9 +22,18 @@ class Filter:
     filename_pattern: str
     all_frames: bool
     if sys.version_info >= (3, 6):
-        def __init__(self, inclusive: bool, filename_pattern: str, lineno: Optional[int] = ..., all_frames: bool = ..., domain: Optional[int] = ...) -> None: ...
+        def __init__(
+            self,
+            inclusive: bool,
+            filename_pattern: str,
+            lineno: Optional[int] = ...,
+            all_frames: bool = ...,
+            domain: Optional[int] = ...,
+        ) -> None: ...
     else:
-        def __init__(self, inclusive: bool, filename_pattern: str, lineno: Optional[int] = ..., all_frames: bool = ...) -> None: ...
+        def __init__(
+            self, inclusive: bool, filename_pattern: str, lineno: Optional[int] = ..., all_frames: bool = ...
+        ) -> None: ...
 
 class Statistic:
     count: int
@@ -72,7 +82,6 @@ class Traceback(Sequence[Frame]):
     @overload
     def __getitem__(self, s: slice) -> Sequence[Frame]: ...
     def __len__(self) -> int: ...
-
 
 class Snapshot:
     def __init__(self, traces: Sequence[_TraceTupleT], traceback_limit: int) -> None: ...

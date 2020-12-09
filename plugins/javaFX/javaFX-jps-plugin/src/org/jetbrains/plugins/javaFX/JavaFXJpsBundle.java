@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX;
 
-import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.jps.api.JpsDynamicBundle;
 
 import java.util.function.Supplier;
 
-public class JavaFXJpsBundle extends AbstractBundle {
+public class JavaFXJpsBundle extends JpsDynamicBundle {
 
   private static final @NonNls String BUNDLE = "messages.JavaFXJpsBundle";
   private static final JavaFXJpsBundle INSTANCE = new JavaFXJpsBundle();

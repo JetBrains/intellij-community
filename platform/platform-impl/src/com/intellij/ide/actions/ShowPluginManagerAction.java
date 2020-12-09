@@ -27,13 +27,13 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
 public class ShowPluginManagerAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    ShowSettingsUtil.getInstance().editConfigurable(component, new PluginManagerConfigurable());
+    ShowSettingsUtil.getInstance().editConfigurable(
+      e.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+      new PluginManagerConfigurable(e.getProject())
+    );
   }
 }

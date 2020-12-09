@@ -15,6 +15,8 @@
  */
 package com.intellij.lang.ant.dom;
 
+import org.jetbrains.annotations.Nls;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -23,5 +25,5 @@ public interface AntDomReference {
 
   void setShouldBeSkippedByAnnotator(boolean value);
 
-  String getUnresolvedMessagePattern();
+  @Nls(capitalization = Nls.Capitalization.Sentence) String getUnresolvedMessagePattern();
 }

@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.compiler.RecursiveFormNestingException;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -258,7 +259,7 @@ public final class XmlReader {
 
   private static RadErrorComponent createErrorComponent(final ModuleProvider module, final String id, final LwComponent lwComponent, final ClassLoader loader) {
     final String componentClassName = lwComponent.getComponentClassName();
-    final String errorDescription = Utils.validateJComponentClass(loader, componentClassName, true);
+    final @NlsSafe String errorDescription = Utils.validateJComponentClass(loader, componentClassName, true);
     return RadErrorComponent.create(
       module,
       id,

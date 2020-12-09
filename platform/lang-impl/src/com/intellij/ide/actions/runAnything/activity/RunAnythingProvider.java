@@ -140,6 +140,7 @@ public interface RunAnythingProvider<V> {
    * Returns completion group title. {@code null} means that current provider doesn't provide completion.
    */
   @Nullable
+  @NlsContexts.PopupTitle
   String getCompletionGroupTitle();
 
   /**

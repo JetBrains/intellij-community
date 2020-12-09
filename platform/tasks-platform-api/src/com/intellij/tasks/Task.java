@@ -111,7 +111,7 @@ public abstract class Task {
   }
 
   @Override
-  public final String toString() {
+  public final @NlsSafe String toString() {
     String text;
     if (isIssue()) {
       text = getPresentableId() + ": " + getSummary();

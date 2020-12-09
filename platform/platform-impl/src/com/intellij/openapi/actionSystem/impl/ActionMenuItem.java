@@ -16,10 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
@@ -189,6 +186,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     ActionMenu.showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
   }
 
+  @NlsSafe
   public String getFirstShortcutText() {
     return KeymapUtil.getFirstKeyboardShortcutText(myAction.getAction());
   }

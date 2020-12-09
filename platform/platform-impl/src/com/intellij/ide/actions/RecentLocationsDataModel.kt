@@ -95,6 +95,7 @@ internal data class RecentLocationsDataModel(val project: Project, val editorsTo
 
     @NlsSafe
     val separator = " > "
+    @NlsSafe
     val result = crumbs.joinToString(separator) { it.text }
     return result
   }

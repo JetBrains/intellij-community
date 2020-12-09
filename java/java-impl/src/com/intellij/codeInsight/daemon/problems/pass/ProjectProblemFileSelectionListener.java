@@ -18,6 +18,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +32,8 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 final class ProjectProblemFileSelectionListener implements FileEditorManagerListener,
                                                            InlayHintsSettings.SettingsListener,
-                                                           BulkFileListener {
+                                                           BulkFileListener,
+                                                           RefactoringEventListener {
   private final Project myProject;
 
   private ProjectProblemFileSelectionListener(@NotNull Project project) {
@@ -66,16 +70,19 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
         FileStateUpdater.removeState(removedJavaFile);
       }
       if (e instanceof VFileContentChangeEvent || e instanceof VFileDeleteEvent) {
-        TextEditor editor = tryCast(FileEditorManager.getInstance(myProject).getSelectedEditor(), TextEditor.class);
-        if (editor == null) continue;
-        VirtualFile selectedFile = editor.getFile();
+        VirtualFile selectedFile = getSelectedFile();
         if (selectedFile == null || changedFile.equals(selectedFile)) continue;
         PsiJavaFile selectedJavaFile = getJavaFile(myProject, selectedFile);
         if (selectedJavaFile == null) continue;
-        editor.getEditor();
         FileStateUpdater.setPreviousState(selectedJavaFile);
       }
     }
+  }
+
+  @Nullable
+  private VirtualFile getSelectedFile() {
+    TextEditor editor = tryCast(FileEditorManager.getInstance(myProject).getSelectedEditor(), TextEditor.class);
+    return editor == null ? null : editor.getFile();
   }
 
   @Override
@@ -104,6 +111,33 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
     }
   }
 
+  @Override
+  public void refactoringStarted(@NotNull String refactoringId, @Nullable RefactoringEventData beforeData) {
+  }
+
+  @Override
+  public void refactoringDone(@NotNull String refactoringId, @Nullable RefactoringEventData afterData) {
+    if (afterData == null) return;
+    PsiMember member = tryCast(afterData.getUserData(RefactoringEventData.PSI_ELEMENT_KEY), PsiMember.class);
+    if (member == null) return;
+    PsiJavaFile psiJavaFile = tryCast(member.getContainingFile(), PsiJavaFile.class);
+    if (psiJavaFile == null) return;
+    FileStateUpdater.setPreviousState(psiJavaFile);
+  }
+
+  @Override
+  public void conflictsDetected(@NotNull String refactoringId, @NotNull RefactoringEventData conflictsData) {
+  }
+
+  @Override
+  public void undoRefactoring(@NotNull String refactoringId) {
+    VirtualFile selectedFile = getSelectedFile();
+    if (selectedFile == null) return;
+    PsiJavaFile psiJavaFile = getJavaFile(myProject, selectedFile);
+    if (psiJavaFile == null) return;
+    FileStateUpdater.setPreviousState(psiJavaFile);
+  }
+
   private static @Nullable PsiJavaFile getJavaFile(@NotNull Project project, @Nullable VirtualFile file) {
     if (file == null || file instanceof VirtualFileWindow || !file.isValid()) return null;
     return tryCast(PsiManager.getInstance(project).findFile(file), PsiJavaFile.class);
@@ -122,6 +156,7 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
       connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
       connection.subscribe(InlayHintsSettings.getINLAY_SETTINGS_CHANGED(), listener);
       connection.subscribe(VirtualFileManager.VFS_CHANGES, listener);
+      connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, listener);
     }
   }
 }

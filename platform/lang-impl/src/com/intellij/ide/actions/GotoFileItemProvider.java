@@ -33,6 +33,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -351,6 +352,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "SuffixMatches{" +
              "patternSuffix='" + patternSuffix + '\'' +

@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.smRunner" exported="" />
     <orderEntry type="module" module-name="intellij.java.typeMigration" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
   <component name="copyright">
     <Base>

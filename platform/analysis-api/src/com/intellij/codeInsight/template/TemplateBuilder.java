@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,7 +22,7 @@ public interface TemplateBuilder {
    * @param element the element to replace.
    * @param replacementText the initial value for the replacement.
    */
-  void replaceElement(@NotNull PsiElement element, String replacementText);
+  void replaceElement(@NotNull PsiElement element, @NlsSafe String replacementText);
 
   void replaceElement(@NotNull PsiElement element, TextRange rangeWithinElement, String replacementText);
 
@@ -36,10 +37,10 @@ public interface TemplateBuilder {
   void replaceElement(@NotNull PsiElement element, TextRange rangeWithinElement, Expression expression);
 
   @ApiStatus.Experimental
-  void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt);
+  void replaceElement(PsiElement element, @NlsSafe String varName, Expression expression, boolean alwaysStopAt);
 
   @ApiStatus.Experimental
-  void replaceElement (PsiElement element, String varName, String dependantVariableName, boolean alwaysStopAt);
+  void replaceElement (PsiElement element, @NlsSafe String varName, String dependantVariableName, boolean alwaysStopAt);
 
 
     /**

@@ -279,7 +279,7 @@ public final class GitRebaseUtils {
     return GitUtil.getRepositoriesInState(project, Repository.State.REBASING);
   }
 
-  public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository, @NotNull String upstream, @Nullable String branch)
+  public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository, @Nullable String upstream, @Nullable String branch)
     throws VcsException {
 
     String rebasingBranch = branch;
@@ -295,7 +295,7 @@ public final class GitRebaseUtils {
     return GitHistoryUtils.collectTimedCommits(
       repository.getProject(),
       repository.getRoot(),
-      upstream + ".." + rebasingBranch
+      getCommitsRangeToRebase(upstream, rebasingBranch)
     ).size();
   }
 
@@ -312,6 +312,13 @@ public final class GitRebaseUtils {
     catch (VcsException e) {
       return null;
     }
+  }
+
+  public static @NotNull String getCommitsRangeToRebase(@Nullable String baseBranch, @NotNull String rebasingBranch) {
+    if (baseBranch == null) {
+      return rebasingBranch;
+    }
+    return baseBranch + ".." + rebasingBranch;
   }
 
   @NotNull

@@ -813,6 +813,7 @@ idea.fatal.error.notification=disabled
       }
     }
     else {
+      SVGPreBuilder.copyIconDb(buildContext, SystemInfo.isMac ? "$targetDirectory/Resources" : targetDirectory)
       unpackPty4jNative(buildContext, targetDirectory, null)
     }
   }

@@ -65,7 +65,7 @@ data class JdkItem(
   val isVisibleOnUI: Boolean,
 
   val jdkMajorVersion: Int,
-  @get:NlsSafe
+  @NlsSafe
   val jdkVersion: String,
   private val jdkVendorVersion: String?,
   val suggestedSdkName: String,
@@ -93,6 +93,34 @@ data class JdkItem(
 
   fun writeMarkerFile(file: Path) {
     saveToFile(file)
+  }
+
+  override fun toString() = "JdkItem($fullPresentationText, $url)"
+
+  override fun hashCode() = sha256.hashCode()
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as JdkItem
+
+    if (jdkVersion != other.jdkVersion) return false
+    if (url != other.url) return false
+    if (sha256 != other.sha256) return false
+
+    return true
+  }
+
+  /**
+   * the Java Home folder (which contains the `bin` folder and `bin/java` path
+   * may be deep inside a JDK package, e.g. on macOS
+   * This method helps to find a traditional Java Home
+   * from a JDK install directory
+   */
+  fun resolveJavaHome(installDir: Path): Path {
+    val packageToBinJavaPrefix = packageToBinJavaPrefix
+    if (packageToBinJavaPrefix.isBlank()) return installDir
+    return installDir.resolve(packageToBinJavaPrefix)
   }
 
   val vendorPrefix

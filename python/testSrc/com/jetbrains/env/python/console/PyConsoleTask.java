@@ -182,6 +182,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());
 
+    consoleRunner.setSdk(existingSdk);
+
     before();
 
     myConsoleInitSemaphore = new Semaphore(0);

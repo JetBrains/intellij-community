@@ -371,12 +371,46 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
       changeMethod(aClass.allInnerClasses[0]) { method, _ ->
         method.parameterList.getParameter(0)?.delete()
       }
-      val reportedElements = ProjectProblemUtils.getReportedProblems(
-        myFixture.editor).keys
+      val reportedElements = ProjectProblemUtils.getReportedProblems(myFixture.editor).keys
       assertSize(1, reportedElements)
       assertTrue(reportedElements.first() is PsiMethod)
     }
   }
+
+  fun testIncompatibleTypeParam() {
+    val targetClass = myFixture.addClass("""
+      public class TargetClass {
+        static <T extends Integer> T id(T t) {
+          return t;
+        }
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass extends TargetClass {
+        void test() {
+          TargetClass.id("foo");
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { psiMethod, _ ->
+        psiMethod.modifierList.setModifierProperty(PsiModifier.PUBLIC, true)
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      changeMethod(targetClass) { psiMethod, factory ->
+        val typeParameterList = factory.createTypeParameterList()
+        typeParameterList.add(factory.createTypeParameterFromText("T", psiMethod))
+        psiMethod.typeParameterList?.replace(typeParameterList)
+      }
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+    }
+  }
+
 
   private fun doMethodTest(methodChangeAction: (PsiMethod, PsiElementFactory) -> Unit) {
 

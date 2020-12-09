@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import org.jetbrains.annotations.NotNull
@@ -107,12 +106,12 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
         def future = ui.findElementsForPattern("imaginaryaction")
         def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginaryaction")
         def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginaryaction")
-        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+        assert waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
 
         future = ui.findElementsForPattern("imaginary action")
         matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginary action")
         matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginary action")
-        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction1, class1, matchedAction2,  class2]
+        assert waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction1, class1, matchedAction2,  class2]
       }
       finally {
         actions.each {actionManager.unregisterAction(it.key)}
@@ -141,11 +140,11 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
         def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginary")
         def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginary")
         def future = ui.findElementsForPattern("imaginary")
-        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+        assert waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
 
         abbreviationManager.register("imaginary", "ia2")
         future = ui.findElementsForPattern("imaginary")
-        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
+        assert waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
       }
       finally {
         actions.each {actionManager.unregisterAction(it.key)}
@@ -162,7 +161,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     try {
       abbreviationManager.register("cp", "CloseProject")
       def future = ui.findElementsForPattern("cp")
-      def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
+      def firstItem = waitForFuture(future, SEARCH_TIMEOUT)[0]
       def matchedAction = GotoActionTest.createMatchedAction(project, actionManager.getAction("CloseProject"), "cp")
       assert firstItem == matchedAction
     }
@@ -170,11 +169,10 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       abbreviationManager.remove("cp", "CloseProject")
     }
 
-    ui.clearResults()
     try {
       abbreviationManager.register("cp", "ScanSourceCommentsAction")
       def future = ui.findElementsForPattern("cp")
-      def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
+      def firstItem = waitForFuture(future, SEARCH_TIMEOUT)[0]
       def matchedAction = GotoActionTest.createMatchedAction(project, actionManager.getAction("ScanSourceCommentsAction"), "cp")
       assert matchedAction == firstItem
     }
@@ -201,14 +199,14 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       ])
 
       def future = ui.findElementsForPattern("appfile")
-      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file2, file1, file4, file3, file6, file5]
+      assert waitForFuture(future, SEARCH_TIMEOUT) == [file2, file1, file4, file3, file6, file5]
 
       myFixture.openFileInEditor(file4.getOriginalFile().getVirtualFile())
       myFixture.openFileInEditor(file3.getOriginalFile().getVirtualFile())
       myFixture.openFileInEditor(file5.getOriginalFile().getVirtualFile())
       myFixture.openFileInEditor(wrongFile.getOriginalFile().getVirtualFile())
       future = ui.findElementsForPattern("appfile")
-      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file4, file3, file5, file2, file1, file6]
+      assert waitForFuture(future, SEARCH_TIMEOUT) == [file4, file3, file5, file2, file1, file6]
     })
   }
 

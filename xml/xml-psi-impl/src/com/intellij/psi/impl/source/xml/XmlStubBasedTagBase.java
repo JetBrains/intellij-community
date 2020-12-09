@@ -168,7 +168,7 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
     return getSubTags(shouldProcessIncludesNow());
   }
 
-  public XmlTag[] getSubTags(boolean processIncludes) {
+  private XmlTag[] getSubTags(boolean processIncludes) {
     return getImpl().getSubTags(processIncludes);
   }
 

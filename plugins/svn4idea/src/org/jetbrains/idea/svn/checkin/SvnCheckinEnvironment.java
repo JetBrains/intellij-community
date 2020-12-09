@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -17,7 +15,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
@@ -66,7 +63,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   private void doCommit(@NotNull Collection<? extends FilePath> committables,
                         String comment,
                         List<VcsException> exception,
-                        final Set<? super String> feedback) {
+                        @NotNull Set<? super String> feedback) {
     MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.self());
 
     for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
@@ -83,7 +80,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   private void doCommitOneRepo(@NotNull Collection<? extends FilePath> committables,
                                String comment,
                                List<VcsException> exception,
-                               final Set<? super String> feedback,
+                               @NotNull Set<? super String> feedback,
                                @NotNull WorkingCopyFormat format)
   throws VcsException {
     if (committables.isEmpty()) {
@@ -102,18 +99,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (committedRevisions.length() > 0) {
-      reportCommittedRevisions(feedback, committedRevisions.toString());
-    }
-  }
-
-  private void reportCommittedRevisions(Set<? super String> feedback, String committedRevisions) {
-    final Project project = mySvnVcs.getProject();
-    final String message = message("status.text.committed.revision", committedRevisions);
-    if (feedback == null) {
-      ApplicationManager.getApplication().invokeLater(() -> new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run(),
-                                                      o -> (!project.isOpen()) || project.isDisposed());
-    } else {
-      feedback.add("Subversion: " + message);
+      feedback.add(SvnVcs.VCS_DISPLAY_NAME + ": " + message("status.text.committed.revision", committedRevisions));
     }
   }
 

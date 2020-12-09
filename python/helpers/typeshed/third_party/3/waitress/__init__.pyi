@@ -1,5 +1,6 @@
 from typing import Any, Tuple
-from waitress.server import create_server
+
+from waitress.server import create_server as create_server
 
 def serve(app: Any, **kw: Any) -> None: ...
 def serve_paste(app: Any, global_conf: Any, **kw: Any) -> int: ...

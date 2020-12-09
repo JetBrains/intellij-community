@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-public final class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher, DataProvider {
+public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher, DataProvider {
   public static final DataKey<String> HOVERED_WIDGET_ID = DataKey.create("HOVERED_WIDGET_ID");
 
   private static final String WIDGET_ID = "STATUS_BAR_WIDGET_ID";
@@ -214,6 +214,18 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor, @NotNull final Disposable parentDisposable) {
     addWidget(widget, anchor);
+    String id = widget.ID();
+    Disposer.register(parentDisposable, () -> removeWidget(id));
+  }
+
+  /**
+   * Adds widget to the left side of the status bar. Please note there is no hover effect when mouse is over the widget.
+   * Use {@link #addWidget} to add widget to the right side of the status bar, in this case hover effect is on.
+   * @param widget widget to add
+   * @param parentDisposable when disposed, the widget will be removed from the status bar
+   */
+  public void addWidgetToLeft(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
+    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.LEFT, "__IGNORED__"));
     String id = widget.ID();
     Disposer.register(parentDisposable, () -> removeWidget(id));
   }

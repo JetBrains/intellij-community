@@ -46,7 +46,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -173,7 +175,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         final PyExpression lhs = assignment.getLeftHandSideExpression();
         final PyTupleExpression targetTuple = PsiTreeUtil.findChildOfType(lhs, PyTupleExpression.class, false);
         if (value != null && targetTuple != null) {
-          final PyType assignedType = PyTypeUtil.toNonWeakType(context.getType(value), context);
+          final PyType assignedType = PyUnionType.toNonWeakType(context.getType(value));
           if (assignedType != null) {
             final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, assignedType, context);
             if (t != null) {
@@ -248,16 +250,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyWithStatement withStatement = PsiTreeUtil.getParentOfType(item, PyWithStatement.class);
       final boolean isAsync = withStatement != null && withStatement.isAsync();
 
-      if (withType instanceof PyClassType) {
-        return getEnterTypeFromPyClass(withExpression, (PyClassType)withType, isAsync, context);
-      }
-      else if (withType instanceof PyUnionType) {
-        final List<PyType> enterTypes = StreamEx.of(((PyUnionType)withType).getMembers())
-          .select(PyClassType.class)
-          .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
-          .toList();
-        return PyUnionType.union(enterTypes);
-      }
+      return PyTypeUtil
+        .toStream(withType)
+        .select(PyClassType.class)
+        .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
+        .collect(PyTypeUtil.toUnion());
     }
     return null;
   }
@@ -371,12 +368,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return tupleType.getIteratedItemType();
     }
     else if (iterableType instanceof PyUnionType) {
-      final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
-      final List<PyType> iterationTypes = new ArrayList<>();
-      for (PyType member : members) {
-        iterationTypes.add(getIterationType(member, source, anchor, context));
-      }
-      return PyUnionType.union(iterationTypes);
+      return ((PyUnionType)iterableType).map(member -> getIterationType(member, source, anchor, context));
     }
     else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);

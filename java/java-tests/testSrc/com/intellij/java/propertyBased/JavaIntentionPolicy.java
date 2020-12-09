@@ -84,6 +84,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   @Override
   public boolean checkComments(IntentionAction intention) {
     String intentionText = intention.getText();
+    String familyName = intention.getFamilyName();
     boolean isCommentChangingAction = intentionText.startsWith("Replace with end-of-line comment") ||
                                       intentionText.startsWith("Replace with block comment") ||
                                       intentionText.startsWith("Remove //noinspection") ||
@@ -113,7 +114,8 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
                                       intentionText.matches("Remove '.*' from '.*' throws list") ||
                                       intentionText.matches(JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix")) ||
-                                      intentionText.matches("Remove .+ suppression");
+                                      intentionText.matches("Remove .+ suppression") ||
+                                      familyName.equals("Fix typo");
     return !isCommentChangingAction;
   }
 

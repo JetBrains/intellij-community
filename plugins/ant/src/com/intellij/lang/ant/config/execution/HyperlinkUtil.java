@@ -17,6 +17,7 @@ package com.intellij.lang.ant.config.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -97,7 +98,12 @@ final class HyperlinkUtil {
     return makePlaceInfo(className, file, lineNumber, project, lparenthIndex, rparenthIndex);
   }
 
-  private static PlaceInfo makePlaceInfo(final String className, final String fileName, final int line, final Project project, final int lparenthIndex, final int rparenthIndex){
+  private static PlaceInfo makePlaceInfo(final @NlsSafe String className,
+                                         final @NlsSafe String fileName,
+                                         final int line,
+                                         final Project project,
+                                         final int lparenthIndex,
+                                         final int rparenthIndex) {
     final PlaceInfo[] info = new PlaceInfo[1];
     ApplicationManager.getApplication().runReadAction(
       () -> {
@@ -108,7 +114,6 @@ final class HyperlinkUtil {
         int slashIndex = fileName1.lastIndexOf('/');
         String shortFileName = slashIndex < 0 ? fileName : fileName.substring(slashIndex + 1);
         final String name = file.getName();
-        if (name == null) return;
         if (!name.equalsIgnoreCase(shortFileName)) return;
         info[0] = new PlaceInfo(file.getVirtualFile(), line, 1, lparenthIndex, rparenthIndex);
       }

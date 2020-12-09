@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.IconUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public abstract class SdkType implements SdkTypeId {
-  public static final ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
+  public static final ExtensionPointName<SdkType> EP_NAME = new ExtensionPointName<>("com.intellij.sdkType");
 
   private static final Comparator<Sdk> ALPHABETICAL_COMPARATOR = (sdk1, sdk2) -> StringUtil.compare(sdk1.getName(), sdk2.getName(), true);
 
@@ -166,7 +166,7 @@ public abstract class SdkType implements SdkTypeId {
 
   @NotNull
   public Icon getIconForAddAction() {
-    return IconUtil.getAddIcon();
+    return AllIcons.General.Add;
   }
 
   @Override

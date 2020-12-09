@@ -39,7 +39,7 @@ public class LiveTemplateLookupActionProvider implements LookupActionProvider {
         });
 
 
-        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel, String.format("Disable '%s' template", template.getKey())) {
+        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel, CodeInsightBundle.message("action.text.disable.live.template", template.getKey())) {
           @Override
           public Result performLookupAction() {
             ApplicationManager.getApplication().invokeLater(() -> templateFromSettings.setDeactivated(true));

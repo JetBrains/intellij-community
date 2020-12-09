@@ -9,6 +9,7 @@ import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public final class AntExecuteBeforeRunDialog extends BaseExecuteBeforeRunDialog<AntBeforeRunTask> {
@@ -21,7 +22,7 @@ public final class AntExecuteBeforeRunDialog extends BaseExecuteBeforeRunDialog<
   }
 
   @Override
-  protected String getTargetDisplayString() {
+  protected @Nls String getTargetDisplayString() {
     return AntBundle.message("ant.target");
   }
 

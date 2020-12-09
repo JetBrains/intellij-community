@@ -11,39 +11,39 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class JetgroovyIcons {
-  private static @NotNull Icon load(@NotNull String path) {
-    return IconManager.getInstance().getIcon(path, JetgroovyIcons.class);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
+    return IconManager.getInstance().loadRasterizedIcon(path, JetgroovyIcons.class, cacheKey);
   }
 
 
   public final static class Groovy {
-    /** 16x16 */ public static final @NotNull Icon AbstractClass = load("/icons/groovy/abstractClass.svg");
-    /** 16x16 */ public static final @NotNull Icon AbstractField = load("/icons/groovy/abstractField.svg");
-    /** 16x16 */ public static final @NotNull Icon AbstractMethod = load("/icons/groovy/abstractMethod.svg");
-    /** 16x16 */ public static final @NotNull Icon AbstractProperty = load("/icons/groovy/abstractProperty.svg");
-    /** 16x16 */ public static final @NotNull Icon AnnotationType = load("/icons/groovy/annotationType.svg");
-    /** 16x16 */ public static final @NotNull Icon Class = load("/icons/groovy/class.svg");
-    /** 16x16 */ public static final @NotNull Icon ClassInitializer = load("/icons/groovy/classInitializer.svg");
-    /** 16x16 */ public static final @NotNull Icon Enum = load("/icons/groovy/enum.svg");
-    /** 16x16 */ public static final @NotNull Icon Field = load("/icons/groovy/field.svg");
-    /** 16x16 */ public static final @NotNull Icon Gant_16x16 = load("/icons/groovy/gant_16x16.svg");
-    /** 16x16 */ public static final @NotNull Icon Gant_sdk = load("/icons/groovy/gant_sdk.svg");
-    /** 16x16 */ public static final @NotNull Icon Gant_target = load("/icons/groovy/gant_target.svg");
-    /** 13x13 */ public static final @NotNull Icon Groovy_13x13 = load("/icons/groovy/groovy_13x13.svg");
-    /** 16x16 */ public static final @NotNull Icon Groovy_16x16 = load("/icons/groovy/groovy_16x16.svg");
-    /** 16x16 */ public static final @NotNull Icon Groovy_outsideSources = load("/icons/groovy/groovy_outsideSources.svg");
-    /** 16x16 */ public static final @NotNull Icon GroovyFile = load("/icons/groovy/groovyFile.svg");
-    /** 16x16 */ public static final @NotNull Icon Interface = load("/icons/groovy/interface.svg");
-    /** 16x16 */ public static final @NotNull Icon Method = load("/icons/groovy/method.svg");
-    /** 16x16 */ public static final @NotNull Icon Property = load("/icons/groovy/property.svg");
-    /** 16x16 */ public static final @NotNull Icon Trait = load("/icons/groovy/trait.svg");
-    /** 16x16 */ public static final @NotNull Icon Variable = load("/icons/groovy/variable.svg");
+    /** 16x16 */ public static final @NotNull Icon AbstractClass = load("/icons/groovy/abstractClass.svg", -2852056460097869762L);
+    /** 16x16 */ public static final @NotNull Icon AbstractField = load("/icons/groovy/abstractField.svg", 3516432460527924533L);
+    /** 16x16 */ public static final @NotNull Icon AbstractMethod = load("/icons/groovy/abstractMethod.svg", 8432903485198158636L);
+    /** 16x16 */ public static final @NotNull Icon AbstractProperty = load("/icons/groovy/abstractProperty.svg", 822515687742017803L);
+    /** 16x16 */ public static final @NotNull Icon AnnotationType = load("/icons/groovy/annotationType.svg", 8549457196911508119L);
+    /** 16x16 */ public static final @NotNull Icon Class = load("/icons/groovy/class.svg", -3124043658357081504L);
+    /** 16x16 */ public static final @NotNull Icon ClassInitializer = load("/icons/groovy/classInitializer.svg", -4767948919833397130L);
+    /** 16x16 */ public static final @NotNull Icon Enum = load("/icons/groovy/enum.svg", -1927454407189797744L);
+    /** 16x16 */ public static final @NotNull Icon Field = load("/icons/groovy/field.svg", -6615275512237214906L);
+    /** 16x16 */ public static final @NotNull Icon Gant_16x16 = load("/icons/groovy/gant_16x16.svg", 5185480676985423474L);
+    /** 16x16 */ public static final @NotNull Icon Gant_sdk = load("/icons/groovy/gant_sdk.svg", 3939650548765197821L);
+    /** 16x16 */ public static final @NotNull Icon Gant_target = load("/icons/groovy/gant_target.svg", -573597268268304131L);
+    /** 13x13 */ public static final @NotNull Icon Groovy_13x13 = load("/icons/groovy/groovy_13x13.svg", 6069203516407582704L);
+    /** 16x16 */ public static final @NotNull Icon Groovy_16x16 = load("/icons/groovy/groovy_16x16.svg", -701686282275947088L);
+    /** 16x16 */ public static final @NotNull Icon Groovy_outsideSources = load("/icons/groovy/groovy_outsideSources.svg", -7892098474612390047L);
+    /** 16x16 */ public static final @NotNull Icon GroovyFile = load("/icons/groovy/groovyFile.svg", 722488867754105613L);
+    /** 16x16 */ public static final @NotNull Icon Interface = load("/icons/groovy/interface.svg", 3051702244012293046L);
+    /** 16x16 */ public static final @NotNull Icon Method = load("/icons/groovy/method.svg", 1113250834177937734L);
+    /** 16x16 */ public static final @NotNull Icon Property = load("/icons/groovy/property.svg", -8778627130267016399L);
+    /** 16x16 */ public static final @NotNull Icon Trait = load("/icons/groovy/trait.svg", -4684780584339688640L);
+    /** 16x16 */ public static final @NotNull Icon Variable = load("/icons/groovy/variable.svg", -607335789222360527L);
 
   }
 
   public final static class Mvc {
-    /** 16x16 */ public static final @NotNull Icon Action_method = load("/icons/mvc/action_method.svg");
-    /** 16x16 */ public static final @NotNull Icon Groovy_mvc_plugin = load("/icons/mvc/groovy_mvc_plugin.svg");
+    /** 16x16 */ public static final @NotNull Icon Action_method = load("/icons/mvc/action_method.svg", -7186662153856022613L);
+    /** 16x16 */ public static final @NotNull Icon Groovy_mvc_plugin = load("/icons/mvc/groovy_mvc_plugin.svg", 5294866572707311015L);
 
   }
 }

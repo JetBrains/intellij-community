@@ -53,7 +53,10 @@ public final class PartialChangesUtil {
                                                    @NotNull Collection<? extends Change> changes,
                                                    boolean executeOnEDT,
                                                    @NotNull PairFunction<? super List<ChangeListChange>, ? super PartialLocalLineStatusTracker, Boolean> partialProcessor) {
-    if (!ContainerUtil.exists(changes, it -> it instanceof ChangeListChange)) return new ArrayList<>(changes);
+    if (!LineStatusTrackerManager.getInstance(project).arePartialChangelistsEnabled() ||
+        !ContainerUtil.exists(changes, it -> it instanceof ChangeListChange)) {
+      return new ArrayList<>(changes);
+    }
 
     List<Change> otherChanges = new ArrayList<>();
 
@@ -121,7 +124,9 @@ public final class PartialChangesUtil {
     ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
     LocalChangeList oldDefaultList = changeListManager.getDefaultChangeList();
 
-    if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
+    if (targetChangeList == null ||
+        targetChangeList.equals(oldDefaultList) ||
+        !changeListManager.areChangeListsEnabled()) {
       return task.compute();
     }
 
@@ -143,7 +148,8 @@ public final class PartialChangesUtil {
     ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
     LocalChangeList oldDefaultList = changeListManager.getDefaultChangeList();
 
-    if (targetChangeList == null) {
+    if (targetChangeList == null ||
+        !changeListManager.areChangeListsEnabled()) {
       return task.compute();
     }
 

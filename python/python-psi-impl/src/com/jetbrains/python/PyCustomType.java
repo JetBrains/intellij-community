@@ -24,6 +24,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -147,7 +148,7 @@ public final class PyCustomType implements PyClassLikeType {
 
   @Override
   public boolean isValid() {
-    return StreamEx.of(myTypesToMimic).allMatch(PyClassLikeType::isValid);
+    return ContainerUtil.and(myTypesToMimic, PyClassLikeType::isValid);
   }
 
   @Nullable
@@ -160,7 +161,7 @@ public final class PyCustomType implements PyClassLikeType {
   public boolean isCallable() {
     return !myInstanceType ||
            PyTypingTypeProvider.CALLABLE.equals(myQualifiedName) ||
-           StreamEx.of(myTypesToMimic).anyMatch(PyCallableType::isCallable);
+           ContainerUtil.or(myTypesToMimic, PyCallableType::isCallable);
   }
 
   @Nullable
@@ -267,7 +268,7 @@ public final class PyCustomType implements PyClassLikeType {
   }
 
   @Override
-  public void visitMembers(@NotNull Processor<PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context) {
+  public void visitMembers(@NotNull Processor<? super PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context) {
     for (PyClassLikeType type : myTypesToMimic) {
       // Only visit methods that are allowed by filter (if any)
       type.visitMembers(t -> {

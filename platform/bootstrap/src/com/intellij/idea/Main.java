@@ -7,8 +7,10 @@ import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -37,7 +39,7 @@ public final class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
-  @SuppressWarnings("unused") public static final int UNSUPPORTED_JAVA_VERSION = 10;  // left for compatibility/reserved for future use
+  public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
   public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
@@ -50,10 +52,10 @@ public final class Main {
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final String[] NO_ARGS = ArrayUtilRt.EMPTY_STRING_ARRAY;
-  private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
+  private static final List<@NonNls String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless");
-  private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
+  private static final List<@NonNls String> GUI_COMMANDS = Arrays.asList("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -63,10 +65,10 @@ public final class Main {
   private Main() { }
 
   public static void main(String[] args) {
-    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
+    LinkedHashMap<@NonNls String, Long> startupTimings = new LinkedHashMap<>();
     startupTimings.put("startup begin", System.nanoTime());
 
-    if (args.length == 1 && "%f".equals(args[0])) {
+    if (args.length == 1 && "%f".equals(args[0])) { // NON-NLS
       args = NO_ARGS;
     }
 
@@ -81,6 +83,12 @@ public final class Main {
       System.exit(NO_GRAPHICS);
     }
 
+    if (!SystemInfo.isJavaVersionAtLeast(11)) {
+      showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.java.version"),
+                  BootstrapBundle.message("bootstrap.error.message.cannot.start.under.java.0.java.11.or.later.is.required", SystemInfo.JAVA_RUNTIME_VERSION), true);
+      System.exit(UNSUPPORTED_JAVA_VERSION);
+    }
+
     try {
       bootstrap(args, startupTimings);
     }
@@ -90,7 +98,7 @@ public final class Main {
     }
   }
 
-  private static void bootstrap(String[] args, LinkedHashMap<String, Long> startupTimings) throws Exception {
+  private static void bootstrap(String[] args, LinkedHashMap<@NonNls String, Long> startupTimings) throws Exception {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
@@ -110,7 +118,7 @@ public final class Main {
     WindowsCommandLineProcessor.ourMainRunnerClass = klass;
     Method startMethod = klass.getMethod("start", String.class, String[].class, LinkedHashMap.class);
     startMethod.setAccessible(true);
-    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings);
+    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings); //NON-NLS
   }
 
   private static void installPluginUpdates() {
@@ -160,7 +168,7 @@ public final class Main {
           return false;
         }
       }
-      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) {
+      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) { // NON-NLS
         return true;
       }
     }
@@ -184,7 +192,7 @@ public final class Main {
     }
 
     String firstArg = args[0];
-    return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
+    return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
   }
 
   private static boolean checkGraphics() {
@@ -210,7 +218,7 @@ public final class Main {
     }
     else {
       boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      String bugReportLink = studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors";
+      String bugReportLink = studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
       message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", bugReportLink));
       message.append("\n\n");
     }

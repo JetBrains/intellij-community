@@ -7,18 +7,15 @@ import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.impl.facade.*
-import com.intellij.vcs.log.graph.utils.*
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.isAncestor
 import com.intellij.vcsUtil.VcsFileUtil
-import gnu.trove.THashSet
 import gnu.trove.TIntHashSet
 import gnu.trove.TIntObjectHashMap
 import it.unimi.dsi.fastutil.Hash
@@ -26,7 +23,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import java.util.*
 import java.util.function.BiConsumer
 
 class FileHistory internal constructor(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>,

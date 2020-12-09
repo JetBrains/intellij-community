@@ -82,6 +82,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     StringBuilder builder = new StringBuilder();
     builder.append("timestamp = ").append(entry.getTimestamp());
     entry.getKeyValuePairs().forEach((key, value) -> builder.append(", ").append(key).append(" = ").append(value));
+    builder.append("\n");
     myPrintStream.println("##teamcity[testStdOut" + idAndName(testIdentifier) + " out = '" + escapeName(builder.toString()) + "']");
   }
 

@@ -70,3 +70,5 @@ record ProhibitedMembers() {
 record StaticFieldCollides(int i) {
   static int <error descr="Variable 'i' is already defined in the scope">i</error>;
 }
+record Incomplete(@<error descr="Class reference expected">i</error>nt a) {}
+record CStyle(int a[]) {}

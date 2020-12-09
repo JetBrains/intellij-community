@@ -336,8 +336,6 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - trying to remove parent and leave child`() {
-    expectedException.expectCause(isA(ReplaceBySourceException::class.java))
-
     val parentEntity = builder.addParentEntity("prop", AnotherSource)
     builder.addChildEntity(parentEntity)
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
@@ -345,6 +343,9 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
     builder.assertConsistency()
+
+    assertEmpty(builder.entities(ParentEntity::class.java).toList())
+    assertEmpty(builder.entities(ChildEntity::class.java).toList())
   }
 
   @Test

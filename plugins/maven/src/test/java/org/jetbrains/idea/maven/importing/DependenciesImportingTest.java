@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -13,17 +14,17 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DependenciesImportingTest extends MavenImportingTestCase {
   @Override
@@ -823,13 +824,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + javaHome + "/lib/tools.jar!/");
   }
 
+  @Bombed(user= "Nikita.Skvortsov", month = Calendar.OCTOBER, day = 15)
   public void testDependencyWithEnvironmentENVProperty() {
-    if (ignore()) {
-      return;
-    }
-    if (MavenUtil.newModelEnabled(myProject)) {
-      throw new IllegalStateException("This test brokes all subsequent!");
-    }
     String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
     envDir = StringUtil.trimEnd(envDir, "/");
 
@@ -2210,7 +2206,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
 
                      "</dependencies>");
-    importProject();
+    importProjectWithErrors();
 
     WriteAction.runAndWait(() -> {
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
@@ -2338,11 +2334,15 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
       importProject();
 
-      OrderEntry[] entries = ModuleRootManager.getInstance(getModule("project")).getOrderEntries();
-      List<String> strings = ContainerUtil.map(entries, Object::toString);
+      List<String> librariesDepNames = Arrays.stream(ModuleRootManager.getInstance(getModule("project"))
+        .getOrderEntries())
+        .filter(LibraryOrderEntry.class::isInstance)
+        .map(LibraryOrderEntry.class::cast)
+        .map(loe -> loe.getLibraryName())
+        .collect(Collectors.toList());
 
-      assertContain(strings, "project -> SomeLibrary", "project -> Maven: junit:junit:4.0");
-      assertDoesntContain(strings, "project -> Maven: AnotherLibrary");
+      assertContain(librariesDepNames, "SomeLibrary", "Maven: junit:junit:4.0");
+      assertDoesntContain(librariesDepNames, "Maven: AnotherLibrary");
 
     }
     finally {

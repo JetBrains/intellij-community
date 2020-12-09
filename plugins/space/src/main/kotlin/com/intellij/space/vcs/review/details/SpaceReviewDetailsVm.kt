@@ -9,19 +9,22 @@ import circlet.code.codeReview
 import circlet.platform.api.BatchInfo
 import circlet.platform.api.Ref
 import circlet.platform.api.TID
-import circlet.platform.client.KCircletClient
-import circlet.platform.client.property
-import circlet.platform.client.resolve
-import circlet.platform.client.resolveRefsOrFetch
+import circlet.platform.client.*
 import com.intellij.openapi.project.Project
 import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.vcs.SpaceProjectInfo
+import com.intellij.space.vcs.SpaceRepoInfo
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.*
 
+private const val MAX_CHANGES_TO_LOAD = 1024
+
 internal open class CrDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
   val ideaProject: Project,
+  val spaceProjectInfo: SpaceProjectInfo,
+  val spaceReposInfo: Set<SpaceRepoInfo>,
   private val reviewRef: Ref<R>,
   val client: KCircletClient
 ) : Lifetimed {
@@ -57,71 +60,91 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
     r?.let { SpaceReviewParticipantsVmImpl(it, projectKey, review.value.identifier, client, lifetime) }
   }
 
-  protected val detailedInfo = mapInit(review, null) {
+  protected val detailedInfo: Property<CodeReviewDetailedInfo?> = mapInit(review, null) {
     client.codeReview.getReviewDetails(review.value.project.identifier, review.value.identifier)
   }
 
-  val selectedCommit: MutableProperty<GitCommitWithGraph?> = Property.createMutable(null)
+  val commits: Property<List<ReviewCommitListItem>?> = mapInit(detailedInfo, null) { detailedInfo ->
+    val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
+
+    detailedInfo?.commits?.flatMap { revInReview ->
+      val repo = revInReview.repository
+      val repoInfo = spaceReposByName[repo.name]
+      val commitsInRepository = revInReview.commits.size
+
+      revInReview.commits.mapIndexed { index, gitCommitWithGraph ->
+        ReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo)
+      }
+    }
+  }
+
+  val selectedCommitIndices: MutableProperty<List<Int>> = Property.createMutable(emptyList())
+
+  protected suspend fun loadChanges(revisions: List<RevisionInReview>): List<ChangeInReview> =
+    client.codeReview.getReviewChanges(BatchInfo("0", MAX_CHANGES_TO_LOAD),
+                                       projectKey.identifier,
+                                       reviewId,
+                                       revisions).data
 }
 
 internal class MergeRequestDetailsVm(
   lifetime: Lifetime,
   ideaProject: Project,
+  spaceProjectInfo: SpaceProjectInfo,
+  spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<MergeRequestRecord>,
   client: KCircletClient
-) : CrDetailsVm<MergeRequestRecord>(lifetime, ideaProject, refMrRecord, client) {
+) : CrDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
 
   private val branchPair: Property<MergeRequestBranchPair> = cellProperty { review.live.branchPair }
 
   val repository: Property<String> = cellProperty { branchPair.live.repository }
-  val targetBranchInfo = cellProperty { branchPair.live.targetBranchInfo }
-  val sourceBranchInfo = cellProperty { branchPair.live.sourceBranchInfo }
+  val targetBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.targetBranchInfo }
+  val sourceBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.sourceBranchInfo }
 
-  val commits = mapInit(detailedInfo, null) { detailedInfo ->
-    detailedInfo?.commits
-  }
+  val repoInfo = spaceReposInfo.firstOrNull { it.name == repository.value }
 
-  val changes = mapInit(commits, selectedCommit, null) { allCommits, selectedCommit ->
-    val revisions = if (selectedCommit != null) {
-      listOf(RevisionInReview(selectedCommit.repositoryName, selectedCommit.commit.id))
-    }
-    else allCommits?.map { it.commits }?.flatten()?.toList()?.map { RevisionInReview(it.repositoryName, it.commit.id) }
+  val changes = mapInit(commits, selectedCommitIndices, null) { allCommits, selectedCommitIndices ->
+    allCommits ?: return@mapInit null
 
-    revisions?.let { client.codeReview.getReviewChanges(BatchInfo("0", 1024), projectKey.identifier, reviewId, it).data }
+    val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { allCommits[it] } else allCommits
+    selectedCommits
+      .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
+      .let { loadChanges(it) }
   }
 }
 
 internal class CommitSetReviewDetailsVm(
   lifetime: Lifetime,
   ideaProject: Project,
+  spaceProjectInfo: SpaceProjectInfo,
+  spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<CommitSetReviewRecord>,
   client: KCircletClient
-) : CrDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, refMrRecord, client) {
-  val commitsByRepos = mapInit(detailedInfo, null) { _detailedInfo ->
-    _detailedInfo?.commits?.associateBy(
-      RevisionsInReview::repository,
-      RevisionsInReview::commits
+) : CrDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
+
+  val reposInCurrentProject: Property<Map<String, SpaceRepoInfo?>?> = mapInit(commits, null) { commits ->
+    val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
+
+    commits?.associateBy(
+      { it.repositoryInReview.name },
+      { spaceReposByName[it.repositoryInReview.name] }
     )
   }
 
-  val changesByRepos = mapInit(commitsByRepos, selectedCommit, null) { commitsByRepos, selectedCommit ->
-    commitsByRepos ?: return@mapInit null
+  val changesByRepos: Property<Map<String, List<ChangeInReview>>?> = mapInit(commits, selectedCommitIndices,
+                                                                             null) { commits, selectedCommitIndices ->
+    commits ?: return@mapInit null
 
-    val selectedCommitsByRepo = if (selectedCommit != null) {
-      commitsByRepos.entries.filter { it.key.name == selectedCommit.repositoryName }
-        .map { entry ->
-          entry.key to entry.value.filter { commitWithGraph -> commitWithGraph.commit == selectedCommit.commit }
-        }.toMap()
-    }
-    else commitsByRepos
-    return@mapInit selectedCommitsByRepo.entries
-      .associateBy(
-        { it.key },
-        {
-          val revisions = it.value.map { RevisionInReview(it.repositoryName, it.commit.id) }
-          client.codeReview.getReviewChanges(BatchInfo("0", 1024), projectKey.identifier, reviewId, revisions).data
-        }
-      )
+    val selectedCommits = if (selectedCommitIndices.isNotEmpty()) selectedCommitIndices.map { commits[it] } else commits
+    selectedCommits
+      .map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
+      .groupBy { it.repository }
+      .map {
+        val repoName = it.key
+        val revisionsInRepo = it.value
+        repoName to loadChanges(revisionsInRepo)
+      }.toMap()
   }
 }
 
@@ -131,3 +154,39 @@ fun buildReviewUrl(projectKey: ProjectKey, reviewNumber: Int): String {
     .absoluteHref(SpaceSettings.getInstance().serverSettings.server)
 }
 
+internal fun createReviewDetailsVm(lifetime: Lifetime,
+                                   project: Project,
+                                   client: KCircletClient,
+                                   spaceProjectInfo: SpaceProjectInfo,
+                                   spaceReposInfo: Set<SpaceRepoInfo>,
+                                   ref: Ref<CodeReviewRecord>): CrDetailsVm<out CodeReviewRecord> {
+  return when (val codeReviewRecord = ref.resolve()) {
+    is MergeRequestRecord -> MergeRequestDetailsVm(
+      lifetime,
+      project,
+      spaceProjectInfo,
+      spaceReposInfo,
+      codeReviewRecord.toRef(client.arena),
+      client
+    )
+    is CommitSetReviewRecord -> CommitSetReviewDetailsVm(
+      lifetime,
+      project,
+      spaceProjectInfo,
+      spaceReposInfo,
+      codeReviewRecord.toRef(client.arena),
+      client
+    )
+    else -> throw IllegalArgumentException("Unable to resolve CodeReviewRecord")
+  }
+}
+
+data class ReviewCommitListItem(
+  val commitWithGraph: GitCommitWithGraph,
+  val repositoryInReview: RepositoryInReview,
+  val index: Int,
+  val commitsInRepository: Int,
+  val spaceRepoInfo: SpaceRepoInfo?
+) {
+  val inCurrentProject: Boolean = spaceRepoInfo != null
+}

@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -1306,7 +1307,7 @@ public class MavenUtil {
 
     if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
         Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
-        if (res != null) {
+        if (res != null && res.getSdkType() instanceof JavaSdkType) {
           return res;
         }
       throw new ProjectJdkNotFoundException();
@@ -1322,7 +1323,12 @@ public class MavenUtil {
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName().equals(name)) {
-        return projectJdk;
+        if(projectJdk.getSdkType() instanceof JavaSdkType) {
+          return projectJdk;
+        } else {
+          throw new InvalidSdkException(projectJdk.getName());
+        }
+
       }
     }
     throw new InvalidSdkException(name);

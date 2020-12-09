@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType;
-import com.intellij.internal.statistic.service.fus.EventLogMetadataUpdateError;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateError;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;

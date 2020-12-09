@@ -69,4 +69,9 @@ public class JsonCopyPasteProcessor implements CopyPastePreProcessor {
 
     return StringUtil.escapeStringCharacters(text);
   }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
+  }
 }

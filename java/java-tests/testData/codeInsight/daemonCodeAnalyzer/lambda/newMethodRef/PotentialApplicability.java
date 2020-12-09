@@ -31,8 +31,8 @@ class Test {
         String i1 = instanceCall(this::m0);
         String i2 = instanceCall(this::m1);
         String i3 = instanceCall(this::m2);
-        String i4 = instanceCall(this::<error descr="Cannot resolve method 'm01'">m01</error>);
-        String i5 = instanceCall(this::<error descr="Cannot resolve method 'm012'">m012</error>);
+        String i4 = instanceCall(this::<error descr="Reference to 'm01' is ambiguous, both 'm01()' and 'm01(String)' match">m01</error>);
+        String i5 = instanceCall(this::<error descr="Reference to 'm012' is ambiguous, both 'm012()' and 'm012(String)' match">m012</error>);
     }
 
     void n0() { }
@@ -53,7 +53,7 @@ class Test {
         Test s1 = staticCall(Test::n0);
         Test s2 = staticCall(Test::n1);
         Test s3 = staticCall<error descr="Cannot resolve method 'staticCall(<method reference>)'">(Test::n2)</error>;
-        Test s4 = staticCall(Test::<error descr="Cannot resolve method 'n01'">n01</error>);
-        Test s5 = staticCall(Test::<error descr="Cannot resolve method 'n012'">n012</error>);
+        Test s4 = staticCall(Test::<error descr="Reference to 'n01' is ambiguous, both 'n01()' and 'n01(String)' match">n01</error>);
+        Test s5 = staticCall(Test::<error descr="Reference to 'n012' is ambiguous, both 'n012()' and 'n012(String)' match">n012</error>);
     }
 }

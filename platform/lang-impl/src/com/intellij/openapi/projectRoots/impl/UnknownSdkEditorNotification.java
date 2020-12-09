@@ -38,8 +38,7 @@ public class UnknownSdkEditorNotification {
   public static final Key<List<EditorNotificationPanel>> NOTIFICATIONS = Key.create("notifications added to the editor");
   private static final Key<?> EDITOR_NOTIFICATIONS_KEY = Key.create("SdkSetupNotificationNew");
 
-  @NotNull
-  public static UnknownSdkEditorNotification getInstance(@NotNull Project project) {
+  public static @NotNull UnknownSdkEditorNotification getInstance(@NotNull Project project) {
     return project.getService(UnknownSdkEditorNotification.class);
   }
 
@@ -66,8 +65,7 @@ public class UnknownSdkEditorNotification {
     return myNotifications.get().isEmpty();
   }
 
-  @NotNull
-  public List<SimpleSdkFixInfo> getNotifications() {
+  public @NotNull List<SimpleSdkFixInfo> getNotifications() {
     return ImmutableList.copyOf(myNotifications.get());
   }
 
@@ -136,42 +134,33 @@ public class UnknownSdkEditorNotification {
   }
 
   public abstract static class SimpleSdkFixInfo {
-    @NotNull protected final SdkType mySdkType;
+    protected final @NotNull SdkType mySdkType;
 
     protected SimpleSdkFixInfo(@NotNull SdkType sdkType) {
       mySdkType = sdkType;
     }
 
-    @Nullable
-    final EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull Project project) {
-      //we must not show the notification for an unrelevant files in the project
-      if (!mySdkType.isRelevantForFile(project, file)) {
-        return null;
-      }
-
-      return createNotificationPanelImpl(file, project);
+    final @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull Project project) {
+      // we must not show the notification for an irrelevant files in the project
+      return !mySdkType.isRelevantForFile(project, file) ? null : createNotificationPanelImpl(file, project);
     }
 
-    @NotNull
-    abstract EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project);
+    abstract @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project);
 
-    @NotNull
-    protected EditorNotificationPanel newNotificationPanel(@IntentionName @NotNull String intentionActionText) {
+    protected @NotNull EditorNotificationPanel newNotificationPanel(@IntentionName @NotNull String intentionActionText) {
       return new EditorNotificationPanel() {
         @Override
         protected String getIntentionActionText() {
           return intentionActionText;
         }
 
-        @NotNull
         @Override
-        protected PriorityAction.Priority getIntentionActionPriority() {
+        protected @NotNull PriorityAction.Priority getIntentionActionPriority() {
           return PriorityAction.Priority.HIGH;
         }
 
-        @NotNull
         @Override
-        protected String getIntentionActionFamilyName() {
+        protected @NotNull String getIntentionActionFamilyName() {
           return ProjectBundle.message("config.unknown.sdk.configuration");
         }
       };
@@ -179,31 +168,26 @@ public class UnknownSdkEditorNotification {
   }
 
   private class UnknownSdkFixInfo extends SimpleSdkFixInfo {
-    @NotNull private final String mySdkName;
-    @Nullable private final UnknownSdk mySdk;
-    @Nullable private final UnknownSdkDownloadableSdkFix myFix;
+    private final @NotNull String mySdkName;
+    private final @Nullable UnknownSdk mySdk;
+    private final @Nullable UnknownSdkDownloadableSdkFix myFix;
 
-    UnknownSdkFixInfo(@NotNull String sdkName,
-                      @NotNull SdkType sdkType,
-                      @Nullable UnknownSdk sdk,
-                      @Nullable UnknownSdkDownloadableSdkFix fix) {
+    UnknownSdkFixInfo(@NotNull String sdkName, @NotNull SdkType sdkType, @Nullable UnknownSdk sdk, @Nullable UnknownSdkDownloadableSdkFix fix) {
       super(sdkType);
       mySdkName = sdkName;
       mySdk = sdk;
       myFix = fix;
     }
 
-    @NotNull
     @Override
-    final EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project) {
+    final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project) {
       String sdkTypeName = mySdkType.getPresentableName();
       String notificationText = ProjectBundle.message("config.unknown.sdk.notification.text", sdkTypeName, mySdkName);
       String configureText = ProjectBundle.message("config.unknown.sdk.configure");
 
       boolean hasDownload = myFix != null && mySdk != null;
       String downloadText = hasDownload ? ProjectBundle.message("config.unknown.sdk.download", myFix.getDownloadDescription()) : "";
-      String intentionActionText =
-        hasDownload ? downloadText : ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, mySdkName);
+      String intentionActionText = hasDownload ? downloadText : ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, mySdkName);
 
       EditorNotificationPanel notification = newNotificationPanel(intentionActionText);
 
@@ -243,8 +227,8 @@ public class UnknownSdkEditorNotification {
   }
 
   private class InvalidSdkFixInfo extends SimpleSdkFixInfo {
-    @NotNull private final String mySdkName;
-    @NotNull private final UnknownInvalidSdk mySdk;
+    private final @NotNull String mySdkName;
+    private final @NotNull UnknownInvalidSdk mySdk;
 
     InvalidSdkFixInfo(@NotNull UnknownInvalidSdk invalidSdk) {
       super(invalidSdk.mySdkType);
@@ -252,9 +236,8 @@ public class UnknownSdkEditorNotification {
       mySdk = invalidSdk;
     }
 
-    @NotNull
     @Override
-    final EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project) {
+    final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project) {
       String sdkTypeName = mySdkType.getPresentableName();
       String notificationText = ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
       String configureText = ProjectBundle.message("config.invalid.sdk.configure");
@@ -285,15 +268,10 @@ public class UnknownSdkEditorNotification {
         actionLabel.setToolTipText(localTextTooltip);
       }
       else if (downloadFix != null) {
-        notification.createActionLabel(downloadText, () -> {
-          mySdk.applyDownloadFix(myProject);
-        }, true);
+        notification.createActionLabel(downloadText, () -> mySdk.applyDownloadFix(myProject), true);
       }
 
-      notification.createActionLabel(configureText,
-                                     mySdk.createSdkSelectionPopup(project),
-                                     true
-      );
+      notification.createActionLabel(configureText, mySdk.createSdkSelectionPopup(project), true);
 
       return notification;
     }

@@ -20,10 +20,22 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NotNull;
 
 public interface IndexableFileSet {
   boolean isInSet(@NotNull VirtualFile file);
-  void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
+
+  /**
+   * @deprecated method is not used anymore.
+   * We directly traverse file with {@link VfsUtilCore#visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} now.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  default void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
+    DeprecatedMethodException.report("Unsupported method is not used anymore");
+  }
 }

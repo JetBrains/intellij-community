@@ -48,6 +48,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,7 +56,7 @@ import java.util.regex.Pattern;
 /**
  * @author Konstantin Bulenkov
  */
-public class CheckRegExpForm {
+public final class CheckRegExpForm {
   private static final Logger LOG = Logger.getInstance(CheckRegExpForm.class);
 
   public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Key.create("CHECK_REG_EXP_EDITOR");
@@ -70,7 +71,7 @@ public class CheckRegExpForm {
   private final JBLabel myRegExpIcon = new JBLabel();
   private final JBLabel mySampleIcon = new JBLabel();
 
-  private final SmartList<RangeHighlighter> highlighters = new SmartList<>();
+  private final List<RangeHighlighter> highlighters = new ArrayList<>();
 
   public CheckRegExpForm(@NotNull PsiFile regexpFile) {
     final Project project = regexpFile.getProject();

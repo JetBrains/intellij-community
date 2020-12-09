@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -72,7 +73,7 @@ public final class GithubCreatePullRequestWorker {
   @NotNull private final GHRepositoryPath myPath;
   @NotNull private final String myRemoteName;
   @NotNull private final String myRemoteUrl;
-  @NotNull private final String myCurrentBranch;
+  @NlsSafe @NotNull private final String myCurrentBranch;
 
   @SuppressWarnings("NullableProblems")
   @NotNull private GHRepositoryPath mySource;

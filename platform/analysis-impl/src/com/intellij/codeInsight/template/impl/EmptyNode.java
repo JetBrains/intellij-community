@@ -17,11 +17,6 @@ public class EmptyNode extends Expression {
   }
 
   @Override
-  public Result calculateQuickResult(ExpressionContext context) {
-    return null;
-  }
-
-  @Override
   public boolean requiresCommittedPSI() {
     return false;
   }

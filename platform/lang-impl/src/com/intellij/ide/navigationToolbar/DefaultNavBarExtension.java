@@ -128,7 +128,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   private static boolean processChildren(final PsiFileSystemItem object, final Processor<Object> processor) {
     return ReadAction.compute(() -> object.processChildren(new PsiFileSystemItemProcessor() {
       @Override
-      public boolean acceptItem(String name, boolean isDirectory) {
+      public boolean acceptItem(@NotNull String name, boolean isDirectory) {
         return true;
       }
 

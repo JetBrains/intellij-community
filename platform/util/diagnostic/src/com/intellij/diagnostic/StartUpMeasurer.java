@@ -65,6 +65,10 @@ public final class StartUpMeasurer {
     return System.nanoTime();
   }
 
+  public static long getCurrentTimeIfEnabled() {
+    return isEnabled ? System.nanoTime() : -1;
+  }
+
   /**
    * Since start in ms.
    */

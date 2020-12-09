@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashMap
 
-@State(name = "PathMacrosImpl", storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.PER_OS)])
+@State(name = "PathMacrosImpl", storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.PER_OS)], useLoadedStateAsExisting = false)
 open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors: Boolean = true) : PathMacros(), PersistentStateComponent<Element?>, ModificationTracker {
   @Volatile
   private var legacyMacros: Map<String, String> = emptyMap()
@@ -179,9 +179,18 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       }
     }
 
+    val forcedMacros = linkedMapOf<String, String>()
     EP_NAME.forEachExtensionSafe { contributor ->
-      contributor.forceRegisterPathMacros(newMacros)
+      contributor.forceRegisterPathMacros(forcedMacros)
     }
+
+    for (forcedMacro in forcedMacros) {
+      if (newMacros[forcedMacro.key] != forcedMacro.value) {
+        modificationStamp.incrementAndGet()
+        break
+      }
+    }
+    newMacros.putAll(forcedMacros)
 
     macros = if (newMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newMacros)
     legacyMacros = if (newLegacyMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newLegacyMacros)

@@ -132,6 +132,8 @@ public final class ChildRole {
 
   public static final int ENUM_CONSTANT_LIST_DELIMITER = 126; // in CLASS
 
+  public static final int PERMITS_LIST = 127; // in CLASS
+
   public static final int DOC_TAG_VALUE = 242;
 
   public static final int TYPE_PARAMETER_IN_LIST = 244;

@@ -43,6 +43,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -171,7 +172,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       else {
         projectName = projectFile.getName();
       }
-      String executionName = "Build " + projectName;
+      String executionName = GradleBundle.message("gradle.execution.name.build.project.", projectName);
       settings.setExecutionName(executionName);
       settings.setExternalProjectPath(rootProjectPath);
       settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));

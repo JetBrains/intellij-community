@@ -33,6 +33,7 @@ import java.awt.event.ActionListener;
  */
 public class TestMacMessagesAction extends AnAction {
   static int num = 1;
+
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     new DialogWrapper(e.getProject()) {
@@ -96,7 +97,8 @@ public class TestMacMessagesAction extends AnAction {
 
         JButton buttons = new JButton("Show Buttons Alert");
         buttons.addActionListener(event -> {
-          System.out.println(Messages.showDialog(buttons, "Message", "Title", new String[]{"Button1", "Button2", "Button3", "Button4", "Button5"}, 0, null));
+          System.out.println(
+            Messages.showDialog(buttons, "Message", "Title", new String[]{"Button1", "Button2", "Button3", "Button4", "Button5"}, 0, null));
         });
         panel.add(buttons);
 
@@ -107,6 +109,7 @@ public class TestMacMessagesAction extends AnAction {
             setTitle("Dialog 2");
             init();
           }
+
           @Override
           protected JComponent createCenterPanel() {
             final JButton b = new JButton("Click me again " + num);
@@ -121,6 +124,73 @@ public class TestMacMessagesAction extends AnAction {
           }
         }.show());
         panel.add(dialogAlert);
+
+
+        JButton changeTitleDialog = new JButton("Dialog(dynamic title) -> Alert");
+        changeTitleDialog.addActionListener(event -> new DialogWrapper(e.getProject()) {
+          {
+            setSize(400, 400);
+            setTitle("Dialog [0]");
+            init();
+          }
+
+          @Override
+          protected JComponent createCenterPanel() {
+            final JButton b = new JButton("Run");
+            b.addActionListener(new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent e1) {
+                setTitle("Dialog [0]");
+                Thread thread = new Thread(() -> {
+                  try {
+                    for (int i = 0; i < 300; i++) {
+                      final int ii = i;
+                      SwingUtilities.invokeLater(() -> setTitle("Dialog [" + ii + "]"));
+                    }
+                  }
+                  catch (Exception ignore) {
+                  }
+                }, "");
+                thread.start();
+                Messages.showYesNoDialog(b, "Message", "Title", Messages.getQuestionIcon());
+                if (thread.isAlive()) {
+                  thread.interrupt();
+                }
+              }
+            });
+            return b;
+          }
+        }.show());
+        panel.add(changeTitleDialog);
+
+        JButton secondDialog = new JButton("Dialog -> Alert || Modal Dialog (~5sec)");
+        secondDialog.addActionListener(event -> {
+          new Thread(() -> {
+            try {
+              if (false) Thread.sleep(5000);
+            }
+            catch (InterruptedException ignore) {
+            }
+            SwingUtilities.invokeLater(() -> {
+              DialogWrapper dialog = new DialogWrapper(e.getProject()) {
+                {
+                  setSize(400, 400);
+                  setTitle("Dialog");
+                  init();
+                }
+
+                @Override
+                protected JComponent createCenterPanel() {
+                  return new JCheckBox("Check me!");
+                }
+              };
+              dialog.setModal(true);
+              dialog.show();
+            });
+          }, "").start();
+          Messages.showYesNoDialog(secondDialog, "Message", "Title", Messages.getQuestionIcon());
+        });
+        panel.add(secondDialog);
 
         return panel;
       }

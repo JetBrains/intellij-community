@@ -102,6 +102,8 @@
       <action id="Tree-scrollDownChangeSelection" class="com.intellij.ui.TreeActions$PageDown" use-shortcut-of="EditorPageDown"/>
       <action id="Tree-scrollDownExtendSelection" class="com.intellij.ui.TreeActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
+      <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
+      <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -276,6 +278,7 @@
       <action id="EditorSplitLine" class="com.intellij.openapi.editor.actions.SplitLineAction"/>
       <action id="EditorStartNewLine" class="com.intellij.openapi.editor.actions.StartNewLineAction"/>
       <action id="EditorStartNewLineBefore" class="com.intellij.openapi.editor.actions.StartNewLineBeforeAction"/>
+      <action id="EditorTranspose" class="com.intellij.openapi.editor.actions.TransposeAction"/>
 
       <!-- generic delete actions should go last to allow redefining shortcuts by more specific actions in the editor -->
       <!-- e.g. Cmd + Backspace on OS X should work as Delete in lists, and as 'Delete to Line Start' in the editor -->
@@ -509,6 +512,7 @@
           <reference ref="FillParagraph"/>
           <reference ref="EditorSortLines"/>
           <reference ref="EditorReverseLines"/>
+          <reference ref="EditorTranspose"/>
           <separator/>
           <reference ref="EditorIndentSelection"/>
           <reference ref="EditorUnindentSelection"/>
@@ -672,7 +676,7 @@
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
           <action id="MaximizeToolWindow" class="com.intellij.openapi.wm.impl.MaximizeToolWindowAction"/>
           <separator/>
-          <group id="TW.ViewModeGroup" class="com.intellij.ide.actions.ToolWindowViewModeAction$Group"/>
+          <group id="TW.ViewModeGroup" class="com.intellij.ide.actions.ToolWindowViewModeAction$Group" popup="true"/>
           <group id="TW.MoveToGroup" class="com.intellij.ide.actions.ToolWindowMoveAction$Group"/>
           <action id="ToggleContentUiTypeMode" class="com.intellij.ide.actions.ToggleContentUiTypeAction"/>
           <action id="ShowContent" class="com.intellij.ide.actions.ShowContentAction"/>
@@ -941,6 +945,8 @@
       <separator/>
       <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
               icon="AllIcons.Actions.ShowHiddens"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="ChangeScheme">
@@ -1006,8 +1012,6 @@
           <action id="MacMessagesSequencesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesSequencesAction"/>
         </group>
         <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction"/>
-        <action id="DumpFocusableComponentHierarchyAction" internal="true"
-                class="com.intellij.internal.focus.DumpFocusableComponentHierarchyAction"/>
         <action id="FocusTracer" internal="true" class="com.intellij.internal.focus.FocusTracesAction">
           <keyboard-shortcut first-keystroke="control shift F11" keymap="$default"/>
         </action>
@@ -1061,8 +1065,12 @@
       </group>
 
       <action id="ShowEditorHighlighterTokens" internal="true" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"/>
+      <action id="KeymapToCsv" internal="true" class="com.intellij.internal.KeymapToCsvAction" text="Export Keymap to CSV..."/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
+
+    <action id="DumpFocusableComponentHierarchyAction" internal="false"
+            class="com.intellij.ui.DumpFocusableComponentHierarchyAction"/>
 
     <group id="EditorContextBarMenu">
       <action id="EditorToggleUseSoftWrapsInPreview" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsInPreviewAction"
@@ -1143,6 +1151,7 @@
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
     <action id="SelectInProjectView" class="com.intellij.ide.actions.SelectInProjectViewAction"/>
+    <action id="SelectOpenedFileInProjectView" class="com.intellij.ide.projectView.impl.SelectOpenedFileAction" icon="AllIcons.General.Locate"/>
 
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
 
@@ -1251,6 +1260,7 @@
       <action id="EditorBreadcrumbsShowAbove" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowAbove"/>
       <action id="EditorBreadcrumbsShowBelow" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowBelow"/>
       <action id="EditorBreadcrumbsHideBoth" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$HideBoth"/>
+      <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
     </group>
 
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>
@@ -1258,5 +1268,6 @@
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
     <group id="AnalyzeStacktraceToolbar"/>
     <group id="EditorTabActionGroup"/>
+    <action class="com.intellij.ide.actions.EditSourceNotInEditorAction" id="EditSourceNotInEditor"/>
   </actions>
 </idea-plugin>

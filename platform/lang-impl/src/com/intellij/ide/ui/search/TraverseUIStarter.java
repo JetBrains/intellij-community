@@ -31,6 +31,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,14 +49,14 @@ import java.util.*;
  */
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public final class TraverseUIStarter implements ApplicationStarter {
-  private static final String OPTIONS = "options";
-  private static final String CONFIGURABLE = "configurable";
-  private static final String ID = "id";
-  private static final String CONFIGURABLE_NAME = "configurable_name";
-  private static final String OPTION = "option";
-  private static final String NAME = "name";
-  private static final String PATH = "path";
-  private static final String HIT = "hit";
+  private static final @NonNls String OPTIONS = "options";
+  private static final @NonNls String CONFIGURABLE = "configurable";
+  private static final @NonNls String ID = "id";
+  private static final @NonNls String CONFIGURABLE_NAME = "configurable_name";
+  private static final @NonNls String OPTION = "option";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String PATH = "path";
+  private static final @NonNls String HIT = "hit";
 
   private static final String ROOT_ACTION_MODULE = "intellij.platform.ide";
 

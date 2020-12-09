@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.facet;
 
+import com.intellij.appengine.JavaGoogleAppEngineBundle;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.impl.AppEngineSdkUtil;
 import com.intellij.appengine.util.AppEngineUtil;
@@ -231,7 +232,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
     private final FrameworkSupportModel myFrameworkSupportModel;
     private JPanel myMainPanel;
     private final AppEngineSdkEditor mySdkEditor;
-    private JComboBox myPersistenceApiComboBox;
+    private JComboBox<String> myPersistenceApiComboBox;
     private JPanel mySdkPanel;
     private final HyperlinkLabel myErrorLabel;
     private JPanel myErrorPanel;
@@ -239,7 +240,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
     private AppEngineSupportConfigurable(FrameworkSupportModel model) {
       myFrameworkSupportModel = model;
       mySdkEditor = new AppEngineSdkEditor(model.getProject());
-      mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "Google App Engine SDK:"), BorderLayout.CENTER);
+      mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), JavaGoogleAppEngineBundle.message("label.google.app.engine.sdk")), BorderLayout.CENTER);
       PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, true);
       if (model.isFrameworkSelected(JPA_FRAMEWORK_ID)) {
         myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getDisplayName());
@@ -268,7 +269,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
       final String path = mySdkEditor.getPath();
       if (StringUtil.isEmptyOrSpaces(path)) {
         myErrorLabel.setVisible(true);
-        myErrorLabel.setHyperlinkText("App Engine SDK path not specified. ", "Download", "");
+        myErrorLabel.setTextWithHyperlink(JavaGoogleAppEngineBundle.message("app.engine.sdk.download.link.text"));
         myMainPanel.repaint();
         return;
       }
@@ -276,7 +277,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
       final ValidationResult result = AppEngineSdkUtil.checkPath(path);
       myErrorLabel.setVisible(!result.isOk());
       if (!result.isOk()) {
-        myErrorLabel.setText("App Engine SDK path is not correct");
+        myErrorLabel.setText(JavaGoogleAppEngineBundle.message("error.app.engine.sdk.path.is.not.correct"));
       }
       myMainPanel.repaint();
     }
@@ -291,7 +292,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
     @Override
     public void frameworkUnselected(@NotNull FrameworkSupportProvider provider) {
       if (provider.getId().equals(JPA_FRAMEWORK_ID)) {
-        myPersistenceApiComboBox.setSelectedItem(PersistenceApiComboboxUtil.NONE_ITEM);
+        myPersistenceApiComboBox.setSelectedItem(PersistenceApiComboboxUtil.NONE_ITEM_SUPPLIER.get());
       }
     }
 

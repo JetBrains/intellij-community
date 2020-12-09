@@ -7,12 +7,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.GraphicsUtil;
@@ -29,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class VariantsCompletionAction extends DumbAwareAction implements LightEditCompatible {
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final JTextComponent myTextField;
 
   public VariantsCompletionAction(JTextComponent textField) {

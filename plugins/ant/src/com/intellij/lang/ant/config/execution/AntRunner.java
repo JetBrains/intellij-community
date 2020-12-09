@@ -11,10 +11,11 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 final class AntRunner implements ProgramRunner<RunnerSettings> {
-  public static final String EXECUTOR_ID = "AntRunConfigurationRunner";
+  public static final @NonNls String EXECUTOR_ID = "AntRunConfigurationRunner";
 
   @Override
   public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
@@ -30,7 +31,7 @@ final class AntRunner implements ProgramRunner<RunnerSettings> {
 
   @NotNull
   @Override
-  public String getRunnerId() {
+  public @NonNls String getRunnerId() {
     return EXECUTOR_ID;
   }
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -115,7 +116,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-  private final BuildProgressListener myProgressListener;
+  private BuildProgressListener myProgressListener;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
@@ -137,6 +138,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
     MavenRehighlighter.install(project, this);
     Disposer.register(this, this::projectClosed);
+  }
+
+  @TestOnly
+  public void setProgressListener(SyncViewManager testViewManager){
+    myProgressListener = testViewManager;
   }
 
   @Override
@@ -545,14 +551,17 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    for (Module m : modules) {
-      if (m.isDisposed()) continue;
-      ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
-      // force re-save (since can be stored externally)
-      if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
-        ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+    //todo remove 'mergeRootsChangesDuring' call when 'setMavenized' stop firing rootsChanged events (IDEA-250924)
+    ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+      for (Module m : modules) {
+        if (m.isDisposed()) continue;
+        ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
+        // force re-save (since can be stored externally)
+        if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
+          ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+        }
       }
-    }
+    });
   }
 
   @TestOnly
@@ -858,8 +867,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
    * if project is closed)
    */
   public Promise<List<Module>> scheduleImportAndResolve() {
-    getSyncConsole().startImport(myProgressListener);
     MavenSyncConsole console = getSyncConsole();
+    console.startImport(myProgressListener);
     fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {

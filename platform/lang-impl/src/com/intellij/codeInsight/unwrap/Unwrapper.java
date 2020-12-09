@@ -19,6 +19,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public interface Unwrapper {
   void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result);
 
   @NotNull
-  String getDescription(@NotNull PsiElement e);
+  @Nls String getDescription(@NotNull PsiElement e);
 
   /**
    * @param toExtract the elements that will be extracted

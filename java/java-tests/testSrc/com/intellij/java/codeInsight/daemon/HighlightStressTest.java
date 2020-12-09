@@ -24,7 +24,6 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -227,7 +226,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       }
       String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName.startsWith("java.lang.invoke")) continue ; // java.lang.invoke.MethodHandle has weird access attributes in recent rt.jar which causes spurious highlighting errors
-      if (!accessible(aClass, new THashSet<>())) continue;
+      if (!accessible(aClass, new HashSet<>())) continue;
       imports.append("import " + qualifiedName + ";\n");
       usages.append("/**/ "+aClass.getName() + " var" + v + " = null; var" + v + ".toString();\n");
       v++;

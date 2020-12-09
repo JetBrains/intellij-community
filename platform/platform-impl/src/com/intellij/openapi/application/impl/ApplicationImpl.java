@@ -55,7 +55,6 @@ import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -157,11 +156,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
       });
     };
-    EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
+    EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
     myLock = new ReadMostlyRWLock();
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass()));
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass()));
     }
     activity.end();
 
@@ -246,6 +245,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myCommandLineMode;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public final boolean isLightEditMode() {
     return Main.isLightEdit();
   }
@@ -256,9 +256,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  public @NotNull <T> Future<T> executeOnPooledThread(@SuppressWarnings("BoundedWildcard") @NotNull Callable<T> action) {
+  public @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
     Callable<T> actionDecorated = ClientId.decorateCallable(action);
-    return ourThreadExecutorsService.submit(new Callable<T>() {
+    return ourThreadExecutorsService.submit(new Callable<>() {
       @Override
       public T call() {
         if (isDisposed()) {
@@ -324,11 +324,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  public final void load(@Nullable Path configPath) {
+  public final void load() {
     @SuppressWarnings("unchecked")
     List<IdeaPluginDescriptorImpl> plugins = (List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins();
     registerComponents(plugins);
-    ApplicationLoader.initConfigurationStore(this, configPath);
+    ApplicationLoader.initConfigurationStore(this);
     Executor executor = ApplicationLoader.createExecutorToPreloadServices();
     preloadServices(plugins, executor, false).getSyncPreloadedServices().join();
     loadComponents(null);
@@ -337,7 +337,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @ApiStatus.Internal
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");  // NON-NLS (not observable)
     try {
       if (indicator == null) {
         // no splash, no need to to use progress manager
@@ -635,7 +635,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);
-          Main.showMessage("Restart failed", t);
+          Main.showMessage(BootstrapBundle.message("restart.failed.title"), t);
           exitCode = Main.RESTART_FAILED;
         }
       }

@@ -32,7 +32,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   private final MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
-    new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
+    new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
+                                    ApplicationBundle.message("settings.code.style.visual.guides.optional"));
   private final JComboBox<String> myWrapOnTypingCombo = new ComboBox<>(getInstance().WRAP_ON_TYPING_OPTIONS);
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
@@ -172,7 +173,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   private static List<Integer> castToIntList(@Nullable Object value) {
-    if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof Integer) {
+    if (value instanceof List && ((List<?>)value).size() > 0 && ((List<?>)value).get(0) instanceof Integer) {
       //noinspection unchecked
       return (List<Integer>)value;
     }
@@ -217,7 +218,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       Object value = node.getValue();
       if (value instanceof String) {
         for (int i = 0; i < getInstance().WRAP_ON_TYPING_OPTIONS.length; i++) {
-          if (getInstance().WRAP_ON_TYPING_OPTIONS.equals(value)) {
+          if (getInstance().WRAP_ON_TYPING_OPTIONS[i].equals(value)) {
             myWrapOnTypingCombo.setSelectedIndex(i);
             break;
           }

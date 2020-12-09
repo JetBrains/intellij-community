@@ -13,5 +13,6 @@
     <orderEntry type="library" scope="TEST" name="testcontainers" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

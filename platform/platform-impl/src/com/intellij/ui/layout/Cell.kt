@@ -289,7 +289,7 @@ abstract class Cell : BaseBuilder {
 
   fun checkBox(@Checkbox text: String,
                property: GraphProperty<Boolean>,
-               comment: String? = null): CellBuilder<JBCheckBox> {
+               @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, property.get())
     return component(comment = comment).withGraphProperty(property).applyToComponent { component.bind(property) }
   }

@@ -1,4 +1,4 @@
-from typing import Any, Union, Text
+from typing import Text, Union
 
 __revision__: str
 

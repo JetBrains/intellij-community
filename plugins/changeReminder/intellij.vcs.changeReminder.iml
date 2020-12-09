@@ -29,5 +29,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

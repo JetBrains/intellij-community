@@ -944,7 +944,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
 
   public void testMissingMultipleAltPropertySets() throws Exception {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
-    doTest(schemaText, "<warning descr=\"One of the following property sets is required: properties 'type' = record, 'fields', 'name', or properties 'type' = enum, 'name', 'symbols', or properties 'type' = array, 'items', or properties 'type' = map, 'values', or properties 'type' = fixed, 'name', 'size'\">{\n" +
+    doTest(schemaText, "<warning descr=\"One of the following property sets is required: properties 'type' = record, 'fields', 'name', properties 'type' = enum, 'name', 'symbols', properties 'type' = array, 'items', properties 'type' = map, 'values', or properties 'type' = fixed, 'name', 'size'\">{\n" +
                        "  \n" +
                        "}</warning>");
   }

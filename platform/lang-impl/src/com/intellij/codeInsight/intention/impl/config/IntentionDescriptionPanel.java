@@ -4,14 +4,15 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -107,8 +108,11 @@ public class IntentionDescriptionPanel {
     if (isCustomPlugin) {
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
       label.addHyperlinkListener(__ -> {
-        Project project = ProjectManager.getInstance().getDefaultProject();
-        PluginManagerConfigurableProxy.showPluginConfigurable(null, project, pluginDescriptor);
+        PluginManagerConfigurableProxy.showPluginConfigurable(
+          null,
+          ProjectManager.getInstance().getDefaultProject(),
+          pluginDescriptor
+        );
       });
       myPoweredByPanel.add(label, BorderLayout.CENTER);
     }

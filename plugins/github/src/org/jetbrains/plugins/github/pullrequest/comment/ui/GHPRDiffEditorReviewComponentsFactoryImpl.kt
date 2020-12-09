@@ -5,6 +5,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.util.NlsActions
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -88,7 +89,9 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
     return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.comment"), hideCallback)
   }
 
-  private fun createCommentComponent(textFieldModel: GHSubmittableTextFieldModel, actionName: String, hideCallback: () -> Unit)
+  private fun createCommentComponent(textFieldModel: GHSubmittableTextFieldModel,
+                                     @NlsActions.ActionText actionName: String,
+                                     hideCallback: () -> Unit)
     : JComponent {
 
     val wrapper = RoundedPanel(BorderLayout()).apply {

@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +24,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
@@ -340,7 +341,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   public void setInfoText(String info) {}
 
   private class ShowHistoryAction extends DumbAwareAction {
-    private final PopupState myPopupState = new PopupState();
+    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),

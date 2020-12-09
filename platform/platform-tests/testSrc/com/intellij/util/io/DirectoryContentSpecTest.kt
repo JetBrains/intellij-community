@@ -126,7 +126,7 @@ class DirectoryContentSpecTest {
   }
 
   @Test
-  fun `merge directory definitions`() {
+  fun `merge directory definitions inside directoryContent`() {
     val dir = directoryContent {
       dir("foo") {
         file("a.txt")
@@ -142,6 +142,59 @@ class DirectoryContentSpecTest {
         file("b.txt")
       }
     })
+  }
+  
+  @Test
+  fun `merge multiple directory contents`() {
+    val dir = directoryContent {
+      dir("foo") {
+        file("a.txt")
+      }
+      file("c.txt", "1")
+      file("d.txt")
+    }.mergeWith(directoryContent {
+      dir("foo") {
+        file("b.txt")
+      }
+      file("c.txt", "2")
+      file("e.txt")
+    }).generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      dir("foo") {
+        file("a.txt")
+        file("b.txt")
+      }
+      file("c.txt", "2")
+      file("d.txt")
+      file("e.txt")
+    })
+  }
+
+  @Test
+  fun `file path filter`() {
+    val dir = directoryContent {
+      dir("foo") {
+        file("a.txt")
+        file("b.xml")
+      }
+      file("c.txt")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      dir("foo") {
+        file("a.txt")
+        file("c.xml")
+      }
+      file("c.txt")
+    }, filePathFilter = { it.endsWith(".txt")})
+
+    dir.assertNotMatches(directoryContent {
+      dir("foo") {
+        file("b.xml")
+      }
+      file("c.txt")
+    }, filePathFilter = { it.endsWith(".txt")})
   }
 
   @Test
@@ -166,9 +219,10 @@ class DirectoryContentSpecTest {
   }
 }
 
-private fun Path.assertNotMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact()) {
+private fun Path.assertNotMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                                  filePathFilter: (String) -> Boolean = { true }) {
   try {
-    assertMatches(spec, fileTextMatcher)
+    assertMatches(spec, fileTextMatcher, filePathFilter)
     fail("File matches to spec but it must not")
   }
   catch (ignored: AssertionError) {

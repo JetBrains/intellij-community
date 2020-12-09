@@ -48,6 +48,7 @@
   </action>
   <action id="EditorPreviousWord">
     <keyboard-shortcut first-keystroke="alt LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt B"/>
   </action>
   <action id="QuickJavaDoc">
     <keyboard-shortcut first-keystroke="F1"/>
@@ -84,6 +85,7 @@
   </action>
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt shift B"/>
   </action>
   <action id="RunClass"/>
 
@@ -152,7 +154,6 @@
     <keyboard-shortcut first-keystroke="control UP"/>
   </action>
   <action id="ShowContent">
-    <keyboard-shortcut first-keystroke="control DOWN"/>
   </action>
   <action id="NextEditorTab">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
@@ -160,9 +161,11 @@
   <action id="TogglePopupHints"/>
   <action id="EditorNextWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt shift F"/>
   </action>
   <action id="EditorNextWord">
     <keyboard-shortcut first-keystroke="alt RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
   <action id="EditorLineStart">
     <keyboard-shortcut first-keystroke="HOME"/>
@@ -524,11 +527,9 @@
   </action>
   <action id="Diff.PrevChange">
     <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
-    <keyboard-shortcut first-keystroke="control LEFT"/>
   </action>
   <action id="Diff.NextChange">
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
-    <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
   <action id="Diff.ApplyLeftSide">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
@@ -727,7 +728,20 @@
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
-  <action id="UsageGrouping.Package">
-    <keyboard-shortcut first-keystroke="control P"/>
+
+  <action id="List-selectFirstRow">
+    <keyboard-shortcut first-keystroke="alt up"/>
+  </action>
+  <action id="List-selectLastRow">
+    <keyboard-shortcut first-keystroke="alt down"/>
+  </action>
+  <action id="List-selectFirstRowExtendSelection">
+    <keyboard-shortcut first-keystroke="alt shift up"/>
+  </action>
+  <action id="List-selectLastRowExtendSelection">
+    <keyboard-shortcut first-keystroke="alt shift down"/>
+  </action>
+  <action id="EditorScrollToCenter">
+    <keyboard-shortcut first-keystroke="control L"/>
   </action>
 </keymap>

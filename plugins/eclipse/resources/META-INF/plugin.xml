@@ -26,8 +26,9 @@
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>
     <fileType name="Eclipse" implementationClass="org.jetbrains.idea.eclipse.config.EclipseFileType" fileNames=".classpath;.project" fieldName="INSTANCE"/>
     <syntaxHighlighter key="Eclipse" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
-    <schemeImporter 
-        name="Eclipse XML Profile"
+    <schemeImporter
+        nameKey="eclipse.xml.profile"
+        nameBundle="messages.EclipseBundle"
         implementationClass="org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"/>
     <schemeImporter 
@@ -41,7 +42,7 @@
   </extensions>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction">
-      <override-text place="MainMenu" text="Project to Eclipse..."/>
+      <override-text place="MainMenu"/>
       <add-to-group group-id="FileExportGroup" anchor="last"/>
     </action>
   </actions>

@@ -104,6 +104,11 @@ public abstract class ProjectLevelVcsManager {
   public abstract boolean checkVcsIsActive(@NonNls String vcsName);
 
   /**
+   * Returns the list of VCSes supported by plugins.
+   */
+  public abstract AbstractVcs @NotNull [] getAllSupportedVcss();
+
+  /**
    * Returns the list of VCSes used by at least one module in the project.
    */
   public abstract AbstractVcs @NotNull [] getAllActiveVcss();
@@ -133,7 +138,11 @@ public abstract class ProjectLevelVcsManager {
   public abstract @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                                              AbstractVcs vcs);
 
-  public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
+  /**
+   * @param vcsActionName is used both in interface and as a key in settings.
+   */
+  @Deprecated
+  public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName,
                                                                         @NotNull AbstractVcs vcs);
 
   @RequiresEdt

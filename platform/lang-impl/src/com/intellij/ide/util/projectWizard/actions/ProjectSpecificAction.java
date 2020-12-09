@@ -18,16 +18,17 @@ package com.intellij.ide.util.projectWizard.actions;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.platform.DirectoryProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 
 public class ProjectSpecificAction extends DefaultActionGroup implements DumbAware {
-  public ProjectSpecificAction(@NotNull final DirectoryProjectGenerator projectGenerator, final ProjectSettingsStepBase step) {
+  public ProjectSpecificAction(@NotNull final DirectoryProjectGenerator<?> projectGenerator, final ProjectSettingsStepBase step) {
     this(projectGenerator, projectGenerator.getName(), step);
   }
 
-  public ProjectSpecificAction(@NotNull final DirectoryProjectGenerator projectGenerator,
-                               @NotNull final String name, final ProjectSettingsStepBase step) {
+  public ProjectSpecificAction(@NotNull final DirectoryProjectGenerator<?> projectGenerator,
+                               @NotNull @ActionText final String name, final ProjectSettingsStepBase step) {
     super(name, true);
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     add(step);

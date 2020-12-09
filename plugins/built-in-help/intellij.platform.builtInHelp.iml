@@ -114,5 +114,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
   </component>
 </module>

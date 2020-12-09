@@ -99,7 +99,7 @@ public abstract class TaskRepository {
    * @return name of this repository, that will be shown in settings
    */
   public @NlsContexts.Label String getPresentableName() {
-    return StringUtil.isEmpty(getUrl()) ? "<undefined>" : getUrl();
+    return StringUtil.isEmpty(getUrl()) ? TaskApiBundle.message("label.undefined") : getUrl(); //NON-NLS
   }
 
   public Icon getIcon() {

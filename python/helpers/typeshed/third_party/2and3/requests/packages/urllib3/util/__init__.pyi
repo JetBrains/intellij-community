@@ -1,11 +1,6 @@
-from . import connection
-from . import request
-from . import response
-from . import ssl_
-from . import timeout
-from . import retry
-from . import url
 import ssl
+
+from . import connection, request, response, retry, ssl_, timeout, url
 
 is_connection_dropped = connection.is_connection_dropped
 make_headers = request.make_headers

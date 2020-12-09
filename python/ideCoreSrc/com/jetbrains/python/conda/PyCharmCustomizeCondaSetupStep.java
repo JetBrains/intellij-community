@@ -215,12 +215,12 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
   }
 
   @Override
-  protected String getHTMLHeader() {
+  public String getHTMLHeader() {
     return wrapInHtml("<h2>Miniconda</h2>");
   }
 
   @Override
-  protected String getHTMLFooter() {
+  public String getHTMLFooter() {
     return PyCharmCommunityBundle.message("conda.setup.wizard.step.footer.content", ToolsBundle.message("tools.settings"),
                                           ActionsBundle.message("action.SetupMiniconda.actionNameWithDots"));
   }

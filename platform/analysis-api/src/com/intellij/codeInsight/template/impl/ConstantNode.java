@@ -53,11 +53,6 @@ public final class ConstantNode extends Expression {
   }
 
   @Override
-  public Result calculateQuickResult(ExpressionContext context) {
-    return myValue;
-  }
-
-  @Override
   public boolean requiresCommittedPSI() {
     return false;
   }

@@ -3,16 +3,13 @@
 
 # based on http://docs.python.org/3.2/library/sys.html
 
-from typing import (
-    List, NoReturn, Sequence, Any, Dict, Tuple, TextIO, overload, Optional,
-    Union, TypeVar, Callable, Type
-)
 import sys
-from types import FrameType, ModuleType, TracebackType
-
+from builtins import object as _object
 from importlib.abc import MetaPathFinder
+from types import FrameType, ModuleType, TracebackType
+from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, TextIO, Tuple, Type, TypeVar, Union, overload
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 # The following type alias are stub-only and do not exist during runtime
 _ExcInfo = Tuple[Type[BaseException], BaseException, TracebackType]
@@ -70,8 +67,8 @@ if sys.platform == "win32":
     winver: str
 _xoptions: Dict[Any, Any]
 
-
 flags: _flags
+
 class _flags:
     debug: int
     division_warning: int
@@ -91,20 +88,22 @@ class _flags:
         utf8_mode: int
 
 float_info: _float_info
+
 class _float_info:
-    epsilon: float   # DBL_EPSILON
-    dig: int         # DBL_DIG
-    mant_dig: int    # DBL_MANT_DIG
-    max: float       # DBL_MAX
-    max_exp: int     # DBL_MAX_EXP
+    epsilon: float  # DBL_EPSILON
+    dig: int  # DBL_DIG
+    mant_dig: int  # DBL_MANT_DIG
+    max: float  # DBL_MAX
+    max_exp: int  # DBL_MAX_EXP
     max_10_exp: int  # DBL_MAX_10_EXP
-    min: float       # DBL_MIN
-    min_exp: int     # DBL_MIN_EXP
+    min: float  # DBL_MIN
+    min_exp: int  # DBL_MIN_EXP
     min_10_exp: int  # DBL_MIN_10_EXP
-    radix: int       # FLT_RADIX
-    rounds: int      # FLT_ROUNDS
+    radix: int  # FLT_RADIX
+    rounds: int  # FLT_ROUNDS
 
 hash_info: _hash_info
+
 class _hash_info:
     width: int
     modulus: int
@@ -113,6 +112,7 @@ class _hash_info:
     imag: int
 
 implementation: _implementation
+
 class _implementation:
     name: str
     version: _version_info
@@ -120,6 +120,7 @@ class _implementation:
     cache_tag: str
 
 int_info: _int_info
+
 class _int_info:
     bits_per_digit: int
     sizeof_digit: int
@@ -130,6 +131,7 @@ class _version_info(Tuple[int, int, int, str, int]):
     micro: int
     releaselevel: str
     serial: int
+
 version_info: _version_info
 
 def call_tracing(__func: Callable[..., _T], __args: Any) -> _T: ...
@@ -137,39 +139,37 @@ def _clear_type_cache() -> None: ...
 def _current_frames() -> Dict[int, Any]: ...
 def _debugmallocstats() -> None: ...
 def __displayhook__(value: object) -> None: ...
-def __excepthook__(type_: Type[BaseException], value: BaseException,
-                   traceback: TracebackType) -> None: ...
+def __excepthook__(type_: Type[BaseException], value: BaseException, traceback: TracebackType) -> None: ...
 def exc_info() -> _OptExcInfo: ...
+
 # sys.exit() accepts an optional argument of anything printable
 def exit(__status: object = ...) -> NoReturn: ...
 def getdefaultencoding() -> str: ...
-if sys.platform != 'win32':
+
+if sys.platform != "win32":
     def getdlopenflags() -> int: ...
+
 def getfilesystemencoding() -> str: ...
 def getrefcount(__object: Any) -> int: ...
 def getrecursionlimit() -> int: ...
-
 @overload
 def getsizeof(obj: object) -> int: ...
 @overload
 def getsizeof(obj: object, default: int) -> int: ...
-
 def getswitchinterval() -> float: ...
-
 def _getframe(__depth: int = ...) -> FrameType: ...
 
 _ProfileFunc = Callable[[FrameType, str, Any], Any]
+
 def getprofile() -> Optional[_ProfileFunc]: ...
 def setprofile(profilefunc: Optional[_ProfileFunc]) -> None: ...
 
 _TraceFunc = Callable[[FrameType, str, Any], Optional[Callable[[FrameType, str, Any], Any]]]
+
 def gettrace() -> Optional[_TraceFunc]: ...
 def settrace(tracefunc: Optional[_TraceFunc]) -> None: ...
 
-
-class _WinVersion(Tuple[int, int, int, int,
-                        str, int, int, int, int,
-                        Tuple[int, int, int]]):
+class _WinVersion(Tuple[int, int, int, int, str, int, int, int, int, Tuple[int, int, int]]):
     major: int
     minor: int
     build: int
@@ -185,7 +185,6 @@ if sys.platform == "win32":
     def getwindowsversion() -> _WinVersion: ...
 
 def intern(__string: str) -> str: ...
-
 def is_finalizing() -> bool: ...
 
 if sys.version_info >= (3, 7):
@@ -194,9 +193,9 @@ if sys.version_info >= (3, 7):
 
 if sys.platform != "win32":
     def setdlopenflags(__flags: int) -> None: ...
+
 def setrecursionlimit(__limit: int) -> None: ...
 def setswitchinterval(__interval: float) -> None: ...
-
 def gettotalrefcount() -> int: ...  # Debug builds only
 
 if sys.version_info < (3, 9):
@@ -210,13 +209,14 @@ if sys.version_info >= (3, 8):
         exc_value: Optional[BaseException]
         exc_traceback: Optional[TracebackType]
         err_msg: Optional[str]
-        object: Optional[object]
+        object: Optional[_object]
     unraisablehook: Callable[[UnraisableHookArgs], Any]
     def addaudithook(hook: Callable[[str, Tuple[Any, ...]], Any]) -> None: ...
     def audit(__event: str, *args: Any) -> None: ...
 
 if sys.version_info >= (3, 6):
     from typing import AsyncGenerator
+
     _AsyncgenHook = Optional[Callable[[AsyncGenerator[Any, Any]], None]]
     class _asyncgen_hooks(Tuple[_AsyncgenHook, _AsyncgenHook]):
         firstiter: _AsyncgenHook

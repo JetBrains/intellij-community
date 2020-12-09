@@ -70,9 +70,11 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public final class HighlightUtil {
+  public static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = Set.of(
+    "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
+
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
@@ -84,62 +86,60 @@ public final class HighlightUtil {
   private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = new THashMap<>(2);
 
   private static final Set<String> ourConstructorNotAllowedModifiers =
-    ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
+    Set.of(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
 
   private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
-  private static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = Set.of(
-    "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
 
   static {
-    ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(PsiModifier.FINAL));
-    ourClassIncompatibleModifiers.put(PsiModifier.FINAL, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.SEALED, PsiModifier.NON_SEALED));
-    ourClassIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
-    ourClassIncompatibleModifiers.put(PsiModifier.PRIVATE, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
-    ourClassIncompatibleModifiers.put(PsiModifier.PUBLIC, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
-    ourClassIncompatibleModifiers.put(PsiModifier.PROTECTED, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
-    ourClassIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.emptySet());
-    ourClassIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
-    ourClassIncompatibleModifiers.put(PsiModifier.SEALED, ContainerUtil.newTroveSet(PsiModifier.FINAL, PsiModifier.NON_SEALED));
-    ourClassIncompatibleModifiers.put(PsiModifier.NON_SEALED, ContainerUtil.newTroveSet(PsiModifier.FINAL, PsiModifier.SEALED));
+    ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, Set.of(PsiModifier.FINAL));
+    ourClassIncompatibleModifiers.put(PsiModifier.FINAL, Set.of(PsiModifier.ABSTRACT, PsiModifier.SEALED, PsiModifier.NON_SEALED));
+    ourClassIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourClassIncompatibleModifiers.put(PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourClassIncompatibleModifiers.put(PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
+    ourClassIncompatibleModifiers.put(PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
+    ourClassIncompatibleModifiers.put(PsiModifier.STRICTFP, Set.of());
+    ourClassIncompatibleModifiers.put(PsiModifier.STATIC, Set.of());
+    ourClassIncompatibleModifiers.put(PsiModifier.SEALED, Set.of(PsiModifier.FINAL, PsiModifier.NON_SEALED));
+    ourClassIncompatibleModifiers.put(PsiModifier.NON_SEALED, Set.of(PsiModifier.FINAL, PsiModifier.SEALED));
 
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.ABSTRACT, Collections.emptySet());
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.PRIVATE, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.PUBLIC, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.PROTECTED, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.emptySet());
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.SEALED, ContainerUtil.newTroveSet(PsiModifier.NON_SEALED));
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.NON_SEALED, ContainerUtil.newTroveSet(PsiModifier.SEALED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.ABSTRACT, Set.of());
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.STRICTFP, Set.of());
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Set.of());
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.SEALED, Set.of(PsiModifier.NON_SEALED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.NON_SEALED, Set.of(PsiModifier.SEALED));
 
-    ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(
+    ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, Set.of(
       PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED, PsiModifier.DEFAULT));
-    ourMethodIncompatibleModifiers.put(PsiModifier.NATIVE, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STRICTFP));
-    ourMethodIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
-    ourMethodIncompatibleModifiers.put(PsiModifier.PRIVATE, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
-    ourMethodIncompatibleModifiers.put(PsiModifier.PUBLIC, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
-    ourMethodIncompatibleModifiers.put(PsiModifier.PROTECTED, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
-    ourMethodIncompatibleModifiers.put(PsiModifier.STATIC, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.DEFAULT, PsiModifier.FINAL));
-    ourMethodIncompatibleModifiers.put(PsiModifier.DEFAULT, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE));
-    ourMethodIncompatibleModifiers.put(PsiModifier.SYNCHRONIZED, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT));
-    ourMethodIncompatibleModifiers.put(PsiModifier.STRICTFP, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT));
-    ourMethodIncompatibleModifiers.put(PsiModifier.FINAL, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.NATIVE, Set.of(PsiModifier.ABSTRACT, PsiModifier.STRICTFP));
+    ourMethodIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourMethodIncompatibleModifiers.put(PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourMethodIncompatibleModifiers.put(PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
+    ourMethodIncompatibleModifiers.put(PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
+    ourMethodIncompatibleModifiers.put(PsiModifier.STATIC, Set.of(PsiModifier.ABSTRACT, PsiModifier.DEFAULT, PsiModifier.FINAL));
+    ourMethodIncompatibleModifiers.put(PsiModifier.DEFAULT, Set.of(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE));
+    ourMethodIncompatibleModifiers.put(PsiModifier.SYNCHRONIZED, Set.of(PsiModifier.ABSTRACT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.STRICTFP, Set.of(PsiModifier.ABSTRACT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.FINAL, Set.of(PsiModifier.ABSTRACT));
 
-    ourFieldIncompatibleModifiers.put(PsiModifier.FINAL, ContainerUtil.newTroveSet(PsiModifier.VOLATILE));
-    ourFieldIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
-    ourFieldIncompatibleModifiers.put(PsiModifier.PRIVATE, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
-    ourFieldIncompatibleModifiers.put(PsiModifier.PUBLIC, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
-    ourFieldIncompatibleModifiers.put(PsiModifier.PROTECTED, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
-    ourFieldIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
-    ourFieldIncompatibleModifiers.put(PsiModifier.TRANSIENT, Collections.emptySet());
-    ourFieldIncompatibleModifiers.put(PsiModifier.VOLATILE, ContainerUtil.newTroveSet(PsiModifier.FINAL));
+    ourFieldIncompatibleModifiers.put(PsiModifier.FINAL, Set.of(PsiModifier.VOLATILE));
+    ourFieldIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourFieldIncompatibleModifiers.put(PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourFieldIncompatibleModifiers.put(PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
+    ourFieldIncompatibleModifiers.put(PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
+    ourFieldIncompatibleModifiers.put(PsiModifier.STATIC, Set.of());
+    ourFieldIncompatibleModifiers.put(PsiModifier.TRANSIENT, Set.of());
+    ourFieldIncompatibleModifiers.put(PsiModifier.VOLATILE, Set.of(PsiModifier.FINAL));
 
-    ourClassInitializerIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
+    ourClassInitializerIncompatibleModifiers.put(PsiModifier.STATIC, Set.of());
 
-    ourModuleIncompatibleModifiers.put(PsiModifier.OPEN, Collections.emptySet());
+    ourModuleIncompatibleModifiers.put(PsiModifier.OPEN, Set.of());
 
-    ourRequiresIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
-    ourRequiresIncompatibleModifiers.put(PsiModifier.TRANSITIVE, Collections.emptySet());
+    ourRequiresIncompatibleModifiers.put(PsiModifier.STATIC, Set.of());
+    ourRequiresIncompatibleModifiers.put(PsiModifier.TRANSITIVE, Set.of());
   }
 
   private HighlightUtil() { }
@@ -483,7 +483,7 @@ public final class HighlightUtil {
 
   private static boolean isArray(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
-    return Stream.of(variable.getChildren()).anyMatch(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
+    return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
   }
 
   static HighlightInfo checkAssignability(@Nullable PsiType lType,
@@ -781,18 +781,37 @@ public final class HighlightUtil {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
-  static HighlightInfo checkUnhandledExceptions(@NotNull PsiElement element, @Nullable TextRange textRange) {
+  static HighlightInfo checkUnhandledExceptions(@NotNull PsiElement element) {
     List<PsiClassType> unhandled = ExceptionUtil.getOwnUnhandledExceptions(element);
     if (unhandled.isEmpty()) return null;
 
     HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element);
     if (highlightType == null) return null;
 
-    if (textRange == null) textRange = element.getTextRange();
+    TextRange textRange = computeRange(element);
     String description = getUnhandledExceptionsDescriptor(unhandled);
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(highlightType).range(textRange).descriptionAndTooltip(description).create();
     HighlightFixUtil.registerUnhandledExceptionFixes(element, errorResult);
     return errorResult;
+  }
+
+  private static TextRange computeRange(@NotNull PsiElement element) {
+    if (element instanceof PsiNewExpression) {
+      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassReference();
+      if (reference != null) {
+        return reference.getTextRange();
+      }
+    }
+    if (element instanceof PsiEnumConstant) {
+      return ((PsiEnumConstant)element).getNameIdentifier().getTextRange();
+    }
+    if (element instanceof PsiMethodCallExpression) {
+      PsiElement nameElement = ((PsiMethodCallExpression)element).getMethodExpression().getReferenceNameElement();
+      if (nameElement != null) {
+        return nameElement.getTextRange();
+      }
+    }
+    return HighlightMethodUtil.getFixRange(element);
   }
 
   static HighlightInfo checkUnhandledCloserExceptions(@NotNull PsiResourceListElement resource) {
@@ -1597,6 +1616,30 @@ public final class HighlightUtil {
     }
     return null;
   }
+
+  static HighlightInfo checkRecordComponentCStyleDeclaration(@NotNull PsiRecordComponent component) {
+    PsiIdentifier identifier = component.getNameIdentifier();
+    if (identifier == null) return null;
+    PsiElement start = null;
+    PsiElement end = null;
+    for (PsiElement element = identifier.getNextSibling(); element != null; element = element.getNextSibling()) {
+      if (start == null && PsiUtil.isJavaToken(element, JavaTokenType.LBRACKET)) {
+        start = element;
+      }
+      if (PsiUtil.isJavaToken(element, JavaTokenType.RBRACKET)) {
+        end = element;
+      }
+    }
+    if (start != null && end != null) {
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(component, start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())
+        .descriptionAndTooltip(JavaErrorBundle.message("record.component.cstyle.declaration")).create();
+      QuickFixAction.registerQuickFixAction(info, new NormalizeRecordComponentFix(component));
+      return info;
+    }
+    return null;
+  }
+
 
   /**
    * This method validates that the language level of the project where the context accesses
@@ -2977,12 +3020,8 @@ public final class HighlightUtil {
         PsiElement element1 = results[0].getElement();
         PsiElement element2 = results[1].getElement();
         if (element1 instanceof PsiMethod && element2 instanceof PsiMethod) {
-          String candidate1 = PsiFormatUtil.formatMethod((PsiMethod)element1, PsiSubstitutor.EMPTY,
-                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
-                                                         PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
-          String candidate2 = PsiFormatUtil.formatMethod((PsiMethod)element2, PsiSubstitutor.EMPTY,
-                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
-                                                         PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
+          String candidate1 = format(element1);
+          String candidate2 = format(element2);
           return JavaErrorBundle.message("incompatible.types.reason.ambiguous.method.reference", candidate1, candidate2);
         }
       }
@@ -3170,7 +3209,7 @@ public final class HighlightUtil {
   }
 
   @NotNull
-  private static String format(@NotNull PsiElement element) {
+  static String format(@NotNull PsiElement element) {
     if (element instanceof PsiClass) return formatClass((PsiClass)element);
     if (element instanceof PsiMethod) return JavaHighlightUtil.formatMethod((PsiMethod)element);
     if (element instanceof PsiField) return formatField((PsiField)element);

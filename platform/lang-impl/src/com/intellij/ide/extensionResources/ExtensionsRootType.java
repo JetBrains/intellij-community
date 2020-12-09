@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,8 @@ import java.util.function.Predicate;
 public final class ExtensionsRootType extends RootType {
   static final Logger LOG = Logger.getInstance(ExtensionsRootType.class);
 
-  private static final String EXTENSIONS_PATH = "extensions";
-  private static final String BACKUP_FILE_EXTENSION = "old";
+  private static final @NonNls String EXTENSIONS_PATH = "extensions";
+  private static final @NonNls String BACKUP_FILE_EXTENSION = "old";
 
   ExtensionsRootType() {
     super(EXTENSIONS_PATH, LangBundle.message("root.type.extensions"));

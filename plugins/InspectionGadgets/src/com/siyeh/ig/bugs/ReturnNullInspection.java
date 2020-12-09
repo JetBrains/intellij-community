@@ -21,6 +21,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,8 +125,7 @@ public class ReturnNullInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpression(literalExpression, getReplacementText());
     }
 
-    @NotNull
-    private String getReplacementText() {
+    private @NonNls @NotNull String getReplacementText() {
       return myTypeText + "." + (OptionalUtil.GUAVA_OPTIONAL.equals(myTypeText) ? "absent" : "empty") + "()";
     }
   }

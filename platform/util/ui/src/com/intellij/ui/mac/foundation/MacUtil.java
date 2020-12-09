@@ -28,7 +28,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
  */
 public final class MacUtil {
   private static final Logger LOG = Logger.getInstance(MacUtil.class);
-  public static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
+  private static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
 
   private MacUtil() {
   }
@@ -50,7 +50,7 @@ public final class MacUtil {
         if (ID.NIL.equals(window)) break;
 
         final ID windowTitle = invoke(window, "title");
-        if (windowTitle != null && !ID.NIL.equals(windowTitle)) {
+        if (!ID.NIL.equals(windowTitle)) {
           final String titleString = toStringViaUTF8(windowTitle);
           if (Objects.equals(titleString, title)) {
             focusedWindow = window;
@@ -178,7 +178,7 @@ public final class MacUtil {
   }
 
   @SuppressWarnings("unused")
-  private static class NSActivityOptions {
+  private static final class NSActivityOptions {
     // Used for activities that require the computer to not idle sleep. This is included in NSActivityUserInitiated.
     private static final long idleSystemSleepDisabled = 1L << 20;
 
@@ -190,14 +190,7 @@ public final class MacUtil {
     private static final long latencyCritical = 0xFF00000000L;
   }
 
-  public interface Activity {
-    /**
-     * Ends activity, allowing macOS to trigger AppNap (idempotent).
-     */
-    void matrixHasYou();
-  }
-
-  private static final class ActivityImpl extends AtomicReference<ID> implements Activity {
+  private static final class ActivityImpl extends AtomicReference<ID> implements Runnable {
     private static final ID processInfoCls = getObjcClass("NSProcessInfo");
     private static final Pointer processInfoSel = createSelector("processInfo");
     private static final Pointer beginActivityWithOptionsReasonSel = createSelector("beginActivityWithOptions:reason:");
@@ -209,8 +202,13 @@ public final class MacUtil {
       super(begin(reason));
     }
 
+    /**
+     * Ends activity, allowing macOS to trigger AppNap (idempotent).
+     */
     @Override
-    public void matrixHasYou() { end(getAndSet(null)); }
+    public void run() {
+      end(getAndSet(null));
+    }
 
     private static ID getProcessInfo() { return invoke(processInfoCls, processInfoSel); }
 
@@ -223,14 +221,16 @@ public final class MacUtil {
     }
 
     private static void end(@Nullable ID activityToken) {
-      if (activityToken == null) return;
+      if (activityToken == null) {
+        return;
+      }
       invoke(getProcessInfo(), endActivitySel, activityToken);
       invoke(activityToken, releaseSel);
     }
   }
 
-  public static Activity wakeUpNeo(@NotNull Object reason) {
-    return SystemInfoRt.isMac && Registry.is("idea.mac.prevent.app.nap") ? new ActivityImpl(reason) : null;
+  public static @NotNull Runnable wakeUpNeo(@NotNull Object reason) {
+    return new ActivityImpl(reason);
   }
 
   @NotNull

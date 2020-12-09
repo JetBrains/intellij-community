@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
 import com.intellij.util.net.NetUtils
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.*
 import javax.swing.Icon
 
@@ -96,6 +97,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
   protected open fun configureConsole(consoleBuilder: TextConsoleBuilder) {
   }
 
+  @NonNls
   protected abstract fun getConsoleToolWindowId(): String
 
   protected abstract fun getConsoleToolWindowIcon(): Icon
@@ -116,6 +118,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
       if (result != null && result == osProcessHandler) {
         processHandler.reset()
       }
+      @Suppress("HardCodedStringLiteral")
       print("${getConsoleToolWindowId()} terminated\n", ConsoleViewContentType.SYSTEM_OUTPUT)
     }
 

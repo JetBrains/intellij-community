@@ -54,7 +54,7 @@ final class EventLogConsole {
 
   private final EditorEx myLogEditor;
 
-  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = new NotNullLazyValue<EditorHyperlinkSupport>() {
+  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = new NotNullLazyValue<>() {
     @NotNull
     @Override
     protected EditorHyperlinkSupport compute() {
@@ -205,8 +205,8 @@ final class EventLogConsole {
     private final NotificationDisplayType myCurrent;
 
     DisplayTypeAction(@NotNull NotificationSettings settings,
-                             @NotNull NotificationDisplayType type,
-                             @NotNull NotificationDisplayType current) {
+                      @NotNull NotificationDisplayType type,
+                      @NotNull NotificationDisplayType current) {
       super(type.getTitle());
       mySettings = settings;
       myType = type;

@@ -568,7 +568,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Override
-  public void visitMembers(@NotNull Processor<PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context) {
+  public void visitMembers(@NotNull Processor<? super PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context) {
     processMembers(processor);
 
     if (inherited) {
@@ -627,7 +627,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return result;
   }
 
-  private void processMembers(@NotNull Processor<PsiElement> processor) {
+  private void processMembers(@NotNull Processor<? super PsiElement> processor) {
     final PsiScopeProcessor scopeProcessor = new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -646,7 +646,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  private void processOwnSlots(@NotNull Processor<String> processor, @NotNull TypeEvalContext context) {
+  private void processOwnSlots(@NotNull Processor<? super String> processor, @NotNull TypeEvalContext context) {
     if (myClass.isNewStyleClass(context)) {
       for (String slot : ContainerUtil.notNullize(myClass.getOwnSlots())) {
         if (!processor.process(slot)) return;
@@ -654,7 +654,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  private void processProvidedMembers(@NotNull Processor<PyCustomMember> processor,
+  private void processProvidedMembers(@NotNull Processor<? super PyCustomMember> processor,
                                       @Nullable PsiElement location,
                                       @NotNull TypeEvalContext context) {
     for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
@@ -669,7 +669,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return StreamEx.of(types).nonNull().map(type -> isDefinition() ? type.toClass() : type.toInstance());
   }
 
-  private void processMetaClassMembers(@NotNull Consumer<PyClassLikeType> typeTypeConsumer,
+  private void processMetaClassMembers(@NotNull Consumer<? super PyClassLikeType> typeTypeConsumer,
                                        @NotNull Processor<? super PyTargetExpression> instanceTypeAttributesProcessor,
                                        @NotNull TypeEvalContext context) {
     if (!myClass.isNewStyleClass(context)) return;

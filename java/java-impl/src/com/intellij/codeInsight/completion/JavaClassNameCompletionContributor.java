@@ -3,6 +3,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil.JavaModuleScope;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
@@ -11,6 +13,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,7 +56,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
       psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
-  private static final ElementPattern<PsiElement> IN_EXTENDS_IMPLEMENTS =
+  private static final ElementPattern<PsiElement> IN_CLASS_REFERENCE_LIST =
     psiElement().inside(psiElement(PsiReferenceList.class).withParent(psiClass()));
 
   @Override
@@ -86,9 +89,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
                                    @NotNull final PrefixMatcher matcher,
                                    @NotNull final Consumer<? super LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
+    final PsiFile psiFile = insertedElement.getContainingFile();
 
-    JavaClassReference ref =
-      JavaClassReferenceCompletionContributor.findJavaClassReference(insertedElement.getContainingFile(), parameters.getOffset());
+    JavaClassReference ref = JavaClassReferenceCompletionContributor.findJavaClassReference(psiFile, parameters.getOffset());
     if (ref != null && ref.getContext() instanceof PsiClass) {
       return;
     }
@@ -107,12 +110,14 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
       return;
     }
 
+    final boolean inPermitsList = JavaCompletionContributor.isInPermitsList(insertedElement);
     final ElementFilter filter =
-      IN_EXTENDS_IMPLEMENTS.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class)) :
+      inPermitsList ? JavaCompletionContributor.createPermitsListFilter() :
+      IN_CLASS_REFERENCE_LIST.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class)) :
       IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) :
       TrueFilter.INSTANCE;
 
-    final boolean inJavaContext = parameters.getPosition() instanceof PsiIdentifier;
+    final boolean inJavaContext = insertedElement instanceof PsiIdentifier;
     final boolean afterNew = AFTER_NEW.accepts(insertedElement);
     if (afterNew) {
       final PsiExpression expr = PsiTreeUtil.getContextOfType(insertedElement, PsiExpression.class, true);
@@ -133,10 +138,24 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     }
 
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
-    AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<>() {
+    final Project project = insertedElement.getProject();
+    final GlobalSearchScope scope;
+    if (inPermitsList) {
+      PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(psiFile.getOriginalElement());
+      if (javaModule == null) return;
+      JavaModuleScope moduleScope = JavaModuleScope.moduleScope(javaModule);
+      if (moduleScope == null) return;
+      scope = moduleScope;
+    }
+    else {
+      scope = filterByScope ? psiFile.getResolveScope() : GlobalSearchScope.allScope(project);
+    }
+
+    Processor<PsiClass> classProcessor = new Processor<>() {
       @Override
-      public void consume(PsiClass psiClass) {
+      public boolean process(PsiClass psiClass) {
         processClass(psiClass, null, "");
+        return true;
       }
 
       private void processClass(PsiClass psiClass, @Nullable Set<? super PsiClass> visited, String prefix) {
@@ -184,7 +203,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
         String innerName = psiClass.getName();
         return innerName != null && matcher.prefixMatches(innerName);
       }
-    });
+    };
+    AllClassesGetter.processJavaClasses(matcher, project, scope,
+                                        new LimitedAccessibleClassPreprocessor(parameters, filterByScope, classProcessor));
   }
 
   @NotNull

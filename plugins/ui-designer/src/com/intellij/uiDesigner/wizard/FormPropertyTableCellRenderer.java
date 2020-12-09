@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.wizard;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -64,7 +65,8 @@ final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
     setIcon(icon);
 
     // Binding
-    append(component.getBinding(), myAttrs1);
+    @NlsSafe String binding = component.getBinding();
+    append(binding, myAttrs1);
 
     // Component class name and package
     final String shortClassName;

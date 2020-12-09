@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.lang.jvm.JvmLanguage;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -31,6 +34,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.jar.JarFile;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
@@ -370,19 +375,19 @@ public final class JavaModuleGraphUtil {
 
     private final PsiJavaModule myModule;
     private final boolean myIncludeLibraries;
+    private final boolean myIsInTests;
 
-    private JavaModuleScope(Project project, PsiJavaModule module, boolean includeLibraries) {
+    private JavaModuleScope(@NotNull Project project, @NotNull PsiJavaModule module, @NotNull VirtualFile moduleFile) {
       super(project);
       myModule = module;
-      myIncludeLibraries = includeLibraries;
+      ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+      myIncludeLibraries = fileIndex.isInLibrary(moduleFile);
+      myIsInTests = !myIncludeLibraries && fileIndex.isInTestSourceContent(moduleFile);
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      VirtualFile moduleFile = aModule.getModuleFile();
-      if (moduleFile == null) return false;
-      boolean inTests = ProjectFileIndex.SERVICE.getInstance(getProject()).isInTestSourceContent(moduleFile);
-      return findDescriptorByModule(aModule, inTests) == myModule;
+      return findDescriptorByModule(aModule, myIsInTests) == myModule;
     }
 
     @Override
@@ -394,15 +399,27 @@ public final class JavaModuleGraphUtil {
     public boolean contains(@NotNull VirtualFile file) {
       Project project = getProject();
       if (project == null) return false;
-      if (!(myModule.getManager().findFile(file) instanceof PsiJavaFile)) return false;
+      if (!isJvmLanguageFile(file)) return false;
       ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
-      if (index.isInLibrary(file)) return myIncludeLibraries && findLibraryFileModule(project, index, file) == myModule;
-      Module fileModule = index.getModuleForFile(file);
-      return findDescriptorByModule(fileModule, index.isInTestSourceContent(file)) == myModule;
+      if (index.isInLibrary(file)) {
+        return myIncludeLibraries && myModule.equals(findLibraryFileModule(project, index, file));
+      }
+      Module module = index.getModuleForFile(file);
+      return myModule.equals(findDescriptorByModule(module, myIsInTests));
     }
 
-    public static @NotNull JavaModuleScope moduleScope(@NotNull PsiJavaModule module, boolean includeLibraries) {
-      return new JavaModuleScope(module.getProject(), module, includeLibraries);
+    private static boolean isJvmLanguageFile(@NotNull VirtualFile file) {
+      FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
+      LanguageFileType languageFileType = tryCast(fileTypeRegistry.getFileTypeByFileName(file.getName()), LanguageFileType.class);
+      return languageFileType != null && languageFileType.getLanguage() instanceof JvmLanguage;
+    }
+
+    public static @Nullable JavaModuleScope moduleScope(@NotNull PsiJavaModule module) {
+      PsiFile moduleFile = module.getContainingFile();
+      if (moduleFile == null) return null;
+      VirtualFile virtualFile = moduleFile.getVirtualFile();
+      if (virtualFile == null) return null;
+      return new JavaModuleScope(module.getProject(), module, virtualFile);
     }
   }
 }

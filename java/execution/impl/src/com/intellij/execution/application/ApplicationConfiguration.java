@@ -23,6 +23,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -143,7 +144,8 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     if (getMainClassName() == null) {
       return null;
     }
-    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(getMainClassName()), 6) + ".main()";
+    @NlsSafe String mainSuffix = ".main()";
+    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(getMainClassName()), 6) + mainSuffix;
   }
 
   @Override
@@ -154,7 +156,9 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    JavaParametersUtil.checkAlternativeJRE(this);
+    if (getDefaultTargetName() == null) {
+      JavaParametersUtil.checkAlternativeJRE(this);
+    }
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     final PsiClass psiClass =
       configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
@@ -365,14 +369,6 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @Override
   public InputRedirectOptions getInputRedirectOptions() {
     return getOptions().getRedirectOptions();
-  }
-
-  public boolean isSwingInspectorEnabled() {
-    return getOptions().isSwingInspectorEnabled();
-  }
-
-  public void setSwingInspectorEnabled(boolean value) {
-    getOptions().setSwingInspectorEnabled(value);
   }
 
   @Override

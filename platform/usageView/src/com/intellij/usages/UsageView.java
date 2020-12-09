@@ -63,14 +63,14 @@ public interface UsageView extends Disposable {
   void setAdditionalComponent(@Nullable JComponent component);
 
   void addPerformOperationAction(@NotNull Runnable processRunnable,
-                                 @NotNull @NlsContexts.Command String commandName,
+                                 @Nullable @NlsContexts.Command String commandName,
                                  @NotNull @NlsContexts.DialogMessage String cannotMakeString,
                                  @NotNull @NlsContexts.Button String shortDescription);
 
   /**
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @Nullable String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
 
   @NotNull
   UsageViewPresentation getPresentation();

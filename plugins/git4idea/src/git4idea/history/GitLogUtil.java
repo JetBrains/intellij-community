@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -98,6 +98,9 @@ public class GitLogUtil {
   public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
                                                                   @NotNull List<String> hashes)
     throws VcsException {
+    if (hashes.isEmpty()) {
+      return Collections.emptyList();
+    }
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -193,6 +196,9 @@ public class GitLogUtil {
                                               @NotNull List<String> hashes,
                                               @NotNull GitCommitRequirements requirements,
                                               @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
+    if (hashes.isEmpty()) {
+      return;
+    }
     new GitFullDetailsCollector(project, root, new InternedGitLogRecordBuilder())
       .readFullDetailsForHashes(hashes, requirements, false, commitConsumer);
   }

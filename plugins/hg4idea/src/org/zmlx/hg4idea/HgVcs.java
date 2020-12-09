@@ -149,7 +149,7 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public Configurable getConfigurable() {
-    return new HgProjectConfigurable(myProject);
+    return null;
   }
 
   @NotNull
@@ -371,8 +371,7 @@ public class HgVcs extends AbstractVcs {
       protected void hyperlinkActivated(@NotNull Notification notification,
                                         @NotNull HyperlinkEvent e) {
         if (SETTINGS_LINK.equals(e.getDescription())) {
-          ShowSettingsUtil.getInstance()
-            .showSettingsDialog(myProject, getConfigurable().getDisplayName());
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, HgProjectConfigurable.getDISPLAY_NAME());
         }
         else if (UPDATE_LINK.equals(e.getDescription())) {
           BrowserUtil.browse("http://mercurial.selenic.com");

@@ -399,10 +399,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     MultiMap<RefactoringElementListener, SmartPsiElementPointer<PsiElement>> renameEvents = MultiMap.createLinked();
 
-    MultiMap<PsiElement, UsageInfo> classified = classifyUsages(
-      elementsToChange.values(),
+    List<UsageInfo> branchedUsages =
       branch == null ? Arrays.asList(usages)
-                     : ContainerUtil.mapNotNull(usages, info -> shouldSkip(info) ? null : ((MoveRenameUsageInfo)info).branched(branch)));
+                     : ContainerUtil.mapNotNull(usages, info -> shouldSkip(info) ? null : ((MoveRenameUsageInfo)info).branched(branch));
+    MultiMap<PsiElement, UsageInfo> classified = classifyUsages(elementsToChange.values(), branchedUsages);
+
+    NonCodeUsageInfo[] nonCodeUsages =
+      ContainerUtil.filterIsInstance(branchedUsages, NonCodeUsageInfo.class).toArray(new NonCodeUsageInfo[0]);
+
     for (final PsiElement element : myAllRenames.keySet()) {
       PsiElement toChange = elementsToChange.get(element);
       if (!element.isValid()) {
@@ -446,7 +450,13 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    nowOrAfterMerge(branch, () -> afterRename(postRenameCallbacks, usages, renameEvents, branch));
+    if (branch != null) {
+      RenameUtil.renameNonCodeUsages(myProject, nonCodeUsages);
+    } else {
+      myNonCodeUsages = nonCodeUsages;
+    }
+
+    nowOrAfterMerge(branch, () -> afterRename(postRenameCallbacks, renameEvents, branch));
   }
 
   private static void nowOrAfterMerge(@Nullable ModelBranch branch, Runnable runnable) {
@@ -458,7 +468,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private void afterRename(List<Runnable> postRenameCallbacks,
-                           UsageInfo[] usages,
                            MultiMap<RefactoringElementListener, SmartPsiElementPointer<PsiElement>> renameEvents,
                            @Nullable ModelBranch branch) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -478,13 +487,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       runnable.run();
     }
 
-    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
-    for (UsageInfo usage : usages) {
-      if (usage instanceof NonCodeUsageInfo) {
-        nonCodeUsages.add((NonCodeUsageInfo)usage);
-      }
-    }
-    myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
     if (!mySkippedUsages.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
         ApplicationManager.getApplication().invokeLater(() -> {

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -36,7 +37,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
                                        PsiExpression expr,
                                        PsiVariable localVariable,
                                        PsiExpression[] occurrences,
-                                       TypeSelectorManagerImpl typeSelectorManager, 
+                                       TypeSelectorManagerImpl typeSelectorManager,
                                        @NlsContexts.Command String title) {
     super(project, getEditor(editor, expr), expr, localVariable, occurrences, title, JavaFileType.INSTANCE);
     myTypeSelectorManager = typeSelectorManager;
@@ -141,10 +142,10 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     if (psiVariable == null || !psiVariable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
     final PsiElement refVariableElementParent = refVariableElement != null ? refVariableElement.getParent() : null;
-    PsiExpression expression = refVariableElement instanceof PsiKeyword && refVariableElementParent instanceof PsiNewExpression 
-                               ? (PsiNewExpression)refVariableElementParent 
-                               : refVariableElementParent instanceof PsiParenthesizedExpression 
-                                 ? ((PsiParenthesizedExpression)refVariableElementParent).getExpression() 
+    PsiExpression expression = refVariableElement instanceof PsiKeyword && refVariableElementParent instanceof PsiNewExpression
+                               ? (PsiNewExpression)refVariableElementParent
+                               : refVariableElementParent instanceof PsiParenthesizedExpression
+                                 ? ((PsiParenthesizedExpression)refVariableElementParent).getExpression()
                                  : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
     if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiMethodCallExpression)) {
       final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
@@ -188,11 +189,6 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
      return new Expression() {
        @Override
        public Result calculateResult(ExpressionContext context) {
-         return new TextResult(defaultType);
-       }
-
-       @Override
-       public Result calculateQuickResult(ExpressionContext context) {
          return new TextResult(defaultType);
        }
 

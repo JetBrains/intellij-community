@@ -1,9 +1,10 @@
-from . import wasyncore as wasyncore
-from threading import Lock
-from socket import SocketType
 import sys
+from socket import SocketType
+from threading import Lock
 from typing import Callable, Mapping, Optional
 from typing_extensions import Literal
+
+from . import wasyncore as wasyncore
 
 class _triggerbase:
     kind: Optional[str] = ...

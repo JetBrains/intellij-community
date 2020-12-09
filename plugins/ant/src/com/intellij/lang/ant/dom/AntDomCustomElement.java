@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.XmlName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,11 +37,11 @@ public abstract class AntDomCustomElement extends AntDomElement{
   }
 
   @Nullable
-  public final String getLoadError() {
+  public final @Nls(capitalization = Nls.Capitalization.Sentence) String getLoadError() {
     return CustomAntElementsRegistry.getInstance(getAntProject()).lookupError(getXmlName());
   }
 
-  public final  XmlName getXmlName() {
+  public final XmlName getXmlName() {
     if (myXmlName == null) {
       myXmlName = new XmlName(getXmlElementName(), getXmlElementNamespace());
     }

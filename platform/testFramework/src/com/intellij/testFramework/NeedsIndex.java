@@ -16,7 +16,7 @@ public interface NeedsIndex {
      * @see com.jetbrains.php.slowTests.PhpDumbCompletionTestSuite
      */
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
+    @Target({ElementType.METHOD, ElementType.TYPE})
     @interface SmartMode {
         String reason();
     }

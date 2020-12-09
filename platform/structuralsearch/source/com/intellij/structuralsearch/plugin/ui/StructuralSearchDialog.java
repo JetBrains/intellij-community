@@ -904,7 +904,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   private void removeMatchHighlights() {
-    if (myEditConfigOnly) {
+    if (myEditConfigOnly || myRangeHighlighters.isEmpty()) {
       return;
     }
     // retrieval of editor needs to be outside of invokeLater(), otherwise the editor might have already changed.
@@ -927,7 +927,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   private void addMatchHighlights() {
-    if (myEditConfigOnly) {
+    if (myEditConfigOnly || DumbService.isDumb(getProject())) {
+      // Search hits in the current editor are not shown when dumb.
       return;
     }
     final Project project = getProject();

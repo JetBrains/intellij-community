@@ -3,22 +3,33 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.google.common.hash.Hashing
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Urls
 import com.intellij.util.io.*
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.Nls
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
+import java.util.stream.Stream
+import kotlin.concurrent.withLock
 import kotlin.math.absoluteValue
 
 interface JdkInstallRequest {
@@ -70,6 +81,11 @@ class JdkInstaller {
   private operator fun File.div(path: String) = File(this, path).absoluteFile
 
   fun defaultInstallDir() : Path {
+    val explicitHome = System.getProperty("jdk.downloader.home")
+    if (explicitHome != null) {
+      return Paths.get(explicitHome)
+    }
+
     val home = Paths.get(FileUtil.toCanonicalPath(System.getProperty("user.home") ?: "."))
     return when {
       SystemInfo.isLinux   -> home.resolve(".jdks")
@@ -114,6 +130,25 @@ class JdkInstaller {
    * @see [JdkInstallRequest.javaHome] for the actual java home, it may not match the [JdkInstallRequest.installDir]
    */
   fun installJdk(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
+    if (request is LocallyFoundJdk) {
+      return
+    }
+
+    if (request is PendingJdkRequest) {
+      request.tryStartInstallOrWait(indicator) {
+        installJdkImpl(request, indicator, project)
+      }
+      return
+    }
+
+    LOG.error("Unexpected JdkInstallRequest: $request of type ${request.javaClass.name}")
+    installJdkImpl(request, indicator, project)
+  }
+
+  /**
+   * @see [JdkInstallRequest.javaHome] for the actual java home, it may not match the [JdkInstallRequest.installDir]
+   */
+  private fun installJdkImpl(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
     JDK_INSTALL_LISTENER_EP_NAME.forEachExtensionSafe { it.onJdkDownloadStarted(request, project) }
 
     val item = request.item
@@ -167,7 +202,8 @@ class JdkInstaller {
         }
         decompressor.extract(targetDir)
 
-        writeMarkerFile(request)
+        runCatching { writeMarkerFile(request) }
+        runCatching { service<JdkInstallerStore>().registerInstall(item, targetDir) }
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
@@ -186,28 +222,46 @@ class JdkInstaller {
     }
   }
 
+  private val myLock = ReentrantLock()
+  private val myPendingDownloads = HashMap<JdkItem, PendingJdkRequest>()
+
   /**
+   * Checks if we already have the requested JDK or the download is already running.
+   * Returns different [JdkInstallRequest] implementations depending on the current
+   * state, it is still required to call the [installJdk] on every of such.
+   *
    * executed synchronously to prepare Jdk installation process, that would run in the future
+   *
+   * The [JdkInstallRequest] may have another [targetPath] if there is such JDK already installed,
+   * or it is being installed right now
    */
   fun prepareJdkInstallation(jdkItem: JdkItem, targetPath: Path): JdkInstallRequest {
+    val existingRequest = findAlreadyInstalledJdk(jdkItem)
+    if (existingRequest != null) return existingRequest
+
+    return myLock.withLock {
+      myPendingDownloads.computeIfAbsent(jdkItem) { prepareJdkInstallationImpl(jdkItem, targetPath) }
+    }
+  }
+
+  /**
+   * This method does not check any existing or pending SDKs locally,
+   * use [prepareJdkInstallation()] to avoid extra work if possible
+   *
+   * @see prepareJdkInstallation
+   */
+  fun prepareJdkInstallationDirect(jdkItem: JdkItem, targetPath: Path): JdkInstallRequest = prepareJdkInstallationImpl(jdkItem, targetPath)
+
+  private fun prepareJdkInstallationImpl(jdkItem: JdkItem, targetPath: Path) : PendingJdkRequest {
     val (home, error) = validateInstallDir(targetPath.toString())
     if (home == null || error != null) {
       throw RuntimeException(error ?: "Invalid Target Directory")
     }
 
-    Files.createDirectories(home)
-
-    val javaHome = when {
-      jdkItem.packageToBinJavaPrefix.isBlank() -> targetPath
-      else -> targetPath.resolve(jdkItem.packageToBinJavaPrefix)
-    }
-
+    val javaHome = jdkItem.resolveJavaHome(targetPath)
     Files.createDirectories(javaHome)
-    val request = object: JdkInstallRequest {
-      override val item = jdkItem
-      override val installDir = targetPath
-      override val javaHome = javaHome
-    }
+
+    val request = PendingJdkRequest(jdkItem, targetPath, javaHome)
     writeMarkerFile(request)
     return request
   }
@@ -229,8 +283,17 @@ class JdkInstaller {
   fun findJdkItemForInstalledJdk(jdkHome: String?): JdkItem? {
     try {
       if (jdkHome == null) return null
-
       val jdkPath = Paths.get(jdkHome)
+      return findJdkItemForInstalledJdk(jdkPath)
+    }
+    catch (t: Throwable) {
+      return null
+    }
+  }
+
+  fun findJdkItemForInstalledJdk(jdkPath: Path?): JdkItem? {
+    try {
+      if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
 
       // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
@@ -246,5 +309,180 @@ class JdkInstaller {
     catch (e: Throwable) {
       return null
     }
+  }
+
+  private fun findAlreadyInstalledJdk(feedItem: JdkItem) : JdkInstallRequest? {
+    try {
+      //TODO: we may track install locations nad use the data to scan more paths
+      Files.list(defaultInstallDir()).use { list ->
+        for (installDir in Stream.concat(list, service<JdkInstallerStore>().findInstallations(feedItem).stream())) {
+          if (!installDir.isDirectory()) continue
+          val item = findJdkItemForInstalledJdk(installDir) ?: continue
+          if (item != feedItem) continue
+
+          val jdkHome = item.resolveJavaHome(installDir)
+          if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome.toFile())) {
+            return LocallyFoundJdk(feedItem, installDir, jdkHome)
+          }
+        }
+      }
+    } catch (t: Throwable) {
+      if (t is ControlFlowException) throw t
+      LOG.warn("Failed to scan for installed JDKs. ${t.message}", t)
+    }
+
+    return null
+  }
+}
+
+private data class PendingJdkRequest(
+  override val item: JdkItem,
+  override val installDir: Path,
+  override val javaHome: Path) : JdkInstallRequest {
+  private val isRunning = AtomicBoolean(false)
+  private val future = CompletableFuture<Unit>()
+
+
+  @Volatile
+  private var progressIndicator : ProgressIndicator? = null
+
+  fun tryStartInstallOrWait(indicator: ProgressIndicator?, installAction: () -> Unit) {
+    if (isRunning.compareAndSet(false, true)) {
+      doRealDownload(indicator, installAction)
+    } else {
+      waitForDownload(indicator)
+    }
+  }
+
+  private fun doRealDownload(indicator: ProgressIndicator?, installAction: () -> Unit) {
+    progressIndicator = indicator
+    try {
+      installAction()
+      future.complete(Unit)
+    }
+    catch (t: Throwable) {
+      future.completeExceptionally(t)
+      throw t
+    }
+    finally {
+      progressIndicator = null
+    }
+  }
+
+  private fun waitForDownload(indicator: ProgressIndicator?) {
+    wrapProgressIfNeeded(indicator) {
+      while (true) {
+        indicator?.checkCanceled()
+        try {
+          future.get(100, TimeUnit.MILLISECONDS)
+          return@wrapProgressIfNeeded
+        }
+        catch (t: TimeoutException) {
+          continue
+        }
+        catch (e: InterruptedException) {
+          throw ProcessCanceledException()
+        }
+        catch (e: CancellationException) {
+          throw ProcessCanceledException()
+        }
+        catch (e: ExecutionException) {
+          throw e.cause ?: e
+        }
+      }
+    }
+  }
+
+  private fun wrapProgressIfNeeded(indicator: ProgressIndicator?, action: () -> Unit) {
+    val parentProgress = progressIndicator as? ProgressIndicatorBase
+    if (indicator == null || parentProgress == null) {
+      return action()
+    }
+
+    val delegate = RelayUiToDelegateIndicator(indicator)
+    parentProgress.addStateDelegate(delegate)
+    try {
+      return action()
+    } finally {
+      parentProgress.removeStateDelegate(delegate)
+    }
+  }
+
+  override fun toString(): String {
+    return "PendingJdkRequest(item=$item, installDir=$installDir)"
+  }
+}
+
+private data class LocallyFoundJdk(
+  override val item: JdkItem,
+  override val installDir: Path,
+  override val javaHome: Path) : JdkInstallRequest {
+
+  override fun toString(): String {
+    return "LocallyFoundJdk(item=$item, installDir=$installDir)"
+  }
+}
+
+
+@Tag("installed-jdk")
+class JdkInstallerStateEntry : BaseState() {
+  var fullText by string()
+  var versionText by string()
+  var url by string()
+  var sha256 by string()
+  var installDir by string()
+  var javaHomeDir by string()
+
+  fun copyForm(item: JdkItem, targetPath: Path) {
+    fullText = item.fullPresentationText
+    versionText = item.versionPresentationText
+    url = item.url
+    sha256 = item.sha256
+    installDir = targetPath.toAbsolutePath().toString()
+    javaHomeDir = item.resolveJavaHome(targetPath).toAbsolutePath().toString()
+  }
+
+  val installPath get() = installDir?.let { Paths.get(it) }
+  val javaHomePath get() = javaHomeDir?.let { Paths.get(it) }
+
+  fun matches(item: JdkItem) : Boolean {
+    if (fullText != item.fullPresentationText) return false
+    if (versionText != item.versionPresentationText) return false
+    if (url != item.url) return false
+    if (sha256 != item.sha256) return false
+    return true
+  }
+}
+
+class JdkInstallerState : BaseState() {
+  @get:XCollection
+  var installedItems by list<JdkInstallerStateEntry>()
+}
+
+@State(name = "JdkInstallerHistory", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)
+class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkInstallerState()) {
+  private val lock = ReentrantLock()
+
+  override fun loadState(state: JdkInstallerState) = lock.withLock {
+    super.loadState(state)
+  }
+
+  fun registerInstall(jdkItem: JdkItem, targetPath: Path) = lock.withLock {
+    state.installedItems.removeIf { it.installPath?.isDirectory() != null || it.matches(jdkItem) }
+    state.installedItems.add(JdkInstallerStateEntry().apply { copyForm(jdkItem, targetPath) })
+    state.intIncrementModificationCount()
+  }
+
+  fun findInstallations(jdkItem: JdkItem) : List<Path> = lock.withLock {
+    state.installedItems.filter { it.matches(jdkItem) }.mapNotNull { it.installPath }.filter { it.isDirectory() }
+  }
+
+  fun listJdkInstallHomes() : List<Path> = lock.withLock {
+    state.installedItems.mapNotNull { it.javaHomePath }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance() = service<JdkInstallerStore>()
   }
 }

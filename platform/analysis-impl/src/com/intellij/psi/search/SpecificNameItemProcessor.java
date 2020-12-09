@@ -20,6 +20,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class SpecificNameItemProcessor implements PsiFileSystemItemProcessor {
   private final String myName;
@@ -33,7 +34,7 @@ public abstract class SpecificNameItemProcessor implements PsiFileSystemItemProc
   }
 
   @Override
-  public boolean acceptItem(String name, boolean isDirectory) {
+  public boolean acceptItem(@NotNull String name, boolean isDirectory) {
     return FileUtil.namesEqual(myName, name);
   }
 }

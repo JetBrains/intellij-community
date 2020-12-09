@@ -206,7 +206,6 @@
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="library" name="jaxb-api" level="project" />
     <orderEntry type="library" name="jaxb-runtime" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">
       <library name="com.gitlab.dumonts:hunspell:1.1.1" type="repository">
         <properties include-transitive-deps="false" maven-id="com.gitlab.dumonts:hunspell:1.1.1" />
@@ -247,5 +246,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

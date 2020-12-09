@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.ex.dummy;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -29,10 +27,10 @@ import java.util.stream.Collectors;
  */
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
-  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.create(
+  private final Map<String, T> myCachedFiles = ConcurrentFactoryMap.create(
     this::findFileByPathInner, ContainerUtil::createConcurrentWeakValueMap);
 
-  public DummyCachingFileSystem(String protocol) {
+  public DummyCachingFileSystem(@NotNull String protocol) {
     myProtocol = protocol;
 
     final Application application = ApplicationManager.getApplication();
@@ -57,9 +55,8 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   @Override
-  @Nullable
-  public final VirtualFile createRoot(String name) {
-    return null;
+  public final @NotNull VirtualFile createRoot(@NotNull String name) {
+    return super.createRoot(name);
   }
 
   @Override
@@ -80,13 +77,13 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   protected abstract T findFileByPathInner(@NotNull String path);
 
-  protected void doRenameFile(VirtualFile vFile, String newName) {
+  protected void doRenameFile(@NotNull VirtualFile vFile, @NotNull String newName) {
     throw new UnsupportedOperationException("not implemented");
   }
 
   @Nullable
-  public Project getProject(@Nullable String projectId) {
-    Project project = projectId == null ? null : ProjectManagerEx.getInstanceEx().findOpenProjectByHash(projectId);
+  public Project getProject(@NotNull String projectId) {
+    Project project = ProjectManagerEx.getInstanceEx().findOpenProjectByHash(projectId);
     if (ApplicationManager.getApplication().isUnitTestMode() && project != null) {
       registerDisposeCallback(project);
       DISPOSE_CALLBACK.set(project, Boolean.TRUE);
@@ -102,29 +99,24 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
       .collect(Collectors.toList());
   }
 
-  public void onProjectClosed() {
+  private void onProjectClosed() {
     clearCache();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       cleanup();
     }
   }
 
-  public void onProjectOpened(final Project project) {
+  public void onProjectOpened(@NotNull Project project) {
     clearCache();
   }
 
   private static final Key<Boolean> DISPOSE_CALLBACK = Key.create("DISPOSE_CALLBACK");
 
-  private void registerDisposeCallback(Project project) {
+  private void registerDisposeCallback(@NotNull Project project) {
     if (Boolean.TRUE.equals(DISPOSE_CALLBACK.get(project))) return;
     // use Disposer instead of ProjectManagerListener#projectClosed() because Disposer.dispose(project)
     // is called later and some cached files should stay valid till the last moment
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        onProjectClosed();
-      }
-    });
+    Disposer.register(project, () -> onProjectClosed());
   }
 
   private void initProjectMap() {
@@ -168,17 +160,19 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     myCachedFiles.remove(file.getPath());
   }
 
-  protected void fileRenamed(@NotNull VirtualFile file, Object requestor, String oldName, String newName) {
+  protected void fileRenamed(@NotNull VirtualFile file, Object requestor, @NotNull String oldName, @NotNull String newName) {
     //noinspection unchecked
     myCachedFiles.put(file.getPath(), (T)file);
     firePropertyChanged(requestor, file, VirtualFile.PROP_NAME, oldName, newName);
   }
 
-  protected static String escapeSlash(String name) {
-    return name == null ? "" : StringUtil.replace(name, "/", "&slash;");
+  @NotNull
+  protected static String escapeSlash(@NotNull String name) {
+    return StringUtil.replace(name, "/", "&slash;");
   }
 
-  protected static String unescapeSlash(String name) {
-    return name == null ? "" : StringUtil.replace(name, "&slash;", "/");
+  @NotNull
+  protected static String unescapeSlash(@NotNull String name) {
+    return StringUtil.replace(name, "&slash;", "/");
   }
 }

@@ -39,6 +39,10 @@ fun PsiFile.allReferencesAround(offset: Int): Collection<PsiSymbolReference> {
   return emptyList()
 }
 
+fun hasReferencesInElement(element: PsiElement, offsetInElement: Int): Boolean {
+  return allReferencesInElement(element, offsetInElement).isNotEmpty()
+}
+
 fun allReferencesInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolReference> {
   val references: Collection<PsiSymbolReference> = referencesInElement(element, offsetInElement)
   if (references.isNotEmpty()) {

@@ -16,7 +16,6 @@ import org.junit.runners.model.Statement
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -24,16 +23,16 @@ import java.util.concurrent.atomic.AtomicInteger
  * and more convenient [newFile], [newDirectory] methods.
  */
 class TempDirectory : ExternalResource() {
-  private var name: String? = null
-  private val nextDirNameSuffix = AtomicInteger()
+  private var myName: String? = null
+  private val myNextDirNameSuffix = AtomicInteger()
   private var myRoot: File? = null
   private var myVirtualFileRoot: VirtualFile? = null
 
   val root: File
     get() {
       if (myRoot == null) {
-        checkNotNull(name) { "apply() was not called" }
-        myRoot = Files.createTempDirectory(UsefulTestCase.TEMP_DIR_MARKER + name + '_').toRealPath().toFile()
+        checkNotNull(myName) { "apply() was not called" }
+        myRoot = Files.createTempDirectory(UsefulTestCase.TEMP_DIR_MARKER + myName + '_').toRealPath().toFile()
       }
       return myRoot!!
     }
@@ -51,45 +50,57 @@ class TempDirectory : ExternalResource() {
       return myVirtualFileRoot!!
     }
 
-  override fun apply(base: Statement,
-                     description: Description): Statement {
-    name = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName, false), true)
+  override fun apply(base: Statement, description: Description): Statement {
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName, false), true)
     return super.apply(base, description)
   }
 
   override fun after() {
-    if (myRoot != null) {
-      val path = myRoot!!.toPath()
-      myVirtualFileRoot = null
-      myRoot = null
-      name = null
-      FileUtil.delete(path)
+    val path = myRoot?.toPath()
+    val vfsDir = myVirtualFileRoot
+
+    myVirtualFileRoot = null
+    myRoot = null
+    myName = null
+
+    try {
+      if (vfsDir != null) {
+        VfsTestUtil.deleteFile(vfsDir)
+      }
+    }
+    finally {
+      if (path != null) {
+        FileUtil.delete(path)
+      }
     }
   }
 
   /**
-   * Creates a new directory with the given relative path from the root temp directory. Throws an exception if such a directory already exists.
+   * Creates a new directory with random name under the root temp directory.
+   */
+  fun newDirectory(): File = newDirectory("dir" + myNextDirNameSuffix.incrementAndGet())
+
+  /**
+   * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
    */
   fun newDirectory(relativePath: String): File {
-    val dir = Paths.get(root.path, relativePath)
+    val dir = rootPath.resolve(relativePath)
     require(!Files.exists(dir)) { "Already exists: $dir" }
     makeDirectories(dir)
     return dir.toFile()
   }
 
   /**
-   * Creates a new directory with random name under the root temp directory.
+   * Creates a new file at the given path relative to the root temp directory. Throws an exception if such a file already exists.
    */
-  fun newDirectory(): File {
-    return FileUtil.createTempDirectory(root, "dir" + nextDirNameSuffix.incrementAndGet(), null)
-  }
+  fun newFile(relativePath: String): File = newFile(relativePath, null)
 
   /**
-   * Creates a new file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
+   * Creates a new file with the given content at the given path relative to the root temp directory.
+   * Throws an exception if such a file already exists.
    */
-  @JvmOverloads
-  fun newFile(relativePath: String, content: ByteArray? = null): File {
-    val file = Paths.get(root.path, relativePath)
+  fun newFile(relativePath: String, content: ByteArray?): File {
+    val file = rootPath.resolve(relativePath)
     require(!Files.exists(file)) { "Already exists: $file" }
     makeDirectories(file.parent)
     Files.createFile(file)
@@ -100,7 +111,7 @@ class TempDirectory : ExternalResource() {
   }
 
   /**
-   * Creates a new virtual directory with the given relative path from the root temp directory. Throws an exception if such a directory already exists.
+   * Creates a new virtual directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
    */
   fun newVirtualDirectory(relativePath: String): VirtualFile {
     val existing = virtualFileRoot.findFileByRelativePath(relativePath)
@@ -109,16 +120,22 @@ class TempDirectory : ExternalResource() {
   }
 
   /**
-   * Creates a new virtual file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
+   * Creates a new virtual file at the given path relative to the root temp directory. Throws an exception if such a file already exists.
    */
-  fun newVirtualFile(relativePath: String, content: String = ""): VirtualFile {
+  fun newVirtualFile(relativePath: String): VirtualFile = newVirtualFile(relativePath, null)
+
+  /**
+   * Creates a new virtual file with the given content at the given path relative to the root temp directory.
+   * Throws an exception if such a file already exists.
+   */
+  fun newVirtualFile(relativePath: String, content: ByteArray?): VirtualFile {
     val existing = virtualFileRoot.findFileByRelativePath(relativePath)
     require(existing == null) { "Already exists: ${existing!!.path}"}
     return VfsTestUtil.createFile(virtualFileRoot, relativePath, content)
   }
 
   /**
-   * Creates an empty new JAR file with the given relative path from the root temp directory.
+   * Creates a new empty JAR file at the given path relative to the root temp directory.
    */
   fun newEmptyVirtualJarFile(relativePath: String): VirtualFile {
     val existing = virtualFileRoot.findFileByRelativePath(relativePath)
@@ -130,14 +147,10 @@ class TempDirectory : ExternalResource() {
   }
 
   @Deprecated("use newDirectory(relativePath) instead", ReplaceWith("newDirectory(relativePath)"))
-  fun newFolder(relativePath: String): File {
-    return newDirectory(relativePath)
-  }
+  fun newFolder(relativePath: String): File = newDirectory(relativePath)
 
   @Deprecated("use newDirectory() instead", ReplaceWith("newDirectory()"))
-  fun newFolder(): File {
-    return newDirectory()
-  }
+  fun newFolder(): File = newDirectory()
 
   private fun makeDirectories(path: Path) {
     if (!Files.isDirectory(path)) {

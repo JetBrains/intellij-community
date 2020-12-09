@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ListItemEditor<T> extends CollectionItemEditor<T> {
   @NotNull
   default @NlsContexts.ListItem String getName(@NotNull T item) {
+    //noinspection HardCodedStringLiteral
     return item.toString();
   }
 

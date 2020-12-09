@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +42,8 @@ import java.util.List;
  */
 public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElement> implements AntDomReference {
 
-  public static final String ANT_FILE_PREFIX = "ant.file.";
-  public static final String ANT_FILE_TYPE_PREFIX = "ant.file.type.";
+  public static final @NonNls String ANT_FILE_PREFIX = "ant.file.";
+  public static final @NonNls String ANT_FILE_TYPE_PREFIX = "ant.file.type.";
   private final DomElement myInvocationContextElement;
   private boolean myShouldBeSkippedByAnnotator = false;
 

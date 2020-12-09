@@ -53,7 +53,7 @@ public abstract class TemplateContextType {
    * @return unique ID to be used on configuration files to flag if this context is enabled for particular template
    */
   @NotNull
-  public String getContextId() {
+  public @NonNls String getContextId() {
     return myContextId;
   }
 

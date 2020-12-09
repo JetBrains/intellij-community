@@ -12,7 +12,7 @@ class ShowCommitOptionsAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.getProjectCommitWorkflowHandler()?.isActive == true
+    e.presentation.isEnabledAndVisible = e.getProjectCommitWorkflowHandler()?.isActive == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {

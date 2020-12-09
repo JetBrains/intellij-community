@@ -39,6 +39,16 @@ public abstract class FileBasedIndex {
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
 
+  @ApiStatus.Internal
+  public void registerProjectFileSets(@NotNull Project project) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ApiStatus.Internal
+  public void removeProjectFileSets(@NotNull Project project) {
+    throw new UnsupportedOperationException();
+  }
+
   /**
    * Should be called only in dumb mode and only in a read action
    */
@@ -53,8 +63,20 @@ public abstract class FileBasedIndex {
     return processor;
   }
 
-  public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
+  /**
+   * @deprecated please use {@link IndexableSetContributor} or
+   * {@link com.intellij.util.indexing.roots.IndexableFilesContributor}
+   * which will be managed registered/unregistered automatically.
+   */
+  @Deprecated
+  public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project);
 
+  /**
+   * @deprecated please use {@link IndexableSetContributor} or
+   * {@link com.intellij.util.indexing.roots.IndexableFilesContributor}
+   * which will be managed registered/unregistered automatically.
+   */
+  @Deprecated
   public abstract void removeIndexableSet(@NotNull IndexableFileSet set);
 
   public static FileBasedIndex getInstance() {

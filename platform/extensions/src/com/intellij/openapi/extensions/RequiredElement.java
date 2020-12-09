@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -16,4 +16,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD})
 public @interface RequiredElement {
+
+  /**
+   * @return {@code true} if the specified property value can be empty.
+   */
+  boolean allowEmpty() default false;
 }

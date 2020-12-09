@@ -87,7 +87,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
   }
 
   private static @NotNull Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    commitDocuments(editor, project);
 
     SelectionModel selectionModel = editor.getSelectionModel();
     final int[] startOffsets = selectionModel.getBlockSelectionStarts();
@@ -128,5 +128,18 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
     return new TextBlockTransferable(escapedText != null ? escapedText : rawText,
                                      transferableDataList,
                                      escapedText != null ? new RawText(rawText) : null);
+  }
+
+  private static void commitDocuments(@NotNull Editor editor, @NotNull Project project) {
+    final boolean commitAllDocuments =
+      CopyPastePostProcessor.EP_NAME.getExtensionList().stream().anyMatch(p -> p.requiresAllDocumentsToBeCommitted(editor, project)) ||
+      CopyPastePreProcessor.EP_NAME.getExtensionList().stream().anyMatch(p -> p.requiresAllDocumentsToBeCommitted(editor, project));
+    LOG.debug("CopyHandler commitAllDocuments: " + commitAllDocuments);
+    if (commitAllDocuments) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
+    else {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    }
   }
 }

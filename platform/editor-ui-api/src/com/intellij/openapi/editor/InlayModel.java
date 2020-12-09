@@ -72,6 +72,13 @@ public interface InlayModel {
   <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset, boolean relatesToPrecedingText, @NotNull T renderer);
 
   /**
+   * Same as {@link #addAfterLineEndElement(int, boolean, EditorCustomElementRenderer)},
+   * but with an option to specify whether the inserted inlay should be the first or the last among other inlays on the same line
+   */
+  @Nullable
+  <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset, boolean relatesToPrecedingText, boolean insertFirst, @NotNull T renderer);
+
+  /**
    * Returns a list of inline elements for a given offset range (both limits are inclusive). Returned list is sorted by offset.
    * Both visible and invisible (due to folding) elements are returned.
    */

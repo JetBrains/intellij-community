@@ -47,11 +47,6 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     root.add(buildRootGroup(AllIcons.General.Settings, IdeBundle.message("welcome.screen.configure.action.text"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
     root.add(buildRootGroup(AllIcons.Actions.Help, IdeBundle.message("welcome.screen.action.docs.how.tos.action.text"), IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
-    // so, we sure this is the last action
-    final AnAction register = actionManager.getAction("WelcomeScreen.Register");
-    if (register != null) {
-      root.add(register);
-    }
     return new WelcomePane(root, screen);
   }
 

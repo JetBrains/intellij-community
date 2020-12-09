@@ -17,6 +17,7 @@ package com.intellij.remoteServer.configuration.deployment;
 
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public abstract class DeploymentConfigurator<D extends DeploymentConfiguration, 
    * @see LocatableConfiguration#suggestedName()
    */
   @Nullable
-  public String suggestConfigurationName(@NotNull DeploymentSource deploymentSource, @NotNull D deploymentConfiguration) {
+  public @NlsActions.ActionText String suggestConfigurationName(@NotNull DeploymentSource deploymentSource, @NotNull D deploymentConfiguration) {
     return null;
   }
 }

@@ -10,6 +10,8 @@ import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 public final class ExtensionPointUtil {
   public static @NotNull <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
                                                                                    @NotNull ExtensionPointName<?> extensionPointName,
@@ -24,11 +26,17 @@ public final class ExtensionPointUtil {
   }
 
   public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<T> extensionPoint) {
+    return createExtensionDisposable(extensionObject, extensionPoint, removed -> removed == extensionObject);
+  }
+
+  public static @NotNull <T, U> Disposable createExtensionDisposable(@NotNull T extensionObject,
+                                                                     @NotNull ExtensionPoint<U> extensionPoint,
+                                                                     @NotNull Predicate<U> removePredicate) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
-    extensionPoint.addExtensionPointListener(new ExtensionPointListener<T>() {
+    extensionPoint.addExtensionPointListener(new ExtensionPointListener<U>() {
       @Override
-      public void extensionRemoved(@NotNull T removedExtension, @NotNull PluginDescriptor pluginDescriptor) {
-        if (extensionObject == removedExtension) {
+      public void extensionRemoved(@NotNull U removedExtension, @NotNull PluginDescriptor pluginDescriptor) {
+        if (removePredicate.test(removedExtension)) {
           Disposer.dispose(disposable);
         }
       }
@@ -36,7 +44,7 @@ public final class ExtensionPointUtil {
     return disposable;
   }
 
-  public static @NotNull <T> Disposable createKeyedExtensionDisposable(@NotNull T extensionObject,
+  public static @NotNull <T> Disposable  createKeyedExtensionDisposable(@NotNull T extensionObject,
                                                                        @NotNull ExtensionPoint<KeyedLazyInstance<T>> extensionPoint) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {

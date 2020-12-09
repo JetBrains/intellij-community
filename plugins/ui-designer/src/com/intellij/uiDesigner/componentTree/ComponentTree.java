@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -473,7 +474,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
       }
       else if (node.getUserObject() != null) {
-        final String fragment = node.getUserObject().toString();
+        final @NlsSafe String fragment = node.getUserObject().toString();
         if (fragment != null) {
           append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }

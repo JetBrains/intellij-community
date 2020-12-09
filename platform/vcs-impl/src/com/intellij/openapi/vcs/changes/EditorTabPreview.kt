@@ -25,8 +25,8 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
-abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) : DiffPreview {
-  private val project get() = diffProcessor.project!!
+abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
+  protected val project get() = diffProcessor.project!!
   private val previewFile = PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor) { getCurrentName() })
   private val updatePreviewQueue =
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {

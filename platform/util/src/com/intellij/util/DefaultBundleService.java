@@ -6,21 +6,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Supplier;
 
 /**
- * Use this class to evaluate a computable with default bundle.
- * <p>
- * It can be useful if a language plugin enabled, but some computation should be invoked with default locale, e.g., getting actions' default text/description.
+ * <p>Use this class to evaluate a computable with default bundle.</p>
+ *
+ * <p>It can be useful if a language plugin is enabled, but some computation should be invoked with a default locale
+ * (e.g. getting actions' default text/description).</p>
  */
 public class DefaultBundleService {
   private static final DefaultBundleService INSTANCE = new DefaultBundleService();
   private static final ThreadLocal<Boolean> ourDefaultBundle = ThreadLocal.withInitial(() -> false);
 
-  @NotNull
-  public static DefaultBundleService getInstance() {
+  public static @NotNull DefaultBundleService getInstance() {
     return INSTANCE;
   }
 
-  @NotNull
-  public <T> T compute(@NotNull Supplier<? extends T> computable) {
+  public <T> @NotNull T compute(@NotNull Supplier<? extends T> computable) {
     final boolean isDefault = isDefaultBundle();
     if (!isDefault) {
       ourDefaultBundle.set(true);

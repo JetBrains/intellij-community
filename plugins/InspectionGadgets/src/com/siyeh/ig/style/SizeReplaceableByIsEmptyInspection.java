@@ -139,7 +139,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)(flipped ? rhs : lhs);
-      String isEmptyCall = null;
+      @NonNls String isEmptyCall = null;
       final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.SIZE.equals(referenceName) && !HardcodedMethodConstants.LENGTH.equals(referenceName)) {

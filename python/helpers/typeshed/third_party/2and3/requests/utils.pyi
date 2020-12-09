@@ -1,10 +1,8 @@
 # Stubs for requests.utils (Python 3)
 
 from typing import Any
-from . import compat
-from . import cookies
-from . import structures
-from . import exceptions
+
+from . import compat, cookies, exceptions, structures
 
 OrderedDict = compat.OrderedDict
 RequestsCookieJar = cookies.RequestsCookieJar

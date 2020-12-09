@@ -27,6 +27,7 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
   protected boolean isFileToCloseInContext(DataContext dataContext, EditorComposite candidate, EditorWindow window) {
     VirtualFile contextFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     VirtualFile candidateFile = candidate.getFile();
+    if (candidate.isPinned()) return false;
     if (Comparing.equal(candidateFile, contextFile)) return false;
     for (EditorWithProviderComposite composite : window.getEditors()) {
       VirtualFile cursorFile = composite.getFile();

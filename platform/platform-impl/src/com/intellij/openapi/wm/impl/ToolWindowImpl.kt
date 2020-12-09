@@ -57,7 +57,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               windowInfo: WindowInfo,
                               private var contentFactory: ToolWindowFactory?,
                               private var isAvailable: Boolean = true,
-                              private @NlsContexts.TabTitle var stripeTitle: String) : ToolWindowEx {
+                              @NlsContexts.TabTitle private var stripeTitle: String) : ToolWindowEx {
   var windowInfoDuringInit: WindowInfoImpl? = null
 
   private val focusTask by lazy { FocusTask(this) }
@@ -433,15 +433,19 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   fun fireActivated() {
-    toolWindowManager.activated(this)
+    fireActivated(null)
   }
 
-  fun fireHidden() {
-    toolWindowManager.hideToolWindow(id, false)
+  fun fireActivated(source: ToolWindowEventSource?) {
+    toolWindowManager.activated(this, source)
   }
 
-  fun fireHiddenSide() {
-    toolWindowManager.hideToolWindow(id, true)
+  fun fireHidden(source: ToolWindowEventSource?) {
+    toolWindowManager.hideToolWindow(id, false, true, source)
+  }
+
+  fun fireHiddenSide(source: ToolWindowEventSource?) {
+    toolWindowManager.hideToolWindow(id, true, true, source)
   }
 
   val popupGroup: ActionGroup?
@@ -570,7 +574,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
       addAction(toggleToolbarGroup).setAsSecondary(true)
       addSeparator()
-      add(ToolWindowViewModeAction.Group())
+      add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       add(ToolWindowMoveAction.Group())
       add(ResizeActionGroup())
       addSeparator()
@@ -621,7 +625,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      toolWindowManager.removeFromSideBar(id)
+      toolWindowManager.removeFromSideBar(id, ToolWindowEventSource.RemoveStripeButtonAction)
     }
 
     override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {

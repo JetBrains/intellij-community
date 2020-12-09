@@ -25,7 +25,7 @@ public class SuspiciousIndentAfterControlStatement {
             System.out.println("foo");
 <warning descr="Suspicious indentation after 'if' statement">            </warning>System.out.println("bar");
         if (i == 10);
-<warning descr="Suspicious indentation after 'if' statement">            </warning>System.out.println("great");
+<warning descr="Suspicious indentation after 'if' statement">            </warning>System.out.println("great");
 
     }
 
@@ -80,7 +80,7 @@ public class SuspiciousIndentAfterControlStatement {
                 } else {
                     return null;
                 }
-            case 2:  // <--- inspection error on this line
+            case 2:  // <--- IDEA-148562 inspection error on this line
             default:
                 return "";
         }
@@ -88,7 +88,7 @@ public class SuspiciousIndentAfterControlStatement {
 
     public void x(int i) {
         if (i == 3)
-<warning descr="Suspicious indentation after 'if' statement">        </warning>System.out.println("-->");
+<warning descr="Suspicious indentation after 'if' statement">	    </warning>System.out.println("-->");
         System.out.println(i);
     }
 

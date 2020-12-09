@@ -815,7 +815,17 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     @Override
     protected void focusedComponentChanged(Component component, AWTEvent cause) {
       if (cause instanceof FocusEvent && cause.getID() == FocusEvent.FOCUS_GAINED){
-        myLastFocusGainedTime = System.currentTimeMillis();
+        if (((FocusEvent)cause).getCause() == FocusEvent.Cause.ACTIVATION) {
+          // Window activation mistakenly puts focus to editor as 'last focused component in this window'
+          // even if you activate the window by clicking some other place (e.g. Project View)
+          SwingUtilities.invokeLater(() -> {
+            if (component.isFocusOwner()) {
+              myLastFocusGainedTime = System.currentTimeMillis();
+            }
+          });
+        } else {
+          myLastFocusGainedTime = System.currentTimeMillis();
+        }
       }
 
       EditorWindow newWindow = null;

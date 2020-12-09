@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDe
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.GrGeneratedConstructorUtils;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
@@ -369,7 +370,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     if (anno == null) {
       return false;
     }
-    AffectedMembersCache cache = new AffectedMembersCache(anno);
+    AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(anno);
     return !cache.arePropertiesHandledByUser() && cache.getAffectedMembers().contains(field);
   }
 

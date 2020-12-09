@@ -256,7 +256,7 @@ public final class PlatformTestUtil {
     if (ignoreOrder) {
       for (String line : treeStringPresentation.split("\n")) {
         if (!expected.contains(line + "\n")) {
-          fail("Missing node: " + line);
+          fail("Missing node: " + line + "\n" + "actual tree:\n" + treeStringPresentation + "\nexpected:\n" + expected);
         }
       }
     }

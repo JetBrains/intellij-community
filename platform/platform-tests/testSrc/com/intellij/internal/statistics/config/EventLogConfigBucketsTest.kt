@@ -24,7 +24,7 @@ class EventLogConfigBucketsTest : EventLogConfigBaseParserTest() {
       }],
       "endpoints": {
         "send": "https://send/endpoint",
-        "whitelist": "https://whitelist/endpoint/",
+        "metadata": "https://metadata/endpoint/",
         "dictionary": "https://dictionary/endpoint/"
       }
     }
@@ -34,7 +34,7 @@ class EventLogConfigBucketsTest : EventLogConfigBaseParserTest() {
     val notExistingConfig: Set<EventLogBuildType> = if (expected.isNotEmpty()) hashSetOf(EAP, UNKNOWN) else hashSetOf(EAP, UNKNOWN, RELEASE)
     val endpoints = hashMapOf(
       "send" to "https://send/endpoint",
-      "whitelist" to "https://whitelist/endpoint/",
+      "metadata" to "https://metadata/endpoint/",
       "dictionary" to "https://dictionary/endpoint/"
     )
     doTest(config, existingConfig = existingConfig, notExistingConfig = notExistingConfig, existingEndpoints = endpoints)

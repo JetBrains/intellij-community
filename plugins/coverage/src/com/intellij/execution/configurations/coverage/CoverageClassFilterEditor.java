@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations.coverage;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.java.coverage.JavaCoverageBundle;
@@ -10,7 +11,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.classFilter.ClassFilterEditor;
-import com.intellij.util.IconUtil;
 
 import javax.swing.*;
 import java.util.List;
@@ -54,6 +54,6 @@ class CoverageClassFilterEditor extends ClassFilterEditor {
 
   @Override
   protected Icon getAddPatternButtonIcon() {
-    return IconUtil.getAddPackageIcon();
+    return AllIcons.ToolbarDecorator.AddFolder;
   }
 }

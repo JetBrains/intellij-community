@@ -74,7 +74,7 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
   }
 
   @Override
-  public Collection<NotificationGroup> getRegisteredNotificationGroups() {
+  public @NotNull Collection<NotificationGroup> getRegisteredNotificationGroups() {
     return myRegisteredGroups.values();
   }
 

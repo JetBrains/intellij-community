@@ -224,7 +224,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
   private static class Log4jLikeProblemChecker implements LoggingProblemChecker {
 
     @Override
-    public boolean hasLoggingProblem(String priority, PsiMethodCallExpression methodCallExpression) {
+    public boolean hasLoggingProblem(@NonNls String priority, PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if ("isDebugEnabled".equals(methodName)) {

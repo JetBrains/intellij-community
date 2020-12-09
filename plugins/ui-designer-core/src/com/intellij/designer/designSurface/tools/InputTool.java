@@ -16,6 +16,7 @@
 package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.EditableArea;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -157,7 +158,7 @@ public abstract class InputTool {
   }
 
   @Nullable
-  protected String getDescription() {
+  protected @Nls String getDescription() {
     return null;
   }
 

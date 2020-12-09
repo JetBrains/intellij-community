@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -29,9 +30,23 @@ import com.intellij.util.PsiNavigateUtil
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
   : InplaceRefactoring(editor, null, extractOptions.project) {
 
+  companion object {
+    private val INPLACE_METHOD_EXTRACTOR = Key<InplaceMethodExtractor>("InplaceMethodExtractor")
+
+    fun getActiveExtractor(editor: Editor): InplaceMethodExtractor? {
+      return TemplateManagerImpl.getTemplateState(editor)?.properties?.get(INPLACE_METHOD_EXTRACTOR) as? InplaceMethodExtractor
+    }
+
+    private fun setActiveExtractor(editor: Editor, extractor: InplaceMethodExtractor) {
+      TemplateManagerImpl.getTemplateState(editor)?.properties?.put(INPLACE_METHOD_EXTRACTOR, extractor)
+    }
+  }
+
   private val fragmentsToRevert = mutableListOf<FragmentState>()
 
   private val caretToRevert: Int = editor.caretModel.currentCaret.offset
+
+  private val selectionToRevert: TextRange? = ExtractMethodHelper.findEditorSelection(editor)
 
   private val extractedRange = enclosingTextRangeOf(extractOptions.elements.first(), extractOptions.elements.last())
 
@@ -78,16 +93,16 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
       }
       PsiDocumentManager.getInstance(myProject).commitDocument(editor.document)
       editor.caretModel.moveToOffset(caretToRevert)
+      if (selectionToRevert != null) {
+        editor.selectionModel.setSelection(selectionToRevert.startOffset, selectionToRevert.endOffset)
+      }
     }
   }
 
   override fun afterTemplateStart() {
     super.afterTemplateStart()
-    popupProvider.setChangeListener { restartWithNewOptions(popupProvider.annotate, popupProvider.makeStatic) }
-    popupProvider.setShowDialogAction {
-      val newOptions = revertAndFindNewOptions(popupProvider.annotate, popupProvider.makeStatic)
-      MethodExtractor().doDialogExtract(newOptions)
-    }
+    popupProvider.setChangeListener { restartInplace() }
+    popupProvider.setShowDialogAction { restartInDialog() }
     popupProvider.setNavigateMethodAction {
       val template = TemplateManagerImpl.getTemplateState(editor)
       if (template != null) {
@@ -102,9 +117,15 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val offset = templateState.currentVariableRange?.endOffset ?: return
     TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupProvider.panel) ?: return
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
+    setActiveExtractor(editor, this)
   }
 
-  private fun revertAndFindNewOptions(annotate: Boolean?, makeStatic: Boolean?): ExtractOptions {
+  fun restartInDialog() {
+    val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
+    MethodExtractor().doDialogExtract(newOptions)
+  }
+
+  private fun revertAndMapOptions(annotate: Boolean?, makeStatic: Boolean?): ExtractOptions {
     if (annotate != null) {
       PropertiesComponent.getInstance(extractOptions.project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, annotate, true)
     }
@@ -122,8 +143,8 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     return options
   }
 
-  private fun restartWithNewOptions(annotate: Boolean?, makeStatic: Boolean?) {
-    val newOptions = revertAndFindNewOptions(annotate, makeStatic)
+  private fun restartInplace() {
+    val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
     WriteCommandAction.runWriteCommandAction(myProject) {
       InplaceMethodExtractor(editor, newOptions, popupProvider).performInplaceRefactoring(linkedSetOf())
     }
@@ -136,8 +157,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   override fun performCleanup() {
     revertState()
   }
-
-  override fun collectAdditionalElementsToRename(stringUsages: MutableList<Pair<PsiElement, TextRange>>) {}
 
   override fun shouldSelectAll(): Boolean = false
 

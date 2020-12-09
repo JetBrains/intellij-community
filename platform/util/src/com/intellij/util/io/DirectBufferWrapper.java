@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
@@ -16,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 abstract class DirectBufferWrapper extends ByteBufferWrapper {
   // Fixes IDEA-222358 Linux native memory leak. Please do not replace to BoundedTaskExecutor
   private static final ExecutorService ourAllocator =
-    SystemInfo.isLinux && SystemProperties.getBooleanProperty("idea.limit.paged.storage.allocators", true)
+    SystemInfoRt.isLinux && Boolean.parseBoolean(System.getProperty("idea.limit.paged.storage.allocators", "true"))
     ? ConcurrencyUtil.newSingleThreadExecutor("DirectBufferWrapper allocation thread")
     : null;
 

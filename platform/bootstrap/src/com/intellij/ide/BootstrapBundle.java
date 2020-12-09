@@ -3,28 +3,40 @@ package com.intellij.ide;
 
 import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.function.Supplier;
+public final class BootstrapBundle extends AbstractBundle {
+  private static final String BUNDLE = "messages.BootstrapBundle";
 
-public class BootstrapBundle extends AbstractBundle {
-  @NonNls private static final String BUNDLE = "messages.BootstrapBundle";
-  private static final BootstrapBundle INSTANCE = new BootstrapBundle();
+  private static final @Nullable BootstrapBundle INSTANCE;
+
+  static {
+    BootstrapBundle instance = null;
+    try {
+      instance = new BootstrapBundle();
+    }
+    catch (Throwable ignored) { }
+    INSTANCE = instance;
+  }
 
   private BootstrapBundle() {
     super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
-  }
+  // used for reporting startup errors, hence must not produce any exceptions
+  public static @Nls @NotNull String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    if (INSTANCE != null) {
+      try {
+        return INSTANCE.getMessage(key, params);
+      }
+      catch (Throwable ignored) { }
+    }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+    StringBuilder sb = new StringBuilder();
+    sb.append('!').append(key).append('!');
+    for (Object param : params) sb.append(param).append('!');
+    return sb.toString();  // NON-NLS (fallback)
   }
 }

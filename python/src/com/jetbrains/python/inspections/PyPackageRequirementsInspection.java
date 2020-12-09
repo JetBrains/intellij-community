@@ -40,9 +40,8 @@ import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
-import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -130,9 +129,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
             @InspectionMessage String msg = PyPsiBundle.message("INSP.requirements.package.requirements.not.satisfied",
                                                                 requirementsList, unsatisfied.size());
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
-            // TODO: Introduce an inspection extension
-            if (PipenvKt.isPipEnv(sdk)) {
-              quickFixes.add(new PipEnvInstallQuickFix());
+
+            Optional<LocalQuickFix> providedFix = PySdkProvider.EP_NAME.extensions()
+              .map(ext -> ext.createInstallPackagesQuickFix(module))
+              .filter(fix -> fix != null)
+              .findFirst();
+
+            if (providedFix.isPresent()) {
+              quickFixes.add(providedFix.get());
             }
             else {
               quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
@@ -333,7 +337,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     module.putUserData(PyPackageManager.RUNNING_PACKAGING_TASKS, value);
   }
 
-  private static boolean isRunningPackagingTasks(@NotNull Module module) {
+  public static boolean isRunningPackagingTasks(@NotNull Module module) {
     final Boolean value = module.getUserData(PyPackageManager.RUNNING_PACKAGING_TASKS);
     return value != null && value;
   }

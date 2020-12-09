@@ -129,7 +129,7 @@ public final class UITheme {
       theme.patcher = new IconPathPatcher() {
         @Nullable
         @Override
-        public String patchPath(@NotNull String path, ClassLoader classLoader) {
+        public String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
           if (classLoader instanceof PluginClassLoader) {
             String pluginId = ((PluginClassLoader)classLoader).getPluginId().getIdString();
             Object icons = theme.icons.get(pluginId);
@@ -188,8 +188,8 @@ public final class UITheme {
         theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
           @Nullable
           @Override
-          public SVGLoader.SvgElementColorPatcher forURL(@Nullable URL url) {
-            PaletteScope scope = paletteScopeManager.getScopeByURL(url);
+          public SVGLoader.SvgElementColorPatcher forPath(@Nullable String path) {
+            PaletteScope scope = paletteScopeManager.getScopeByPath(path);
             if (scope == null) {
               return null;
             }
@@ -522,14 +522,11 @@ public final class UITheme {
     }
   }
 
-  static class PaletteScopeManager {
+  static final class PaletteScopeManager {
     final PaletteScope ui = new PaletteScope();
     final PaletteScope checkBoxes = new PaletteScope();
     final PaletteScope radioButtons = new PaletteScope();
     final PaletteScope trees = new PaletteScope();
-
-    PaletteScopeManager() {
-    }
 
     PaletteScope getScope(String colorKey) {
       if (colorKey.startsWith("Checkbox.")) return checkBoxes;
@@ -543,18 +540,13 @@ public final class UITheme {
       return null;
     }
 
-    @Nullable
-    PaletteScope getScopeByURL(@Nullable URL url) {
-      if (url != null) {
-        String path = url.toString();
+    @Nullable PaletteScope getScopeByPath(@Nullable String path) {
+      if (path != null && path.contains("/com/intellij/ide/ui/laf/icons/")) {
         String file = path.substring(path.lastIndexOf('/') + 1);
-
-        if (path.contains("/com/intellij/ide/ui/laf/icons/")) {
-          if (file.equals("treeCollapsed.svg") || file.equals("treeExpanded.svg")) return trees;
-          if (file.startsWith("check")) return checkBoxes;
-          if (file.startsWith("radio")) return checkBoxes; //same set of colors as for checkboxes
-          return null;
-        }
+        if (file.equals("treeCollapsed.svg") || file.equals("treeExpanded.svg")) return trees;
+        if (file.startsWith("check")) return checkBoxes;
+        if (file.startsWith("radio")) return checkBoxes; //same set of colors as for checkboxes
+        return null;
       }
       return ui;
     }

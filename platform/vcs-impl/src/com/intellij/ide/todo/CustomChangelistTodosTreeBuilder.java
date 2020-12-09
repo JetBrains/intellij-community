@@ -53,7 +53,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     myProject = project;
 
     myIncludedFiles = collectIncludedFiles(todoItems);
-    myIncludedChangeListsIds = collectIncludedChangeListsIds(changes);
+    myIncludedChangeListsIds = collectIncludedChangeListsIds(project, changes);
 
     buildMap(todoItems);
   }
@@ -68,7 +68,9 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   @Nullable
-  private static Set<String> collectIncludedChangeListsIds(@NotNull List<Change> changes) {
+  private static Set<String> collectIncludedChangeListsIds(@NotNull Project project, @NotNull List<Change> changes) {
+    if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return null;
+
     HashSet<String> ids = new HashSet<>();
     for (Change change : changes) {
       if (change instanceof ChangeListChange) {

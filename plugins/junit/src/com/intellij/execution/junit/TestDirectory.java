@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ReadAction;
@@ -178,7 +179,7 @@ class TestDirectory extends TestPackage {
   public String suggestActionName() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String dirName = data.getDirName();
-    return dirName.isEmpty() ? JUnitBundle.message("all.tests.scope.presentable.text")
+    return dirName.isEmpty() ? TestRunnerBundle.message("all.tests.scope.presentable.text")
                              : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(FileUtil.toSystemIndependentName(dirName), '/'));
   }
 

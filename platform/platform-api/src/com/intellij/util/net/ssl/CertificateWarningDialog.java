@@ -70,7 +70,7 @@ public class CertificateWarningDialog extends DialogWrapper {
     Messages.installHyperlinkSupport(myNoticePane);
     //    myNoticePane.setFont(myNoticePane.getFont().deriveFont((float)FontSize.SMALL.getSize()));
 
-    String path = FileUtil.toCanonicalPath(manager.getCacertsPath());
+    String path = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(manager.getCacertsPath()));
     @NlsSafe String password = manager.getPassword();
 
     myNoticePane.setText(

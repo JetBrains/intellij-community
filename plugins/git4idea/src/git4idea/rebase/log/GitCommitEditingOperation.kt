@@ -50,7 +50,7 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
     override fun notifySuccess() {
       repository.update()
       val newHead = repository.currentRevision!!
-      result = GitCommitEditingOperationResult.Complete(repository, params.upstream, initialHead, newHead)
+      result = GitCommitEditingOperationResult.Complete(repository, params.upstream!!, initialHead, newHead)
     }
   }
 }

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.events.MavenUnparseableConfigEvent;
 
 import java.util.function.Consumer;
@@ -21,6 +22,7 @@ public class MavenBadConfigEventParser implements MavenLoggedEventParser {
 
   @Override
   public boolean checkLogLine(@NotNull Object parendId,
+                              @NotNull MavenParsingContext parsingContext,
                               @NotNull MavenLogEntryReader.MavenLogEntry logLine,
                               @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {

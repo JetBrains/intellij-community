@@ -63,7 +63,11 @@ internal object PreviewLAFThemeStyles {
                 border: 1px solid ${separatorColor.webRgba()};
               }
               
-              hr, kbd, tr {
+              hr {
+                background-color: ${separatorColor.webRgba()};
+              }
+              
+              kbd, tr {
                 border: 1px solid ${separatorColor.webRgba()};
               }
               
@@ -72,7 +76,7 @@ internal object PreviewLAFThemeStyles {
               }
               
               blockquote {
-                border-left: 2px solid ${linkActiveForeground.webRgba(alpha = 0.6)};
+                border-left: 2px solid ${linkActiveForeground.webRgba(alpha = 0.4)};
               }
               
               ::-webkit-scrollbar-thumb {

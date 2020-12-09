@@ -17,5 +17,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.DevKitPropertiesQuotesValidationInspection"
                      key="inspection.dev.kit.properties.quotes.validation.display.name"/>
+    <properties.implicitPropertyUsageProvider
+      implementation="org.jetbrains.idea.devkit.inspections.IntentionsImplicitPropertyUsageProvider"/>
   </extensions>
 </idea-plugin>

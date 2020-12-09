@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -103,6 +104,7 @@ public class JavaHomeFinderBasic {
 
     Set<Path> paths = new HashSet<>();
     paths.add(JdkInstaller.getInstance().defaultInstallDir());
+    paths.addAll(JdkInstallerStore.getInstance().listJdkInstallHomes());
 
     for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {

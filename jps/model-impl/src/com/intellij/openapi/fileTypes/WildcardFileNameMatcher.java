@@ -1,16 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PatternUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 
 public class WildcardFileNameMatcher implements FileNameMatcher {
-  @NotNull
   private final String myPattern;
   private final MaskMatcher myMatcher;
 
@@ -43,7 +40,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
 
     @Override
     public boolean matches(final @NotNull CharSequence filename) {
-      return StringUtil.endsWith(filename, mySuffix);
+      return Strings.endsWith(filename, mySuffix);
     }
   }
 
@@ -56,7 +53,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
 
     @Override
     public boolean matches(final @NotNull CharSequence filename) {
-      return StringUtil.startsWith(filename, myPrefix);
+      return Strings.startsWith(filename, 0, myPrefix);
     }
   }
 
@@ -69,14 +66,14 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
 
     @Override
     public boolean matches(final @NotNull CharSequence filename) {
-      return StringUtil.contains(filename, myInfix);
+      return Strings.contains(filename, myInfix);
     }
   }
 
   /**
    * Use {@link org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory#createMatcher(String)} instead of direct call to constructor
    */
-  public WildcardFileNameMatcher(@NotNull @NonNls String pattern) {
+  public WildcardFileNameMatcher(@NotNull String pattern) {
     myPattern = pattern;
     myMatcher = createMatcher(pattern);
   }
@@ -98,14 +95,12 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   }
 
   @Override
-  public boolean acceptsCharSequence(@NonNls @NotNull CharSequence fileName) {
+  public boolean acceptsCharSequence(@NotNull CharSequence fileName) {
     return myMatcher.matches(fileName);
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getPresentableString() {
+  public @NotNull String getPresentableString() {
     return myPattern;
   }
 

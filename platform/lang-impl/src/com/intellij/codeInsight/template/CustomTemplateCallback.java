@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -77,12 +78,12 @@ public class CustomTemplateCallback {
   }
 
   @Nullable
-  public TemplateImpl findApplicableTemplate(@NotNull String key) {
+  public TemplateImpl findApplicableTemplate(@NotNull @NlsSafe String key) {
     return ContainerUtil.getFirstItem(findApplicableTemplates(key));
   }
 
   @NotNull
-  public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
+  public List<TemplateImpl> findApplicableTemplates(@NotNull @NlsSafe String key) {
     List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : getMatchingTemplates(key)) {
       if (isAvailableTemplate(candidate)) {

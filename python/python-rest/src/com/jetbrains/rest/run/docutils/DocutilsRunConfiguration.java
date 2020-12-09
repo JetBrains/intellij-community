@@ -61,6 +61,6 @@ public class DocutilsRunConfiguration extends RestRunConfiguration {
 
   @Override
   public String suggestedName() {
-    return "docutils task in " + getName();
+    return PythonRestBundle.message("python.rest.docutils.run.cfg.default.name", getName());
   }
 }

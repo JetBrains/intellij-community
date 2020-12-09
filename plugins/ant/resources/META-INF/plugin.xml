@@ -44,15 +44,16 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.lang.ant.quickfix.AntUnresolvedRefsFixProvider"/>
     <hectorComponentProvider implementation="com.intellij.lang.ant.validation.AntHectorPanelProvider"/>
 
-    <localInspection language="XML" shortName="AntDuplicateTargetsInspection" bundle="messages.AntBundle" key="ant.duplicate.targets.inspection"
+    <localInspection language="XML" shortName="AntDuplicateTargetsInspection" bundle="messages.AntBundle" key="inspection.ant.duplicate.targets"
                      groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.ant.validation.AntDuplicateTargetsInspection"/>
-    <localInspection language="XML" shortName="AntMissingPropertiesFileInspection" bundle="messages.AntBundle" key="ant.missing.properties.file.inspection"
+    <localInspection language="XML" shortName="AntMissingPropertiesFileInspection" bundle="messages.AntBundle" key="inspection.ant.missing.properties.file"
                      groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection"/>
-    <localInspection language="XML" shortName="AntResolveInspection" displayName="Ant references resolve problems" bundle="messages.AntBundle"
+    <localInspection language="XML" shortName="AntResolveInspection" bundle="messages.AntBundle"
                      groupKey="ant.inspections.display.name"
-                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"/>
+                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"
+                     key="inspection.ant.resolve.inspection.display.name"/>
 
     <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntDomFileDescription" rootTagName="project"/>
     <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription" rootTagName="antlib"/>

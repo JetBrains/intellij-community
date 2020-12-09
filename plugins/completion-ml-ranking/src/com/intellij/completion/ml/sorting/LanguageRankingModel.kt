@@ -7,7 +7,7 @@ class LanguageRankingModel(private val model: DecisionFunction) : RankingModelWr
   private val featuresArrayBuilder = CachingFeaturesArrayBuilder(model.featuresOrder)
   override fun canScore(features: RankingFeatures): Boolean {
     return model.requiredFeatures.all { features.hasFeature(it) }
-           && model.getUnknownFeatures(features.relevanceFeatures()).isEmpty()
+           && model.getUnknownFeatures(features.meaningfulRelevanceFeatures()).isEmpty()
   }
 
   override fun version(): String? = model.version()

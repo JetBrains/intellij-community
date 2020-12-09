@@ -28,4 +28,9 @@ public class DebuggerCopyPastePreprocessor implements CopyPastePreProcessor {
     }
     return text;
   }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
+  }
 }

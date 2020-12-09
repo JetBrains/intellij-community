@@ -15,13 +15,16 @@
  */
 package com.intellij.refactoring.convertToInstanceMethod;
 
-import com.intellij.usageView.UsageInfo;
+import com.intellij.model.BranchableUsageInfo;
+import com.intellij.model.ModelBranch;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-class MethodCallUsageInfo extends UsageInfo {
+final class MethodCallUsageInfo extends UsageInfo implements BranchableUsageInfo {
   private final PsiMethodCallExpression myMethodCall;
 
   MethodCallUsageInfo(PsiMethodCallExpression methodCall) {
@@ -31,5 +34,10 @@ class MethodCallUsageInfo extends UsageInfo {
 
   public PsiMethodCallExpression getMethodCall() {
     return myMethodCall;
+  }
+
+  @Override
+  public @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
+    return new MethodCallUsageInfo(branch.obtainPsiCopy(myMethodCall));
   }
 }

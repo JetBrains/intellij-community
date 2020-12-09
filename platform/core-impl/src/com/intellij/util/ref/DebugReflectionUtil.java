@@ -24,18 +24,19 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public final class DebugReflectionUtil {
-  private static final Map<Class<?>, Field[]> allFields = new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<Class<?>>() {
-    // default strategy seems to be too slow
-    @Override
-    public int hashCode(@Nullable Class<?> aClass) {
-      return aClass == null ? 0 : aClass.getName().hashCode();
-    }
+  private static final Map<Class<?>, Field[]> allFields =
+    Collections.synchronizedMap(new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<Class<?>>() {
+      // default strategy seems to be too slow
+      @Override
+      public int hashCode(@Nullable Class<?> aClass) {
+        return aClass == null ? 0 : aClass.getName().hashCode();
+      }
 
-    @Override
-    public boolean equals(@Nullable Class<?> o1, @Nullable Class<?> o2) {
-      return o1 == o2;
-    }
-  });
+      @Override
+      public boolean equals(@Nullable Class<?> o1, @Nullable Class<?> o2) {
+        return o1 == o2;
+      }
+    }));
 
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
   private static final Method Unsafe_shouldBeInitialized;

@@ -227,6 +227,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
            : getKeyStrokeText(item.getAccelerator());
   }
 
+  @NlsSafe
   private static String getKeyStrokeText(KeyStroke keystroke) {
     String s1 = "";
     if (keystroke != null){

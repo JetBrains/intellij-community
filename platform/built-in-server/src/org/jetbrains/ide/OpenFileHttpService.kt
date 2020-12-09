@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.regex.Pattern
 import javax.swing.SwingUtilities
 
+@Suppress("HardCodedStringLiteral")
 private val NOT_FOUND = createError("not found")
 private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
 
@@ -57,6 +58,7 @@ private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
  * @apiExample {curl} Query parameters
  * curl http://localhost:63342/api/file?file=path/to/file.kt&line=100&column=34
  */
+@Suppress("HardCodedStringLiteral")
 internal class OpenFileHttpService : RestService() {
   @Volatile private var refreshSessionId: Long = 0
   private val requests = ConcurrentLinkedQueue<OpenFileTask>()

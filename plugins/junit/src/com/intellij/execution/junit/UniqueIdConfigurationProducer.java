@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -44,10 +45,12 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
     if (!(runConfiguration instanceof JUnitConfiguration)) return null;
     Module module = ((JUnitConfiguration)runConfiguration).getConfigurationModule().getModule();
 
+    Project project = context.getProject();
     GlobalSearchScope searchScope =
-      module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(context.getProject());
+      module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.projectScope(project);
+    if (!JUnitUtil.isJUnit5(searchScope, project)) return null;
     return
-      Arrays.stream(testProxies).map(testProxy -> TestUniqueId.getEffectiveNodeId(testProxy, context.getProject(), searchScope))
+      Arrays.stream(testProxies).map(testProxy -> TestUniqueId.getEffectiveNodeId(testProxy, project, searchScope))
         .filter(Objects::nonNull)
         .toArray(String[]::new);
   }

@@ -88,7 +88,6 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final ProjectLevelVcsManager myVcsManager;
-  private final GitRepositoryFiles myRepositoryFiles;
   private final Git myGit;
 
   private final Set<FilePath> myDefinitelyUntrackedFiles = new HashSet<>();
@@ -97,7 +96,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   private final Object LOCK = new Object();
   private final Object RESCAN_LOCK = new Object();
 
-  GitUntrackedFilesHolder(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
+  GitUntrackedFilesHolder(@NotNull GitRepository repository) {
     myProject = repository.getProject();
     myRepository = repository;
     myRoot = repository.getRoot();
@@ -106,8 +105,6 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myGit = Git.getInstance();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-
-    myRepositoryFiles = gitFiles;
   }
 
   void setupVfsListener(@NotNull Project project) {

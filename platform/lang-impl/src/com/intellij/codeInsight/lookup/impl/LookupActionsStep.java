@@ -49,7 +49,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
     if (result == LookupElementAction.Result.HIDE_LOOKUP) {
       myLookup.hideLookup(true);
     } else if (result == LookupElementAction.Result.REFRESH_ITEM) {
-      myLookup.updateLookupWidth(myLookupElement);
+      myLookup.updateLookupWidth();
       myLookup.requestResize();
       myLookup.refreshUi(false, true);
     } else if (result instanceof LookupElementAction.Result.ChooseItem) {

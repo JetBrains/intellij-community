@@ -4,7 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,33 +14,32 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
 public final class MethodSignatureUtil {
   private MethodSignatureUtil() { }
 
-  public static final TObjectHashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
-    new TObjectHashingStrategy<MethodSignatureBackedByPsiMethod>() {
+  public static final Hash.Strategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
+    new Hash.Strategy<MethodSignatureBackedByPsiMethod>() {
       @Override
-      public int computeHashCode(final MethodSignatureBackedByPsiMethod signature) {
-        return signature.getMethod().hashCode();
+      public int hashCode(@Nullable MethodSignatureBackedByPsiMethod signature) {
+        return signature == null ? 0 : signature.getMethod().hashCode();
       }
 
       @Override
-      public boolean equals(final MethodSignatureBackedByPsiMethod s1, final MethodSignatureBackedByPsiMethod s2) {
-        return s1.getMethod().equals(s2.getMethod());
+      public boolean equals(@Nullable MethodSignatureBackedByPsiMethod s1, @Nullable MethodSignatureBackedByPsiMethod s2) {
+        return s1 == s2 || (s1 != null && s2 != null && s1.getMethod().equals(s2.getMethod()));
       }
     };
 
-  public static final TObjectHashingStrategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY =
-    new TObjectHashingStrategy<MethodSignature>() {
+  public static final Hash.Strategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY =
+    new Hash.Strategy<MethodSignature>() {
       @Override
-      public int computeHashCode(final MethodSignature signature) {
-        return signature.hashCode();
+      public int hashCode(final MethodSignature signature) {
+        return signature == null ? 0 : signature.hashCode();
       }
 
       @Override
-      public boolean equals(MethodSignature method1, MethodSignature method2) {
-        return areSignaturesEqualLightweight(method1, method2) && areErasedParametersEqual(method1, method2);
+      public boolean equals(@Nullable MethodSignature method1, @Nullable MethodSignature method2) {
+        return method1 == method2 || (method1 != null && method2 != null && areSignaturesEqualLightweight(method1, method2) && areErasedParametersEqual(method1, method2));
       }
     };
 

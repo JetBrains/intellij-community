@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -46,27 +47,6 @@ public final class MavenServerManager implements Disposable {
 
   private final Map<Project, MavenServerConnector> myServerConnectors = new HashMap<>();
   private File eventListenerJar;
-
-  public static boolean checkMavenSettings(Project project, MavenSyncConsole console) {
-
-    MavenDistribution distribution = MavenDistribution.fromSettings(project);
-    if (distribution == null) {
-      console.showQuickFixBadMaven(SyncBundle.message("maven.sync.quickfixes.nomaven"), MessageEvent.Kind.ERROR);
-      return false;
-    }
-
-    if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3.6.0") == 0) {
-      console.showQuickFixBadMaven(SyncBundle.message("maven.sync.quickfixes.maven360"), MessageEvent.Kind.WARNING);
-      return false;
-    }
-
-    Sdk jdk = getJdk(project, MavenWorkspaceSettingsComponent.getInstance(project).getSettings());
-    if (!verifyMavenSdkRequirements(jdk, distribution.getVersion())) {
-      console.showQuickFixJDK(distribution.getVersion());
-      return false;
-    }
-    return true;
-  }
 
   public void unregisterConnector(MavenServerConnector serverConnector) {
     synchronized (myServerConnectors) {
@@ -149,9 +129,6 @@ public final class MavenServerManager implements Disposable {
 
   @NotNull
   private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    }
     String jdkForImporterName = settings.importingSettings.getJdkForImporter();
     return MavenUtil.getJdk(project, jdkForImporterName);
   }

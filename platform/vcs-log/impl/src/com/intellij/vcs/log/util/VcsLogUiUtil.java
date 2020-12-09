@@ -27,12 +27,11 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
-import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.Nls;
@@ -44,9 +43,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Predicate;
-
-import static com.intellij.vcs.log.ui.AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP;
 
 public final class VcsLogUiUtil {
   @NotNull
@@ -142,7 +138,7 @@ public final class VcsLogUiUtil {
   }
 
   @NotNull
-  public static History installNavigationHistory(@NotNull VcsLogUiEx ui) {
+  public static History installNavigationHistory(@NotNull AbstractVcsLogUi ui) {
     History history = new History(new VcsLogPlaceNavigator(ui));
     ui.getTable().getSelectionModel().addListSelectionListener((e) -> {
       if (!history.isNavigatingNow() && !e.getValueIsAdjusting()) {
@@ -185,22 +181,6 @@ public final class VcsLogUiUtil {
     return Registry.is("vcs.log.show.diff.preview.as.editor.tab");
   }
 
-  public static void installHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
-    LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(() -> {
-      updateHighlighters(logUi, enabled);
-    }, logUi);
-    updateHighlighters(logUi, enabled);
-  }
-
-  private static void updateHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
-    logUi.getTable().removeAllHighlighters();
-    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
-      if (enabled.test(factory)) {
-        logUi.getTable().addHighlighter(factory.createHighlighter(logUi.getLogData(), logUi));
-      }
-    }
-  }
-
   @NotNull
   public static Dimension expandToFitToolbar(@NotNull Dimension size, @NotNull JComponent toolbar) {
     Dimension preferredSize = toolbar.getPreferredSize();
@@ -210,9 +190,9 @@ public final class VcsLogUiUtil {
 
   private static final class VcsLogPlaceNavigator implements Place.Navigator {
     @NonNls private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
-    @NotNull private final VcsLogUiEx myUi;
+    @NotNull private final AbstractVcsLogUi myUi;
 
-    private VcsLogPlaceNavigator(@NotNull VcsLogUiEx ui) {
+    private VcsLogPlaceNavigator(@NotNull AbstractVcsLogUi ui) {
       myUi = ui;
     }
 
@@ -234,7 +214,7 @@ public final class VcsLogUiUtil {
       CommitId commitId = (CommitId)value;
       ActionCallback callback = new ActionCallback();
 
-      ListenableFuture<Boolean> future = myUi.jumpToCommit(commitId.getHash(), commitId.getRoot());
+      ListenableFuture<Boolean> future = ((VcsLogImpl)myUi.getVcsLog()).jumpToCommit(commitId.getHash(), commitId.getRoot());
 
       Futures.addCallback(future, new FutureCallback<Boolean>() {
         @Override

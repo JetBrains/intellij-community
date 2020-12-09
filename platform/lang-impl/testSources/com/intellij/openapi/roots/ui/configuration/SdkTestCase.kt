@@ -174,7 +174,7 @@ abstract class SdkTestCase : LightPlatformTestCase() {
 
     fun findTestSdk(sdk: Sdk): TestSdk? = findTestSdk(sdk.homePath!!)
 
-    fun findTestSdk(homePath: String): TestSdk? = createdSdks[homePath]
+    fun findTestSdk(homePath: String): TestSdk? = createdSdks[FileUtil.toSystemDependentName(homePath)]
 
     fun getCurrentSdk() = createdSdks.values.last()
 
@@ -186,7 +186,7 @@ abstract class SdkTestCase : LightPlatformTestCase() {
 
     fun createTestSdk(sdkInfo: SdkInfo): TestSdk {
       val sdk = TestSdk(sdkInfo.name, sdkInfo.homePath, sdkInfo.versionString)
-      createdSdks[sdkInfo.homePath] = sdk
+      createdSdks[FileUtil.toSystemDependentName(sdkInfo.homePath)] = sdk
       return sdk
     }
 

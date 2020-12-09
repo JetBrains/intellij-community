@@ -9,7 +9,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.levelToLibraryTableId
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
@@ -72,7 +71,10 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
+  override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
+                            reader: JpsFileContentReader,
+                            errorReporter: ErrorReporter,
+                            virtualFileManager: VirtualFileUrlManager) {
     val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 

@@ -27,6 +27,10 @@
     <searcher forClass="com.intellij.model.search.PsiSymbolReferenceSearchParameters"
               implementationClass="com.intellij.model.search.impl.PsiToSymbolSearcher"
               order="last"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.find.usages.impl.DefaultUsageSearcher"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="com.intellij.refactoring.rename.impl.DefaultRenameUsageSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SearcherQueryExecutor"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
@@ -76,6 +80,8 @@
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSettingsService"
+                        serviceImplementation="com.intellij.psi.codeStyle.CodeStyleSettingsServiceImpl" />
 
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
                         serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
@@ -90,6 +96,10 @@
 
     <applicationService serviceInterface="com.intellij.model.BranchService"
                         serviceImplementation="com.intellij.model.BranchServiceImpl"/>
+
+    <projectServiceContainerCustomizer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener"/>
+    <projectServiceContainerInitializedListener
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$MyProjectServiceContainerInitializedListener"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
 
@@ -928,7 +938,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.NonAsciiCharactersInspection"/>
     <localInspection shortName="ProblematicWhitespace" bundle="messages.LangBundle" key="problematic.whitespace.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" 
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ProblematicWhitespaceInspection"/>
     <localInspection shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
@@ -951,6 +961,7 @@
     <projectViewPane implementation="com.intellij.ide.scopeView.ScopeViewPane"/>
 
     <renamerFactory implementation="com.intellij.refactoring.rename.RenameHandlerRenamerFactory"/>
+    <renamerFactory implementation="com.intellij.refactoring.rename.impl.SymbolRenameTargetRenamerFactory"/>
     <renameHandler implementation="com.intellij.refactoring.rename.PlainDirectoryRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler"/>
@@ -997,6 +1008,7 @@
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.tools.InspectionsUsagesCollector$InspectionToolValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.notification.impl.NotificationCollector$NotificationGroupValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.notification.impl.NotificationCollector$NotificationIdValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.FavoriteTypeValidationRule"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
@@ -1023,7 +1035,7 @@
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeLanguageExtension"/>
 
-    <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence" />
+    <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence" />
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
@@ -1213,6 +1225,7 @@
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Factory"/>
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Factory"/>
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor$Factory"/>
+    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor$Factory"/>
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider"/>
@@ -1339,10 +1352,17 @@
 
     <registerToolWindowTaskProvider implementation="com.intellij.facet.impl.ui.FacetDependentToolWindowManager"/>
     <postStartupActivity implementation="com.intellij.ide.script.IdeStartupScripts" order="last"/>
+
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor" order="first"/>
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalFilesContributor" order="last" id="aditionalFiles"/>
+    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after aditionalFiles"/>
+    <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.FileBasedIndexTreeChangePreprocessor"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
+    <listener class="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationNotifier"
+              topic="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationListener"/>
   </projectListeners>
 </idea-plugin>
 

@@ -84,7 +84,7 @@ public class IdeUICustomization {
    * Allows to replace the text of the given action (only for the actions/groups that support this mechanism)
    */
   @Nullable
-  public String getActionText(@NotNull String actionId) {
+  public @Nls String getActionText(@NotNull String actionId) {
     return null;
   }
 

@@ -1,7 +1,7 @@
 Index: before/1.txt
 ===================================================================
---- before/1.txt	(revision before)
-+++ after/1.txt	(revision after)
+--- a/before/1.txt	(revision before)
++++ b/after/1.txt	(revision after)
 @@ -1,2 +1,3 @@
  uno
 -dos

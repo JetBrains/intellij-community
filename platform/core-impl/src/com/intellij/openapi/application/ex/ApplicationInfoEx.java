@@ -120,6 +120,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 
+  public abstract @Nullable String getCustomizeIDEWizardDialog();
+
   public abstract @Nullable String getCustomizeIDEWizardStepsProvider();
 
   public abstract int @Nullable [] getAboutLogoRect();

@@ -133,14 +133,24 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull
     @Override
     public Boolean fun(Project project) {
-      return ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
+      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+      if (!vcsManager.hasActiveVcss()) return false;
+      AbstractVcs singleVcs = vcsManager.getSingleVCS();
+      if (singleVcs != null && singleVcs.isWithCustomLocalChanges()) return false;
+      return true;
     }
   }
 
   public static class DisplayNameSupplier implements Supplier<String> {
+    private final @NotNull Project myProject;
+
+    public DisplayNameSupplier(@NotNull Project project) {
+      myProject = project;
+    }
+
     @Override
     public String get() {
-      return VcsBundle.getString("local.changes.tab");
+      return isCommitToolWindow(myProject) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
     }
   }
 
@@ -167,15 +177,16 @@ public class ChangesViewManager implements ChangesViewEx,
   private ChangesViewToolWindowPanel initToolWindowPanel() {
     if (myToolWindowPanel == null) {
       ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, this);
-      Disposer.register(myProject, panel);
+      Disposer.register(this, panel);
+
       myToolWindowPanel = panel;
+      Disposer.register(panel, () -> myToolWindowPanel = null);
     }
     return myToolWindowPanel;
   }
 
   @Override
   public void dispose() {
-    myToolWindowPanel = null;
   }
 
   @NotNull
@@ -573,7 +584,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (isNonModal) {
         if (myCommitPanel == null) {
           myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
-          myCommitPanel = myChangesViewManager.createCommitPanel(myView, this);
+          myCommitPanel = new ChangesViewCommitPanel(myChangesPanel, this);
           myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
           if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate(false);
@@ -858,10 +869,6 @@ public class ChangesViewManager implements ChangesViewEx,
         return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
       }
     }
-  }
-
-  protected ChangesViewCommitPanel createCommitPanel(@NotNull ChangesListView myView, @NotNull ChangesViewToolWindowPanel changesViewToolWindowPanel) {
-      return new ChangesViewCommitPanel(myView, changesViewToolWindowPanel);
   }
 
   private static final class MyContentDnDTarget extends VcsToolwindowDnDTarget {

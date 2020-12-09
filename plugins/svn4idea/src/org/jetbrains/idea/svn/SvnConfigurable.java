@@ -22,11 +22,10 @@ import java.awt.*;
 import java.io.File;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.vcs.configurable.VcsManagerConfigurable.getVcsConfigurableId;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<SvnConfiguration>, SvnConfiguration> {
-  private static final @NonNls String ID = getVcsConfigurableId(SvnVcs.VCS_DISPLAY_NAME);
+  private static final @NonNls String ID = "vcs.Subversion";
   private static final @NonNls String HELP_ID = "project.propSubversion";
 
   @NotNull private final Project myProject;

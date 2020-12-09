@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -240,7 +241,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
                                                  root: VirtualFile,
                                                  repository: GitRepository,
                                                  indicator: ProgressIndicator,
-                                                 name: String,
+                                                 @NlsSafe name: String,
                                                  url: String): Boolean {
           // check if there is no commits
           if (!repository.isFresh) {

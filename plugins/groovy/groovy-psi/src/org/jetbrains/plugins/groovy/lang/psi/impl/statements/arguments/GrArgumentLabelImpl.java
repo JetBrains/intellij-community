@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrMapConstructorPropertyReference;
 
@@ -299,6 +298,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       return false;
     }
     GroovyResolveResult result = constructorReference.advancedResolve();
-    return result instanceof GroovyConstructorResult && ((GroovyConstructorResult)result).isMapConstructor();
+    return PsiUtil.isTrustedMapConstructorResult(result);
   }
 }

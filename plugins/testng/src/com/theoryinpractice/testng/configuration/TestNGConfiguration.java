@@ -146,14 +146,12 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
 
   @Override
   public String suggestedName() {
-    final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
-    return testObject != null ? testObject.getGeneratedName() : null;
+    return TestNGTestObject.fromConfig(this).getGeneratedName();
   }
 
   @Override
   public String getActionName() {
-    final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
-    return testObject != null ? testObject.getActionName() : null;
+    return TestNGTestObject.fromConfig(this).getActionName();
   }
 
   @Override

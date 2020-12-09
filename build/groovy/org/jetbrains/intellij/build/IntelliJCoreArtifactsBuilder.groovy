@@ -21,6 +21,7 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.platform.editor",
     "intellij.platform.editor.ex",
     "intellij.platform.extensions",
+    "intellij.platform.codeStyle",
     "intellij.platform.indexing",
     "intellij.java.analysis",
     "intellij.java.indexing",
@@ -44,6 +45,7 @@ class IntelliJCoreArtifactsBuilder {
   private static final List<String> ANALYSIS_IMPL_MODULES = [
     "intellij.platform.analysis.impl",
     "intellij.platform.core.impl",
+    "intellij.platform.codeStyle.impl",
     "intellij.platform.indexing.impl",
     "intellij.java.analysis.impl",
     "intellij.java.indexing.impl",

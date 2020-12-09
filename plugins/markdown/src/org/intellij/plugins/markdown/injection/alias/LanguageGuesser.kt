@@ -56,7 +56,7 @@ internal object LanguageGuesser {
       if (StringUtil.toLowerCase(language.id) == lower) return language
     }
 
-    for (provider in EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.extensionList) {
+    for (provider in EmbeddedTokenTypesProvider.getProviders()) {
       if (provider.name.equals(name, ignoreCase = true)) return provider.elementType.language
     }
 

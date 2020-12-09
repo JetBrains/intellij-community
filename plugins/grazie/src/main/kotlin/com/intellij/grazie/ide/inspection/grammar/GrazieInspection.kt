@@ -10,8 +10,8 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.grammar.GrammarChecker
-import com.intellij.grazie.grammar.Typo
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain.*
 import com.intellij.grazie.ide.inspection.grammar.problem.GrazieProblemDescriptor
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
@@ -21,8 +21,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
-import com.intellij.util.containers.CollectionFactory
 import java.util.*
 
 class GrazieInspection : LocalInspectionTool() {
@@ -50,53 +51,59 @@ class GrazieInspection : LocalInspectionTool() {
         DaemonCodeAnalyzer.getInstance(it).restart()
       }
     }
+
+    private fun isCheckInElementTextDomainEnabled(domain: GrammarCheckingStrategy.TextDomain): Boolean {
+      return when (domain) {
+        NON_TEXT -> false
+        LITERALS -> checking.isCheckInStringLiteralsEnabled
+        COMMENTS -> checking.isCheckInCommentsEnabled
+        DOCS -> checking.isCheckInDocumentationEnabled
+        PLAIN_TEXT -> true
+      }
+    }
   }
 
-  private val CHECKED_ELEMENTS: Key<Set<PsiElement>> = Key.create("Grazie.Grammar.Checked")
+  private val CHECKED_ELEMENTS: Key<Set<PsiElement>> = Key.create("Grazie.CHECKED_ELEMENTS")
 
   override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    if (InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(holder.project)
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        val typos = CollectionFactory.createSmallMemoryFootprintSet<Typo>()
+        if (element is PsiWhiteSpace) return super.visitElement(element)
 
-        val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
-
-        for (strategy in strategies) {
+        for (strategy in LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)) {
           val domain = strategy.getContextRootTextDomain(element)
-          val isCheckNeeded = when (domain) {
-            GrammarCheckingStrategy.TextDomain.NON_TEXT -> false
-            GrammarCheckingStrategy.TextDomain.LITERALS -> checking.isCheckInStringLiteralsEnabled
-            GrammarCheckingStrategy.TextDomain.COMMENTS -> checking.isCheckInCommentsEnabled
-            GrammarCheckingStrategy.TextDomain.DOCS -> checking.isCheckInDocumentationEnabled
-            GrammarCheckingStrategy.TextDomain.PLAIN_TEXT -> true
+          if (!isCheckInElementTextDomainEnabled(domain)) continue
+
+          val roots = strategy.getRootsChain(element)
+          require(roots.isNotEmpty()) { "Roots chain MUST contain at least one element (self)" }
+          if (checkIfAlreadyProcessed(roots.first(), session)) continue
+
+          val whitespaceTokens = strategy.getWhiteSpaceTokens()
+          val rootsWithoutWhitespaces = roots.filter { it.elementType !in whitespaceTokens }
+
+          require(rootsWithoutWhitespaces.all { strategy.isMyContextRoot(it) }) {
+            "Chain roots MUST have the same GrammarCheckingStrategy"
           }
 
-          if (isCheckNeeded) {
-            val roots = strategy.getRootsChain(element)
-            require(roots.isNotEmpty()) { "Roots chain MUST contain at least one element (self)" }
+          require(rootsWithoutWhitespaces.all { strategy.getContextRootTextDomain(it) == domain }) {
+            "Chain roots MUST be from the same TextDomain"
+          }
 
-            if (!checkIfAlreadyProcessed(roots.first(), session)) {
-              val whitespaceTokens = strategy.getWhiteSpaceTokens()
-              val rootsWithoutWhitespaces = roots.filter { it.elementType !in whitespaceTokens }
-
-              require(rootsWithoutWhitespaces.all {
-                strategy in LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
-              }) { "Chain roots MUST have the same GrammarCheckingStrategy" }
-
-              require(rootsWithoutWhitespaces.all { strategy.getContextRootTextDomain(it) == domain }) {
-                "Chain roots must be from the same TextDomain"
-              }
-
-              typos.addAll(GrammarChecker.check(roots, strategy))
+          // if any root in chain contains injected language - ignore whole chain
+          for (root in rootsWithoutWhitespaces) {
+            if (root is PsiLanguageInjectionHost) {
+              if (!injectedLanguageManager.getInjectedPsiFiles(root).isNullOrEmpty()) return super.visitElement(element)
             }
           }
-        }
 
-        for (typo in typos.asSequence().filterNot { suppression.isSuppressed(it) }) {
-          holder.registerProblem(GrazieProblemDescriptor(typo, isOnTheFly))
+          for (typo in GrammarChecker.check(roots, strategy)) {
+            if (!suppression.isSuppressed(typo)) {
+              holder.registerProblem(GrazieProblemDescriptor(typo, isOnTheFly))
+            }
+          }
         }
 
         super.visitElement(element)

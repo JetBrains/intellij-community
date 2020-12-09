@@ -2,6 +2,7 @@
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SmartList
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
@@ -20,6 +21,7 @@ internal const val COMMAND_END = "-->"
 
 internal class SsiStopProcessingException : RuntimeException()
 
+@Suppress("HardCodedStringLiteral")
 internal open class SsiProcessor {
   private val commands: MutableMap<String, SsiCommand> = HashMap()
 

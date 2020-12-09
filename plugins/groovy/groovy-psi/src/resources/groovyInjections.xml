@@ -49,6 +49,7 @@
   <injection language="RegExp" injector-id="groovy">
     <display-name>RegExp</display-name>
     <place><![CDATA[groovyLiteralExpression().regExpOperatorArgument()]]></place>
+    <place><![CDATA[groovyElement().annotationParam("groovy.lang.Newify", "pattern")]]></place>
   </injection>
   <injection language="encoding-reference" injector-id="java">
     <display-name>Charset Name</display-name>

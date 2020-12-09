@@ -17,7 +17,7 @@ import com.intellij.util.WalkingState;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +71,7 @@ public abstract class SliceNullnessAnalyzerBase {
     }
     SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, nodeName);
 
-    Set<PsiElement> uniqueValues = new THashSet<>(groupedByValue, myLeafEquality);
+    Set<PsiElement> uniqueValues = new ObjectOpenCustomHashSet<>(groupedByValue, myLeafEquality);
     for (final PsiElement expression : uniqueValues) {
       SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, oldNode -> {
         if (oldNode.getDuplicate() != null) {

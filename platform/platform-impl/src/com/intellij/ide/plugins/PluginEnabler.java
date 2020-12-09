@@ -2,9 +2,9 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,7 +17,9 @@ import java.util.*;
 public final class PluginEnabler {
   private static final Logger LOG = Logger.getInstance(PluginEnabler.class);
 
-  public static boolean enablePlugins(@Nullable Project project, Collection<IdeaPluginDescriptor> plugins, boolean enable) {
+  public static boolean enablePlugins(@Nullable Project project,
+                                      @NotNull Collection<? extends IdeaPluginDescriptor> plugins,
+                                      boolean enable) {
     return updatePluginEnabledState(project, enable ? plugins : Collections.emptyList(),
                                     enable ? Collections.emptyList() : plugins,
                                     null);
@@ -27,24 +29,36 @@ public final class PluginEnabler {
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
   public static boolean updatePluginEnabledState(@Nullable Project project,
-                                                 Collection<IdeaPluginDescriptor> pluginsToEnable,
-                                                 Collection<IdeaPluginDescriptor> pluginsToDisable,
+                                                 @NotNull Collection<? extends IdeaPluginDescriptor> pluginsToEnable,
+                                                 @NotNull Collection<? extends IdeaPluginDescriptor> pluginsToDisable,
                                                  @Nullable JComponent parentComponent) {
     List<IdeaPluginDescriptorImpl> pluginDescriptorsToEnable = loadFullDescriptors(pluginsToEnable);
     List<IdeaPluginDescriptorImpl> pluginDescriptorsToDisable = loadFullDescriptors(pluginsToDisable);
 
+    ProjectPluginTracker pluginTracker = project != null ?
+                                         ProjectPluginTracker.getInstance(project) :
+                                         null;
+
     Set<PluginId> disabledIds = DisabledPluginsState.getDisabledIds();
-    for (PluginDescriptor descriptor : pluginsToEnable) {
-      descriptor.setEnabled(true);
-      disabledIds.remove(descriptor.getPluginId());
+    for (IdeaPluginDescriptor descriptor : pluginsToEnable) {
+      if (pluginTracker == null ||
+          !pluginTracker.isEnabled(descriptor)) {
+        descriptor.setEnabled(true);
+        disabledIds.remove(descriptor.getPluginId());
+      }
     }
-    for (PluginDescriptor descriptor : pluginsToDisable) {
+
+    for (IdeaPluginDescriptor descriptor : pluginsToDisable) {
       if (!PluginManagerCore.getLoadedPlugins().contains(descriptor)) {
         // don't try to unload plugin which wasn't loaded
         pluginDescriptorsToDisable.removeIf(plugin -> plugin.getPluginId().equals(descriptor.getPluginId()));
       }
-      descriptor.setEnabled(false);
-      disabledIds.add(descriptor.getPluginId());
+
+      if (pluginTracker == null ||
+          !pluginTracker.isDisabled(descriptor)) {
+        descriptor.setEnabled(false);
+        disabledIds.add(descriptor.getPluginId());
+      }
     }
 
     try {
@@ -84,11 +98,11 @@ public final class PluginEnabler {
     return false;
   }
 
-  private static List<IdeaPluginDescriptorImpl> loadFullDescriptors(Collection<IdeaPluginDescriptor> pluginsToEnable) {
+  private static List<IdeaPluginDescriptorImpl> loadFullDescriptors(@NotNull Collection<? extends IdeaPluginDescriptor> pluginsToEnable) {
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     for (IdeaPluginDescriptor descriptor : pluginsToEnable) {
       if (descriptor instanceof IdeaPluginDescriptorImpl) {
-        result.add(PluginDescriptorLoader.loadFullDescriptor((IdeaPluginDescriptorImpl) descriptor));
+        result.add(PluginDescriptorLoader.loadFullDescriptor((IdeaPluginDescriptorImpl)descriptor));
       }
     }
     return result;

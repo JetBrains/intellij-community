@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -45,12 +46,8 @@ import kotlin.collections.LinkedHashSet
 private val CHANGED_FILES_KEY = Key<LinkedHashMap<ComponentStoreImpl, LinkedHashSet<StateStorage>>>("CHANGED_FILES_KEY")
 private val CHANGED_SCHEMES_KEY = Key<LinkedHashMap<SchemeChangeApplicator, LinkedHashSet<SchemeChangeEvent>>>("CHANGED_SCHEMES_KEY")
 
-/**
- * This service is temporary allowed to be overridden to support reloading of new project model entities. It should be removed after merging
- * new project model modules to community project.
- */
 @ApiStatus.Internal
-open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
+internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<Throwable?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
@@ -101,10 +98,13 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     }
   }, delay = 300, parentDisposable = this)
 
-  protected open fun reloadAdditionalConfigurations(project: Project) {
+  private fun reloadAdditionalConfigurations(project: Project) {
+    JpsProjectModelSynchronizer.getInstance(project)?.reloadProjectEntities()
   }
 
-  protected open fun mayHaveAdditionalConfigurations(project: Project): Boolean = false
+  private fun mayHaveAdditionalConfigurations(project: Project): Boolean {
+    return JpsProjectModelSynchronizer.getInstance(project)?.needToReloadProjectEntities() ?: false
+  }
 
   internal class MyVirtualFileManagerListener : VirtualFileManagerListener {
     private val manager = StoreReloadManager.getInstance()

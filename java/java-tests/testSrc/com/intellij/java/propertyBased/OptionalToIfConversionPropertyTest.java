@@ -65,14 +65,17 @@ public class OptionalToIfConversionPropertyTest extends LightJavaCodeInsightFixt
     String methodText = context.generateOptionalCall(true);
     String afterStepText = context.afterStep;
     PsiMethod newMethod = replaceMethod(psiClass, methodText);
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
     PsiStatement lastStatement = addLastStatement(afterStepText, newMethod);
+    SmartPsiElementPointer<PsiStatement> lastStatementPtr = lastStatement == null ?
+                                                            null : smartPointerManager.createSmartPsiElementPointer(lastStatement);
     env.logMessage("Code before conversion:\n" + psiClass.getText());
 
     Editor editor = myFixture.getEditor();
     applyConversion(newMethod, editor);
     env.logMessage("Code after conversion:\n" + psiClass.getText());
 
-    assertFalse(hasErrors(newMethod, editor, lastStatement));
+    assertFalse(hasErrors(newMethod, editor, lastStatementPtr));
   }
 
   private @Nullable PsiStatement addLastStatement(@Nullable String statementText, @NotNull PsiMethod method) {
@@ -106,11 +109,11 @@ public class OptionalToIfConversionPropertyTest extends LightJavaCodeInsightFixt
     myFixture.launchAction(actions.get(0));
   }
 
-  private boolean hasErrors(PsiMethod psiMethod, @NotNull Editor editor, @Nullable PsiStatement afterStatement) {
-    if (afterStatement != null) {
+  private boolean hasErrors(PsiMethod psiMethod, @NotNull Editor editor, @Nullable SmartPsiElementPointer<PsiStatement> afterStatementPtr) {
+    if (afterStatementPtr != null) {
       PsiStatement[] statements = psiMethod.getBody().getStatements();
       int nStatements = statements.length;
-      assertTrue(nStatements >= 1 && statements[nStatements - 1] == afterStatement);
+      assertTrue(nStatements >= 1 && statements[nStatements - 1] == afterStatementPtr.dereference());
       if (nStatements >= 2) {
         PsiStatement lastConverted = statements[nStatements - 2];
         if (lastConverted instanceof PsiThrowStatement) return false;

@@ -204,11 +204,6 @@ final class ShTextRenameRefactoring {
     }
 
     @Override
-    public Result calculateQuickResult(ExpressionContext context) {
-      return calculateResult(context);
-    }
-
-    @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       return LookupElement.EMPTY_ARRAY;
     }

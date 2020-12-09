@@ -145,7 +145,7 @@ public abstract class DialogWrapper {
 
   protected final @NotNull Disposable myDisposable = new Disposable() {
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return DialogWrapper.this.toString();
     }
 
@@ -173,8 +173,7 @@ public abstract class DialogWrapper {
   private JComponent myPreferredFocusedComponentFromPanel;
   private Computable<? extends Point> myInitialLocationCallback;
   private Dimension  myActualSize;
-  @NotNull
-  private List<ValidationInfo> myInfo = Collections.emptyList();
+  private @NotNull List<ValidationInfo> myInfo = Collections.emptyList();
   private @Nullable DoNotAskOption myDoNotAsk;
   private Action myYesAction;
   private Action myNoAction;
@@ -389,7 +388,6 @@ public abstract class DialogWrapper {
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
     boolean updateNeeded = isInplaceValidationToolTipEnabled() ? !myInfo.equals(info) : !myErrorText.isTextSet(info);
     if (updateNeeded) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
         setErrorInfoAll(info);
@@ -991,7 +989,6 @@ public abstract class DialogWrapper {
     }
   }
 
-  @SuppressWarnings("SSBasedInspection")
   public static void cleanupWindowListeners(@Nullable Window window) {
     if (window == null) return;
     SwingUtilities.invokeLater(() -> {
@@ -1003,7 +1000,6 @@ public abstract class DialogWrapper {
       }
     });
   }
-
 
   /**
    * This method is invoked by default implementation of "Cancel" action. It just closes dialog
@@ -1414,7 +1410,6 @@ public abstract class DialogWrapper {
     }
   }
 
-  @SuppressWarnings("SSBasedInspection")
   protected void startTrackingValidation() {
     SwingUtilities.invokeLater(() -> {
       if (!myValidationStarted && !myDisposed) {
@@ -1971,7 +1966,6 @@ public abstract class DialogWrapper {
       clearErrorRunnable.run();
     }
     else {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(clearErrorRunnable);
     }
 
@@ -1996,7 +1990,6 @@ public abstract class DialogWrapper {
           }
         }
 
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
       });
     }
@@ -2015,7 +2008,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private boolean isInplaceValidationToolTipEnabled() {
+  private static boolean isInplaceValidationToolTipEnabled() {
     return Registry.is("ide.inplace.validation.tooltip", true);
   }
 

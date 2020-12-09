@@ -33,8 +33,6 @@ import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.pipenv.PipenvKt;
-import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
 import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -42,10 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,55 +73,37 @@ public final class PyInterpreterInspection extends PyInspection {
       final boolean pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde();
 
       final List<LocalQuickFix> fixes = new ArrayList<>();
-      // TODO: Introduce an inspection extension
-      if (UsePipEnvQuickFix.Companion.isApplicable(module)) {
-        fixes.add(new UsePipEnvQuickFix(sdk, module));
-      }
-      if (pyCharm && sdk == null) {
-        final String sdkName = ProjectRootManager.getInstance(node.getProject()).getProjectSdkName();
-        if (sdkName != null) {
-          ContainerUtil.addIfNotNull(fixes, getSuitableSdkFix(sdkName, module));
-        }
-      }
-      if (pyCharm) {
-        fixes.add(new ConfigureInterpreterFix());
-      }
-      else {
-        fixes.add(new InterpreterSettingsQuickFix(module));
-      }
-
       if (sdk == null) {
+        Optional<PyInterpreterInspectionQuickFixData> fixData = PySdkProvider.EP_NAME.extensions()
+          .map(ext -> ext.createMissingSdkFix(module, node))
+          .filter(it -> it != null)
+          .findFirst();
+
         final @InspectionMessage String message;
-        if (pyCharm) {
+        if (fixData.isPresent()) {
+          fixes.add(fixData.get().getQuickFix());
+          // noinspection HardCodedStringLiteral
+          message = fixData.get().getMessage();
+        }
+        else if (pyCharm) {
           message = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.project");
         }
         else {
           message = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.module");
         }
-        registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        registerProblemWithCommonFixes(node, message, module, null, fixes, pyCharm);
       }
       else {
-        // TODO: Introduce an inspection extension
         final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
-        if (PipenvKt.isPipEnv(sdk) && (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module))) {
-          final @InspectionMessage String message;
-          if (associatedModulePath != null) {
-            if (pyCharm) {
-              message = PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.project", associatedModulePath);
-            }
-            else {
-              message = PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.module", associatedModulePath);
-            }
-          }
-          else {
-            if (pyCharm) {
-              message = PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.project");
-            }
-            else  {
-              message = PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.module");
-            }
-          }
-          registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        if (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module)) {
+          PySdkProvider.EP_NAME.extensions()
+            .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
+            .filter(it -> it != null)
+            .findFirst().ifPresent(fixData ->  {
+              fixes.add(fixData.getQuickFix());
+              // noinspection HardCodedStringLiteral
+              registerProblemWithCommonFixes(node, fixData.getMessage(), module, sdk, fixes, pyCharm);
+          });
         }
         else if (PythonSdkUtil.isInvalid(sdk)) {
           final @InspectionMessage String message;
@@ -136,7 +113,7 @@ public final class PyInterpreterInspection extends PyInspection {
           else {
             message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.module");
           }
-          registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          registerProblemWithCommonFixes(node, message, module, sdk, fixes, pyCharm);
         }
         else {
           final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
@@ -150,10 +127,27 @@ public final class PyInterpreterInspection extends PyInspection {
               message = PyPsiBundle.message("INSP.interpreter.python.has.reached.its.end.life.and.is.no.longer.supported.in.python.plugin",
                                          languageLevel);
             }
-            registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+            registerProblemWithCommonFixes(node, message, module, sdk, fixes, pyCharm);
           }
         }
       }
+    }
+
+    private void registerProblemWithCommonFixes(PyFile node, @InspectionMessage String message, Module module, Sdk sdk, List<LocalQuickFix> fixes, boolean pyCharm) {
+      if (pyCharm && sdk == null) {
+        final String sdkName = ProjectRootManager.getInstance(node.getProject()).getProjectSdkName();
+        if (sdkName != null) {
+          ContainerUtil.addIfNotNull(fixes, getSuitableSdkFix(sdkName, module));
+        }
+      }
+      if (pyCharm) {
+        fixes.add(new ConfigureInterpreterFix());
+      }
+      else {
+        fixes.add(new InterpreterSettingsQuickFix(module));
+      }
+
+      registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
 
     @Nullable

@@ -43,7 +43,7 @@ class ExampleClassWithTypos<T> {
     /**
      * Creates an empty group.
      *
-     * @param name the name which group
+     * @param name the <warning descr="COMMA_WHICH">name which</warning> group
      */
     public ExampleClassWithTypos(String name) {
         this.name = name;

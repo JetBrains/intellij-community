@@ -6,7 +6,8 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
-import com.intellij.util.IconUtil;
+import com.intellij.ui.CoreAwareIconManager;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
@@ -268,8 +269,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     if (isSyntheticJSP()) {
       final PsiElement element = getPsiElement();
       if (element != null && element.isValid()) {
-        return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
-                                Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
+        IconManager iconManager = IconManager.getInstance();
+        if (iconManager instanceof CoreAwareIconManager) {
+          return ((CoreAwareIconManager)iconManager).getIcon(element.getContainingFile().getVirtualFile(),
+                                  Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
+        }
       }
     }
     return super.getIcon(expanded);

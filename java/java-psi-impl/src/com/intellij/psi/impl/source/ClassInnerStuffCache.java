@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,20 +13,19 @@ import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.*;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class ClassInnerStuffCache {
+public final class ClassInnerStuffCache {
   private final PsiExtensibleClass myClass;
   private final Ref<Pair<Long, Interner<PsiMember>>> myInterner = Ref.create();
 
@@ -157,7 +156,7 @@ public class ClassInnerStuffCache {
 
   @NotNull
   private Map<String, PsiField> getFieldsMap() {
-    Map<String, PsiField> cachedFields = new THashMap<>();
+    Map<String, PsiField> cachedFields = new java.util.HashMap<>();
     for (PsiField field : myClass.getOwnFields()) {
       String name = field.getName();
       if (!cachedFields.containsKey(name)) {
@@ -186,7 +185,7 @@ public class ClassInnerStuffCache {
 
   @NotNull
   private Map<String, PsiClass> getInnerClassesMap() {
-    Map<String, PsiClass> cachedInners = new THashMap<>();
+    Map<String, PsiClass> cachedInners = new HashMap<>();
     for (PsiClass psiClass : myClass.getOwnInnerClasses()) {
       String name = psiClass.getName();
       if (name == null) {

@@ -166,4 +166,9 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
     }
     return element;
   }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
+  }
 }

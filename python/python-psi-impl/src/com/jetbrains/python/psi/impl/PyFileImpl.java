@@ -99,7 +99,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       Collections.reverse(myImportedNameDefiners);
     }
 
-    private boolean processDeclarations(@NotNull List<PsiElement> elements, @NotNull Processor<PsiElement> processor) {
+    private boolean processDeclarations(@NotNull List<PsiElement> elements, @NotNull Processor<? super PsiElement> processor) {
       for (PsiElement child : elements) {
         if (!processor.process(child)) {
           return false;

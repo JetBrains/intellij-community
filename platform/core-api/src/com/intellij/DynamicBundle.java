@@ -60,13 +60,10 @@ public abstract class DynamicBundle extends AbstractBundle {
   }
 
   // todo: one language per application
-  private static @Nullable LanguageBundleEP findLanguageBundle() {
+  public static @Nullable LanguageBundleEP findLanguageBundle() {
     try {
       Application application = ApplicationManager.getApplication();
-      if (application == null) return null;
-      if (application.isUnitTestMode() && !application.getExtensionArea().hasExtensionPoint(LanguageBundleEP.EP_NAME)) {
-        return null;
-      }
+      if (application == null || !application.getExtensionArea().hasExtensionPoint(LanguageBundleEP.EP_NAME)) return null;
       return LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP.class);
     }
     catch (ProcessCanceledException e) {

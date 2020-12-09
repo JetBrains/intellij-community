@@ -2,12 +2,8 @@
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
-import com.intellij.internal.statistic.eventLog.events.EnumEventField;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.internal.statistic.eventLog.events.VarargEventId;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,18 +19,31 @@ final class GTDUCollector extends CounterUsagesCollector {
   }
 
   private static final EnumEventField<GTDUChoice> CHOICE = EventFields.Enum("choice", GTDUChoice.class);
-  private static final EventLogGroup GROUP = new EventLogGroup("actions.gtdu", FeatureUsageLogger.getConfigVersion());
-  private static final VarargEventId PERFORMED = GROUP.registerVarargEvent(
-    "performed",
-    EventFields.InputEvent,
-    EventFields.ActionPlace,
-    ActionsEventLogGroup.CONTEXT_MENU,
-    EventFields.CurrentFile,
-    CHOICE
-  );
+  private static final ClassEventField NAVIGATION_PROVIDER_CLASS = EventFields.Class("navigation_provider_class");
+  private static final EventLogGroup GROUP = new EventLogGroup("actions.gtdu", 58);
 
-  static void record(@NotNull List<@NotNull EventPair<?>> eventData, @NotNull GTDUChoice choice) {
+  private static final VarargEventId PERFORMED = registerGTDUEvent("performed");
+  private static final VarargEventId NAVIGATED = registerGTDUEvent("navigated");
+
+  @NotNull
+  private static VarargEventId registerGTDUEvent(String eventId) {
+    return GROUP.registerVarargEvent(
+      eventId,
+      EventFields.InputEvent,
+      EventFields.ActionPlace,
+      ActionsEventLogGroup.CONTEXT_MENU,
+      EventFields.CurrentFile,
+      CHOICE,
+      NAVIGATION_PROVIDER_CLASS
+    );
+  }
+
+  static void recordPerformed(@NotNull List<@NotNull EventPair<?>> eventData, @NotNull GTDUChoice choice) {
     PERFORMED.log(ContainerUtil.append(eventData, CHOICE.with(choice)).toArray(new EventPair[0]));
+  }
+
+  static void recordNavigated(@NotNull List<@NotNull EventPair<?>> eventData, @NotNull Class<?> navigationProviderClass) {
+    NAVIGATED.log(ContainerUtil.append(eventData, NAVIGATION_PROVIDER_CLASS.with(navigationProviderClass)).toArray(new EventPair[0]));
   }
 
   @Override

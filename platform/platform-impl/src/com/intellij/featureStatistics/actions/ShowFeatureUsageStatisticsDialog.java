@@ -4,6 +4,7 @@ package com.intellij.featureStatistics.actions;
 import com.intellij.CommonBundle;
 import com.intellij.featureStatistics.*;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.TableViewSpeedSearch;
@@ -41,7 +41,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   private static final Comparator<FeatureDescriptor> LAST_USED_COMPARATOR =
     (fd1, fd2) -> new Date(fd2.getLastTimeUsed()).compareTo(new Date(fd1.getLastTimeUsed()));
 
-  private static final ColumnInfo<FeatureDescriptor, String> DISPLAY_NAME = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.feature")) {
+  private static final ColumnInfo<FeatureDescriptor, String> DISPLAY_NAME = new ColumnInfo<>(FeatureStatisticsBundle.message("feature.statistics.column.feature")) {
     @Override
     public String valueOf(FeatureDescriptor featureDescriptor) {
       return featureDescriptor.getDisplayName();
@@ -52,7 +52,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       return DISPLAY_NAME_COMPARATOR;
     }
   };
-  private static final ColumnInfo<FeatureDescriptor, String> GROUP_NAME = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.group")) {
+  private static final ColumnInfo<FeatureDescriptor, String> GROUP_NAME = new ColumnInfo<>(FeatureStatisticsBundle.message("feature.statistics.column.group")) {
     @Override
     public String valueOf(FeatureDescriptor featureDescriptor) {
       return getGroupName(featureDescriptor);
@@ -63,7 +63,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       return GROUP_NAME_COMPARATOR;
     }
   };
-  private static final ColumnInfo<FeatureDescriptor, String> USED_TOTAL = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.usage.count")) {
+  private static final ColumnInfo<FeatureDescriptor, String> USED_TOTAL = new ColumnInfo<>(FeatureStatisticsBundle.message("feature.statistics.column.usage.count")) {
     @Override
     public String valueOf(FeatureDescriptor featureDescriptor) {
       int count = featureDescriptor.getUsageCount();
@@ -75,7 +75,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       return USAGE_COUNT_COMPARATOR;
     }
   };
-  private static final ColumnInfo<FeatureDescriptor, String> LAST_USED = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.last.used")) {
+  private static final ColumnInfo<FeatureDescriptor, String> LAST_USED = new ColumnInfo<>(FeatureStatisticsBundle.message("feature.statistics.column.last.used")) {
     @Override
     public String valueOf(FeatureDescriptor featureDescriptor) {
       long tm = featureDescriptor.getLastTimeUsed();
@@ -130,7 +130,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       features.add(registry.getFeatureDescriptor(id));
     }
     TableView<FeatureDescriptor> table = new TableView<>(new ListTableModel<>(COLUMNS, features, 0));
-    new TableViewSpeedSearch<FeatureDescriptor>(table) {
+    new TableViewSpeedSearch<>(table) {
       @Override
       protected String getItemText(@NotNull FeatureDescriptor element) {
         return element.getDisplayName();
@@ -146,10 +146,10 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     final String uptimeS = FeatureStatisticsBundle.message("feature.statistics.application.uptime",
                                                            ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                           StringUtil.formatDurationApproximate(uptime));
+                                                           NlsMessages.formatDurationApproximate(uptime));
 
     final String idleTimeS = FeatureStatisticsBundle.message("feature.statistics.application.idle.time",
-                                                             StringUtil.formatDurationApproximate(idleTime));
+                                                             NlsMessages.formatDurationApproximate(idleTime));
 
     String labelText = uptimeS + ", " + idleTimeS;
     CompletionStatistics stats = ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics();

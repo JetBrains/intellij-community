@@ -80,17 +80,17 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   }
 
   @Override
-  protected String getTitle() {
+  public String getTitle() {
     return IdeBundle.message("step.title.desktop.entry");
   }
 
   @Override
-  protected String getHTMLHeader() {
+  public String getHTMLHeader() {
     return IdeBundle.message("label.create.desktop.entry");
   }
 
   @Override
-  protected String getHTMLFooter() {
+  public String getHTMLFooter() {
     return IdeBundle.message("label.text.desktop.entry.can.be.created.later.in.tools.create.desktop.entry");
   }
 }

@@ -34,7 +34,7 @@ class WorkspaceModelTopics : Disposable {
 
   private val allEvents = ContainerUtil.createConcurrentList<EventsDispatcher>()
   private var sendToQueue = true
-  internal var modulesAreLoaded = false
+  var modulesAreLoaded = false
 
   /**
    * Subscribe to topic and start to receive changes immediately
@@ -62,7 +62,7 @@ class WorkspaceModelTopics : Disposable {
 
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
-  internal fun notifyModulesAreLoaded() {
+  fun notifyModulesAreLoaded() {
     val activity = StartUpMeasurer.startActivity("(wm) After modules are loaded")
     sendToQueue = false
     val application = ApplicationManager.getApplication()

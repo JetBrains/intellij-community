@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -38,7 +34,7 @@ import java.util.ArrayList;
 public class ChooseActionsDialog extends DialogWrapper {
   private final ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
-  private final TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor<?> myTreeExpansionMonitor;
   private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
   private final Keymap myKeymap;
   private final QuickList[] myQuicklists;
@@ -150,7 +146,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     panel.add(myFilterComponent, BorderLayout.CENTER);
 
     group.add(new AnAction(KeyMapBundle.message("filter.shortcut.action.text"),
-                           KeyMapBundle.message("filter.shortcut.action.text"),
+                           KeyMapBundle.message("filter.shortcut.action.description"),
                            AllIcons.Actions.ShortcutFilter) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -160,7 +156,7 @@ public class ChooseActionsDialog extends DialogWrapper {
       }
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
-                           KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
+                           KeyMapBundle.message("filter.shortcut.action.description"), AllIcons.Actions.GC) {
       @Override
       public void update(@NotNull AnActionEvent event) {
         boolean enabled = null != myFilteringPanel.getShortcut();

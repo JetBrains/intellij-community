@@ -3,6 +3,8 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
@@ -11,6 +13,7 @@ import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,13 +31,13 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
   private static final String ELLIPSIS_SUFFIX = "...";
 
   private Pattern myCompiledPattern;
-  private String myPattern;
+  private @NlsSafe String myPattern;
   private final List<? extends T> myItems;
-  private final String myNotInMessage;
+  private final @NlsContexts.Label String myNotInMessage;
 
   public ListChooseByNameModel(@NotNull final Project project,
-                               @NotNull String prompt,
-                               @NotNull String notInMessage,
+                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String prompt,
+                               @NotNull @NlsContexts.Label String notInMessage,
                                @NotNull List<? extends T> items) {
     super(project, prompt, null);
 

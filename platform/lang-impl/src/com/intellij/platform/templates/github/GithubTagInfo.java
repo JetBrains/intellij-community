@@ -52,7 +52,7 @@ public class GithubTagInfo {
   @NotNull
   private Version createVersionComponents() {
     String tagName = myName;
-    if (tagName.startsWith("v.")) {
+    if (tagName.startsWith("v.")) { //NON-NLS
       tagName = tagName.substring(2);
     } else if (StringUtil.startsWithChar(tagName, 'v')) {
       tagName = tagName.substring(1);

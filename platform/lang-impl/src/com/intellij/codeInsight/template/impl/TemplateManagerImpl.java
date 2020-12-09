@@ -114,6 +114,11 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   @Override
+  public @NotNull TemplateState runTemplate(@NotNull Editor editor, @NotNull Template template) {
+    return startTemplate(editor, null, template, true, null, null, null);
+  }
+
+  @Override
   public boolean startTemplate(@NotNull Editor editor, char shortcutChar) {
     Runnable runnable = prepareTemplate(editor, shortcutChar, null);
     if (runnable != null) {
@@ -141,7 +146,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     startTemplate(editor, null, template, true, listener, processor, null);
   }
 
-  private void startTemplate(final Editor editor,
+  private @NotNull TemplateState startTemplate(final Editor editor,
                              final String selectionString,
                              final Template template,
                              boolean inSeparateCommand,
@@ -177,6 +182,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     if (shouldSkipInTests()) {
       if (!templateState.isFinished()) templateState.gotoEnd(false);
     }
+    return templateState;
   }
 
   public boolean shouldSkipInTests() {

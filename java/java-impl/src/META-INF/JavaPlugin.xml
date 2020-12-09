@@ -482,11 +482,14 @@
                          childrenEPName="com.intellij.compilerSettingsFactory">
       <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable"
                     id="reference.projectsettings.compiler.excludes"
-                    displayName="Excludes"/>
+                    key="reference.projectsettings.compiler.excludes"
+                    bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.JavaCompilersTab" id="reference.projectsettings.compiler.javacompiler"
                     key="java.compiler.description" bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
-                    id="reference.projectsettings.compiler.annotationProcessors" displayName="Annotation Processors"/>
+                    id="reference.projectsettings.compiler.annotationProcessors" 
+                    key="reference.projectsettings.compiler.annotationProcessors"
+                    bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.ValidationConfigurable" id="project.validation" key="validation.display.name"
                     bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"
@@ -740,6 +743,7 @@
     <debugger.sourcePositionHighlighter implementation="com.intellij.debugger.engine.JavaSourcePositionHighlighter"/>
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
+    <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
     <unknownSdkContributor implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributor"/>
     <postStartupActivity implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributorRefresher" />
     <registryKey key="jdk.auto.runConfigurations" defaultValue="false" restartRequired="true"
@@ -1373,9 +1377,15 @@
                      bundle="messages.JavaBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousTernaryOperatorInVarargsCall"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     bundle="messages.JavaBundle"
+                     key="inspection.suspicious.ternary.in.varargs.display.name"
+                     implementationClass="com.intellij.codeInspection.SuspiciousTernaryOperatorInVarargsCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantFileCreation"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      bundle="messages.JavaBundle"
                      key="inspection.redundant.file.creation.display.name"
                      implementationClass="com.intellij.codeInspection.RedundantFileCreationInspection"/>
@@ -1449,6 +1459,10 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      bundle="messages.JavaBundle" key="inspection.message.record.can.be.converted.to.class"
                      implementationClass="com.intellij.codeInspection.RecordCanBeClassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ClassCanBeRecord" enabledByDefault="true" level="WEAK WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     bundle="messages.JavaBundle" key="class.can.be.record.display.name"
+                     implementationClass="com.intellij.codeInspection.ClassCanBeRecordInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EndlessStream"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"

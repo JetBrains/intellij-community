@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,15 +30,17 @@ public final class RemoveInvalidElementsDialog extends DialogWrapper {
 
   private RemoveInvalidElementsDialog(@NlsContexts.DialogTitle String title,
                                       ConfigurationErrorType type,
-                                      String invalidElements,
-                                      final Project project,
+                                      @Nls String invalidElements,
+                                      Project project,
                                       List<? extends ConfigurationErrorDescription> errors) {
     super(project, true);
     setTitle(title);
-    myDescriptionLabel.setText(ProjectBundle.message(type.canIgnore() ? "label.text.0.cannot.be.loaded.ignore" : "label.text.0.cannot.be.loaded.remove", invalidElements));
+    myDescriptionLabel.setText(ProjectBundle.message(
+      type.canIgnore() ? "label.text.0.cannot.be.loaded.ignore" : "label.text.0.cannot.be.loaded.remove",
+      invalidElements));
     myContentPanel.setLayout(new VerticalFlowLayout());
     for (ConfigurationErrorDescription error : errors) {
-      JCheckBox checkBox = new JCheckBox(error.getElementName() + ".");
+      JCheckBox checkBox = new JCheckBox(error.getElementName());
       checkBox.setSelected(true);
       myCheckboxes.put(checkBox, error);
       JPanel panel = new JPanel(new GridBagLayout());
@@ -57,19 +60,21 @@ public final class RemoveInvalidElementsDialog extends DialogWrapper {
     setCancelButtonText(ProjectBundle.message("button.text.keep.all"));
   }
 
-
   /**
    * @return {@code true} if the problems are resolved
    */
-  public static boolean showDialog(@NotNull Project project, @NotNull @NlsContexts.DialogTitle String title, ConfigurationErrorType type,
-                                   @NotNull String invalidElements, @NotNull List<? extends ConfigurationErrorDescription> errors) {
+  public static boolean showDialog(@NotNull Project project,
+                                   @NlsContexts.DialogTitle @NotNull String title,
+                                   @NotNull ConfigurationErrorType type,
+                                   @Nls @NotNull String invalidElements,
+                                   @NotNull List<? extends ConfigurationErrorDescription> errors) {
     if (errors.isEmpty()) {
       return true;
     }
     if (errors.size() == 1) {
       ConfigurationErrorDescription error = errors.get(0);
       String message = error.getDescription() + "\n" + error.getIgnoreConfirmationMessage();
-      final int answer = Messages.showYesNoDialog(project, message, title, Messages.getErrorIcon());
+      int answer = Messages.showYesNoDialog(project, message, title, Messages.getErrorIcon());
       if (answer == Messages.YES) {
         error.ignoreInvalidElement();
         return true;

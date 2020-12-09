@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;

@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.BeanBinding
 import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicInteger
 
 private val GROUP = EventLogGroup("settings", 9)
@@ -76,6 +77,7 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
         val pluginInfo = getPluginInfo(clazz)
         if (pluginInfo.isDevelopedByJetBrains()) {
           recordedComponents.add(componentName)
+          @Suppress("HardCodedStringLiteral")
           logConfig(GROUP, "invoked", createComponentData(project, componentName, pluginInfo), counter.incrementAndGet())
         }
       }
@@ -99,6 +101,7 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
 
   fun logConfigurationState(componentName: String, state: Any?, project: Project?) {
     val (optionsValues, pluginInfo) = valuesExtractor.extract(project, componentName, state) ?: return
+    @Suppress("HardCodedStringLiteral")
     val eventId = if (recordDefault) "option" else "not.default"
     val id = counter.incrementAndGet()
     for (data in optionsValues) {
@@ -106,15 +109,16 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     }
 
     if (!recordDefault) {
+      @Suppress("HardCodedStringLiteral")
       logConfig(GROUP, "invoked", createComponentData(project, componentName, pluginInfo), id)
     }
   }
 
-  protected open fun logConfig(group: EventLogGroup, eventId: String, data: FeatureUsageData, id: Int) {
+  protected open fun logConfig(group: EventLogGroup, @NonNls eventId: String, data: FeatureUsageData, id: Int) {
     FeatureUsageLogger.logState(group, eventId, data.addData(ID_FIELD, id).build())
   }
 
-  protected open fun logSettingsChanged(eventId: String, data: FeatureUsageData, id: Int) {
+  protected open fun logSettingsChanged(@NonNls eventId: String, data: FeatureUsageData, id: Int) {
     FUCounterUsageLogger.getInstance().logEvent(CHANGES_GROUP, eventId, data.addData(ID_FIELD, id))
   }
 
@@ -222,7 +226,7 @@ internal data class ConfigurationStateExtractor(val recordDefault: Boolean) {
                                pluginInfo: PluginInfo,
                                accessor: Accessor,
                                state: Any,
-                               type: String): FeatureUsageData? {
+                               @NonNls type: String): FeatureUsageData? {
     val isDefault = !jdomSerializer.getDefaultSerializationFilter().accepts(accessor, state)
     if (isDefault && !recordDefault) {
       return null

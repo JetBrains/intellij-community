@@ -268,9 +268,7 @@
     <keyboard-shortcut first-keystroke="meta E" second-keystroke="U"/>
     <keyboard-shortcut first-keystroke="meta E" second-keystroke="meta U"/>
   </action>
-  <action id="Vcs.ShowMessageHistory">
-    <keyboard-shortcut first-keystroke="meta M"/>
-  </action>
+  <action id="Vcs.ShowMessageHistory"/>
   <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="meta alt P"/>
   </action>
@@ -395,9 +393,22 @@
   </action>
   <action id="ActivateCommitToolWindow"/>
   <action id="tasks.goto"/>
-  <action id="ExpandRegion"/>
-  <action id="CollapseRegion"/>
-  <action id="CollapseAllRegions"/>
+  <action id="ExpandRegion">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="E"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control E"/>
+  </action>
+  <action id="CollapseRegion">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="S"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control S"/>
+  </action>
+  <action id="CollapseAllRegions">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="A"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control A"/>
+  </action>
+  <action id="ExpandAllRegions">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="X"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control X"/>
+  </action>
   <action id="OpenFile">
     <keyboard-shortcut first-keystroke="meta O"/>
   </action>

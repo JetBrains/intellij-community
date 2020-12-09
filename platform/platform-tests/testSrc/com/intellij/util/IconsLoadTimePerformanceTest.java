@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.idea.HardwareAgentRequired;
@@ -6,17 +6,16 @@ import com.intellij.internal.IconsLoadTime;
 import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.icons.ImageType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.TestScaleHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.awt.image.ImageFilter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -61,20 +60,17 @@ public class IconsLoadTimePerformanceTest {
   }
 
   public void loadIcons(int expectedTime) throws ClassNotFoundException, IOException {
-    assertNotNull(Class.forName(IconsLoadTime.class.getName())); // force static init
+    // force static init
+    assertNotNull(Class.forName(IconsLoadTime.class.getName()));
 
     try (BufferedReader br = Files.newBufferedReader(Paths.get(ICONS_LIST_PATH))) {
       String iconPath;
       while ((iconPath = br.readLine()) != null) {
-        ImageLoader.loadFromUrl(
-          new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL(),
-          true,
-          false, // do not use global cache
-          new ImageFilter[]{},
-          ScaleContext.create());
+        URL url = new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL();
+        ImageLoader.loadFromUrl(url, true, false /* do not use global cache */, null, ScaleContext.create());
       }
     }
-    StatData svgData = IconsLoadTime.getStatData(false, ImageType.SVG);
+    StatData svgData = IconsLoadTime.getStatData(false, true);
 
     assumeTrue("no SVG load statistics gathered", svgData != null);
     LOG.debug(String.valueOf(svgData));

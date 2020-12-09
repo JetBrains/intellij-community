@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 class JsonGrammarCheckingStrategy : GrammarCheckingStrategy {
   override fun isMyContextRoot(element: PsiElement) = getContextRootTextDomain(element) != TextDomain.NON_TEXT
 
-  override fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(root, default = TextDomain.NON_TEXT)
+  override fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(this, root, default = TextDomain.NON_TEXT)
 
   override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement) = RuleGroup.CASING
 }

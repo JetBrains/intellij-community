@@ -71,6 +71,7 @@ class XBreakpointItem extends BreakpointItem {
   }
 
   @Override
+  @Nls
   public String footerText() {
     return XBreakpointUtil.getDisplayText(myBreakpoint);
   }

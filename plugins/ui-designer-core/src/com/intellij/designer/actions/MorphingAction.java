@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.MetaModel;
@@ -64,7 +65,7 @@ public class MorphingAction extends AnAction {
       }
 
       myArea.setSelection(newComponents);
-    }, "Run Morphing action", true);
+    }, DesignerBundle.message("run.morphing.action"), true);
   }
 
   public static void fill(DesignerEditorPanel designer, DefaultActionGroup group, EditableArea area) {
@@ -91,7 +92,7 @@ public class MorphingAction extends AnAction {
       return;
     }
 
-    DefaultActionGroup morphingGroup = DefaultActionGroup.createPopupGroup(() -> "Morphing");
+    DefaultActionGroup morphingGroup = DefaultActionGroup.createPopupGroup(() -> DesignerBundle.message("action.morphing.text"));
     for (MetaModel morphingModel : models) {
       morphingGroup.add(new MorphingAction(designer, area, selection, morphingModel));
     }

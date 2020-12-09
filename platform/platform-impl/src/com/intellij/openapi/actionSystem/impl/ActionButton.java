@@ -11,13 +11,15 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -50,7 +52,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
-  protected final PopupState myPopupState = new PopupState();
+  protected final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
   private ActionButtonLook myLook = ActionButtonLook.SYSTEM_LOOK;
   private boolean myMouseDown;
   private boolean myRollover;
@@ -177,19 +179,49 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected void actionPerformed(final AnActionEvent event) {
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
-      showPopupMenu(event, (ActionGroup) myAction);
+      if (Registry.is("actionSystem.toolbar.show.group.in.popup")) {
+        showGroupInPopup(event, (ActionGroup)myAction);
+      }
+      else {
+        showGroupInPopupMenu(event, (ActionGroup) myAction);
+      }
     }
     else {
-      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
+      ActionUtil.performActionDumbAware(myAction, event);
+      ActionManagerEx.getInstanceEx().fireAfterActionPerformed(myAction, event.getDataContext(), event);
     }
   }
 
+  protected void showGroupInPopup(AnActionEvent e, ActionGroup actionGroup) {
+    ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false,
+                                                            false, true, false,
+                                                            null, -1, null,
+                                                            ActionPlaces.getActionGroupPopupPlace(e.getPlace()),
+                                                            createPresentationFactory(), false);
+
+    popup.showUnderneathOf(e.getInputEvent().getComponent());
+  }
+
   // used in Rider, please don't change visibility
-  protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+  protected void showGroupInPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
     String place = ActionPlaces.getActionGroupPopupPlace(event.getPlace());
-    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(place, actionGroup, new MenuItemPresentationFactory() {
+    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(place, actionGroup, createPresentationFactory());
+    popupMenu.setDataContextProvider(() -> getDataContext());
+    myPopupState.prepareToShow(popupMenu.getComponent());
+
+    if (event.isFromActionToolbar()) {
+      popupMenu.getComponent().show(this, 0, getHeight());
+    }
+    else {
+      popupMenu.getComponent().show(this, getWidth(), 0);
+    }
+  }
+
+  @NotNull
+  private MenuItemPresentationFactory createPresentationFactory() {
+    return new MenuItemPresentationFactory() {
       @Override
       protected void processPresentation(Presentation presentation) {
         super.processPresentation(presentation);
@@ -198,16 +230,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
           presentation.setHoveredIcon(null);
         }
       }
-    });
-    popupMenu.setDataContextProvider(() -> getDataContext());
-    popupMenu.getComponent().addPopupMenuListener(myPopupState);
-
-    if (event.isFromActionToolbar()) {
-      popupMenu.getComponent().show(this, 0, getHeight());
-    }
-    else {
-      popupMenu.getComponent().show(this, getWidth(), 0);
-    }
+    };
   }
 
   private static boolean isPopupMenuAction(AnActionEvent event, AnAction action) {
@@ -261,12 +284,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       super.setToolTipText(StringUtil.isNotEmpty(toolTipText) ? toolTipText : null);
     }
-  }
-
-  @Override
-  public Insets getInsets() {
-    ActionToolbarImpl owner = ComponentUtil.getParentOfType((Class<? extends ActionToolbarImpl>)ActionToolbarImpl.class, (Component)this);
-    return owner != null && owner.getOrientation() == SwingConstants.VERTICAL ? JBInsets.create(2, 1) : JBInsets.create(1, 2);
   }
 
   @Override

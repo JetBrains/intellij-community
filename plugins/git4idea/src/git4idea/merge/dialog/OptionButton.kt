@@ -20,8 +20,8 @@ import javax.swing.JButton
 import javax.swing.JLayeredPane
 
 internal class OptionButton<T>(val option: T,
-                               @NlsSafe val flag: String,
-                               val removeClickListener: () -> Unit) : JBLayeredPane() {
+                               @NlsSafe private val flag: String,
+                               private val removeClickListener: () -> Unit) : JBLayeredPane() {
 
   private val flagBtn = createFlagButton()
   private val removeBtn = createCloseButton()

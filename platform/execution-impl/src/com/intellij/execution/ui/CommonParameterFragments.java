@@ -65,6 +65,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     programArguments.getEditorField().getEmptyText().setText(message);
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
     FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
+    setMonospaced(programArguments.getTextField());
     MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, myHasModule);
     SettingsEditorFragment<Settings, RawCommandLineEditor> parameters =
       new SettingsEditorFragment<>("commandLineParameters", ExecutionBundle.message("run.configuration.program.parameters.name"), null, programArguments,
@@ -84,10 +85,10 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
 
   public <S extends InputRedirectAware> SettingsEditorFragment<S, ?> createRedirectFragment() {
     TextFieldWithBrowseButton inputFile = new TextFieldWithBrowseButton();
-    inputFile.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(null, null, inputFile, null,
-                                                                                                     FileChooserDescriptorFactory
+    inputFile.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<>(null, null, inputFile, null,
+                                                                                           FileChooserDescriptorFactory
                                                                                              .createSingleFileDescriptor(),
-                                                                                                     TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+                                                                                           TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
       @Override
       protected @Nullable VirtualFile getInitialFile() {
         VirtualFile initialFile = super.getInitialFile();
@@ -103,17 +104,20 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     LabeledComponent<TextFieldWithBrowseButton> labeledComponent =
       LabeledComponent.create(inputFile, ExecutionBundle.message("redirect.input.from"));
     labeledComponent.setLabelLocation(BorderLayout.WEST);
-    return new SettingsEditorFragment<>("redirectInput", ExecutionBundle.message("redirect.input.from.name"),
-                                        ExecutionBundle.message("group.operating.system"), labeledComponent,
-                                        (settings, component) -> component.getComponent().setText(
-                                          FileUtil.toSystemDependentName(notNullize(settings.getInputRedirectOptions().getRedirectInputPath()))),
-                                        (settings, component) -> {
-                                          String filePath = component.getComponent().getText();
-                                          settings.getInputRedirectOptions().setRedirectInput(component.isVisible() && isNotEmpty(filePath));
-                                          settings.getInputRedirectOptions().setRedirectInputPath(
-                                            isEmpty(filePath) ? null : FileUtil.toSystemIndependentName(filePath));
-                                        },
-                                        settings -> isNotEmpty(settings.getInputRedirectOptions().getRedirectInputPath()));
+    SettingsEditorFragment<S, LabeledComponent<TextFieldWithBrowseButton>> redirectInput =
+      new SettingsEditorFragment<>("redirectInput", ExecutionBundle.message("redirect.input.from.name"),
+                                   ExecutionBundle.message("group.operating.system"), labeledComponent,
+                                   (settings, component) -> component.getComponent().setText(
+                                     FileUtil.toSystemDependentName(notNullize(settings.getInputRedirectOptions().getRedirectInputPath()))),
+                                   (settings, component) -> {
+                                     String filePath = component.getComponent().getText();
+                                     settings.getInputRedirectOptions().setRedirectInput(component.isVisible() && isNotEmpty(filePath));
+                                     settings.getInputRedirectOptions().setRedirectInputPath(
+                                       isEmpty(filePath) ? null : FileUtil.toSystemIndependentName(filePath));
+                                   },
+                                   settings -> isNotEmpty(settings.getInputRedirectOptions().getRedirectInputPath()));
+    redirectInput.setActionHint(ExecutionBundle.message("read.input.from.the.specified.file"));
+    return redirectInput;
   }
 
   public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
@@ -134,6 +138,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                    },
                                    s -> true);
     fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"));
+    fragment.setActionHint(ExecutionBundle.message("set.custom.environment.variables.for.the.process"));
     return fragment;
   }
 

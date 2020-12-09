@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
 import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -54,9 +55,9 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
                                        private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
-                                       private val currentUser: GHUser) {
+                                       private val currentUser: GHUser) : TimelineItemComponentFactory<GHPRTimelineItem> {
 
-  fun createComponent(item: GHPRTimelineItem): Item {
+  override fun createComponent(item: GHPRTimelineItem): Item {
     try {
       return when (item) {
         is GHPullRequestCommitShort -> createComponent(item)

@@ -3,12 +3,20 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert
 import org.junit.Assume
 import java.nio.file.Files
+import kotlin.concurrent.thread
 
 internal fun jdkItemForTest(url: String,
                             packageType: JdkPackageType,
@@ -41,6 +49,11 @@ internal fun jdkItemForTest(url: String,
 }
 
 class JdkDownloaderTest : LightPlatformTestCase() {
+  override fun setUp() {
+    super.setUp()
+    service<JdkInstallerStore>().loadState(JdkInstallerState())
+  }
+
   private val mockTarGZ = jdkItemForTest(packageType = JdkPackageType.TAR_GZ,
                                          url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data.tar.gz",
                                          size = 249,
@@ -52,10 +65,82 @@ class JdkDownloaderTest : LightPlatformTestCase() {
                                           size = 318,
                                           sha256 = "963af2c1578a376340f60c5adabf217f59006cfc8b2b3fc97edda2e90c0295e2"
   )
+
   private val mockZip = jdkItemForTest(packageType = JdkPackageType.ZIP,
                                        url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data.zip",
                                        size = 604,
                                        sha256 = "1cf15536c1525f413190fd53243f343511a17e6ce7439ccee4dc86f0d34f9e81")
+
+  fun `test reuse pending jdks`() {
+    val home1 = createTempDir("h2342341").toPath()
+    val home2 = createTempDir("234234h2").toPath()
+
+    val p1 = JdkInstaller.getInstance().prepareJdkInstallation(mockTarGZ, home1)
+    val p2 = JdkInstaller.getInstance().prepareJdkInstallation(mockTarGZ, home2)
+
+    Assert.assertTrue(p1.toString().startsWith("PendingJdkRequest"))
+    Assert.assertSame(p1, p2)
+  }
+
+  fun `test no reuse pending different jdks`() {
+    val home1 = createTempDir("h2342341").toPath()
+    val home2 = createTempDir("234234h2").toPath()
+
+    val p1 = JdkInstaller.getInstance().prepareJdkInstallation(mockTarGZ, home1)
+    val p2 = JdkInstaller.getInstance().prepareJdkInstallation(mockZip, home2)
+
+    Assert.assertTrue(p1.toString().startsWith("PendingJdkRequest"))
+    Assert.assertNotSame(p1, p2)
+  }
+
+  fun `test should not install the same JDK twice`() {
+    val home1 = createTempDir("h2342341").toPath()
+    val home2 = createTempDir("234234h2").toPath()
+
+    val p1 = JdkInstaller.getInstance().prepareJdkInstallation(mockTarGZ, home1)
+    JdkInstaller.getInstance().installJdk(p1, ProgressIndicatorBase(), null)
+
+    val p2 = JdkInstaller.getInstance().prepareJdkInstallation(mockTarGZ, home2)
+
+    Assert.assertTrue(p1.toString().startsWith("PendingJdkRequest"))
+    Assert.assertSame(p1, p2)
+
+    //this must be fast
+    repeat(1000) {
+      val pN = JdkInstaller.getInstance().prepareJdkInstallation(mockTarGZ, home2)
+      JdkInstaller.getInstance().installJdk(pN, ProgressIndicatorBase(), null)
+    }
+  }
+
+  fun `test re-use pending download`() {
+    val eventsLog = mutableListOf<String>()
+    val listener = object: JdkInstallerListener {
+      override fun onJdkDownloadStarted(request: JdkInstallRequest, project: Project?) {
+        synchronized(eventsLog) { eventsLog += "started $request"}
+      }
+
+      override fun onJdkDownloadFinished(request: JdkInstallRequest, project: Project?) {
+        synchronized(eventsLog) { eventsLog += "completed $request"}
+      }
+    }
+    ExtensionTestUtil.maskExtensions(ExtensionPointName.create<JdkInstallerListener>("com.intellij.jdkDownloader.jdkInstallerListener"), listOf(listener), testRootDisposable)
+
+    val home1 = createTempDir("h2342341").toPath()
+    val home2 = createTempDir("234234h2").toPath()
+
+    val p1 = JdkInstaller.getInstance().prepareJdkInstallation(mockTarGZ, home1)
+    val p2 = JdkInstaller.getInstance().prepareJdkInstallation(mockTarGZ, home2)
+
+    val t1 = thread { JdkInstaller.getInstance().installJdk(p1, ProgressIndicatorBase(), null) }
+    val t2 = thread { JdkInstaller.getInstance().installJdk(p2, EmptyProgressIndicator(), null) }
+
+    t1.join()
+    t2.join()
+
+    Assert.assertEquals("$eventsLog", 2, eventsLog.size)
+    Assert.assertTrue("$eventsLog", eventsLog.first().startsWith("started"))
+    Assert.assertTrue("$eventsLog", eventsLog.drop(1).first().startsWith("completed"))
+  }
 
   fun `test unpacking tar gz`() = testUnpacking(mockTarGZ) {
     assertThat(installDir).isEqualTo(javaHome)
@@ -161,7 +246,7 @@ class JdkDownloaderTest : LightPlatformTestCase() {
   private fun testUnpacking(item: JdkItem, resultDir: JdkInstallRequest.() -> Unit = { error("must not reach here") }) {
     val dir = Files.createTempDirectory("")
     try {
-      val task = JdkInstaller.getInstance().prepareJdkInstallation(item, dir)
+      val task = JdkInstaller.getInstance().prepareJdkInstallationDirect(item, dir)
       JdkInstaller.getInstance().installJdk(task, null, null)
 
       assertThat(task.installDir).isDirectory()

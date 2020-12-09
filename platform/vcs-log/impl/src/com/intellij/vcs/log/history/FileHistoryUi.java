@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
@@ -52,7 +51,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
-  @NotNull private final Set<String> myHighlighterIds;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
   @NotNull private final History myHistory;
 
@@ -87,13 +85,11 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       new FileHistoryEditorDiffPreview(logData.getProject(), myUiProperties, myFileHistoryPanel);
     }
 
-    myHighlighterIds = myRevision == null
-                       ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
-                                                  CurrentBranchHighlighter.Factory.ID)
-                       : Collections.singleton(MyCommitsHighlighter.Factory.ID);
-    VcsLogUiUtil.installHighlighters(this, f -> isHighlighterEnabled(f.getId()));
+    getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
+    } else {
+      getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(CurrentBranchHighlighter.Factory.class).createHighlighter(getLogData(), this));
     }
 
     myPropertiesChangeListener = new MyPropertiesChangeListener();
@@ -148,10 +144,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
           if (commitId instanceof Hash) {
-            ui.jumpToCommit((Hash)commitId, myRoot);
+            ui.getVcsLog().jumpToCommit((Hash)commitId, myRoot);
           }
           else if (commitId instanceof String) {
-            ui.jumpToHash((String)commitId);
+            ui.getVcsLog().jumpToReference((String)commitId);
           }
         });
       });
@@ -166,11 +162,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   public VcsLogFilterUi getFilterUi() {
     return myFilterUi;
-  }
-
-  @Override
-  public boolean isHighlighterEnabled(@NotNull String id) {
-    return myHighlighterIds.contains(id);
   }
 
   @Override

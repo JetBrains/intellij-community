@@ -41,12 +41,12 @@
     {
       "id": "java",
       "experimentBucketsCount": 16,
-      "includeGroups": [ 7, 8, 11, 12 ]
+      "includeGroups": [ 7, 8, 11, 12, 13 ]
     },
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12 ]
+      "includeGroups": [ 7, 8, 11, 12, 13 ]
     },
     {
       "id": "kotlin",
@@ -55,8 +55,8 @@
     },
     {
       "id": "scala",
-      "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13 ]
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 8, 12, 13 ]
     },
     {
       "id": "php",
@@ -70,7 +70,7 @@
     },
     {
       "id": "ruby",
-      "experimentBucketsCount": 2,
+      "experimentBucketsCount": 4,
       "includeGroups": [ 7, 8 ]
     },
     {

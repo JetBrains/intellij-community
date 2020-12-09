@@ -13,8 +13,8 @@ fun finishModuleLoadingActivity() {
   moduleLoadingActivity = null
 }
 
-fun recordModuleLoadingActivity(project: Project) {
-  if (moduleLoadingActivity == null && !(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+fun recordModuleLoadingActivity() {
+  if (moduleLoadingActivity == null) {
     moduleLoadingActivity = StartUpMeasurer.startMainActivity("module loading")
   }
 }

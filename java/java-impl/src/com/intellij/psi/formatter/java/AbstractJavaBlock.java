@@ -270,7 +270,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private static boolean isLikeExtendsList(final IElementType elementType) {
     return elementType == JavaElementType.EXTENDS_LIST
            || elementType == JavaElementType.IMPLEMENTS_LIST
-           || elementType == JavaElementType.THROWS_LIST;
+           || elementType == JavaElementType.THROWS_LIST
+           || elementType == JavaElementType.PERMITS_LIST;
   }
 
   private static boolean isBlockType(final IElementType elementType) {
@@ -430,7 +431,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (nodeType == JavaElementType.FOR_STATEMENT) {
       return createAlignment(mySettings.ALIGN_MULTILINE_FOR, null);
     }
-    if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
+    if (nodeType == JavaElementType.EXTENDS_LIST ||
+        nodeType == JavaElementType.IMPLEMENTS_LIST ||
+        nodeType == JavaElementType.PERMITS_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_EXTENDS_LIST, null);
     }
     if (nodeType == JavaElementType.THROWS_LIST) {
@@ -806,6 +809,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     else if (nodeType == JavaElementType.EXTENDS_LIST ||
              nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.PERMITS_LIST ||
              nodeType == JavaElementType.THROWS_LIST) {
       return role == ChildRole.REFERENCE_IN_LIST;
     }

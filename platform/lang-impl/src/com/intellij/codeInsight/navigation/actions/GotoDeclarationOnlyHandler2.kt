@@ -4,12 +4,8 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.impl.GTDActionData
-import com.intellij.codeInsight.navigation.impl.GTDActionResult
-import com.intellij.codeInsight.navigation.impl.fromGTDProviders
-import com.intellij.codeInsight.navigation.impl.gotoDeclaration
+import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.featureStatistics.FeatureUsageTracker
-import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
@@ -63,16 +59,25 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
 
   internal fun gotoDeclaration(editor: Editor, file: PsiFile, actionResult: GTDActionResult) {
     when (actionResult) {
-      is GTDActionResult.SingleTarget -> gotoTarget(editor, file, actionResult.navigatable)
+      is GTDActionResult.SingleTarget -> {
+        recordAndNavigate(editor, file, actionResult.navigatable, actionResult.navigationProvider)
+      }
       is GTDActionResult.MultipleTargets -> {
         val popup = chooseTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
-          actionResult.targets, Pair<Navigatable, TargetPopupPresentation>::second
-        ) { (navigatable, _) ->
-          gotoTarget(editor, file, navigatable)
+          actionResult.targets, GTDTarget::presentation
+        ) { (navigatable, _, navigationProvider) ->
+          recordAndNavigate(editor, file, navigatable, navigationProvider)
         }
         popup.showInBestPositionFor(editor)
       }
     }
+  }
+
+  private fun recordAndNavigate(editor: Editor, file: PsiFile, navigatable: Navigatable, navigationProvider: Any?) {
+    if (navigationProvider != null) {
+      GotoDeclarationAction.recordGTDNavigation(navigationProvider.javaClass)
+    }
+    gotoTarget(editor, file, navigatable)
   }
 }

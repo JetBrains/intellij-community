@@ -59,13 +59,14 @@ object DigestUtil {
    * Digest cloning is faster than requesting a new one from [MessageDigest.getInstance].
    * This approach is used in Guava as well.
    */
-  private fun MessageDigest.cloneDigest(): MessageDigest =
-    try {
+  private fun MessageDigest.cloneDigest(): MessageDigest {
+    return try {
       clone() as MessageDigest
     }
     catch (e: CloneNotSupportedException) {
       throw IllegalArgumentException("Message digest is not cloneable: ${this}")
     }
+  }
 
   @JvmStatic
   fun updateContentHash(digest: MessageDigest, path: Path) {
@@ -94,9 +95,9 @@ object DigestUtil {
     }
   }
 
-  private fun getMessageDigest(algorithm: String): MessageDigest =
-    MessageDigest.getInstance(algorithm, sunSecurityProvider)
-
+  private fun getMessageDigest(algorithm: String): MessageDigest {
+    return MessageDigest.getInstance(algorithm, sunSecurityProvider)
+  }
 }
 
 private fun bytesToHex(data: ByteArray): String {

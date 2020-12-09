@@ -252,7 +252,7 @@ public abstract class InplaceRefactoring {
     return new PsiElement[] { myElementToRename.getContainingFile() };
   }
 
-  protected abstract void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages);
+  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {}
 
   protected abstract boolean shouldSelectAll();
 

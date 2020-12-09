@@ -319,14 +319,14 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
 private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean) {
   val waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
-    indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..." else ProjectBundle.message(
-      "project.preparing.workspace")
+    indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
+                     else ProjectBundle.message("project.preparing.workspace")
     indicator.isIndeterminate = true
   }
   ApplicationManager.getApplication().invokeAndWait {
     waitEdtActivity.end()
     if (indicator != null && ApplicationManager.getApplication().isInternal) {
-      indicator.text = "Running project opened tasks..."
+      indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
     }
 
     ProjectManagerImpl.LOG.debug("projectOpened")

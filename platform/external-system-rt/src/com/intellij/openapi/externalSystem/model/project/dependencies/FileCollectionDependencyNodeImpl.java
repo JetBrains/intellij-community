@@ -29,12 +29,9 @@ public class FileCollectionDependencyNodeImpl extends AbstractDependencyNode imp
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    FileCollectionDependencyNodeImpl node = (FileCollectionDependencyNodeImpl)o;
+  public boolean match(AbstractDependencyNode dependencyNode) {
+    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
+    FileCollectionDependencyNodeImpl node = (FileCollectionDependencyNodeImpl)dependencyNode;
     if (!displayName.equals(node.displayName)) return false;
     if (!path.equals(node.path)) return false;
     return true;

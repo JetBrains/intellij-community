@@ -238,5 +238,15 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
       return text;
     }
+
+    @Override
+    public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
   }
 }

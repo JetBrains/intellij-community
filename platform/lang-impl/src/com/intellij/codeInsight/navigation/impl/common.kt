@@ -47,7 +47,7 @@ internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo {
       val ranges = listOf(references.first().absoluteRange)
       val singleTarget = targets.singleOrNull()
       if (singleTarget != null) {
-        SingleSymbolCtrlMouseInfo(singleTarget, ranges)
+        SingleSymbolCtrlMouseInfo(singleTarget.symbol, ranges)
       }
       else {
         MultipleTargetElementsInfo(ranges)

@@ -1,14 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.changeReminder.prediction.model.PredictionModel
 import com.jetbrains.changeReminder.repository.Commit
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * This class provides a prediction about forgotten (to commit or modify) files.
@@ -17,7 +13,6 @@ import kotlin.math.min
 class PredictionProvider(private val minProb: Double = 0.55) {
   companion object {
     private const val MAX_RELATED_FILES_COUNT = 150
-    private const val MAX_HISTORY_COMMIT_SIZE = 15
   }
 
 
@@ -29,10 +24,8 @@ class PredictionProvider(private val minProb: Double = 0.55) {
       if (relatedFiles.size > MAX_RELATED_FILES_COUNT) {
         break
       }
-      if (oldCommit.files.size < MAX_HISTORY_COMMIT_SIZE) {
-        oldCommit.files.filter { it !in commit.files }.forEach { relatedFile ->
-          relatedFiles.getOrPut(relatedFile) { mutableSetOf() }.add(oldCommit)
-        }
+      oldCommit.files.filter { it !in commit.files }.forEach { relatedFile ->
+        relatedFiles.getOrPut(relatedFile) { mutableSetOf() }.add(oldCommit)
       }
     }
 

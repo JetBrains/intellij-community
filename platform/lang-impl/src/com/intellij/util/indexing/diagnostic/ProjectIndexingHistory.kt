@@ -49,8 +49,9 @@ data class ProjectIndexingHistory(val projectName: String) {
     }
 
     for ((indexId, stats) in statistics.statsPerIndexer) {
-      val totalStats = totalStatsPerIndexer.getOrPut(indexId) { StatsPerIndexer(0, 0, 0) }
+      val totalStats = totalStatsPerIndexer.getOrPut(indexId) { StatsPerIndexer(0, 0, 0, 0) }
       totalStats.totalNumberOfFiles += stats.numberOfFiles
+      totalStats.totalNumberOfFilesIndexedByExtensions += stats.numberOfFilesIndexedByExtensions
       totalStats.totalBytes += stats.totalBytes
       totalStats.totalIndexingTimeInAllThreads += stats.indexingTime.sumTime
     }
@@ -76,6 +77,7 @@ data class ProjectIndexingHistory(val projectName: String) {
 
   data class StatsPerIndexer(
     var totalNumberOfFiles: Int,
+    var totalNumberOfFilesIndexedByExtensions: Int,
     var totalBytes: BytesNumber,
     var totalIndexingTimeInAllThreads: TimeNano
   )

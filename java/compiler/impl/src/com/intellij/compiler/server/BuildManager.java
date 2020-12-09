@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
+import com.intellij.DynamicBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
@@ -29,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.module.Module;
@@ -78,6 +80,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -90,7 +93,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -822,7 +826,7 @@ public final class BuildManager implements Disposable {
               Integer debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_PORT);
               if (debugPort != null) {
                 messageHandler.handleCompileMessage(
-                  sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse("Build: waiting for debugger connection on port " + debugPort
+                  sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse("Build: waiting for debugger connection on port " + debugPort //NON-NLS
                 ).getCompileMessage());
               }
 
@@ -832,8 +836,9 @@ public final class BuildManager implements Disposable {
 
               final int exitValue = processHandler.getProcess().exitValue();
               if (exitValue != 0) {
+                @Nls
                 final StringBuilder msg = new StringBuilder();
-                msg.append("Abnormal build process termination: ");
+                msg.append(JavaCompilerBundle.message("abnormal.build.process.termination")).append(": ");
                 if (errorsOnLaunch != null && errorsOnLaunch.length() > 0) {
                   msg.append("\n").append(errorsOnLaunch);
                   if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
@@ -844,7 +849,7 @@ public final class BuildManager implements Disposable {
                   }
                 }
                 else {
-                  msg.append("unknown error");
+                  msg.append(JavaCompilerBundle.message("unknown.build.process.error"));
                 }
                 handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(msg.toString(), null));
               }
@@ -1044,7 +1049,7 @@ public final class BuildManager implements Disposable {
               compilerPath = null;
             }
             if (compilerPath == null) {
-              throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+              throw new ExecutionException(JavaCompilerBundle.message("build.process.no.javac.found"));
             }
           }
           else {
@@ -1054,7 +1059,7 @@ public final class BuildManager implements Disposable {
         else {
           compilerPath = projectJdkType.getToolsPath(projectJdk);
           if (compilerPath == null) {
-            throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
+            throw new ExecutionException(JavaCompilerBundle.message("build.process.no.javac.path.found", projectJdk.getName(), projectJdk.getHomePath()));
           }
         }
       }
@@ -1182,7 +1187,7 @@ public final class BuildManager implements Disposable {
           debugPort = NetUtils.findAvailableSocketPort();
         }
         catch (IOException e) {
-          throw new ExecutionException("Cannot find free port to debug build process", e);
+          throw new ExecutionException(JavaCompilerBundle.message("build.process.no.free.debug.port"), e);
         }
       }
       if (debugPort > 0) {
@@ -1206,6 +1211,15 @@ public final class BuildManager implements Disposable {
       final String value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + "=" + value);
+      }
+    }
+    final DynamicBundle.LanguageBundleEP languageBundle = DynamicBundle.findLanguageBundle();
+    if (languageBundle != null) {
+      final PluginDescriptor pluginDescriptor = languageBundle.getPluginDescriptor();
+      final ClassLoader loader = pluginDescriptor != null? pluginDescriptor.getPluginClassLoader() : null;
+      final String bundlePath = loader != null? PathManager.getResourceRoot(loader, "/META-INF/plugin.xml") : null;
+      if (bundlePath != null) {
+        cmdLine.addParameter("-D"+ GlobalOptions.LANGUAGE_BUNDLE + "=" + FileUtil.toSystemIndependentName(bundlePath));
       }
     }
     cmdLine.addParameter("-D" + PathManager.PROPERTY_HOME_PATH + "=" + PathManager.getHomePath());
@@ -1248,7 +1262,7 @@ public final class BuildManager implements Disposable {
           includeBundledEcj = false;
         }
         else {
-          throw new ExecutionException("Path to eclipse ecj compiler does not exist: " + customEcjPath.getAbsolutePath());
+          throw new ExecutionException(JavaCompilerBundle.message("build.process.ecj.path.does.not.exist", customEcjPath.getAbsolutePath()));
           //customEcjPath = null;
         }
       }
@@ -1344,8 +1358,7 @@ public final class BuildManager implements Disposable {
 
   @Nullable
   public File getProjectSystemDirectory(Project project) {
-    final String projectPath = getProjectPath(project);
-    return projectPath != null ? Utils.getDataStorageRoot(getBuildSystemDirectory().toFile(), projectPath) : null;
+    return Utils.getDataStorageRoot(getBuildSystemDirectory().toFile(), getProjectPath(project));
   }
 
   private static File getUsageFile(@NotNull File projectSystemDir) {

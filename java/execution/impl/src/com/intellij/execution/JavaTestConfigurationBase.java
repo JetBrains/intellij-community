@@ -18,6 +18,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
 
   private ShortenCommandLine myShortenCommandLine = null;
   private boolean myUseModulePath = true;
-  private static final String USE_CLASS_PATH_ONLY = "useClassPathOnly";
+  private static final @NonNls String USE_CLASS_PATH_ONLY = "useClassPathOnly";
 
   public JavaTestConfigurationBase(String name,
                                    @NotNull JavaRunConfigurationModule configurationModule,
@@ -48,7 +49,7 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
 
   public abstract boolean isConfiguredByElement(PsiElement element);
 
-  public abstract String getTestType();
+  public abstract @NonNls String getTestType();
 
   public String prepareParameterizedParameter(String paramSetName) {
     return paramSetName;

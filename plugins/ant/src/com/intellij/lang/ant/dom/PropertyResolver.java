@@ -4,6 +4,7 @@ package com.intellij.lang.ant.dom;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -12,11 +13,11 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public final class PropertyResolver extends PropertyProviderFinder {
-  private final String myPropertyName;
+  private final @NonNls String myPropertyName;
   private PropertiesProvider myResult;
   private final Set<String> myVariants = new HashSet<>();
 
-  private PropertyResolver(@NotNull String propertyName, DomElement contextElement) {
+  private PropertyResolver(@NotNull @NonNls String propertyName, DomElement contextElement) {
     super(contextElement);
     myPropertyName = propertyName;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.util.io.FileUtil
@@ -340,7 +340,8 @@ private val GIT_LOG_OPTIONS = arrayOf(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIM
 private fun createTestRecord(vararg parameters: Pair<GitLogOption, Any>,
                              changes: List<GitTestLogRecord.GitTestChange> = emptyList(),
                              newRefsFormat: Boolean = false): GitTestLogRecord {
-  val data = mutableMapOf(Pair(SUBJECT, "Subject"),
+  val data = mutableMapOf<GitLogOption, Any>(
+                          Pair(SUBJECT, "Subject"),
                           Pair(BODY, "Body"),
                           Pair(AUTHOR_TIME, Date(1317027817L * 1000)),
                           Pair(AUTHOR_NAME, "John Doe"),

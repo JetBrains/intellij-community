@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.testFramework.PlatformTestUtil;
@@ -67,7 +67,7 @@ public class SvgIconSizeTest {
      * Test SVGLoader.getDocumentSize for SVG starting with <svg.
      */
     url = new File(getSvgIconPath("20x10")).toURI().toURL();
-    ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(url, url.openStream(), 1);
+    ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(url.openStream(), 1);
     assertEquals("wrong svg doc width", 20d, size.getWidth());
     assertEquals("wrong svg doc height", 10d, size.getHeight());
 
@@ -75,7 +75,7 @@ public class SvgIconSizeTest {
      * Test SVGLoader.getDocumentSize for SVG starting with <?xml.
      */
     url = new File(getSvgIconPath("xml_20x10")).toURI().toURL();
-    size = SVGLoader.getDocumentSize(url, url.openStream(), 1);
+    size = SVGLoader.getDocumentSize(url.openStream(), 1);
     assertEquals("wrong svg doc width", 20d, size.getWidth());
     assertEquals("wrong svg doc height", 10d, size.getHeight());
   }

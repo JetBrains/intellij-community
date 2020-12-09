@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,12 +86,14 @@ public class NavBarPresentation {
   }
 
   @NotNull
+  @Nls
   protected String getPresentableText(Object object, boolean forPopup) {
     String text = calcPresentableText(object, forPopup);
     return text.length() > 50 ? text.substring(0, 47) + "..." : text;
   }
 
   @NotNull
+  @Nls
   public static String calcPresentableText(Object object, boolean forPopup) {
     if (!NavBarModel.isValid(object)) {
       return StructureViewBundle.message("node.structureview.invalid");
@@ -99,7 +102,7 @@ public class NavBarPresentation {
       String text = modelExtension.getPresentableText(object, forPopup);
       if (text != null) return text;
     }
-    return object.toString();
+    return object.toString(); //NON-NLS
   }
 
   protected SimpleTextAttributes getTextAttributes(final Object object, final boolean selected) {

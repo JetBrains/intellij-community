@@ -24,6 +24,8 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.FsRoot;
+import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -862,7 +864,8 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       // ensure it's cached
       file.getLength();
       assertEquals(attrCallCount, fs.getAttributeCallCount());
-    } finally {
+    }
+    finally {
       Disposer.dispose(disposable);
     }
   }
@@ -943,5 +946,19 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     VfsUtil.markDirtyAndRefresh(false, true, true, outputFile);
 
     return outputFile;
+  }
+
+  public void testCanonicalRootPathMustAllowDotDots() {
+    assertPathAllowed("..xx");
+    assertPathAllowed("xx..");
+    assertPathAllowed("..xx..");
+    assertPathAllowed("..x..x..");
+    assertPathAllowed("x..x..");
+    assertPathAllowed("x..x");
+    assertPathAllowed("F:/..2020newAndroid/LearKotlin/lib/kotlin-stdlib.jar!");
+  }
+
+  private static void assertPathAllowed(String pathBeforeSlash) {
+    new FsRoot(1, 2, new VfsData(), LocalFileSystem.getInstance(), pathBeforeSlash, new FileAttributes(true, false, false, false, 0, 0, false));
   }
 }

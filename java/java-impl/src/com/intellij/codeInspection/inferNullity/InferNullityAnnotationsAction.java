@@ -275,7 +275,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final Usage[] usages = convertUsagesRef.get();
 
     final UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setTabText("Infer Nullity Preview");
+    presentation.setTabText(JavaBundle.message("tab.title.infer.nullity.preview"));
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));

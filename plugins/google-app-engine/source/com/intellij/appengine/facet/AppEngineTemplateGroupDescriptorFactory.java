@@ -15,6 +15,7 @@
  */
 package com.intellij.appengine.facet;
 
+import com.intellij.appengine.JavaGoogleAppEngineBundle;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
@@ -34,7 +35,7 @@ public class AppEngineTemplateGroupDescriptorFactory implements FileTemplateGrou
     final FileTemplateDescriptor appEngineApplicationXml = new FileTemplateDescriptor(APP_ENGINE_APPLICATION_XML_TEMPLATE, XmlFileType.INSTANCE.getIcon());
     final FileTemplateDescriptor jdoConfigXml = new FileTemplateDescriptor(APP_ENGINE_JDO_CONFIG_TEMPLATE, XmlFileType.INSTANCE.getIcon());
     final FileTemplateDescriptor jpaConfigXml = new FileTemplateDescriptor(APP_ENGINE_JPA_CONFIG_TEMPLATE, XmlFileType.INSTANCE.getIcon());
-    return new FileTemplateGroupDescriptor("Google App Engine", GoogleAppEngineIcons.AppEngine, appEngineXml,
+    return new FileTemplateGroupDescriptor(JavaGoogleAppEngineBundle.message("plugin.name"), GoogleAppEngineIcons.AppEngine, appEngineXml,
                                            appEngineApplicationXml, jdoConfigXml, jpaConfigXml);
   }
 }

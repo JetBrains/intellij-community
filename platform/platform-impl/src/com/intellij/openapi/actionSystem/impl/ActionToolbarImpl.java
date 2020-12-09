@@ -409,7 +409,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         return enabled ? AllIcons.Toolbar.Unknown : IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown);
       }
     };
+
     actionButton.setLook(look);
+    actionButton.setBorder(myOrientation == SwingConstants.VERTICAL ? JBUI.Borders.empty(2, 1) : JBUI.Borders.empty(1, 2));
+
     return actionButton;
   }
 
@@ -1085,6 +1088,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private boolean myAlreadyUpdated;
+  private boolean myHideDisabled = false;
+
+  public void setHideDisabled(boolean hideDisabled) {
+    myHideDisabled = hideDisabled;
+    updateActionsImmediately();
+  }
 
   private void updateActionsImpl(boolean transparentOnly, boolean forced) {
     DataContext dataContext = getDataContext();
@@ -1095,11 +1104,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (async) {
       if (myLastUpdate != null) myLastUpdate.cancel();
 
-      myLastUpdate = updater.expandActionGroupAsync(myActionGroup, false);
+      myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
       myLastUpdate.onSuccess(actions -> actionsUpdated(forced, actions)).onProcessed(__ -> myLastUpdate = null);
     }
     else {
-      actionsUpdated(forced, updater.expandActionGroupWithTimeout(myActionGroup, false));
+      actionsUpdated(forced, updater.expandActionGroupWithTimeout(myActionGroup, myHideDisabled));
       myAlreadyUpdated = true;
     }
     if (mySecondaryActionsButton != null) {

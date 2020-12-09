@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -67,7 +68,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    @Nls String breadcrumbs = myData.getBreadcrumbsMap(myCheckBox.isSelected()).get(value.getInfo());
+    @NlsSafe String breadcrumbs = myData.getBreadcrumbsMap(myCheckBox.isSelected()).get(value.getInfo());
     JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
     if (index != 0) {
       panel.add(createSeparatorLine(colorsScheme));

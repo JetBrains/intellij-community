@@ -7,5 +7,6 @@ import com.intellij.util.indexing.ID
 class FileIndexingStatistics(
   val indexingTime: TimeNano,
   val fileType: FileType,
+  val indexesProvidedByExtensions: Set<ID<*, *>>,
   val perIndexerTimes: Map<ID<*, *>, TimeNano>
 ) 

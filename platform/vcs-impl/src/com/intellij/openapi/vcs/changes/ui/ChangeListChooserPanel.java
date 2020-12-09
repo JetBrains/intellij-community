@@ -106,7 +106,8 @@ public class ChangeListChooserPanel extends JPanel {
     myListPanel.init(null);
   }
 
-  public void setChangeLists(Collection<? extends ChangeList> changeLists) {
+  public void setChangeLists(@Nullable Collection<? extends ChangeList> changeLists) {
+    if (changeLists == null) changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
     myExistingListsCombo.setModel(new DefaultComboBoxModel<>(changeLists.toArray(new ChangeList[0])));
   }
 

@@ -5,10 +5,11 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -18,8 +19,8 @@ public final class PsiSuperMethodUtil {
 
   public static boolean isSuperMethod(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-    for (HierarchicalMethodSignature supsig : signature.getSuperSignatures()) {
-      PsiMethod supsigme = supsig.getMethod();
+    for (HierarchicalMethodSignature superSignature : signature.getSuperSignatures()) {
+      PsiMethod supsigme = superSignature.getMethod();
       if (superMethod.equals(supsigme) || isSuperMethod(supsigme, superMethod)) return true;
     }
 
@@ -41,7 +42,7 @@ public final class PsiSuperMethodUtil {
       PsiType type = superSubstitutor.substitute(typeParameter);
       final PsiType t = derivedSubstitutor.substitute(type);
       if (map == null) {
-        map = new THashMap<>();
+        map = new HashMap<>();
       }
       map.put(typeParameter, t);
     }
@@ -52,7 +53,7 @@ public final class PsiSuperMethodUtil {
   @NotNull
   public static Map<MethodSignature, Set<PsiMethod>> collectOverrideEquivalents(@NotNull PsiClass aClass) {
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
-      new THashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     final GlobalSearchScope resolveScope = aClass.getResolveScope();
     PsiClass[] supers = aClass.getSupers();
     for (int i = 0; i < supers.length; i++) {

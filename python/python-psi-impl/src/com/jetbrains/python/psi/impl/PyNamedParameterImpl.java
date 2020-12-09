@@ -467,7 +467,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return Collections.emptyList();
   }
 
-  private static void processLocalCalls(@NotNull PyFunction function, @NotNull Processor<PyCallExpression> processor) {
+  private static void processLocalCalls(@NotNull PyFunction function, @NotNull Processor<? super PyCallExpression> processor) {
     final PsiFile file = function.getContainingFile();
     final String name = function.getName();
     if (file != null && name != null) {

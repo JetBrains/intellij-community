@@ -1,8 +1,8 @@
-from typing import Any, Optional, Union, IO, Text, Tuple, List
 import datetime
-from ._common import tzname_in_python2 as tzname_in_python2, _tzinfo as _tzinfo
-from ._common import tzrangebase as tzrangebase, enfold as enfold
+from typing import IO, Any, List, Optional, Text, Tuple, Union
+
 from ..relativedelta import relativedelta
+from ._common import _tzinfo as _tzinfo, enfold as enfold, tzname_in_python2 as tzname_in_python2, tzrangebase as tzrangebase
 
 _FileObj = Union[str, Text, IO[str], IO[Text]]
 
@@ -30,7 +30,6 @@ class tzoffset(datetime.tzinfo):
     __hash__: Any
     def __ne__(self, other): ...
     __reduce__: Any
-
     @classmethod
     def instance(cls, name, offset) -> tzoffset: ...
 
@@ -65,14 +64,21 @@ class tzfile(_tzinfo):
 
 class tzrange(tzrangebase):
     hasdst: bool
-    def __init__(self, stdabbr: Text, stdoffset: Union[int, datetime.timedelta, None] = ..., dstabbr: Optional[Text] = ..., dstoffset: Union[int, datetime.timedelta, None] = ..., start: Optional[relativedelta] = ..., end: Optional[relativedelta] = ...) -> None: ...
+    def __init__(
+        self,
+        stdabbr: Text,
+        stdoffset: Union[int, datetime.timedelta, None] = ...,
+        dstabbr: Optional[Text] = ...,
+        dstoffset: Union[int, datetime.timedelta, None] = ...,
+        start: Optional[relativedelta] = ...,
+        end: Optional[relativedelta] = ...,
+    ) -> None: ...
     def transitions(self, year: int) -> Tuple[datetime.datetime, datetime.datetime]: ...
     def __eq__(self, other): ...
 
 class tzstr(tzrange):
     hasdst: bool
     def __init__(self, s: Union[bytes, _FileObj], posix_offset: bool = ...) -> None: ...
-
     @classmethod
     def instance(cls, name, offset) -> tzoffset: ...
 
@@ -87,7 +93,6 @@ TZPATHS: List[str]
 def datetime_exists(dt: datetime.datetime, tz: Optional[datetime.tzinfo] = ...) -> bool: ...
 def datetime_ambiguous(dt: datetime.datetime, tz: Optional[datetime.tzinfo] = ...) -> bool: ...
 def resolve_imaginary(dt: datetime.datetime) -> datetime.datetime: ...
-
 
 class _GetTZ:
     def __call__(self, name: Optional[Text] = ...) -> Optional[datetime.tzinfo]: ...

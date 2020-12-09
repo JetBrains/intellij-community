@@ -25,6 +25,7 @@ import java.io.OutputStream
 import java.net.URI
 import java.net.URISyntaxException
 
+@Suppress("HardCodedStringLiteral")
 internal class InstallPluginService : RestService() {
   override fun getServiceName() = "installPlugin"
 

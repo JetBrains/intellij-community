@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.duplicates.analysis" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
   <component name="copyright">
     <Base>

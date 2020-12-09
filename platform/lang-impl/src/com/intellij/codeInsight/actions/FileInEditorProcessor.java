@@ -279,7 +279,7 @@ public class FileInEditorProcessor {
 
         String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
         if (optimizeImportsNotification != null) {
-          builder.append(StringUtil.capitalize(optimizeImportsNotification)).br();
+          builder.append(optimizeImportsNotification).br();
         }
       }
 

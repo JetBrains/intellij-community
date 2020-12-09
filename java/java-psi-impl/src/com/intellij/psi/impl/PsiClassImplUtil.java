@@ -26,15 +26,12 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
-import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 public final class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
@@ -250,7 +248,9 @@ public final class PsiClassImplUtil {
   }
 
   private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = r -> {
-    if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
+    if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) {
+      return null;
+    }
 
     boolean isLocked = BitUtil.isSet(r.flags, Iconable.ICON_FLAG_READ_STATUS) && !r.psiClass.isWritable();
     Icon symbolIcon = r.symbolIcon != null
@@ -277,7 +277,7 @@ public final class PsiClassImplUtil {
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 
-    return IconDeferrer.getInstance().defer(base, new ClassIconRequest(aClass, flags, symbolIcon), FULL_ICON_EVALUATOR);
+    return IconManager.getInstance().createDeferredIcon(base, new ClassIconRequest(aClass, flags, symbolIcon), FULL_ICON_EVALUATOR);
   }
 
   @NotNull
@@ -361,7 +361,7 @@ public final class PsiClassImplUtil {
 
   private static @NotNull ConcurrentMap<MemberType, Map<String, PsiMember[]>> createMembersMap(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
     return ConcurrentFactoryMap.createMap(key -> {
-      Map<String, List<PsiMember>> map = new THashMap<>();
+      Map<String, List<PsiMember>> map = new HashMap<>();
 
       List<PsiMember> allMembers = new ArrayList<>();
       map.put(ALL, allMembers);
@@ -380,7 +380,7 @@ public final class PsiClassImplUtil {
           map.computeIfAbsent(element.getName(), __ -> new SmartList<>()).add(element);
         }
       }
-      Map<String, PsiMember[]> result = new THashMap<>();
+      Map<String, PsiMember[]> result = new HashMap<>(map.size());
       for (Map.Entry<String, List<PsiMember>> entry : map.entrySet()) {
         result.put(entry.getKey(), entry.getValue().toArray(PsiMember.EMPTY_ARRAY));
       }
@@ -655,8 +655,12 @@ public final class PsiClassImplUtil {
                                                          @NotNull LanguageLevel languageLevel,
                                                          @NotNull GlobalSearchScope resolveScope) {
     ProgressManager.checkCanceled();
-    if (visited == null) visited = new THashSet<>();
-    if (!visited.add(aClass)) return true;
+    if (visited == null) {
+      visited = new HashSet<>();
+    }
+    if (!visited.add(aClass)) {
+      return true;
+    }
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 

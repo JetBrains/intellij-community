@@ -246,7 +246,7 @@ public abstract class Language extends UserDataHolderBase {
     return myDialects;
   }
 
-  public static @Nullable Language findLanguageByID(String id) {
+  public static @Nullable Language findLanguageByID(@NonNls String id) {
     return id == null ? null : ourRegisteredIDs.get(id);
   }
 

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.action.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -12,7 +13,10 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-class GithubMergeCommitMessageDialog(project: Project, title: String, subject: String, body: String) : DialogWrapper(project) {
+class GithubMergeCommitMessageDialog(project: Project,
+                                     @NlsContexts.DialogTitle title: String,
+                                     subject: String,
+                                     body: String) : DialogWrapper(project) {
 
   private val commitMessage = CommitMessage(project, false, false, true).apply {
     setCommitMessage("$subject\n\n$body")

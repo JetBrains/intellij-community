@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.unwrap;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import java.util.List;
 public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
 
   public JavaSwitchStatementUnwrapper() {
-    super("Unwrap 'switch' statement");
+    super(JavaBundle.message("unwrap.switch.statement"));
   }
 
   @Override

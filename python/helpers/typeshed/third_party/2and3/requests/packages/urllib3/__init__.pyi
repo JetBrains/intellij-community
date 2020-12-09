@@ -1,13 +1,8 @@
-from typing import Any
-from . import connectionpool
-from . import filepost
-from . import poolmanager
-from . import response
-from .util import request as _request
-from .util import url
-from .util import timeout
-from .util import retry
 import logging
+from typing import Any
+
+from . import connectionpool, filepost, poolmanager, response
+from .util import request as _request, retry, timeout, url
 
 __license__: Any
 

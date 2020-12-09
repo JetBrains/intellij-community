@@ -22,7 +22,7 @@ class MyTest {
 
     {
         Bar1 b1 = MyTest :: foo;
-        bar(MyTest :: <error descr="Cannot resolve method 'foo'">foo</error>);
+        bar(MyTest :: <error descr="Reference to 'foo' is ambiguous, both 'foo(int)' and 'foo(String)' match">foo</error>);
     }
 }
 
@@ -122,7 +122,7 @@ class MyTest4 {
     }
 
     {
-         bar(MyTest4:: <error descr="Cannot resolve method 'foo'">foo</error>);
+         bar(MyTest4:: <error descr="Reference to 'foo' is ambiguous, both 'foo(int)' and 'foo(String)' match">foo</error>);
     }
 }
 

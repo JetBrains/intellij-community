@@ -3,6 +3,7 @@
  */
 package com.intellij.ui.popup.util;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -132,7 +133,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       }
     }
     else {
-      myLabel.setText("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
+      myLabel.setText(LangBundle.message(file.isDirectory() ? "detail.view.navigate.to.directory" :"detail.view.navigate.to.file"));
       add(myLabel, BorderLayout.CENTER);
       validate();
     }

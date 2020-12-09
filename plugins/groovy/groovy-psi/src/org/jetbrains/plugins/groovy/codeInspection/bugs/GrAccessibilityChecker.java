@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -125,6 +126,7 @@ public class GrAccessibilityChecker {
   private void registerFixes(GrReferenceElement ref, GroovyResolveResult result, HighlightInfo info) {
     PsiElement element = result.getElement();
     assert element != null;
+    if (element instanceof LightElement) return;
     GroovyFix[] fixes = buildFixes(ref, result);
     if (fixes.length == 0) {
       String displayName = HighlightDisplayKey.getDisplayNameByKey(myDisplayKey);

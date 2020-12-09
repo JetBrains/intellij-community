@@ -11,9 +11,9 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class SHIcons {
-  private static @NotNull Icon load(@NotNull String path) {
-    return IconManager.getInstance().getIcon(path, SHIcons.class);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
+    return IconManager.getInstance().loadRasterizedIcon(path, SHIcons.class, cacheKey);
   }
 
-  /** 16x16 */ public static final @NotNull Icon ShFile = load("/icons/shFile.svg");
+  /** 16x16 */ public static final @NotNull Icon ShFile = load("/icons/shFile.svg", -7397725416222144519L);
 }

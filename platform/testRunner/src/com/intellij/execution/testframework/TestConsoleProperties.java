@@ -71,6 +71,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myProject;
   }
 
+  /**
+   * @return scope which was used to compose tests classpath
+   */
   @NotNull
   public GlobalSearchScope getScope() {
     if (myScope == null) {
@@ -177,6 +180,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myConsole;
   }
 
+  /**
+   * Override to customize console used
+   */
   @NotNull
   public ConsoleView createConsole() {
     return new TestsConsoleBuilderImpl(getProject(),
@@ -199,12 +205,18 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return null;
   }
 
+  /**
+   * If supported by the framework, can be used in additional actions toolbar
+   */
   @NotNull
   protected ToggleBooleanProperty createIncludeNonStartedInRerun(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
     return new DumbAwareToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
   }
 
+  /**
+   * If supported by the framework, can be used in additional actions toolbar
+   */
   @NotNull
   protected ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.hide.successful.config.action.name");
@@ -212,6 +224,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return new DumbAwareToggleBooleanProperty(text, null, null, target, HIDE_SUCCESSFUL_CONFIG);
   }
 
+  /**
+   * Override if framework supports running tests on multiple selection
+   */
   @JdkConstants.TreeSelectionMode
   public int getSelectionMode() {
     return TreeSelectionModel.SINGLE_TREE_SELECTION;
@@ -222,6 +237,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return DefaultExecutionTarget.INSTANCE;
   }
 
+  /**
+   * Override to choose toolwindow where test finished notification would be shown
+   */
   @NotNull
   public String getWindowId() {
     return isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;

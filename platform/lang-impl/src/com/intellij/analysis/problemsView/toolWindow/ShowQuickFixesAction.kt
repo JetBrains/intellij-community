@@ -71,7 +71,7 @@ internal class ShowQuickFixesAction : AnAction() {
   private fun actionPerformed(event: AnActionEvent, problem: HighlightingProblem) {
     val intentions = getCachedIntentions(event, problem) ?: return
     val editor = intentions.editor ?: return
-    editor.caretModel.moveToOffset(intentions.offset)
+    if (intentions.offset >= 0) editor.caretModel.moveToOffset(intentions.offset.coerceAtMost(editor.document.textLength))
     show(event, JBPopupFactory.getInstance().createListPopup(
       IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions)
     ))
@@ -84,7 +84,7 @@ internal class ShowQuickFixesAction : AnAction() {
 
     val info = ShowIntentionsPass.IntentionsInfo()
     markers.filter { it.second.isValid }.forEach { info.intentionsToShow.add(it.first) }
-    info.offset = problem.offset
+    info.offset = problem.info?.actualStartOffset ?: -1
 
     val intentions = CachedIntentions.createAndUpdateActions(psi.project, psi, editor, info)
     if (intentions.intentions.isNotEmpty()) return intentions

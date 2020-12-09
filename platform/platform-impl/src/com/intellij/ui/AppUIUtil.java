@@ -25,9 +25,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleContextSupport;
+import com.intellij.ui.scale.ScaleContextAware;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -72,16 +71,22 @@ public final class AppUIUtil {
       String smallSvgIconUrl = appInfo.getSmallApplicationSvgIconUrl();
       ScaleContext ctx = ScaleContext.create(window);
 
-      if (SystemInfo.isUnix) {
+      if (SystemInfoRt.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
-        ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
+        Image element = loadApplicationIconImage(svgIconUrl, ctx, 128, fallback);
+        if (element != null) {
+          images.add(element);
+        }
       }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback));
+      Image element = loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback);
+      if (element != null) {
+        images.add(element);
+      }
 
-      if (SystemInfo.isWindows) {
-        ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx, 16));
+      if (SystemInfoRt.isWindows) {
+        images.add(loadSmallApplicationIconImage(ctx, 16));
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -113,10 +118,10 @@ public final class AppUIUtil {
   }
 
   @SuppressWarnings("SameParameterValue")
-  private static @NotNull Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx, int size) {
+  private static @NotNull Image loadSmallApplicationIconImage(@NotNull ScaleContext scaleContext, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
-    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), ctx, size, fallbackSmallIconUrl);
+    //noinspection deprecation
+    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), scaleContext, size, appInfo.getSmallIconUrl());
   }
 
   public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
@@ -126,12 +131,13 @@ public final class AppUIUtil {
   public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
-
-    Icon icon = loadApplicationIcon(smallIconUrl, ctx, size);
-    if (icon != null) return icon;
+    Icon icon = smallIconUrl == null ? null : loadApplicationIcon(smallIconUrl, ctx, size);
+    if (icon != null) {
+      return icon;
+    }
 
     @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
-    Image image = ImageLoader.loadFromResource(fallbackSmallIconUrl);
+    Image image = ImageLoader.loadFromResource(fallbackSmallIconUrl, AppUIUtil.class);
     //noinspection ConstantConditions
     icon = new JBImageIcon(image);
     scaleIconToSize(icon, size);
@@ -140,36 +146,38 @@ public final class AppUIUtil {
 
   public static @Nullable Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {
     String url = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
-    return loadApplicationIcon(url, ctx, size);
+    return url == null ? null : loadApplicationIcon(url, ctx, size);
   }
 
   /**
    * Returns a hidpi-aware image.
    */
   @Contract("_, _, _, !null -> !null")
-  private static @Nullable Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
-    Icon icon = loadApplicationIcon(svgPath, ctx, size);
+  private static @Nullable Image loadApplicationIconImage(@Nullable String svgPath, ScaleContext scaleContext, int size, @Nullable String fallbackPath) {
+    Icon icon = svgPath == null ? null : loadApplicationIcon(svgPath, scaleContext, size);
     if (icon != null) {
-      return IconUtil.toImage(icon, ctx);
+      return IconUtil.toImage(icon, scaleContext);
     }
 
     if (fallbackPath != null) {
-      return ImageLoader.loadFromResource(fallbackPath);
+      return ImageLoader.loadFromResource(fallbackPath, AppUIUtil.class);
     }
-
     return null;
   }
 
-  private static @Nullable Icon loadApplicationIcon(String svgPath, ScaleContext ctx, int size) {
-    if (svgPath == null) return null;
+  private static @Nullable Icon loadApplicationIcon(String svgPath, ScaleContext scaleContext, int size) {
+    if (svgPath == null) {
+      return null;
+    }
 
-    Icon icon = IconLoader.findIcon(svgPath);
+    Icon icon = IconLoader.findIcon(svgPath, AppUIUtil.class);
     if (icon == null) {
       getLogger().info("Cannot load SVG application icon from " + svgPath);
       return null;
     }
-    if (icon instanceof ScaleContextSupport) {
-      ((ScaleContextSupport)icon).updateScaleContext(ctx);
+
+    if (icon instanceof ScaleContextAware) {
+      ((ScaleContextAware)icon).updateScaleContext(scaleContext);
     }
     return scaleIconToSize(icon, size);
   }

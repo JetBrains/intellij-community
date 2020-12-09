@@ -66,7 +66,7 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
   @NotNull
   @Override
   public String getName() {
-    return "Design";
+    return DesignerBundle.message("design");
   }
 
   @Override

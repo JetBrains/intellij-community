@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -51,11 +52,14 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   public void compile(PsiElement @NotNull [] topLevelElements) {
-    final JavaWordOptimizer optimizer = new JavaWordOptimizer();
-    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    final CompileContext context = myCompilingVisitor.getContext();
+
+    // When dumb the index is not used while editing pattern (e.g. no warning when zero hits in project).
+    final JavaWordOptimizer optimizer = DumbService.isDumb(context.getProject()) ? null : new JavaWordOptimizer();
+    final CompiledPattern pattern = context.getPattern();
     for (PsiElement element : topLevelElements) {
       element.accept(this);
-      element.accept(optimizer);
+      if (optimizer != null) element.accept(optimizer);
       pattern.setHandler(element, new TopLevelMatchingHandler(pattern.getHandler(element)));
     }
   }
@@ -149,7 +153,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     @Override
     public @NotNull List<String> getDescendantsOf(@NotNull String className, boolean includeSelf, @NotNull Project project) {
-      List<String> result = new SmartList<>();
+      final List<String> result = new SmartList<>();
 
       // use project and libraries scope, because super class may be outside the scope of the search
       final GlobalSearchScope projectAndLibraries = ProjectScope.getAllScope(project);
@@ -283,7 +287,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     visitElement(reference);
     final PsiElement referenceParent = reference.getParent();
 
-    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    final CompileContext context = myCompilingVisitor.getContext();
+    final CompiledPattern pattern = context.getPattern();
     final boolean typedVar = pattern.isRealTypedVar(reference) &&
                              reference.getQualifierExpression() == null &&
                              !(referenceParent instanceof PsiExpressionStatement);
@@ -295,7 +300,10 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     final String referencedName = reference.getReferenceName();
 
     if (!typedVar && !(handler instanceof SubstitutionHandler)) {
-      final PsiElement resolve = reference.resolve();
+      // When in dumb mode fall back to first character of name is upper case heuristic to identify classes.
+      // Which is basically already always used when the referenced class is not in java.lang,
+      // because SSR patterns have no imports so resolve will return null.
+      final PsiElement resolve = DumbService.isDumb(context.getProject()) ? null : reference.resolve();
 
       final PsiElement referenceQualifier = reference.getQualifier();
       if (resolve instanceof PsiClass ||

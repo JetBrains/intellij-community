@@ -1,25 +1,7 @@
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Sequence,
-    Mapping,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    overload,
-)
+from typing import Any, Callable, Dict, Generic, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union, overload
 
 # `import X as X` is required to make these public
-from . import exceptions as exceptions
-from . import filters as filters
-from . import converters as converters
-from . import validators as validators
-
+from . import converters as converters, exceptions as exceptions, filters as filters, validators as validators
 from ._version_info import VersionInfo
 
 __version__: str
@@ -55,10 +37,7 @@ NOTHING: object
 @overload
 def Factory(factory: Callable[[], _T]) -> _T: ...
 @overload
-def Factory(
-    factory: Union[Callable[[Any], _T], Callable[[], _T]],
-    takes_self: bool = ...,
-) -> _T: ...
+def Factory(factory: Union[Callable[[Any], _T], Callable[[], _T]], takes_self: bool = ...) -> _T: ...
 
 class Attribute(Generic[_T]):
     name: str

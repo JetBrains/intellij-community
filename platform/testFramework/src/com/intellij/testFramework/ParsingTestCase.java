@@ -39,6 +39,8 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
+import com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
@@ -513,6 +515,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
     registerExtensionPoint(myApp.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+    getApplication().registerService(EditorWindowTracker.class, new EditorWindowTrackerImpl());
     myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject));
   }
 }

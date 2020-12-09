@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.GroupItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,11 +26,14 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   private final ArrayList<ComponentItem> myItems = new ArrayList<>();
   private final ComponentItem myInitialSelection;
   private final Processor<? super ComponentItem> myRunnable;
-  private final String myTitle;
+  private final @Nls String myTitle;
   private final Project myProject;
   private Runnable myFinalRunnable;
 
-  PaletteListPopupStep(GuiEditor editor, ComponentItem initialSelection, final Processor<? super ComponentItem> runnable, final String title) {
+  PaletteListPopupStep(GuiEditor editor,
+                       ComponentItem initialSelection,
+                       final Processor<? super ComponentItem> runnable,
+                       final @Nls String title) {
     myInitialSelection = initialSelection;
     myRunnable = runnable;
     myProject = editor.getProject();

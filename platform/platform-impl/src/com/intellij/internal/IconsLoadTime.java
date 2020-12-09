@@ -4,37 +4,27 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.ui.icons.ImageDescriptor;
-import com.intellij.ui.icons.ImageType;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Logs load time statistics for PNG/SVG images, such as: average, median, ide startup total, first N icons total.
- *
- * @author tav
+ * See icon-loading-stat.svg to understand how icon loading is measured.
  */
+@ApiStatus.Internal
 public final class IconsLoadTime extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(IconsLoadTime.class);
 
-  private static final int STATS_LIMIT = 10000;
-  private static final int FIXED_SCOPE = 100; // log stats for a first fixed number of icons
-
   // load time per icon
-  private static final List<Integer> statsSVG = new ArrayList<>();
-  private static final List<Integer> statsPNG = new ArrayList<>();
-
-  static {
-    if (Boolean.getBoolean("idea.measure.icon.load.time")) {
-      ImageDescriptor.setLoadTimeConsumer(IconsLoadTime::measure);
-    }
-  }
+  private static final IntList svgStats = new IntArrayList();
+  private static final IntList pngStats = new IntArrayList();
 
   public static final class StatData {
-    public final ImageType type;
+    public final boolean isSvg;
     public final boolean startup;
     public final int count;
 
@@ -43,8 +33,8 @@ public final class IconsLoadTime extends DumbAwareAction {
     public final float averageTime;
     public final float medianTime;
 
-    private StatData(@NotNull ImageType type, boolean startup, int totalTime, int averageTime, int medianTime, int count) {
-      this.type = type;
+    private StatData(boolean isSvg, boolean startup, int totalTime, int averageTime, int medianTime, int count) {
+      this.isSvg = isSvg;
       this.startup = startup;
       this.count = count;
 
@@ -55,10 +45,11 @@ public final class IconsLoadTime extends DumbAwareAction {
 
     @Override
     public String toString() {
-      return type + " load time: " +
+      return "load time: " +
              (startup ? "ide_startup=" : "total=") + String.format("%.02fms", totalTime) +
              ", average=" + String.format("%.02fms", averageTime) +
              ", median=" + String.format("%.02fms", medianTime) +
+             ", isSvg=" + isSvg +
              "; number of icons: " + count;
     }
   }
@@ -69,18 +60,18 @@ public final class IconsLoadTime extends DumbAwareAction {
   }
 
   public static void log(boolean measureStartupLoad) {
-    log(measureStartupLoad, ImageType.IMG);
-    log(measureStartupLoad, ImageType.SVG);
+    log(measureStartupLoad, false);
+    log(measureStartupLoad, true);
   }
 
-  private static void log(boolean measureStartupLoad, @NotNull ImageType type) {
-    StatData data = getStatData(measureStartupLoad, type);
+  private static void log(boolean measureStartupLoad, boolean isSvg) {
+    StatData data = getStatData(measureStartupLoad, isSvg);
     if (data != null) LOG.info(data.toString());
   }
 
   @Nullable
-  public static StatData getStatData(boolean measureStartupLoad, @NotNull ImageType type) {
-    List<Integer> stats = getStats(type);
+  public static StatData getStatData(boolean measureStartupLoad, boolean isSvg) {
+    List<Integer> stats = getStats(isSvg);
     if (stats.isEmpty()) {
       return null;
     }
@@ -91,29 +82,11 @@ public final class IconsLoadTime extends DumbAwareAction {
       int sum = stats.stream().mapToInt(Integer::intValue).sum();
       int average = sum / size;
       int median = (size % 2 == 0) ? stats.get(size / 2 - 1) + stats.get(size / 2) : stats.get(size / 2);
-      return new StatData(type, measureStartupLoad, sum, average, median, size);
+      return new StatData(isSvg, measureStartupLoad, sum, average, median, size);
     }
   }
 
-  private static void measure(@NotNull ImageType type, int duration) {
-    List<Integer> stats = getStats(type);
-    if (stats.size() > STATS_LIMIT) {
-      ImageDescriptor.setLoadTimeConsumer(null);
-    }
-
-    int size;
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (stats) {
-      stats.add(duration);
-      size = stats.size();
-    }
-    if (size == FIXED_SCOPE) {
-      log(false, type);
-    }
-  }
-
-  @NotNull
-  private static List<Integer> getStats(@NotNull ImageType type) {
-    return type == ImageType.SVG ? statsSVG : statsPNG;
+  private static @NotNull IntList getStats(boolean isSvg) {
+    return isSvg ? svgStats : pngStats;
   }
 }

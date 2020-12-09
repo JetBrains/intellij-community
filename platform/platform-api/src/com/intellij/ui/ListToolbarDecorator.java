@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,12 @@ class ListToolbarDecorator<T> extends ToolbarDecorator {
       }
     });
     myList.addPropertyChangeListener("enabled", __ -> updateButtons());
+  }
+
+  @Override
+  public @NotNull ToolbarDecorator initPosition() {
+    setToolbarPosition(ActionToolbarPosition.BOTTOM);
+    return this;
   }
 
   private void createActions() {

@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.config.AbstractProperty;
@@ -85,7 +86,7 @@ public final class BuildFilePropertiesPanel {
 
     public abstract JComponent getComponent();
 
-    public abstract String getDisplayName();
+    public abstract @NlsContexts.TabTitle String getDisplayName();
 
     public UIPropertyBinding.Composite getBinding() {
       return myBinding;

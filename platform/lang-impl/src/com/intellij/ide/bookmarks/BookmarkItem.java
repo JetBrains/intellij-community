@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,6 +112,7 @@ public class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem
   }
 
   @Override
+  @Nls
   public String footerText() {
     return myBookmark.getFile().getPresentableUrl();
   }

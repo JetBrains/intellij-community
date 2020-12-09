@@ -36,6 +36,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -49,7 +50,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -827,13 +827,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private void rebuildErrorStripeMarksModel() {
     ErrorStripeMarkersModel errorStripeMarkersModel = myErrorStripeMarkersModel;
     errorStripeMarkersModel.clear();
-    Processor<RangeHighlighterEx> processor = ex -> {
-      errorStripeMarkersModel.afterAdded(ex);
-      return true;
-    };
+
     int textLength = myEditor.getDocument().getTextLength();
-    processRangeHighlightersOverlappingWith(0, textLength, processor);
-    myEditor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, processor);
+    processRangeHighlightersOverlappingWith(0, textLength, ex -> {
+      errorStripeMarkersModel.afterAdded(ex, false);
+      return true;
+    });
+    myEditor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, ex -> {
+      errorStripeMarkersModel.afterAdded(ex, true);
+      return true;
+    });
   }
 
   void repaint() {
@@ -1402,8 +1405,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     public @NotNull TrafficTooltipRenderer createTrafficTooltipRenderer(final @NotNull Runnable onHide, @NotNull Editor editor) {
       return new TrafficTooltipRenderer() {
         @Override
-        public void repaintTooltipWindow() {
-        }
+        public void repaintTooltipWindow() { }
 
         @Override
         public @NotNull LightweightHint show(@NotNull Editor editor,
@@ -1411,7 +1413,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                              boolean alignToRight,
                                              @NotNull TooltipGroup group,
                                              @NotNull HintHint hintHint) {
-          JLabel label = new JLabel("WTF");
+          JLabel label = new JLabel("WTF");  // NON-NLS (non-observable)
           return new LightweightHint(label) {
             @Override
             public void hide() {
@@ -1618,10 +1620,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           group.add(new CompactViewAction());
           */
           if (0 < group.getChildrenCount()) {
-            ActionManager.getInstance()
-              .createActionPopupMenu(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group)
-              .getComponent()
-              .show(me.getComponent(), me.getX(), me.getY());
+            JBPopupMenu.showByEvent(me, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group);
           }
         }
 

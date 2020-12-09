@@ -15,7 +15,7 @@ import libraries.coroutines.extra.Lifetime
 internal class ReviewLoginComponent(lifetime: Lifetime,
                                     project: Project,
                                     spaceProjectInfo: SpaceProjectInfo,
-                                    repoInfo: Set<SpaceRepoInfo>) {
+                                    spaceRepos: Set<SpaceRepoInfo>) {
 
   private val vm = ReviewVm(lifetime, project, spaceProjectInfo.key)
 
@@ -32,17 +32,22 @@ internal class ReviewLoginComponent(lifetime: Lifetime,
         view.setContent(loginLabel)
       }
       else {
-        val circletReviewComponent = SpaceReviewComponent(project,
-                                                          lifetime,
-                                                          repoInfo,
-                                                          space.workspace.value!!.client,
-                                                          SpaceReviewsListVmImpl(lifetime,
-                                                                                 space.workspace.value!!.client,
-                                                                                 spaceProjectInfo.key,
-                                                                                 space.workspace.value!!.me),
-                                                          SpaceSelectedReviewVmImpl()
-        )
-        view.setContent(circletReviewComponent)
+        val workspace = space.workspace.value!!
+        val client = workspace.client
+
+        val reviewsListVm = SpaceReviewsListVmImpl(lifetime,
+                                                   client,
+                                                   spaceProjectInfo,
+                                                   workspace.me)
+
+        val reviewComponent = SpaceReviewComponent(project,
+                                                   lifetime,
+                                                   spaceProjectInfo,
+                                                   spaceRepos,
+                                                   client,
+                                                   reviewsListVm,
+                                                   SpaceSelectedReviewVmImpl())
+        view.setContent(reviewComponent)
       }
       view.validate()
       view.repaint()

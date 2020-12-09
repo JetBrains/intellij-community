@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +26,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.xml.XmlName;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +170,7 @@ public final class CustomAntElementsRegistry {
   }
 
   @Nullable
-  public String lookupError(XmlName xmlName) {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String lookupError(XmlName xmlName) {
     final ClassProvider provider = myCustomElements.get(xmlName);
     return provider == null ? null : provider.getError();
   }
@@ -181,7 +183,7 @@ public final class CustomAntElementsRegistry {
     return StreamEx.ofKeys(myDeclarations, typedef::equals).anyMatch(name -> lookupError(name) != null);
   }
 
-  public List<String> getTypeLoadingErrors(AntDomTypeDef typedef) {
+  public List<@NlsSafe String> getTypeLoadingErrors(AntDomTypeDef typedef) {
     final String generalError = myTypeDefErrors.get(typedef);
     if (generalError != null) {
       return Collections.singletonList(generalError);

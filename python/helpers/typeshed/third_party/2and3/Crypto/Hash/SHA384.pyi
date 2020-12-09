@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 from Crypto.Hash.hashalgo import HashAlgo
 
 class SHA384Hash(HashAlgo):

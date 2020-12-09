@@ -18,6 +18,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.io.FileUtil;
@@ -56,7 +57,8 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   private final Action myIgnoreAction;
 
-  public PluginUpdateDialog(@NotNull Collection<PluginDownloader> updatedPlugins,
+  public PluginUpdateDialog(@Nullable Project project,
+                            @NotNull Collection<PluginDownloader> updatedPlugins,
                             @NotNull Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
     super(true);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
@@ -71,7 +73,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
     };
 
-    myPluginModel = new MyPluginModel() {
+    myPluginModel = new MyPluginModel(project) {
       @Override
       public void runRestartButton(@NotNull Component component) {
         doOKAction();

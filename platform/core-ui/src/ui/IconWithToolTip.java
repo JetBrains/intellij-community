@@ -2,11 +2,9 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.ScalableIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.function.Supplier;
 
 /**
  * Icon which supports providing a tooltip.
@@ -19,17 +17,4 @@ public interface IconWithToolTip extends Icon {
    * @return
    */
   @NlsContexts.Tooltip @Nullable String getToolTip(boolean composite);
-
-  static IconWithToolTip create(Icon icon, Supplier<@NlsContexts.Tooltip String> tooltip) {
-    if (icon instanceof ScalableIcon) {
-      return new ScalableIconWrapperWithToolTip((ScalableIcon)icon, tooltip);
-    }
-    else {
-      return new IconWrapperWithToolTip(icon, tooltip);
-    }
-  }
-
-  static IconWithToolTip tooltipOnlyIfComposite(Icon icon) {
-    return new IconWrapperWithToolTipComposite(icon);
-  }
 }

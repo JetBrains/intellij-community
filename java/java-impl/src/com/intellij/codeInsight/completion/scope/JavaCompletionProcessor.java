@@ -26,20 +26,21 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassHint {
+public final class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassHint {
   private static final Logger LOG = Logger.getInstance(JavaCompletionProcessor.class);
 
   private final boolean myInJavaDoc;
   private boolean myStatic;
   private PsiElement myDeclarationHolder;
   private final Map<CompletionElement, CompletionElement> myResults = new LinkedHashMap<>();
-  private final Set<CompletionElement> mySecondRateResults = ContainerUtil.newIdentityTroveSet();
+  private final Set<CompletionElement> mySecondRateResults = new ReferenceOpenHashSet<>();
   private final Set<String> myShadowedNames = new HashSet<>();
   private final Set<String> myCurrentScopeMethodNames = new HashSet<>();
   private final Set<String> myFinishedScopesMethodNames = new HashSet<>();

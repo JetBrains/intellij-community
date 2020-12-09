@@ -13,6 +13,7 @@ import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +54,9 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
         .setDeclaringDomElement(entry.getValue())
         .addExtender(EXTENSION_EXTENDER);
     }
+
+    // "fallback" extension
+    registrar.registerCustomChildrenExtension(Extensions.UnresolvedExtension.class, new CustomDomChildrenDescription.TagNameDescriptor());
   }
 
   @Nullable
@@ -125,4 +129,5 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
     result.addAll(ids);
     return result;
   }
+
 }

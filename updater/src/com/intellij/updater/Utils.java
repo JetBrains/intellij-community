@@ -345,7 +345,6 @@ public class Utils {
     @Override
     @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
     public synchronized void writeTo(OutputStream out) throws IOException {
-      //noinspection UnnecessarilyQualifiedStaticUsage
       Utils.writeBytes(buf, count, out);
     }
   }

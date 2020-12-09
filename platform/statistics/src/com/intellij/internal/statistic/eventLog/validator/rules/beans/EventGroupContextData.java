@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.validator.rules.beans;
 
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule;
-import com.intellij.internal.statistic.eventLog.whitelist.GlobalRulesHolder;
+import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

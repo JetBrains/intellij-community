@@ -16,6 +16,7 @@ import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.P
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.QUALIFIED
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.REFERENCE
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.STRING
+import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.TEXT
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.TYPE
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.UNION
 import org.editorconfig.language.schema.parser.handlers.EditorConfigDescriptorParseHandlerBase
@@ -57,6 +58,7 @@ class EditorConfigJsonSchemaParser(private val logger: Logger) {
     val standardTypeParseHandler = EditorConfigStandardTypeDescriptorParseHandler()
     registerParseHandler(NUMBER to standardTypeParseHandler)
     registerParseHandler(STRING to standardTypeParseHandler)
+    registerParseHandler(TEXT to standardTypeParseHandler)
 
     registerParseHandler(DECLARATION to EditorConfigDeclarationDescriptorParseHandler())
     registerParseHandler(REFERENCE to EditorConfigReferenceDescriptorParseHandler())

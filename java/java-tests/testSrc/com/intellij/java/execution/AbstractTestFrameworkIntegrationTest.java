@@ -138,7 +138,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
     return new ArtifactRepositoryManager(
       localRepo,
-      Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "https://repo.labs.intellij.net/repo1")),
+      Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")),
       new ProgressConsumer() {
         @Override
         public void consume(String message) {

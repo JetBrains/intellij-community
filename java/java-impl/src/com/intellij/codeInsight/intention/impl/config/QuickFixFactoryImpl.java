@@ -947,4 +947,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName) {
     return new MoveToPackageFix(classToMove.getContainingFile(), packageName);
   }
+
+  @Override
+  public @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
+                                                                     @NotNull PsiClass parentClass,
+                                                                     @NotNull PsiClass subClass) {
+    return Arrays.asList(ImplementOrExtendFix.createActions(subclassRef, subClass, parentClass, false));
+  }
 }

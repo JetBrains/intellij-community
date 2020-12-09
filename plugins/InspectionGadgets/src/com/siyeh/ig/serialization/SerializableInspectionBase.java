@@ -11,6 +11,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreAnonymousInnerClasses = false;
   @SuppressWarnings({"PublicField"})
-  public String superClassString = "java.awt.Component";
+  public @NonNls String superClassString = "java.awt.Component";
   protected List<String> superClassList = new ArrayList<>();
 
   @Override

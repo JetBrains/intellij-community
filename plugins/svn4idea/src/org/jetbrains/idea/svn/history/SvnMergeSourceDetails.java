@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.CommittedChangeListPanel;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,6 +19,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -34,7 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer.getDescriptionOfChangeList;
+import static com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer.truncateDescription;
 import static com.intellij.util.text.DateFormatUtil.formatPrettyDateTime;
 
 public final class SvnMergeSourceDetails extends MasterDetailsComponent {
@@ -97,7 +100,6 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     private final static int ourMaxWidth = 100;
-    private final static String ourDots = "(...)";
 
     @Override
     public void customizeCellRenderer(final JTree tree,
@@ -111,29 +113,27 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
       final SvnFileRevision revision;
       if (value instanceof MyRootNode) {
         revision = myRevision;
-      } else {
+      }
+      else {
         final MyNode myNode = (MyNode)value;
-        final MyNamedConfigurable configurable = (MyNamedConfigurable) myNode.getConfigurable();
+        final MyNamedConfigurable configurable = (MyNamedConfigurable)myNode.getConfigurable();
         revision = configurable.getRevision();
       }
 
-      final String revisonNumber = revision.getRevisionNumber().asString();
-      String description = CommittedChangeListRenderer.getDescriptionOfChangeList(revision.getCommitMessage());
-      int width = metrics.stringWidth(description);
-      int dotsWidth = metrics.stringWidth(ourDots);
-      boolean descriptionTruncated = false;
-      if (ourMaxWidth < width) {
-        description = CommittedChangeListRenderer.truncateDescription(description, metrics, ourMaxWidth - dotsWidth);
-        descriptionTruncated = true;
-      }
-      if (descriptionTruncated) {
-        description += ourDots;
+      String description = getDescriptionOfChangeList(revision.getCommitMessage());
+      if (metrics.stringWidth(description) > ourMaxWidth) {
+        description = truncateDescription(description, metrics, ourMaxWidth - metrics.stringWidth(getTruncatedSuffix()));
+        description += getTruncatedSuffix();
       }
 
-      append(revisonNumber + " ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      append(revision.getRevisionNumber().asString() + " ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(description + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(notNullize(revision.getAuthor()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(", " + formatPrettyDateTime(revision.getRevisionDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+
+    private @Nls @NotNull String getTruncatedSuffix() {
+      return "(" + ELLIPSIS + ")";
     }
   }
 

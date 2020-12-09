@@ -364,19 +364,14 @@ public class FindUsagesTest extends JavaPsiTestCase {
     SearchScope scope = new LocalSearchScope(aClass);
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
         ProgressManager.getInstance().runProcess(() ->
-          {
-            try {
+            assertThrows(IndexNotReadyException.class, () -> {
               SearchRequestCollector collector = new SearchRequestCollector(new SearchSession(field));
               collector.searchWord(field.getName(), scope, true, field);
               PsiSearchHelper.getInstance(getProject()).processRequests(collector, reference -> {
                   throw IndexNotReadyException.create();
                 });
-              fail("must throw INRE");
-            }
-            catch (IndexNotReadyException ignored) {
-            }
-          },
-          new EmptyProgressIndicator())
+            })
+          , new EmptyProgressIndicator())
       );
 
     future.get();

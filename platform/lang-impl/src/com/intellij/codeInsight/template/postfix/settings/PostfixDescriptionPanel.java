@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,7 @@ class PostfixDescriptionPanel implements Disposable {
   }
 
   @NotNull
-  private static String getDescription(TextDescriptor url) {
+  private static @Nls String getDescription(TextDescriptor url) {
     try {
       return url.getText();
     }

@@ -324,7 +324,7 @@ final class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
   }
 
   @Override
-  public @Nullable String patchPath(@NotNull String path, ClassLoader classLoader) {
+  public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
     return ourDeprecatedIconsReplacements.get(path);
   }
 }

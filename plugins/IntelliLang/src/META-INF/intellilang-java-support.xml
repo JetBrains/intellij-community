@@ -28,6 +28,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <tipAndTrick file="InjectSQLLanguage.html" feature-id="db.console.run.intention"/>
+    <compileServer.plugin classpath="java-langInjection-jps.jar"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">

@@ -21,7 +21,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -57,7 +57,7 @@ class InspectionPopupManager {
   private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
   private final AncestorListener myAncestorListener;
   private final JBPopupListener myPopupListener;
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final Alarm popupAlarm = new Alarm();
   private final List<DropDownLink<?>> levelLinks = new ArrayList<>();
 
@@ -142,7 +142,7 @@ class InspectionPopupManager {
 
     myPopup = myPopupBuilder.createPopup();
     myPopup.addListener(myPopupListener);
-    myPopup.addListener(myPopupState);
+    myPopupState.prepareToShow(myPopup);
     myEditor.getComponent().addAncestorListener(myAncestorListener);
 
     JComponent owner = (JComponent)event.getComponent();
@@ -287,25 +287,15 @@ class InspectionPopupManager {
       java.util.List<LanguageHighlightLevel> levels = controller.getHighlightLevels();
 
       if (levels.size() == 1) {
-        JLabel highlightLabel = new JLabel(EditorBundle.message("iw.highlight.label") + " ");
-        highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
-
-        panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START));
-
-        DropDownLink<?> link = createDropDownLink(levels.get(0), controller);
+        DropDownLink<?> link = createDropDownLink(levels.get(0), controller, EditorBundle.message("iw.highlight.label") + " ");
         levelLinks.add(link);
         panel.add(link, gc.next());
       }
       else if (levels.size() > 1) {
         for(LanguageHighlightLevel level: levels) {
-          JLabel highlightLabel = new JLabel(level.getLangID() + ": ");
-          highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
-
-          panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
-
-          DropDownLink<?> link = createDropDownLink(level, controller);
+          DropDownLink<?> link = createDropDownLink(level, controller, level.getLangID() + ": ");
           levelLinks.add(link);
-          panel.add(link, gc.next());
+          panel.add(link, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
         }
       }
     }
@@ -319,7 +309,9 @@ class InspectionPopupManager {
     return panel;
   }
 
-  private @NotNull DropDownLink<InspectionsLevel> createDropDownLink(@NotNull LanguageHighlightLevel level, @NotNull UIController controller) {
+  private @NotNull DropDownLink<InspectionsLevel> createDropDownLink(@NotNull LanguageHighlightLevel level,
+                                                                     @NotNull UIController controller,
+                                                                     @NotNull @Nls String prefix) {
     return new DropDownLink<>(level.getLevel(),
                               controller.getAvailableLevels(),
                               inspectionsLevel -> {
@@ -338,7 +330,13 @@ class InspectionPopupManager {
 
                                 FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
                               },
-                              true);
+                              true) {
+      @NotNull
+      @Override
+      protected String itemToString(InspectionsLevel item) {
+        return prefix + item.toString();
+      }
+    };
   }
 
 

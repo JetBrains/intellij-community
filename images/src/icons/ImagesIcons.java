@@ -11,13 +11,13 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class ImagesIcons {
-  private static @NotNull Icon load(@NotNull String path) {
-    return IconManager.getInstance().getIcon(path, ImagesIcons.class);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
+    return IconManager.getInstance().loadRasterizedIcon(path, ImagesIcons.class, cacheKey);
   }
 
-  /** 16x16 */ public static final @NotNull Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.svg");
-  /** 75x86 */ public static final @NotNull Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png");
-  /** 75x82 */ public static final @NotNull Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png");
-  /** 13x13 */ public static final @NotNull Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.svg");
-  /** 16x16 */ public static final @NotNull Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.svg");
+  /** 16x16 */ public static final @NotNull Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.svg", -5025763363129571436L);
+  /** 75x86 */ public static final @NotNull Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png", 0L);
+  /** 75x82 */ public static final @NotNull Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png", 0L);
+  /** 13x13 */ public static final @NotNull Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.svg", -8102673512058461080L);
+  /** 16x16 */ public static final @NotNull Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.svg", 7203549220197426977L);
 }

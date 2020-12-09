@@ -1,7 +1,5 @@
-from typing import (Any, Container, Generic, Iterable, Iterator, Optional,
-                    overload, SupportsInt, Text, Tuple, TypeVar)
-
 import sys
+from typing import Any, Container, Generic, Iterable, Iterator, Optional, SupportsInt, Text, Tuple, TypeVar, overload
 
 # Undocumented length constants
 IPV4LENGTH: int
@@ -86,7 +84,7 @@ class _BaseNetwork(_IPAddressBase, Container[_A], Iterable[_A], Generic[_A]):
     def max_prefixlen(self) -> int: ...
     @property
     def num_addresses(self) -> int: ...
-    def overlaps(self, other: _BaseNetwork) -> bool: ...
+    def overlaps(self, other: _BaseNetwork[_A]) -> bool: ...
     @property
     def prefixlen(self) -> int: ...
     if sys.version_info >= (3, 7):

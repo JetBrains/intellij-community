@@ -7,10 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
-import com.intellij.ide.lightEdit.LightEditUtil;
+import com.intellij.ide.lightEdit.*;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -195,7 +192,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   public static void openFile(VirtualFile file, @NotNull Project project) {
     NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
     if (LightEdit.owns(project)) {
-      if (LightEdit.openFile(file)) {
+      if (LightEditService.getInstance().openFile(file, true) != null) {
         LightEditFeatureUsagesUtil.logFileOpen(LightEditOpenAction);
       }
     }

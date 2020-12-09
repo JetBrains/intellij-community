@@ -20,10 +20,15 @@ class ChangeListsFindInProjectExtension : FindInProjectExtension {
     val module = LangDataKeys.MODULE_CONTEXT.getData(dataContext)
     if (module != null || project == null) return false
 
+    val changeListManager = ChangeListManager.getInstance(project)
+    if (!changeListManager.areChangeListsEnabled()) return false
+
     var changeList = ArrayUtil.getFirstElement(dataContext.getData(VcsDataKeys.CHANGE_LISTS))
     if (changeList == null) {
       val change = ArrayUtil.getFirstElement(dataContext.getData(VcsDataKeys.CHANGES))
-      changeList = if (change == null) null else ChangeListManager.getInstance(project).getChangeList(change)
+      changeList = if (change == null) null else {
+        changeListManager.getChangeList(change)
+      }
     }
 
     if (changeList != null) {

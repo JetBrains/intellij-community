@@ -13,7 +13,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * @author peter
+ * Represents a set of files which should be indexed additionally to a default ones.
+ * <br>
+ * Files provided by {@link IndexableSetContributor} will be indexed (or ensured up to date) on project loading and
+ * {@link FileBasedIndex} automatically rebuilds indexes for these files when they are going to be changed.
  */
 public abstract class IndexableSetContributor {
 

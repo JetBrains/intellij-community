@@ -24,6 +24,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,7 +137,7 @@ public final class SpeedSearchUtil {
   }
 
   public static void appendColoredFragments(final SimpleColoredComponent simpleColoredComponent,
-                                            final @NlsContexts.Label String text,
+                                            final @Nls String text,
                                             Iterable<? extends TextRange> colored,
                                             final SimpleTextAttributes plain, final SimpleTextAttributes highlighted) {
     final List<Pair<String, Integer>> searchTerms = new ArrayList<>();

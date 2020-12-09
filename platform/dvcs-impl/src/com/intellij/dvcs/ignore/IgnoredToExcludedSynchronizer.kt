@@ -4,6 +4,7 @@ package com.intellij.dvcs.ignore
 import com.intellij.CommonBundle
 import com.intellij.ProjectTopics
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.projectView.actions.MarkExcludeRootAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.runInEdt
@@ -217,6 +218,8 @@ class IgnoredToExcludeNotificationProvider : EditorNotifications.Provider<Editor
       text = message("ignore.to.exclude.notification.message")
       createActionLabel(message("ignore.to.exclude.notification.action.view")) { showIgnoredAction(project) }
       createActionLabel(message("ignore.to.exclude.notification.action.mute"), muteAction(project))
+      createActionLabel(message("ignore.to.exclude.notification.action.details")) {
+        BrowserUtil.browse("https://www.jetbrains.com/help/idea/content-roots.html#folder-categories") }
     }
   }
 }

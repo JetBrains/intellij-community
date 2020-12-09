@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.wizard;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -119,8 +120,7 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
   }
 
   private void initHelpButton() {
-    myHelp.setText("Help");
-    myHelp.setMnemonic('H');
+    myHelp.setText(IdeBundle.message("button.help"));
     myHelp.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

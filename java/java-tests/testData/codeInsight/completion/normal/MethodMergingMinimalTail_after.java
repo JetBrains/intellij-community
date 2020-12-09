@@ -1,7 +1,7 @@
 class Foo {
     {
-      foo("someTestAttachment", "".getBytes(<caret>))
+      foo("someTestAttachment", "".startsWith(<caret>))
     }
 
-  void foo(String s, byte[] z) {}
+  void foo(String s, boolean z) {}
 }

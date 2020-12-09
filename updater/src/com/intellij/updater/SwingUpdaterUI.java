@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"UseJBColor", "UseDPIAwareInsets", "UseDPIAwareBorders"})
+@SuppressWarnings({"UseJBColor", "UseDPIAwareBorders", "HardCodedStringLiteral"})
 public class SwingUpdaterUI implements UpdaterUI {
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
   private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
@@ -241,7 +241,6 @@ public class SwingUpdaterUI implements UpdaterUI {
     return "<b>" + text + "</b>";
   }
 
-  @SuppressWarnings("SSBasedInspection")
   private static void invokeLater(Runnable runnable) {
     SwingUtilities.invokeLater(runnable);
   }
@@ -348,7 +347,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   private static class MyCellEditor extends DefaultCellEditor {
     MyCellEditor() {
-      super(new JComboBox());
+      super(new JComboBox<>());
     }
 
     @Override

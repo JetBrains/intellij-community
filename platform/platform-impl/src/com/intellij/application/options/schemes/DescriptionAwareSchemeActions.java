@@ -20,7 +20,7 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
   @Nullable
   public abstract @NlsContexts.DetailedDescription String getDescription(@NotNull T scheme);
 
-  protected abstract void setDescription(@NotNull T scheme, @NotNull String newDescription);
+  protected abstract void setDescription(@NotNull T scheme, @NlsContexts.DetailedDescription @NotNull String newDescription);
 
   @Override
   protected void addAdditionalActions(@NotNull List<? super AnAction> defaultActions) {

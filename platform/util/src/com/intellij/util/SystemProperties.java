@@ -4,8 +4,6 @@ package com.intellij.util;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 /**
  * Utility wrappers for accessing system properties.
@@ -13,8 +11,6 @@ import org.jetbrains.annotations.TestOnly;
  * @see SystemInfo
  */
 public final class SystemProperties {
-  private static String ourTestUserName;
-
   private SystemProperties() { }
 
   @NotNull
@@ -22,13 +18,8 @@ public final class SystemProperties {
     return System.getProperty("user.home");
   }
 
-  public static String getUserName() {
-    return ourTestUserName != null ? ourTestUserName : System.getProperty("user.name");
-  }
-
-  @TestOnly
-  public static void setTestUserName(@Nullable String name) {
-    ourTestUserName = name;
+  public static @NotNull String getUserName() {
+    return System.getProperty("user.name");
   }
 
   public static String getLineSeparator() {

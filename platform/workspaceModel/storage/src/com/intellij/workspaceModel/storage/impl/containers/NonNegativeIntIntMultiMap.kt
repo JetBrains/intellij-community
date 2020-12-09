@@ -4,6 +4,8 @@ package com.intellij.workspaceModel.storage.impl.containers
 import it.unimi.dsi.fastutil.ints.*
 import org.jetbrains.annotations.TestOnly
 import java.util.function.BiConsumer
+import java.util.function.IntConsumer
+import java.util.function.IntFunction
 
 /**
  * Int to Int multimap that can hold *ONLY* non-negative integers and optimized for memory and reading.
@@ -327,9 +329,9 @@ sealed class NonNegativeIntIntMultiMap {
 
     abstract fun getIterator(): IntIterator
 
-    inline fun forEach(action: (Int) -> Unit) {
+    fun forEach(action: IntConsumer) {
       val iterator = getIterator()
-      while (iterator.hasNext()) action(iterator.nextInt())
+      while (iterator.hasNext()) action.accept(iterator.nextInt())
     }
 
     fun isEmpty(): Boolean = !getIterator().hasNext()
@@ -352,14 +354,14 @@ sealed class NonNegativeIntIntMultiMap {
     @TestOnly
     internal fun single(): Int = toArray().single()
 
-    open fun <T> map(transformation: (Int) -> T): Sequence<T> {
+    open fun <T> map(transformation: IntFunction<T>): Sequence<T> {
       return Sequence {
         object : Iterator<T> {
           private val iterator = getIterator()
 
           override fun hasNext(): Boolean = iterator.hasNext()
 
-          override fun next(): T = transformation(iterator.nextInt())
+          override fun next(): T = transformation.apply(iterator.nextInt())
         }
       }
     }
@@ -383,6 +385,6 @@ sealed class NonNegativeIntIntMultiMap {
   protected object EmptyIntSequence : IntSequence() {
     override fun getIterator(): IntIterator = IntArray(0).iterator()
 
-    override fun <T> map(transformation: (Int) -> T): Sequence<T> = emptySequence()
+    override fun <T> map(transformation: IntFunction<T>): Sequence<T> = emptySequence()
   }
 }

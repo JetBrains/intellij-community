@@ -721,6 +721,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         return;
       }
       releaseGlassPane();
+      if(Disposer.isDisposed(parentDisposable)){
+        return;
+      }
       myGlassPane = glassPane;
       myGlassPaneDisposable = Disposer.newDisposable();
       Disposer.register(parentDisposable, myGlassPaneDisposable);

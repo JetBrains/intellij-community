@@ -37,11 +37,10 @@ public interface PyFormattedStringElement extends PyStringElement, PyElement {
    * <p>
    * For instance, for the following f-string:
    * <p>
-   * <pre><code>
+   * <pre>{@code
    *   f'foo{bar:format}baz'
-   * </code></pre>
-   * <p>
-   * this method will return ranges {@code (2, 5)} and {@code (14, 17)}.
+   * }</pre>
+   * this method will return ranges {@code (2, 5)} and {@code (17, 20)}.
    */
   @NotNull
   List<TextRange> getLiteralPartRanges();

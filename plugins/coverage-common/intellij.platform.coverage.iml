@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

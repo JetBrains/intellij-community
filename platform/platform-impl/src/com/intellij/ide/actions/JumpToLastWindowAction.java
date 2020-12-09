@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowEventSource;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 public final class JumpToLastWindowAction extends AnAction implements DumbAware {
@@ -16,12 +18,12 @@ public final class JumpToLastWindowAction extends AnAction implements DumbAware 
     if (project == null) {
       return;
     }
-    ToolWindowManager manager = ToolWindowManager.getInstance(project);
+    ToolWindowManagerImpl manager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
     String id = manager.getLastActiveToolWindowId();
     if (id == null || !manager.getToolWindow(id).isAvailable()) {
       return;
     }
-    manager.getToolWindow(id).activate(null);
+    manager.activateToolWindow(id, null, true, ToolWindowEventSource.JumpToLastWindowAction);
   }
 
   @Override

@@ -5,9 +5,11 @@ import com.intellij.openapi.options.CompositeSettingsBuilder;
 import com.intellij.openapi.options.CompositeSettingsEditor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,5 +51,11 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   @Override
   public CompositeSettingsBuilder<Settings> getBuilder() {
     return new FragmentedSettingsBuilder<>(getFragments(), null);
+  }
+
+  @Override
+  public void installWatcher(JComponent c) {
+    super.installWatcher(c);
+    addSettingsEditorListener(editor -> SwingUtilities.invokeLater(() -> UIUtil.setupEnclosingDialogBounds(c)));
   }
 }

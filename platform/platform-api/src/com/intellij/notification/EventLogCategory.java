@@ -16,6 +16,7 @@
 package com.intellij.notification;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,13 +25,14 @@ import org.jetbrains.annotations.NotNull;
 public abstract class EventLogCategory {
   public static final ExtensionPointName<EventLogCategory> EP_NAME = ExtensionPointName.create("com.intellij.eventLogCategory");
 
-  private final String myDisplayName;
+  private final @Nls String myDisplayName;
 
-  protected EventLogCategory(@NotNull String displayName) {
+  protected EventLogCategory(@NotNull @Nls String displayName) {
     myDisplayName = displayName;
   }
 
   @NotNull
+  @Nls
   public final String getDisplayName() {
     return myDisplayName;
   }

@@ -20,10 +20,12 @@ import java.util.ResourceBundle;
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
   public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
-  static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
   public static final boolean SHOW_DEFAULT_MESSAGES = Boolean.getBoolean("idea.l10n.english");
   public static final boolean SHOW_KEYS = Boolean.getBoolean("idea.l10n.keys");
+
+  static final String L10N_MARKER = "🔅";
+
   private static final Logger LOG = Logger.getInstance(BundleBase.class);
 
   private static boolean assertOnMissedKeys;
@@ -83,8 +85,7 @@ public abstract class BundleBase {
     return sb.toString();
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nls @NotNull String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return messageOrDefault(bundle, key, null, params);
   }
 
@@ -126,8 +127,8 @@ public abstract class BundleBase {
     return result;
   }
 
-  @NotNull
-  public static String getDefaultMessage(@NotNull ResourceBundle bundle, @NotNull String key) {
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static @NotNull String getDefaultMessage(@NotNull ResourceBundle bundle, @NotNull String key) {
     try {
       Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
       if (parent != null) {
@@ -138,24 +139,23 @@ public abstract class BundleBase {
       }
     }
     catch (IllegalAccessException e) {
-      LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
+      LOG.warn("Cannot fetch default message with 'idea.l10n.english' enabled, by key '" + key + "'");
     }
-    //noinspection HardCodedStringLiteral
+
     return "undefined";
   }
 
   private static final String[] SUFFIXES = {"</body></html>", "</html>"};
 
-  @NotNull
-  protected static @NlsSafe String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
+  protected static @NlsSafe @NotNull String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
     for (String suffix : SUFFIXES) {
       if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
     }
     return result + suffixToAppend;
   }
 
-  @NotNull
-  static @Nls String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable @Nls String defaultValue) {
+  @SuppressWarnings("HardCodedStringLiteral")
+  static @Nls @NotNull String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable @Nls String defaultValue) {
     if (defaultValue != null) {
       return defaultValue;
     }
@@ -163,13 +163,12 @@ public abstract class BundleBase {
     if (assertOnMissedKeys) {
       LOG.error("'" + key + "' is not found in " + bundle);
     }
-    //noinspection HardCodedStringLiteral
+
     return "!" + key + "!";
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  @NotNull
-  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull @Nls String value, Object @NotNull ... params) {
+  static @Nls @NotNull String postprocessValue(@NotNull ResourceBundle bundle, @NotNull @Nls String value, Object @NotNull ... params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {
@@ -187,9 +186,8 @@ public abstract class BundleBase {
     return value;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static String format(@NotNull String value, Object @NotNull ... params) {
+  public static @NotNull String format(@NotNull String value, Object @NotNull ... params) {
     return params.length > 0 && value.indexOf('{') >= 0 ? MessageFormat.format(value, params) : value;
   }
 
@@ -229,7 +227,7 @@ public abstract class BundleBase {
       }
       i++;
     }
-    @NlsSafe final String result = builder.toString();
+    @NlsSafe String result = builder.toString();
     return result;
   }
 }

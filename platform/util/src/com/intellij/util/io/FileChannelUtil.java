@@ -37,15 +37,16 @@ final class FileChannelUtil {
       }
     }
     catch (NoSuchMethodException e) {
-      LOG.info("interruptible FileChannel-s will be used for indexes");
+      LOG.info("interruptible FileChannels will be used for indexes");
     }
     catch (IllegalAccessException e) {
       LOG.error(e);
     }
     if (setUnInterruptible != null) {
-      LOG.info("un-interruptible FileChannel-s will be used for indexes");
-    } else {
-      LOG.info("interruptible FileChannel-s will be used for indexes");
+      LOG.info("uninterruptible FileChannels will be used for indexes");
+    }
+    else {
+      LOG.info("interruptible FileChannels will be used for indexes");
     }
     return setUnInterruptible;
   }

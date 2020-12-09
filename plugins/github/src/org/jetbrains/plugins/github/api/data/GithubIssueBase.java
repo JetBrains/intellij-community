@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,8 +141,7 @@ public abstract class GithubIssueBase {
     return state;
   }
 
-  @NotNull
-  public String getTitle() {
+  public @NlsSafe @NotNull String getTitle() {
     return title;
   }
 
@@ -150,8 +150,7 @@ public abstract class GithubIssueBase {
     return labels;
   }
 
-  @NotNull
-  public String getBody() {
+  public @NlsSafe @NotNull String getBody() {
     return StringUtil.notNullize(body);
   }
 

@@ -21,6 +21,7 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
@@ -98,7 +99,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     final DefaultListModel dataModel = new DefaultListModel();
     myTargetList = new JBList(dataModel);
     final List<String> targetNames = myInitialEvent.getTargetNames();
-    for (String name : targetNames) {
+    for (@NlsSafe String name : targetNames) {
       dataModel.addElement(name);
     }
     panel.add(new JLabel(AntBundle.message("save.meta.data.targets.label")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1,
@@ -154,7 +155,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
   private ExecuteCompositeTargetEvent createEventObject() {
     final ListModel model = myTargetList.getModel();
     final int size = model.getSize();
-    final List<String> names  = new ArrayList<>();
+    final List<@NlsSafe String> names  = new ArrayList<>();
     for (int idx = 0; idx < size; idx++) {
       names.add((String)model.getElementAt(idx));
     }

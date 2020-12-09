@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
@@ -47,7 +48,7 @@ internal class GHPRDiffFileEditor(project: Project,
     }
   }
 
-  override fun getName(): String = "Pull Request Diff"
+  override fun getName(): String = GithubBundle.message("pull.request.editor.diff")
 
   override fun getComponent() = diffProcessor.component
   override fun getPreferredFocusedComponent() = diffProcessor.preferredFocusedComponent

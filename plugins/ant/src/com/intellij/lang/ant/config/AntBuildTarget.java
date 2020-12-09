@@ -18,6 +18,8 @@ package com.intellij.lang.ant.config;
 
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +28,10 @@ import java.util.List;
 
 public interface AntBuildTarget {
   @Nullable
-  String getName();
+  @NlsSafe String getName();
 
   @Nullable
+  @NlsSafe
   String getDisplayName();
 
   /**
@@ -37,13 +40,13 @@ public interface AntBuildTarget {
    *         a list of targets that form the meta-target
    */
   @NotNull
-  default List<String> getTargetNames() {
+  default List<@NlsSafe String> getTargetNames() {
     final String name = getName();
     return name == null? Collections.emptyList() : Collections.singletonList(name);
   }
 
   @Nullable
-  String getNotEmptyDescription();
+  @Nls(capitalization = Nls.Capitalization.Sentence) String getNotEmptyDescription();
 
   boolean isDefault();
 

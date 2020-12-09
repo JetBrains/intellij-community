@@ -667,44 +667,62 @@ public final class EditorUtil {
   }
 
   /**
-   * Returns the range of {@code y} coordinates in editor coordinate space (relative to {@code editor.getContentComponent()}), corresponding
-   * to a given logical line in a document. Most often, a logical line corresponds to a single visual line, in that case the returned range
-   * has a height of {@code editor.getLineHeight()}. This will be not the case, if the line is soft-wrapped. Then the vertical range will be
-   * larger, as it will include several visual lines. Also, the range's height can differ from {@code editor.getLineHeight()}, if the target
-   * visual line is part of the comment, which is currently displayed in a rendered form (using inlay). In that case returned range will be
-   * that of the corresponding inlay. Other block inlays displayed on either side of the calculated range, are not included in the result.
+   * First value returned is the range of {@code y} coordinates in editor coordinate space (relative to
+   * {@code editor.getContentComponent()}), corresponding to a given logical line in a document. Most often, a logical line corresponds to a
+   * single visual line, in that case the returned range has a height of {@code editor.getLineHeight()}. This will be not the case, if the
+   * line is soft-wrapped. Then the vertical range will be larger, as it will include several visual lines. Also, the range's height can
+   * differ from {@code editor.getLineHeight()}, if the target visual line is part of the comment, which is currently displayed in a
+   * rendered form (using inlay). In that case returned range will be that of the corresponding inlay. Other block inlays displayed on
+   * either side of the calculated range, are not included in the result.
+   * <p>
+   * The second value is a sub-range no other logical line maps to (or {@code null} if there's no such sub-range).
    *
    * @see #yToLogicalLineRange(Editor, int)
    */
   @NotNull
-  public static Interval logicalLineToYRange(@NotNull Editor editor, int logicalLine) {
+  public static Pair<@NotNull Interval, @Nullable Interval> logicalLineToYRange(@NotNull Editor editor, int logicalLine) {
     if (logicalLine < 0) throw new IllegalArgumentException("Logical line is negative: " + logicalLine);
     Document document = editor.getDocument();
     int startVisualLine;
     int endVisualLine;
+    boolean topOverlapped;
+    boolean bottomOverlapped;
     if (logicalLine >= document.getLineCount()) {
       startVisualLine = endVisualLine = logicalToVisualLine(editor, logicalLine);
+      topOverlapped = bottomOverlapped = false;
     }
     else {
       int lineStartOffset = document.getLineStartOffset(logicalLine);
       int lineEndOffset = document.getLineEndOffset(logicalLine);
-      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(document.getLineStartOffset(logicalLine));
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
       if (foldRegion != null) {
         Inlay<?> inlay = EditorInlayFoldingMapper.getInstance().getAssociatedInlay(foldRegion);
         if (inlay != null) {
           // special case of rendered doc comment
           Rectangle bounds = inlay.getBounds();
           if (bounds != null) {
-            return new OurInterval(bounds.y, bounds.y + bounds.height);
+            OurInterval interval = new OurInterval(bounds.y, bounds.y + bounds.height);
+            return Pair.create(interval,
+                               foldRegion.getStartOffset() == lineStartOffset &&
+                               foldRegion.getEndOffset() == (logicalLine + 1 < document.getLineCount()
+                                                             ? document.getLineStartOffset(logicalLine + 1)
+                                                             : document.getTextLength())
+                               ? interval : null);
           }
         }
       }
       startVisualLine = editor.offsetToVisualLine(lineStartOffset, false);
       endVisualLine = startVisualLine + editor.getSoftWrapModel().getSoftWrapsForRange(lineStartOffset + 1, lineEndOffset - 1).size();
+      topOverlapped = editor.getFoldingModel().isOffsetCollapsed(lineStartOffset - 1);
+      bottomOverlapped = logicalLine + 1 < document.getLineCount() &&
+                         editor.getFoldingModel().isOffsetCollapsed(document.getLineStartOffset(logicalLine + 1) - 1);
     }
+    int lineHeight = editor.getLineHeight();
     int startY = editor.visualLineToY(startVisualLine);
-    int endY = endVisualLine == startVisualLine ? startY : editor.visualLineToY(endVisualLine);
-    return new OurInterval(startY, endY + editor.getLineHeight());
+    int endY = (endVisualLine == startVisualLine ? startY : editor.visualLineToY(endVisualLine)) + lineHeight;
+    int startYEx = topOverlapped ? startY + lineHeight : startY;
+    int endYEx = bottomOverlapped ? endY - lineHeight : endY;
+    return Pair.create(new OurInterval(startY, endY), startYEx < endYEx ? new OurInterval(startYEx, endYEx) : null);
   }
 
   /**

@@ -66,7 +66,7 @@ public class FUCounterUsageLogger {
   @NonNls
   private static final String[] GENERAL_GROUPS = new String[]{
     "event.log", "performance", "ui.dialogs", "ui.settings",
-    "toolwindow", "intentions", "run.configuration.exec",
+    "intentions", "run.configuration.exec",
     "productivity", "completion.postfix", "notifications", "settings.changes"
   };
 

@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
@@ -173,7 +174,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   public static class MyTextField extends JBTextField {
     private int myWidth = -1;
 
-    public MyTextField(@NotNull String hintCaption) {
+    public MyTextField(@Nls @NotNull String hintCaption) {
       getEmptyText().setText(hintCaption);
     }
 

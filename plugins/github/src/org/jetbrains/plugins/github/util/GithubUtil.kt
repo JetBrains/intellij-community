@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
@@ -29,7 +30,11 @@ object GithubUtil {
 
   @JvmField
   val LOG: Logger = Logger.getInstance("github")
+
+  @NlsSafe
   const val SERVICE_DISPLAY_NAME: String = "GitHub"
+
+  @NlsSafe
   const val ENTERPRISE_SERVICE_DISPLAY_NAME: String = "GitHub Enterprise"
   const val GIT_AUTH_PASSWORD_SUBSTITUTE: String = "x-oauth-basic"
 

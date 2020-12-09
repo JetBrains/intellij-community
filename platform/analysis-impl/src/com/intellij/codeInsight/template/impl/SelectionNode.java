@@ -18,14 +18,9 @@ public class SelectionNode extends Expression {
   }
 
   @Override
-  public Result calculateQuickResult(ExpressionContext context) {
+  public Result calculateResult(ExpressionContext context) {
     final String selection = context.getProperty(ExpressionContext.SELECTION);
     return new TextResult(selection == null ? "" : selection);
-  }
-
-  @Override
-  public Result calculateResult(ExpressionContext context) {
-    return calculateQuickResult(context);
   }
 
   @Override

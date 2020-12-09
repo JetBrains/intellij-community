@@ -34,10 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LibraryElementPresentation extends PackagingElementPresentation {
-  private final String myLevel;
+  private final @NlsSafe String myLevel;
   private final @NlsSafe String myModuleName;
   private final Library myLibrary;
-  private final String myLibraryName;
+  private final @NlsSafe String myLibraryName;
   private final ArtifactEditorContext myContext;
 
   public LibraryElementPresentation(String libraryName, String level, @Nullable String moduleName, Library library, ArtifactEditorContext context) {
@@ -71,9 +71,9 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
       presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }
     else {
-      presentationData.addText(getPresentableName() + " (" + (myModuleName != null ?
-                                                              JavaCompilerBundle.message("label.library.element.module", myModuleName)
-                                                                                   : myLevel) + ")", SimpleTextAttributes.ERROR_ATTRIBUTES);
+      presentationData.addText(
+        getPresentableName() + " (" + (myModuleName != null? JavaCompilerBundle.message("label.library.element.module", myModuleName) : myLevel) + ")", SimpleTextAttributes.ERROR_ATTRIBUTES
+      );
     }
   }
 

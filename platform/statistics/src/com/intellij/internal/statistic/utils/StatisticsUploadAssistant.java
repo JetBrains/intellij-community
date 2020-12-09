@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils;
 
-import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
+import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
+import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;

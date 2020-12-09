@@ -220,6 +220,7 @@ internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boole
   consumer(preload(isOldSchemeNaming, parser), parser)
 }
 
+@Suppress("HardCodedStringLiteral")
 private fun preload(isOldSchemeNaming: Boolean, parser: MXParser): String? {
   var eventType = parser.eventType
 

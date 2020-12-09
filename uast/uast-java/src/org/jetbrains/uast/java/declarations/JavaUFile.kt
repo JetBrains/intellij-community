@@ -5,9 +5,14 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.uast.*
+import org.jetbrains.uast.java.internal.JavaUElementWithComments
 import java.util.*
 
-class JavaUFile(override val sourcePsi: PsiJavaFile, override val languagePlugin: UastLanguagePlugin) : UFile, UElement {
+class JavaUFile(
+  override val sourcePsi: PsiJavaFile,
+  override val languagePlugin: UastLanguagePlugin
+) : UFile, UElement, JavaUElementWithComments {
+
   override val packageName: String
     get() = sourcePsi.packageName
 
@@ -33,5 +38,6 @@ class JavaUFile(override val sourcePsi: PsiJavaFile, override val languagePlugin
   override fun equals(other: Any?): Boolean = (other as? JavaUFile)?.sourcePsi == sourcePsi
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = sourcePsi
+  override val psi
+    get() = sourcePsi
 }

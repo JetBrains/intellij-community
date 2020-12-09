@@ -227,7 +227,7 @@ public final class FileTypeAssocTable<T> {
   public List<String> getHashBangPatterns(@NotNull T type) {
     return myHashBangMap.entrySet().stream()
       .filter(e -> e.getValue().equals(type))
-      .map(e->e.getKey())
+      .map(e -> e.getKey())
       .collect(Collectors.toList());
   }
 

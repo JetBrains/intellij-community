@@ -18,7 +18,6 @@ import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.IconRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,22 +273,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     if (mySelectedIndex >= 0) {
       getTabbedPane().setSelectedIndex(mySelectedIndex);
       markPropertyAsModified(mySelectedIndexProperty);
-    }
-  }
-
-  @Override
-  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
-    JTabbedPane tabbedPane = (JTabbedPane) component;
-    for(int i=0; i<tabbedPane.getTabCount(); i++) {
-      String title = tabbedPane.getTitleAt(i);
-      Component child = tabbedPane.getComponentAt(i);
-      if (child instanceof JComponent) {
-        RadComponent childComponent = createSnapshotComponent(context, (JComponent) child);
-        if (childComponent != null) {
-          childComponent.setCustomLayoutConstraints(new LwTabbedPane.Constraints(StringDescriptor.create(title)));
-          addComponent(childComponent);
-        }
-      }
     }
   }
 

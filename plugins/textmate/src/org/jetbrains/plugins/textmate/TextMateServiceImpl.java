@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +43,7 @@ import org.jetbrains.plugins.textmate.plist.PlistReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TextMateServiceImpl extends TextMateService {
@@ -82,7 +78,7 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   private void registerBundles(boolean fireEvents) {
-    Map<String, CharSequence> oldExtensionsMapping = new THashMap<>(myExtensionsMapping);
+    Map<String, CharSequence> oldExtensionsMapping = new HashMap<>(myExtensionsMapping);
     unregisterAllBundles();
 
     TextMateSettings settings = TextMateSettings.getInstance();
@@ -92,7 +88,7 @@ public final class TextMateServiceImpl extends TextMateService {
     if (!ourBuiltinBundlesDisabled) {
       loadBuiltinBundles(settings);
     }
-    THashMap<String, CharSequence> newExtensionsMapping = new THashMap<>();
+    Map<String, CharSequence> newExtensionsMapping = new HashMap<>();
     for (BundleConfigBean bundleConfigBean : settings.getBundles()) {
       if (bundleConfigBean.isEnabled()) {
         VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath());
@@ -252,7 +248,7 @@ public final class TextMateServiceImpl extends TextMateService {
     }
   }
 
-  private boolean registerBundle(@Nullable VirtualFile directory, @NotNull THashMap<String, CharSequence> extensionsMapping) {
+  private boolean registerBundle(@Nullable VirtualFile directory, @NotNull Map<String, CharSequence> extensionsMapping) {
     final Bundle bundle = createBundle(directory);
     if (bundle != null) {
       registerLanguageSupport(bundle, extensionsMapping);
@@ -302,7 +298,7 @@ public final class TextMateServiceImpl extends TextMateService {
     }
   }
 
-  private void registerLanguageSupport(@NotNull Bundle bundle, @NotNull THashMap<String, CharSequence> extensionsMapping) {
+  private void registerLanguageSupport(@NotNull Bundle bundle, @NotNull Map<String, CharSequence> extensionsMapping) {
     for (File grammarFile : bundle.getGrammarFiles()) {
       try {
         Plist plist = myPlistReader.read(grammarFile);

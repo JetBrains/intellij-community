@@ -3,10 +3,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.ide.*;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -142,6 +139,16 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
+    var focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    var focusOwner = focusManager.getFocusOwner();
+
+    if (focusOwner instanceof KeyboardAwareFocusOwner && ((KeyboardAwareFocusOwner)focusOwner).skipKeyEventDispatcher(e)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Key event not processed because %s is in focus and implements %s", focusOwner, KeyboardAwareFocusOwner.class));
+      }
+      return false;
+    }
+
     int id = e.getID();
     if (myIgnoreNextKeyTypedEvent) {
       if (KeyEvent.KEY_TYPED == id) return true;
@@ -169,9 +176,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
         myRightAltPressed = false;
       }
     }
-
-    KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    Component focusOwner = focusManager.getFocusOwner();
 
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
@@ -960,7 +964,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return new ActionListCellRenderer();
     }
 
-    private static ListPopupStep buildStep(@NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+    private static ListPopupStep<?> buildStep(@NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
       return new BaseListPopupStep<Pair<AnAction, KeyStroke>>(IdeBundle.message("popup.title.choose.action"), ContainerUtil.findAll(actions, pair -> {
         final AnAction action = pair.getFirst();
         final Presentation presentation = action.getTemplatePresentation().clone();

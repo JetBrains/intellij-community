@@ -55,6 +55,7 @@ import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
@@ -85,7 +86,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  private static String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
+  private static @Nls String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass)element);
     }
@@ -150,7 +151,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  private static String generatePackageInfo(PsiPackage aPackage) {
+  private static @NlsSafe String generatePackageInfo(PsiPackage aPackage) {
     return aPackage.getQualifiedName();
   }
 
@@ -187,8 +188,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  public static String generateClassInfo(PsiClass aClass) {
-    StringBuilder buffer = new StringBuilder();
+  public static @Nls String generateClassInfo(PsiClass aClass) {
+    @Nls StringBuilder buffer = new StringBuilder();
 
     if (aClass instanceof PsiAnonymousClass) return JavaPsiBundle.message("java.terms.anonymous.class");
 
@@ -342,8 +343,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
-  private static String generateFieldInfo(PsiField field, PsiSubstitutor substitutor) {
-    StringBuilder buffer = new StringBuilder();
+  private static @Nls String generateFieldInfo(PsiField field, PsiSubstitutor substitutor) {
+    @Nls StringBuilder buffer = new StringBuilder();
     PsiClass parentClass = field.getContainingClass();
 
     if (parentClass != null && !(parentClass instanceof PsiAnonymousClass)) {
@@ -363,8 +364,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
-  private static String generateVariableInfo(PsiVariable variable) {
-    StringBuilder buffer = new StringBuilder();
+  private static @Nls String generateVariableInfo(PsiVariable variable) {
+    @Nls StringBuilder buffer = new StringBuilder();
 
     generateModifiers(buffer, variable);
 
@@ -378,8 +379,9 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
+  @Nls
   private static String generateModuleInfo(PsiJavaModule module) {
-    StringBuilder sb = new StringBuilder();
+    @Nls StringBuilder sb = new StringBuilder();
 
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());

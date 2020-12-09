@@ -12,6 +12,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SeparatorFactory;
@@ -167,11 +168,25 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   private JBPopup showOptions() {
     DataContext dataContext = DataManager.getInstance().getDataContext(myLinkLabel);
+    DefaultActionGroup group = buildGroup();
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
-                                                                          buildGroup(),
+                                                                          group,
                                                                           dataContext,
                                                                           JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+    popup.addListSelectionListener(e -> {
+      AnActionHolder data = (AnActionHolder)PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)e.getSource());
+      popup.setAdText(getHint(data == null ? null : data.getAction()), SwingConstants.LEFT);
+    });
+    popup.setAdText(getHint(ContainerUtil.find(group.getChildren(null), action -> !(action instanceof Separator))), SwingConstants.LEFT);
     return popup;
+  }
+
+  @NotNull
+  private static @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
+    if (action == null || action.getTemplatePresentation().getDescription() == null) {
+      return IdeBundle.message("popup.advertisement.hover.item.to.see.hint");
+    }
+    return action.getTemplatePresentation().getDescription();
   }
 
   @NotNull
@@ -237,6 +252,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     private ToggleFragmentAction(SettingsEditorFragment<?, ?> fragment) {
       super(fragment.getName());
       myFragment = fragment;
+      getTemplatePresentation().setDescription(fragment.getActionHint());
     }
 
     @Override

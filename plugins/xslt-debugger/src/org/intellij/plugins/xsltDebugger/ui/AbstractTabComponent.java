@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 abstract class AbstractTabComponent extends AdditionalTabComponent {
-  private final String myTabTitle;
+  private final @NlsContexts.TabTitle String myTabTitle;
 
   AbstractTabComponent(@NlsContexts.TabTitle String tabTitle) {
     myTabTitle = tabTitle;

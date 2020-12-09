@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.IdeaSVNConfigFile;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
+import org.jetbrains.idea.svn.config.SvnIniFile;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -43,11 +43,11 @@ public class ProxyModule extends BaseCommandRuntimeModule {
 
   @NotNull
   private String ensureGroupForHost(@NotNull Command command, @NotNull String host) {
-    IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(myAuthenticationService.getSpecialConfigDir());
-    String groupName = IdeaSVNConfigFile.getGroupForHost(host, configFile);
+    SvnIniFile configFile = new SvnIniFile(myAuthenticationService.getSpecialConfigDir());
+    String groupName = SvnIniFile.getGroupForHost(host, configFile);
 
     if (StringUtil.isEmptyOrSpaces(groupName)) {
-      groupName = IdeaSVNConfigFile.getNewGroupName(host, configFile);
+      groupName = SvnIniFile.getNewGroupName(host, configFile);
 
       command.put("--config-option");
       command.put(String.format("servers:groups:%s=%s*", groupName, host));

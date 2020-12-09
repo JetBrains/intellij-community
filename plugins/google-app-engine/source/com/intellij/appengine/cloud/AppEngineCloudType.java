@@ -15,6 +15,7 @@
  */
 package com.intellij.appengine.cloud;
 
+import com.intellij.appengine.JavaGoogleAppEngineBundle;
 import com.intellij.appengine.actions.AppEngineUploader;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.openapi.options.SettingsEditor;
@@ -47,7 +48,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Google App Engine";
+    return JavaGoogleAppEngineBundle.message("plugin.name");
   }
 
   @Override

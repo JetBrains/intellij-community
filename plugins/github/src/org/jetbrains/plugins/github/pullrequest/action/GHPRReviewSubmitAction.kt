@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.IdeBorderFactory
@@ -21,7 +22,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.util.ui.*
 import com.intellij.util.ui.codereview.InlineIconButton
-import icons.GithubIcons
+import icons.VcsCodeReviewIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -69,6 +70,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
   private fun getPrefix(place: String) = if (place == ActionPlaces.DIFF_TOOLBAR) GithubBundle.message("pull.request.review.submit")
   else GithubBundle.message("pull.request.review.submit.review")
 
+  @NlsSafe
   private fun getText(pendingComments: Int?): String {
     val builder = StringBuilder()
     if (pendingComments != null) builder.append(" ($pendingComments)")
@@ -165,9 +167,8 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
       init {
         discardButton = pendingReview?.let { review ->
-          val button = InlineIconButton(icon = GithubIcons.Delete, hoveredIcon =GithubIcons.DeleteHovered,
-                                                                              tooltip = GithubBundle.message(
-                                                                                "pull.request.discard.pending.comments"))
+          val button = InlineIconButton(icon = VcsCodeReviewIcons.Delete, hoveredIcon = VcsCodeReviewIcons.DeleteHovered,
+                                        tooltip = GithubBundle.message("pull.request.discard.pending.comments"))
           button.actionListener = ActionListener {
             if (MessageDialogBuilder.yesNo(GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
                                            GithubBundle.message("pull.request.discard.pending.comments.dialog.msg")).ask(button)) {

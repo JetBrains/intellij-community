@@ -7,8 +7,10 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -17,13 +19,24 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexingBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class SearchForTestsTask extends Task.Backgroundable {
 
@@ -31,6 +44,8 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   protected Socket mySocket;
   private final ServerSocket myServerSocket;
   private ProgressIndicator myProcessIndicator;
+  private boolean myAllowIndexInDumbMode;
+  @NotNull private Runnable myIncompleteIndexUsageCallback = EmptyRunnable.getInstance();
 
   public SearchForTestsTask(@Nullable final Project project,
                             final ServerSocket socket) {
@@ -95,13 +110,21 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       final ExecutionException[] ex = new ExecutionException[1];
       NonBlockingReadAction<Void> readAction = ReadAction.nonBlocking(() -> {
         try {
-          search();
+          if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
+            myIncompleteIndexUsageCallback.run();
+            FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+              search();
+              return null;
+            });
+          } else {
+            search();
+          }
         }
         catch (ExecutionException e) {
           ex[0] = e;
         }
       });
-      if (requiresSmartMode()) {
+      if (requiresSmartMode() && !myAllowIndexInDumbMode) {
         readAction = readAction.inSmartMode(myProject);
       }
       readAction.executeSynchronously();
@@ -133,14 +156,22 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   public void onSuccess() {
     Runnable runnable = () -> {
       try {
-        onFound();
+        if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
+          myIncompleteIndexUsageCallback.run();
+          FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+            onFound();
+            return null;
+          });
+        } else {
+          onFound();
+        }
       }
       catch (ExecutionException e) {
         LOG.error(e);
       }
       finish();
     };
-    if (requiresSmartMode()) {
+    if (requiresSmartMode() && !myAllowIndexInDumbMode) {
       DumbService.getInstance(getProject()).runWhenSmart(runnable);
     }
     else {
@@ -175,5 +206,55 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
         LOG.info(e);
       }
     }
+  }
+
+  public void setIncompleteIndexUsageCallback(@NotNull Runnable incompleteIndexUsageCallback) {
+    myIncompleteIndexUsageCallback = incompleteIndexUsageCallback;
+  }
+
+  @ApiStatus.Internal
+  public void arrangeForIndexAccess() {
+    if (!requiresSmartMode() || !DumbService.isDumb(myProject)) return;
+
+
+
+    JLabel component = new JLabel(new HtmlBuilder()
+                                    .appendRaw(ExecutionBundle.message("tests.wait.or.use.partial.index"))
+                                    .wrapWithHtmlBody()
+                                    .toString());
+
+    DialogWrapper dialog = new DialogWrapper(myProject) {
+      {
+        setTitle(IndexingBundle.message("progress.indexing.updating"));
+        setOKButtonText(ExecutionBundle.message("test.button.run.with.partial.index"));
+        init();
+        LaterInvocator.markTransparent(ModalityState.stateForComponent(component));
+      }
+      @Override
+      protected JComponent createCenterPanel() {
+        return component;
+      }
+    };
+
+    AtomicBoolean finishedItself = new AtomicBoolean();
+    myProject.getMessageBus().connect(dialog.getDisposable()).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void exitDumbMode() {
+        finishedItself.set(true);
+        Window window = ComponentUtil.getWindow(component);
+        if (window != null) {
+          window.setVisible(false);
+        }
+      }
+    });
+    if (dialog.showAndGet()) {
+      myAllowIndexInDumbMode = true;
+      return;
+    }
+
+    if (finishedItself.get()) {
+      return;
+    }
+    throw new ProcessCanceledException();
   }
 }

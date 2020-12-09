@@ -30,7 +30,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, Disposable {
+class FilePointerProviderImpl(project: Project) : FilePointerProvider, Disposable {
   private val sourceRootPointers = mutableMapOf<VirtualFileUrl, Pair<VirtualFilePointer, Disposable>>()
   private val contentRootPointers = mutableMapOf<VirtualFileUrl, Pair<VirtualFilePointer, Disposable>>()
   private val excludedRootsPointers = mutableMapOf<VirtualFileUrl, Pair<VirtualFilePointer, Disposable>>()

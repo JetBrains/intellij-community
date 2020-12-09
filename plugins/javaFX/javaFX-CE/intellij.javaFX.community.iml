@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.groovy.structuralSearch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.Weighted
+import com.intellij.ui.UIBundle
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
@@ -110,7 +111,8 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
     fun getDefaultShowPopupShortcut() = DEFAULT_SHOW_POPUP_SHORTCUT
 
     @JvmStatic
-    fun getDefaultTooltip() = "Show drop-down menu (${getFirstKeyboardShortcutText(getDefaultShowPopupShortcut())})"
+    fun getDefaultTooltip() = UIBundle.message("option.button.tooltip.shortcut.text",
+                                               getFirstKeyboardShortcutText(getDefaultShowPopupShortcut()))
   }
 }
 

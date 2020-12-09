@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -21,10 +21,10 @@ class CleanupEventsTestSchemeAction(private val recorderId: String? = null)
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Removing Test Scheme", false) {
       override fun run(indicator: ProgressIndicator) {
         if (recorderId == null) {
-          WhitelistTestGroupStorage.cleanupAll()
+          ValidationTestRulesPersistedStorage.cleanupAll()
         }
         else {
-          WhitelistTestGroupStorage.cleanupAll(listOf(recorderId))
+          ValidationTestRulesPersistedStorage.cleanupAll(listOf(recorderId))
         }
       }
     })

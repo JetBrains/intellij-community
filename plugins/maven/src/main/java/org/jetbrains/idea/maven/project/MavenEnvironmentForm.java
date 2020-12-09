@@ -1,22 +1,8 @@
-/* ==========================================================================
- * Copyright 2006 Mevenide Team
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * =========================================================================
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -33,9 +19,12 @@ import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -46,6 +35,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class MavenEnvironmentForm implements PanelWithAnchor {
   private JPanel panel;
@@ -63,6 +55,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
   private boolean isUpdating = false;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private String myTargetName;
 
   public MavenEnvironmentForm() {
     DocumentAdapter listener = new DocumentAdapter() {
@@ -115,7 +108,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     final ArrayList<String> foundMavenHomes = new ArrayList<>();
     foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
-    if (mavenHomeDirectory != null) {
+    final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
+    if (mavenHomeDirectory != null && ! FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
       foundMavenHomes.add(FileUtil.toSystemIndependentName(mavenHomeDirectory.getPath()));
     }
     mavenHomeField.setHistory(foundMavenHomes);
@@ -165,7 +159,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   }
 
   private void updateMavenVersionLabel() {
-    String version = MavenServerManager.getInstance().getMavenVersion(getMavenHome());
+    String version = MavenUtil.getMavenVersion(MavenServerManager.getMavenHomeFile(getMavenHome()));
     String versionText = version == null ? MavenProjectBundle.message("label.invalid.maven.home.directory")
                                          : MavenProjectBundle.message("label.invalid.maven.home.version", version);
     mavenVersionLabelComponent.getComponent().setText(versionText);
@@ -212,6 +206,54 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     localRepositoryComponent.setAnchor(anchor);
   }
 
+  @ApiStatus.Internal
+  void apply(@Nullable String targetName) {
+    boolean localTarget = targetName == null;
+    boolean targetChanged = !Objects.equals(myTargetName, targetName);
+    if (targetChanged) {
+      myTargetName = targetName;
+      mavenHomeComponent.getComponent().getButton().setEnabled(localTarget);
+      reloadMavenHomeComponents(targetName);
+    }
+    else if (!localTarget) {
+      reloadMavenHomeComponents(targetName);
+    }
+  }
+
+  private void reloadMavenHomeComponents(@Nullable String targetName) {
+    List<String> targetMavenHomes = findTargetMavenHomes(targetName);
+    if (!mavenHomeField.getHistory().equals(targetMavenHomes)) {
+      EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setHistory(targetMavenHomes));
+    }
+    String mavenHomeFieldText = mavenHomeField.getText();
+    if (!targetMavenHomes.isEmpty() && !StringUtil.isEmptyOrSpaces(mavenHomeFieldText) && !targetMavenHomes.contains(mavenHomeFieldText)) {
+      EdtInvocationManager.getInstance().invokeLater(() -> mavenHomeField.setSelectedItem(targetMavenHomes.get(0)));
+    }
+  }
+
+  private static List<String> findTargetMavenHomes(@Nullable String targetName) {
+    List<String> mavenHomes = new ArrayList<>();
+    boolean localTarget = targetName == null;
+    if (localTarget) {
+      mavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
+      final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
+      if (mavenHomeDirectory != null) {
+        mavenHomes.add(FileUtil.toSystemIndependentName(mavenHomeDirectory.getPath()));
+      }
+    }
+    else {
+      TargetEnvironmentConfiguration targetEnvironmentConfiguration =
+        TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+      if (targetEnvironmentConfiguration != null) {
+        mavenHomes = targetEnvironmentConfiguration.getRuntimes().resolvedConfigs().stream()
+          .filter(runtimeConfiguration -> runtimeConfiguration instanceof MavenRuntimeTargetConfiguration)
+          .map(runtimeConfiguration -> ((MavenRuntimeTargetConfiguration)runtimeConfiguration).getHomePath())
+          .collect(Collectors.toList());
+      }
+    }
+    return mavenHomes;
+  }
+
   private static abstract class PathProvider {
     @NlsSafe
     public String getPath() {
@@ -232,9 +274,9 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     private @NlsSafe String overrideText;
 
     PathOverrider(final LabeledComponent<TextFieldWithBrowseButton> component,
-                         final JCheckBox checkBox,
-                         DocumentListener docListener,
-                         PathProvider pathProvider) {
+                  final JCheckBox checkBox,
+                  DocumentListener docListener,
+                  PathProvider pathProvider) {
       this.component = component.getComponent();
       this.component.getTextField().getDocument().addDocumentListener(docListener);
       this.checkBox = checkBox;

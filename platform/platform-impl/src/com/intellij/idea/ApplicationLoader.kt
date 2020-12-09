@@ -40,7 +40,6 @@ import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.dnd.DragSource
 import java.io.IOException
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -285,7 +284,7 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
     }, AppExecutorUtil.getAppExecutorService())
 
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
-    initConfigurationStore(app, null)
+    initConfigurationStore(app)
 
     future.thenApply {
       @Suppress("UNCHECKED_CAST")
@@ -410,12 +409,12 @@ private fun loadSystemFonts() {
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
 @ApiStatus.Internal
-fun initConfigurationStore(app: ApplicationImpl, configPath: Path?) {
+fun initConfigurationStore(app: ApplicationImpl) {
   var activity = StartUpMeasurer.startMainActivity("beforeApplicationLoaded")
-  val effectiveConfigPath = configPath ?: PathManager.getConfigDir()
+  val configPath = PathManager.getConfigDir()
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
-      (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath)
+      (listener ?: break).beforeApplicationLoaded(app, configPath)
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -428,7 +427,7 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: Path?) {
   activity = activity.endAndStart("init app store")
 
   // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
-  app.stateStore.setPath(effectiveConfigPath)
+  app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
 }

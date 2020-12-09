@@ -15,6 +15,7 @@
  */
 package com.intellij.appengine.actions;
 
+import com.intellij.appengine.JavaGoogleAppEngineBundle;
 import com.intellij.appengine.cloud.AppEngineCloudType;
 import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.appengine.facet.AppEngineFacet;
@@ -52,7 +53,7 @@ public class UploadApplicationAction extends AnAction {
         text = getTemplatePresentation().getText();
       }
       else {
-        text = "Upload App Engine Application '" + configurationToRun.getName() + "'";
+        text = JavaGoogleAppEngineBundle.message("action.upload.app.engine.application.text", configurationToRun.getName());
       }
       e.getPresentation().setText(text);
     }

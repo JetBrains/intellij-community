@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import org.jetbrains.annotations.NotNull;
@@ -82,9 +81,7 @@ public class FindSymbolParameters {
   }
 
   @NotNull
-  public static GlobalSearchScope searchScopeFor(@Nullable Project project, boolean searchInLibraries) {
-    return project == null ? new EverythingGlobalScope() :
-           searchInLibraries ? ProjectScope.getAllScope(project) :
-           ProjectScope.getProjectScope(project);
+  public static GlobalSearchScope searchScopeFor(@NotNull Project project, boolean searchInLibraries) {
+    return searchInLibraries ? ProjectScope.getAllScope(project) : ProjectScope.getProjectScope(project);
   }
 }

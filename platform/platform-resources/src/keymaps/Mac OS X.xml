@@ -174,7 +174,6 @@
     <keyboard-shortcut first-keystroke="control shift LEFT"/>
   </action>
   <action id="ShowContent">
-    <keyboard-shortcut first-keystroke="control DOWN"/>
   </action>
   <action id="NextEditorTab">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
@@ -513,8 +512,5 @@
   </action>
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control D"/>
-  </action>
-  <action id="UsageGrouping.Package">
-    <keyboard-shortcut first-keystroke="control P"/>
   </action>
 </keymap>

@@ -23,18 +23,23 @@ internal data class NodeComparator(
     return naturalCompare(node1.name, node2.name)
   }
 
-  private fun compare(problem1: ProblemNode, problem2: ProblemNode): Int {
+  private fun compare(node1: ProblemNode, node2: ProblemNode): Int {
     if (sortBySeverity) {
-      val result = problem2.severity.compareTo(problem1.severity)
+      val result = node2.severity.compareTo(node1.severity)
       if (result != 0) return result
     }
     return if (sortByName) {
-      val result = naturalCompare(problem1.text, problem2.text)
-      if (result != 0) result else problem1.offset.compareTo(problem2.offset)
+      val result = naturalCompare(node1.text, node2.text)
+      if (result != 0) result else comparePosition(node1, node2)
     }
     else {
-      val result = problem1.offset.compareTo(problem2.offset)
-      if (result != 0) result else naturalCompare(problem1.text, problem2.text)
+      val result = comparePosition(node1, node2)
+      if (result != 0) result else naturalCompare(node1.text, node2.text)
     }
+  }
+
+  private fun comparePosition(node1: ProblemNode, node2: ProblemNode): Int {
+    val result = node1.line.compareTo(node2.line)
+    return if (result != 0) result else node1.column.compareTo(node2.column)
   }
 }

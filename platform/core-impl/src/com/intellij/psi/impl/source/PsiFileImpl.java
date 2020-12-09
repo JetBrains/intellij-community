@@ -126,7 +126,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  public boolean processChildren(@NotNull final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(final @NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
     return true;
   }
 

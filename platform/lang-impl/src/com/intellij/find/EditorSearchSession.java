@@ -533,7 +533,7 @@ public class EditorSearchSession implements SearchSession,
           myComponent.setNotFoundBackground();
           myClickToHighlightLabel.setVisible(false);
           mySearchResults.clear();
-          myComponent.setStatusText(INCORRECT_REGEX_MESSAGE);
+          myComponent.setStatusText(FindBundle.message(INCORRECT_REGEXP_MESSAGE_KEY));
           return;
         }
         if (text.matches("\\|+")) {

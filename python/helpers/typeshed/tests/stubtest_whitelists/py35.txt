@@ -28,6 +28,7 @@ collections.UserString.maketrans
 contextlib._GeneratorContextManager.__init__
 ctypes.CDLL.__init__
 fractions.Fraction.__new__  # private _normalize param was made keyword-only in Python 3.6
+hmac.HMAC.__init__
 importlib.metadata
 importlib.resources
 io.StringIO.readline
@@ -44,11 +45,13 @@ os.DirEntry
 os.utime
 plistlib.Dict.__init__
 pyexpat.XMLParserType.ExternalEntityParserCreate
+random.Random.randrange  # missing undocumented arg _int
+random.randrange  # missing undocumented arg _int
 smtpd.SMTPChannel.__init__
 smtpd.SMTPServer.__init__
 sre_compile.dis
 ssl.SSLSocket.__init__
-typing.AbstractSet.isdisjoint
+tarfile.TarFile.__init__  # undocumented arg copybufsize doesn't exist
 typing.Coroutine.cr_await
 typing.Coroutine.cr_code
 typing.Coroutine.cr_frame
@@ -61,28 +64,15 @@ typing.Generator.gi_yieldfrom
 typing.GenericMeta.__new__
 typing.IO.closed  # Incorrect definition in CPython, fixed in bpo-39493
 typing.Mapping.get
-typing.MutableMapping.pop
-typing.MutableMapping.setdefault
-typing.MutableSequence.append
-typing.MutableSequence.extend
-typing.MutableSequence.insert
-typing.MutableSequence.remove
-typing.MutableSet.add
-typing.MutableSet.discard
-typing.MutableSet.remove
 typing.NamedTuple.__new__
 typing.NamedTuple._asdict
 typing.NamedTuple._make
 typing.NamedTuple._replace
-typing.Sequence.count
 typing.Sequence.index
 typing.runtime_checkable
-unittest.async_case
-unittest.case._AssertLogsContext.__init__
+unittest.async_case  # Added in Python 3.8
 uuid.UUID.int
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
-xml.etree.cElementTree.Element.__bool__
-xml.etree.cElementTree.Element.copy
 xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
 xml.etree.cElementTree.XMLPullParser
 xml.parsers.expat.XMLParserType.ExternalEntityParserCreate

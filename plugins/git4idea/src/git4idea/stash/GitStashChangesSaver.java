@@ -136,8 +136,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
     @Override
     protected void notifyUnresolvedRemain() {
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        "git.unstash.with.conflicts", GitBundle.getString("stash.unstash.unresolved.conflict.warning.notification.title"),
-        GitBundle.getString("stash.unstash.unresolved.conflict.warning.notification.message"),
+        "git.unstash.with.conflicts", GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.title"),
+        GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.message"),
         new NotificationListener() {
           @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
@@ -162,7 +162,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
-      return GitBundle.getString("stash.unstash.conflict.dialog.description.label.text");
+      return GitBundle.message("stash.unstash.conflict.dialog.description.label.text");
     }
 
     @NotNull

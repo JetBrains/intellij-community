@@ -152,7 +152,7 @@ interface GrammarCheckingStrategy {
    * @return [TextDomain] for [root] element
    */
   @JvmDefault
-  fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(root, default = PLAIN_TEXT)
+  fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(this, root, default = PLAIN_TEXT)
 
   /**
    * Determine PsiElement behavior @see [ElementBehavior].

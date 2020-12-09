@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports vararg method calls that use a ternary operator with mixed array and non-array branches.<br><br>
+When compiled, both branches are wrapped in arrays. As a result, the array branch is turned into
+a two-dimensional array, which may indicate a problem.<br><br>
+The quick-fix wraps the non-array branch in an array to prevent the compiler from doing the conversion.<br><br>
+Example:<br><br>
+<code><pre>
+// reported call
+method(condition ? new String[] {"arg1"} : "arg2");
+// after the quick-fix
+method(condition ? new String[] {"arg1"} : new Object[] {"arg2"});
+</pre></code>
+<!-- tooltip end -->
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

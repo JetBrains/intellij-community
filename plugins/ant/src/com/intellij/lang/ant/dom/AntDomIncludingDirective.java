@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 public abstract class AntDomIncludingDirective extends AntDomElement {
-  private static final String DEFAULT_SEPARATOR = ".";
+  private static final @NlsSafe String DEFAULT_SEPARATOR = ".";
 
   @Attribute("file")
   @Convert(value = AntPathRelativeToAntFileConverter.class)
@@ -42,7 +43,7 @@ public abstract class AntDomIncludingDirective extends AntDomElement {
   public abstract GenericAttributeValue<String> getTargetPrefixSeparator();
 
   @NotNull
-  public final String getTargetPrefixSeparatorValue() {
+  public final @NlsSafe String getTargetPrefixSeparatorValue() {
     final GenericAttributeValue<String> separator = getTargetPrefixSeparator();
     if (separator == null) {
       return DEFAULT_SEPARATOR;

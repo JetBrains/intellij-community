@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.GuiFormFileType;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public class FormRelatedFilesProvider extends GotoRelatedProvider {
       while (psiClass != null) {
         List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(psiClass.getProject(), psiClass);
         if (!forms.isEmpty()) {
-          return GotoRelatedItem.createItems(forms, "UI Forms");
+          return GotoRelatedItem.createItems(forms, UIDesignerBundle.message("separator.ui.forms"));
         }
         psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
       }
@@ -58,7 +59,7 @@ public class FormRelatedFilesProvider extends GotoRelatedProvider {
             Project project = file.getProject();
             PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
             if (aClass != null) {
-              return Collections.singletonList(new GotoRelatedItem(aClass, "Java"));
+              return Collections.singletonList(new GotoRelatedItem(aClass, UIDesignerBundle.message("separator.java")));
             }
           }
         }

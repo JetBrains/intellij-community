@@ -5,7 +5,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast
 
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferStringAttribute
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import groovy.transform.options.Visibility as GroovyVisibility
@@ -22,6 +24,16 @@ enum class Visibility {
     PACKAGE_PRIVATE -> GrModifier.PACKAGE_LOCAL
     PROTECTED -> GrModifier.PROTECTED
     PUBLIC -> GrModifier.PUBLIC
+  }
+}
+
+fun extractVisibility(element : PsiModifierListOwner) : Visibility {
+  val modifierList = element.modifierList as? GrModifierList ?: return Visibility.PUBLIC
+  return when {
+    hasModifierProperty(modifierList, "public") -> Visibility.PUBLIC
+    hasModifierProperty(modifierList, "private") -> Visibility.PRIVATE
+    hasModifierProperty(modifierList, "protected") -> Visibility.PROTECTED
+    else -> Visibility.PACKAGE_PRIVATE
   }
 }
 

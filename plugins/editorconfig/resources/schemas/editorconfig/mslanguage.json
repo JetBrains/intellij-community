@@ -1,0 +1,1590 @@
+[
+  {
+    "type": "option",
+    "key": "dotnet_style_qualification_for_field",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer fields to be prefaced with this. in C# or Me. in Visual Basic"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer fields not to be prefaced with this. or Me."
+          }
+        ]
+      },
+      "second": {
+        "type": "union",
+        "type_alias": "severity",
+        "values": [
+          {
+            "type": "constant",
+            "value": "none",
+            "documentation": "Do not show anything to the user when this rule is violated. Code generation features generate code in this style, however. Rules with none severity never appear in the Quick Actions and Refactorings menu. In most cases, this is considered \"disabled\" or \"ignored\"."
+          },
+          {
+            "type": "constant",
+            "value": "silent",
+            "documentation": "Do not show anything to the user when this rule is violated. Code generation features generate code in this style, however. Rules with silent severity participate in cleanup and appear in the Quick Actions and Refactorings menu."
+          },
+          {
+            "type": "constant",
+            "value": "suggestion",
+            "documentation": "When this style rule is violated, show it to the user as a suggestion. Suggestions appear as three gray dots under the first two characters."
+          },
+          {
+            "type": "constant",
+            "value": "warning",
+            "documentation": "When this style rule is violated, show a compiler warning."
+          },
+          {
+            "type": "constant",
+            "value": "error",
+            "documentation": "When this style rule is violated, show a compiler error."
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_qualification_for_property",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer properties to be prefaced with this. in C# or Me. in Visual Basic"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer properties not to be prefaced with this. or Me."
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_qualification_for_method",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer methods to be prefaced with this. in C# or Me. in Visual Basic."
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer methods not to be prefaced with this. or Me.."
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_qualification_for_event",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer events to be prefaced with this. in C# or Me. in Visual Basic."
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer events not to be prefaced with this. or Me.."
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_predefined_type_for_locals_parameters_members",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer the language keyword for local variables, method parameters, and class members, instead of the type name, for types that have a keyword to represent them"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer the type name for local variables, method parameters, and class members, instead of the language keyword"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_predefined_type_for_member_access",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer the language keyword for member access expressions, instead of the type name, for types that have a keyword to represent them"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer the type name for member access expressions, instead of the language keyword"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_require_accessibility_modifiers",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "always",
+            "documentation": "Prefer accessibility modifiers to be specified."
+          },
+          {
+            "type": "constant",
+            "value": "for_non_interface_members",
+            "documentation": "Prefer accessibility modifiers to be declared except for public interface members. (This is the same as always and has been added for future-proofing if C# adds default interface methods.)"
+          },
+          {
+            "type": "constant",
+            "value": "never",
+            "documentation": "Do not prefer accessibility modifiers to be specified."
+          },
+          {
+            "type": "constant",
+            "value": "omit_if_default",
+            "documentation": "Prefer accessibility modifiers to be specified except if they are the default modifier."
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_readonly_field",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer that fields should be marked with readonly (C#) or ReadOnly (Visual Basic) if they are only ever assigned inline, or inside of a constructor"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Specify no preference over whether fields should be marked with readonly (C#) or ReadOnly (Visual Basic)"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_parentheses_in_arithmetic_binary_operators",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "always_for_clarity",
+            "documentation": "Prefer parentheses to clarify arithmetic operator (*, /, %, +, -, &lt;&lt;, &gt;&gt;, &amp;, ^, |) precedence"
+          },
+          {
+            "type": "constant",
+            "value": "never_if_unnecessary",
+            "documentation": "Prefer to not have parentheses when arithmetic operator (*, /, %, +, -, &lt;&lt;, &gt;&gt;, &amp;, ^, |) precedence is obvious"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_parentheses_in_relational_binary_operators",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "always_for_clarity",
+            "documentation": "Prefer parentheses to clarify relational operator (&gt;, &lt;, &lt;=, &gt;=, is, as, ==, !=) precedence"
+          },
+          {
+            "type": "constant",
+            "value": "never_if_unnecessary",
+            "documentation": "Prefer to not have parentheses when relational operator (&gt;, &lt;, &lt;=, &gt;=, is, as, ==, !=) precedence is obvious"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_parentheses_in_other_binary_operators",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "always_for_clarity",
+            "documentation": "Prefer parentheses to clarify other binary operator (&amp;&amp;, ||, ??) precedence"
+          },
+          {
+            "type": "constant",
+            "value": "never_if_unnecessary",
+            "documentation": "Prefer to not have parentheses when other binary operator (&amp;&amp;, ||, ??) precedence is obvious"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_parentheses_in_other_operators",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "always_for_clarity",
+            "documentation": "Prefer parentheses to clarify operator precedence"
+          },
+          {
+            "type": "constant",
+            "value": "never_if_unnecessary",
+            "documentation": "Prefer to not have parentheses when operator precedence is obvious"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_object_initializer",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer objects to be initialized using object initializers when possible"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer objects to not be initialized using object initializers"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_collection_initializer",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer collections to be initialized using collection initializers when possible"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer collections to not be initialized using collection initializers"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_explicit_tuple_names",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer tuple names to ItemX properties"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer ItemX properties to tuple names"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_inferred_tuple_names",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer inferred tuple element names"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer explicit tuple element names"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_inferred_anonymous_type_member_names",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer inferred anonymous type member names"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer explicit anonymous type member names"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_auto_properties",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer autoproperties over properties with private backing fields"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer properties with private backing fields over autoproperties"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_is_null_check_over_reference_equality_method",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer using a null check with pattern-matching over object.ReferenceEquals"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer object.ReferenceEquals over a null check with pattern-matching"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_conditional_expression_over_assignment",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer assignments with a ternary conditional over an if-else statement"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer assignments with an if-else statement over a ternary conditional"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_conditional_expression_over_return",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer return statements to use a ternary conditional over an if-else statement"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer return statements to use an if-else statement over a ternary conditional"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_compound_assignment",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer compound assignment expressions"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Don't prefer compound assignment expressions"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_coalesce_expression",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer null coalescing expressions to ternary operator checking"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer ternary operator checking to null coalescing expressions"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_null_propagation",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer to use null-conditional operator when possible"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer to use ternary null checking where possible"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_code_quality_unused_parameters",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "all",
+            "documentation": "Flag methods with any accessibility that contain unused parameters"
+          },
+          {
+            "type": "constant",
+            "value": "non_public",
+            "documentation": "Flag only non-public methods that contain unused parameters"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_var_for_built_in_types",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer var is used to declare variables with built-in system types such as int"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer explicit type over var to declare variables with built-in system types such as int"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_var_when_type_is_apparent",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer var when the type is already mentioned on the right-hand side of a declaration expression"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer explicit type over var when the type is already mentioned on the right-hand side of a declaration expression"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_var_elsewhere",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer var over explicit type in all cases, unless overridden by another code style rule"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer explicit type over var in all cases, unless overridden by another code style rule"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_expression_bodied_methods",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer expression bodies for methods"
+          },
+          {
+            "type": "constant",
+            "value": "when_on_single_line",
+            "documentation": "Prefer expression bodies for methods when they will be a single line"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer block bodies for methods"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_expression_bodied_constructors",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer expression bodies for constructors"
+          },
+          {
+            "type": "constant",
+            "value": "when_on_single_line",
+            "documentation": "Prefer expression bodies for constructors when they will be a single line"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer block bodies for constructors"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_expression_bodied_operators",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer expression bodies for operators"
+          },
+          {
+            "type": "constant",
+            "value": "when_on_single_line",
+            "documentation": "Prefer expression bodies for operators when they will be a single line"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer block bodies for operators"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_expression_bodied_properties",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer expression bodies for properties"
+          },
+          {
+            "type": "constant",
+            "value": "when_on_single_line",
+            "documentation": "Prefer expression bodies for properties when they will be a single line"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer block bodies for properties"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_expression_bodied_indexers",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer expression bodies for indexers"
+          },
+          {
+            "type": "constant",
+            "value": "when_on_single_line",
+            "documentation": "Prefer expression bodies for indexers when they will be a single line"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer block bodies for indexers"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_expression_bodied_accessors",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer expression bodies for accessors"
+          },
+          {
+            "type": "constant",
+            "value": "when_on_single_line",
+            "documentation": "Prefer expression bodies for accessors when they will be a single line"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer block bodies for accessors"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_expression_bodied_lambdas",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer expression bodies for lambdas"
+          },
+          {
+            "type": "constant",
+            "value": "when_on_single_line",
+            "documentation": "Prefer expression bodies for lambdas when they will be a single line"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer block bodies for lambdas"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "csharp_style_expression_bodied_local_functions",
+      "documentation": "Starting with C# 7.0, C# supports local functions. Local functions are private methods of a type that are nested in another member."
+    },
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer expression bodies for local functions"
+          },
+          {
+            "type": "constant",
+            "value": "when_on_single_line",
+            "documentation": "Prefer expression bodies for local functions when they will be a single line"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer block bodies for local functions"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_pattern_matching_over_is_with_cast_check",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer pattern matching instead of is expressions with type casts"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer is expressions with type casts instead of pattern matching"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_pattern_matching_over_as_with_null_check",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer pattern matching instead of as expressions with null checks to determine if something is of a particular type"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer as expressions with null checks instead of pattern matching to determine if something is of a particular type"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_inlined_variable_declaration",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer out variables to be declared inline in the argument list of a method call when possible"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer out variables to be declared before the method call"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "csharp_prefer_simple_default_expression",
+      "documentation": "This style rule concerns using the default literal for default value expressions when the compiler can infer the type of the expression."
+    },
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer default over default(T)"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer default(T) over default"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_throw_expression",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer to use throw expressions instead of throw statements"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer to use throw statements instead of throw expressions"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_conditional_delegate_call",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "refer to use the conditional coalescing operator (?.) when invoking a lambda expression, instead of performing a null check"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer to perform a null check before invoking a lambda expression, instead of using the conditional coalescing operator (?.)"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_prefer_braces",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer curly braces even for one line of code"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer no curly braces if allowed"
+          },
+          {
+            "type": "constant",
+            "value": "when_multiline",
+            "documentation": "Prefer curly braces on multiple lines"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_unused_value_expression_statement_preference",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "discard_variable",
+            "documentation": "Prefer to assign an unused expression to a discard "
+          },
+          {
+            "type": "constant",
+            "value": "unused_local_variable",
+            "documentation": "Prefer to assign an unused expression to a local variable"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_unused_value_assignment_preference",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "discard_variable",
+            "documentation": "Prefer to use a discard when assigning a value that's not used"
+          },
+          {
+            "type": "constant",
+            "value": "unused_local_variable",
+            "documentation": "Prefer to use a local variable when assigning a value that's not used"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_prefer_index_operator",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer to use the ^ operator when calculating an index from the end of a collection"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Don't prefer to use the ^ operator when calculating an index from the end of a collection"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_prefer_range_operator",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer to use the range operator .. when extracting a &quot;slice&quot; of a collection"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Don't prefer to use the range operator .. when extracting a &quot;slice&quot; of a collection"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_deconstructed_variable_declaration",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer deconstructed variable declaration"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Do not prefer deconstruction in variable declarations"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "csharp_style_pattern_local_over_anonymous_function",
+      "documentation": "Starting with C# 7.0, C# supports local functions. Local functions are private methods of a type that are nested in another member."
+    },
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer local functions over anonymous functions"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer anonymous functions over local functions"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_using_directive_placement",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "outside_namespace",
+            "documentation": "Prefer using directives to be placed outside the namespace"
+          },
+          {
+            "type": "constant",
+            "value": "inside_namespace",
+            "documentation": "Prefer using directives to be placed inside the namespace"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_prefer_static_local_function",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer local functions to be marked static"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Don't prefer local functions to be marked static"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_prefer_simple_using_statement",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer to use a simple using statement"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Don't prefer to use a simple using statement"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_prefer_switch_expression",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "values": [
+          {
+            "type": "constant",
+            "value": "true",
+            "documentation": "Prefer to use a switch expression (introduced with C# 8.0)"
+          },
+          {
+            "type": "constant",
+            "value": "false",
+            "documentation": "Prefer to use a switch statement"
+          }
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_preferred_modifier_order",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "list",
+        "values": [
+          "public",
+          "private",
+          "protected",
+          "internal",
+          "static",
+          "extern",
+          "new",
+          "virtual",
+          "abstract",
+          "sealed",
+          "override",
+          "readonly",
+          "unsafe",
+          "volatile",
+          "async"
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "visual_basic_preferred_modifier_order",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "list",
+        "values": [
+          "Partial",
+          "Default",
+          "Private",
+          "Protected",
+          "Public",
+          "Friend",
+          "NotOverridable",
+          "Overridable",
+          "MustOverride",
+          "Overloads",
+          "Overrides",
+          "MustInherit",
+          "NotInheritable",
+          "Static",
+          "Shared",
+          "Shadows",
+          "ReadOnly",
+          "WriteOnly",
+          "Dim",
+          "Const",
+          "WithEvents",
+          "Widening",
+          "Narrowing",
+          "Custom",
+          "Async"
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "visual_basic_style_unused_value_expression_statement_preference",
+    "value": {
+      "type": "pair",
+      "first": "unused_local_variable",
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "visual_basic_style_unused_value_assignment_preference",
+    "value": {
+      "type": "pair",
+      "first": "unused_local_variable",
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+
+
+
+
+
+
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_simplified_boolean_expressions",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "type_alias": "boolean",
+        "values": [
+          "true",
+          "false"
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_simplified_boolean_expressions",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "boolean"
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_prefer_not_pattern",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "boolean"
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_prefer_pattern_matching",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "boolean"
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_simplified_interpolation",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "boolean"
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  }
+]

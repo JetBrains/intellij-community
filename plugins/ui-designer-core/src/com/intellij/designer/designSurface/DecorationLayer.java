@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
@@ -78,7 +79,7 @@ public class DecorationLayer extends JComponent {
       }
     }
     catch (Throwable e) {
-      myDesigner.showError("Paint operation", e);
+      myDesigner.showError(DesignerBundle.message("designer.error.paint.operation"), e);
     }
   }
 

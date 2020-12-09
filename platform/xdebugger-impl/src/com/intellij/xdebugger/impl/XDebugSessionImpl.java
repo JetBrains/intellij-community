@@ -14,6 +14,7 @@ import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -42,6 +43,8 @@ import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
+import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
+import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -61,6 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance(XDebugSessionImpl.class);
   private static final Logger PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance");
+  private static final NotificationGroup BP_NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Breakpoint hit");
 
   /** @deprecated Use {@link XDebuggerManagerImpl#NOTIFICATION_GROUP} */
   @Deprecated
@@ -115,6 +119,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myShowTabOnSuspend = new AtomicBoolean(showTabOnSuspend);
     myProject = debuggerManager.getProject();
     ValueLookupManager.getInstance(myProject).startListening();
+    DebuggerInlayListener.getInstance(myProject).startListening();
     myIcon = icon;
 
     XDebugSessionData oldSessionData = null;
@@ -763,6 +768,10 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     }
 
+    BP_NOTIFICATION_GROUP
+      .createNotification(XDebuggerBundle.message("xdebugger.breakpoint.reached"), MessageType.INFO)
+      .notify(getProject());
+
     myActiveNonLineBreakpoint =
       (!(breakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)breakpoint).getType().canBeHitInOtherPlaces()) ? breakpoint : null;
 
@@ -1087,6 +1096,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   List<XExpression> getWatchExpressions() {
     return myDebuggerManager.getWatchesManager().getWatches(getConfigurationName());
   }
+
 
   @Nullable
   public ExecutionEnvironment getExecutionEnvironment() {

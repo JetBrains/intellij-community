@@ -1,25 +1,9 @@
 import sys
-from typing import (
-    Any,
-    BinaryIO,
-    Callable,
-    Dict,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Text,
-    TextIO,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
-from types import TracebackType
+from _typeshed import SupportsRead, SupportsReadline
 from socket import socket
 from ssl import SSLContext
-from _typeshed import SupportsRead, SupportsReadline
+from types import TracebackType
+from typing import Any, BinaryIO, Callable, Dict, Iterable, Iterator, List, Optional, Text, TextIO, Tuple, Type, TypeVar, Union
 
 _T = TypeVar("_T")
 _IntOrStr = Union[int, Text]

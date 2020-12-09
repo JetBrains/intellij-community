@@ -1,4 +1,5 @@
 from typing import Tuple
+
 from . import _LangModelType
 
 Latin5_BulgarianCharToOrderMap: Tuple[int, ...]

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -77,7 +78,9 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
         } else if (userObject instanceof PsiClass) {
           append(ClassPresentationUtil.getNameForClass((PsiClass)userObject, true));
         } else {
-          append(userObject.toString());
+          @NlsSafe
+          final String text = userObject.toString();
+          append(text);
         }
       }
     });

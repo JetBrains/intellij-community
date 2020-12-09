@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -57,7 +58,7 @@ class GHRepositoryListCellRenderer(private val accountsSupplier: () -> Collectio
       background = UIUtil.getListBackground()
     }
 
-    fun withName(title: String, itemContent: Component, withBorder: Boolean): AccountNameRenderer {
+    fun withName(@NlsSafe title: String, itemContent: Component, withBorder: Boolean): AccountNameRenderer {
       titleLabel.border = null
       titleLabel.clear()
       titleLabel.append(title, SimpleTextAttributes.GRAY_SMALL_ATTRIBUTES)

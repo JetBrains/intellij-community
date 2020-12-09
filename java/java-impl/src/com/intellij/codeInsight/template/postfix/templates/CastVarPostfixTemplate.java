@@ -4,7 +4,10 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
@@ -13,6 +16,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +29,7 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public class CastVarPostfixTemplate extends StringBasedPostfixTemplate {
   private static final String TYPE_VAR = "typeVar";
-  private static final String VAR_NAME = "varName";
+  private static final @NonNls String VAR_NAME = "varName";
 
   public CastVarPostfixTemplate() {
     super("castvar", "T name = (T)expr", selectorTopmost(IS_NON_VOID));

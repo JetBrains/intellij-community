@@ -533,6 +533,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public Icon getIcon() {
     Icon icon = myIcon;
     if (icon == null) {
+      myIcon = icon = myUsageInfo.getIcon();
+    }
+    if (icon == null) {
       PsiElement psiElement = getElement();
       myIcon = icon = psiElement != null && psiElement.isValid() && !isFindInPathUsage(psiElement) ? psiElement.getIcon(0) : null;
     }

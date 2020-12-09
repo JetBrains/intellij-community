@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -213,19 +214,19 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void doImport(final Project project, final File target, final Url url, final Depth depth,
                               final boolean includeIgnored, final String message) {
-    final Ref<String> errorMessage = new Ref<>();
+    final Ref<@Nls String> errorMessage = new Ref<>();
     final SvnVcs vcs = SvnVcs.getInstance(project);
-    final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
+    final String targetPath = target.getAbsolutePath();
 
     ExclusiveBackgroundVcsAction.run(project, () -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       try {
-        progressIndicator.setText(message("progress.text.import", target.getAbsolutePath()));
+        progressIndicator.setText(message("progress.text.import", targetPath));
 
         final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
         if (targetVf == null) {
-          errorMessage.set("Can not find file: " + targetPath);
+          errorMessage.set(message("error.can.not.find.file", targetPath));
         }
         else {
           final boolean isInContent = ReadAction.compute(() -> facade.isInContent(targetVf));

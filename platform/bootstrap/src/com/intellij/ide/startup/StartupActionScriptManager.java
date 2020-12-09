@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.Decompressor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -200,6 +201,7 @@ public final class StartupActionScriptManager {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "copy[" + mySource + "," + myDestination + "]";
     }
@@ -248,6 +250,7 @@ public final class StartupActionScriptManager {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "unzip[" + mySource + "," + myDestination + "]";
     }
@@ -283,6 +286,7 @@ public final class StartupActionScriptManager {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "delete[" + mySource + "]";
     }

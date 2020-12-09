@@ -160,6 +160,7 @@ private fun sendBadGateway(channel: Channel, extraHeaders: HttpHeaders) {
   }
 }
 
+@Suppress("HardCodedStringLiteral")
 private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
   val builder = StringBuilder()
   while (buffer.isReadable) {

@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,7 +25,6 @@ public class QueryFactory<Result, Parameters> {
     return new ExecutorsQuery<>(parameters, getExecutors());
   }
 
-
   @NotNull
   protected List<QueryExecutor<Result, Parameters>> getExecutors() {
     return myExecutors;
@@ -47,26 +45,11 @@ public class QueryFactory<Result, Parameters> {
 
   /**
    * @param parameters      of the search
-   * @param hashingStrategy strategy to factor results
-   * @return query to perform the search. Obtained results are automatically filtered wrt. equals() relation.
-   */
-  @NotNull
-  public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
-                                                      @NotNull TObjectHashingStrategy<Result> hashingStrategy) {
-    return new UniqueResultsQuery<>(createQuery(parameters), hashingStrategy);
-  }
-
-  /**
-   * @param parameters      of the search
-   * @param hashingStrategy strategy to factor results
    * @param mapper          function that maps results to their mapping counterparts.
    * @return query to perform the search. Obtained results are mapped to whatever objects that are automatically filtered wrt. equals()
    *         relation. Storing mapped objects instead of original elements may be wise wrt to memory consumption.
    */
-  @NotNull
-  public final <T> Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
-                                                          @NotNull TObjectHashingStrategy<? super T> hashingStrategy,
-                                                          @NotNull Function<? super Result, ? extends T> mapper) {
-    return new UniqueResultsQuery<>(createQuery(parameters), hashingStrategy, mapper);
+  public final @NotNull <T> Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters, @NotNull Function<? super Result, ? extends T> mapper) {
+    return new UniqueResultsQuery<>(createQuery(parameters), mapper);
   }
 }

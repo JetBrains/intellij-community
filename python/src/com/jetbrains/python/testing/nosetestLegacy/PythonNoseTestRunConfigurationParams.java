@@ -15,11 +15,12 @@
  */
 package com.jetbrains.python.testing.nosetestLegacy;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 
 public interface PythonNoseTestRunConfigurationParams {
-  String getParams();
-  void setParams(String params);
+  @NlsSafe String getParams();
+  void setParams(@NlsSafe String params);
   boolean useParam();
   void useParam(boolean useParam);
 

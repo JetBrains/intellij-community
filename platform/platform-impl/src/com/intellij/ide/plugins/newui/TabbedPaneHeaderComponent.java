@@ -91,9 +91,8 @@ public class TabbedPaneHeaderComponent extends JPanel {
     add(createToolbar(IdeBundle.message("plugin.manager.tooltip"), actions), BorderLayout.EAST);
   }
 
-
-  @NotNull
-  private static JComponent createToolbar(@Nullable @NlsActions.ActionText String tooltip, @NotNull DefaultActionGroup actions) {
+  static @NotNull JComponent createToolbar(@Nullable @NlsActions.ActionText String tooltip,
+                                           @NotNull DefaultActionGroup actions) {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     ActionToolbar toolbar =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);

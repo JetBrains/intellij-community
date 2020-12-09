@@ -16,14 +16,14 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).setValue(true)
+    Registry.get(EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY).setValue(true)
     val descriptorManager = EditorConfigOptionDescriptorManager.instance as EditorConfigOptionDescriptorManagerImpl
     descriptorManager.loadDescriptors()
   }
 
   override fun tearDown() {
     try {
-      Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).resetToDefault()
+      Registry.get(EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY).resetToDefault()
       val descriptorManager = EditorConfigOptionDescriptorManager.instance as EditorConfigOptionDescriptorManagerImpl
       descriptorManager.loadDescriptors()
     }
@@ -31,16 +31,6 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
       super.tearDown()
     }
   }
-
-  private val basicValues = arrayOf(
-    "indent_size",
-    "indent_style",
-    "tab_width",
-    "end_of_line",
-    "charset",
-    "trim_trailing_whitespace",
-    "insert_final_newline"
-  )
 
   fun testComplexKeyFullTemplate() = doTest("dotnet_naming_rule, all required")
   fun testComplexKeyTemplate1() = doTest("dotnet_naming_rule", "dotnet_naming_style", "dotnet_naming_symbols")
@@ -57,15 +47,24 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
   fun testRootDeclaration3() = doExactTest("[")
   fun testRootDeclarationValue1() = doExactTest("true")
   fun testRootDeclarationValue2() = doInverseTest("true")
-  fun testSimpleOptionKey1() = doTest(*basicValues)
+  fun testSimpleOptionKey1() = doTest("charset")
   fun testSimpleOptionKey2() = doInverseTest("indent_size", "indent_style")
-  fun testSimpleOptionKey3() = doTest(*basicValues)
+  fun testSimpleOptionKey3() = doTest("charset")
   fun testSimpleOptionValue() = doExactTest("lf", "crlf", "cr", "unset")
+  fun testCSharpOptionExistence() = doTestThatCompletionIsNotEmpty()
+  fun testDotNetOptionExistence() = doTestThatCompletionIsNotEmpty()
+  fun testReSharperOptionExistence() = doTestThatCompletionIsNotEmpty()
 
   fun doTest(vararg required: String) = with(myFixture) {
     val name = getTestName(true)
     configureByFile("$name/.editorconfig")
     assertTrue(required.all(completeBasic().map(LookupElement::getLookupString)::contains))
+  }
+
+  private fun doTestThatCompletionIsNotEmpty() = with(myFixture) {
+    val name = getTestName(true)
+    configureByFile("$name/.editorconfig")
+    assertTrue(completeBasic().isNotEmpty())
   }
 
   private fun doInverseTest(vararg forbidden: String) = with(myFixture) {

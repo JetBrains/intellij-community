@@ -3,12 +3,15 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.Convertor;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Comparator;
@@ -17,13 +20,13 @@ import java.util.Properties;
 public class AntInstallation {
   private static final Logger LOG = Logger.getInstance(AntInstallation.class);
   public static final StringProperty HOME_DIR = new StringProperty("homeDir", "");
-  public static final AbstractProperty<String> NAME = new StringProperty("name", "");
+  public static final AbstractProperty<@NlsSafe String> NAME = new StringProperty("name", "");
   public static final ListProperty<AntClasspathEntry> CLASS_PATH = ListProperty.create("classpath");
   public static final Comparator<AntInstallation> NAME_COMPARATOR =
     (antInstallation, antInstallation1) -> String.CASE_INSENSITIVE_ORDER.compare(antInstallation.getName(), antInstallation1.getName());
 
   public static final Convertor<AntInstallation, AntReference> REFERENCE_TO_ANT = antInstallation -> antInstallation.getReference();
-  public static final AbstractProperty<String> VERSION =
+  public static final AbstractProperty<@Nls String> VERSION =
     new StringProperty("version", AntBundle.message("ant.unknown.version.string.presentation"));
   @NonNls private static final String PROPERTY_VERSION = "VERSION";
 
@@ -61,7 +64,7 @@ public class AntInstallation {
     if (antJar.exists()) {
       try {
         Properties antProps = loadProperties(antJar);
-        VERSION.set(getProperties(), antProps.getProperty(PROPERTY_VERSION));
+        VERSION.set(getProperties(), extractVersion(antProps));
       }
       catch (Exception e) {
         LOG.error(e);
@@ -81,19 +84,19 @@ public class AntInstallation {
     myClassLoaderHolder = new AntInstallationClassLoaderHolder(myProperties);
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return NAME.get(myProperties);
   }
 
-  public void setName(final String name) {
+  public void setName(final @NlsSafe String name) {
     NAME.set(myProperties, name);
   }
 
-  public String getVersion() {
+  public @NlsSafe String getVersion() {
     return VERSION.get(myProperties);
   }
 
-  public String getHomeDir() {
+  public @NlsSafe String getHomeDir() {
     return HOME_DIR.get(myProperties);
   }
 
@@ -124,7 +127,7 @@ public class AntInstallation {
     Properties properties = loadProperties(antJar);
     AntInstallation antInstallation = new AntInstallation();
     HOME_DIR.set(antInstallation.getProperties(), antHome.getAbsolutePath());
-    final String versionProp = properties.getProperty(PROPERTY_VERSION);
+    final String versionProp = extractVersion(properties);
     NAME.set(antInstallation.getProperties(), AntBundle.message("apache.ant.with.version.string.presentation", versionProp));
     VERSION.set(antInstallation.getProperties(), versionProp);
     antInstallation.addClasspathEntry(new AllJarsUnderDirEntry(lib));
@@ -158,5 +161,9 @@ public class AntInstallation {
     container.registerProperty(HOME_DIR, Externalizer.STRING);
     container.registerProperty(CLASS_PATH, "classpathItem", AntClasspathEntry.EXTERNALIZER);
     container.registerProperty(VERSION, Externalizer.STRING);
+  }
+
+  private static @Nullable @NlsSafe String extractVersion(Properties properties) {
+    return properties.getProperty(PROPERTY_VERSION);
   }
 }

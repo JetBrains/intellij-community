@@ -337,12 +337,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   public void onStartTesting() {}
 
   public synchronized void startTesting() {
-    myTestingStartedHandler.run();
     onStartTesting();
     GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onStartTesting();
     }
+  }
+
+  public void setupProcessor() {
+    myTestingStartedHandler.run();
   }
 
   public synchronized void finishTesting() {
@@ -577,6 +580,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         // Since a test reporter may not emit "testingStarted"/"testingFinished" events,
         // startTesting() is already invoked before starting processing messages.
         if (!myFirstTestingStartedEvent) {
+          setupProcessor();
           startTesting();
         }
         myFirstTestingStartedEvent = false;

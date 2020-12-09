@@ -1,27 +1,28 @@
 from types import ModuleType
 from typing import Any
 
-from werkzeug import _internal
-from werkzeug import datastructures
-from werkzeug import debug
-from werkzeug import exceptions
-from werkzeug import formparser
-from werkzeug import http
-from werkzeug import local
-from werkzeug import security
-from werkzeug import serving
-from werkzeug import test
-from werkzeug import testapp
-from werkzeug import urls
-from werkzeug import useragents
-from werkzeug import utils
-from werkzeug import wrappers
-from werkzeug import wsgi
+from werkzeug import (
+    _internal,
+    datastructures,
+    debug,
+    exceptions,
+    formparser,
+    http,
+    local,
+    security,
+    serving,
+    test,
+    testapp,
+    urls,
+    useragents,
+    utils,
+    wrappers,
+    wsgi,
+)
 
 class module(ModuleType):
     def __getattr__(self, name): ...
     def __dir__(self): ...
-
 
 __version__: Any
 

@@ -27,18 +27,15 @@ import java.util.Collections;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogUi myLogUi;
   private boolean myShouldHighlightUser = false;
 
-  public MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
+  public MyCommitsHighlighter(@NotNull VcsLogData logData) {
     myLogData = logData;
-    myLogUi = logUi;
   }
 
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, boolean isSelected) {
-    if (!myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     if (myShouldHighlightUser) {
       VcsUser currentUser = myLogData.getCurrentUser().get(details.getRoot());
       if (currentUser != null && VcsUserUtil.isSamePerson(currentUser, details.getAuthor())) {
@@ -73,7 +70,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
-      return new MyCommitsHighlighter(logData, logUi);
+      return new MyCommitsHighlighter(logData);
     }
 
     @NotNull

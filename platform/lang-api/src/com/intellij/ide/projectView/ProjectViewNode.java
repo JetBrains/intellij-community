@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -194,6 +195,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   }
 
   @Nullable
+  @NlsContexts.PopupTitle
   public String getTitle() {
     return null;
   }

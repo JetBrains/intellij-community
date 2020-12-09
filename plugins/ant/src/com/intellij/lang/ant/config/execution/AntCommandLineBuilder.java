@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
@@ -31,9 +32,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class AntCommandLineBuilder {
-  private final List<String> myTargets = new ArrayList<>();
+  private final List<@NlsSafe String> myTargets = new ArrayList<>();
   private final JavaParameters myCommandLine = new JavaParameters();
-  private String myBuildFilePath;
+  private @NlsSafe String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;
   @NonNls private final List<String> myExpandedProperties = new ArrayList<>();
@@ -60,7 +61,7 @@ public class AntCommandLineBuilder {
     myExpandedProperties.add("-D" + property.getPropertyName() + "=" + value);
   }
 
-  public void addTarget(String targetName) {
+  public void addTarget(@NlsSafe String targetName) {
     myTargets.add(targetName);
   }
 
@@ -169,15 +170,15 @@ public class AntCommandLineBuilder {
     return myCommandLine;
   }
 
-  public void addTargets(String[] targets) {
+  public void addTargets(@NlsSafe String[] targets) {
     ContainerUtil.addAll(myTargets, targets);
   }
 
-  public void addTargets(Collection<String> targets) {
+  public void addTargets(Collection<@NlsSafe String> targets) {
     myTargets.addAll(targets);
   }
 
-  public String[] getTargets() {
+  public @NlsSafe String[] getTargets() {
     return ArrayUtilRt.toStringArray(myTargets);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -1115,8 +1116,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     Rectangle bottomRightScreen = ScreenUtil.getScreenRectangle(bottomRight);
     if (topLeft.x < topLeftScreen.x || topLeft.y < topLeftScreen.y
         || bottomRight.x > bottomRightScreen.getMaxX() || bottomRight.y > bottomRightScreen.getMaxY()) {
-      Rectangle centerScreen = ScreenUtil.getScreenRectangle(new Point((int)targetBounds.getCenterX(), (int)targetBounds.getCenterY()));
-      ScreenUtil.moveToFit(targetBounds, centerScreen, null);
+      GraphicsDevice device = ScreenUtil.getScreenDevice(targetBounds);
+      Rectangle mostAppropriateScreenRectangle = device != null ? ScreenUtil.getScreenRectangle(device.getDefaultConfiguration())
+                                                                : ScreenUtil.getMainScreenBounds();
+      ScreenUtil.moveToFit(targetBounds, mostAppropriateScreenRectangle, null);
     }
   }
 
@@ -1530,6 +1533,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     public MyContentPanel(@NotNull PopupBorder border) {
       super(new BorderLayout());
+      MnemonicHelper.init(this);
       putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
       setBorder(border);
     }

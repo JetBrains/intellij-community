@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,7 @@ public final class DvcsBranchUtil {
     });
   }
 
-  @NotNull
-  public static String shortenBranchName(@NotNull String fullBranchName) {
+  public static @Nls @NotNull String shortenBranchName(@Nls @NotNull String fullBranchName) {
     // -1, because there are arrows indicating that it is a popup
     int maxLength = DvcsBundle.message("branch.popup.maximum.branch.length.sample").length() - 1;
     return StringUtil.shortenTextWithEllipsis(fullBranchName, maxLength, 5);

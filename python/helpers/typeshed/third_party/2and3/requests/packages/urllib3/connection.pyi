@@ -1,24 +1,20 @@
 # Stubs for requests.packages.urllib3.connection (Python 3.4)
 
+import ssl
 import sys
 from typing import Any
-from . import packages
-import ssl
-from . import exceptions
+
+from . import exceptions, util
 from .packages import ssl_match_hostname
 from .util import ssl_
-from . import util
 
 if sys.version_info < (3, 0):
-    from httplib import HTTPConnection as _HTTPConnection
-    from httplib import HTTPException as HTTPException
-
+    from httplib import HTTPConnection as _HTTPConnection, HTTPException as HTTPException
     class ConnectionError(Exception): ...
-else:
-    from http.client import HTTPConnection as _HTTPConnection
-    from http.client import HTTPException as HTTPException
-    from builtins import ConnectionError as ConnectionError
 
+else:
+    from builtins import ConnectionError as ConnectionError
+    from http.client import HTTPConnection as _HTTPConnection, HTTPException as HTTPException
 
 class DummyConnection: ...
 

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,12 +26,12 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 abstract public class LiveTemplateLookupElement extends LookupElement {
-  private final String myLookupString;
+  private final @NlsSafe String myLookupString;
   public final boolean sudden;
   private final boolean myWorthShowingInAutoPopup;
-  private final String myDescription;
+  private final @NlsSafe String myDescription;
 
-  LiveTemplateLookupElement(@NotNull String lookupString, @Nullable String description, boolean sudden, boolean worthShowingInAutoPopup) {
+  LiveTemplateLookupElement(@NotNull @NlsSafe String lookupString, @Nullable @NlsSafe String description, boolean sudden, boolean worthShowingInAutoPopup) {
     myDescription = description;
     this.sudden = sudden;
     myLookupString = lookupString;
@@ -44,7 +45,7 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
   }
 
   @NotNull
-  protected String getItemText() {
+  protected @NlsSafe String getItemText() {
     return myLookupString;
   }
 

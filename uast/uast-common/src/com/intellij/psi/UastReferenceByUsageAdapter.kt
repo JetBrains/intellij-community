@@ -29,7 +29,7 @@ internal class UastReferenceByUsageAdapter(private val usagePattern: ElementPatt
                                            private val provider: UastReferenceProvider) : UastReferenceProvider(UExpression::class.java) {
 
   override fun acceptsTarget(target: PsiElement): Boolean {
-    return provider.acceptsTarget(target) && !target.project.isDefault
+    return provider.acceptsTarget(target)
   }
 
   override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {

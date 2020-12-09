@@ -39,5 +39,5 @@ public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigatableP
   @NotNull @NlsSafe
   String getName();
 
-  boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor);
+  boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> processor);
 }

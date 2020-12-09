@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions.scheme
 
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
@@ -46,7 +46,7 @@ class EventsTestSchemeGroupConfigurationTest : BasePlatformTestCase() {
         }
       }
     """.trimIndent()
-    val globalRules = FUStatisticsWhiteListGroupsService.WLRule()
+    val globalRules = EventGroupRemoteDescriptors.GroupRemoteRule()
     globalRules.regexps = mapOf("integer" to "testIntegerRegexp")
     globalRules.enums = mapOf("boolean" to setOf("true", "false"))
 

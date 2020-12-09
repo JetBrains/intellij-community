@@ -10,6 +10,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryParameters;
+import com.intellij.util.UniqueResultsQuery;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,8 +91,7 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
     return search(new SearchParameters(derivedMethod, psiClass, checkBases, allowStaticMethod));
   }
 
-  @NotNull
-  public static Query<MethodSignatureBackedByPsiMethod> search(@NotNull SearchParameters parameters) {
-    return SUPER_METHODS_SEARCH_INSTANCE.createUniqueResultsQuery(parameters, MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
+  public static @NotNull Query<MethodSignatureBackedByPsiMethod> search(@NotNull SearchParameters parameters) {
+    return new UniqueResultsQuery<>(SUPER_METHODS_SEARCH_INSTANCE.createQuery(parameters), MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
   }
 }

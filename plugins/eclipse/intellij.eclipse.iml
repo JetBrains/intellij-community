@@ -22,6 +22,6 @@
     <orderEntry type="module" module-name="intellij.eclipse.jps" />
     <orderEntry type="module" module-name="intellij.eclipse.common" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
-    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

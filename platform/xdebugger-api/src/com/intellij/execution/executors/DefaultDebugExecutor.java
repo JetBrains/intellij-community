@@ -75,6 +75,11 @@ public class DefaultDebugExecutor extends Executor {
     return "debugging.DebugWindow";
   }
 
+  @Override
+  public boolean isRDCAction() {
+    return getId() == EXECUTOR_ID;
+  }
+
   public static Executor getDebugExecutorInstance() {
     return ExecutorRegistry.getInstance().getExecutorById(EXECUTOR_ID);
   }

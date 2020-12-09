@@ -8,11 +8,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class Expression {
+
   @Nullable
   public abstract Result calculateResult(ExpressionContext context);
 
   @Nullable
-  public abstract Result calculateQuickResult(ExpressionContext context);
+  public Result calculateQuickResult(ExpressionContext context) {
+    return calculateResult(context);
+  }
 
   public abstract LookupElement @Nullable [] calculateLookupItems(ExpressionContext context);
 
@@ -22,9 +25,8 @@ public abstract class Expression {
   }
 
   /**
-   * @return true if {@link Expression#calculateResult(ExpressionContext)} or
-   *                 {@link Expression#calculateQuickResult(ExpressionContext)}
-   *         require committed PSI for their calculation or false otherwise
+   * @return true if {@link Expression#calculateResult} or {@link Expression#calculateQuickResult}
+   * require committed PSI for their calculation or false otherwise
    */
   public boolean requiresCommittedPSI() {
     return true;

@@ -30,7 +30,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
-class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
+final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final Logger LOG = Logger.getInstance(UsageViewTreeCellRenderer.class);
   private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
   private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));

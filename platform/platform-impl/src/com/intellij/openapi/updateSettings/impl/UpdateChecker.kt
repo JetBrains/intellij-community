@@ -543,7 +543,11 @@ object UpdateChecker {
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
       if (showDialog || !canEnableNotifications()) {
-        PluginUpdateDialog(updatedPlugins, checkPluginsUpdateResult.customRepositoryPlugins).show()
+        PluginUpdateDialog(
+          project,
+          updatedPlugins,
+          checkPluginsUpdateResult.customRepositoryPlugins
+        ).show()
       }
       // don't show notification if all updated plugins is disabled
       else if (updatedPlugins.size != updatedPlugins.count { downloader -> PluginManagerCore.isDisabled(downloader.id) }) {

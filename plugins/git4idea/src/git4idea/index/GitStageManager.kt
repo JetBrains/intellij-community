@@ -25,6 +25,12 @@ class GitStageManager(val project: Project) : Disposable {
         ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
       }
     }, this)
+    stageLocalChangesRegistryOption().addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+        ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+      }
+    }, this)
     stageLineStatusTrackerRegistryOption().addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
@@ -52,8 +58,9 @@ class GitStageStartupActivity : StartupActivity.Background {
 
 fun stageRegistryOption() = Registry.get("git.enable.stage")
 fun stageLineStatusTrackerRegistryOption() = Registry.get("git.enable.stage.line.status.tracker")
+fun stageLocalChangesRegistryOption() = Registry.get("git.enable.stage.disable.local.changes")
 
 fun isStageAvailable(project: Project): Boolean {
   return stageRegistryOption().asBoolean() &&
-         ProjectLevelVcsManager.getInstance(project).allVcsRoots.any { it.vcs?.keyInstanceMethod == GitVcs.getKey() }
+         ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod == GitVcs.getKey()
 }

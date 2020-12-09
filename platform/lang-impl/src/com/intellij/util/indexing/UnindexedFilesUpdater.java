@@ -26,16 +26,15 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
-import com.intellij.util.indexing.roots.IndexableFilesProvider;
-import com.intellij.util.indexing.roots.ModuleIndexableFilesProvider;
-import com.intellij.util.indexing.roots.SdkIndexableFilesProvider;
+import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.ModuleIndexableFilesIterator;
+import com.intellij.util.indexing.roots.SdkIndexableFilesIterator;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -56,6 +55,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     "Indexing", getMaxNumberOfIndexingThreads()
   );
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
+  private static final @NotNull Key<UnindexedFilesUpdater> RUNNING_TASK = Key.create("RUNNING_INDEX_UPDATER_TASK");
+  private static final Object ourLastRunningTaskLock = new Object();
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
@@ -76,6 +77,24 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       }
     });
     myProject.putUserData(CONTENT_SCANNED, null);
+
+    synchronized (ourLastRunningTaskLock) {
+      UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
+      if (runningTask != null) {
+        DumbService.getInstance(project).cancelTask(runningTask);
+      }
+      myProject.putUserData(RUNNING_TASK, this);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    synchronized (ourLastRunningTaskLock) {
+      UnindexedFilesUpdater lastRunningTask = myProject.getUserData(RUNNING_TASK);
+      if (lastRunningTask == this) {
+        myProject.putUserData(RUNNING_TASK, null);
+      }
+    }
   }
 
   public UnindexedFilesUpdater(@NotNull Project project) {
@@ -129,8 +148,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
 
     projectIndexingHistory.getTimes().setScanFilesStart(Instant.now());
-    List<IndexableFilesProvider> orderedProviders;
-    Map<IndexableFilesProvider, List<VirtualFile>> providerToFiles;
+    List<IndexableFilesIterator> orderedProviders;
+    Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
     try {
       orderedProviders = getOrderedProviders();
       providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders);
@@ -169,7 +188,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
     projectIndexingHistory.setNumberOfIndexingThreads(numberOfIndexingThreads);
 
-    for (IndexableFilesProvider provider : orderedProviders) {
+    for (IndexableFilesIterator provider : orderedProviders) {
       List<VirtualFile> providerFiles = providerToFiles.get(provider);
       if (providerFiles == null || providerFiles.isEmpty()) {
         continue;
@@ -245,26 +264,26 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
    * so this method moves all SDK providers to the end.
    */
   @NotNull
-  private List<IndexableFilesProvider> getOrderedProviders() {
-    List<IndexableFilesProvider> originalOrderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
+  private List<IndexableFilesIterator> getOrderedProviders() {
+    List<IndexableFilesIterator> originalOrderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
 
-    List<IndexableFilesProvider> orderedProviders = new ArrayList<>();
+    List<IndexableFilesIterator> orderedProviders = new ArrayList<>();
     originalOrderedProviders.stream()
-      .filter(p -> !(p instanceof SdkIndexableFilesProvider))
+      .filter(p -> !(p instanceof SdkIndexableFilesIterator))
       .collect(Collectors.toCollection(() -> orderedProviders));
 
     originalOrderedProviders.stream()
-      .filter(p -> p instanceof SdkIndexableFilesProvider)
+      .filter(p -> p instanceof SdkIndexableFilesIterator)
       .collect(Collectors.toCollection(() -> orderedProviders));
 
     if (SystemProperties.getBooleanProperty("shared.indexes.performance.tests.try.to.index.sources.after.libraries", false)) {
-      List<IndexableFilesProvider> sourcesGoLastOrder = new ArrayList<>();
+      List<IndexableFilesIterator> sourcesGoLastOrder = new ArrayList<>();
       orderedProviders.stream()
-        .filter(p -> !(p instanceof ModuleIndexableFilesProvider))
+        .filter(p -> !(p instanceof ModuleIndexableFilesIterator))
         .collect(Collectors.toCollection(() -> sourcesGoLastOrder));
 
       orderedProviders.stream()
-        .filter(p -> p instanceof ModuleIndexableFilesProvider)
+        .filter(p -> p instanceof ModuleIndexableFilesIterator)
         .collect(Collectors.toCollection(() -> sourcesGoLastOrder));
 
       return sourcesGoLastOrder;
@@ -274,16 +293,16 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   @NotNull
-  private Map<IndexableFilesProvider, List<VirtualFile>> collectIndexableFilesConcurrently(
+  private Map<IndexableFilesIterator, List<VirtualFile>> collectIndexableFilesConcurrently(
     @NotNull Project project,
     @NotNull ProgressIndicator indicator,
-    @NotNull List<IndexableFilesProvider> providers
+    @NotNull List<IndexableFilesIterator> providers
   ) {
     if (providers.isEmpty()) {
       return Collections.emptyMap();
     }
     VirtualFileFilter unindexedFileFilter = new UnindexedFilesFinder(project, myIndex, myRunExtensionsForFilesMarkedAsIndexed);
-    Map<IndexableFilesProvider, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
+    Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
     ConcurrentBitSet visitedFileSet = new ConcurrentBitSet();
 
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));

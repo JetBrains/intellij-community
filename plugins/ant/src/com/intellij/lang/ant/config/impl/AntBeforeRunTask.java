@@ -4,6 +4,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
@@ -30,7 +31,7 @@ public final class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     return project;
   }
 
-  public String getAntFileUrl() {
+  public @NlsSafe String getAntFileUrl() {
     return myAntFileUrl;
   }
 
@@ -38,7 +39,7 @@ public final class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     myAntFileUrl = url;
   }
 
-  public String getTargetName() {
+  public @NlsSafe String getTargetName() {
     return myTargetName;
   }
 

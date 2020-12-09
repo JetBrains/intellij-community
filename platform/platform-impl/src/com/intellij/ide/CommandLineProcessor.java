@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.CommandLineArgs;
@@ -71,8 +72,9 @@ public final class CommandLineProcessor {
 
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
     if (file == null) {
-      if (LightEditUtil.openFile(ioFile)) {
-        return new CommandLineProcessorResult(LightEditUtil.getProject(), OK_FUTURE);
+      Project lightEditProject = LightEditUtil.openFile(ioFile);
+      if (lightEditProject != null) {
+        return new CommandLineProcessorResult(lightEditProject, OK_FUTURE);
       }
       else {
         return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()));
@@ -90,8 +92,9 @@ public final class CommandLineProcessor {
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
-      if (LightEdit.owns(project)) {
-        if (LightEdit.openFile(file)) {
+      if (project == null) {
+        project = LightEditService.getInstance().openFile(file, true);
+        if (project != null) {
           LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
         }
       }
@@ -108,7 +111,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
+  private static @Nullable Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
     for (Project project : projects) {
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
@@ -116,14 +119,14 @@ public final class CommandLineProcessor {
       }
     }
 
-    if (LightEditUtil.isLightEditEnabled() && !LightEditUtil.isOpenInExistingProject()) {
-      return LightEditUtil.getProject();
+    if (LightEditService.getInstance().canOpen(file) && !LightEditUtil.isOpenInExistingProject()) {
+      return null;
     }
 
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     if (frame != null) {
       Project project = frame.getProject();
-      if (project != null) {
+      if (project != null && !LightEdit.owns(project)) {
         return project;
       }
     }

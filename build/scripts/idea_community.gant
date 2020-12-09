@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.BuildOptions
@@ -29,7 +29,7 @@ target('build-intellij-core' : 'Build intellij-core.zip') {
 target('update-from-sources': 'Update locally installed distribution from compiled classes') {
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
-  options.buildStepsToSkip << BuildOptions.SVGICONS_PREBUILD_STEP
+//  options.buildStepsToSkip << BuildOptions.SVGICONS_PREBUILD_STEP
   options.buildStepsToSkip << BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP
   options.buildStepsToSkip << BuildOptions.SOURCES_ARCHIVE_STEP
   if (!SystemProperties.getBooleanProperty('intellij.build.local.plugins.repository', false)) {

@@ -22,6 +22,7 @@ import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,15 +117,15 @@ public final class RunAnythingUtil {
     return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
   }
 
-  public static String getAdDebugText() {
+  public static @Nls String getAdDebugText() {
     return IdeBundle.message("run.anything.ad.run.with.debug", SHIFT_SHORTCUT_TEXT);
   }
 
-  public static String getAdDeleteCommandText() {
+  public static @Nls String getAdDeleteCommandText() {
     return IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
   }
 
-  public static String getAdContextText() {
+  public static @Nls String getAdContextText() {
     return IdeBundle.message("run.anything.ad.run.in.context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
   }
 }

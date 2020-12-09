@@ -116,7 +116,7 @@ abstract class GitCommitPanel(private val project: Project,
   @Nls
   private fun getCommitText(): String {
     if (isAmend) return ActionsBundle.message("action.Vcs.ToggleAmendCommitMode.text")
-    else return GitBundle.getString("commit.action.name")
+    else return GitBundle.message("commit.action.name")
   }
 
   private fun updateCommitMessage() {

@@ -151,11 +151,9 @@
     <keyboard-shortcut first-keystroke="shift meta LEFT"/>
   </action>
   <action id="EditorNextWordInDifferentHumpsMode">
-    <keyboard-shortcut first-keystroke="control alt F"/>
     <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
   <action id="EditorNextWordInDifferentHumpsModeWithSelection">
-    <keyboard-shortcut first-keystroke="shift control alt F"/>
     <keyboard-shortcut first-keystroke="shift control RIGHT"/>
   </action>
   <action id="EditorPageDown">
@@ -172,11 +170,9 @@
     <keyboard-shortcut first-keystroke="alt PAGE_UP"/>
   </action>
   <action id="EditorPreviousWordInDifferentHumpsMode">
-    <keyboard-shortcut first-keystroke="control alt B"/>
     <keyboard-shortcut first-keystroke="control LEFT"/>
   </action>
   <action id="EditorPreviousWordInDifferentHumpsModeWithSelection">
-    <keyboard-shortcut first-keystroke="shift control alt B"/>
     <keyboard-shortcut first-keystroke="shift control LEFT"/>
   </action>
   <action id="EditorScrollBottom">
@@ -626,5 +622,9 @@
   
   <action id="ShowUmlDiagramPopup">
     <keyboard-shortcut first-keystroke="meta alt control U"/>
+  </action>
+
+  <action id="EditorTranspose">
+    <keyboard-shortcut first-keystroke="ctrl T"/>
   </action>
 </keymap>

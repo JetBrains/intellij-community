@@ -12,11 +12,9 @@ import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.internal.MethodSorter;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 
+import static com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode.DUMB_EMPTY_INDEX;
 import static junit.framework.TestSuite.warning;
 
 /**
@@ -111,7 +109,7 @@ public interface TestIndexingModeSupporter {
         String methodName = declaredMethod.getName();
         if (!methodName.startsWith("test")) continue;
         if (TestFrameworkUtil.isPerformanceTest(methodName, aClass.getName())) continue;
-        if (handler.shouldIgnore(declaredMethod, aClass)) continue;
+        if (handler.shouldIgnore(declaredMethod)) continue;
         TestIndexingModeSupporter aCase = constructor.newInstance();
         aCase.setIndexingMode(handler.getIndexingMode());
         if (aCase instanceof TestCase) {
@@ -149,22 +147,37 @@ public interface TestIndexingModeSupporter {
   abstract class IndexingModeTestHandler {
     public final String myTestSuiteName;
     public final String myTestNamePrefix;
+    private final IndexingMode myIndexingMode;
 
-    protected IndexingModeTestHandler(@NotNull String testSuiteName, @NotNull String testNamePrefix) {
+    protected IndexingModeTestHandler(@NotNull String testSuiteName,
+                                      @NotNull String testNamePrefix,
+                                      @NotNull IndexingMode mode) {
       myTestSuiteName = testSuiteName;
       myTestNamePrefix = testNamePrefix;
+      myIndexingMode = mode;
     }
 
     public TestSuite createTestSuite() {
       return new NamedTestSuite(myTestNamePrefix);
     }
 
-    public abstract boolean shouldIgnore(@NotNull Class<? extends TestIndexingModeSupporter> aClass);
+    public abstract boolean shouldIgnore(@NotNull AnnotatedElement aClass);
 
-    public abstract boolean shouldIgnore(@NotNull Method method,
-                                         @NotNull Class<? extends TestIndexingModeSupporter> aClass);
+    public @NotNull TestIndexingModeSupporter.IndexingMode getIndexingMode() {
+      return myIndexingMode;
+    }
 
-    public abstract @NotNull TestIndexingModeSupporter.IndexingMode getIndexingMode();
+    private static boolean shouldIgnoreInFullIndexSuite(@NotNull AnnotatedElement element) {
+      return element.isAnnotationPresent(NeedsIndex.SmartMode.class);
+    }
+
+    private static boolean shouldIgnoreInRuntimeOnlyIndexSuite(@NotNull AnnotatedElement element) {
+      return shouldIgnoreInFullIndexSuite(element) || element.isAnnotationPresent(NeedsIndex.Full.class);
+    }
+
+    private static boolean shouldIgnoreInEmptyIndexSuite(@NotNull AnnotatedElement element) {
+      return shouldIgnoreInRuntimeOnlyIndexSuite(element) || element.isAnnotationPresent(NeedsIndex.ForStandardLibrary.class);
+    }
 
     private static Test wrapForTeamCity(@NotNull TestCase testCase, @NotNull IndexingMode mode) {
       return new MyHackyJUnitTaskMirrorImpl.VmExitErrorTest(testCase, mode);
@@ -236,6 +249,41 @@ public interface TestIndexingModeSupporter {
           return myTestCase.getClass().getName() + "." + myTestCase.getName() + " with IndexingMode " + myMode.name();
         }
       }
+    }
+  }
+
+  class FullIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
+    public FullIndexSuite() {
+      super("Full index", "Full index: ", IndexingMode.DUMB_FULL_INDEX);
+    }
+
+    @Override
+    public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      return IndexingModeTestHandler.shouldIgnoreInFullIndexSuite(aClass);
+    }
+  }
+
+  class RuntimeOnlyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
+
+    public RuntimeOnlyIndexSuite() {
+      super("RuntimeOnlyIndex", "Runtime only index: ", IndexingMode.DUMB_RUNTIME_ONLY_INDEX);
+    }
+
+    @Override
+    public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      return IndexingModeTestHandler.shouldIgnoreInRuntimeOnlyIndexSuite(aClass);
+    }
+  }
+
+  class EmptyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
+
+    public EmptyIndexSuite() {
+      super("Empty index", "Empty index:", DUMB_EMPTY_INDEX);
+    }
+
+    @Override
+    public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      return IndexingModeTestHandler.shouldIgnoreInEmptyIndexSuite(aClass);
     }
   }
 }

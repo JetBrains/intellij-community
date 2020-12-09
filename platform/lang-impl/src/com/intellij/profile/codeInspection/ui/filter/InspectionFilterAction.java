@@ -246,7 +246,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myFilterComponent.setFilter("\"New in " + version + "\"");
+      myFilterComponent.setFilter("\"New in " + version + "\""); //NON-NLS
     }
   }
 

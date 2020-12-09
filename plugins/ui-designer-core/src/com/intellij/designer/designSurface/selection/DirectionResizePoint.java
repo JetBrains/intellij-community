@@ -20,6 +20,7 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.designSurface.tools.ResizeTracker;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -32,15 +33,15 @@ public class DirectionResizePoint extends ResizePoint {
   final private Object myType;
   protected double myXSeparator;
   protected double myYSeparator;
-  private final String myDescription;
+  private final @Nls String myDescription;
 
-  public DirectionResizePoint(int direction, Object type, @Nullable String description) {
+  public DirectionResizePoint(int direction, Object type, @Nullable @Nls String description) {
     setDirection(direction);
     myType = type;
     myDescription = description;
   }
 
-  public DirectionResizePoint(Color color, Color border, int direction, Object type, @Nullable String description) {
+  public DirectionResizePoint(Color color, Color border, int direction, Object type, @Nullable @Nls String description) {
     super(color, border);
     setDirection(direction);
     myType = type;

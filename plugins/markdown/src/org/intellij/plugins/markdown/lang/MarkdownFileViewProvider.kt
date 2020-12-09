@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang
 
 import com.intellij.lang.Language
@@ -8,18 +8,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
-import gnu.trove.THashSet
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes.MARKDOWN_TEMPLATE_DATA
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
 class MarkdownFileViewProvider(manager: PsiManager, virtualFile: VirtualFile, eventSystemEnabled: Boolean)
   : MultiplePsiFilesPerDocumentFileViewProvider(manager, virtualFile, eventSystemEnabled), TemplateLanguageFileViewProvider {
 
-  private val myRelevantLanguages = THashSet<Language>()
+  private val relevantLanguages = HashSet<Language>()
 
   init {
-    myRelevantLanguages.add(baseLanguage)
-    myRelevantLanguages.add(templateDataLanguage)
+    relevantLanguages.add(baseLanguage)
+    relevantLanguages.add(templateDataLanguage)
   }
 
   override fun createFile(lang: Language): PsiFile? {
@@ -39,7 +38,7 @@ class MarkdownFileViewProvider(manager: PsiManager, virtualFile: VirtualFile, ev
 
   override fun getBaseLanguage(): Language = MarkdownLanguage.INSTANCE
 
-  override fun getLanguages(): Set<Language> = myRelevantLanguages
+  override fun getLanguages(): Set<Language> = relevantLanguages
 
   override fun getTemplateDataLanguage(): Language = HTMLLanguage.INSTANCE
 

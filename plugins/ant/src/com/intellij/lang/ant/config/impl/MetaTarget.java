@@ -21,8 +21,11 @@ import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +34,10 @@ import java.util.List;
 public class MetaTarget implements AntBuildTargetBase {
   private final AntBuildFileBase myBuildFile;
   private final List<String> myTargets;
-  private final String myName;
-  private final String myDescription;
+  private final @Nls String myName;
+  private final @Nls String myDescription;
 
-  public MetaTarget(final AntBuildFileBase buildFile, final String displayName, final List<String> targets) {
+  public MetaTarget(final AntBuildFileBase buildFile, @Nls final String displayName, final List<String> targets) {
     myBuildFile = buildFile;
     myTargets = targets;
     myName = displayName;
@@ -52,23 +55,23 @@ public class MetaTarget implements AntBuildTargetBase {
 
   @NotNull
   @Override
-  public List<String> getTargetNames() {
+  public List<@NlsSafe String> getTargetNames() {
     return myTargets;
   }
 
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
   @Override
   @Nullable
-  public String getDisplayName() {
+  public @NlsSafe String getDisplayName() {
     return getName();
   }
 
   @Override
-  public String getNotEmptyDescription() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getNotEmptyDescription() {
     return myDescription;
   }
 
@@ -78,7 +81,7 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   @Override
-  public String getActionId() {
+  public @NonNls String getActionId() {
     final String modelName = myBuildFile.getModel().getName();
     if (modelName == null || modelName.length() == 0) {
       return null;

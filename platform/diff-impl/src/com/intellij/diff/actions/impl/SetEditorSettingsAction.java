@@ -230,7 +230,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     private void apply(@NotNull HighlightingLevel layer) {
       for (Editor editor : myEditors) {
-        ((EditorImpl)editor).setHighlightingFilter(layer.getCondition());
+        ((EditorImpl)editor).setHighlightingPredicate(layer.getCondition());
       }
     }
 

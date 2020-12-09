@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.find.findUsages.FindUsagesHelper;
@@ -66,15 +66,22 @@ public final class TextOccurrencesUtilBase {
                                                                    PsiSearchHelper helper,
                                                                    final Processor<? super PsiElement> processor) {
     TextOccurenceProcessor occurenceProcessor = (element, offsetInElement) -> {
-      final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
-      final ASTNode node = element.getNode();
-      if (definition != null && node != null && definition.getStringLiteralElements().contains(node.getElementType())) {
+      if (isStringLiteralElement(element)) {
         return processor.process(element);
       }
       return true;
     };
 
     return helper.processElementsWithWord(occurenceProcessor, searchScope, identifier, UsageSearchContext.IN_STRINGS, true);
+  }
+
+  public static boolean isStringLiteralElement(@NotNull PsiElement element) {
+    final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
+    if (definition == null) {
+      return false;
+    }
+    final ASTNode node = element.getNode();
+    return node != null && definition.getStringLiteralElements().contains(node.getElementType());
   }
 
   private static boolean processTextIn(PsiElement scope,

@@ -33,6 +33,7 @@ import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
@@ -241,7 +242,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   }
 
   public static void runCustomTask(@NotNull Project project,
-                                   @NotNull String executionName,
+                                   @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,
                                    @NotNull String projectPath,
                                    @NotNull String gradlePath,
@@ -252,7 +253,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   }
 
   public static void runCustomTask(@NotNull Project project,
-                                   @NotNull String executionName,
+                                   @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,
                                    @NotNull String projectPath,
                                    @NotNull String gradlePath,

@@ -40,13 +40,15 @@ public class ChangeListTodosTreeStructure extends TodoTreeStructure {
     if (!psiFile.isValid()) return false;
 
     VirtualFile file = psiFile.getVirtualFile();
-    ChangeListManager listManager = ChangeListManager.getInstance(myProject);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
 
-    FileStatus status = listManager.getStatus(file);
+    FileStatus status = changeListManager.getStatus(file);
     if (status == FileStatus.NOT_CHANGED) return false;
 
     FilePath filePath = VcsUtil.getFilePath(file);
-    final Collection<Change> changes = listManager.getDefaultChangeList().getChanges();
+    Collection<Change> changes = changeListManager.areChangeListsEnabled()
+                                 ? changeListManager.getDefaultChangeList().getChanges()
+                                 : changeListManager.getAllChanges();
     for (Change change : changes) {
       ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null && afterRevision.getFile().equals(filePath)) {

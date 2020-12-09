@@ -113,24 +113,13 @@ public class PyFunctionTypeImpl implements PyFunctionType {
         qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
       }
       if (qualifier != null) {
-        final PyType qualifierType = PyTypeUtil.toNonWeakType(context.getType(qualifier), context);
-        if (isInstanceType(qualifierType)) {
+        final PyType qualifierType = context.getType(qualifier);
+        if (PyTypeUtil.toStream(qualifierType).select(PyClassType.class).anyMatch(it -> !it.isDefinition())) {
           return true;
-        }
-        else if (qualifierType instanceof PyUnionType) {
-          for (PyType type : ((PyUnionType)qualifierType).getMembers()) {
-            if (isInstanceType(type)) {
-              return true;
-            }
-          }
         }
       }
     }
     return false;
-  }
-
-  private static boolean isInstanceType(@Nullable PyType type) {
-    return type instanceof PyClassType && !((PyClassType)type).isDefinition();
   }
 
   @Override

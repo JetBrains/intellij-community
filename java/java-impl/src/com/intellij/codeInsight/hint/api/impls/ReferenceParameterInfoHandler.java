@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,15 +27,6 @@ import java.util.Arrays;
  * @author Maxim.Mossienko
  */
 public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
-  @Override
-  public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
-    return null;
-  }
-
-  @Override
-  public boolean couldShowInLookup() {
-    return false;
-  }
 
   @Override
   public PsiReferenceParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {

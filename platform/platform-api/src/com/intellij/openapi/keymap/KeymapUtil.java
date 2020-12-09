@@ -354,7 +354,7 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String getPreferredShortcutText(Shortcut @NotNull [] shortcuts) {
+  public static @NlsSafe String getPreferredShortcutText(Shortcut @NotNull [] shortcuts) {
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut != null ? getShortcutText(shortcut) :
            shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";

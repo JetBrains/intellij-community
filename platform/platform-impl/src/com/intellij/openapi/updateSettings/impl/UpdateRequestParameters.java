@@ -5,19 +5,22 @@ import com.intellij.util.Url;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 @ApiStatus.Internal
 public class UpdateRequestParameters {
-  private static final Map<String, String> ourParameters = Collections.synchronizedMap(new HashMap<>());
+  private static final Map<String, String> ourParameters = new HashMap<>();
 
   public static void addParameter(@NotNull String name, @NotNull String value) {
-    ourParameters.put(name, value);
+    synchronized (ourParameters) {
+      ourParameters.put(name, value);
+    }
   }
 
   static @NotNull Url amendUpdateRequest(@NotNull Url url) {
-    return url.addParameters(ourParameters);
+    synchronized (ourParameters) {
+      return url.addParameters(ourParameters);
+    }
   }
 }

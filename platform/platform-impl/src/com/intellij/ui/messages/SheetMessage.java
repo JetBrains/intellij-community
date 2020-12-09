@@ -38,7 +38,7 @@ final class SheetMessage implements Disposable {
 
   SheetMessage(@NotNull Window owner,
                @Nls String title,
-               String message,
+               @Nls String message,
                Icon icon,
                String[] buttons,
                DialogWrapper.DoNotAskOption doNotAskOption,

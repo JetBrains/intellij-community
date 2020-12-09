@@ -2,6 +2,8 @@
 package com.intellij.internal.statistic.eventLog.config;
 
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.connection.EventLogBasicConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

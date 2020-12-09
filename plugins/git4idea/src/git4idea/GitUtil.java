@@ -990,8 +990,12 @@ public final class GitUtil {
   }
 
   public static void refreshVfsInRoot(@NotNull VirtualFile root) {
-    RefreshVFsSynchronously.trace("refresh root " + root);
-    VfsUtil.markDirtyAndRefresh(false, true, false, root);
+    refreshVfsInRoots(Collections.singleton(root));
+  }
+
+  public static void refreshVfsInRoots(@NotNull Collection<VirtualFile> roots) {
+    RefreshVFsSynchronously.trace("refresh roots " + roots);
+    VfsUtil.markDirtyAndRefresh(false, true, false, roots.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
   public static void updateAndRefreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {

@@ -15,6 +15,7 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -197,7 +198,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
 
   private static class MavenGoalAction extends MavenAction {
     private final MavenProject myMavenProject;
-    private final String myGoal;
+    private final @NlsSafe String myGoal;
 
     MavenGoalAction(MavenProject mavenProject, String goal) {
       myMavenProject = mavenProject;

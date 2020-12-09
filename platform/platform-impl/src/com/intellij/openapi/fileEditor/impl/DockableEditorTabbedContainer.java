@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import static javax.swing.SwingConstants.*;
@@ -148,14 +149,25 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       window = mySplitters.getOrCreateCurrentWindow(file);
     }
 
-
+    Boolean dropInBetweenPinnedTabs = null;
     if (myCurrentOver != null) {
+
       int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
+      if (index >= 0 && index < myCurrentOver.getTabCount() - 1) {
+        dropInBetweenPinnedTabs = myCurrentOver.getTabAt(index).isPinned();
+      }
       file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
+      Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
+      Integer dragStartLocation = file.getUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY);
+      boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && dragStartLocation != null &&
+                                         dragStartLocation == System.identityHashCode(myCurrentOver);
+      if (!isDroppedToOriginalPlace) {
+        file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, dropInBetweenPinnedTabs);
+      }
     }
 
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
-    window.setFilePinned(file, dockableEditor.isPinned());
+    window.setFilePinned(file, Objects.requireNonNullElseGet(dropInBetweenPinnedTabs, dockableEditor::isPinned));
   }
 
   @MagicConstant(intValues = {TOP, LEFT, BOTTOM, RIGHT, -1})

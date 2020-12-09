@@ -55,7 +55,6 @@
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
-    <compileServer.plugin classpath="java-langInjection-jps.jar"/>
 
     <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.references.InjectedReferencesContributor"/>
     <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>

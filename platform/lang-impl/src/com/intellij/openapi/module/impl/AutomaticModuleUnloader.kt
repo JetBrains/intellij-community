@@ -2,15 +2,13 @@
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
+import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
@@ -68,56 +66,35 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
 
     val messages = mutableListOf<String>()
     val actions = mutableListOf<NotificationAction>()
-    populateNotification(change.toUnload, messages, actions, "Load", {"Load $it back"}, change.toLoad.isEmpty(), {"unloaded"}) {
-      it.removeAll(change.toUnload.map { it.moduleName })
+
+    if (change.toUnload.isNotEmpty()) {
+      val modules = change.toUnload
+      val args = arrayOf(modules.size, modules[0].moduleName, modules.getOrElse(2) { modules.size - 1 })
+      messages += ProjectBundle.message("auto.unloaded.notification", *args)
+      val text = ProjectBundle.message(if (change.toUnload.isEmpty()) "auto.unloaded.revert.short" else "auto.unloaded.revert.full", *args)
+      actions += createAction(text) { list -> list.removeAll(modules.map { it.moduleName }) }
     }
-    populateNotification(change.toLoad, messages, actions, "Unload", {"Unload $it"}, change.toUnload.isEmpty(), {"loaded because some other modules depend on $it"}) { list ->
-      list.addAll(change.toLoad.map { it.moduleName })
+
+    if (change.toLoad.isNotEmpty()) {
+      val modules = change.toLoad
+      val args = arrayOf(modules.size, modules[0].moduleName, modules.getOrElse(2) { modules.size - 1 })
+      messages += ProjectBundle.message("auto.loaded.notification", *args)
+      val action = ProjectBundle.message(if (change.toUnload.isEmpty()) "auto.loaded.revert.short" else "auto.loaded.revert.full", *args)
+      actions += createAction(action) { list -> list.addAll(modules.map { it.moduleName }) }
     }
-    actions.add(object : NotificationAction("Configure Unloaded Modules") {
+
+    actions += object : NotificationAction(ProjectBundle.message("configure.unloaded.modules")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        val ok = ConfigureUnloadedModulesDialog(project, null).showAndGet()
-        if (ok) {
+        if (ConfigureUnloadedModulesDialog(project, null).showAndGet()) {
           notification.expire()
         }
       }
-    })
+    }
 
-    val notification = NOTIFICATION_GROUP.createNotification("New Modules are Added",
-                                                             XmlStringUtil.wrapInHtml(messages.joinToString("<br>")),
-                                                             NotificationType.INFORMATION, null)
+    val content = XmlStringUtil.wrapInHtml(messages.joinToString("<br>"))
+    val notification = NOTIFICATION_GROUP.createNotification(ProjectBundle.message("modules.added.notification.title"), content, NotificationType.INFORMATION, null)
     notification.addActions(actions)
     notification.notify(project)
-  }
-
-  private fun populateNotification(modules: List<ModulePath>,
-                                   messages: MutableList<String>,
-                                   actions: MutableList<NotificationAction>,
-                                   revertActionName: String,
-                                   revertActionShortText: (String) -> String,
-                                   useShortActionText: Boolean,
-                                   statusDescription: (String) -> String,
-                                   revertAction: (MutableList<String>) -> Unit) {
-    when {
-      modules.size == 1 -> {
-        val moduleName = modules.single().moduleName
-        messages.add("Newly added module '$moduleName' was automatically ${statusDescription("it")}.")
-        val text = if (useShortActionText) revertActionShortText("it") else "$revertActionName '$moduleName' module"
-        actions.add(createAction(text, revertAction))
-      }
-      modules.size == 2 -> {
-        val names = "'${modules[0].moduleName}' and '${modules[1].moduleName}'"
-        messages.add("Newly added modules $names were automatically ${statusDescription("them")}.")
-        val text = if (useShortActionText) revertActionShortText("them") else "$revertActionName modules $names"
-        actions.add(createAction(text, revertAction))
-      }
-      modules.size > 2 -> {
-        val names = "'${modules.first().moduleName}' and ${modules.size - 1} more modules"
-        messages.add("$names were automatically ${statusDescription("them")}.")
-        val text = if (useShortActionText) revertActionShortText("them") else "$revertActionName $names"
-        actions.add(createAction(text, revertAction))
-      }
-    }
   }
 
   fun createAction(@NlsContexts.NotificationContent text: String, action: (MutableList<String>) -> Unit): NotificationAction = object : NotificationAction(text) {
@@ -143,7 +120,8 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     @JvmStatic
     fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
 
-    private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Automatic Module Unloading")
+    private val NOTIFICATION_GROUP: NotificationGroup
+      get() = NotificationGroupManager.getInstance().getNotificationGroup("Automatic Module Unloading")
   }
 }
 

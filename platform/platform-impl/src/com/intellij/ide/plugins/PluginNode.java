@@ -382,7 +382,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myDownloadUrl = host;
   }
 
-  public String getRepositoryName() {
+  public @NlsSafe String getRepositoryName() {
     return myRepositoryName;
   }
 

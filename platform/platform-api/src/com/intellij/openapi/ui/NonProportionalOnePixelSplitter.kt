@@ -50,13 +50,13 @@ class NonProportionalOnePixelSplitter(
     }
   }
 
+  @Suppress("DuplicatedCode")
   private fun invokeLaterWhen(condition: () -> Boolean, timestamp: Long, count: Int = 0, action: () -> Unit) {
     if (addNotifyTimestamp != timestamp) return
 
     SwingUtilities.invokeLater {
       when {
         Disposer.isDisposed(disposable) -> return@invokeLater
-
         condition() -> action()
         count > maxRetryCount -> {
           logger.error("Could not restore proportions in $maxRetryCount times. ${dump()}")
@@ -67,7 +67,7 @@ class NonProportionalOnePixelSplitter(
     }
   }
 
-  private fun dump() = "$size=$size, minSize=${minSize}"
+  @NonNls private fun dump() = "$size=$size, minSize=${minSize}"
 
   private fun checkSize() = size != 0 && minSize < size
 

@@ -3,7 +3,7 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
-  <resource-bundle>extensionI18nBundle</resource-bundle>
+  <resource-bundle>MyBundle</resource-bundle>
   <resource-bundle><error descr="Cannot resolve property bundle">INVALID_VALUE</error></resource-bundle>
 
   <extensionPoints>
@@ -51,7 +51,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection groupKey="my.key" key="my.key"/>
-    <localInspection groupKey="my.key" key="my.key" bundle="extensionI18nBundle" groupBundle="extensionI18nBundle"/>
+    <localInspection groupKey="my.key" key="my.key" bundle="MyBundle" groupBundle="MyBundle"/>
     <localInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
                      key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
@@ -61,7 +61,7 @@
                          bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
     <projectConfigurable>
-       <configurable key="my.key" bundle="extensionI18nBundle"/>
+       <configurable key="my.key" bundle="MyBundle"/>
        <configurable key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                      bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
     </projectConfigurable>
@@ -71,20 +71,20 @@
                             bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
     <groupConfigurable id="myGroup" descriptionKey="my.key" displayNameKey="my.key" />
-    <groupConfigurable id="myGroup2" bundle="extensionI18nAnotherBundle" descriptionKey="another.key" displayNameKey="another.key" />
+    <groupConfigurable id="myGroup2" bundle="AnotherBundle" descriptionKey="another.key" displayNameKey="another.key" />
     <groupConfigurable id="myGroupInvalid"
                        bundle="<error descr="Cannot resolve property bundle">INVALID_VALUE</error>"
                        descriptionKey="<error descr="Cannot resolve property key">INVALID_VALUE</error>"
                        displayNameKey="<error descr="Cannot resolve property key">INVALID_VALUE</error>" />
 
     <notificationGroup id="myNotification" displayType="BALLOON"
-                       key="my.key" bundle="extensionI18nBundle"/>
+                       key="my.key" bundle="MyBundle"/>
     <notificationGroup id="myNotificationInvalid" displayType="BALLOON"
                        key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                        bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
 
-    <schemeImporter nameKey="my.key" nameBundle="extensionI18nBundle"/>
+    <schemeImporter nameKey="my.key" nameBundle="MyBundle"/>
     <schemeImporter nameKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                     nameBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
@@ -106,26 +106,9 @@
   
   <extensions defaultExtensionNs="custom">
     <myCustomInspection groupKey="my.key" key="my.key"/>
-    <myCustomInspection groupKey="my.key" key="my.key" bundle="extensionI18nBundle" groupBundle="extensionI18nBundle"/>
+    <myCustomInspection groupKey="my.key" key="my.key" bundle="MyBundle" groupBundle="MyBundle"/>
     <myCustomInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
                         key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
   </extensions>
 
-  <actions>
-    <group id="separatorGroup">
-      <separator key="my.key"/>
-
-      <separator key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
-    </group>
-  </actions>
-
-  <actions resource-bundle="extensionI18nAnotherBundle">
-    <group id="separatorGroupWithCustomResourceBundle">
-      <separator key="another.key"/>
-
-      <separator key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
-    </group>
-  </actions>
-
-  <actions resource-bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 </idea-plugin>

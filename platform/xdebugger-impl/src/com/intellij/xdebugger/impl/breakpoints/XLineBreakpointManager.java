@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.AppTopics;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -257,7 +258,8 @@ public final class XLineBreakpointManager {
       final Document document = editor.getDocument();
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (line >= 0 && line < document.getLineCount() && file != null) {
-        ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
+        ActionManagerEx.getInstanceEx()
+          .fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent(), ActionPlaces.EDITOR_GUTTER);
 
         XBreakpointUtil.toggleLineBreakpoint(myProject,
                                              XSourcePositionImpl.create(file, line),

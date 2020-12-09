@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
@@ -120,10 +121,10 @@ public class ActionGroupPanelWrapper {
     boolean singleProjectGenerator = list.getModel().getSize() == 1;
 
     final Ref<Component> selected = Ref.create();
-    final JPanel main = new JPanel(new BorderLayout());
+    final JPanel main = new NonOpaquePanel(new BorderLayout());
     main.add(actionsListPanel, BorderLayout.WEST);
 
-    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    JPanel bottomPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
     bottomPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new JBColor(Gray._217, Gray._81)));
     main.add(bottomPanel, BorderLayout.SOUTH);
 

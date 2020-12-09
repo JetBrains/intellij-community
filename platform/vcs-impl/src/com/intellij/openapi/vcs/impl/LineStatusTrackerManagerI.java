@@ -36,6 +36,8 @@ public interface LineStatusTrackerManagerI {
   void releaseTrackerFor(@NotNull Document document, @NotNull Object requester);
 
 
+  boolean arePartialChangelistsEnabled();
+
   boolean arePartialChangelistsEnabled(@NotNull VirtualFile virtualFile);
 
   void invokeAfterUpdate(@NotNull Runnable task);

@@ -7,23 +7,20 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.Graphics
 import java.awt.Graphics2D
-import javax.swing.JPanel
 import javax.swing.ListModel
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
 
 class GHPRTimelineComponent(private val detailsModel: SingleValueModel<GHPullRequestShort>,
-                            private val model: ListModel<GHPRTimelineItem>,
-                            private val itemComponentFactory: GHPRTimelineItemComponentFactory)
-  : JPanel(VerticalLayout(UI.scale(20))) {
+                            model: ListModel<GHPRTimelineItem>,
+                            itemComponentFactory: GHPRTimelineItemComponentFactory)
+  : TimelineComponent<GHPRTimelineItem>(model, itemComponentFactory, itemComponentFactory.createComponent(detailsModel.value)) {
 
   private val timeLineColor = JBColor(ColorUtil.fromHex("#F2F2F2"), ColorUtil.fromHex("#3E3E3E"))
   private val timeLineValues = JBValue.JBValueGroup()
@@ -32,45 +29,11 @@ class GHPRTimelineComponent(private val detailsModel: SingleValueModel<GHPullReq
   private val timeLineX = timeLineValues.value(20f / 2 - 1)
 
   init {
-    isOpaque = false
     border = JBUI.Borders.emptyTop(6)
 
-    model.addListDataListener(object : ListDataListener {
-      override fun intervalRemoved(e: ListDataEvent) {
-        for (i in e.index1 downTo e.index0) {
-          remove(i + 1)
-        }
-        revalidate()
-        repaint()
-      }
-
-      override fun intervalAdded(e: ListDataEvent) {
-        for (i in e.index0..e.index1) {
-          add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
-        }
-        revalidate()
-        repaint()
-      }
-
-      override fun contentsChanged(e: ListDataEvent) {
-        for (i in e.index1 downTo e.index0) {
-          remove(i + 1)
-        }
-        for (i in e.index0..e.index1) {
-          add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
-        }
-        validate()
-        repaint()
-      }
-    })
     detailsModel.addValueChangedListener {
       remove(0)
       add(itemComponentFactory.createComponent(detailsModel.value), VerticalLayout.FILL_HORIZONTAL, 0)
-    }
-
-    add(itemComponentFactory.createComponent(detailsModel.value), VerticalLayout.FILL_HORIZONTAL, 0)
-    for (i in 0 until model.size) {
-      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
     }
   }
 

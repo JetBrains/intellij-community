@@ -162,17 +162,18 @@ public final class JavaSharedImplUtil {
       }
 
       CompositeElement newType = (CompositeElement)type.clone();
-      for (int i = 0; i < arrayCount; i++) {
+      if (!(typeElement.getType() instanceof PsiArrayType)) {
         CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
         newType1.rawAddChildren(newType);
-
-        annotationElementsToMove.get(i).forEach(newType1::rawAddChildren);
-
-        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
-        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
         newType = newType1;
-        newType.acceptTree(new GeneratedMarkerVisitor());
       }
+      for (int i = 0; i < arrayCount; i++) {
+        annotationElementsToMove.get(i).forEach(newType::rawAddChildren);
+
+        newType.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
+        newType.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
+      }
+      newType.acceptTree(new GeneratedMarkerVisitor());
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
       CodeEditUtil.replaceChild(variableElement, type, newType);
     }

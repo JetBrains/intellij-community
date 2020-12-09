@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 
 public final class CoreBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.CoreBundle";
-  private static final CoreBundle INSTANCE = new CoreBundle();
+  public static final CoreBundle INSTANCE = new CoreBundle();
 
   private CoreBundle() {
     super(BUNDLE);

@@ -1,5 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="PyCharm" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="BUNDLED" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <log_file alias="idea.log" path="$PROJECT_DIR$/system/pycharm/log/idea.log" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <module name="intellij.pycharm.community.main" />

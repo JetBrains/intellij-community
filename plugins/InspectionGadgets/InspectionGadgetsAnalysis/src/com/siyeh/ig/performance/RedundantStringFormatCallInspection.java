@@ -400,7 +400,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       final Object value = expression.getValue();
       if (value == null) return expression;
 
-      final StringBuilder newExpression = new StringBuilder();
+      final @NonNls StringBuilder newExpression = new StringBuilder();
 
       final String leftText = value.toString();
       if (expression.isTextBlock()) {

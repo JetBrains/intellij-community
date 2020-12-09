@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.SwingProperties;
@@ -10,7 +9,6 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadGridLayoutManager;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
@@ -112,20 +110,6 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     final V defaultValue = getDefaultValue(component.getDelegee());
     invokeSetter(component, defaultValue);
     markTopmostModified(component, false);
-  }
-
-  public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    try {
-      //noinspection unchecked
-      V value = (V) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-      V defaultValue = getDefaultValue(radComponent.getDelegee());
-      if (!Comparing.equal(value, defaultValue)) {
-        setValue(radComponent, value);
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
   }
 
   protected V getDefaultValue(final JComponent delegee) throws Exception {

@@ -33,10 +33,6 @@ public final class EditSourceOnEnterKeyHandler {
   }
 
   public static void install(@NotNull JComponent component, @Nullable Runnable whenPerformed) {
-    install(component, whenPerformed, Registry.is("edit.source.on.enter.key.request.focus.in.editor"));
-  }
-
-  private static void install(@NotNull JComponent component, @Nullable Runnable whenPerformed, boolean requestFocus) {
     onEnterKey(component, () -> {
       if (Registry.is("edit.source.on.enter.key.disabled")) return false;
       if (isOverriddenByAction(IdeActions.ACTION_EDIT_SOURCE)) return false;
@@ -44,6 +40,7 @@ public final class EditSourceOnEnterKeyHandler {
       DataContext context = DataManager.getInstance().getDataContext(component);
       List<Navigatable> navigatables = getNavigatables(context);
       if (navigatables.isEmpty()) return false; // nowhere to navigate
+      boolean requestFocus = Registry.is("edit.source.on.enter.key.request.focus.in.editor");
       navigatables.forEach(navigatable -> navigatable.navigate(requestFocus));
       if (whenPerformed != null) whenPerformed.run();
       return true;

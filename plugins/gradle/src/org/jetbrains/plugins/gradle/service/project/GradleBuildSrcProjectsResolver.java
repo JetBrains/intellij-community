@@ -13,6 +13,7 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
@@ -25,6 +26,8 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -78,9 +81,9 @@ public final class GradleBuildSrcProjectsResolver {
     Map<String, String> includedBuildsPaths = new HashMap<>();
     Map<String, String> buildNames = new HashMap<>();
     buildNames.put(projectPath, mainBuildProjectData.getExternalName());
-    DataNode<CompositeBuildData> compositeBuildData = find(mainBuildProjectDataNode, CompositeBuildData.KEY);
+    CompositeBuildData compositeBuildData = getCompositeBuildData(mainBuildProjectDataNode);
     if (compositeBuildData != null) {
-      for (BuildParticipant buildParticipant : compositeBuildData.getData().getCompositeParticipants()) {
+      for (BuildParticipant buildParticipant : compositeBuildData.getCompositeParticipants()) {
         String buildParticipantRootPath = buildParticipant.getRootPath();
         buildNames.put(buildParticipantRootPath, buildParticipant.getRootProjectName());
         for (String path : buildParticipant.getProjects()) {
@@ -89,7 +92,7 @@ public final class GradleBuildSrcProjectsResolver {
       }
     }
 
-    MultiMap<String, DataNode<BuildScriptClasspathData>> buildClasspathNodesMap = new MultiMap<>();
+    MultiMap<Path, DataNode<BuildScriptClasspathData>> buildClasspathNodesMap = new MultiMap<>();
     Map<String, ModuleData> includedModulesPaths = new HashMap<>();
     for (DataNode<ModuleData> moduleDataNode : findAll(mainBuildProjectDataNode, ProjectKeys.MODULE)) {
       String path = moduleDataNode.getData().getLinkedExternalProjectPath();
@@ -97,7 +100,7 @@ public final class GradleBuildSrcProjectsResolver {
       DataNode<BuildScriptClasspathData> scriptClasspathDataNode = find(moduleDataNode, BuildScriptClasspathData.KEY);
       if (scriptClasspathDataNode != null) {
         String rootPath = includedBuildsPaths.get(path);
-        buildClasspathNodesMap.putValue(rootPath != null ? rootPath : projectPath, scriptClasspathDataNode);
+        buildClasspathNodesMap.putValue(Paths.get(rootPath != null ? rootPath : projectPath), scriptClasspathDataNode);
       }
     }
 
@@ -115,7 +118,7 @@ public final class GradleBuildSrcProjectsResolver {
     Stream<Build> builds = new ToolingModelsProviderImpl(myResolverContext.getModels()).builds();
     builds.forEach(build -> {
       String buildPath = build.getBuildIdentifier().getRootDir().getPath();
-      Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes = buildClasspathNodesMap.getModifiable(buildPath);
+      Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes = buildClasspathNodesMap.getModifiable(Paths.get(buildPath));
 
       GradleExecutionSettings buildSrcProjectSettings;
       if (gradleHome != null) {
@@ -139,6 +142,7 @@ public final class GradleBuildSrcProjectsResolver {
         else {
           buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false);
         }
+        includeRootBuildIncludedBuildsIfNeeded(buildSrcProjectSettings, compositeBuildData);
       }
       else {
         buildSrcProjectSettings = myMainBuildExecutionSettings;
@@ -160,6 +164,30 @@ public final class GradleBuildSrcProjectsResolver {
                             buildSrcResolverCtx,
                             myProjectResolver.getProjectDataFunction(buildSrcResolverCtx, myResolverChain, true));
     });
+  }
+
+  private void includeRootBuildIncludedBuildsIfNeeded(@NotNull GradleExecutionSettings buildSrcProjectSettings,
+                                                      @Nullable CompositeBuildData compositeBuildData) {
+    if (compositeBuildData == null) return;
+    String projectGradleVersion = myResolverContext.getProjectGradleVersion();
+    GradleVersion gradleBaseVersion = projectGradleVersion == null ? null : GradleVersion.version(projectGradleVersion).getBaseVersion();
+    if (gradleBaseVersion == null) return;
+
+    // since 6.7 included builds become "visible" for `buildSrc` project https://docs.gradle.org/6.7-rc-1/release-notes.html#build-src
+    // !!! Note, this is true only for builds included from the "root" build and it becomes visible also for "nested" `buildSrc` projects !!!
+    // Transitive included builds are not visible even for related "transitive" `buildSrc` projects
+    // due to limitation caused by specific ordering requirement:  "include order is important if an included build provides a plugin which should be discovered very very early".
+    // It can be improved in the future Gradle releases.
+    if (gradleBaseVersion.compareTo(GradleVersion.version("6.7")) < 0) return;
+    for (BuildParticipant buildParticipant : compositeBuildData.getCompositeParticipants()) {
+      buildSrcProjectSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getRootPath());
+    }
+  }
+
+  @Nullable
+  private static CompositeBuildData getCompositeBuildData(@NotNull DataNode<ProjectData> mainBuildProjectDataNode) {
+    DataNode<CompositeBuildData> compositeBuildDataNode = find(mainBuildProjectDataNode, CompositeBuildData.KEY);
+    return compositeBuildDataNode != null ? compositeBuildDataNode.getData() : null;
   }
 
   private void handleBuildSrcProject(@NotNull DataNode<ProjectData> resultProjectDataNode,

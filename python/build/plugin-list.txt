@@ -1,4 +1,5 @@
 intellij.completionMlRanking
+intellij.completionMlRankingModels
 intellij.configurationScript
 intellij.copyright
 intellij.editorconfig

@@ -24,8 +24,3 @@ jobs:
       script: ./tests/mypy_test.py --platform=darwin
     - name: "mypy self test"
       script: ./tests/mypy_selftest.py
-    - name: "check file consistency"
-      script: ./tests/check_consistent.py
-    - name: "flake8"
-      install: pip install -r requirements-tests-py3.txt
-      script: flake8

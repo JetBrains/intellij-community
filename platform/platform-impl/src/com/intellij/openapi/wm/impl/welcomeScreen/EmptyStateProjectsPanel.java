@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
@@ -11,8 +10,8 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
@@ -52,9 +51,7 @@ public class EmptyStateProjectsPanel extends JPanel {
 
     DefaultActionGroup moreActionGroup = mainAndMore.getSecond();
     if (moreActionGroup.getChildrenCount() > 0) {
-      LinkLabel<String> moreLink = createLinkWithPopup(moreActionGroup);
-      moreLink.setFocusable(true);
-      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), moreLink);
+      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), createLinkWithPopup(moreActionGroup));
       mainPanel.add(moreLinkPanel);
     }
 
@@ -71,20 +68,11 @@ public class EmptyStateProjectsPanel extends JPanel {
   }
 
   @NotNull
-  static LinkLabel<String> createLinkWithPopup(@NotNull ActionGroup actionGroup) {
-    LinkLabel<String> moreLink =
-      new LinkLabel<>(actionGroup.getTemplateText(), AllIcons.General.LinkDropTriangle, (s, __) ->
-      {
-        JBPopupFactory.getInstance().createActionGroupPopup(null, actionGroup,
-                                                            DataManager
-                                                              .getInstance()
-                                                              .getDataContext(s),
-                                                            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                                            true).showUnderneathOf(s);
-      }, null);
-    moreLink.setHorizontalTextPosition(SwingConstants.LEADING);
-    moreLink.setBorder(JBUI.Borders.emptyTop(30));
-    return moreLink;
+  static DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
+    return new DropDownLink<>(group.getTemplateText(), link
+      -> JBPopupFactory.getInstance().createActionGroupPopup(
+      null, group, DataManager.getInstance().getDataContext(link),
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true));
   }
 
   @NotNull

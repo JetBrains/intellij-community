@@ -275,7 +275,19 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
 
   public static PsiAnnotation addPhysicalAnnotationTo(String fqn, PsiNameValuePair[] pairs, PsiAnnotationOwner owner) {
     owner = expandParameterIfNecessary(owner);
-    PsiAnnotation inserted = owner.addAnnotation(fqn);
+    PsiAnnotation inserted;
+    try {
+      inserted = owner.addAnnotation(fqn);
+    }
+    catch (UnsupportedOperationException e) {
+      String message = "Cannot add annotation to "+owner.getClass();
+      if (owner instanceof PsiElement) {
+        StreamEx.iterate(((PsiElement)owner).getParent(), p -> p != null && !(p instanceof PsiFileSystemItem), PsiElement::getParent)
+          .map(p -> p.getClass().getName()).toList();
+        message += "; parents: " + message;
+      }
+      throw new RuntimeException(message, e);
+    }
     for (PsiNameValuePair pair : pairs) {
       inserted.setDeclaredAttributeValue(pair.getName(), pair.getValue());
     }

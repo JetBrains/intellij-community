@@ -6,10 +6,20 @@ import com.intellij.openapi.util.Disposer
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.lifetime.onTermination
 
+
+/**
+ * Creates a lifetime corresponding to this disposable.
+ * The lifetime will be terminated when this disposable is disposed.
+ * If it is already disposed, this will return a terminated lifetime
+ */
 fun Disposable.createLifetime(): Lifetime = this.defineNestedLifetime().lifetime
 
+/**
+ * Creates a lifetime definition bounded by this disposable.
+ * The lifetime will be terminated when this disposable is disposed.
+ * If it is already disposed, this will return a terminated lifetime definition
+ */
 fun Disposable.defineNestedLifetime(): LifetimeDefinition {
   val lifetimeDefinition = Lifetime.Eternal.createNested()
   if (Disposer.isDisposed(this)) {
@@ -21,6 +31,11 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
   return lifetimeDefinition
 }
 
+/**
+ * Performs an action id this disposable has not been disposed yet.
+ * The action receives a lifetime corresponding to this disposable.
+ * @see createLifetime
+ */
 fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
   val disposableLifetime: Lifetime?
   if(Disposer.isDisposed(this)) return
@@ -36,10 +51,17 @@ fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
   action(disposableLifetime)
 }
 
+/**
+ * Creates a disposable that will be disposed when the given lifetime is terminated.
+ * If the lifetime was already terminated, the returned disposable will be disposed too,
+ */
 fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisposable"): Disposable {
   val d = Disposer.newDisposable(debugName)
 
-  this.onTermination {
+  val added = this.onTerminationIfAlive {
+    Disposer.dispose(d)
+  }
+  if (!added) { // false indicates an already-terminated lifetime
     Disposer.dispose(d)
   }
   return d

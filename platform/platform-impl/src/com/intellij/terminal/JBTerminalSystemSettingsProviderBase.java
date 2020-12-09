@@ -470,7 +470,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   @Override
-  public float getLineSpace() {
+  public float getLineSpacing() {
     return myColorsScheme.getConsoleLineSpacing();
   }
 

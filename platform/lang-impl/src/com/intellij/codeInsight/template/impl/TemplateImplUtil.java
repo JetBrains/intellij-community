@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
@@ -18,7 +19,7 @@ import java.util.Map;
 public final class TemplateImplUtil {
 
   @NotNull
-  public static LinkedHashSet<String> parseVariableNames(@NotNull CharSequence text) {
+  public static LinkedHashSet<@NlsSafe String> parseVariableNames(@NotNull CharSequence text) {
     LinkedHashSet<String> variableNames = new LinkedHashSet<>();
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);

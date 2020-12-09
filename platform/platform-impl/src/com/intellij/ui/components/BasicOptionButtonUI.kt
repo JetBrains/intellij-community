@@ -72,8 +72,14 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     _optionButton = null
   }
 
-  override fun getPreferredSize(c: JComponent): Dimension = Dimension(mainButton.preferredSize.width + arrowButton.preferredSize.width,
-                                                                      maxOf(mainButton.preferredSize.height, arrowButton.preferredSize.height))
+  override fun getPreferredSize(c: JComponent): Dimension {
+    if (!arrowButton.isVisible) return mainButton.preferredSize
+
+    return Dimension(
+      mainButton.preferredSize.width + arrowButton.preferredSize.width,
+      maxOf(mainButton.preferredSize.height, arrowButton.preferredSize.height)
+    )
+  }
 
   protected open fun installPopup() {
     showPopupAction = DumbAwareAction.create { showPopup() }

@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render
 
-import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.DebuggerManagerEx
+import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.actions.ArrayAction
 import com.intellij.debugger.actions.ArrayFilterAction
 import com.intellij.debugger.engine.JavaValue
@@ -33,7 +33,7 @@ import java.awt.Rectangle
 import javax.swing.event.TreeModelEvent
 import javax.swing.tree.TreeNode
 
-class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolean, thisType: PsiType?) : XDebuggerTreeInplaceEditor(node,
+final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolean, thisType: PsiType?) : XDebuggerTreeInplaceEditor(node,
                                                                                                                               "arrayFilter") {
   init {
     if (thisType != null) {

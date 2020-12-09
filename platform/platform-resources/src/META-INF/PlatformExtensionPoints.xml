@@ -177,6 +177,7 @@
     <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider"/>
     <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider" dynamic="true"/>
     <extensionPoint name="welcomeTabFactory" interface="com.intellij.openapi.wm.WelcomeTabFactory" dynamic="true"/>
+    <extensionPoint name="welcomeScreenCustomization" interface="com.intellij.openapi.wm.WelcomeScreenCustomization" dynamic="true"/>
 
     <extensionPoint name="statistic.eventLog.eventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider"/>
     <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker"/>
@@ -383,6 +384,7 @@
     <extensionPoint name="lightEditTabAttributesProvider" interface="com.intellij.ide.lightEdit.LightEditTabAttributesProvider" dynamic="true"/>
 
     <extensionPoint name="jdkDownloader.jdkInstallerListener" interface="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerListener" dynamic="true"/>
+    <extensionPoint name="jdkUpdateCheckContributor" interface="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateCheckContributor" dynamic="true"/>
     <extensionPoint name="ui.optionEditorProvider" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.options.OptionEditorProvider"/>
     </extensionPoint>
@@ -391,5 +393,8 @@
 
     <extensionPoint name="utf8BomOptionProvider" interface="com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider" dynamic="true"/>
     <extensionPoint name="iw.actionProvider" interface="com.intellij.openapi.editor.markup.InspectionWidgetActionProvider" dynamic="true"/>
+    <extensionPoint name="textEditorCustomizer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer" dynamic="true"/>
+
+    <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider"/>
   </extensionPoints>
 </idea-plugin>

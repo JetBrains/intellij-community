@@ -18,6 +18,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
@@ -54,9 +55,10 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 
     /**
      * @param project the project
-     * @return null if either multi-projects are not enabled or the project has only one module
+     * @return `null` if either multi-projects are not enabled or the project has only one module
      */
     @JvmStatic
+    @NlsSafe
     fun getMultiProjectDisplayName(project: Project): String? {
       if (!canAttachToProject()) {
         return null
@@ -69,14 +71,8 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 
       val primaryModule = getPrimaryModule(project) ?: modules.first()
       val result = StringBuilder(primaryModule.name)
-      result.append(", ")
-      for (module in modules) {
-        if (module === primaryModule) {
-          continue
-        }
-        result.append(module.name)
-        break
-      }
+        .append(", ")
+        .append(modules.asSequence().filter { it !== primaryModule }.first())
       if (modules.size > 2) {
         result.append("...")
       }

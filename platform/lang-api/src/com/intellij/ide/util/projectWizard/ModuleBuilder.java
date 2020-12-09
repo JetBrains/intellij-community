@@ -363,7 +363,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   @Nls(capitalization = Nls.Capitalization.Title)
   protected String getModuleTypeName() {
     String name = getModuleType().getName();
-    return StringUtil.trimEnd(name, " Module");
+    return StringUtil.trimEnd(name, " Module");  // NON-NLS
   }
 
   public String getGroupName() {

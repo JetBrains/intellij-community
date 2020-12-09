@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -240,7 +241,7 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
       return fetchSupport(myProject).fetch(myRepository, remote).showNotificationIfFailed();
     }
 
-    private void rebaseCurrentBranch(@NotNull ProgressIndicator indicator, String onto) {
+    private void rebaseCurrentBranch(@NotNull ProgressIndicator indicator, @NlsSafe String onto) {
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("rebase.git.operation.name"))) {
         List<VirtualFile> rootsToSave = Collections.singletonList(myRepository.getRoot());
         GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();

@@ -9,7 +9,7 @@ import javax.swing.SwingUtilities
 
 object ListUiUtil {
   object WithTallRow {
-    private val selectionBackground: JBColor = JBColor(0xE9EEF5, 0x464A4D)
+    private val selectionBackground: JBColor = JBColor(0xEDF6FE, 0x464A4D)
     private val unfocusedSelectionBackground: JBColor = JBColor(0xF5F5F5, 0x464A4D)
     private val alternativeRowBackground: JBColor = JBColor(0xFFFFFF, 0x313335)
 

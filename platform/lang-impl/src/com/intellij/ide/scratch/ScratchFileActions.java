@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -123,7 +124,7 @@ public final class ScratchFileActions {
       Project project = e.getProject();
       if (project == null) return;
       ScratchFileCreationHelper.Context context = createContext(e, project);
-      context.filePrefix = "buffer";
+      context.filePrefix = LangBundle.message("scratch.file.action.new.buffer.action.buffer");
       context.createOption = ScratchFileService.Option.create_if_missing;
       context.fileCounter = ScratchFileActions::nextBufferIndex;
       if (context.language == null) context.language = PlainTextLanguage.INSTANCE;
@@ -241,7 +242,8 @@ public final class ScratchFileActions {
         .map(fileLanguage(project))
         .filter(notNull())
         .addAllTo(new LinkedHashSet<>());
-      String langName = languages.size() == 1 ? languages.iterator().next().getDisplayName() : languages.size() + " different";
+      String langName = languages.size() == 1 ? languages.iterator().next().getDisplayName()
+                                              : LangBundle.message("scratch.file.actions.0.different.languages.number", languages.size());
       e.getPresentation().setText(getChangeLanguageActionName(langName));
       e.getPresentation().setEnabledAndVisible(true);
     }
@@ -251,7 +253,7 @@ public final class ScratchFileActions {
      */
     @NotNull @Deprecated
     protected String getLanguageTerm() {
-      return "Language";
+      return "Language"; //NON-NLS
     }
 
     @NotNull @Nls
@@ -293,7 +295,7 @@ public final class ScratchFileActions {
 
     protected void actionPerformedImpl(@NotNull AnActionEvent e,
                                        @NotNull Project project,
-                                       @NotNull String title,
+                                       @NotNull @NlsContexts.PopupTitle String title,
                                        @NotNull JBIterable<? extends VirtualFile> files) {
       ScratchFileService fileService = ScratchFileService.getInstance();
       PerFileMappings<Language> mapping = fileService.getScratchesMapping();

@@ -34,12 +34,20 @@ public class ScrollToCenterAction extends InactiveEditorAction {
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       boolean savedSetting = EditorSettingsExternalizable.getInstance().isRefrainFromScrolling();
+      boolean overriddenInEditor = false;
       try {
         EditorSettingsExternalizable.getInstance().setRefrainFromScrolling(false);
+        if (editor.getSettings().isRefrainFromScrolling()) {
+          overriddenInEditor = true;
+          editor.getSettings().setRefrainFromScrolling(false);
+        }
         editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       }
       finally {
         EditorSettingsExternalizable.getInstance().setRefrainFromScrolling(savedSetting);
+        if (overriddenInEditor) {
+          editor.getSettings().setRefrainFromScrolling(true);
+        }
       }
     }
   }

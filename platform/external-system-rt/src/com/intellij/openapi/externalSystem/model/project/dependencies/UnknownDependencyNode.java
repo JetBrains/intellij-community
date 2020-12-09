@@ -21,11 +21,9 @@ public class UnknownDependencyNode extends AbstractDependencyNode {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-    UnknownDependencyNode node = (UnknownDependencyNode)o;
+  public boolean match(AbstractDependencyNode dependencyNode) {
+    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
+    UnknownDependencyNode node = (UnknownDependencyNode)dependencyNode;
     if (name != null ? !name.equals(node.name) : node.name != null) return false;
     return true;
   }

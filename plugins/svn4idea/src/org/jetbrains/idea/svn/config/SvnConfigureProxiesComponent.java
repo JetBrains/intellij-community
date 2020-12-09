@@ -13,7 +13,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnServerFileManager;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -22,8 +21,10 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
-  private final SvnServerFileManager myManager;
+  private final ServersFileManager myManager;
 
   private final CompositeRunnable myTreeUpdaterValidator;
   private final Runnable myValidator;
@@ -31,7 +32,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   private final TestConnectionPerformer myTestConnectionPerformer;
   private ConfigureProxiesOptionsPanel myDefaultGroupPanel;
 
-  public SvnConfigureProxiesComponent(final SvnServerFileManager manager, final GroupsValidator validator, final TestConnectionPerformer testConnectionPerformer) {
+  public SvnConfigureProxiesComponent(final ServersFileManager manager, final GroupsValidator validator, final TestConnectionPerformer testConnectionPerformer) {
     myTestConnectionPerformer = testConnectionPerformer;
     myValidator = validator;
     myTreeUpdaterValidator = new CompositeRunnable(TREE_UPDATER, myValidator);
@@ -52,7 +53,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   @Override
   public String getDisplayName() {
-    return SvnBundle.message("configurable.SvnConfigureProxiesComponent.display.name");
+    return message("configurable.SvnConfigureProxiesComponent.display.name");
   }
 
   @Override
@@ -60,16 +61,12 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return null;
   }
 
-  private static String getNewName() {
-    return "Unnamed";
-  }
-
   private void addGroup(final ProxyGroup template) {
     final ProxyGroup group;
     if (template == null) {
-      group = new ProxyGroup(getNewName(), "", new HashMap<>());
+      group = new ProxyGroup(message("value.new.server.group.name"), "", new HashMap<>());
     } else {
-      group = new ProxyGroup(getNewName(), template.getPatterns(), template.getProperties());
+      group = new ProxyGroup(message("value.new.server.group.name"), template.getPatterns(), template.getProperties());
     }
 
     addNode(createNodeForObject(group), myRoot);
@@ -101,7 +98,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       final String groupName = groupConfigurable.getEditableObject().getName();
 
       if (checkSet.contains(groupName)) {
-        listener.onError(SvnBundle.message("dialog.edit.http.proxies.settings.error.same.group.names.text", groupName), myComponent, true);
+        listener.onError(message("dialog.edit.http.proxies.settings.error.same.group.names.text", groupName), myComponent, true);
         return false;
       }
       checkSet.add(groupName);

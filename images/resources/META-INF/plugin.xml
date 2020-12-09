@@ -50,80 +50,85 @@
       <action class="org.intellij.images.actions.ShowThumbnailsAction"
               id="Images.ShowThumbnails">
       </action>
-      <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
-              id="Images.ToggleTransparencyChessboard"
-              icon="ImagesIcons.ToggleTransparencyChessboard">
-      </action>
-      <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
-              id="Images.SetBackgroundImage">
-        <add-to-group group-id="ProjectViewPopupMenu"/>
-        <add-to-group group-id="EditorPopupMenu3"/>
-      </action>
-      <action class="org.intellij.images.editor.actions.ToggleGridAction"
-              id="Images.Editor.ToggleGrid"
-              icon="AllIcons.Graph.Grid">
-        <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
-      </action>
-      <action class="org.intellij.images.editor.actions.ZoomInAction"
-              id="Images.Editor.ZoomIn"
-              icon="AllIcons.Graph.ZoomIn"
-              use-shortcut-of="ExpandAll"/>
-      <action class="org.intellij.images.editor.actions.ZoomOutAction"
-              id="Images.Editor.ZoomOut"
-              icon="AllIcons.Graph.ZoomOut"
-              use-shortcut-of="CollapseAll"/>
-      <action class="org.intellij.images.editor.actions.ActualSizeAction"
-              id="Images.Editor.ActualSize"
-              icon="AllIcons.Graph.ActualZoom">
-        <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
-        <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
-      </action>
-      <action class="org.intellij.images.editor.actions.FitZoomToWindowAction"
-              id="Images.Editor.FitZoomToWindow"
-              icon="AllIcons.General.FitContent"/>
+
+      <group id="Images.ImageViewActions">
+        <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
+                id="Images.ToggleTransparencyChessboard"
+                icon="ImagesIcons.ToggleTransparencyChessboard">
+        </action>
+        <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
+                id="Images.SetBackgroundImage">
+          <add-to-group group-id="ProjectViewPopupMenu"/>
+          <add-to-group group-id="EditorPopupMenu3"/>
+        </action>
+        <action class="org.intellij.images.editor.actions.ToggleGridAction"
+                id="Images.Editor.ToggleGrid"
+                icon="AllIcons.Graph.Grid">
+          <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
+        </action>
+        <action class="org.intellij.images.editor.actions.ZoomInAction"
+                id="Images.Editor.ZoomIn"
+                icon="AllIcons.Graph.ZoomIn"
+                use-shortcut-of="ExpandAll"/>
+        <action class="org.intellij.images.editor.actions.ZoomOutAction"
+                id="Images.Editor.ZoomOut"
+                icon="AllIcons.Graph.ZoomOut"
+                use-shortcut-of="CollapseAll"/>
+        <action class="org.intellij.images.editor.actions.ActualSizeAction"
+                id="Images.Editor.ActualSize"
+                icon="AllIcons.Graph.ActualZoom">
+          <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
+        </action>
+        <action class="org.intellij.images.editor.actions.FitZoomToWindowAction"
+                id="Images.Editor.FitZoomToWindow"
+                icon="AllIcons.General.FitContent"/>
+      </group>
       <separator/>
 
-      <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
-              id="Images.Thumbnails.UpFolder"
-              icon="AllIcons.Nodes.UpFolder">
-        <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default"/>
-      </action>
-      <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
-              id="Images.Thumbnails.ToggleRecursive"
-              icon="AllIcons.ObjectBrowser.FlattenPackages">
-        <keyboard-shortcut first-keystroke="alt MULTIPLY" keymap="$default"/>
-      </action>
-      <action class="org.intellij.images.thumbnail.actions.ToggleFileSizeAction"
-              id="Images.Thumbnails.ToggleFileSize"
-              icon="AllIcons.FileTypes.Any_type">
-      </action>
-      <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
-              id="Images.Thumbnails.ToggleFileName"
-              icon="AllIcons.Actions.ShowImportStatements">
-      </action>
-      <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
-              internal="true"
-              id="Images.Thumbnails.FilterByTheme"/>
-      <action class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
-              internal="true"
-              popup="true"
-              id="Images.Thumbnails.FilterByTag"/>
-      <action class="org.intellij.images.thumbnail.actions.ToggleTagsPanelAction"
-              id="Images.Thumbnails.ToggleTagsPanelName"
-              icon="AllIcons.Actions.Preview">
-      </action>
+      <group id="Images.ThumbnailViewActions">
+        <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
+                id="Images.Thumbnails.UpFolder"
+                icon="AllIcons.Nodes.UpFolder">
+          <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default"/>
+        </action>
+        <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
+                id="Images.Thumbnails.ToggleRecursive"
+                icon="AllIcons.ObjectBrowser.FlattenPackages">
+          <keyboard-shortcut first-keystroke="alt MULTIPLY" keymap="$default"/>
+        </action>
+        <action class="org.intellij.images.thumbnail.actions.ToggleFileSizeAction"
+                id="Images.Thumbnails.ToggleFileSize"
+                icon="AllIcons.FileTypes.Any_type">
+        </action>
+        <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
+                id="Images.Thumbnails.ToggleFileName"
+                icon="AllIcons.Actions.ShowImportStatements">
+        </action>
+        <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
+                internal="true"
+                id="Images.Thumbnails.FilterByTheme"/>
+        <action class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
+                internal="true"
+                popup="true"
+                id="Images.Thumbnails.FilterByTag"/>
+        <action class="org.intellij.images.thumbnail.actions.ToggleTagsPanelAction"
+                id="Images.Thumbnails.ToggleTagsPanelName"
+                icon="AllIcons.Actions.Preview">
+        </action>
 
-      <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
-              id="Images.Thumbnails.Hide"
-              icon="AllIcons.Actions.Cancel" use-shortcut-of="CloseContent"/>
+        <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
+                id="Images.Thumbnails.Hide"
+                icon="AllIcons.Actions.Cancel" use-shortcut-of="CloseContent"/>
 
-      <action class="org.intellij.images.thumbnail.actions.EnterAction"
-              id="Images.Thumbnails.EnterAction">
-        <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
-      </action>
+        <action class="org.intellij.images.thumbnail.actions.EnterAction"
+                id="Images.Thumbnails.EnterAction">
+          <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+        </action>
 
-      <action class="org.intellij.images.thumbnail.actions.ShowBorderAction" id="Images.ShowBorder"/>
-      <action class="org.intellij.images.editor.actions.ChangeBackgroundAction" id="Images.ChangeBackground"/>
+        <action class="org.intellij.images.thumbnail.actions.ShowBorderAction" id="Images.ShowBorder"/>
+        <action class="org.intellij.images.editor.actions.ChangeBackgroundAction" id="Images.ChangeBackground"/>
+      </group>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>

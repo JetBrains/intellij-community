@@ -10,10 +10,10 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class CompletionMlRankingIcons {
-  private static @NotNull Icon load(@NotNull String path) {
-    return IconManager.getInstance().getIcon(path, CompletionMlRankingIcons.class);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
+    return IconManager.getInstance().loadRasterizedIcon(path, CompletionMlRankingIcons.class, cacheKey);
   }
 
-  /** 8x10 */ public static final @NotNull Icon ProposalDown = load("/icons/proposalDown.svg");
-  /** 8x10 */ public static final @NotNull Icon ProposalUp = load("/icons/proposalUp.svg");
+  /** 8x10 */ public static final @NotNull Icon ProposalDown = load("/icons/proposalDown.svg", 8340477964665919680L);
+  /** 8x10 */ public static final @NotNull Icon ProposalUp = load("/icons/proposalUp.svg", -2928048825157543772L);
 }

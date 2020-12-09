@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
@@ -10,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -142,10 +140,6 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
   public static void showNow() {
     if (ourInstance != null) {
       return;
-    }
-
-    if (!GeneralSettings.getInstance().isShowWelcomeScreen()) {
-      ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
 
     Runnable show = prepareToShow();

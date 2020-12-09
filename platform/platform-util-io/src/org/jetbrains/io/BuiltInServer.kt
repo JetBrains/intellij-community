@@ -4,7 +4,6 @@ package org.jetbrains.io
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.PlatformUtils
-import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.serverBootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
@@ -128,7 +127,7 @@ private class BuiltInServerThreadFactory : ThreadFactory {
   private val counter = AtomicInteger()
 
   override fun newThread(r: Runnable): Thread {
-    return FastThreadLocalThread(r, IdeUtilIoBundle.message("thread.name.netty.builtin.server.0", counter.incrementAndGet()))
+    return FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
   }
 }
 

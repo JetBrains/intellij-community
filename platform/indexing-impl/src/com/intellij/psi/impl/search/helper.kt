@@ -4,10 +4,7 @@ package com.intellij.psi.impl.search
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.Searcher
 import com.intellij.model.search.impl.*
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
@@ -20,6 +17,10 @@ import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.SmartList
 import com.intellij.util.text.StringSearcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.produce
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.collections.ArrayList
@@ -32,6 +33,18 @@ private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.se
 
 internal val indicatorOrEmpty: ProgressIndicator
   get() = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator())
+
+fun <R> runSearch(cs: CoroutineScope, project: Project, query: Query<R>): ReceiveChannel<R> {
+  @Suppress("EXPERIMENTAL_API_USAGE")
+  return cs.produce(capacity = Channel.UNLIMITED) {
+    runUnderIndicator {
+      runSearch(project, query, Processor {
+        require(channel.offer(it))
+        true
+      })
+    }
+  }
+}
 
 @Internal
 fun <R> runSearch(project: Project, query: Query<out R>, processor: Processor<in R>): Boolean {
@@ -169,16 +182,23 @@ private class Layer<T>(
 
     for (wordRequest: WordRequest<T> in wordRequests) {
       progress.checkCanceled()
+      val occurrenceProcessor: OccurrenceProcessor = wordRequest.occurrenceProcessor(processor)
       val byRequest = theMap.getOrPut(wordRequest.searchWordRequest) {
         Pair(SmartList(), LinkedHashMap())
       }
-      val occurrenceProcessors: MutableCollection<OccurrenceProcessor> = when (val injectionInfo = wordRequest.injectionInfo) {
-        InjectionInfo.NoInjection -> byRequest.first
-        is InjectionInfo.InInjection -> byRequest.second.getOrPut(injectionInfo.languageInfo) {
-          SmartList()
-        }
+      val injectionInfo = wordRequest.injectionInfo
+      if (injectionInfo == InjectionInfo.NoInjection || injectionInfo == InjectionInfo.IncludeInjections) {
+        byRequest.first.add(occurrenceProcessor)
       }
-      occurrenceProcessors += wordRequest.occurrenceProcessor(processor)
+      if (injectionInfo is InjectionInfo.InInjection || injectionInfo == InjectionInfo.IncludeInjections) {
+        val languageInfo: LanguageInfo = if (injectionInfo is InjectionInfo.InInjection) {
+          injectionInfo.languageInfo
+        }
+        else {
+          LanguageInfo.NoLanguage
+        }
+        byRequest.second.getOrPut(languageInfo) { SmartList() }.add(occurrenceProcessor)
+      }
     }
 
     return theMap.map { (wordRequest: WordRequestInfo, byRequest) ->

@@ -1,15 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi;
 
-import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
+import com.intellij.psi.PsiElement;
 import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement;
 import org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.NavigatablePsiElement;
+import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
 
 public class EditorConfigVisitor extends PsiElementVisitor {
 
@@ -116,4 +114,5 @@ public class EditorConfigVisitor extends PsiElementVisitor {
   public void visitPsiElement(@NotNull PsiElement o) {
     visitElement(o);
   }
+
 }

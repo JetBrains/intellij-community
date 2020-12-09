@@ -206,8 +206,19 @@ public final class AllVcses implements AllVcsesI, Disposable {
         result.add(vcsEP.createDescriptor());
       }
     }
-    Collections.sort(result);
+    result.sort(Comparator.comparing(VcsDescriptor::getName, String::compareTo));
     return result.toArray(new VcsDescriptor[0]);
+  }
+
+  @Override
+  public AbstractVcs[] getSupportedVcses() {
+    List<String> names;
+    synchronized (myLock) {
+      names = new ArrayList<>(myExtensions.keySet());
+    }
+    names.sort(String::compareTo);
+    return ContainerUtil.mapNotNull(names, this::getByName)
+      .toArray(new AbstractVcs[0]);
   }
 
   private class MyExtensionPointListener implements ExtensionPointListener<VcsEP> {

@@ -552,10 +552,10 @@ abstract class PyAbstractTestConfiguration(project: Project,
     when (target.targetType) {
       PyRunTargetVariant.PATH -> {
         val name = target.asVirtualFile()?.name
-        "$testFrameworkName in " + (name ?: target.target)
+        PyBundle.message("runcfg.test.suggest.name.in.path", testFrameworkName, (name ?: target.target))
       }
       PyRunTargetVariant.PYTHON -> {
-        "$testFrameworkName for " + target.target
+        PyBundle.message("runcfg.test.suggest.name.in.python", testFrameworkName, target.target)
       }
       else -> {
         testFrameworkName

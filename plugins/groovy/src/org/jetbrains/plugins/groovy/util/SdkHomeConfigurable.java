@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    return !myPathField.getText().equals(getStateText());
+    return !(myPathField.getText().equals(StringUtil.notNullize(getStateText())));
   }
 
   @Override

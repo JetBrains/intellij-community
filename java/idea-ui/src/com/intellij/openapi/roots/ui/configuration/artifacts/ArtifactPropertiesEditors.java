@@ -20,9 +20,6 @@ import javax.swing.*;
 import java.util.*;
 
 public class ArtifactPropertiesEditors {
-  private static final List<String> STANDARD_TABS_ORDER = Arrays.asList(
-    ArtifactPropertiesEditor.VALIDATION_TAB, ArtifactPropertiesEditor.PRE_PROCESSING_TAB, ArtifactPropertiesEditor.POST_PROCESSING_TAB
-  );
   private final Map<@Nls(capitalization = Nls.Capitalization.Sentence) String, JPanel> myMainPanels;
   private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
@@ -55,12 +52,18 @@ public class ArtifactPropertiesEditors {
   }
 
   public void addTabs(TabbedPaneWrapper tabbedPane) {
+    final List<String> standardTabsOrder = Arrays.asList(
+      ArtifactPropertiesEditor.VALIDATION_TAB_POINTER.get(),
+      ArtifactPropertiesEditor.PRE_PROCESSING_TAB_POINTER.get(),
+      ArtifactPropertiesEditor.POST_PROCESSING_TAB_POINTER.get()
+    );
+
     List<@NlsContexts.TabTitle String> sortedTabs = new ArrayList<>(myMainPanels.keySet());
     sortedTabs.sort((o1, o2) -> {
-      int i1 = STANDARD_TABS_ORDER.indexOf(o1);
-      if (i1 == -1) i1 = STANDARD_TABS_ORDER.size();
-      int i2 = STANDARD_TABS_ORDER.indexOf(o2);
-      if (i2 == -1) i2 = STANDARD_TABS_ORDER.size();
+      int i1 = standardTabsOrder.indexOf(o1);
+      if (i1 == -1) i1 = standardTabsOrder.size();
+      int i2 = standardTabsOrder.indexOf(o2);
+      if (i2 == -1) i2 = standardTabsOrder.size();
       if (i1 != i2) {
         return i1 - i2;
       }
@@ -93,13 +96,13 @@ public class ArtifactPropertiesEditors {
 
   @Nullable
   public String getHelpId(String title) {
-    if (ArtifactPropertiesEditor.VALIDATION_TAB.equals(title)) {
+    if (ArtifactPropertiesEditor.VALIDATION_TAB_POINTER.get().equals(title)) {
       return "reference.project.structure.artifacts.validation";
     }
-    else if (ArtifactPropertiesEditor.PRE_PROCESSING_TAB.equals(title)) {
+    else if (ArtifactPropertiesEditor.PRE_PROCESSING_TAB_POINTER.get().equals(title)) {
       return "reference.project.structure.artifacts.preprocessing";
     }
-    else if (ArtifactPropertiesEditor.POST_PROCESSING_TAB.equals(title)) {
+    else if (ArtifactPropertiesEditor.POST_PROCESSING_TAB_POINTER.get().equals(title)) {
       return "reference.project.structure.artifacts.postprocessing";
     }
     for (PropertiesEditorInfo editorInfo : myEditors) {

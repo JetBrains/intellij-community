@@ -15,11 +15,14 @@
  */
 package com.intellij.refactoring.convertToInstanceMethod;
 
+import com.intellij.model.BranchableUsageInfo;
+import com.intellij.model.ModelBranch;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
-public class MethodReferenceUsageInfo extends UsageInfo {
+public final class MethodReferenceUsageInfo extends UsageInfo implements BranchableUsageInfo {
   private final PsiMethodReferenceExpression myExpression;
   private final boolean myApplicableBySecondSearch;
   private PsiMethodCallExpression myReplacement;
@@ -44,5 +47,10 @@ public class MethodReferenceUsageInfo extends UsageInfo {
 
   public PsiMethodCallExpression getReplacement() {
     return myReplacement;
+  }
+
+  @Override
+  public @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
+    return new MethodReferenceUsageInfo(branch.obtainPsiCopy(getExpression()), isApplicableBySecondSearch());
   }
 }

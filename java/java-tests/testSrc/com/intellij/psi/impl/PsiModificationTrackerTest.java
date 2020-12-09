@@ -248,7 +248,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertNull(psiManager.getFileManager().getCachedPsiFile(file));
   }
 
-  public void testClassShouldNotDisappearWithoutEvents_NoDocument() throws IOException {
+  public void testClassShouldNotDisappearWithoutEvents_NoDocument() {
     final VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     long count1 = getJavaTracker().getModificationCount();
@@ -300,7 +300,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertFalse(count0 == getJavaTracker().getModificationCount());
   }
 
-  public void testClassShouldNotDisappearWithoutEvents_VirtualFileDeleted() throws IOException {
+  public void testClassShouldNotDisappearWithoutEvents_VirtualFileDeleted() {
     final VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     long count1 = getJavaTracker().getModificationCount();
@@ -312,7 +312,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertFalse(count1 == getJavaTracker().getModificationCount());
   }
 
-  public void testClassShouldNotDisappearWithoutEvents_ParentVirtualDirectoryDeleted() throws Exception {
+  public void testClassShouldNotDisappearWithoutEvents_ParentVirtualDirectoryDeleted() {
     final VirtualFile file = addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
 
@@ -325,7 +325,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertFalse(count1 == getJavaTracker().getModificationCount());
   }
 
-  public void testClassShouldNotDisappearWithoutEvents_InCodeBlock() throws Exception {
+  public void testClassShouldNotDisappearWithoutEvents_InCodeBlock() {
     String barStr = "class Bar {}";
     PsiFile file = addFileToProject("Foo.java", "class Foo {{" + barStr + "}}");
     JBIterable<PsiClass> barQuery = SyntaxTraverser.psiTraverser(file).filter(PsiClass.class).filter(o -> "Bar".equals(o.getName()));
@@ -341,7 +341,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertFalse(count1 == getJavaTracker().getModificationCount());
   }
 
-  public void testClassShouldNotAppearWithoutEvents_InCodeBlock() throws Exception {
+  public void testClassShouldNotAppearWithoutEvents_InCodeBlock() {
     String barStr = "class Bar {}";
     PsiFile file = addFileToProject("Foo.java", "class Foo {{" + "}}");
     JBIterable<PsiClass> barQuery = SyntaxTraverser.psiTraverser(file).filter(PsiClass.class).filter(o -> "Bar".equals(o.getName()));
@@ -356,7 +356,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertFalse(count1 == getJavaTracker().getModificationCount());
   }
 
-  public void testVirtualFileRename_WithPsi() throws IOException {
+  public void testVirtualFileRename_WithPsi() {
     final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
 
@@ -374,7 +374,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertEquals(hc, psiManager.findFile(file).hashCode());
   }
 
-  public void testLanguageLevelChange() throws IOException {
+  public void testLanguageLevelChange() {
     //noinspection unused
     PsiFile psiFile = addFileToProject("Foo.java", "class Foo {}");
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
@@ -395,7 +395,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertTrue(psiClass.isValid());
   }
 
-  private PsiFile addFileToProject(@NotNull String fileName, String text) throws IOException {
+  private PsiFile addFileToProject(@NotNull String fileName, String text) {
     Path file = ProjectKt.getStateStore(getProject()).getProjectBasePath().resolve(fileName);
     PathKt.write(file, text);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
@@ -524,7 +524,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     @Override
     @NotNull
     ModificationTracker getJavaTracker() {
-      return ((PsiModificationTrackerImpl)PsiModificationTracker.SERVICE.getInstance(getProject()))
+      return PsiModificationTracker.SERVICE.getInstance(getProject())
         .forLanguage(JavaLanguage.INSTANCE);
     }
   }

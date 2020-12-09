@@ -79,15 +79,18 @@ public class AfterTestEvent extends AbstractTestEvent {
           }
         }
         getResultsViewer().onTestFailed(testProxy);
+        getExecutionConsole().getEventPublisher().onTestFailed(testProxy);
         break;
       case SKIPPED:
         testProxy.setTestIgnored(null, null);
         getResultsViewer().onTestIgnored(testProxy);
+        getExecutionConsole().getEventPublisher().onTestIgnored(testProxy);
         break;
       case UNKNOWN_RESULT:
         break;
     }
 
     getResultsViewer().onTestFinished(testProxy);
+    getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -126,8 +128,15 @@ public class TestNGTestPattern extends TestNGTestObject {
   public String getGeneratedName() {
     final Set<String> patterns = myConfig.getPersistantData().getPatterns();
     final int size = patterns.size();
-    if (size == 0) return "Temp suite";
-    return StringUtil.getShortName(patterns.iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
+    if (size == 0) return TestngBundle.message("action.text.temp.suite");
+    String firstPattern = ContainerUtil.getFirstItem(patterns);
+    if (size == 1) {
+      return firstPattern;
+    }
+    else {
+      //noinspection DialogTitleCapitalization
+      return TestRunnerBundle.message("test.config.first.pattern.and.few.more", firstPattern, size - 1);
+    }
   }
 
   @Override

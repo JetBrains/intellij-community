@@ -51,6 +51,8 @@ public abstract class ChangeListManager implements ChangeListModification {
                                          @Nullable ModalityState state);
 
 
+  public abstract boolean areChangeListsEnabled();
+
   public abstract int getChangeListsNumber();
 
   @NotNull

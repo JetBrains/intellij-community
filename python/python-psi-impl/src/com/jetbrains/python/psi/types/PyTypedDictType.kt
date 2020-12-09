@@ -5,7 +5,6 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import one.util.streamex.StreamEx
 import java.util.*
 
 class PyTypedDictType @JvmOverloads constructor(private val name: String,
@@ -181,11 +180,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     }
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
-      if (actual is PyUnionType) {
-        return StreamEx.of(actual.members).allMatch { type -> PyTypeChecker.match(expected, type, context) }
-      }
-
-      return PyTypeChecker.match(expected, actual, context)
+      return PyTypeUtil.toStream(actual).allMatch { type -> PyTypeChecker.match(expected, type, context) }
     }
 
     fun checkStructuralCompatibility(expected: PyType?, actual: PyTypedDictType, context: TypeEvalContext): Optional<Boolean> {

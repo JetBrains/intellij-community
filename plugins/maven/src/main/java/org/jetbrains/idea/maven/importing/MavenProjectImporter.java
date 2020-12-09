@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.impl.ModulePathKt;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -616,11 +617,20 @@ public class MavenProjectImporter {
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.
     deleteExistingImlFile(path);
+    String moduleName = ModulePathKt.getModuleNameByFilePath(path);
+    deleteExistingModuleByName(moduleName);
 
     final Module module = myModuleModel.newModule(path, project.getModuleType().getId());
     myMavenProjectToModule.put(project, module);
     myCreatedModules.add(module);
     return true;
+  }
+
+  private void deleteExistingModuleByName(final String name) {
+    Module module = myModuleModel.findModuleByName(name);
+    if (module != null) {
+      myModuleModel.disposeModule(module);
+    }
   }
 
   private void deleteExistingImlFile(final String path) {

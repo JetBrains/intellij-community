@@ -7,7 +7,6 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.impl.SingleConfigurationConfigurable;
 import com.intellij.execution.ui.*;
-import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -29,7 +28,6 @@ import javax.swing.*;
 public class ApplicationConfigurable extends SettingsEditor<ApplicationConfiguration> implements PanelWithAnchor {
   private final Project myProject;
   private final ConfigurationModuleSelector myModuleSelector;
-  private final JreVersionDetector myVersionDetector;
 
   private JPanel myWholePanel;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMainClass;
@@ -38,13 +36,11 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private LabeledComponent<JBCheckBox> myIncludeProvidedDeps;
   private JrePathEditor myJrePathEditor;
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
-  private JCheckBox myShowSwingInspectorCheckbox;
   private JComponent myAnchor;
 
   public ApplicationConfigurable(Project project) {
     myProject = project;
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
-    myVersionDetector = new JreVersionDetector();
 
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromSourceRootsDependencies(myModule.getComponent(), getMainClassField()));
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
@@ -67,19 +63,16 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     configuration.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
-    configuration.setSwingInspectorEnabled(isJre50Configured(configuration) && myShowSwingInspectorCheckbox.isSelected());
     configuration.setShortenCommandLine(myShortenClasspathModeCombo.getComponent().getSelectedItem());
     configuration.setIncludeProvidedScope(myIncludeProvidedDeps.getComponent().isSelected());
 
     hideUnsupportedFieldsIfNeeded();
-    updateShowSwingInspector(configuration);
   }
 
   public void hideUnsupportedFieldsIfNeeded() {
     boolean localTarget = DataManager.getInstance().getDataContext(myWholePanel)
                             .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY) == null;
     myJrePathEditor.setVisible(localTarget);
-    myShowSwingInspectorCheckbox.setVisible(localTarget);
   }
 
   @Override
@@ -93,24 +86,6 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myIncludeProvidedDeps.getComponent().setSelected(configuration.isProvidedScopeIncluded());
 
     hideUnsupportedFieldsIfNeeded();
-    updateShowSwingInspector(configuration);
-  }
-
-  private boolean isJre50Configured(ApplicationConfiguration configuration) {
-    return myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration);
-  }
-
-  private void updateShowSwingInspector(ApplicationConfiguration configuration) {
-    if (isJre50Configured(configuration)) {
-      myShowSwingInspectorCheckbox.setEnabled(true);
-      myShowSwingInspectorCheckbox.setSelected(configuration.isSwingInspectorEnabled());
-      myShowSwingInspectorCheckbox.setText(ExecutionBundle.message("show.swing.inspector"));
-    }
-    else {
-      myShowSwingInspectorCheckbox.setEnabled(false);
-      myShowSwingInspectorCheckbox.setSelected(false);
-      myShowSwingInspectorCheckbox.setText(ExecutionBundle.message("show.swing.inspector.disabled"));
-    }
   }
 
   public EditorTextFieldWithBrowseButton getMainClassField() {

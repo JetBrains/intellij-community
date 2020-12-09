@@ -55,6 +55,7 @@ public class BeforeTestEvent extends AbstractTestEvent {
           if (parentTestProxy1 != null) {
             parentTestProxy1.addChild(gradleSMTestProxy);
             getResultsViewer().onSuiteStarted(gradleSMTestProxy);
+            getExecutionConsole().getEventPublisher().onSuiteStarted(gradleSMTestProxy);
           }
         }
         parentTestProxy.addChild(testProxy);
@@ -62,5 +63,6 @@ public class BeforeTestEvent extends AbstractTestEvent {
     }
 
     getResultsViewer().onTestStarted(testProxy);
+    getExecutionConsole().getEventPublisher().onTestStarted(testProxy);
   }
 }

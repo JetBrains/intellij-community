@@ -20,6 +20,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 private class StaticFileHandler : WebServerFileHandler() {
+  @Suppress("HardCodedStringLiteral")
   override val pageFileExtensions = arrayOf("html", "htm", "shtml", "stm", "shtm")
 
   private var ssiProcessor: SsiProcessor? = null

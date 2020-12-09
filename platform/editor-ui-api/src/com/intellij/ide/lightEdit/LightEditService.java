@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Objects;
 
 @ApiStatus.Experimental
 public interface LightEditService {
@@ -39,9 +40,10 @@ public interface LightEditService {
 
   Project getProject();
 
-  @NotNull Project getOrCreateProject();
+  boolean canOpen(@NotNull VirtualFile file);
 
-  boolean openFile(@NotNull VirtualFile file);
+  @Nullable
+  Project openFile(@NotNull VirtualFile file, boolean force);
 
   boolean isAutosaveMode();
 

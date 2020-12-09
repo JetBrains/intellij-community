@@ -23,7 +23,7 @@ class JSONEncoder:
             sort_keys: bool = ...,
             indent: Optional[int] = ...,
             separators: Optional[Tuple[str, str]] = ...,
-            default: Optional[Callable[..., Any]] = ...
+            default: Optional[Callable[..., Any]] = ...,
         ) -> None: ...
     else:
         def __init__(

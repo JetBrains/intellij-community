@@ -1,38 +1,50 @@
 # These are not exported.
-from typing import Any, Dict, Generic, TypeVar, Tuple, overload, Type, Optional, List, Union, Reversible
-
 # These are exported.
 from typing import (
+    AbstractSet as Set,
+    Any,
     Callable as Callable,
     Container as Container,
+    Dict,
+    Generic,
     Hashable as Hashable,
     ItemsView as ItemsView,
     Iterable as Iterable,
     Iterator as Iterator,
     KeysView as KeysView,
+    List,
     Mapping as Mapping,
     MappingView as MappingView,
     MutableMapping as MutableMapping,
     MutableSequence as MutableSequence,
     MutableSet as MutableSet,
+    Optional,
+    Reversible,
     Sequence as Sequence,
-    AbstractSet as Set,
     Sized as Sized,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
     ValuesView as ValuesView,
+    overload,
 )
 
-_S = TypeVar('_S')
-_T = TypeVar('_T')
-_KT = TypeVar('_KT')
-_VT = TypeVar('_VT')
+_S = TypeVar("_S")
+_T = TypeVar("_T")
+_KT = TypeVar("_KT")
+_VT = TypeVar("_VT")
 
 # namedtuple is special-cased in the type checker; the initializer is ignored.
-def namedtuple(typename: Union[str, unicode], field_names: Union[str, unicode, Iterable[Union[str, unicode]]],
-               verbose: bool = ..., rename: bool = ...) -> Type[Tuple[Any, ...]]: ...
+def namedtuple(
+    typename: Union[str, unicode],
+    field_names: Union[str, unicode, Iterable[Union[str, unicode]]],
+    verbose: bool = ...,
+    rename: bool = ...,
+) -> Type[Tuple[Any, ...]]: ...
 
 class deque(Sized, Iterable[_T], Reversible[_T], Generic[_T]):
-    def __init__(self, iterable: Iterable[_T] = ...,
-                 maxlen: int = ...) -> None: ...
+    def __init__(self, iterable: Iterable[_T] = ..., maxlen: int = ...) -> None: ...
     @property
     def maxlen(self) -> Optional[int]: ...
     def append(self, x: _T) -> None: ...
@@ -45,7 +57,7 @@ class deque(Sized, Iterable[_T], Reversible[_T], Generic[_T]):
     def popleft(self) -> _T: ...
     def remove(self, value: _T) -> None: ...
     def reverse(self) -> None: ...
-    def rotate(self, n: int) -> None: ...
+    def rotate(self, n: int = ...) -> None: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[_T]: ...
     def __str__(self) -> str: ...
@@ -81,7 +93,6 @@ class Counter(Dict[_T, int], Generic[_T]):
     def update(self, __m: Union[Iterable[_T], Iterable[Tuple[_T, int]]], **kwargs: int) -> None: ...
     @overload
     def update(self, **kwargs: int) -> None: ...
-
     def __add__(self, other: Counter[_T]) -> Counter[_T]: ...
     def __sub__(self, other: Counter[_T]) -> Counter[_T]: ...
     def __and__(self, other: Counter[_T]) -> Counter[_T]: ...
@@ -105,16 +116,14 @@ class defaultdict(Dict[_KT, _VT], Generic[_KT, _VT]):
     @overload
     def __init__(self, default_factory: Optional[Callable[[], _VT]], **kwargs: _VT) -> None: ...
     @overload
-    def __init__(self, default_factory: Optional[Callable[[], _VT]],
-                 map: Mapping[_KT, _VT]) -> None: ...
+    def __init__(self, default_factory: Optional[Callable[[], _VT]], map: Mapping[_KT, _VT]) -> None: ...
     @overload
-    def __init__(self, default_factory: Optional[Callable[[], _VT]],
-                 map: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
+    def __init__(self, default_factory: Optional[Callable[[], _VT]], map: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
     @overload
-    def __init__(self, default_factory: Optional[Callable[[], _VT]],
-                 iterable: Iterable[Tuple[_KT, _VT]]) -> None: ...
+    def __init__(self, default_factory: Optional[Callable[[], _VT]], iterable: Iterable[Tuple[_KT, _VT]]) -> None: ...
     @overload
-    def __init__(self, default_factory: Optional[Callable[[], _VT]],
-                 iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
+    def __init__(
+        self, default_factory: Optional[Callable[[], _VT]], iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT
+    ) -> None: ...
     def __missing__(self, key: _KT) -> _VT: ...
     def copy(self: _S) -> _S: ...

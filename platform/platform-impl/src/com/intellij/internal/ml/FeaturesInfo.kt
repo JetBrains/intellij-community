@@ -23,7 +23,7 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
       return result
     }
 
-    fun buildInfo(reader: ResourcesMetadataReader): FeaturesInfo {
+    fun buildInfo(reader: ModelMetadataReader): FeaturesInfo {
       val knownFeatures = reader.allKnown().fromJson<List<String>>().withSafeWeighers()
 
       val binaryFactors: List<BinaryFeature> = reader.binaryFeatures().fromJson<Map<String, Map<String, Any>>>()

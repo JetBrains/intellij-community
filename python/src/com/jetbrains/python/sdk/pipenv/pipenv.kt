@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.pipenv
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
-import com.intellij.CommonBundle
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionName
@@ -38,7 +37,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.SystemInfo
@@ -46,9 +44,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
+import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import icons.PythonIcons
@@ -384,7 +384,11 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
         }
         catch (e: ExecutionException) {
           runInEdt {
-            Messages.showErrorDialog(project, e.toString(), CommonBundle.message("title.error"))
+            val error = PyPackageManagementService.toErrorDescription(listOf(e), module.pythonSdk)
+            if (error != null) {
+              PackagesNotificationPanel.showError(
+                PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"), error)
+            }
           }
         }
         finally {

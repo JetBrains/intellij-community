@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -516,7 +517,7 @@ public class FileReferenceSet {
     return toTargetContexts(getParentDirectoryContext());
   }
 
-  public String getPathString() {
+  public @NlsSafe String getPathString() {
     return myPathString;
   }
 

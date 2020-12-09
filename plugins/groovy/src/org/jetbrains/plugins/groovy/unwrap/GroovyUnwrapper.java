@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -33,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import java.util.List;
 
 public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.Context> {
-  public GroovyUnwrapper(@NotNull String description) {
+  public GroovyUnwrapper(@NotNull @Nls String description) {
     super(description);
   }
 

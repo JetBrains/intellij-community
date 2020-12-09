@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -21,13 +21,13 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -37,19 +37,23 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
   private static final int BUILTIN_PRIORITY = -10;
 
   public ShCommandCompletionContributor() {
-    extend(CompletionType.BASIC, elementPattern(), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, elementPattern(), new CompletionProvider<>() {
       @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
         if (endsWithDot(parameters)) return;
 
         Collection<String> kws = new SmartList<>();
         PsiElement original = parameters.getOriginalPosition();
         if (original == null || !original.getText().contains("/")) {
           result.addAllElements(ContainerUtil.map(BUILTIN,
-              s -> PrioritizedLookupElement.withPriority(LookupElementBuilder
-                  .create(s)
-                  .withIcon(PlatformIcons.FUNCTION_ICON)
-                  .withInsertHandler(AddSpaceInsertHandler.INSTANCE), BUILTIN_PRIORITY)));
+                                                  s -> PrioritizedLookupElement.withPriority(LookupElementBuilder
+                                                                                               .create(s)
+                                                                                               .withIcon(PlatformIcons.FUNCTION_ICON)
+                                                                                               .withInsertHandler(
+                                                                                                 AddSpaceInsertHandler.INSTANCE),
+                                                                                             BUILTIN_PRIORITY)));
 
           kws = suggestKeywords(parameters.getPosition());
           for (String keywords : kws) {
@@ -66,7 +70,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
         }
 
         CompletionResultSet resultSetWithPrefix = result.withPrefixMatcher(prefix);
-        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, new THashSet<>(kws));
+        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, new HashSet<>(kws));
       }
     });
   }
@@ -104,8 +108,8 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
   }
 
   @NonNls private static final List<String> BUILTIN =
-    new SmartList<>("alias", "bg", "bind", "break", "builtin", "caller", "cd", "command", "compgen", "complete", "continue", "declare",
-      "dirs", "disown", "echo", "enable", "eval", "exec", "exit", "export", "false", "fc", "fg", "getopts", "hash", "help", "history",
-      "jobs", "kill", "let", "local", "logout", "popd", "printf", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt",
-      "source", "suspend", "test", "times", "trap", "true", "type", "typeset", "ulimit", "umask", "unalias", "unset", "wait");
+    Arrays.asList("alias", "bg", "bind", "break", "builtin", "caller", "cd", "command", "compgen", "complete", "continue", "declare",
+                  "dirs", "disown", "echo", "enable", "eval", "exec", "exit", "export", "false", "fc", "fg", "getopts", "hash", "help", "history",
+                  "jobs", "kill", "let", "local", "logout", "popd", "printf", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt",
+                  "source", "suspend", "test", "times", "trap", "true", "type", "typeset", "ulimit", "umask", "unalias", "unset", "wait");
 }

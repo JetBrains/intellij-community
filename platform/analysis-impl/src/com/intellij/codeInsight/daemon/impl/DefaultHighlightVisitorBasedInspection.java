@@ -109,11 +109,11 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                                                                          boolean runAnnotators) {
     ProgressIndicator indicator = ProgressManager.getGlobalProgressIndicator();
     MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators);
-    if (indicator == null) {
-      ProgressManager.getInstance().runProcess(() -> file.accept(visitor), new DaemonProgressIndicator());
+    if (indicator instanceof DaemonProgressIndicator) {
+      file.accept(visitor);
     }
     else {
-      file.accept(visitor);
+      ProgressManager.getInstance().runProcess(() -> file.accept(visitor), new DaemonProgressIndicator());
     }
     return visitor.result;
   }

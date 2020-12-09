@@ -13,6 +13,6 @@ class PluginInfoValidationRule : CustomValidationRule() {
   }
 
   companion object {
-    private val acceptedRules = hashSetOf("plugin_info", "project_type", "framework", "gutter_icon", "editor_notification_panel_key", "plugin_version", "favorite_type")
+    private val acceptedRules = hashSetOf("plugin_info", "project_type", "framework", "gutter_icon", "editor_notification_panel_key", "plugin_version")
   }
 }

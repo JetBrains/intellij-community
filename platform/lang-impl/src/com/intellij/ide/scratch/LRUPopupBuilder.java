@@ -45,9 +45,9 @@ public abstract class LRUPopupBuilder<T> {
   private static final int MAX_VISIBLE_SIZE = 20;
   private static final int LRU_ITEMS = 4;
 
-  private final String myTitle;
+  private final @PopupTitle String myTitle;
   private final PropertiesComponent myPropertiesComponent;
-  private final Map<T, Pair<String, Icon>> myPresentations = new IdentityHashMap<>();
+  private final Map<T, Pair<@Nls String, Icon>> myPresentations = new IdentityHashMap<>();
 
   private T mySelection;
   private Consumer<? super T> myOnChosen;
@@ -57,7 +57,7 @@ public abstract class LRUPopupBuilder<T> {
 
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
-                                           @NotNull String title,
+                                           @NotNull @PopupTitle String title,
                                            @NotNull Iterable<? extends VirtualFile> files,
                                            @NotNull PerFileMappings<Language> mappings) {
     VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
@@ -81,7 +81,7 @@ public abstract class LRUPopupBuilder<T> {
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @Nullable Language selection,
                                            @NotNull Consumer<? super Language> onChosen) {
-    return forFileLanguages(project, "Languages", selection, onChosen);
+    return forFileLanguages(project, "Languages", selection, onChosen); //NON-NLS
   }
 
   @NotNull
@@ -117,7 +117,7 @@ public abstract class LRUPopupBuilder<T> {
     }.withComparator(LanguageUtil.LANGUAGE_COMPARATOR);
   }
 
-  protected LRUPopupBuilder(@NotNull Project project, @NotNull String title) {
+  protected LRUPopupBuilder(@NotNull Project project, @NotNull @PopupTitle String title) {
     myTitle = title;
     myPropertiesComponent = PropertiesComponent.getInstance(project);
   }
@@ -222,7 +222,7 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  private Pair<String, Icon> getPresentation(T t) {
+  private Pair<@Nls String, Icon> getPresentation(T t) {
     Pair<String, Icon> p = myPresentations.get(t);
     if (p == null) myPresentations.put(t, p = Pair.create(getDisplayName(t), getIcon(t)));
     return p;

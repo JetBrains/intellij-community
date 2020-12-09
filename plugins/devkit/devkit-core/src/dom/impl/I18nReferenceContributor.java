@@ -38,6 +38,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
 import static com.intellij.patterns.XmlPatterns.xmlTag;
 
@@ -47,6 +48,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
 
   @NonNls private static final String SEPARATOR_TAG = "separator";
+  @NonNls private static final String SYNONYM_TAG = "synonym";
 
   @NonNls
   private static class Holder {
@@ -59,6 +61,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
     private static final String ICON_DESCRIPTION_BUNDLE_EP = IconDescriptionBundleEP.class.getName();
     private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
+
+    private static final String SPRING_TOOL_WINDOW_CONTENT = "com.intellij.spring.toolWindow.SpringToolWindowContent";
   }
 
   @Override
@@ -106,10 +110,16 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                   Holder.TYPE_NAME_EP),
                                         new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"));
 
-    final XmlAttributeValuePattern separatorKeyPattern =
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"displayName"},
+                                                                  Holder.SPRING_TOOL_WINDOW_CONTENT),
+                                        new PropertyKeyReferenceProvider(false, "displayName", "bundle"));
+
+    final XmlAttributeValuePattern separatorSynonymPattern =
       xmlAttributeValue("key")
-        .withSuperParent(2, DomPatterns.tagWithDom(SEPARATOR_TAG, Separator.class));
-    registrar.registerReferenceProvider(separatorKeyPattern,
+        .withSuperParent(2,
+                         or(DomPatterns.tagWithDom(SEPARATOR_TAG, Separator.class),
+                            DomPatterns.tagWithDom(SYNONYM_TAG, Synonym.class)));
+    registrar.registerReferenceProvider(separatorSynonymPattern,
                                         new PropertyKeyReferenceProvider(tag -> {
                                           final DomElement domElement = DomUtil.getDomElement(tag);
                                           if (domElement == null) return null;
@@ -141,7 +151,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP,
                                                                   Holder.GROUP_CONFIGURABLE_EP,
-                                                                  Holder.NOTIFICATION_GROUP_EP),
+                                                                  Holder.NOTIFICATION_GROUP_EP,
+                                                                  Holder.SPRING_TOOL_WINDOW_CONTENT),
                                         bundleReferenceProvider);
     registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                         Holder.CONFIGURABLE_EP),

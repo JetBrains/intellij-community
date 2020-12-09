@@ -5,13 +5,14 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.NlsSafe
 
 abstract class ExternalSystemModulePropertyManager {
   abstract fun getExternalSystemId(): String?
   abstract fun getExternalModuleType(): String?
   abstract fun getExternalModuleVersion(): String?
   abstract fun getExternalModuleGroup(): String?
-  abstract fun getLinkedProjectId(): String?
+  @NlsSafe abstract fun getLinkedProjectId(): String?
   abstract fun getRootProjectPath(): String?
   abstract fun getLinkedProjectPath(): String?
 

@@ -138,7 +138,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       else {
         checkedExpression = getCheckedExpression(myUseIsEmpty, argument);
       }
-      final StringBuilder newExpression;
+      final @NonNls StringBuilder newExpression;
       CommentTracker ct = new CommentTracker();
       if (myAddNullCheck) {
         newExpression = new StringBuilder(ct.text(checkedExpression, ParenthesesUtils.EQUALITY_PRECEDENCE));

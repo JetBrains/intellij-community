@@ -574,7 +574,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
-  public void selectNodeInTree(String displayName) {
+  public void selectNodeInTree(@NlsSafe String displayName) {
     final MyNode nodeByName = findNodeByName(myRoot, displayName);
     selectNodeInTree(nodeByName, true);
   }

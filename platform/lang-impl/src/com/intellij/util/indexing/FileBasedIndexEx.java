@@ -8,16 +8,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -32,7 +28,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
-import com.intellij.util.indexing.roots.*;
+import com.intellij.util.indexing.roots.IndexableFilesContributor;
+import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.IntPredicate;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.indexing.FileBasedIndexImpl.LOG;
 import static com.intellij.util.indexing.FileBasedIndexImpl.getCauseToRebuildIndex;
@@ -398,7 +396,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
-    List<IndexableFilesProvider> providers = getOrderedIndexableFilesProviders(project);
+    List<IndexableFilesIterator> providers = getOrderedIndexableFilesProviders(project);
     ConcurrentBitSet visitedFileSet = new ConcurrentBitSet();
     boolean wasIndeterminate = false;
     if (indicator != null) {
@@ -412,7 +410,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         if (indicator != null) {
           indicator.checkCanceled();
         }
-        IndexableFilesProvider provider = providers.get(i);
+        IndexableFilesIterator provider = providers.get(i);
         if (!provider.iterateFiles(project, processor, visitedFileSet)) {
           break;
         }
@@ -432,7 +430,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * Returns providers of files to be indexed. Indexing is performed in the order corresponding to the resulting list.
    */
   @NotNull
-  public List<IndexableFilesProvider> getOrderedIndexableFilesProviders(@NotNull Project project) {
+  public List<IndexableFilesIterator> getOrderedIndexableFilesProviders(@NotNull Project project) {
     if (LightEdit.owns(project)) {
       return Collections.emptyList();
     }
@@ -441,42 +439,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         return Collections.emptyList();
       }
 
-      Set<Library> seenLibraries = new HashSet<>();
-      Set<Sdk> seenSdks = new HashSet<>();
-
-      List<IndexableFilesProvider> providers = new ArrayList<>();
-      Module[] modules = ModuleManager.getInstance(project).getSortedModules();
-      for (Module module : modules) {
-        providers.add(new ModuleIndexableFilesProvider(module));
-
-        OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-        for (OrderEntry orderEntry : orderEntries) {
-          if (orderEntry instanceof LibraryOrderEntry) {
-            Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
-            if (library != null && seenLibraries.add(library)) {
-              providers.add(new LibraryIndexableFilesProvider(library));
-            }
-          }
-          if (orderEntry instanceof JdkOrderEntry) {
-            Sdk sdk = ((JdkOrderEntry)orderEntry).getJdk();
-            if (sdk != null && seenSdks.add(sdk)) {
-              providers.add(new SdkIndexableFilesProvider(sdk));
-            }
-          }
-        }
-      }
-
-      for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
-        providers.add(new IndexableSetContributorFilesProvider(contributor));
-      }
-
-      for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(project)) {
-          providers.add(new SyntheticLibraryIndexableFilesProvider(library));
-        }
-      }
-
-      return providers;
+      return IndexableFilesContributor.EP_NAME
+        .getExtensionList()
+        .stream()
+        .flatMap(c -> c.getIndexableFiles(project).stream())
+        .collect(Collectors.toList());
     });
   }
 

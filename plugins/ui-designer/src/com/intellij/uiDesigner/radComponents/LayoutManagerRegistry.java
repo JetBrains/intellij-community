@@ -3,6 +3,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.util.ArrayUtilRt;
@@ -63,7 +64,7 @@ public final class LayoutManagerRegistry {
     return ArrayUtilRt.toStringArray(layoutManagerNames);
   }
 
-  public static String getLayoutManagerDisplayName(String name) {
+  public static @NlsSafe String getLayoutManagerDisplayName(String name) {
     if (ourLayoutManagerDisplayNames.containsKey(name)) {
       return ourLayoutManagerDisplayNames.get(name);
     }

@@ -101,14 +101,15 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   }
 
   static @NotNull ExitCode reportError(CompileContext context, String placePresentableName, Exception error) {
-    final StringBuilder builder = new StringBuilder().append("Error resolving dependencies for ").append(placePresentableName);
+    @Nls StringBuilder builder = new StringBuilder().append(JpsBuildBundle.message("build.message.error.resolving.dependencies.for",
+                                                                                   placePresentableName));
     Throwable th = error;
     final Set<Throwable> processed = new HashSet<>();
     final Set<String> detailsMessage = new HashSet<>();
     while (th != null && processed.add(th)) {
       String details = th.getMessage();
       if (th instanceof UnknownHostException) {
-        details = "Unknown host: " + details; // hack for UnknownHostException
+        details = JpsBuildBundle.message("build.message.unknown.host.0", details); // hack for UnknownHostException
       }
       if (details != null && detailsMessage.add(details)) {
         builder.append(":\n").append(details);

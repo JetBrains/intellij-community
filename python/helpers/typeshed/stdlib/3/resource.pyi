@@ -1,7 +1,7 @@
 # Stubs for resource
 
 import sys
-from typing import Tuple, Optional, NamedTuple
+from typing import NamedTuple, Optional, Tuple
 
 RLIMIT_AS: int
 RLIMIT_CORE: int
@@ -47,6 +47,7 @@ def getpagesize() -> int: ...
 def getrlimit(__resource: int) -> Tuple[int, int]: ...
 def getrusage(__who: int) -> _RUsage: ...
 def setrlimit(__resource: int, __limits: Tuple[int, int]) -> None: ...
+
 if sys.platform == "linux":
     def prlimit(pid: int, resource: int, limits: Optional[Tuple[int, int]]) -> Tuple[int, int]: ...
 

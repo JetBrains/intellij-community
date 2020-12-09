@@ -1,15 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -18,7 +20,7 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 /**
  * @author Alexander Lobas
  */
-public class HiDPIPluginLogoIcon extends PluginLogoIcon {
+public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
   private static Icon myCachedDisabledJBLogo;
   private static Icon myCachedJBLogo2x;
   private static Icon myCachedErrorLogo2x;
@@ -130,7 +132,9 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
   @NotNull
   static Icon loadSVG(@NotNull InputStream stream, int width, int height) throws IOException {
     ScaleContext context = ScaleContext.create();
-    return getHiDPI(context, SVGLoader.loadHiDPI(null, stream, context, width, height));
+    BufferedImage image = (BufferedImage)SVGLoader.load(null, stream, context, width, height);
+    BufferedImage t = (BufferedImage)ImageUtil.ensureHiDPI(image, context);
+    return getHiDPI(context, t);
   }
 
   @NotNull

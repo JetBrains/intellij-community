@@ -30,7 +30,7 @@ import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.mac.TouchbarDataKeys
-import com.intellij.ui.popup.util.PopupState
+import com.intellij.ui.popup.PopupState
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
@@ -951,7 +951,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   protected inner class MyToolbarAddAction : AnAction(ExecutionBundle.message("add.new.run.configuration.action2.name"),
                                                     ExecutionBundle.message("add.new.run.configuration.action2.name"),
                                                     IconUtil.getAddIcon()), AnActionButtonRunnable {
-    private val myPopupState = PopupState()
+    private val myPopupState = PopupState.forPopup()
 
     init {
       registerCustomShortcutSet(CommonShortcuts.INSERT, tree)
@@ -980,7 +980,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                                                           { factory -> createNewConfiguration(factory) }, selectedConfigurationType,
                                                           { showAddPopup(false) }, true)
       //new TreeSpeedSearch(myTree);
-      popup.addListener(myPopupState)
+      myPopupState.prepareToShow(popup)
       popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
     }
   }

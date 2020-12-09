@@ -11,11 +11,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.PopupHandler;
@@ -24,6 +25,7 @@ import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
 import com.intellij.ui.layout.migLayout.patched.MigLayout;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
@@ -362,7 +364,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
             if (allowResize && ui.isResizeable()) {
               arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
             }
-            ui.window.fireActivated();
+            ui.window.fireActivated(ToolWindowEventSource.Content);
           }
         }
       }
@@ -488,7 +490,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
-    return new DumbAwareAction(IdeBundle.message("action.text.split.0.group", content.getTitlePrefix())) {
+    return new DumbAwareAction(IdeBundle.message("action.text.split.group", content.getTitlePrefix())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
@@ -498,7 +500,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
-    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.0.group", groupId.getDisplayName())) {
+    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.group", groupId.getDisplayName())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ContentUtilEx.mergeTabs(manager, groupId);
@@ -532,10 +534,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private void hideWindow(@NotNull MouseEvent e) {
     if (e.isControlDown()) {
-      window.fireHiddenSide();
+      window.fireHiddenSide(ToolWindowEventSource.ToolWindowHeaderAltClick);
     }
     else {
-      window.fireHidden();
+      window.fireHidden(ToolWindowEventSource.ToolWindowHeader);
     }
   }
 
@@ -576,7 +578,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   private final class HideToolwindowTarget implements CloseAction.CloseTarget {
     @Override
     public void close() {
-      window.fireHidden();
+      window.fireHidden(ToolWindowEventSource.CloseAction);
     }
   }
 
@@ -601,7 +603,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     toggleContentPopup(content, contentManager, null);
   }
 
-  static void toggleContentPopup(@NotNull ToolWindowContentUi content, @NotNull ContentManager contentManager, JBPopupListener listener) {
+  static void toggleContentPopup(@NotNull ToolWindowContentUi content,
+                                 @NotNull ContentManager contentManager,
+                                 @Nullable PopupState<JBPopup> popupState) {
     SelectContentStep step = new SelectContentStep(contentManager.getContents());
     Content selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
@@ -609,7 +613,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
 
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    if (listener != null) popup.addListener(listener);
+    if (popupState != null) popupState.prepareToShow(popup);
     content.getCurrentLayout().showContentPopup(popup);
 
     if (selectedContent instanceof TabbedContent) {

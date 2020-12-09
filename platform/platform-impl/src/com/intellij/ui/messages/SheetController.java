@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.TouchbarDataKeys;
@@ -16,6 +17,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,8 +86,8 @@ public final class SheetController implements Disposable {
   private final JEditorPane headerLabel = new JEditorPane();
 
   SheetController(final SheetMessage sheetMessage,
-                  final String title,
-                  final String message,
+                  @Nls final String title,
+                  @Nls final String message,
                   final Icon icon,
                   final String[] buttonTitles,
                   final String defaultButtonTitle,
@@ -160,7 +162,7 @@ public final class SheetController implements Disposable {
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
 
-  private void handleMnemonics(int i, String title) {
+  private void handleMnemonics(int i, @NlsContexts.Button String title) {
     buttons[i].setName(title);
 
     if (!setButtonTextAndMnemonic(i, title, '_') &&
@@ -170,7 +172,7 @@ public final class SheetController implements Disposable {
     }
   }
 
-  private boolean setButtonTextAndMnemonic(int i, String title, char mnemonics) {
+  private boolean setButtonTextAndMnemonic(int i, @NlsContexts.Button String title, char mnemonics) {
     int mIdx;
     if ((mIdx = title.indexOf(mnemonics)) >= 0) {
       String text = title.substring(0, mIdx) + title.substring(mIdx + 1);
@@ -236,7 +238,7 @@ public final class SheetController implements Disposable {
     return .95f;
   }
 
-  private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
+  private JPanel createSheetPanel(@Nls String title, @Nls String message, JButton[] buttons) {
     JPanel sheetPanel = new JPanel() {
       @Override
       protected void paintComponent(@NotNull Graphics g2d) {

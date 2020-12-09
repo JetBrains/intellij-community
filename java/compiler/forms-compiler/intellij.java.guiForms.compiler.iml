@@ -15,5 +15,6 @@
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
 </module>

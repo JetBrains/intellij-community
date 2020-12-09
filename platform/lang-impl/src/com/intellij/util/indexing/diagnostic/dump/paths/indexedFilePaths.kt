@@ -34,7 +34,7 @@ object IndexedFilePaths {
       val fileContent = FileContentImpl.createByFile(fileOrDir) as FileContentImpl
       runReadAction {
         val contentHash = IndexedHashesSupport.getBinaryContentHash(fileContent.content)
-        val indexedHash = IndexedHashesSupport.calculateIndexedHash(fileContent, contentHash)
+        val indexedHash = IndexedHashesSupport.calculateIndexedHash(fileContent, contentHash, false)
         Base64.encode(contentHash) to Base64.encode(indexedHash)
       }
     }

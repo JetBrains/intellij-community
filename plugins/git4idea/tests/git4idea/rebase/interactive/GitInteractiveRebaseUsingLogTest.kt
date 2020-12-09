@@ -1,38 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.FatalErrorHandler
 import git4idea.branch.GitRebaseParams
+import git4idea.log.createLogData
+import git4idea.log.refreshAndWait
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseUtils
 import git4idea.test.GitSingleRepoTest
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
-  companion object {
-    private val LOG = logger<GitInteractiveRebaseUsingLogTest>()
-  }
-
   private lateinit var logData: VcsLogData
 
   override fun setUp() {
     super.setUp()
-    logData = VcsLogData(project, mapOf(repo.root to logProvider), object : FatalErrorHandler {
-      override fun consume(source: Any?, throwable: Throwable) {
-        LOG.error(throwable)
-      }
-
-      override fun displayFatalErrorMessage(message: String) {
-        LOG.error(message)
-      }
-    }, testRootDisposable)
+    logData = createLogData(repo, logProvider, testRootDisposable)
   }
 
   fun `test simple commits`() {
@@ -114,26 +99,6 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
     }
   }
 
-  private fun refreshLogAndWait() {
-    val logWaiter = CompletableFuture<VcsLogData>()
-    val dataPackChangeListener = DataPackChangeListener { newDataPack ->
-      if (newDataPack.isFull) {
-        logWaiter.complete(logData)
-      }
-    }
-    logData.addDataPackChangeListener(dataPackChangeListener)
-    logData.refresh(listOf(repo.root))
-    try {
-      logWaiter.get(5, TimeUnit.SECONDS)
-    }
-    catch (e: Exception) {
-      fail(e.message)
-    }
-    finally {
-      logData.removeDataPackChangeListener(dataPackChangeListener)
-    }
-  }
-
   private fun getRebaseEntriesUsingGit(commit: VcsCommitMetadata): List<GitRebaseEntry> {
     lateinit var entriesGeneratedUsingGit: List<GitRebaseEntry>
     val editorHandler = object : GitInteractiveRebaseEditorHandler(project, repo.root) {
@@ -152,7 +117,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
   }
 
   private fun checkEntriesGeneration(commit: VcsCommitMetadata) {
-    refreshLogAndWait()
+    logData.refreshAndWait(repo)
     val entriesGeneratedUsingLog = getEntriesUsingLog(repo, commit, logData)
     val entriesGeneratedUsingGit = getRebaseEntriesUsingGit(commit)
     assertTrue(entriesGeneratedUsingGit.isNotEmpty() && entriesGeneratedUsingLog.isNotEmpty())
@@ -172,7 +137,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
     reason: CantRebaseUsingLogException.Reason,
     failMessage: (entries: List<GitRebaseEntry>) -> String
   ) {
-    refreshLogAndWait()
+    logData.refreshAndWait(repo)
     try {
       val entries = getEntriesUsingLog(repo, commit, logData)
       fail(failMessage(entries))

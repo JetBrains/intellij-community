@@ -35,7 +35,7 @@ private class SyncAction(private val syncType: SyncType,
                          private val urlTextField: JTextField,
                          private val project: Project?,
                          private val dialogManager: DialogManager) : AbstractAction(
-  icsMessage("action.${syncType.messageKey}Settings.text")) {
+  icsMessage(syncType.messageKey)) {
   private fun saveRemoteRepositoryUrl(): ValidationInfo? {
     val url = urlTextField.text.nullize(true)
     validateUrl(url, project)?.let {

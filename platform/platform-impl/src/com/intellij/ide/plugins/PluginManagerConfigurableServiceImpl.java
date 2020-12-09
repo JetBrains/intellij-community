@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public class PluginManagerConfigurableServiceImpl implements PluginManagerConfigurableService {
   @Override
   public void showPluginConfigurableAndEnable(@Nullable Project project,
@@ -19,9 +21,10 @@ public class PluginManagerConfigurableServiceImpl implements PluginManagerConfig
       }
       descriptors[i] = descriptor;
     }
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-      configurable.getPluginModel().changeEnableDisable(descriptors, true);
+      configurable.getPluginModel()
+        .enablePlugins(Set.of(descriptors));
       configurable.select(descriptors);
     });
   }

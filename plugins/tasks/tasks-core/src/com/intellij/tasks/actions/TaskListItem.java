@@ -28,13 +28,13 @@ import javax.swing.*;
  */
 abstract class TaskListItem {
 
-  private final String myText;
+  private final @NlsContexts.ListItem String myText;
   private final Icon myIcon;
   private final @NlsContexts.Separator String mySeparator;
   private final boolean myTemp;
   private final LocalTask myTask;
 
-  TaskListItem(String text, Icon icon) {
+  TaskListItem(@NlsContexts.ListItem String text, Icon icon) {
     myText = text;
     myIcon = icon;
     mySeparator = null;
@@ -50,7 +50,7 @@ abstract class TaskListItem {
     myIcon = temp ? IconLoader.getTransparentIcon(task.getIcon(), 0.5f) : task.getIcon();
   }
 
-  public String getText() {
+  public @NlsContexts.ListItem String getText() {
     return myText;
   }
 

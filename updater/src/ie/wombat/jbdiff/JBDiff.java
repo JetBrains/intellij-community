@@ -30,7 +30,8 @@ import com.intellij.updater.Utils;
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 
 import java.io.*;
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -67,8 +68,8 @@ public class JBDiff {
   }
 
   private static void split(int[] I, int[] V, int initStart, int initLen, int h) {
-    Stack<Integer> startStack = new Stack<>();
-    Stack<Integer> lenStack = new Stack<>();
+    Deque<Integer> startStack = new ArrayDeque<>();
+    Deque<Integer> lenStack = new ArrayDeque<>();
     startStack.push(initStart);
     lenStack.push(initLen);
     while (!startStack.isEmpty()) {

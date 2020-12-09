@@ -80,7 +80,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
     for (IndexableFileSet set : myManager.getIndexableSets()) {
       if (set.isInSet(file)) {
-        set.iterateIndexableFilesIn(file, iterator);
+        IndexableFileSetUtil.iterateIndexableFilesRecursively(file, set, iterator);
       }
     }
   }

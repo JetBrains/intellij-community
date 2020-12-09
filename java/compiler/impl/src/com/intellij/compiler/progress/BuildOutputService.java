@@ -21,15 +21,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.util.*;
@@ -40,10 +38,10 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 @ApiStatus.Internal
 public class BuildOutputService implements BuildViewService {
-  private static final String ANSI_RESET = "\u001B[0m"; //NON-NLS
-  private static final String ANSI_RED = "\u001B[31m"; //NON-NLS
-  private static final String ANSI_YELLOW = "\u001B[33m"; //NON-NLS
-  private static final String ANSI_BOLD = "\u001b[1m"; //NON-NLS
+  private static final @NonNls String ANSI_RESET = "\u001B[0m";
+  private static final @NonNls String ANSI_RED = "\u001B[31m";
+  private static final @NonNls String ANSI_YELLOW = "\u001B[33m";
+  private static final @NonNls String ANSI_BOLD = "\u001b[1m";
   private final @NotNull Project myProject;
   private final @NotNull BuildProgress<BuildProgressDescriptor> myBuildProgress;
   private final @NotNull @NlsContexts.TabTitle String myContentName;
@@ -166,18 +164,26 @@ public class BuildOutputService implements BuildViewService {
         String title = getMessageTitle(compilerMessage);
         myBuildProgress.message(title, compilerMessage.getMessage(), kind, navigatable);
       }
-      String color;
-      if (kind == MessageEvent.Kind.ERROR) {
-        color = ANSI_RED;
-      }
-      else if (kind == MessageEvent.Kind.WARNING) {
-        color = ANSI_YELLOW;
-      }
-      else {
-        color = ANSI_BOLD;
-      }
-      myBuildProgress.output(color + compilerMessage.getMessage() + ANSI_RESET + '\n', kind != MessageEvent.Kind.ERROR);
+      myBuildProgress.output(wrapWithAnsiColor(kind, compilerMessage.getMessage()) + '\n', kind != MessageEvent.Kind.ERROR);
     }
+  }
+
+  @Nls
+  private static String wrapWithAnsiColor(MessageEvent.Kind kind, @Nls String message) {
+    @NlsSafe
+    String color;
+    if (kind == MessageEvent.Kind.ERROR) {
+      color = ANSI_RED;
+    }
+    else if (kind == MessageEvent.Kind.WARNING) {
+      color = ANSI_YELLOW;
+    }
+    else {
+      color = ANSI_BOLD;
+    }
+    @NlsSafe
+    final String ansiReset = ANSI_RESET;
+    return color + message + ansiReset;
   }
 
   @NotNull
@@ -220,6 +226,7 @@ public class BuildOutputService implements BuildViewService {
     }
     ((ProgressIndicatorEx)indicator).addStateDelegate(new CompilerMessagesService.DummyProgressIndicator() {
       private final Map<String, Set<String>> mySeenMessages = new HashMap<>();
+      @NlsSafe
       private String lastMessage = null;
       private Stack<String> myTextStack;
 
@@ -245,7 +252,7 @@ public class BuildOutputService implements BuildViewService {
         return stack;
       }
 
-      private void addIndicatorNewMessagesAsBuildOutput(String msg) {
+      private void addIndicatorNewMessagesAsBuildOutput(@Nls String msg) {
         Stack<String> textStack = getTextStack();
         if (!textStack.isEmpty() && msg.equals(textStack.peek())) {
           textStack.pop();
@@ -280,6 +287,7 @@ public class BuildOutputService implements BuildViewService {
     return contextActions;
   }
 
+  @Nls
   private static String getMessageTitle(@NotNull CompilerMessage compilerMessage) {
     String message = null;
     String[] messages = splitByLines(compilerMessage.getMessage());

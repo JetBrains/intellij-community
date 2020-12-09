@@ -81,7 +81,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
   @Override
   public PsiElement getAnchorStatementForAllInScope(PsiElement scope) {
     PsiElement anchor = RefactoringUtil.getAnchorElementForMultipleExpressions(myOccurrences, scope);
-    return anchor instanceof PsiField && !(anchor instanceof PsiEnumConstant) ? ((PsiField)anchor).getInitializer() : anchor;
+    return anchor instanceof PsiField && ((PsiField)anchor).hasInitializer() && !(anchor instanceof PsiEnumConstant) ? ((PsiField)anchor).getInitializer() : anchor;
   }
 
   private static boolean needToDeclareFinal(PsiExpression[] occurrences) {

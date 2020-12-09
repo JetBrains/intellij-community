@@ -254,7 +254,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   private fun loadUserDetails(account: GithubAccount,
                               executor: GithubApiRequestExecutor.WithTokenAuth) {
-    progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
+    progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       lateinit var user: GithubAuthenticatedUser
       lateinit var iconProvider: CachingGithubAvatarIconsProvider
 
@@ -288,7 +288,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     repositoriesByAccount.remove(account)
     errorsByAccount.remove(account)
 
-    progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
+    progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       override fun run(indicator: ProgressIndicator) {
         val repoPagesRequest = GithubApiRequests.CurrentUser.Repos.pages(account.server,
                                                                          affiliation = Affiliation.combine(Affiliation.OWNER,

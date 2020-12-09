@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.ui.EmptyIcon
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import java.awt.FlowLayout
@@ -50,6 +51,7 @@ object GHPRStatusChecksComponent {
     return panel
   }
 
+  @Nls
   private fun getChecksResultsText(failedChecks: Int, pendingChecks: Int, successfulChecks: Int): String {
     val results = mutableListOf<String>()
     failedChecks.takeIf { it > 0 }?.let {

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
 public final class DownloadUtil {
-  public static final String CONTENT_LENGTH_TEMPLATE = "${content-length}";
+  public static final @NonNls String CONTENT_LENGTH_TEMPLATE = "${content-length}";
   private static final Logger LOG = Logger.getInstance(DownloadUtil.class);
 
   /**
@@ -190,6 +191,7 @@ public final class DownloadUtil {
     }
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static String formatContentLength(int contentLengthInBytes) {
     if (contentLengthInBytes < 0) {
       return "";

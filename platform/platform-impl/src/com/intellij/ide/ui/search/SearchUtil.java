@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
@@ -242,6 +243,12 @@ public final class SearchUtil {
   }
 
   private static void processUILabel(String title, Set<? super OptionDescription> configurableOptions, String path) {
+    int headStart = title.indexOf("<head>");
+    int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
+    if (headEnd > headStart) {
+      title = title.substring(0, headStart) + title.substring(headEnd + "</head>".length());
+    }
+
     title = HTML_PATTERN.matcher(title).replaceAll(" ");
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
     title = NON_WORD_PATTERN.matcher(title).replaceAll(" ");
@@ -460,7 +467,7 @@ public final class SearchUtil {
   }
 
   public static void appendFragments(String filter,
-                                     String text,
+                                     @NlsSafe String text,
                                      @SimpleTextAttributes.StyleAttributeConstant int style,
                                      final Color foreground,
                                      final Color background,
@@ -510,7 +517,7 @@ public final class SearchUtil {
       int idx = 0;
       for (String word : selectedWords) {
         text = text.substring(idx);
-        final String before = text.substring(0, text.indexOf(word));
+        @NlsSafe final String before = text.substring(0, text.indexOf(word));
         if (before.length() > 0) {
           textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
         }
@@ -520,7 +527,7 @@ public final class SearchUtil {
                                                                                                style |
                                                                                                SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
-      final String after = text.substring(idx);
+      @NlsSafe final String after = text.substring(idx);
       if (after.length() > 0) {
         textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
       }

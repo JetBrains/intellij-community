@@ -39,11 +39,11 @@ class PyLineBreakpointTypeTest : PyTestCase() {
   // PY-16932
   fun testPutAtPythonStub() {
     val pythonFile = PyTypeShed.directory!!.findFileByRelativePath("stdlib/2/__builtin__.pyi")
-    val line = 29
+    val line = 69
 
     val document = FileDocumentManager.getInstance().getDocument(pythonFile!!)
     val range = TextRange.create(document!!.getLineStartOffset(line), document.getLineEndOffset(line))
-    assertEquals("_T = TypeVar('_T')", document.getText(range))
+    assertEquals("_T = TypeVar(\"_T\")", document.getText(range))
 
     assertFalse(PyLineBreakpointType().canPutAt(pythonFile, line, myFixture.project))
   }

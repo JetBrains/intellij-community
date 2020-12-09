@@ -10,7 +10,7 @@ Object $paramName){
    #set($i = 0)
    #foreach($field in $fields)
      #if ($i > 0)
-     &&
+     && ##
      #end
      #set($i = $i + 1)
      #if ($field.primitive)

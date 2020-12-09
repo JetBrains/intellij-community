@@ -230,12 +230,10 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   void postUpdateCurrent(Configurable configurable) {
   }
 
-  final boolean updateIfCurrent(Configurable configurable) {
-    if (myConfigurable != configurable) {
-      return false;
+  final void updateIfCurrent(Configurable configurable) {
+    if (myConfigurable == configurable) {
+      updateCurrent(configurable, false);
     }
-    updateCurrent(configurable, false);
-    return true;
   }
 
   @NotNull
@@ -300,7 +298,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       content.add(BorderLayout.CENTER, panel);
       panel.add(Box.createVerticalStrut(10));
       for (Configurable current : group.getConfigurables()) {
-        LinkLabel label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
+        //noinspection DialogTitleCapitalization (title case is OK here)
+        LinkLabel<?> label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
         label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
         panel.add(label);
       }

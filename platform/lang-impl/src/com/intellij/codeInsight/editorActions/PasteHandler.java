@@ -61,7 +61,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   @Override
   public void execute(Editor editor, DataContext dataContext, @Nullable Producer<Transferable> producer) {
     final Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(producer);
-    if (transferable == null) return;
+    if (transferable == null) {
+      myOriginalHandler.execute(editor, null, dataContext);
+      return;
+    }
 
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
 
@@ -226,7 +229,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
               break;
 
             case CodeInsightSettings.REFORMAT_BLOCK:
-              indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset()); // this is needed for example when inserting a comment before method
+              indentEachLine(project, editor, bounds.getStartOffset(),
+                             bounds.getEndOffset()); // this is needed for example when inserting a comment before method
               reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
               break;
           }

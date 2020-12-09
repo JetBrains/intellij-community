@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +32,15 @@ public abstract class FileColorManager {
   public abstract Project getProject();
 
   @Nullable
-  public abstract Color getColor(@NotNull @NonNls String name);
+  public abstract Color getColor(@NotNull @NonNls String id);
 
-  public abstract Collection<String> getColorNames();
+  @NotNull
+  @Nls
+  public abstract String getColorName(@NotNull @NonNls String id);
+
+  public abstract Collection<@NonNls String> getColorIDs();
+
+  public abstract Collection<@Nls String> getColorNames();
 
   @Nullable
   public abstract Color getFileColor(@NotNull final VirtualFile file);

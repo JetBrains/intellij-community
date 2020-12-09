@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.LightPlatform4TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
@@ -14,67 +15,66 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
-public class WSLUtilTest {
+public class WSLUtilTest extends LightPlatform4TestCase {
 
   @Nullable
-  private WSLDistribution myLegacyWSL;
+  private WSLDistribution myWSL;
+
+  public WSLUtilTest() {
+    super();
+  }
 
   @Before
-  public void setUp() throws Exception {
-    myLegacyWSL = WSLDistributionLegacy.getInstance();
+  public void setUp0() throws Exception {
+    if (WSLUtil.hasAvailableDistributions()) {
+      myWSL = WSLUtil.getAvailableDistributions().get(0);
+    }
+  }
+
+  private static void assumeWSLAvailable() {
+    assumeTrue("WSL unavailable", WSLUtil.hasAvailableDistributions());
   }
 
   @Test
   public void testWslToWinPath() {
     assumeWSLAvailable();
 
-    assertWslPath("/usr/something/include", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include", true);
-    assertWslPath("/usr/something/bin/gcc", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc", true);
+    assertWslPath("/mnt/cd", null);
+    assertWslPath("/mnt", null);
+    assertWslPath("", null);
+    assertWslPath("/mnt//test", null);
+    assertWslPath("/mnt/1/test", null);
+    assertWslPath("/mnt/c", "C:");
+    assertWslPath("/mnt/x/", "X:\\");
 
-    assertWslPath("/mnt/cd", null, false);
-    assertWslPath("/mnt", null, false);
-    assertWslPath("", null, false);
-    assertWslPath("/mnt//test", null, false);
-    assertWslPath("/mnt/1/test", null, false);
-    assertWslPath("/mnt/c", "c:", false);
-    assertWslPath("/mnt/x/", "x:\\", false);
-
-    assertWslPath("/mnt/c/temp/foo", "c:\\temp\\foo", false);
-    assertWslPath("/mnt/c/temp/KeepCase", "c:\\temp\\KeepCase", false);
-    assertWslPath("/mnt/c/name with spaces/another name with spaces", "c:\\name with spaces\\another name with spaces", false);
-    assertWslPath("/mnt/c/юникод", "c:\\юникод", false);
-  }
-
-  private void assumeWSLAvailable() {
-    assumeTrue("WSL unavailable", myLegacyWSL != null);
+    assertWslPath("/mnt/c/temp/foo", "C:\\temp\\foo");
+    assertWslPath("/mnt/c/temp/KeepCase", "C:\\temp\\KeepCase");
+    assertWslPath("/mnt/c/name with spaces/another name with spaces", "C:\\name with spaces\\another name with spaces");
+    assertWslPath("/mnt/c/юникод", "C:\\юникод");
   }
 
   @Test
   public void testWinToWslPath() {
     assumeWSLAvailable();
 
-    assertWinPath("c:\\foo", "/mnt/c/foo");
-    assertWinPath("c:\\temp\\KeepCase", "/mnt/c/temp/KeepCase");
+    assertWinPath("C:\\foo", "/mnt/c/foo");
+    assertWinPath("C:\\temp\\KeepCase", "/mnt/c/temp/KeepCase");
     assertWinPath("?:\\temp\\KeepCase", null);
     assertWinPath("c:c", null);
-
-    assertWinPath("%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include", "/usr/something/include");
-    assertWinPath("%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc", "/usr/something/bin/gcc");
   }
 
   @Test
   public void testPaths() {
     assumeWSLAvailable();
 
-    final String originalWinPath = "c:\\usr\\something\\bin\\gcc";
-    final String winPath = myLegacyWSL.getWindowsPath(myLegacyWSL.getWslPath(originalWinPath));
+    final String originalWinPath = "C:\\usr\\something\\bin\\gcc";
+    final String winPath = myWSL.getWindowsPath(myWSL.getWslPath(originalWinPath));
     assertEquals(originalWinPath, winPath);
 
-    final String originalWslPath = "/usr/bin/gcc";
-    final String wslPath = myLegacyWSL.getWslPath(myLegacyWSL.getWindowsPath(originalWslPath));
+    final String originalWslPath = "/mnt/c/usr/bin/gcc";
+    final String wslPath = myWSL.getWslPath(myWSL.getWindowsPath(originalWslPath));
     assertEquals(originalWslPath, wslPath);
   }
 
@@ -86,11 +86,11 @@ public class WSLUtilTest {
     final File winSymlink = new File(new File(FileUtil.getTempDirectory()), "sym_link");
 
     try {
-      final String file = myLegacyWSL.getWslPath(winFile.getPath());
-      final String symlink = myLegacyWSL.getWslPath(winSymlink.getPath());
+      final String file = myWSL.getWslPath(winFile.getPath());
+      final String symlink = myWSL.getWslPath(winSymlink.getPath());
       mkSymlink(file, symlink);
 
-      final String resolved = myLegacyWSL.getWindowsPath(myLegacyWSL.resolveSymlink(symlink));
+      final String resolved = myWSL.getWindowsPath(myWSL.resolveSymlink(symlink));
       assertTrue(FileUtil.exists(resolved));
       assertTrue(winFile.getPath().equalsIgnoreCase(resolved));
     }
@@ -101,22 +101,11 @@ public class WSLUtilTest {
   }
 
   private void assertWinPath(@NotNull String winPath, @Nullable String wslPath) {
-    assertEquals(wslPath, myLegacyWSL.getWslPath(prepare(winPath)));
+    assertEquals(wslPath, myWSL.getWslPath(winPath));
   }
 
-  private void assertWslPath(@NotNull String wslPath, @Nullable String winPath, boolean forLegacyWSL) {
-    String windowsPath =
-      forLegacyWSL ? myLegacyWSL.getWindowsPath(wslPath) : WSLUtil.getWindowsPath(wslPath, WSLDistribution.DEFAULT_WSL_MNT_ROOT);
-    assertEquals(prepare(winPath), windowsPath);
-  }
-
-  @Nullable
-  private static String prepare(@Nullable String path) {
-    if (path != null && path.startsWith("%LOCALAPPDATA%")) {
-      final String localappdata = System.getenv().get("LOCALAPPDATA");
-      path = localappdata + path.substring("%LOCALAPPDATA%".length());
-    }
-    return path;
+  private void assertWslPath(@NotNull String wslPath, @Nullable String winPath) {
+    assertEquals(winPath, myWSL.getWindowsPath(wslPath));
   }
 
   private void mkSymlink(@NotNull String file, @NotNull String symlink) throws Exception {
@@ -124,7 +113,7 @@ public class WSLUtilTest {
     cl.setExePath("ln");
     cl.addParameters("-s", file, symlink);
 
-    final GeneralCommandLine cmd = myLegacyWSL.patchCommandLine(cl, null, null, false);
+    final GeneralCommandLine cmd = myWSL.patchCommandLine(cl, null, null, false);
     final CapturingProcessHandler process = new CapturingProcessHandler(cmd);
     final ProcessOutput output = WSLUtil.addInputCloseListener(process).runProcess(10_000);
     assertFalse(output.isTimeout());

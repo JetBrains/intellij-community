@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.storage.*
 import org.junit.*
 import org.junit.Assert
@@ -59,7 +60,7 @@ class ImlReplaceBySourceTest {
     val configLocation = JpsProjectConfigLocation.DirectoryBased(temp.root.toVirtualFileUrl(virtualFileManager))
 
     val builder = WorkspaceEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, virtualFileManager)
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, TestErrorReporter, virtualFileManager)
 
     moduleFile.writeText("""
       <module type="JAVA_MODULE" version="4">
@@ -78,7 +79,7 @@ class ImlReplaceBySourceTest {
 
     val replaceWith = WorkspaceEntityStorageBuilder.create()
     val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
-    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, virtualFileManager)
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, TestErrorReporter, virtualFileManager)
 
     val before = builder.toStorage()
 
@@ -108,7 +109,7 @@ class ImlReplaceBySourceTest {
 
     val storageBuilder2 = WorkspaceEntityStorageBuilder.create()
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager).baseDirectoryUrlString)
-    data.loadAll(reader, storageBuilder2)
+    data.loadAll(reader, storageBuilder2, TestErrorReporter)
 
     //println(storageBuilder1.toGraphViz())
     //println(storageBuilder2.toGraphViz())

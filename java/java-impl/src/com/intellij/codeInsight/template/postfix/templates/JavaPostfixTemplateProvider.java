@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.postfix.templates.editable.*;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -18,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -28,7 +30,7 @@ import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplat
 
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
-  private static final String LANGUAGE_LEVEL_ATTR = "language-level";
+  private static final @NonNls String LANGUAGE_LEVEL_ATTR = "language-level";
 
   private final Set<PostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
     new AssertStatementPostfixTemplate(this),
@@ -86,7 +88,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Java";
+    return JavaBundle.message("postfix.template.provider.name");
   }
 
   @Override

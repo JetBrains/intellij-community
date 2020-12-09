@@ -4,16 +4,16 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
 
-public class RecaptureTypeMapper extends PsiTypeMapper {
+public final class RecaptureTypeMapper extends PsiTypeMapper {
   public static final Key<PsiElement> SELF_REFERENCE = Key.create("SELF_REFERENCE");
-  private final Set<PsiClassType> myVisited = ContainerUtil.newIdentityTroveSet();
+  private final Set<PsiClassType> myVisited = new ReferenceOpenHashSet<>();
 
   @Override
   public PsiType visitType(@NotNull PsiType type) {

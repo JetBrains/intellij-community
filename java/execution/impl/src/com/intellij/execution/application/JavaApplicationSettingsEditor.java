@@ -30,10 +30,6 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
     fragments.add(createShortenClasspath(classpathCombo, jrePath, true));
-    fragments.add(SettingsEditorFragment.createTag("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"),
-                                                   ExecutionBundle.message("group.java.options"),
-                                                   configuration -> configuration.isSwingInspectorEnabled(),
-                                                   (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
   }
 
   @Override

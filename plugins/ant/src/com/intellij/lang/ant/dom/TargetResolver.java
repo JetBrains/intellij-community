@@ -2,6 +2,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ public class TargetResolver extends PropertyProviderFinder {
   private final Result myResult;
 
   public static class Result {
-    private String myRefsString;
+    private @NonNls String myRefsString;
     private final Map<String, Pair<AntDomTarget, String>> myMap = new HashMap<>(); // declared target name -> pair[target, effective name]
     private Map<String, AntDomTarget> myVariants;
 
@@ -30,11 +31,11 @@ public class TargetResolver extends PropertyProviderFinder {
       myVariants = variants;
     }
 
-    public String getRefsString() {
+    public @NonNls String getRefsString() {
       return myRefsString;
     }
 
-    public void setRefsString(String refsString) {
+    public void setRefsString(@NonNls String refsString) {
       myRefsString = refsString;
     }
 

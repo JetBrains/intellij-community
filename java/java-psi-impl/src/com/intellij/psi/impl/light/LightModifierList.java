@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -6,10 +6,11 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class LightModifierList extends LightElement implements PsiModifierList {
@@ -24,9 +25,9 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     this(manager, JavaLanguage.INSTANCE);
   }
 
-  public LightModifierList(PsiManager manager, final Language language, String... modifiers) {
+  public LightModifierList(PsiManager manager, Language language, String... modifiers) {
     super(manager, language);
-    myModifiers = ContainerUtil.newTroveSet(modifiers);
+    myModifiers = new HashSet<>(Arrays.asList(modifiers));
   }
 
   public void addModifier(String modifier) {

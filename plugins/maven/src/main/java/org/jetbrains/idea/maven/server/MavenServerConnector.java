@@ -160,7 +160,7 @@ public class MavenServerConnector implements @NotNull Disposable {
       myMavenServer.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
     }
     catch (Exception e) {
-      throw new RuntimeException("Cannot start maven service", e);
+      throw new CannotStartServerException(e);
     }
   }
 

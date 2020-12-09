@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.space.chat.createSpaceChatPanel
+import com.intellij.space.chat.ui.createSpaceChatPanel
 import com.intellij.space.messages.SpaceBundle
 import libraries.coroutines.extra.LifetimeSource
 import javax.swing.JComponent

@@ -98,12 +98,12 @@ public final class ControlFlowFactory implements Disposable {
 
   @NotNull
   public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy) throws AnalysisCanceledException {
-    return doGetControlFlow(element, policy, new ControlFlowOptions(true, true));
+    return doGetControlFlow(element, policy, ControlFlowOptions.create(true, true, true));
   }
 
   @NotNull
   public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
-    return doGetControlFlow(element, policy, new ControlFlowOptions(true, evaluateConstantIfCondition));
+    return doGetControlFlow(element, policy, ControlFlowOptions.create(true, evaluateConstantIfCondition, true));
   }
 
   @NotNull

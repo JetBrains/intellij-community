@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.InternalActionsBundle;
@@ -87,7 +88,7 @@ import java.util.function.Supplier;
 import static com.intellij.internal.inspector.UiInspectorUtil.collectAnActionInfo;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
-public class UiInspectorAction extends ToggleAction implements DumbAware {
+public class UiInspectorAction extends ToggleAction implements DumbAware, LightEditCompatible {
   private static final String CLICK_INFO = "CLICK_INFO";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";

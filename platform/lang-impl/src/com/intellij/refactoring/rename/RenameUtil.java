@@ -295,7 +295,6 @@ public final class RenameUtil {
   }
 
   public static void renameNonCodeUsages(@NotNull Project project, NonCodeUsageInfo @NotNull [] usages) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     Map<Document, Int2ObjectOpenHashMap<UsageOffset>> docsToOffsetsMap = CollectionFactory.createSmallMemoryFootprintMap();
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (NonCodeUsageInfo usage : usages) {
@@ -309,7 +308,10 @@ public final class RenameUtil {
       if (rangeInElement == null) continue;
 
       final PsiFile containingFile = element.getContainingFile();
-      Document document = psiDocumentManager.getDocument(containingFile);
+      Document document = containingFile.getViewProvider().getDocument();
+      if (document != null) {
+        psiDocumentManager.commitDocument(document);
+      }
 
       final Segment segment = usage.getSegment();
       LOG.assertTrue(segment != null);
@@ -349,9 +351,8 @@ public final class RenameUtil {
         UsageOffset usageOffset = offsets[i];
         document.replaceString(usageOffset.startOffset, usageOffset.endOffset, usageOffset.newText);
       }
-      PsiDocumentManager.getInstance(project).commitDocument(document);
+      psiDocumentManager.commitDocument(document);
     }
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
   }
 
   public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {

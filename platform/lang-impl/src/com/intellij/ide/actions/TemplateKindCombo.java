@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -61,6 +62,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
   }
 
   @NotNull
+  @NlsSafe
   public String getSelectedName() {
     //noinspection unchecked
     final Trinity<String, Icon, String> trinity = (Trinity<String, Icon, String>)getComboBox().getSelectedItem();

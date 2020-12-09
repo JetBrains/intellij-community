@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.Editor;
@@ -112,6 +113,11 @@ class JavaCompletionPolicy extends CompletionPolicy {
       return false;
     }
     if (target instanceof PsiVariable && PsiTreeUtil.isAncestor(target, ref, false)) {
+      return false;
+    }
+    if (anno != null &&
+        ref.getParent() instanceof PsiNameValuePair &&
+        !JavaCompletionContributor.mayCompleteValueExpression(ref, anno.resolveAnnotationType())) {
       return false;
     }
     return true;

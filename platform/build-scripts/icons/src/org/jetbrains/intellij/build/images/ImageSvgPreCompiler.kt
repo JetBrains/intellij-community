@@ -1,26 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.*
-import com.intellij.util.io.exists
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
-import com.intellij.util.io.readBytes
+import com.intellij.openapi.util.text.Formats
+import com.intellij.ui.svg.ImageValue
+import com.intellij.ui.svg.MyTranscoder
+import com.intellij.ui.svg.SaxSvgDocumentFactory
+import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.util.ImageLoader
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import org.jetbrains.mvstore.MVMap
+import org.jetbrains.mvstore.MVStore
+import org.jetbrains.mvstore.type.LongDataType
+import org.xml.sax.InputSource
+import java.nio.file.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
-import java.util.stream.Collectors
 import kotlin.system.exitProcess
 
 /**
- * Works together with [SVGLoaderCache] to generate pre-cached icons
+ * Works together with [SvgCacheManager] to generate pre-cached icons
  */
-class ImageSvgPreCompiler {
+internal class ImageSvgPreCompiler {
   /// the expected scales of images that we have
   /// the macOS touch bar uses 2.5x scale
   /// the application icon (which one?) is 4x on macOS
@@ -36,80 +37,163 @@ class ImageSvgPreCompiler {
 
   private val productIconPrefixes = mutableListOf<String>()
 
-  private val generatedSize = AtomicLong(0)
   private val totalFiles = AtomicLong(0)
 
-  private data class Request(val from: Path, val to: Path)
-
-  fun addProductIconPrefix(path: String) {
-    productIconPrefixes += path.trim().replace('\\', '/').trim('/').removeSuffix(".svg")
+  fun preCompileIcons(modules: List<JpsModule>, dbFile: Path) {
+    val javaExtensionService = JpsJavaExtensionService.getInstance()
+    compileIcons(dbFile, modules.mapNotNull { javaExtensionService.getOutputDirectory(it, false)?.toPath() })
   }
 
-  fun preCompileIcons(modules: List<JpsModule>) {
-    val allRoots: List<Request> = modules
-      .mapNotNull { module ->
-        val path = JpsJavaExtensionService.getInstance().getOutputDirectory(module, false)?.toPath() ?: return@mapNotNull null
-        Request(from = path, to = path)
+  fun compileIcons(dbFile: Path, dirs: List<Path>) {
+    val storeBuilder = MVStore.Builder()
+      .autoCommitBufferSize(128_1024)
+      .backgroundExceptionHandler { _, e: Throwable -> throw e }
+      .compressionLevel(2)
+    val store = storeBuilder.truncateAndOpen(dbFile)
+    try {
+      val scaleToMap = ConcurrentHashMap<Double, MVMap<Long, ImageValue>>(2, 0.75f, 2)
+
+      val mapBuilder = MVMap.Builder<Long, ImageValue>()
+      mapBuilder.keyType(LongDataType.INSTANCE)
+      mapBuilder.valueType(ImageValue.ImageValueSerializer())
+
+      val getMapByScale: (scale: Double, isDark: Boolean) -> MutableMap<Long, ImageValue> = { k, isDark ->
+        SvgCacheManager.getMap(k, isDark, scaleToMap, store, mapBuilder)
       }
 
-    preCompileIconsImpl(allRoots)
-  }
-
-  private fun preCompileIconsImpl(requests: List<Request>) {
-    requests.stream().parallel().forEach { req ->
-      val rootDir = req.from
-      if (!rootDir.isDirectory()) return@forEach
-
-      val allIcons = Files.walk(rootDir).parallel().filter { file ->
-        file.fileName.toString().endsWith(".svg") && file.isFile()
-      }.collect(Collectors.toSet())
-
-      allIcons.parallelStream().forEach { fromFile ->
-        val relativePath = rootDir.relativize(fromFile)
-        val toFile = req.to.resolve(relativePath)
-
-        val scales = when {
-          productIconPrefixes.any { relativePath.toFile().path.startsWith(it) } -> {
-            println("INFO Generating Product Icon scales for $relativePath")
-            productIconScales
-          }
-          else -> scales
-        }
-        //TODO: use output directory
-        preCompile(fromFile, toFile, scales)
+      val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconsRobots = null)
+      dirs.stream().parallel().forEach { dir ->
+        processDir(dir, dir, 1, rootRobotData, getMapByScale)
       }
+    }
+    finally {
+      println("Saving rasterized SVG database (${totalFiles.get()} icons)...")
+      store.close()
+      println("Saved rasterized SVG database (size=${Formats.formatFileSize(Files.size(dbFile))}, path=$dbFile)")
     }
   }
 
-  fun printStats() {
-    println()
-    println("SVG generation: ${StringUtil.formatFileSize(generatedSize.get())} bytes in total in ${totalFiles.get()} files(s)")
-  }
-
-  private fun preCompile(svgFile: Path, targetFileBase: Path, scales: DoubleArray) {
-    if (!svgFile.fileName.toString().endsWith(".svg")) {
+  private fun processDir(dir: Path,
+                         rootDir: Path,
+                         level: Int,
+                         rootRobotData: IconRobotsData,
+                         getMapByScale: (scale: Double, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
+    val stream = try {
+      Files.newDirectoryStream(dir)
+    }
+    catch (e: NotDirectoryException) {
+      return
+    }
+    catch (e: NoSuchFileException) {
       return
     }
 
+    var svgFiles: MutableList<Path>? = null
+
+    stream.use {
+      val robotData = rootRobotData.fork(dir, dir)
+      for (file in stream) {
+        if (level == 1) {
+          if (isBlacklistedTopDirectory(file.fileName.toString())) {
+            continue
+          }
+        }
+
+        if (robotData.isSkipped(file)) {
+          continue
+        }
+
+        if (file.toString().endsWith(".svg")) {
+          if (svgFiles == null) {
+            svgFiles = ArrayList()
+          }
+          svgFiles!!.add(file)
+        }
+        else {
+          processDir(file, rootDir, level + 1, rootRobotData.fork(file, rootDir), getMapByScale)
+        }
+      }
+    }
+
+    val list = svgFiles ?: return
+    list.sort()
+    processSvgFiles(list, rootDir, getMapByScale)
+  }
+
+  private fun processSvgFiles(list: List<Path>,
+                              rootDir: Path,
+                              getMapByScale: (scale: Double, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
+    val svgDocumentFactory = SaxSvgDocumentFactory()
+    var i = 0
+    while (i < list.size) {
+      var file = list[i]
+      val relativePath = rootDir.relativize(file)
+      val scales = when {
+        productIconPrefixes.any { relativePath.toString().startsWith(it) } -> {
+          println("INFO Generating Product Icon scales for $relativePath")
+          productIconScales
+        }
+        else -> scales
+      }
+
+      var x2: Path? = null
+      val nextIndex = i + 1
+      if (nextIndex < list.size && list[nextIndex].toString().endsWith("@2x.svg")) {
+        x2 = list[nextIndex]
+        i++
+      }
+      else if (file.toString().endsWith("@2x_dark.svg")) {
+        // @2x_dark.svg > _dark.svg, so use prev
+        x2 = file
+        if (nextIndex == list.size || list[nextIndex].fileName.toString() != x2.fileName.toString().replace("@2x", "")) {
+          throw IllegalStateException("No regular icon for 2x: $file")
+        }
+
+        file = list[nextIndex]
+        i++
+      }
+
+      preCompile(file, x2, svgDocumentFactory, scales, getMapByScale)
+
+      i++
+    }
+  }
+
+  private fun preCompile(svgFile: Path,
+                         x2: Path?,
+                         svgDocumentFactory: SaxSvgDocumentFactory,
+                         scales: DoubleArray,
+                         getMapByScale: (scale: Double, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
+    val data = loadAndNormalizeSvgFile(svgFile)
     totalFiles.incrementAndGet()
 
-    val data = svgFile.readBytes()
-
-    if (data.toString(Charsets.UTF_8).contains("data:image")) {
-      println("WARN: Image $svgFile uses data urls and WILL BE SKIPPED")
+    if (data.contains("data:image")) {
+      println("WARN: image $svgFile uses data urls and will be skipped")
       return
     }
 
+    // key is the same for all variants
+    val imageKey = getImageKey(data.toByteArray())
+    val dimension = ImageLoader.Dimension2DDouble(0.0, 0.0)
     for (scale in scales) {
-      val dim = ImageLoader.Dimension2DDouble(0.0, 0.0)
-      val image = SVGLoader.loadWithoutCache(svgFile.toUri().toURL(), data.inputStream(), scale, dim)
+      dimension.setSize(0.0, 0.0)
 
-      val targetFile = Paths.get(targetFileBase.toString() + SVGLoaderPrebuilt.getPreBuiltImageURLSuffix(scale))
-      SVGLoaderCacheIO.writeImageFile(targetFile, image, dim)
+      val svgPath = svgFile.toString()
+      val inputSource = if (scale >= 2 && x2 != null) InputSource(Files.readAllBytes(x2).inputStream()) else InputSource(data.reader())
+      inputSource.systemId = svgPath
+      val document = svgDocumentFactory.createDocument(svgPath, inputSource)
+      val image = MyTranscoder.createImage(scale, document, dimension)
 
-      val length = Files.size(targetFile)
-      require(length > 0) { "File ${targetFile} is empty!" }
-      generatedSize.addAndGet(length)
+      val map = getMapByScale(scale, svgPath.endsWith("_dark.svg"))
+      val newValue = SvgCacheManager.writeImage(image, dimension)
+      val oldValue = map.putIfAbsent(imageKey, newValue)
+      if (oldValue != null) {
+        if (oldValue == newValue) {
+          // duplicated images - not yet clear should be forbid it or not
+          return
+        }
+        throw IllegalStateException("Hash collision for key $svgFile")
+      }
     }
   }
 
@@ -119,43 +203,38 @@ class ImageSvgPreCompiler {
       try {
         mainImpl(args)
       }
-      catch (t: Throwable) {
-        System.err.println("Unexpected crash: ${t.message}")
-        t.printStackTrace(System.err)
+      catch (e: Throwable) {
+        System.err.println("Unexpected crash: ${e.message}")
+        e.printStackTrace(System.err)
         exitProcess(1)
       }
+
+      exitProcess(0)
     }
 
     private fun mainImpl(args: Array<String>) {
       println("Pre-building SVG images...")
       if (args.isEmpty()) {
-        println("Usage: <tool> tasks_file product_icons*")
+        println("Usage: <tool> dbFile tasks_file product_icons*")
         println("")
-        println("tasks_file: list of paths, every path on a new line: {<input dir>\\n<output dir>\\n}+")
+        println("tasks_file: list of paths, every path on a new line: {<input dir>\\n}+")
         println("")
         exitProcess(1)
       }
 
       System.setProperty("java.awt.headless", "true")
 
-      val argsFile = args.firstOrNull() ?: error("only one parameter is supported")
-      val requests = File(argsFile).readLines().chunked(2).map { block ->
-        if (block.size != 2) error("Invalid args format. Two paths were expected but was: $block")
+      val dbFile = args.getOrNull(0) ?: error("only one parameter is supported")
+      val argsFile = args.getOrNull(1) ?: error("only one parameter is supported")
+      val dirs = Files.readAllLines(Paths.get(argsFile)).map { Paths.get(it) }
 
-        val (from, to) = block
-        val fromFile = Paths.get(from)
-        val toFile = Paths.get(to)
-
-        Request(from = fromFile, to = toFile)
-      }.toList()
-
-      val productIcons = args.drop(1).toSortedSet()
+      val productIcons = args.drop(2).toSortedSet()
       println("Expecting product icons: $productIcons")
 
       val compiler = ImageSvgPreCompiler()
-      productIcons.forEach(compiler::addProductIconPrefix)
-      compiler.preCompileIconsImpl(requests)
-      compiler.printStats()
+      // todo
+      //productIcons.forEach(compiler::addProductIconPrefix)
+      compiler.compileIcons(Paths.get(dbFile), dirs)
     }
   }
 }

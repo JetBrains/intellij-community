@@ -14,7 +14,7 @@ import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
 class OptionListCellRenderer<T>(private val optionInfoProvider: (T) -> OptionInfo<T>,
-                                private val selectedOptionsProvider: () -> Set<T>,
+                                private val optionSelectedPredicate: (T) -> Boolean,
                                 private val optionSelectablePredicate: (T) -> Boolean) : ListCellRenderer<T> {
 
   private val iconLabel = JLabel()
@@ -28,8 +28,7 @@ class OptionListCellRenderer<T>(private val optionInfoProvider: (T) -> OptionInf
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val selectedOptions = selectedOptionsProvider()
-    val optionSelected = value in selectedOptions
+    val optionSelected = optionSelectedPredicate(value)
     val optionSelectable = optionSelectablePredicate(value)
 
     panel.apply {

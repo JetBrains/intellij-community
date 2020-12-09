@@ -17,7 +17,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
+
 import java.awt.*;
 import java.util.function.Supplier;
 import javax.swing.*;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
-  @NonNls public static String TAB_NAME = "Log"; // used as tab id, not user-visible
+  @NonNls public static final String TAB_NAME = "Log"; // used as tab id, not user-visible
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
@@ -90,7 +90,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
       myUi = logManager.createLogUi(VcsLogProjectTabsProperties.MAIN_LOG_ID, VcsLogManager.LogWindowKind.TOOL_WINDOW, false);
-      VcsLogPanel panel = createPanel(logManager, myUi);
+      VcsLogPanel panel = new VcsLogPanel(logManager, myUi);
       myContainer.add(panel, BorderLayout.CENTER);
       DataManager.registerDataProvider(myContainer, panel);
 
@@ -106,11 +106,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     if (myContent != null && myUi != null) {
       myContent.setDisplayName(VcsLogTabsManager.generateDisplayName(myUi));
     }
-  }
-
-  @NotNull
-  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager, @NotNull VcsLogUiEx ui) {
-    return new VcsLogPanel(logManager, ui);
   }
 
   @RequiresEdt

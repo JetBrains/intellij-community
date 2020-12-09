@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   private static final Logger LOG = Logger.getInstance(LineMarkerInfo.class);
 
   protected final Icon myIcon;
-  private final SmartPsiElementPointer<T> elementRef;
+  private final @NotNull SmartPsiElementPointer<? extends T> elementRef;
   public final int startOffset;
   public final int endOffset;
   public Color separatorColor;
@@ -127,7 +128,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     this(createElementRef(element, range), range, icon, accessibleNameProvider, tooltipProvider, navHandler, alignment);
   }
 
-  protected LineMarkerInfo(@NotNull SmartPsiElementPointer<T> elementRef,
+  protected LineMarkerInfo(@NotNull SmartPsiElementPointer<? extends T> elementRef,
                            @NotNull TextRange range,
                            @Nullable Icon icon,
                            @Nullable Supplier<@Nls @NotNull String> accessibleNameProvider,
@@ -157,6 +158,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
     this(element, range, icon, null, tooltipProvider, navHandler, alignment);
+    DeprecatedMethodException.report("Please use LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier) instead");
   }
 
   /**
@@ -171,6 +173,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
     this(element, new TextRange(startOffset, startOffset), icon, null, tooltipProvider, navHandler, alignment);
+    DeprecatedMethodException.report("Please use LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier) instead");
   }
 
   /**
@@ -184,6 +187,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
     this(element, new TextRange(startOffset, startOffset), icon, null, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
+    DeprecatedMethodException.report("Please use LineMarkerInfo(T, TextRange, Icon, Function, GutterIconNavigationHandler, Alignment, Supplier) instead");
   }
 
   public Icon getIcon() {

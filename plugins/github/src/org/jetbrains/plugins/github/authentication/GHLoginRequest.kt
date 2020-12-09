@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.authentication
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import git4idea.DialogManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.createAccount
@@ -12,6 +13,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import java.awt.Component
 
 internal class GHLoginRequest(
+  @NlsContexts.DialogMessage
   val text: String? = null,
   val error: Throwable? = null,
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
@@ -29,7 +30,7 @@ public class SelectSameTypeAction extends AnAction {
   private final EditableArea myArea;
 
   public SelectSameTypeAction(EditableArea area) {
-    super("Select Same Type", "Select Same Type", null);
+    super(DesignerBundle.message("action.select.same.type.text"), DesignerBundle.message("action.select.same.type.description"), null);
     myArea = area;
   }
 

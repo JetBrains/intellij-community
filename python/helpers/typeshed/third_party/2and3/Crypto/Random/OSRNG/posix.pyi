@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 from .rng_base import BaseRNG
 
 class DevURandomRNG(BaseRNG):

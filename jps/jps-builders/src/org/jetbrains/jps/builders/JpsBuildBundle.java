@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders;
 
-import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.jps.api.JpsDynamicBundle;
 
 import java.util.function.Supplier;
 
-public class JpsBuildBundle extends AbstractBundle {
+public class JpsBuildBundle extends JpsDynamicBundle {
   @NonNls private static final String BUNDLE = "messages.JpsBuildBundle";
   private static final JpsBuildBundle INSTANCE = new JpsBuildBundle();
 

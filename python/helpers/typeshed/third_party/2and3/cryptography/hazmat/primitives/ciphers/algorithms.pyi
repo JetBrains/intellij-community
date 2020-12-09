@@ -1,7 +1,7 @@
+from typing import FrozenSet
+
 from cryptography.hazmat.primitives.ciphers import BlockCipherAlgorithm, CipherAlgorithm
 from cryptography.hazmat.primitives.ciphers.modes import ModeWithNonce
-
-from typing import FrozenSet
 
 class AES(BlockCipherAlgorithm, CipherAlgorithm):
     def __init__(self, key: bytes) -> None: ...

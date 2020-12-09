@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,6 +32,7 @@ public interface GenericValue<T> {
    */
   @TagValue
   @Nullable
+  @NlsSafe
   String getStringValue();
 
   /**
@@ -39,5 +41,4 @@ public interface GenericValue<T> {
    */
   @Nullable
   T getValue();
-
 }

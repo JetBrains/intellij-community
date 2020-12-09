@@ -44,7 +44,7 @@ public final class DeferredIconImpl<T> extends JBCachingScalableIcon<DeferredIco
   private final Icon myDelegateIcon;
   @NotNull
   private volatile Icon myScaledDelegateIcon;
-  private Function<? super T, ? extends Icon> myEvaluator;
+  private java.util.function.Function<? super T, ? extends Icon> myEvaluator;
   private volatile boolean myIsScheduled;
   private final T myParam;
   private static final Icon EMPTY_ICON = EmptyIcon.create(16).withIconPreScaled(false);
@@ -91,19 +91,15 @@ public final class DeferredIconImpl<T> extends JBCachingScalableIcon<DeferredIco
     return this;
   }
 
-  private static class Holder {
-    private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
-  }
-
-  DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<? super T, ? extends Icon> evaluator, @NotNull IconListener<T> listener, boolean autoUpdatable) {
+  DeferredIconImpl(Icon baseIcon, T param, @NotNull java.util.function.Function<? super T, ? extends Icon> evaluator, @NotNull IconListener<T> listener, boolean autoUpdatable) {
     this(baseIcon, param, true, evaluator, listener, autoUpdatable);
   }
 
   public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator) {
-    this(baseIcon, param, needReadAction, evaluator, null, false);
+    this(baseIcon, param, needReadAction, t -> evaluator.fun(t), null, false);
   }
 
-  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator, @Nullable IconListener<T> listener, boolean autoUpdatable) {
+  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, @NotNull java.util.function.Function<? super T, ? extends Icon> evaluator, @Nullable IconListener<T> listener, boolean autoUpdatable) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myScaledDelegateIcon = myDelegateIcon;
@@ -276,13 +272,13 @@ public final class DeferredIconImpl<T> extends JBCachingScalableIcon<DeferredIco
   public Icon evaluate() {
     Icon result;
     try {
-      result = nonNull(myEvaluator.fun(myParam));
+      result = nonNull(myEvaluator.apply(myParam));
     }
     catch (IndexNotReadyException e) {
       result = EMPTY_ICON;
     }
 
-    if (Holder.CHECK_CONSISTENCY) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       checkDoesntReferenceThis(result);
     }
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -10,10 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.InputEvent;
 
 public interface ListPopupStepEx<T> extends ListPopupStep<T> {
-  PopupStep onChosen(T selectedValue, boolean finalChoice, @MagicConstant(flagsFromClass = InputEvent.class) int eventModifiers);
+  PopupStep<?> onChosen(T selectedValue, boolean finalChoice, @MagicConstant(flagsFromClass = InputEvent.class) int eventModifiers);
 
-  @Nullable @NlsContexts.Tooltip
-  String getTooltipTextFor(T value);
+  @NlsContexts.Tooltip @Nullable String getTooltipTextFor(T value);
   
   void setEmptyText(@NotNull StatusText emptyText);
 

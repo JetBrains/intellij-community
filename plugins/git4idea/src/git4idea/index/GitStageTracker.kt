@@ -185,6 +185,10 @@ class GitStageTracker(val project: Project) : Disposable {
       return statuses.values.any { line -> line.getStagedStatus() != null }
     }
 
+    fun hasChangedFiles(): Boolean {
+      return statuses.values.any { line -> line.isTracked() }
+    }
+
     fun isEmpty(): Boolean {
       return statuses.isEmpty()
     }
@@ -202,8 +206,12 @@ class GitStageTracker(val project: Project) : Disposable {
   data class State(val rootStates: Map<VirtualFile, RootState>) {
     val stagedRoots: Set<VirtualFile>
       get() = rootStates.filterValues(RootState::hasStagedFiles).keys
+    val changedRoots: Set<VirtualFile>
+      get() = rootStates.filterValues(RootState::hasChangedFiles).keys
 
     fun hasStagedRoots(): Boolean = rootStates.any { it.value.hasStagedFiles() }
+
+    fun hasChangedRoots(): Boolean = rootStates.any { it.value.hasChangedFiles() }
 
     internal fun updatedWith(root: VirtualFile, newState: RootState): State {
       val result = mutableMapOf<VirtualFile, RootState>()

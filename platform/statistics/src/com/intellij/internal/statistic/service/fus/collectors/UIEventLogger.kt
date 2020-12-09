@@ -27,7 +27,9 @@ enum class UIEventId {
   IncrementalSearchKeyTyped,
   IncrementalSearchCancelled,
   IncrementalSearchNextPrevItemSelected,
-  ShowUsagesPopupShowSettings
+  ShowUsagesPopupShowSettings,
+  ToolWindowsWidgetPopupShown,
+  ToolWindowsWidgetPopupClicked
 }
 
 fun logUIEvent(eventId: UIEventId) {

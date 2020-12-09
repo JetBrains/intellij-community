@@ -15,8 +15,15 @@
  */
 package com.intellij.lang;
 
+import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
+/**
+ * @deprecated use {@link com.intellij.lexer.HtmlEmbeddedContentSupport#getScriptTagEmbedmentInfo()} API
+ */
+@Deprecated
 public class LanguageHtmlScriptContentProvider extends LanguageExtension<HtmlScriptContentProvider> {
   public final static LanguageHtmlScriptContentProvider INSTANCE = new LanguageHtmlScriptContentProvider();
 
@@ -26,5 +33,9 @@ public class LanguageHtmlScriptContentProvider extends LanguageExtension<HtmlScr
 
   public static HtmlScriptContentProvider getScriptContentProvider(@NotNull Language language) {
     return INSTANCE.forLanguage(language);
+  }
+
+  public static @NotNull List<KeyedLazyInstance<HtmlScriptContentProvider>> getAllProviders() {
+    return INSTANCE.getExtensions();
   }
 }

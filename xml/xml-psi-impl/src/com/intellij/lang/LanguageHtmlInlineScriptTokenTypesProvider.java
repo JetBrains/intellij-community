@@ -17,6 +17,10 @@ package com.intellij.lang;
 
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated in favor of {@link com.intellij.lexer.HtmlEmbeddedContentSupport} API.
+ */
+@Deprecated
 public class LanguageHtmlInlineScriptTokenTypesProvider extends LanguageExtension<HtmlInlineScriptTokenTypesProvider> {
   public final static LanguageHtmlInlineScriptTokenTypesProvider INSTANCE = new LanguageHtmlInlineScriptTokenTypesProvider();
 

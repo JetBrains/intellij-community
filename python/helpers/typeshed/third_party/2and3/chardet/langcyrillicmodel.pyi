@@ -1,4 +1,5 @@
 from typing import Tuple
+
 from . import _LangModelType
 
 KOI8R_char_to_order_map: Tuple[int, ...]

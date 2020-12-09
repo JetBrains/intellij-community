@@ -42,6 +42,7 @@ import java.util.List;
  *
  * @apiUse DiffRequestExample
  */
+@SuppressWarnings("HardCodedStringLiteral")
 final class DiffHttpService extends RestService {
   @NotNull
   @Override

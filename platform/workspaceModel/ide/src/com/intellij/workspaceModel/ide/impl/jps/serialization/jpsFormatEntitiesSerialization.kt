@@ -28,7 +28,8 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
-  fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager)
+  fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, errorReporter: ErrorReporter,
+                   virtualFileManager: VirtualFileUrlManager)
   fun saveEntities(mainEntities: Collection<E>, entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>, writer: JpsFileContentWriter)
 
   val additionalEntityTypes: List<Class<out WorkspaceEntity>>
@@ -96,10 +97,11 @@ interface JpsProjectSerializers {
     }
   }
 
-  fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder)
+  fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter)
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
-                             reader: JpsFileContentReader): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder>
+                             reader: JpsFileContentReader,
+                             errorReporter: ErrorReporter): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder>
 
   @TestOnly
   fun saveAllEntities(storage: WorkspaceEntityStorage, writer: JpsFileContentWriter)
@@ -107,6 +109,10 @@ interface JpsProjectSerializers {
   fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter)
   
   fun getAllModulePaths(): List<ModulePath>
+}
+
+interface ErrorReporter {
+  fun reportError(message: String, file: VirtualFileUrl)
 }
 
 data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>,

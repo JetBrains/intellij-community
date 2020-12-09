@@ -37,12 +37,13 @@ import java.util.*;
  * @author Bip Thelin
  * @author Dan Sandberg
  */
-@SuppressWarnings("SpellCheckingInspection")
+@SuppressWarnings({"SpellCheckingInspection", "HardCodedStringLiteral"})
 public final class Strftime {
   private static final Map<String, String> translate = new HashMap<>();
   private final SimpleDateFormat simpleDateFormat;
 
   static {
+    //noinspection HardCodedStringLiteral
     translate.put("a", "EEE");
     translate.put("A", "EEEE");
     translate.put("b", "MMM");

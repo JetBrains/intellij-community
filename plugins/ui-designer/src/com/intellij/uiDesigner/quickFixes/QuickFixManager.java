@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -291,7 +292,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private static class SuppressFix extends QuickFix {
     private final String myInspectionId;
 
-    SuppressFix(final GuiEditor editor, final String name, final String inspectionId, final RadComponent component) {
+    SuppressFix(final GuiEditor editor, final @IntentionName String name, final String inspectionId, final RadComponent component) {
       super(editor, name, component);
       myInspectionId = inspectionId;
     }

@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
@@ -47,6 +48,7 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
     aClass.add(field);
   }
 
+  @NonNls
   public static String generateSerialVersionUIDFieldText(long serialVersionUID) {
     return "private static final long serialVersionUID = " + serialVersionUID + "L;";
   }

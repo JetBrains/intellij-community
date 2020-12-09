@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.tree;
 
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.Pair;
@@ -23,14 +24,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
+import static com.intellij.execution.wsl.WSLUtil.getExistingUNCRoots;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
@@ -131,7 +135,6 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
   @Override
   public final boolean isLeaf(Object object) {
     if (object instanceof Node) {
-      assert object != state;
       Entry<Node> entry = getEntry((Node)object, false);
       if (entry != null) return entry.isLeaf();
     }
@@ -154,6 +157,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
   }
 
   private boolean hasEntry(VirtualFile file) {
+    if (file == null) return false;
     if (roots != null) {
       for (Root root : roots) {
         Entry<Node> entry = root.tree.findEntry(file);
@@ -312,10 +316,14 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     }
 
     private static List<VirtualFile> getSystemRoots() {
-      return StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false)
-               .map(root -> findFile(root.toAbsolutePath().toString()))
-               .filter(State::isValid)
-               .collect(toList());
+      List<File> files = new ArrayList<>();
+      for (Path path : FileSystems.getDefault().getRootDirectories()) {
+        files.add(path.toFile());
+      }
+      if (Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
+        files.addAll(getExistingUNCRoots());
+      }
+      return files.stream().map(root -> findFile(root.getAbsolutePath())).filter(State::isValid).collect(toList());
     }
 
     @Override

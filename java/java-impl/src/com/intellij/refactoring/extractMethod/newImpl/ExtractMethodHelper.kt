@@ -5,11 +5,13 @@ import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
+import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
@@ -18,8 +20,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
+import java.util.LinkedHashSet
 
 object ExtractMethodHelper {
 
@@ -188,5 +192,41 @@ object ExtractMethodHelper {
       .flatMap { PsiTreeUtil.findChildrenOfAnyType(it, false, PsiJavaCodeReferenceElement::class.java).asSequence() }
       .mapNotNull { reference -> reference.resolve() }
       .any{ referencedElement -> referencedElement.textRange in scopeRange }
+  }
+
+  fun guessMethodName(options: ExtractOptions): List<String> {
+    val project = options.project
+    val initialMethodNames: MutableSet<String> = LinkedHashSet()
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project) as JavaCodeStyleManagerImpl
+    val returnType = options.dataOutput.type
+
+    val expression = options.elements.singleOrNull() as? PsiExpression
+    if (expression != null || returnType !is PsiPrimitiveType) {
+      codeStyleManager.suggestVariableName(VariableKind.FIELD, null, expression, returnType).names
+        .forEach { name ->
+          initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
+        }
+    }
+
+    val outVariable = (options.dataOutput as? VariableOutput)?.variable
+    if (outVariable != null) {
+      val outKind = codeStyleManager.getVariableKind(outVariable)
+      val propertyName = codeStyleManager.variableNameToPropertyName(outVariable.name!!, outKind)
+      val names = codeStyleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, outVariable.type).names
+      names.forEach { name ->
+        initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
+      }
+    }
+
+    val normalizedType = (returnType as? PsiEllipsisType)?.toArrayType() ?: returnType
+    val field = JavaPsiFacade.getElementFactory(project).createField("fieldNameToReplace", normalizedType)
+    fun suggestGetterName(name: String): String? {
+      field.name = name
+      return GenerateMembersUtil.suggestGetterName(field)
+    }
+
+    val getters: List<String> = initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
+      .mapNotNull { propertyName -> suggestGetterName(propertyName) }
+    return getters
   }
 }

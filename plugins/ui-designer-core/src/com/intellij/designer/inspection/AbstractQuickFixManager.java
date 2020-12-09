@@ -297,7 +297,8 @@ public abstract class AbstractQuickFixManager {
   }
 
   private Runnable getQuickFixRunnable(final QuickFix value) {
-    return () -> myDesigner.getToolProvider().executeWithReparse(() -> ApplicationManager.getApplication().runWriteAction(value), "Run '" + value.getName() + "' QuickFix");
+    return () -> myDesigner.getToolProvider().executeWithReparse(() -> ApplicationManager.getApplication().runWriteAction(value),
+                                                                 DesignerBundle.message("run.0.quickfix", value.getName()));
   }
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(4, 4, 4, 4);

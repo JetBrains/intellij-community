@@ -10,6 +10,7 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -33,11 +34,11 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private JPanel mySdkEditorPanel;
   private JCheckBox myRunEnhancerOnMakeCheckBox;
   private JPanel myFilesToEnhancePanel;
-  private final JList myFilesList;
-  private JComboBox myPersistenceApiComboBox;
+  private final JList<String> myFilesList;
+  private JComboBox<String> myPersistenceApiComboBox;
   private JPanel myFilesPanel;
   private final AppEngineSdkEditor mySdkEditor;
-  private final DefaultListModel myFilesListModel;
+  private final DefaultListModel<@NlsSafe String> myFilesListModel;
 
   public AppEngineFacetEditor(AppEngineFacetConfiguration facetConfiguration, FacetEditorContext context, FacetValidatorsManager validatorsManager) {
     myFacetConfiguration = facetConfiguration;
@@ -61,8 +62,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
       }
     });
 
-    myFilesListModel = new DefaultListModel();
-    myFilesList = new JBList(myFilesListModel);
+    myFilesListModel = new DefaultListModel<>();
+    myFilesList = new JBList<>(myFilesListModel);
     myFilesList.setCellRenderer(new FilesListCellRenderer());
     myFilesPanel.add(ToolbarDecorator.createDecorator(myFilesList)
                        .setAddAction(new AnActionButtonRunnable() {
@@ -109,7 +110,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private List<String> getConfiguredFiles() {
     final List<String> files = new ArrayList<>();
     for (int i = 0; i < myFilesListModel.getSize(); i++) {
-      files.add((String)myFilesListModel.getElementAt(i));
+      files.add(myFilesListModel.getElementAt(i));
     }
     return files;
   }
@@ -134,8 +135,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     myPersistenceApiComboBox.setSelectedItem(myFacetConfiguration.getPersistenceApi().getDisplayName());
   }
 
-  private void fillFilesList(final List<String> paths) {
-    for (String path : paths) {
+  private void fillFilesList(final List<@NlsSafe String> paths) {
+    for (@NlsSafe String path : paths) {
       myFilesListModel.addElement(path);
     }
   }

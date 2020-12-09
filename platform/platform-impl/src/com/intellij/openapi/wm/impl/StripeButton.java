@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
@@ -56,16 +55,15 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
 
     addActionListener(e -> {
       String id = toolWindow.getId();
+      ToolWindowManagerImpl manager = toolWindow.getToolWindowManager();
       if (myPressedWhenSelected) {
-        toolWindow.getToolWindowManager().hideToolWindow(id, false);
+        manager.hideToolWindow(id, false, true, ToolWindowEventSource.StripeButton);
       }
       else {
-        toolWindow.getToolWindowManager().activated$intellij_platform_ide_impl(toolWindow);
+        manager.activated$intellij_platform_ide_impl(toolWindow, ToolWindowEventSource.StripeButton);
       }
 
       myPressedWhenSelected = false;
-      //noinspection SpellCheckingInspection
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + id);
     });
     addMouseListener(new PopupHandler() {
       @Override

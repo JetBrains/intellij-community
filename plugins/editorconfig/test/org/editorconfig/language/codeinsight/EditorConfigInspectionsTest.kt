@@ -61,6 +61,25 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   // Bugfixes
 
   fun testIncompleteHeader() = doTest(EditorConfigNoMatchingFilesInspection::class)
+  fun testReSharperKeys() = doTest(EditorConfigKeyCorrectnessInspection::class)
+  fun testMsFormattingKeys() = doTest(EditorConfigKeyCorrectnessInspection::class)
+  fun testMsFormattingValues() = doTest(EditorConfigValueCorrectnessInspection::class)
+  fun testSampleFromMicrosoftWebPage() = doTest(
+    EditorConfigKeyCorrectnessInspection::class,
+    EditorConfigMissingRequiredDeclarationInspection::class,
+    EditorConfigListAcceptabilityInspection::class,
+    EditorConfigMissingRequiredDeclarationInspection::class,
+    EditorConfigOptionRedundancyInspection::class,
+    EditorConfigPairAcceptabilityInspection::class,
+    EditorConfigReferenceCorrectnessInspection::class,
+    EditorConfigRootDeclarationCorrectnessInspection::class,
+    EditorConfigShadowedOptionInspection::class,
+    EditorConfigShadowingOptionInspection::class,
+    EditorConfigUnexpectedCommaInspection::class,
+    EditorConfigUnusedDeclarationInspection::class,
+    EditorConfigValueCorrectnessInspection::class,
+    EditorConfigValueUniquenessInspection::class
+  )
 
   // Utils
 

@@ -1,15 +1,15 @@
 Index: 1.txt
 ===================================================================
---- 1.txt	(revision before)
-+++ 1.txt	(revision after)
+--- a/1.txt	(revision before)
++++ b/1.txt	(revision after)
 @@ -1,2 +1,2 @@
 -old
 +new
  unchanged
 Index: 2.txt
 ===================================================================
---- 2.txt	(revision before)
-+++ 2.txt	(revision after)
+--- a/2.txt	(revision before)
++++ b/2.txt	(revision after)
 @@ -1,2 +1,2 @@
  unchanged1
 -new

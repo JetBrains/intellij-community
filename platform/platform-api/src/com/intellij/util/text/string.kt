@@ -2,10 +2,11 @@
 package com.intellij.util.text
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import org.jetbrains.annotations.Contract
 
 @Contract(pure = true)
-fun String?.nullize(nullizeSpaces: Boolean = false): String? = StringUtil.nullize(this, nullizeSpaces)
+fun String?.nullize(nullizeSpaces: Boolean = false): String? = Strings.nullize(this, nullizeSpaces)
 
 fun String.trimMiddle(maxLength: Int, useEllipsisSymbol: Boolean = true): String {
   return StringUtil.shortenTextWithEllipsis(this, maxLength, maxLength shr 1, useEllipsisSymbol)

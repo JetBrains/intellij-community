@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
@@ -198,8 +198,8 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
         is SdkListItem.SdkReferenceItem -> "[reference] ${element.name}"
         is SdkListItem.SdkItem -> "[sdk] ${element.sdk.name}"
         is SdkListItem.SuggestedItem -> "[suggested] ${element.homePath}"
-        is SdkListItem.ActionItem -> "[action] ${element.myRole} ${element.myAction.sdkType.name}"
-        is SdkListItem.GroupItem -> "[group] {${element.mySubItems.joinToString { dumpToString(it) }}}"
+        is SdkListItem.ActionItem -> "[action] ${element.role} ${element.action.sdkType.name}"
+        is SdkListItem.GroupItem -> "[group] {${element.subItems.joinToString { dumpToString(it) }}}"
         null -> "null"
         else -> element::class.java.name
       }

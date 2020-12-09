@@ -38,6 +38,7 @@ import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.PaintIcon
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
@@ -155,7 +156,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
   private var table: JTable? = null
 
   private fun copy(list: List<FileColorConfiguration>) = list.map { copy(it) }
-  private fun copy(configuration: FileColorConfiguration) = FileColorConfiguration(configuration.scopeName, configuration.colorName)
+  private fun copy(configuration: FileColorConfiguration) = FileColorConfiguration(configuration.scopeName, configuration.colorID)
 
   private fun selectRow(row: Int) {
     val table = table ?: return
@@ -192,7 +193,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
       else -> message("settings.file.colors.dialog.warning.local", presentableName)
     }
     val configuration = list[index]
-    val update = when (configuration.colorName == colorName) {
+    val update = when (configuration.colorID == colorName) {
       true -> {
         Messages.YES != Messages.showYesNoDialog(
           parent,
@@ -201,7 +202,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
           Messages.getWarningIcon())
       }
       else -> {
-        val oldColor = manager.getColor(configuration.colorName)?.let { toHex(it) } ?: ""
+        val oldColor = manager.getColor(configuration.colorID)?.let { toHex(it) } ?: ""
         val newColor = manager.getColor(colorName)?.let { toHex(it) } ?: ""
         Messages.OK == Messages.showOkCancelDialog(
           parent,
@@ -215,7 +216,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
       }
     }
     if (!update) return false
-    configuration.colorName = colorName
+    configuration.colorID = colorName
     val row = if (toSharedList) local.size + index else index
     fireTableRowsUpdated(row, row)
     selectRow(row)
@@ -234,7 +235,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     onRowInserted(0)
   }
 
-  internal fun getColors(): List<String> {
+  internal fun getColors(): List<@Nls String> {
     val list = mutableListOf<String>()
     list += manager.colorNames
     list += message("settings.file.color.custom.name")
@@ -266,7 +267,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     when (column) {
       1 -> {
         val configuration = getConfiguration(row) ?: return
-        configuration.colorName = resolveCustomColor(value) ?: return
+        configuration.colorID = resolveCustomColor(value) ?: return
         fireTableCellUpdated(row, column)
       }
       2 -> {
@@ -274,14 +275,14 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
         if (index < 0) {
           val configuration = local.removeAt(row)
           fireTableRowsDeleted(row, row)
-          if (resolveDuplicate(configuration.scopeName, configuration.colorName, true)) return
+          if (resolveDuplicate(configuration.scopeName, configuration.colorID, true)) return
           shared.add(0, configuration)
           onRowInserted(local.size)
         }
         else if (index < shared.size) {
           val configuration = shared.removeAt(index)
           fireTableRowsDeleted(row, row)
-          if (resolveDuplicate(configuration.scopeName, configuration.colorName, false)) return
+          if (resolveDuplicate(configuration.scopeName, configuration.colorID, false)) return
           local.add(configuration)
           onRowInserted(local.size - 1)
         }
@@ -408,8 +409,8 @@ private class TableColorRenderer(val manager: FileColorManagerImpl) : DefaultTab
   override fun getTableCellRendererComponent(table: JTable?, value: Any?,
                                              selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
     val configuration = value as? FileColorConfiguration
-    super.getTableCellRendererComponent(table, configuration?.colorPresentableName, selected, focused, row, column)
-    return updateColorRenderer(this, selected, configuration?.colorName?.let { manager.getColor(it) })
+    super.getTableCellRendererComponent(table, configuration?.colorID?.let { manager.getColorName(it) }, selected, focused, row, column)
+    return updateColorRenderer(this, selected, configuration?.colorID?.let { manager.getColor(it) })
   }
 
   override fun paintComponent(g: Graphics?) {

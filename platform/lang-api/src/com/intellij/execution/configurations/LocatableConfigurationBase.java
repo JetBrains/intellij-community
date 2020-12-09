@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,7 @@ public abstract class LocatableConfigurationBase<T> extends RunConfigurationBase
    * @return the name of the action.
    */
   @Nullable
-  public String getActionName() {
+  public @NlsActions.ActionText String getActionName() {
     String name = getName();
     final String shortName = name.length() < 20 ? name : name.substring(0, 20) + "...";
     return shortName + getPresentableType();

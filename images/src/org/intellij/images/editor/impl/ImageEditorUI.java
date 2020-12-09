@@ -68,8 +68,6 @@ import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.net.URL;
 
 /**
  * Image editor UI
@@ -388,8 +386,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
         if (IfsUtil.isSVG(file)) {
           try {
-            URL url = new File(file.getPath()).toURI().toURL();
-            return Math.max(1, SVGLoader.getMaxZoomFactor(url, new ByteArrayInputStream(file.contentsToByteArray()), ScaleContext.create(editor.getComponent())));
+            return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()), ScaleContext.create(editor.getComponent())));
           }
           catch (Throwable t) {
             Logger.getInstance("#org.intellij.images.editor.impl.ImageEditorUI").warn(t);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
@@ -210,7 +210,7 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
 
     model.setRegularExpressions(true);
     assertTrue(actionButton.isSelected());
-    assertEquals(SearchSession.INCORRECT_REGEX_MESSAGE, component.getStatusText());
+    assertEquals(FindBundle.message(SearchSession.INCORRECT_REGEXP_MESSAGE_KEY), component.getStatusText());
     model.setStringToFind("|");
     assertEquals(ApplicationBundle.message("editorsearch.empty.string.matches"), component.getStatusText());
     model.setStringToFind("ba.?");

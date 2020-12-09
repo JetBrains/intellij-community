@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateCheckContributor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.JavaSyntheticLibrary
 import com.intellij.openapi.roots.OrderRootType
@@ -19,18 +20,9 @@ import com.intellij.ui.AppUIUtil
 
 class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
   override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
-    if (Registry.`is`("index.run.configuration.jre")) {
-      return RunManager.getInstance(project).allConfigurationsList
-        .asSequence()
-        .filterIsInstance(ConfigurationWithAlternativeJre::class.java)
-        .filter { it.isAlternativeJrePathEnabled }
-        .mapNotNull { it.alternativeJrePath }
-        .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
-        .distinct()
-        .map { createSdkLibrary(it) }
-        .toList()
-    }
-    return emptyList()
+    return getAdditionalProjectJdksToIndex(project)
+      .map { createSdkLibrary(it) }
+      .toList()
   }
 
   private fun createSdkLibrary(sdk: Sdk): JavaSyntheticLibrary {
@@ -42,6 +34,38 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
 
   companion object {
     private val ALTERNATIVE_SDK_LIBS_KEY = Key.create<Collection<SyntheticLibrary>>("ALTERNATIVE_SDK_LIBS_KEY")
+
+    @JvmStatic
+    fun shouldIndexAlternativeJre() = Registry.`is`("index.run.configuration.jre")
+
+    @JvmStatic
+    fun hasEnabledAlternativeJre(settings: RunnerAndConfigurationSettings): Boolean {
+      val configuration = settings.configuration
+      return configuration is ConfigurationWithAlternativeJre && configuration.isAlternativeJrePathEnabled
+    }
+
+    @JvmStatic
+    fun getAdditionalProjectJdksToIndex(project: Project): List<Sdk> {
+      if (shouldIndexAlternativeJre()) {
+        return getAdditionalProjectJdks(project)
+      }
+      return emptyList()
+    }
+
+    /**
+     * Returns all [Sdk] that are used in Run configurations
+     */
+    @JvmStatic
+    fun getAdditionalProjectJdks(project: Project): List<Sdk> {
+      return RunManager.getInstance(project).allConfigurationsList
+        .asSequence()
+        .filterIsInstance(ConfigurationWithAlternativeJre::class.java)
+        .filter { it.isAlternativeJrePathEnabled }
+        .mapNotNull { it.alternativeJrePath }
+        .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
+        .distinct()
+        .toList()
+    }
 
     @JvmStatic
     fun reindexIfNeeded(project: Project) {
@@ -63,5 +87,11 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
         }
       }
     }
+  }
+}
+
+class AlternativeSdkRootsProviderForJdkUpdate : JdkUpdateCheckContributor {
+  override fun contributeJdks(project: Project): List<Sdk> {
+    return AlternativeSdkRootsProvider.getAdditionalProjectJdks(project)
   }
 }

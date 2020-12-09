@@ -120,7 +120,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       private String getShortcut() {
         if (myIsDoubleCtrlRegistered) {
           return IdeBundle.message("double.ctrl.or.shift.shortcut",
-                                   SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl");
+                                   SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl"); //NON-NLS
         }
         //keymap shortcut is added automatically
         return null;

@@ -70,17 +70,17 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
   }
 
   @Override
-  protected String getTitle() {
+  public String getTitle() {
     return IdeBundle.message("step.title.launcher.script");
   }
 
   @Override
-  protected String getHTMLHeader() {
+  public String getHTMLHeader() {
     return IdeBundle.message("label.create.launcher.script");
   }
 
   @Override
-  protected String getHTMLFooter() {
+  public String getHTMLFooter() {
     return IdeBundle.message("label.launcher.script.can.be.created.later.via.tools.create.command.line.launcher");
   }
 }

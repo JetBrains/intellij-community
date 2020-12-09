@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -23,14 +22,12 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -60,7 +57,7 @@ public final class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  private static final int VERSION = 54 +
+  private static final int VERSION = 55 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
                                      (bulkAttrReadSupport ? 0x27 : 0) +
@@ -113,8 +110,11 @@ public final class FSRecords {
   private static volatile int ourLocalModificationCount;
   private static volatile boolean ourIsDisposed;
 
-  private static final int FREE_RECORD_FLAG = 0x100;
-  private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
+  private static final int FREE_RECORD_FLAG = 0x400;
+  static {
+    assert (PersistentFS.Flags.ALL_VALID_FLAGS & FREE_RECORD_FLAG) == 0 : PersistentFS.Flags.ALL_VALID_FLAGS;
+  }
+  private static final int ALL_VALID_FLAGS = PersistentFS.Flags.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
   static {
@@ -955,9 +955,10 @@ public final class FSRecords {
     }
   }
 
-  // try to apply `childrenConvertor` to the children of `parentId`.
-  // First, try optimistically: outside write lock and commit inside write lock if nothing changed
-  // Failing that, pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
+  // Perform operation on children and save the list atomically:
+  // Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
+  // If everything is still valid (i.e. no one changed the list in the meantime), commit.
+  // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
   static ListResult update(int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
     assert parentId > 0: parentId;
@@ -1045,76 +1046,6 @@ public final class FSRecords {
         }
       }
     }
-  }
-
-  // return entries from `existingList` plus `newList',
-  // in case of name clash use id from the corresponding `existingList` entry and name from the `newList` entry (to avoid duplicating ids: preserve old id but supply new name)
-  @NotNull
-  static ListResult mergeByName(@NotNull ListResult existingList, @NotNull ListResult newList, boolean isCaseSensitive) {
-    List<? extends ChildInfo> newChildren = newList.children;
-    List<? extends ChildInfo> oldChildren = existingList.children;
-    if (oldChildren.isEmpty()) return newList;
-    // both `newChildren` and `oldChildren` are sorted by id, but not nameId, so plain O(N) merge is not possible.
-    // instead, try to eliminate entries with the same id from both lists first (since they have same nameId), and compare the rest by (slower) nameId.
-    // typically, when `newChildren` contains 5K entries + couple absent from `oldChildren`, and `oldChildren` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
-
-    // name -> index in result
-    Object2IntOpenCustomHashMap<CharSequence> nameToIndex = new Object2IntOpenCustomHashMap<>(Math.max(oldChildren.size(), newChildren.size()), FastUtilHashingStrategies
-      .getCharSequenceStrategy(isCaseSensitive));
-    // distinguish between absence and the 0th index
-    nameToIndex.defaultReturnValue(-1);
-
-    List<ChildInfo> result = new ArrayList<>(Math.max(oldChildren.size(), newChildren.size()));
-    for (int i = 0, j = 0; i < newChildren.size() || j < oldChildren.size(); ) {
-      ChildInfo newChild = i == newChildren.size() ? null : newChildren.get(i);
-      ChildInfo oldChild = j == oldChildren.size() ? null : oldChildren.get(j);
-      int newId = newChild == null ? Integer.MAX_VALUE : newChild.getId();
-      int oldId = oldChild == null ? Integer.MAX_VALUE : oldChild.getId();
-      if (newId == oldId) {
-        i++;
-        j++;
-        result.add(oldChild);
-      }
-      else if (newId < oldId) {
-        // newId is absent from `oldChildren`
-        CharSequence name = newChild.getName();
-        int dupI = nameToIndex.put(name, result.size());
-        if (dupI == -1) {
-          result.add(newChild);
-        }
-        else {
-          // aha, found entry in `result` with the same name.
-          // That previous entry must come from the `oldChildren`
-          // so replace just the name (the new name must have changed its case), leave id the same
-          ChildInfo oldDup = result.get(dupI);
-          int nameId = newChild.getNameId();
-          assert nameId > 0 : newList;
-          ChildInfo replaced = ((ChildInfoImpl)oldDup).withNameId(nameId);
-          result.set(dupI, replaced);
-        }
-        i++;
-      }
-      else {
-        // oldId is absent from `newChildren`
-        CharSequence name = oldChild.getName();
-        int dupI = nameToIndex.put(name, result.size());
-        if (dupI == -1) {
-          result.add(oldChild);
-        }
-        else {
-          // aha, found entry in `result` with the same name.
-          // That previous entry must come from the `newChildren`
-          // so leave the new name (the new name must have changed its case), replace the id
-          ChildInfo dup = result.get(dupI);
-          int nameId = dup.getNameId();
-          assert nameId > 0 : existingList;
-          ChildInfo replaced = ((ChildInfoImpl)dup).withId(oldChild.getId());
-          result.set(dupI, replaced);
-        }
-        j++;
-      }
-    }
-    return nameToIndex.isEmpty() ? newList : new ListResult(result);
   }
 
   static @Nullable String readSymlinkTarget(int id) {
@@ -1211,7 +1142,7 @@ public final class FSRecords {
         VirtualFileSystemEntry parent = foundParent;
         if (path != null) {
           for (int i = path.size() - 1; i >= 0; i--) {
-            parent = findChild(parent, path.get(i));
+            parent = findChild(parent, path.getInt(i));
           }
         }
 
@@ -1942,7 +1873,7 @@ public final class FSRecords {
     if (parentId > 0 && getParent(parentId) > 0) {
       int parentFlags = getFlags(parentId);
       assert !BitUtil.isSet(parentFlags, FREE_RECORD_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
-      assert BitUtil.isSet(parentFlags, PersistentFS.IS_DIRECTORY_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
+      assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
     }
 
     CharSequence name = getNameSequence(id);

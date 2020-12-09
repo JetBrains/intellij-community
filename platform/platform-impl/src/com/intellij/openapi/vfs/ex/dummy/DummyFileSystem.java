@@ -33,8 +33,9 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     startEventPropagation();
   }
 
-  public VirtualFile createRoot(String name) {
-    VirtualFileDirectoryImpl root = new VirtualFileDirectoryImpl(this, null, name);
+  @NotNull
+  public VirtualFile createRoot(@NotNull String name) {
+    DummyDirectoryImpl root = new DummyDirectoryImpl(this, null, name);
     fireFileCreated(null, root);
     return root;
   }
@@ -69,12 +70,12 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
     fireBeforeFileDeletion(requestor, vFile);
-    final VirtualFileDirectoryImpl parent = (VirtualFileDirectoryImpl)vFile.getParent();
+    final DummyDirectoryImpl parent = (DummyDirectoryImpl)vFile.getParent();
     if (parent == null) {
       throw new IOException(IdeBundle.message("file.delete.root.error", vFile.getPresentableUrl()));
     }
 
-    parent.removeChild((VirtualFileImpl)vFile);
+    parent.removeChild((DummyFileBase)vFile);
     fireFileDeleted(requestor, vFile, vFile.getName(), parent);
   }
 
@@ -82,15 +83,15 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) {
     final String oldName = vFile.getName();
     fireBeforePropertyChange(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
-    ((VirtualFileImpl)vFile).setName(newName);
+    ((DummyFileBase)vFile).setName(newName);
     firePropertyChanged(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
   }
 
   @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    final VirtualFileDirectoryImpl dir = (VirtualFileDirectoryImpl)vDir;
-    VirtualFileImpl child = new VirtualFileDataImpl(this, dir, fileName);
+    final DummyDirectoryImpl dir = (DummyDirectoryImpl)vDir;
+    DummyFileBase child = new DummyFileImpl(this, dir, fileName);
     dir.addChild(child);
     fireFileCreated(requestor, child);
     return child;
@@ -109,8 +110,8 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) {
-    final VirtualFileDirectoryImpl dir = (VirtualFileDirectoryImpl)vDir;
-    VirtualFileImpl child = new VirtualFileDirectoryImpl(this, dir, dirName);
+    final DummyDirectoryImpl dir = (DummyDirectoryImpl)vDir;
+    DummyFileBase child = new DummyDirectoryImpl(this, dir, dirName);
     dir.addChild(child);
     fireFileCreated(requestor, child);
     return child;

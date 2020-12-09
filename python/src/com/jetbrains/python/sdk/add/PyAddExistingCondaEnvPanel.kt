@@ -45,7 +45,8 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
                                  private val module: Module?,
                                  private val existingSdks: List<Sdk>,
                                  override var newProjectPath: String?,
-                                 context: UserDataHolder) : PyAddSdkPanel() {
+                                 context: UserDataHolder,
+                                 onEnvsDetectionComplete: (() -> Boolean)? = null) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
   private val sdkComboBox = PySdkPathChoosingComboBox()
@@ -79,8 +80,8 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    addInterpretersAsync(sdkComboBox) {
-      detectCondaEnvs(module, existingSdks, context)
+    addInterpretersAsync(sdkComboBox, { detectCondaEnvs(module, existingSdks, context) }) {
+      onEnvsDetectionComplete?.invoke()
     }
   }
 

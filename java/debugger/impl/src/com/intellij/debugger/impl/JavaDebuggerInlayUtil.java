@@ -14,7 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
+import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;

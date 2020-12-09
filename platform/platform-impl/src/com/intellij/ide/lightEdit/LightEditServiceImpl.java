@@ -118,20 +118,21 @@ public final class LightEditServiceImpl implements LightEditService,
     return myLightEditProjectManager.getProject();
   }
 
-  @Override
-  public @NotNull Project getOrCreateProject() {
+  @NotNull Project getOrCreateProject() {
     return myLightEditProjectManager.getOrCreateProject();
   }
 
   @Override
-  public boolean openFile(@NotNull VirtualFile file) {
-    if (LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file)) {
+  @Nullable
+  public Project openFile(@NotNull VirtualFile file, boolean force) {
+    if (force || canOpen(file)) {
+      Project project = myLightEditProjectManager.getOrCreateProject();
       doWhenActionManagerInitialized(() -> {
         doOpenFile(file);
       });
-      return true;
+      return project;
     }
-    return false;
+    return null;
   }
 
   private static void doWhenActionManagerInitialized(@NotNull Runnable callback) {
@@ -145,6 +146,11 @@ public final class LightEditServiceImpl implements LightEditService,
     else {
       invokeOnEdt(callback);
     }
+  }
+
+  @Override
+  public boolean canOpen(@NotNull VirtualFile file) {
+    return LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file);
   }
 
   private static void invokeOnEdt(@NotNull Runnable callback) {

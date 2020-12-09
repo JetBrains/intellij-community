@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,11 +22,11 @@ public class PropertyExpander {
     void onPropertyExpanded(String propName, String propValue);
   }
 
-  public PropertyExpander(final @NotNull String str) {
+  public PropertyExpander(final @NotNull @NlsSafe String str) {
     this(str, Collections.emptySet());
   }
 
-  private PropertyExpander(final @NotNull String str, Set<String> namesToSkip) {
+  private PropertyExpander(final @NotNull @NlsSafe String str, Set<@NlsSafe String> namesToSkip) {
     myResolver = new Resolver(str, namesToSkip);
     myNamesToSkip.addAll(namesToSkip);
   }

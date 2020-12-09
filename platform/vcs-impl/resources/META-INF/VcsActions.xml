@@ -111,7 +111,7 @@
 
     <group id="ChangesView.GroupBy" icon="AllIcons.Actions.GroupBy" popup="true"
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
-      <separator text="Group By"/>
+      <separator key="group.ChangesView.GroupBy.text"/>
       <action id="ChangesView.GroupBy.Directory"
               class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
@@ -125,7 +125,7 @@
       <reference ref="ChangesView.Revert"/>
       <action id="ChangesView.Diff" class="com.intellij.diff.actions.ShowDiffAction" icon="AllIcons.Actions.Diff"
               use-shortcut-of="Diff.ShowDiff"/>
-      <group icon="AllIcons.Vcs.Changelist" text="Changelists" popup="true">
+      <group icon="AllIcons.Vcs.Changelist" id="ChangesView.Changelists" popup="true">
         <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
                 icon="AllIcons.General.Add"/>
         <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"
@@ -317,14 +317,14 @@
               icon="AllIcons.Vcs.History"/>
     </group>
 
+    <group id="Vcs.Commit.PrimaryCommitActions"/>
     <group id="Vcs.CommitExecutor.Actions"/>
 
     <group id="ChangesView.CommitToolbar">
-      <action id="ChangesView.ShowCommitOptions"
-              class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
+      <action id="Vcs.ToggleAmendCommitMode" class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
+      <action id="ChangesView.ShowCommitOptions" class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
       <reference id="Vcs.MessageActionGroup"/>
     </group>
-    <action id="Vcs.ToggleAmendCommitMode" class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
 
     <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction"/>
 
@@ -536,7 +536,7 @@
       </group>
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
-      <separator text="Local History"/>
+      <separator key="separator.Local.History.text"/>
       <reference id="LocalHistory.ShowHistory"/>
       <reference id="LocalHistory.PutLabel"/>
     </group>

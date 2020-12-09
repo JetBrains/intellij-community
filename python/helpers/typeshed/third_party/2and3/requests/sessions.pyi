@@ -1,18 +1,10 @@
 # Stubs for requests.sessions (Python 3)
 
-from typing import Any, Union, List, MutableMapping, Text, Optional, IO, Tuple, Callable, Iterable
-from . import adapters
-from . import auth as _auth
-from . import compat
-from . import cookies
-from . import models
+from typing import IO, Any, Callable, Iterable, List, Mapping, MutableMapping, Optional, Text, Tuple, Union
+
+from . import adapters, auth as _auth, compat, cookies, exceptions, hooks, models, status_codes, structures, utils
 from .models import Response
-from . import hooks
-from . import utils
-from . import exceptions
 from .packages.urllib3 import _collections
-from . import structures
-from . import status_codes
 
 BaseAdapter = adapters.BaseAdapter
 OrderedDict = compat.OrderedDict
@@ -49,12 +41,11 @@ def merge_setting(request_setting, session_setting, dict_class=...): ...
 def merge_hooks(request_hooks, session_hooks, dict_class=...): ...
 
 class SessionRedirectMixin:
-    def resolve_redirects(self, resp, req, stream=..., timeout=..., verify=..., cert=...,
-                          proxies=...): ...
+    def resolve_redirects(self, resp, req, stream=..., timeout=..., verify=..., cert=..., proxies=...): ...
     def rebuild_auth(self, prepared_request, response): ...
     def rebuild_proxies(self, prepared_request, proxies): ...
 
-_Data = Union[None, Text, bytes, MutableMapping[str, Any], MutableMapping[Text, Any], Iterable[Tuple[Text, Optional[Text]]], IO]
+_Data = Union[None, Text, bytes, Mapping[str, Any], Mapping[Text, Any], Iterable[Tuple[Text, Optional[Text]]], IO]
 
 _Hook = Callable[[Response], Any]
 _Hooks = MutableMapping[Text, List[_Hook]]
@@ -79,22 +70,25 @@ class Session(SessionRedirectMixin):
     def __enter__(self) -> Session: ...
     def __exit__(self, *args) -> None: ...
     def prepare_request(self, request): ...
-    def request(self, method: str, url: Union[str, bytes, Text],
-                params: Union[None, bytes, MutableMapping[Text, Text]] = ...,
-                data: _Data = ...,
-                headers: Optional[MutableMapping[Text, Text]] = ...,
-                cookies: Union[None, RequestsCookieJar, MutableMapping[Text, Text]] = ...,
-                files: Optional[MutableMapping[Text, IO[Any]]] = ...,
-                auth: Union[None, Tuple[Text, Text], _auth.AuthBase, Callable[[Request], Request]] = ...,
-                timeout: Union[None, float, Tuple[float, float], Tuple[float, None]] = ...,
-                allow_redirects: Optional[bool] = ...,
-                proxies: Optional[MutableMapping[Text, Text]] = ...,
-                hooks: Optional[_HooksInput] = ...,
-                stream: Optional[bool] = ...,
-                verify: Union[None, bool, Text] = ...,
-                cert: Union[Text, Tuple[Text, Text], None] = ...,
-                json: Optional[Any] = ...,
-                ) -> Response: ...
+    def request(
+        self,
+        method: str,
+        url: Union[str, bytes, Text],
+        params: Union[None, bytes, MutableMapping[Text, Text]] = ...,
+        data: _Data = ...,
+        headers: Optional[MutableMapping[Text, Text]] = ...,
+        cookies: Union[None, RequestsCookieJar, MutableMapping[Text, Text]] = ...,
+        files: Optional[MutableMapping[Text, IO[Any]]] = ...,
+        auth: Union[None, Tuple[Text, Text], _auth.AuthBase, Callable[[Request], Request]] = ...,
+        timeout: Union[None, float, Tuple[float, float], Tuple[float, None]] = ...,
+        allow_redirects: Optional[bool] = ...,
+        proxies: Optional[MutableMapping[Text, Text]] = ...,
+        hooks: Optional[_HooksInput] = ...,
+        stream: Optional[bool] = ...,
+        verify: Union[None, bool, Text] = ...,
+        cert: Union[Text, Tuple[Text, Text], None] = ...,
+        json: Optional[Any] = ...,
+    ) -> Response: ...
     def get(self, url: Union[Text, bytes], **kwargs) -> Response: ...
     def options(self, url: Union[Text, bytes], **kwargs) -> Response: ...
     def head(self, url: Union[Text, bytes], **kwargs) -> Response: ...
@@ -102,12 +96,10 @@ class Session(SessionRedirectMixin):
     def put(self, url: Union[Text, bytes], data: _Data = ..., **kwargs) -> Response: ...
     def patch(self, url: Union[Text, bytes], data: _Data = ..., **kwargs) -> Response: ...
     def delete(self, url: Union[Text, bytes], **kwargs) -> Response: ...
-    def send(self, request, **kwargs): ...
+    def send(self, request: PreparedRequest, **kwargs) -> Response: ...
     def merge_environment_settings(self, url, proxies, stream, verify, cert): ...
     def get_adapter(self, url): ...
     def close(self) -> None: ...
-    def mount(self, prefix:
-              Union[Text, bytes],
-              adapter: BaseAdapter) -> None: ...
+    def mount(self, prefix: Union[Text, bytes], adapter: BaseAdapter) -> None: ...
 
 def session() -> Session: ...

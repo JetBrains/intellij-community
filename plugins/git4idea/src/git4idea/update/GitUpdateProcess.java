@@ -13,11 +13,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,8 +60,6 @@ public final class GitUpdateProcess {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final ChangeListManager myChangeListManager;
 
   @NotNull private final List<GitRepository> myRepositories;
   @NotNull private final Map<GitRepository, GitSubmodule> mySubmodulesInDetachedHead;
@@ -77,16 +73,6 @@ public final class GitUpdateProcess {
   @NotNull private final Map<GitRepository, @Nls String> mySkippedRoots = new LinkedHashMap<>();
   @Nullable private Map<GitRepository, HashRange> myUpdatedRanges;
 
-  @SuppressWarnings("unused") //used in a 3-party plugin
-  public GitUpdateProcess(@NotNull Project project,
-                          @Nullable ProgressIndicator progressIndicator,
-                          @NotNull Collection<GitRepository> repositories,
-                          @NotNull UpdatedFiles updatedFiles,
-                          boolean checkRebaseOverMergeProblem,
-                          boolean checkForTrackedBranchExistence) {
-    this(project, progressIndicator, repositories, updatedFiles, null, checkRebaseOverMergeProblem, checkForTrackedBranchExistence);
-  }
-
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories,
@@ -98,8 +84,6 @@ public final class GitUpdateProcess {
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
     myCheckForTrackedBranchExistence = checkForTrackedBranchExistence;
     myGit = Git.getInstance();
-    myChangeListManager = ChangeListManager.getInstance(project);
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myUpdatedFiles = updatedFiles;
     myUpdateConfig = updateConfig;
 

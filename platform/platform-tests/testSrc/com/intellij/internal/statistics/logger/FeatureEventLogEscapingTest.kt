@@ -50,7 +50,7 @@ class FeatureEventLogEscapingTest {
   }
 
   @Test
-  fun testEventEventIdWhitelistEscaping() {
+  fun testEventEventIdEscaping() {
     testEventIdEscaping(newEvent(eventId = "test\tevent"), "test_event")
     testEventIdEscaping(newEvent(eventId = "test event"), "test_event")
     testEventIdEscaping(newEvent(eventId = "t est\tevent"), "t_est_event")

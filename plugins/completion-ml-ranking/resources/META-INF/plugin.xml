@@ -20,6 +20,10 @@
     <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.completion.ml.CompletionMLPolicy"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.completion.ml.lookupFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.LookupFeatureProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <resource-bundle>messages.MlCompletionBundle</resource-bundle>
@@ -49,7 +53,8 @@
     <projectService serviceImplementation="com.intellij.completion.ml.personalization.impl.ProjectUserFactorStorage"/>
 
     <applicationService serviceInterface="com.intellij.completion.ml.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"/>
+                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"
+                        preload="true"/>
 
     <projectService serviceImplementation="com.intellij.completion.ml.ngram.NGramModelRunnerManager"/>
 
@@ -60,11 +65,17 @@
     <registryKey key="completion.ml.reorder.only.top.items" defaultValue="true"
                  description="Reorder only a few items on the top in the lookup to preserve a proper grouping for the items below"/>
 
-    <registryKey key="completion.ml.show.arrows.notification" defaultValue="false"
-                 description="Show notification about arrows if user in corresponding group of A/B experiment"/>
+    <registryKey key="completion.ml.show.arrows.notification" defaultValue="true"
+                 description="Show notification with question about ML completion arrows"/>
 
     <registryKey key="completion.ml.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
+
+    <registryKey key="completion.ml.override.experiment.group.number" defaultValue="-1" restartRequired="true"
+                 description="Set experiment bucket number. If value is negative, will be skipped."/>
+
+    <registryKey key="completion.ml.path.to.zip.model" defaultValue="no path"
+                 description="Path to load ml completion model from zip"/>
 
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonLocationFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonElementLocationFeatures"/>
@@ -73,6 +84,7 @@
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.ContextSimilarityFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.RecentPlacesFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
+    <completion.ml.lookupFeatures language="JAVA" implementationClass="com.intellij.completion.ml.sorting.RecommendersLookupFeatureProvider"/>
 
     <lookup.usageDetails implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor"/>
 

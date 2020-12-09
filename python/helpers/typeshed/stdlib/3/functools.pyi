@@ -1,17 +1,31 @@
 import sys
-from typing import Any, Callable, Generic, Dict, Hashable, Iterable, Mapping, Optional, Sequence, Tuple, Type, TypeVar, NamedTuple, Union, overload
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Hashable,
+    Iterable,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Protocol,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    overload,
+)
 
 _AnyCallable = Callable[..., Any]
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
-
 @overload
-def reduce(function: Callable[[_T, _S], _T],
-           sequence: Iterable[_S], initial: _T) -> _T: ...
+def reduce(function: Callable[[_T, _S], _T], sequence: Iterable[_S], initial: _T) -> _T: ...
 @overload
-def reduce(function: Callable[[_T, _T], _T],
-           sequence: Iterable[_T]) -> _T: ...
+def reduce(function: Callable[[_T, _T], _T], sequence: Iterable[_T]) -> _T: ...
 
 class _CacheInfo(NamedTuple):
     hits: int
@@ -30,17 +44,25 @@ if sys.version_info >= (3, 8):
     def lru_cache(maxsize: Optional[int] = ..., typed: bool = ...) -> Callable[[Callable[..., _T]], _lru_cache_wrapper[_T]]: ...
     @overload
     def lru_cache(maxsize: Callable[..., _T], typed: bool = ...) -> _lru_cache_wrapper[_T]: ...
+
 else:
     def lru_cache(maxsize: Optional[int] = ..., typed: bool = ...) -> Callable[[Callable[..., _T]], _lru_cache_wrapper[_T]]: ...
 
 WRAPPER_ASSIGNMENTS: Sequence[str]
 WRAPPER_UPDATES: Sequence[str]
 
-def update_wrapper(wrapper: _AnyCallable, wrapped: _AnyCallable, assigned: Sequence[str] = ...,
-                   updated: Sequence[str] = ...) -> _AnyCallable: ...
-def wraps(wrapped: _AnyCallable, assigned: Sequence[str] = ..., updated: Sequence[str] = ...) -> Callable[[_AnyCallable], _AnyCallable]: ...
+def update_wrapper(
+    wrapper: _AnyCallable, wrapped: _AnyCallable, assigned: Sequence[str] = ..., updated: Sequence[str] = ...
+) -> _AnyCallable: ...
+def wraps(
+    wrapped: _AnyCallable, assigned: Sequence[str] = ..., updated: Sequence[str] = ...
+) -> Callable[[_AnyCallable], _AnyCallable]: ...
 def total_ordering(cls: Type[_T]) -> Type[_T]: ...
-def cmp_to_key(mycmp: Callable[[_T, _T], int]) -> Callable[[_T], Any]: ...
+
+class _SupportsLessThan(Protocol):
+    def __lt__(self, __other: Any) -> bool: ...
+
+def cmp_to_key(mycmp: Callable[[_T, _T], int]) -> Callable[[_T], _SupportsLessThan]: ...
 
 class partial(Generic[_T]):
     func: Callable[..., _T]
@@ -56,7 +78,6 @@ class partialmethod(Generic[_T]):
     func: Union[Callable[..., _T], _Descriptor]
     args: Tuple[Any, ...]
     keywords: Dict[str, Any]
-
     @overload
     def __init__(self, func: Callable[..., _T], *args: Any, **keywords: Any) -> None: ...
     @overload
@@ -87,7 +108,6 @@ if sys.version_info >= (3, 8):
         @overload
         def register(self, cls: Any, method: Callable[..., _T]) -> Callable[..., _T]: ...
         def __call__(self, *args: Any, **kwargs: Any) -> _T: ...
-
     class cached_property(Generic[_T]):
         func: Callable[[Any], _T]
         attrname: Optional[str]
@@ -99,15 +119,4 @@ if sys.version_info >= (3, 8):
         def __set_name__(self, owner: Type[Any], name: str) -> None: ...
 
 if sys.version_info >= (3, 9):
-    class TopologicalSorter(Generic[_T]):
-        def __init__(self, graph: Optional[Dict[_T, Iterable[_T]]] = ...) -> None: ...
-        def add(self, node: _T, *predecessors: _T) -> None: ...
-        def prepare(self) -> None: ...
-        def is_active(self) -> bool: ...
-        def done(self, *nodes: _T) -> None: ...
-        def get_ready(self) -> Tuple[_T, ...]: ...
-        def static_order(self) -> Iterable[_T]: ...
-
-    class CycleError(ValueError): ...
-
     def cache(__user_function: Callable[..., _T]) -> _lru_cache_wrapper[_T]: ...

@@ -1,12 +1,11 @@
-from . import wasyncore
-from .proxy_headers import proxy_headers_middleware
 from socket import SocketType
-from typing import Any, Sequence, Optional, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
+
 from waitress.adjustments import Adjustments
 from waitress.channel import HTTPChannel
-from waitress.compat import IPPROTO_IPV6, IPV6_V6ONLY
 from waitress.task import Task, ThreadedTaskDispatcher
-from waitress.utilities import cleanup_unix_socket
+
+from . import wasyncore
 
 def create_server(
     application: Any,

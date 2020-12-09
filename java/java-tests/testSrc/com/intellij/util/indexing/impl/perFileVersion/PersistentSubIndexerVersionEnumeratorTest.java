@@ -8,10 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
-import com.intellij.util.indexing.CompositeDataIndexer;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.IndexedFile;
-import com.intellij.util.indexing.IndexedFileImpl;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -169,7 +166,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     VirtualFile file = file(attribute);
     file.putUserData(ATTRIBUTE_KEY, attribute);
     try {
-      return myMap.isIndexed(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject()));
+      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject())) == FileIndexingState.UP_TO_DATE;
     }
     catch (IOException e) {
       LOG.error(e);

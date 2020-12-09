@@ -523,7 +523,10 @@
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
       </action>
 
-      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction"/>
+      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
+        <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
+        <override-text place="XDebuggerTreeInlayPopup" text="Create Value Renderer"/>
+      </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
@@ -732,7 +735,9 @@
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
 
-    <action class="com.intellij.find.findUsages.GroupByPackageAction" id="UsageGrouping.Package"/>
+    <action class="com.intellij.find.findUsages.GroupByPackageAction" id="UsageGrouping.Package" use-shortcut-of="UsageGrouping.Directory">
+      <add-to-group group-id="UsageGroupingActionGroup"/>
+    </action>
   </actions>
 </idea-plugin>
 

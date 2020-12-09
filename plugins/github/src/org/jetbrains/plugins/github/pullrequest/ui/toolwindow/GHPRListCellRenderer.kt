@@ -92,7 +92,8 @@ class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarI
       foreground = primaryTextColor
     }
     info.apply {
-      text = "#${value.number} ${value.author?.login} on ${DateFormatUtil.formatDate(value.createdAt)}"
+      text = GithubBundle.message("pull.request.list.item.info", value.number, value.author?.login,
+                                  DateFormatUtil.formatDate(value.createdAt))
       foreground = secondaryTextColor
     }
     labels.apply {

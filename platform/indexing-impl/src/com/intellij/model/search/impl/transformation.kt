@@ -3,8 +3,6 @@ package com.intellij.model.search.impl
 
 import com.intellij.util.Query
 import com.intellij.util.SmartList
-import java.util.function.Function
-import java.util.function.Predicate
 
 /**
  * @param B base type
@@ -48,17 +46,4 @@ internal fun <B, I, R> XTransformation<B, I>.karasique(next: XTransformation<I, 
       }
     }
   }
-}
-
-fun <R> filtering(predicate: Predicate<in R>): Transformation<R, R> = { element: R ->
-  if (predicate.test(element)) {
-    listOf(element)
-  }
-  else {
-    emptyList()
-  }
-}
-
-fun <B, R> mapping(f: Function<in B, out R>): Transformation<B, R> = { base: B ->
-  listOf(f.apply(base))
 }

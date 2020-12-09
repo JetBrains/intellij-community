@@ -70,6 +70,7 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   }
 
   private fun notify(problem: Problem, state: SetUpdateState) {
+    if (project.isDisposed) return
     when (state) {
       SetUpdateState.ADDED -> {
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemAppeared(problem)

@@ -38,7 +38,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -613,7 +613,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       whenAllCommitted.run();
     }
     else {
-      UIUtil.invokeLaterIfNeeded(() -> { if (!myProject.isDisposed()) performWhenAllCommitted(whenAllCommitted);});
+      EdtInvocationManager.invokeLaterIfNeeded(() -> { if (!myProject.isDisposed()) performWhenAllCommitted(whenAllCommitted);});
     }
   }
 

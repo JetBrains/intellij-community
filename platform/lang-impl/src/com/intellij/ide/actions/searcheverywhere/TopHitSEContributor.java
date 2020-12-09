@@ -30,6 +30,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -280,6 +281,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
     return o instanceof OptionDescription;
   }
 
+  @Nls
   private static String getSettingText(OptionDescription value) {
     String hit = value.getHit();
     if (hit == null) {

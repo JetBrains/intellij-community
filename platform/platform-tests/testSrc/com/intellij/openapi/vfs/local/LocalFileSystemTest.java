@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -705,20 +704,20 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
       RefreshSession session = RefreshQueue.getInstance().createSession(false, true, null);
       String stopAt = top.getName() + "/sub_2/file_2";
-      RefreshWorker.setTestListener(file -> {
+      RefreshQueueImpl.setTestListener(file -> {
         if (file.getPath().endsWith(stopAt)) RefreshQueue.getInstance().cancelSession(session.getId());
       });
       session.addFile(topDir);
       session.launch();
       assertThat(processed).hasSizeBetween(1, files.size() - 1);
 
-      RefreshWorker.setTestListener(null);
+      RefreshQueueImpl.setTestListener(null);
       topDir.refresh(false, true);
       assertThat(processed).isEqualTo(files);
     }
     finally {
       connection.disconnect();
-      RefreshWorker.setTestListener(null);
+      RefreshQueueImpl.setTestListener(null);
     }
   }
 
