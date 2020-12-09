@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -128,21 +126,9 @@ public class GetVersionAction extends AnAction implements DumbAware {
       FileUtil.writeToFile(filePath.getIOFile(), revision);
     }
     else {
-      Document document;
-      if (!virtualFile.getFileType().isBinary()) {
-        document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      }
-      else {
-        document = null;
-      }
-
-      if (document == null) {
-        virtualFile.setBinaryContent(revision);
-      }
-      else {
-        String content = StringUtil.convertLineSeparators(new String(revision, filePath.getCharset().name()));
-        document.replaceString(0, document.getTextLength(), content);
-      }
+      virtualFile.setBinaryContent(revision);
+      // Avoid MemoryDiskConflictResolver. We've got user consent to override file in ReplaceFileConfirmationDialog.
+      FileDocumentManager.getInstance().reloadFiles(virtualFile);
     }
   }
 
