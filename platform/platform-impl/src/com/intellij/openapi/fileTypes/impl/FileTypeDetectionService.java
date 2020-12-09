@@ -50,6 +50,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 final class FileTypeDetectionService implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeDetectionService.class);
@@ -66,6 +67,9 @@ final class FileTypeDetectionService implements Disposable {
   // otherwise if auto-detected as text or binary, the result is stored in AUTO_DETECTED_AS_TEXT_MASK|AUTO_DETECTED_AS_BINARY_MASK bits
   private static final byte AUTO_DETECT_WAS_RUN_MASK = 1<<2;
   private static final byte ATTRIBUTES_WERE_LOADED_MASK = 1<<3;    // set if AUTO_* bits above were loaded from the file persistent attributes and saved to packedFlags
+
+  private static final String FILE_TYPE_DETECTORS_PROPERTY = "fileTypeDetectors";
+  private static final String FILE_TYPE_CHANGED_COUNTER_PROPERTY = "fileTypeChangedCounter";
 
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
@@ -90,7 +94,7 @@ final class FileTypeDetectionService implements Disposable {
   FileTypeDetectionService(@NotNull FileTypeManagerImpl fileTypeManager) {
     myFileTypeManager = fileTypeManager;
 
-    int fileTypeChangedCounter = PropertiesComponent.getInstance().getInt("fileTypeChangedCounter", 0);
+    int fileTypeChangedCounter = PropertiesComponent.getInstance().getInt(FILE_TYPE_CHANGED_COUNTER_PROPERTY, 0);
     fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
     autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", fileTypeChangedCounter, true);
 
@@ -163,8 +167,13 @@ final class FileTypeDetectionService implements Disposable {
 
     FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(() -> {
       cachedDetectFileBufferSize = -1;
-      clearCaches();
+      onDetectorsChange();
     }, this);
+
+    String prevDetectors = PropertiesComponent.getInstance().getValue(FILE_TYPE_DETECTORS_PROPERTY);
+    if (!StringUtil.equals(prevDetectors, getDetectorsString())) {
+      onDetectorsChange();
+    }
 
     Application app = ApplicationManager.getApplication();
     Disposer.register(app, this);
@@ -255,7 +264,7 @@ final class FileTypeDetectionService implements Disposable {
   void loadState(@NotNull Element state) {
     String fileTypeChangedCounterStr = null;
     for (Element element : state.getChildren()) {
-      if (element.getName().equals("setting") && "fileTypeChangedCounter".equals(element.getAttributeValue(Constants.NAME))) {
+      if (element.getName().equals("setting") && FILE_TYPE_CHANGED_COUNTER_PROPERTY.equals(element.getAttributeValue(Constants.NAME))) {
         fileTypeChangedCounterStr = element.getAttributeValue(Constants.VALUE);
         break;
       }
@@ -272,6 +281,18 @@ final class FileTypeDetectionService implements Disposable {
     if (toLog()) {
       log("F: clearCaches()");
     }
+  }
+
+  private void onDetectorsChange() {
+    clearCaches();
+    PropertiesComponent.getInstance().setValue(FILE_TYPE_DETECTORS_PROPERTY, getDetectorsString());
+  }
+
+  private static String getDetectorsString() {
+    return Arrays.stream(FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensions())
+      .map(detector -> detector.getClass().getCanonicalName())
+      .sorted()
+      .collect(Collectors.joining(":"));
   }
 
   @Override
@@ -319,7 +340,7 @@ final class FileTypeDetectionService implements Disposable {
   private void clearPersistentAttributes() {
     int count = fileTypeChangedCount.incrementAndGet();
     autoDetectedAttribute = autoDetectedAttribute.newVersion(count);
-    PropertiesComponent.getInstance().setValue("fileTypeChangedCounter", Integer.toString(count));
+    PropertiesComponent.getInstance().setValue(FILE_TYPE_CHANGED_COUNTER_PROPERTY, Integer.toString(count));
     if (toLog()) {
       log("F: clearPersistentAttributes()");
     }
