@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.actions
+package training.learn
 
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
@@ -26,9 +26,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import training.lang.LangManager
 import training.lang.LangSupport
-import training.learn.CourseManager
-import training.learn.LearnBundle
-import training.learn.NewLearnProjectUtil
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.LessonType
 import training.learn.lesson.LessonManager
@@ -44,8 +41,8 @@ import training.util.findLanguageByID
 import training.util.isLearningProject
 import java.io.IOException
 
-internal object OpenLessonAction {
-  private val LOG = logger<OpenLessonAction>()
+internal object OpenLessonActivities {
+  private val LOG = logger<OpenLessonActivities>()
 
   @RequiresEdt
   fun openLesson(projectWhereToStartLesson: Project, lesson: Lesson) {

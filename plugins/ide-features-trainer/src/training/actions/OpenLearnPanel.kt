@@ -4,6 +4,7 @@ package training.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
+import training.learn.OpenLessonActivities
 import training.ui.LearnToolWindowFactory
 
 class OpenLearnPanel : DumbAwareAction() {
@@ -14,7 +15,7 @@ class OpenLearnPanel : DumbAwareAction() {
       toolWindow.show()
     }
     else {
-      OpenLessonAction.openLearnProjectFromWelcomeScreen()
+      OpenLessonActivities.openLearnProjectFromWelcomeScreen()
     }
   }
 }
