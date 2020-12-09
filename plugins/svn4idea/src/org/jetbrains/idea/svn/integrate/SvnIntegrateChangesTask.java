@@ -257,16 +257,15 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
     VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(files, null);
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.invokeAfterUpdate(
-      () -> {
-        Collection<Change> changes = new ArrayList<>();
-        for (FilePath file : files) {
-          ContainerUtil.addIfNotNull(changes, changeListManager.getChange(file));
-        }
+    changeListManager.invokeAfterUpdateWithModal(true, myTitle, () -> {
+      Collection<Change> changes = new ArrayList<>();
+      for (FilePath file : files) {
+        ContainerUtil.addIfNotNull(changes, changeListManager.getChange(file));
+      }
 
-        CommitChangeListDialog.commitChanges(myProject, changes, null, null, myMerger.getComment());
-        prepareAndShowResults();
-      }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, myTitle, null);
+      CommitChangeListDialog.commitChanges(myProject, changes, null, null, myMerger.getComment());
+      prepareAndShowResults();
+    });
   }
 
   @NotNull

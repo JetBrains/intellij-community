@@ -42,6 +42,41 @@ public abstract class ChangeListManager implements ChangeListModification {
     invokeAfterUpdate(afterUpdate, mode, null, null);
   }
 
+  /**
+   * Invoke callback when current refresh is completed. Show background progress while waiting.
+   *
+   * @param cancellable Whether the progress can be cancelled. If progress is cancelled, callback will not be called.
+   * @param title       Operation name to use as prefix for progress text
+   * @param afterUpdate Callback that will be called in {@link com.intellij.openapi.progress.Task#onFinished()}
+   */
+  public void invokeAfterUpdateWithProgress(boolean cancellable,
+                                            @Nullable @NlsContexts.ProgressTitle String title,
+                                            @NotNull Runnable afterUpdate) {
+    InvokeAfterUpdateMode mode = cancellable ? InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE
+                                             : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
+    invokeAfterUpdate(afterUpdate, mode, title, null);
+  }
+
+  /**
+   * Invoke callback when current refresh is completed with modal progress.
+   *
+   * @param cancellable Whether the progress can be cancelled. If progress is cancelled, callback will be called without waiting for current CLM refresh to finish.
+   * @param title       Operation name to use as prefix for progress dialog title
+   * @param afterUpdate Callback that will be called in {@link com.intellij.openapi.progress.Task#onFinished()}
+   */
+  public void invokeAfterUpdateWithModal(boolean cancellable,
+                                         @Nullable @NlsContexts.DialogTitle String title,
+                                         @NotNull Runnable afterUpdate) {
+    InvokeAfterUpdateMode mode = cancellable ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE
+                                             : InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE;
+    invokeAfterUpdate(afterUpdate, mode, title, null);
+  }
+
+  /**
+   * @see #invokeAfterUpdate(boolean, Runnable)
+   * @see #invokeAfterUpdateWithProgress
+   * @see #invokeAfterUpdateWithModal
+   */
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable @Nls String title,

@@ -5,7 +5,6 @@ import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UpdateInBackground
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -83,10 +82,10 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     context: VcsContext,
     roots: Array<FilePath>
   ) {
-    ChangeListManager.getInstance(project).invokeAfterUpdate(
-      { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-      VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current()
-    )
+    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
+      true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
+      performCheckIn(context, project, roots)
+    }
   }
 
   @Deprecated("getActionName() will be used instead")
