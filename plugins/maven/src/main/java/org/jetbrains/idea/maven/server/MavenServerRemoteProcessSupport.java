@@ -1,12 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -21,15 +19,15 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
-public class MavenServerRemoteProcessSupport extends MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport {
-  private final Sdk myJdk;
-  private final String myOptions;
-  private final MavenDistribution myDistribution;
-  private final Project myProject;
-  private final Integer myDebugPort;
+public abstract class MavenServerRemoteProcessSupport extends MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport {
+  protected final Sdk myJdk;
+  protected final String myOptions;
+  protected final MavenDistribution myDistribution;
+  protected final Project myProject;
+  protected final Integer myDebugPort;
 
   public MavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @Nullable MavenDistribution mavenDistribution,
-                                  @NotNull Project project, @Nullable Integer debugPort) {
+                                         @NotNull Project project, @Nullable Integer debugPort) {
     super(MavenServer.class);
     myJdk = jdk;
     myOptions = vmOptions;
@@ -46,11 +44,6 @@ public class MavenServerRemoteProcessSupport extends MavenRemoteProcessSupportFa
   @Override
   protected String getName(@NotNull Object file) {
     return MavenServerManager.class.getSimpleName();
-  }
-
-  @Override
-  protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
-    return new MavenServerCMDState(myJdk, myOptions, myDistribution, myProject, myDebugPort);
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

@@ -427,6 +427,7 @@
       <param name="delimiters/delimiter" disableReferences="true"/>
     </pluginDescriptor>
 
+    <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.LocalMavenRemoteProcessSupportFactory"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>

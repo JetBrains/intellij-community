@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
@@ -78,17 +76,8 @@ public class MavenServerConnector implements @NotNull Disposable {
         System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
       }
 
-      MavenRemoteProcessSupportFactory[] factories = MavenRemoteProcessSupportFactory.MAVEN_SERVER_SUPPORT_EP_NAME.getExtensions();
-      List<MavenRemoteProcessSupportFactory> aFactories = ContainerUtil.filter(factories, factory -> factory.isApplicable(project));
-      if (aFactories.size() > 1) {
-        LOG.warn("More than one MavenRemoteProcessSupportFactory is applicable: " + aFactories);
-      }
-      else if (aFactories.size() == 1) {
-        mySupport = aFactories.get(0).create(myJdk, myVmOptions, myDistribution, project, myDebugPort);
-      }
-      else {
-        mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, project, myDebugPort);
-      }
+      mySupport = getSupportFactory(project).create(myJdk, myVmOptions, myDistribution, project, myDebugPort);
+
       myMavenServer = mySupport.acquire(this, "");
       myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;
       if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
@@ -110,6 +99,19 @@ public class MavenServerConnector implements @NotNull Disposable {
       myManager.cleanUp(this);
       throw new CannotStartServerException(e);
     }
+  }
+
+  @NotNull
+  private static MavenRemoteProcessSupportFactory getSupportFactory(Project project) {
+    MavenRemoteProcessSupportFactory[] factories = MavenRemoteProcessSupportFactory.MAVEN_SERVER_SUPPORT_EP_NAME.getExtensions();
+    List<MavenRemoteProcessSupportFactory> aFactories = ContainerUtil.filter(factories, factory -> factory.isApplicable(project));
+    if (aFactories.isEmpty()) {
+      return new LocalMavenRemoteProcessSupportFactory();
+    }
+    if (aFactories.size() > 1) {
+      LOG.warn("More than one MavenRemoteProcessSupportFactory is applicable: " + aFactories);
+    }
+    return aFactories.get(0);
   }
 
   private void cleanUp() {
