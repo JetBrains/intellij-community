@@ -49,7 +49,9 @@ class RedundantSemicolonInspection : AbstractKotlinInspection(), CleanupLocalIns
                 if (semicolon.parent is KtPackageDirective && (nextLeaf as? KtImportList)?.imports?.isEmpty() == true) {
                     return true
                 }
-                if (semicolon.prevLeaf { it !is PsiWhiteSpace && it !is PsiComment || it.isLineBreak() } is PsiWhiteSpace) {
+                if (semicolon.prevLeaf { it !is PsiWhiteSpace && it !is PsiComment || it.isLineBreak() } is PsiWhiteSpace &&
+                    !semicolon.isBeforeLeftBrace()
+                ) {
                     return true
                 }
                 return false
@@ -82,14 +84,18 @@ class RedundantSemicolonInspection : AbstractKotlinInspection(), CleanupLocalIns
                     return false
             }
 
-            if (nextLeaf?.nextLeaf {
-                    it !is PsiWhiteSpace && it !is PsiComment && it.getStrictParentOfType<KDoc>() == null &&
-                            it.getStrictParentOfType<KtAnnotationEntry>() == null
-                }?.node?.elementType == KtTokens.LBRACE) {
+            if (nextLeaf.isBeforeLeftBrace()) {
                 return false // case with statement starting with '{' and call on the previous line
             }
 
             return !isSemicolonRequired(semicolon)
+        }
+
+        private fun PsiElement?.isBeforeLeftBrace(): Boolean {
+            return this?.nextLeaf {
+                it !is PsiWhiteSpace && it !is PsiComment && it.getStrictParentOfType<KDoc>() == null &&
+                it.getStrictParentOfType<KtAnnotationEntry>() == null
+            }?.node?.elementType == KtTokens.LBRACE
         }
 
         private fun isSemicolonRequired(semicolon: PsiElement): Boolean {

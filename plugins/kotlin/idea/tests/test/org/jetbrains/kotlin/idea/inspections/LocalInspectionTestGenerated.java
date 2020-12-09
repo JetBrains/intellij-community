@@ -8410,6 +8410,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testStartOfLine2() throws Exception {
             runTest("testData/inspectionsLocal/redundantSemicolon/startOfLine2.kt");
         }
+
+        @TestMetadata("startOfLineBeforeLambda.kt")
+        public void testStartOfLineBeforeLambda() throws Exception {
+            runTest("testData/inspectionsLocal/redundantSemicolon/startOfLineBeforeLambda.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
