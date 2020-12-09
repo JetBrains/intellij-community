@@ -1,13 +1,23 @@
 <html>
 <body>
-Reports any uses of <b>java.util.Optional&lt;T&gt;</b>, <b>java.util.OptionalDouble</b>, <b>java.util.OptionalInt</b>,
-<b>java.util.OptionalLong</b> or <b>com.google.common.base.Optional</b> as the type for a field or a parameter.
+Reports any uses of <code>java.util.Optional&lt;T&gt;</code>, <code>java.util.OptionalDouble</code>, <code>java.util.OptionalInt</code>,
+<code>java.util.OptionalLong</code> or <code>com.google.common.base.Optional</code> as the type for a field or a parameter.
 Optional was designed to provide a limited mechanism for library method return types where there needed
 to be a clear way to represent "no result".
-Using a field with type <b>java.util.Optional</b> is also problematic if the class needs to be <b>Serializable</b>,
-which <b>java.util.Optional</b> is not.
+Using a field with type <code>java.util.Optional</code> is also problematic if the class needs to be <code>Serializable</code>,
+which <code>java.util.Optional</code> is not.
+<p>Example:</p>
+<pre>
+class MyClass {
+  Optional&lt;String&gt; name; // Optional field
+  
+  void setName(Optional&lt;String&gt; name) { // Optional parameter
+    this.name = name;
+  }
+}
+</pre>
 <!-- tooltip end -->
 <p>
-<small>New in 16</small>
+<small>New in 2016.1</small>
 </body>
 </html>
