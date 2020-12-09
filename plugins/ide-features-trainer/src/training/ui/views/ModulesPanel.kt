@@ -7,14 +7,12 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
-import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Module
@@ -33,7 +31,7 @@ import javax.swing.text.StyleConstants
 
 class ModulesPanel : JPanel() {
 
-  private val modulesPanel: JPanel = LearningItems()
+  private val modulesPanel = LearningItems()
 
   private val module2linklabel = BidirectionalMap<Module, LinkLabel<Any>>()
 
@@ -76,41 +74,9 @@ class ModulesPanel : JPanel() {
       module2linklabel.clear()
     }
 
-    if (modulesPanel is LearningItems) {
-      modulesPanel.let {
-        it.modules = modules
-        it.updateItems()
-      }
-    }
-    else {
-      modulesPanel.apply {
-        name = "modulesPanel"
-        layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
-        border = UISettings.instance.eastBorder
-        isOpaque = true
-        isFocusable = false
-      }
-
-      for (module in modules) {
-        if (module.lessons.isEmpty()) continue
-        val moduleName = createModuleNameLinkLabel(module)
-        val moduleHeader = createModuleHeader(module, moduleName, JBColor.BLACK).apply { border = UISettings.instance.checkmarkShiftBorder }
-
-        val feedbackPane = createDescriptionPane(module)
-        feedbackPane.border = UISettings.instance.checkmarkShiftBorder
-        feedbackPane.addMouseListener(delegateToLinkLabel(feedbackPane, moduleName))
-
-        modulesPanel.add(moduleHeader)
-        modulesPanel.add(Box.createVerticalStrut(UISettings.instance.headerGap))
-        modulesPanel.add(feedbackPane)
-        modulesPanel.add(Box.createVerticalStrut(UISettings.instance.moduleGap))
-      }
-
-      val feedback = LangManager.getInstance().getLangSupport()?.langCourseFeedback
-      if (feedback != null) {
-        createFeedbackPanel(feedback)
-      }
-      modulesPanel.add(Box.createVerticalGlue())
+    modulesPanel.let {
+      it.modules = modules
+      it.updateItems(CourseManager.instance.unfoldModuleOnInit)
     }
   }
 
