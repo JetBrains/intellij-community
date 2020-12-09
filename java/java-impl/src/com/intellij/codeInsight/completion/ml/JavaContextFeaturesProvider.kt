@@ -15,6 +15,12 @@ class JavaContextFeaturesProvider : ContextFeatureProvider {
     JavaCompletionUtil.getExpectedTypes(environment.parameters)?.forEach {
       features["${JavaCompletionFeatures.asJavaType(it).name.toLowerCase()}_expected"] = MLFeatureValue.binary(true)
     }
+    if (JavaCompletionFeatures.isInQualifierExpression(environment)) {
+      features["is_in_qualifier_expression"] = MLFeatureValue.binary(true)
+    }
+    if (JavaCompletionFeatures.isAfterMethodCall(environment)) {
+      features["is_after_method_call"] = MLFeatureValue.binary(true)
+    }
     PsiTreeUtil.prevVisibleLeaf(environment.parameters.position)?.let { prevLeaf ->
       JavaCompletionFeatures.asKeyword(prevLeaf.text)?.let { keyword ->
         features["prev_neighbour_keyword"] = MLFeatureValue.categorical(keyword)

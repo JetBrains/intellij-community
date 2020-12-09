@@ -141,6 +141,28 @@ internal object JavaCompletionFeatures {
     return result
   }
 
+  fun isInQualifierExpression(environment: CompletionEnvironment): Boolean {
+    val parentExpressions = mutableSetOf<PsiExpression>()
+    var curParent = environment.parameters.position.context
+    while (curParent is PsiExpression) {
+      if (curParent is PsiReferenceExpression && parentExpressions.contains(curParent.qualifierExpression)) {
+        return true
+      }
+      parentExpressions.add(curParent)
+      curParent = curParent.parent
+    }
+    return false
+  }
+
+  fun isAfterMethodCall(environment: CompletionEnvironment): Boolean {
+    val context = environment.parameters.position.context
+    if (context is PsiReferenceExpression) {
+      val qualifier = context.qualifierExpression
+      return qualifier is PsiNewExpression || qualifier is PsiMethodCallExpression
+    }
+    return false
+  }
+
   private data class VariablesInfo(
     val names: Set<String>,
     val types: Set<PsiType>,
