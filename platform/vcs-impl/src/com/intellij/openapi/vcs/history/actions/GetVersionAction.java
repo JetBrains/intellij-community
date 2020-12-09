@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -123,7 +122,7 @@ public class GetVersionAction extends AnAction implements DumbAware {
     return VcsBundle.message("action.name.for.file.get.version", filePath.getPath(), revision.getRevisionNumber());
   }
 
-  private static void write(@NotNull FilePath filePath, byte[] revision, @NotNull Project project) throws IOException {
+  private static void write(@NotNull FilePath filePath, byte[] revision) throws IOException {
     VirtualFile virtualFile = filePath.getVirtualFile();
     if (virtualFile == null) {
       FileUtil.writeToFile(filePath.getIOFile(), revision);
@@ -142,10 +141,7 @@ public class GetVersionAction extends AnAction implements DumbAware {
       }
       else {
         String content = StringUtil.convertLineSeparators(new String(revision, filePath.getCharset().name()));
-
-        CommandProcessor
-          .getInstance().executeCommand(project, () -> document.replaceString(0, document.getTextLength(), content),
-                                        VcsBundle.message("message.title.get.version"), null);
+        document.replaceString(0, document.getTextLength(), content);
       }
     }
   }
@@ -186,15 +182,17 @@ public class GetVersionAction extends AnAction implements DumbAware {
 
       LocalHistoryAction action = virtualFile != null ? startLocalHistoryAction(myFilePath, myRevision) : LocalHistoryAction.NULL;
       try {
-        WriteCommandAction.writeCommandAction(myProject).run(() -> {
-          try {
-            write(myFilePath, revisionContent, myProject);
-          }
-          catch (IOException e) {
-            Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
-                                       VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
-          }
-        });
+        WriteCommandAction.writeCommandAction(myProject)
+          .withName(VcsBundle.message("message.title.get.version"))
+          .run(() -> {
+            try {
+              write(myFilePath, revisionContent);
+            }
+            catch (IOException e) {
+              Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
+                                         VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
+            }
+          });
         VcsDirtyScopeManager.getInstance(myProject).fileDirty(myFilePath);
       }
       finally {
