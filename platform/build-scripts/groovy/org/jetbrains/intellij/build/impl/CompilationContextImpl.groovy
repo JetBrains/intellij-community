@@ -497,13 +497,11 @@ class CompilationContextImpl implements CompilationContext {
 @CompileStatic
 class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
-    super(Paths.get(communityHome), Paths.get("$buildOutputRoot/temp"))
+    super(Paths.get(communityHome).toAbsolutePath().normalize(), Paths.get(buildOutputRoot).toAbsolutePath().normalize())
 
     this.projectHome = projectHome
-    this.buildOutputRoot = buildOutputRoot
     this.jdkHome = jdkHome
     this.kotlinHome = kotlinHome
     artifacts = "$buildOutputRoot/artifacts"
-    distAll = "$buildOutputRoot/dist.all"
   }
 }

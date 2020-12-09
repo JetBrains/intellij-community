@@ -87,20 +87,19 @@ final class BuildHelper {
 
   private static synchronized BuildHelper loadHelper(BuildContext buildContext) {
     JpsModule helperModule = buildContext.findRequiredModule("intellij.idea.community.build.tasks")
-    List<String> classPathFiles = buildContext.getModuleRuntimeClasspath(helperModule, false)
-    List<URL> classPathUrls = new ArrayList<>(classPathFiles.size())
-    for (String filePath : classPathFiles) {
+    List<String> classPaths = buildContext.getModuleRuntimeClasspath(helperModule, false)
+    List<Path> classPathFiles = new ArrayList<>(classPaths.size())
+    for (String filePath : classPaths) {
       Path file = Paths.get(filePath).normalize()
       if (!file.endsWith("jrt-fs.jar")) {
-        classPathUrls.add(file.toUri().toURL())
+        classPathFiles.add(file)
       }
     }
     UrlClassLoader classLoader = UrlClassLoader.build()
       .parent(ClassLoader.getSystemClassLoader())
       .usePersistentClasspathIndexForLocalClassDirectories()
       .useCache()
-      .allowLock(true)
-      .urls(classPathUrls)
+      .files(classPathFiles)
       .get()
     return new BuildHelper(classLoader)
   }

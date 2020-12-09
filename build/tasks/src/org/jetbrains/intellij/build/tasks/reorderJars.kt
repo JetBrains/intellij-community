@@ -101,7 +101,7 @@ internal fun readClassLoadingLog(classLoadingLogFile: Path, rootDir: Path): Map<
   val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
   Files.lines(classLoadingLogFile).use { lines ->
     lines.forEach {
-      val data = it.split(':')
+      val data = it.split(':', limit = 2)
       val source = rootDir.resolve(data[1])
       sourceToNames.computeIfAbsent(source) { mutableListOf() }.add(data[0])
     }

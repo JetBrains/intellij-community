@@ -301,9 +301,8 @@ final class DistributionJARsBuilder {
   }
 
   static void reorderJars(@NotNull BuildContext buildContext) {
-    Path distDir = Paths.get(buildContext.paths.distAll)
     Path result = (Path)BuildHelper.getInstance(buildContext).reorderJars
-      .invokeWithArguments(distDir, distDir,
+      .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
                            buildContext.getBootClassPathJarNames(),
                            buildContext.paths.tempDir,
                            buildContext.productProperties.platformPrefix ?: "idea",
@@ -453,11 +452,11 @@ final class DistributionJARsBuilder {
   }
 
   private static String getThirdPartyLibrariesHtmlFilePath(@NotNull BuildContext buildContext) {
-    "$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH"
+    return "$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH"
   }
 
   private static String getThirdPartyLibrariesJsonFilePath(@NotNull BuildContext buildContext) {
-    "$buildContext.paths.temp/third-party-libraries.json"
+    return "$buildContext.paths.temp/third-party-libraries.json"
   }
 
   static Map<String, String> getPluginModulesToJar(@NotNull BuildContext buildContext) {
@@ -521,7 +520,7 @@ final class DistributionJARsBuilder {
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
-      def packagedFiles = new File(buildContext.paths.distAll, "lib").listFiles()
+      File[] packagedFiles = buildContext.paths.distAllDir.resolve("lib").toFile().listFiles()
       def forbiddenJars = packagedFiles.findAll { forbiddenJarNames.contains(it.name) }
       if (!forbiddenJars.empty) {
         buildContext.messages.error( "The following JARs cannot be included into the product 'lib' directory, they need to be scrambled with the main jar: ${forbiddenJars}")

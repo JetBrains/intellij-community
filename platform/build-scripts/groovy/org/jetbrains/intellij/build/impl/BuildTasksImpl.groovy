@@ -267,7 +267,7 @@ idea.fatal.error.notification=disabled
 
       if (buildContext.applicationInfo.svgRelativePath != null) {
         Path from = findBrandingResource(buildContext.applicationInfo.svgRelativePath)
-        Path to = Paths.get(buildContext.paths.distAll, "bin/${buildContext.productProperties.baseFileName}.svg")
+        Path to = buildContext.paths.distAllDir.resolve("bin/${buildContext.productProperties.baseFileName}.svg")
         Files.createDirectories(to.parent)
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
       }
@@ -305,7 +305,7 @@ idea.fatal.error.notification=disabled
 
   private void copyLogXml() {
     Path src = buildContext.paths.communityHomeDir.resolve("bin/log.xml")
-    Path dst = Paths.get(buildContext.paths.distAll, "bin/log.xml")
+    Path dst = buildContext.paths.distAllDir.resolve("bin/log.xml")
     Files.createDirectories(dst.parent)
     Files.newBufferedWriter(dst).withCloseable {
       src.filterLine { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(it)
@@ -885,14 +885,15 @@ idea.fatal.error.notification=disabled
     layoutShared()
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
-      new ClassVersionChecker(checkerConfig).checkVersions(buildContext, Paths.get(buildContext.paths.distAll))
+      new ClassVersionChecker(checkerConfig).checkVersions(buildContext, buildContext.paths.distAllDir)
     }
   }
 
   @Override
   @CompileStatic(TypeCheckingMode.SKIP)
   void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime) {
-    buildContext.paths.distAll = targetDirectory.toString()
+    buildContext.paths.distAllDir = targetDirectory.toAbsolutePath().normalize()
+    buildContext.paths.distAll = FileUtilRt.toSystemIndependentName(buildContext.paths.distAllDir.toString())
     OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
                          SystemInfoRt.isMac ? OsFamily.MACOS :
                          SystemInfoRt.isLinux ? OsFamily.LINUX : null

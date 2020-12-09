@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-
 import com.intellij.openapi.util.io.FileUtilRt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -12,12 +11,17 @@ import java.nio.file.Path
  */
 @CompileStatic
 abstract class BuildPaths {
-  BuildPaths(@NotNull Path communityHomeDir, @NotNull Path tempDir) {
+  BuildPaths(@NotNull Path communityHomeDir, @NotNull Path buildOutputDir) {
     this.communityHomeDir = communityHomeDir
-    this.tempDir = tempDir
 
+    this.buildOutputRoot = FileUtilRt.toSystemIndependentName(buildOutputDir.toString())
     communityHome = FileUtilRt.toSystemIndependentName(communityHomeDir.toString())
+
+    tempDir = buildOutputDir.resolve("temp")
     temp = FileUtilRt.toSystemIndependentName(tempDir.toString())
+
+    distAllDir = buildOutputDir.resolve("dist.all")
+    distAll = FileUtilRt.toSystemIndependentName(distAllDir.toString())
   }
 
   /**
@@ -45,6 +49,7 @@ abstract class BuildPaths {
    * Path to a directory containing distribution files ('bin', 'lib', 'plugins' directories) common for all operating systems
    */
   String distAll
+  Path distAllDir
 
   /**
    * Path to a directory where temporary files required for a particular build step can be stored
