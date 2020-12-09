@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
@@ -51,10 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -66,6 +64,7 @@ public class InspectionValidatorWrapper implements Validator {
   private final InspectionManager myInspectionManager;
   private final InspectionProjectProfileManager myProfileManager;
   private final PsiDocumentManager myPsiDocumentManager;
+
   private static final ThreadLocal<Boolean> ourCompilationThreads = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   public InspectionValidatorWrapper(CompilerManager compilerManager, InspectionManager inspectionManager,
@@ -188,19 +187,17 @@ public class InspectionValidatorWrapper implements Validator {
   public ProcessingItem[] process(@NotNull CompileContext context, ProcessingItem @NotNull [] items) {
     context.getProgressIndicator().setText(myValidator.getProgressIndicatorText());
 
-    List<ProcessingItem> processedItems = new ArrayList<>();
+    Map<Class<?>, LocalInspectionTool> allTools = getInspectionToolMap(context.getProject(), myProfileManager);
+
     List<LocalInspectionTool> inspections = new ArrayList<>();
     for (Class<? extends LocalInspectionTool> aClass : myValidator.getInspectionToolClasses(context)) {
-      try {
-        inspections.add(aClass.newInstance());
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new Error(e);
+      LocalInspectionTool tool = allTools.get(aClass);
+      if (tool != null) {
+        inspections.add(tool);
       }
     }
+
+    List<ProcessingItem> processedItems = new ArrayList<>();
     for (int i = 0; i < items.length; i++) {
       MyValidatorProcessingItem item = (MyValidatorProcessingItem)items[i];
       context.getProgressIndicator().checkCanceled();
@@ -221,6 +218,19 @@ public class InspectionValidatorWrapper implements Validator {
     return processedItems.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
+  private static @NotNull Map<Class<?>, LocalInspectionTool> getInspectionToolMap(@NotNull Project project,
+                                                                                  @NotNull InspectionProjectProfileManager profileManager) {
+    Map<Class<?>, LocalInspectionTool> allTools = new IdentityHashMap<>();
+    InspectionProfile profile = profileManager.getCurrentProfile();
+    for (Tools tools : profile.getAllEnabledInspectionTools(project)) {
+      InspectionProfileEntry inspectionProfileEntry = tools.getTool().getTool();
+      if (inspectionProfileEntry instanceof LocalInspectionTool) {
+        allTools.put(inspectionProfileEntry.getClass(), (LocalInspectionTool)inspectionProfileEntry);
+      }
+    }
+    return allTools;
+  }
+
   private boolean checkFile(List<? extends LocalInspectionTool> inspections, MyValidatorProcessingItem item, CompileContext context) {
     boolean hasErrors = !checkUnderReadAction(item, context, () -> myValidator.checkAdditionally(item.getPsiFile()));
 
@@ -233,7 +243,6 @@ public class InspectionValidatorWrapper implements Validator {
     })) {
       hasErrors = true;
     }
-
 
     InspectionProfile inspectionProfile = myProfileManager.getCurrentProfile();
     for (LocalInspectionTool inspectionTool : inspections) {
@@ -372,7 +381,6 @@ public class InspectionValidatorWrapper implements Validator {
     }
   }
 
-
   @Override
   @NotNull
   @Nls
@@ -389,5 +397,4 @@ public class InspectionValidatorWrapper implements Validator {
   public ValidityState createValidityState(DataInput in) throws IOException {
     return PsiElementsValidityState.load(in);
   }
-
 }
