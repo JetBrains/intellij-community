@@ -21,7 +21,6 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
@@ -37,6 +36,7 @@ import java.util.function.BiFunction;
 import java.util.jar.JarFile;
 
 import static com.intellij.util.ObjectUtils.tryCast;
+import static java.util.Objects.requireNonNullElse;
 
 public final class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
@@ -125,8 +125,8 @@ public final class JavaModuleGraphUtil {
   public static @NotNull Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project), cacheDependency()));
-    return ObjectUtils.notNull(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
+      Result.create(findCycles(project), PsiModificationTracker.MODIFICATION_COUNT));
+    return requireNonNullElse(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
   }
 
   public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @Nullable PsiJavaModule target) {
@@ -150,10 +150,6 @@ public final class JavaModuleGraphUtil {
 
   public static @Nullable PsiJavaModule findOrigin(@NotNull PsiJavaModule module, @NotNull String packageName) {
     return getRequiresGraph(module).findOrigin(module, packageName);
-  }
-
-  private static Object cacheDependency() {
-    return PsiModificationTracker.MODIFICATION_COUNT;
   }
 
   /*
@@ -213,7 +209,7 @@ public final class JavaModuleGraphUtil {
   private static RequiresGraph getRequiresGraph(PsiJavaModule module) {
     Project project = module.getProject();
     return CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), cacheDependency()));
+      Result.create(buildRequiresGraph(project), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   /*

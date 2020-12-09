@@ -35,9 +35,8 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
     return true;
   }
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
@@ -46,9 +45,8 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
     return 5;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
@@ -57,31 +55,26 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
     return false;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return myFilter;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return myIndexer;
   }
 
-  @NotNull
   @Override
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+  public @NotNull Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
     return Collections.singleton(JavaClassFileType.INSTANCE);
   }
 
-  @NotNull
-  public static Collection<VirtualFile> getFilesByKey(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+  public static @NotNull Collection<VirtualFile> getFilesByKey(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, new JavaAutoModuleFilterScope(scope));
   }
 
-  @NotNull
-  public static Collection<String> getAllKeys(@NotNull Project project) {
+  public static @NotNull Collection<String> getAllKeys(@NotNull Project project) {
     return FileBasedIndex.getInstance().getAllKeys(NAME, project);
   }
 }
