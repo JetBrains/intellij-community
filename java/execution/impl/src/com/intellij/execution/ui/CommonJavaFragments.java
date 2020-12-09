@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
@@ -122,6 +123,7 @@ public final class CommonJavaFragments {
                                    },
                                    s -> s.getDefaultModule() != s.getConfigurationModule().getModule() &&
                                         s.getConfigurationModule().getModule() != null ||
+                                        ModuleManager.getInstance(s.getProject()).getModules().length > 1 ||
                                         option != null && getter.test(s));
     fragment.setHint(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.hint"));
     fragment.setActionHint(
