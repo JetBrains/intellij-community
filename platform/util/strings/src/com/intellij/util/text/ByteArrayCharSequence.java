@@ -31,7 +31,7 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
   public int hashCode() {
     int h = hash;
     if (h == 0) {
-      hash = h = Strings.stringHashCode(this, myStart, myEnd);
+      hash = h = Strings.stringHashCode(this, 0, length());
     }
     return h;
   }
