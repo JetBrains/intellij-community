@@ -60,7 +60,7 @@ public abstract class BackendToolWindowSynchronizer {
   }
 
   @Nullable
-  public ToolWindowViewModelContent getContent(String id) {
+  protected ToolWindowViewModelContent getContent(String id) {
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(id);
 
     final ToolWindowViewModelExtractor[] extractors = ToolWindowViewModelExtractor.EP_NAME.getExtensions();
