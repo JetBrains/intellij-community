@@ -29,12 +29,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -77,7 +74,6 @@ import java.util.*;
  */
 public final class IdeKeyEventDispatcher implements Disposable {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
-  private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -100,10 +96,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private final IdeEventQueue myQueue;
 
   private final Alarm mySecondStrokeTimeout = new Alarm();
+
   private final Runnable mySecondStrokeTimeoutRunnable = () -> {
     if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
       resetState();
-      final DataContext dataContext = myContext.getDataContext();
+      DataContext dataContext = myContext.getDataContext();
       StatusBar.Info.set(null, dataContext == null ? null : CommonDataKeys.PROJECT.getData(dataContext));
     }
   };
@@ -114,13 +111,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     myQueue = queue;
 
     // Application is null on early start when e.g. license dialog is shown
-    Application parent = ApplicationManager.getApplication();
-    if (parent != null) {
-      Disposer.register(parent, this);
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      Disposer.register(app, this);
     }
   }
 
-  public boolean isWaitingForSecondKeyStroke(){
+  public boolean isWaitingForSecondKeyStroke() {
     return getState() == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE || isPressedWasProcessed();
   }
 
@@ -128,8 +125,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * @return {@code true} if and only if the passed event is already dispatched by the
    * {@code IdeKeyEventDispatcher} and there is no need for any other processing of the event.
    */
-  public boolean dispatchKeyEvent(final KeyEvent e){
-    if (myDisposed) return false;
+  public boolean dispatchKeyEvent(KeyEvent e) {
+    if (myDisposed) {
+      return false;
+    }
 
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       storeAsciiForChar(e);
@@ -180,13 +179,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
       // remove AltGr modifier to show a shortcut without AltGr in Settings
-      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == id) removeAltGraph(e);
+      if (SystemInfoRt.isWindows && KeyEvent.KEY_PRESSED == id) {
+        removeAltGraph(e);
+      }
       return false;
     }
-    if (id == KeyEvent.KEY_PRESSED && focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
-      if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
-        MacUIUtil.hideCursor();
-      }
+
+    if (id == KeyEvent.KEY_PRESSED &&
+        focusOwner instanceof JTextComponent &&
+        ((JTextComponent)focusOwner).isEditable() &&
+        e.getKeyChar() != KeyEvent.CHAR_UNDEFINED &&
+        e.getKeyCode() != KeyEvent.VK_ESCAPE) {
+      MacUIUtil.hideCursor();
     }
 
     MenuSelectionManager menuSelectionManager=MenuSelectionManager.defaultManager();
@@ -208,10 +212,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Window focusedWindow = focusManager.getFocusedWindow();
     boolean isModalContext = focusedWindow != null && isModalContext(focusedWindow);
 
-    if (ApplicationManager.getApplication() == null) return false; //EA-39114
-
-    final DataManager dataManager = DataManager.getInstance();
-    if (dataManager == null) return false;
+    Application app = ApplicationManager.getApplication();
+    DataManager dataManager = app == null ? null : app.getServiceIfCreated(DataManager.class);
+    if (dataManager == null) {
+      return false;
+    }
 
     DataContext dataContext = dataManager.getDataContext();
 
@@ -221,26 +226,21 @@ public final class IdeKeyEventDispatcher implements Disposable {
     myContext.setInputEvent(e);
 
     try {
-      if (getState() == KeyState.STATE_INIT) {
-        return inInitState();
-      }
-      else if (getState() == KeyState.STATE_PROCESSED) {
-        return inProcessedState();
-      }
-      else if (getState() == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-        return inWaitForSecondStrokeState();
-      }
-      else if (getState() == KeyState.STATE_SECOND_STROKE_IN_PROGRESS) {
-        return inSecondStrokeInProgressState();
-      }
-      else if (getState() == KeyState.STATE_KEY_GESTURE_PROCESSOR) {
-        return myKeyGestureProcessor.process();
-      }
-      else if (getState() == KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR) {
-        return inWaitForPossibleAltGr();
-      }
-      else {
-        throw new IllegalStateException("state = " + getState());
+      switch (getState()) {
+        case STATE_INIT:
+          return inInitState();
+        case STATE_PROCESSED:
+          return inProcessedState();
+        case STATE_WAIT_FOR_SECOND_KEYSTROKE:
+          return inWaitForSecondStrokeState();
+        case STATE_SECOND_STROKE_IN_PROGRESS:
+          return inSecondStrokeInProgressState();
+        case STATE_KEY_GESTURE_PROCESSOR:
+          return myKeyGestureProcessor.process();
+        case STATE_WAIT_FOR_POSSIBLE_ALT_GR:
+          return inWaitForPossibleAltGr();
+        default:
+          throw new IllegalStateException("state = " + getState());
       }
     }
     finally {
@@ -354,8 +354,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     int eventId = e.getID();
     if (KeyEvent.KEY_TYPED == eventId && e.isAltGraphDown()) {
       return false;
-    } else if (KeyEvent.KEY_RELEASED == eventId) {
-
+    }
+    else if (KeyEvent.KEY_RELEASED == eventId) {
       updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(keyStroke, null));
 
       if (myContext.getActions().isEmpty()) {
@@ -372,8 +372,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyEvent e = myContext.getInputEvent();
 
     // when any key is released, we stop waiting for the second stroke
-    if(KeyEvent.KEY_RELEASED==e.getID()){
-      myFirstKeyStroke=null;
+    if (KeyEvent.KEY_RELEASED == e.getID()) {
+      myFirstKeyStroke = null;
       setState(KeyState.STATE_INIT);
       Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
       StatusBar.Info.set(null, project);
@@ -384,7 +384,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (originalKeyStroke == null) {
       return false;
     }
-    KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
+
+    KeyStroke keyStroke = getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
     updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(myFirstKeyStroke, keyStroke));
 
@@ -395,13 +396,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // finally user had managed to enter the second keystroke, so let it be processed
     Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
-    StatusBarEx statusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(project);
+    StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
     if (processAction(e, myActionProcessor)) {
       if (statusBar != null) {
         statusBar.setInfo(null);
       }
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }
@@ -426,7 +428,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Component focusOwner = myContext.getFocusOwner();
     KeyEvent e = myContext.getInputEvent();
 
-    if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e) && e.isControlDown()) {
+    if (SystemInfoRt.isWindows && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e) && e.isControlDown()) {
       myFirstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
       if (myFirstKeyStroke == null) return false;
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
@@ -435,10 +437,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
     if (isCandidateForAltGr) {
-      if (Registry.is("actionSystem.force.alt.gr")) {
+      if (Registry.is("actionSystem.force.alt.gr", false)) {
         return false;
       }
-      if (isAltGrLayout(focusOwner)) return false; // don't search for shortcuts
+      if (isAltGrLayout(focusOwner)) {
+        return false; // don't search for shortcuts
+      }
     }
 
     KeyStroke originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
@@ -477,54 +481,50 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private boolean processActionOrWaitSecondStroke(KeyStroke keyStroke) {
-    DataContext dataContext = myContext.getDataContext();
-    KeyEvent e = myContext.getInputEvent();
-
-    if (myContext.isHasSecondStroke()) {
-      myFirstKeyStroke=keyStroke;
-      final ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
-
-      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      @NlsContexts.StatusBarText StringBuilder message = new StringBuilder();
-      message.append(KeyMapBundle.message("prefix.key.pressed.message"));
-      message.append(' ');
-      for (int i = 0; i < secondKeyStrokes.size(); i++) {
-        Pair<AnAction, KeyStroke> pair = secondKeyStrokes.get(i);
-        if (i > 0) message.append(", ");
-        message.append(pair.getFirst().getTemplatePresentation().getText());
-        message.append(" (");
-        message.append(KeymapUtil.getKeystrokeText(pair.getSecond()));
-        message.append(")");
-      }
-
-      StatusBar.Info.set(message.toString(), project);
-
-      mySecondStrokeTimeout.cancelAllRequests();
-      mySecondStrokeTimeout.addRequest(mySecondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimeout"));
-
-      if (Registry.is("actionSystem.secondKeystrokeAutoPopupEnabled")) {
-        mySecondKeystrokePopupTimeout.cancelAllRequests();
-        if (secondKeyStrokes.size() > 1) {
-          final DataContext oldContext = myContext.getDataContext();
-          mySecondKeystrokePopupTimeout.addRequest(() -> {
-            if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-              StatusBar.Info.set(null, CommonDataKeys.PROJECT.getData(oldContext));
-              new SecondaryKeystrokePopup(myFirstKeyStroke, secondKeyStrokes, oldContext).showInBestPositionFor(oldContext);
-            }
-          }, Registry.intValue("actionSystem.secondKeystrokePopupTimeout"));
-        }
-      }
-
-      setState(KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE);
-      return true;
+    if (!myContext.isHasSecondStroke()) {
+      return processAction(myContext.getInputEvent(), myActionProcessor);
     }
-    else {
-      return processAction(e, myActionProcessor);
+
+    myFirstKeyStroke = keyStroke;
+    List<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
+
+    Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
+    @NlsContexts.StatusBarText StringBuilder message = new StringBuilder();
+    message.append(KeyMapBundle.message("prefix.key.pressed.message"));
+    message.append(' ');
+    for (int i = 0; i < secondKeyStrokes.size(); i++) {
+      Pair<AnAction, KeyStroke> pair = secondKeyStrokes.get(i);
+      if (i > 0) message.append(", ");
+      message.append(pair.getFirst().getTemplatePresentation().getText());
+      message.append(" (");
+      message.append(KeymapUtil.getKeystrokeText(pair.getSecond()));
+      message.append(")");
     }
+
+    StatusBar.Info.set(message.toString(), project);
+
+    mySecondStrokeTimeout.cancelAllRequests();
+    mySecondStrokeTimeout.addRequest(mySecondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimeout"));
+
+    if (Registry.is("actionSystem.secondKeystrokeAutoPopupEnabled")) {
+      mySecondKeystrokePopupTimeout.cancelAllRequests();
+      if (secondKeyStrokes.size() > 1) {
+        final DataContext oldContext = myContext.getDataContext();
+        mySecondKeystrokePopupTimeout.addRequest(() -> {
+          if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
+            StatusBar.Info.set(null, CommonDataKeys.PROJECT.getData(oldContext));
+            new SecondaryKeystrokePopup(myFirstKeyStroke, secondKeyStrokes, oldContext).showInBestPositionFor(oldContext);
+          }
+        }, Registry.intValue("actionSystem.secondKeystrokePopupTimeout"));
+      }
+    }
+
+    setState(KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE);
+    return true;
   }
 
-  private ArrayList<Pair<AnAction, KeyStroke>> getSecondKeystrokeActions() {
-    ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = new ArrayList<>();
+  private List<Pair<AnAction, KeyStroke>> getSecondKeystrokeActions() {
+    List<Pair<AnAction, KeyStroke>> secondKeyStrokes = new ArrayList<>();
     for (AnAction action : myContext.getActions()) {
       Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
       for (Shortcut shortcut : shortcuts) {
@@ -548,7 +548,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
     Container container = focusOwner == null ? null : ComponentUtil.getWindow(focusOwner);
     if (container instanceof JFrame) {
-      ComponentWithMnemonics componentWithMnemonics = UIUtil.getParentOfType(ComponentWithMnemonics.class, focusOwner);
+      ComponentWithMnemonics componentWithMnemonics = ComponentUtil.getParentOfType(ComponentWithMnemonics.class, focusOwner);
       if (componentWithMnemonics instanceof Container) {
         container = (Container)componentWithMnemonics;
       }
@@ -724,9 +724,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static @NotNull @Nls String getActionUnavailableMessage(AnActionEvent... actionEvents) {
     List<String> actionNames = new ArrayList<>();
-    for (final AnActionEvent event : actionEvents) {
-      final String s = event.getPresentation().getText();
-      if (StringUtil.isNotEmpty(s)) {
+    for (AnActionEvent event : actionEvents) {
+      String s = event.getPresentation().getText();
+      if (Strings.isNotEmpty(s)) {
         actionNames.add(s);
       }
     }
@@ -738,7 +738,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
     else {
       return getUnavailableMessage(IdeBundle.message("dumb.balloon.none.of.the.following.actions"), true) +
-             ": " + StringUtil.join(actionNames, ", ");
+             ": " + String.join(", ", actionNames);
     }
   }
 
@@ -860,10 +860,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private void addAction(AnAction action, @NotNull Shortcut sc) {
-    Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    for (Shortcut each : shortcuts) {
-      if (each == null) throw new NullPointerException("unexpected shortcut of action: " + action.toString());
-      if (!each.isKeyboard()) continue;
+    for (Shortcut each : action.getShortcutSet().getShortcuts()) {
+      if (each == null) {
+        throw new NullPointerException("unexpected shortcut of action: " + action);
+      }
+      if (!each.isKeyboard()) {
+        continue;
+      }
 
       if (each.startsWith(sc)) {
         if (!myContext.getActions().contains(action)) {
@@ -914,40 +917,45 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return myState == KeyState.STATE_INIT || myState == KeyState.STATE_PROCESSED;
   }
 
-  private static class SecondaryKeystrokePopup extends ListPopupImpl {
-
+  private static final class SecondaryKeystrokePopup extends ListPopupImpl {
     SecondaryKeystrokePopup(@NotNull KeyStroke firstKeystroke, @NotNull List<? extends Pair<AnAction, KeyStroke>> actions, DataContext context) {
       super(CommonDataKeys.PROJECT.getData(context), buildStep(actions, context));
       registerActions(firstKeystroke, actions, context);
     }
 
     private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
-      ContainerUtil.process(actions, pair -> {
-        final String actionText = pair.getFirst().getTemplatePresentation().getText();
+      // do a little trick here, so if I will press Command+R and the second keystroke is just 'R',
+      // I want to be able to hold the Command while pressing 'R'
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, size = actions.size(); i < size; i++) {
+        Pair<AnAction, KeyStroke> t = actions.get(i);
+        final String actionText = t.getFirst().getTemplatePresentation().getText();
         final AbstractAction a = new AbstractAction() {
           @Override
           public void actionPerformed(final ActionEvent e) {
             cancel();
-            invokeAction(pair.getFirst(), ctx);
+            invokeAction(t.getFirst(), ctx);
           }
         };
 
-        final KeyStroke keyStroke = pair.getSecond();
-        if (keyStroke != null) {
-          registerAction(actionText, keyStroke, a);
-
-          if (keyStroke.getModifiers() == 0) {
-            // do a little trick here, so if I will press Command+R and the second keystroke is just 'R',
-            // I want to be able to hold the Command while pressing 'R'
-
-            final KeyStroke additionalKeyStroke = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), firstKeyStroke.getModifiers());
-            final String _existing = getActionForKeyStroke(additionalKeyStroke);
-            if (_existing == null) registerAction("__additional__" + actionText, additionalKeyStroke, a);
-          }
+        final KeyStroke keyStroke = t.getSecond();
+        if (keyStroke == null) {
+          continue;
         }
 
-        return true;
-      });
+        registerAction(actionText, keyStroke, a);
+
+        if (keyStroke.getModifiers() == 0) {
+          // do a little trick here, so if I will press Command+R and the second keystroke is just 'R',
+          // I want to be able to hold the Command while pressing 'R'
+
+          KeyStroke additionalKeyStroke = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), firstKeyStroke.getModifiers());
+          String _existing = getActionForKeyStroke(additionalKeyStroke);
+          if (_existing == null) {
+            registerAction("__additional__" + actionText, additionalKeyStroke, a);
+          }
+        }
+      }
     }
 
     private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
@@ -960,25 +968,24 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     @Override
-    protected ListCellRenderer getListElementRenderer() {
+    protected ListCellRenderer<?> getListElementRenderer() {
       return new ActionListCellRenderer();
     }
 
     private static ListPopupStep<?> buildStep(@NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
       return new BaseListPopupStep<Pair<AnAction, KeyStroke>>(IdeBundle.message("popup.title.choose.action"), ContainerUtil.findAll(actions, pair -> {
-        final AnAction action = pair.getFirst();
-        final Presentation presentation = action.getTemplatePresentation().clone();
+        AnAction action = pair.getFirst();
+        Presentation presentation = action.getTemplatePresentation().clone();
         AnActionEvent event = new AnActionEvent(null, ctx,
                                                 ActionPlaces.UNKNOWN,
                                                 presentation,
                                                 ActionManager.getInstance(),
                                                 0);
-
         ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, true);
         return presentation.isEnabled() && presentation.isVisible();
       })) {
         @Override
-        public PopupStep onChosen(Pair<AnAction, KeyStroke> selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(Pair<AnAction, KeyStroke> selectedValue, boolean finalChoice) {
           invokeAction(selectedValue.getFirst(), ctx);
           return FINAL_CHOICE;
         }
@@ -1066,11 +1073,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   public static boolean isAltGrLayout(Component component) {
-    if (component == null) return false;
-    InputContext context = component.getInputContext();
-    if (context == null) return false;
-    Locale locale = context.getLocale();
-    if (locale == null) return false;
+    InputContext context = component == null ? null : component.getInputContext();
+    Locale locale = context == null ? null : context.getLocale();
+    if (locale == null) {
+      return false;
+    }
+
     String language = locale.getLanguage();
     boolean contains = !"en".equals(language)
                        ? ALT_GR_LANGUAGES.contains(language)
@@ -1080,7 +1088,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   // http://www.oracle.com/technetwork/java/javase/documentation/jdk12locales-5294582.html
-  @NonNls private static final Set<String> ALT_GR_LANGUAGES = ContainerUtil.set(
+  @NonNls private static final Set<String> ALT_GR_LANGUAGES = Set.of(
     "da", // Danish
     "de", // German
     "es", // Spanish
@@ -1103,7 +1111,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     "sv", // Swedish
     "tr"  // Turkish
   );
-  @NonNls private static final Set<String> ALT_GR_COUNTRIES = ContainerUtil.set(
+
+  @NonNls private static final Set<String> ALT_GR_COUNTRIES = Set.of(
     "DK", // Denmark
     "DE", // Germany
     "FI", // Finland

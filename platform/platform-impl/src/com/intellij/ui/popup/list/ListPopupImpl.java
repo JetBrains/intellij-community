@@ -313,7 +313,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return myList.getInputMap();
   }
 
-  protected ListCellRenderer getListElementRenderer() {
+  protected ListCellRenderer<?> getListElementRenderer() {
     return new PopupListElementRenderer(this);
   }
 
