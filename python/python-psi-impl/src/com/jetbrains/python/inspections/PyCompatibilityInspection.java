@@ -74,7 +74,7 @@ public class PyCompatibilityInspection extends PyInspection {
   @NotNull
   public static final List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
     .of(LanguageLevel.values())
-    .filter(v -> v.isPython2() && v.isAtLeast(LanguageLevel.PYTHON26) || v.isAtLeast(LanguageLevel.PYTHON34))
+    .filter(v -> v == LanguageLevel.PYTHON27 || v.isAtLeast(LanguageLevel.PYTHON35))
     .toImmutableList();
 
   @NotNull
@@ -164,10 +164,12 @@ public class PyCompatibilityInspection extends PyInspection {
         return;
       }
 
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getProject(), node.getContainingFile());
       final PsiElement resolvedCallee = Optional
         .ofNullable(callee)
         .map(PyExpression::getReference)
         .map(PsiReference::resolve)
+        .map(e -> e instanceof PyClass ? ((PyClass)e).findInitOrNew(false, context) : e)
         .orElse(null);
 
       if (resolvedCallee instanceof PyFunction) {

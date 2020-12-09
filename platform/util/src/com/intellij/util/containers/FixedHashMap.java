@@ -14,8 +14,10 @@ public final class FixedHashMap<K, V> extends LinkedHashMap<K, V> {
   public FixedHashMap(int maxSize) {
     this.maxSize = maxSize;
   }
+
   public FixedHashMap(int maxSize, int initialCapacity, float loadFactor, boolean accessOrder) {
     super(initialCapacity, loadFactor, accessOrder);
+
     this.maxSize = maxSize;
   }
 

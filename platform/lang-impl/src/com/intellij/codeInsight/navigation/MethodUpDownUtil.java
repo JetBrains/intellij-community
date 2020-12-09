@@ -11,11 +11,11 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 public final class MethodUpDownUtil {
   private MethodUpDownUtil() {
@@ -29,7 +29,7 @@ public final class MethodUpDownUtil {
       }
     }
 
-    Collection<PsiElement> array = new THashSet<>();
+    Collection<PsiElement> array = new HashSet<>();
     addNavigationElements(array, file);
     return offsetsFromElements(array);
   }

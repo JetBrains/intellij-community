@@ -35,6 +35,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -60,40 +61,30 @@ import static com.intellij.codeInsight.navigation.actions.UiKt.notifyNowhereToGo
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
 
   private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
-  private static List<EventPair<?>> ourCurrentActionData = null; // accessed from EDT only
+  private static List<EventPair<?>> ourCurrentEventData = null; // accessed from EDT only
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Language language = file != null ? file.getLanguage() : null;
-    List<EventPair<?>> currentActionData = ContainerUtil.append(
+    List<EventPair<?>> currentEventData = ContainerUtil.append(
       ActionsCollectorImpl.actionEventData(e),
       EventFields.CurrentFile.with(language)
     );
-    List<EventPair<?>> savedActionData = ourCurrentActionData;
-    ourCurrentActionData = currentActionData;
+    List<EventPair<?>> savedEventData = ourCurrentEventData;
+    ourCurrentEventData = currentEventData;
     try {
       super.actionPerformed(e);
     }
     finally {
-      ourCurrentActionData = savedActionData;
+      ourCurrentEventData = savedEventData;
     }
   }
 
-  static void recordGTD() {
+  static @NotNull List<@NotNull EventPair<?>> getCurrentEventData() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordPerformed(ourCurrentActionData, GTDUCollector.GTDUChoice.GTD);
-  }
-
-  static void recordSU() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordPerformed(ourCurrentActionData, GTDUCollector.GTDUChoice.SU);
-  }
-
-  static void recordGTDNavigation(@NotNull Class<?> navigationProviderClass) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordNavigated(ourCurrentActionData, navigationProviderClass);
+    return Objects.requireNonNull(ourCurrentEventData);
   }
 
   @NotNull
@@ -245,7 +236,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public static boolean chooseAmbiguousTarget(@NotNull Editor editor,
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
-                                              @NotNull String titlePattern,
+                                              @NotNull @PopupTitle String titlePattern,
                                               PsiElement @Nullable [] elements) {
     Project project = editor.getProject();
     if (project == null) {
@@ -259,7 +250,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
                                               @NotNull Editor editor,
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
-                                              @NotNull @NlsContexts.PopupTitle String titlePattern,
+                                              @NotNull @PopupTitle String titlePattern,
                                               PsiElement @Nullable [] elements) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return false;
@@ -449,7 +440,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
           @Override
           public @NotNull CtrlMouseDocInfo getDocInfo() {
             String name = UsageViewUtil.getType(element) + " '" + UsageViewUtil.getShortName(element) + "'";
-            return new CtrlMouseDocInfo("Show usages of " + name, null, null);
+            return new CtrlMouseDocInfo(CodeInsightBundle.message("hint.text.show.usages", name), null, null);
           }
 
           @Override

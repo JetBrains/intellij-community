@@ -8,7 +8,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "JavaCoverageOptionsProvider",
@@ -52,9 +51,8 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
     return false;
   }
 
-  @Nullable
   @Override
-  public JavaCoverageOptionsProvider.State getState() {
+  public JavaCoverageOptionsProvider.@NotNull State getState() {
     return myState;
   }
 

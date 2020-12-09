@@ -21,7 +21,7 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,7 +53,7 @@ public abstract class JBListTable {
     myInternalTable = t;
     myMainTable = new MyTable();
     myMainTable.setTableHeader(null);
-    myMainTable.setStriped(true);
+    myMainTable.setShowGrid(false);
     myRowResizeAnimator = new RowResizeAnimator(myMainTable);
     Disposer.register(parent, myRowResizeAnimator);
   }
@@ -217,9 +217,10 @@ public abstract class JBListTable {
     private static final int ANIMATION_STEP_MILLIS = 15;
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
-    private final Int2ObjectOpenHashMap<RowAnimationState> myRowAnimationStates = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<RowAnimationState> myRowAnimationStates = new Int2ObjectOpenHashMap<>();
     private final Timer myAnimationTimer = TimerUtil.createNamedTimer("JBListTableTimer", ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
+    private boolean myDisposed;
 
     RowResizeAnimator(JTable table) {
       myTable = table;
@@ -235,15 +236,20 @@ public abstract class JBListTable {
       doAnimationStep(e.getWhen());
     }
 
+    void revive() {
+      myDisposed = false;
+    }
+
     @Override
     public void dispose() {
+      myDisposed = true;
       stopAnimation();
       // enforce all animations are completed
       doAnimationStep(Long.MAX_VALUE);
     }
 
     private void startAnimation() {
-      if (!myAnimationTimer.isRunning()) {
+      if (!myAnimationTimer.isRunning() && !myDisposed) {
         myAnimationTimer.start();
       }
     }
@@ -253,9 +259,8 @@ public abstract class JBListTable {
     }
 
     private void doAnimationStep(long updateTime) {
-      IntArrayList completeRows = new IntArrayList(myRowAnimationStates.size());
-      for (ObjectIterator<Int2ObjectMap.Entry<RowAnimationState>> iterator = myRowAnimationStates.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
-        Int2ObjectMap.Entry<RowAnimationState> entry = iterator.next();
+      IntList completeRows = new IntArrayList(myRowAnimationStates.size());
+      for (Int2ObjectMap.Entry<RowAnimationState> entry : myRowAnimationStates.int2ObjectEntrySet()) {
         if (entry.getValue().doAnimationStep(updateTime)) {
           completeRows.add(entry.getIntKey());
         }
@@ -459,7 +464,7 @@ public abstract class JBListTable {
         return myCellEditor;
       }
       myCellEditor = null;
-      return myCellEditor;
+      return null;
     }
 
     @Override
@@ -467,6 +472,12 @@ public abstract class JBListTable {
       Object value = getValueAt(row, column);
       boolean isSelected = isCellSelected(row, column);
       return editor.getTableCellEditorComponent(this, value, isSelected, row, column);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      myRowResizeAnimator.revive();
     }
 
     @Override

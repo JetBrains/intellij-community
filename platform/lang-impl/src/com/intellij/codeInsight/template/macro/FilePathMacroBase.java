@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
 import com.intellij.ide.actions.CopyReferenceUtil;
 import com.intellij.openapi.editor.Editor;
@@ -61,11 +60,6 @@ public abstract class FilePathMacroBase extends Macro {
     }
 
     @Override
-    public String getPresentableName() {
-      return CodeInsightBundle.message("macro.file.name.without.extension");
-    }
-
-    @Override
     protected TextResult calculateResult(@NotNull VirtualFile virtualFile, @NotNull Project project) {
       return new TextResult(virtualFile.getNameWithoutExtension());
     }
@@ -75,11 +69,6 @@ public abstract class FilePathMacroBase extends Macro {
     @Override
     public String getName() {
       return "fileName";
-    }
-
-    @Override
-    public String getPresentableName() {
-      return CodeInsightBundle.message("macro.file.name");
     }
 
     @Override
@@ -95,11 +84,6 @@ public abstract class FilePathMacroBase extends Macro {
     }
 
     @Override
-    public String getPresentableName() {
-      return "filePath()";
-    }
-
-    @Override
     protected TextResult calculateResult(@NotNull VirtualFile virtualFile, @NotNull Project project) {
       return new TextResult(FileUtil.toSystemDependentName(virtualFile.getPath()));
     }
@@ -109,11 +93,6 @@ public abstract class FilePathMacroBase extends Macro {
     @Override
     public String getName() {
       return "fileRelativePath";
-    }
-
-    @Override
-    public String getPresentableName() {
-      return "fileRelativePath()";
     }
 
     @Override

@@ -27,20 +27,15 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class UnindentSelectionAction extends EditorAction {
   public UnindentSelectionAction() {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       unindentSelection(editor, project);
     }

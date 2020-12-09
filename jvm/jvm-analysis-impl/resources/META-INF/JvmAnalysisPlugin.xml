@@ -35,6 +35,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.must.already.be.removed.api.display.name"
                      implementationClass="com.intellij.codeInspection.MustAlreadyBeRemovedApiInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="Dependency"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.dependency.display.name"
+                     implementationClass="com.intellij.codeInspection.DependencyInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">

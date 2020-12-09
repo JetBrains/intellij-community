@@ -77,6 +77,7 @@ public final class ClassLoadingUtils {
   public static ClassType getHelperClass(Class<?> cls, EvaluationContext evaluationContext) throws EvaluateException {
     // TODO [egor]: cache and load in bootstrap class loader
     String name = cls.getName();
+    evaluationContext = ((EvaluationContextImpl)evaluationContext).withAutoLoadClasses(true);
     DebugProcess process = evaluationContext.getDebugProcess();
     try {
       return (ClassType)process.findClass(evaluationContext, name, evaluationContext.getClassLoader());

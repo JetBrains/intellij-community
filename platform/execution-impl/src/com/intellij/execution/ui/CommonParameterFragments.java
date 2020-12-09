@@ -137,6 +137,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                        env.apply(settings);
                                    },
                                    s -> true);
+    fragment.setCanBeHidden(true);
     fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"));
     fragment.setActionHint(ExecutionBundle.message("set.custom.environment.variables.for.the.process"));
     return fragment;

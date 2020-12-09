@@ -13,6 +13,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,7 +62,9 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
       final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
       for (final RunnerAndConfigurationSettings configuration : configurations) {
         if (! canBeRun(configuration)) {
-          showNotification(project, "Run Configuration '" + configuration.getName() + "' can not be started with 'Run' action.");
+          showNotification(
+            project,
+            ExecutionBundle.message("project.startup.runner.notification.can.not.be.started", configuration.getName()));
           return;
         }
 
@@ -76,8 +79,9 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
     }, project.getDisposed());
   }
 
-  private static void showNotification(Project project, String text) {
-    ProjectStartupTaskManager.NOTIFICATION_GROUP.createNotification(ProjectStartupTaskManager.PREFIX + " " + text, MessageType.ERROR).notify(project);
+  private static void showNotification(Project project, @Nls String text) {
+    ProjectStartupTaskManager.NOTIFICATION_GROUP.createNotification(
+      ExecutionBundle.message("project.startup.runner.notification", text), MessageType.ERROR).notify(project);
   }
 
   private static class MyExecutor implements Runnable {
@@ -102,7 +106,9 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
     public void run() {
       if (ExecutionManager.getInstance(myProject).isStarting(myEnvironment)) {
         if (myCnt <= 0) {
-          showNotification(myProject, "'" + myName + "' not started after " + ATTEMPTS + " attempts.");
+          showNotification(
+            myProject,
+            ExecutionBundle.message("project.startup.runner.notification.not.started", myName, ATTEMPTS));
           return;
         }
         --myCnt;

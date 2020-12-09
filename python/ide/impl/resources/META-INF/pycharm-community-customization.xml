@@ -74,6 +74,19 @@
     <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Python interpreter configuring" displayType="BALLOON"/>
     <notificationGroup id="Packaging" displayType="BALLOON"/>
+
+    <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
+                                      id="requirementsTxtOrSetupPy"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
+                                      id="environmentYml"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPipfileSdkConfiguration"
+                                      id="pipfile" order="before requirementsTxtOrSetupPy"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

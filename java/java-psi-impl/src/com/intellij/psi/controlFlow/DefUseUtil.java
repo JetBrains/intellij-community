@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -259,7 +260,7 @@ public final class DefUseUtil {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
         final PsiManager psiManager = def.getManager();
-        private final IntArrayList[] myBackwardTraces = getBackwardTraces(instructions);
+        private final IntList[] myBackwardTraces = getBackwardTraces(instructions);
 
         @Override
         protected int nNext(int index) {
@@ -410,7 +411,7 @@ public final class DefUseUtil {
         // hack: ControlFlow doesn't contains parameters initialization
         int startIndex = elem;
 
-        IntArrayList workQueue = new IntArrayList();
+        IntList workQueue = new IntArrayList();
         workQueue.add(startIndex);
         PsiManager psiManager = body.getManager();
 
@@ -467,8 +468,8 @@ public final class DefUseUtil {
   }
 
 
-  private static IntArrayList @NotNull [] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
-    final IntArrayList[] states = new IntArrayList[instructions.size()];
+  private static IntList @NotNull [] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
+    final IntList[] states = new IntList[instructions.size()];
     for (int i = 0; i < states.length; i++) {
       states[i] = new IntArrayList();
     }

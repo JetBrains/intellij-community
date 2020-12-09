@@ -41,6 +41,7 @@ class ModuleLevelLibrariesInRootModelTest {
     run {
       val model = createModifiableModel(module)
       val library = model.moduleLibraryTable.createLibrary() as LibraryEx
+      assertThat(library.presentableName).isEqualTo("Empty Library")
       assertThat(model.moduleLibraryTable.libraries.single()).isEqualTo(library)
       val libraryEntry = getSingleLibraryOrderEntry(model)
       assertThat(libraryEntry.ownerModule).isEqualTo(module)
@@ -77,6 +78,7 @@ class ModuleLevelLibrariesInRootModelTest {
       val libraryEntryForUncommitted = getSingleLibraryOrderEntry(model)
       assertThat(libraryEntryForUncommitted.getFiles(OrderRootType.CLASSES)).isEmpty()
       libraryModel.commit()
+      assertThat(library.presentableName).isEqualTo("lib")
       val libraryEntry = getSingleLibraryOrderEntry(model)
       assertThat(libraryEntry.getFiles(OrderRootType.CLASSES).single()).isEqualTo(root)
       assertThat(libraryEntry.presentableName).isEqualTo(root.presentableUrl)
@@ -212,7 +214,7 @@ class ModuleLevelLibrariesInRootModelTest {
   }
 
   @Test
-  fun `replace library`() {
+  fun `replace module library by module library`() {
     run {
       val model = createModifiableModel(module)
       model.moduleLibraryTable.createLibrary("foo")
@@ -220,6 +222,19 @@ class ModuleLevelLibrariesInRootModelTest {
     }
     val model = createModifiableModel(module)
     val oldEntry = getSingleLibraryOrderEntry(model)
+    val newLibrary = model.moduleLibraryTable.createLibrary("bar")
+    OrderEntryUtil.replaceLibraryEntryByAdded(model, oldEntry)
+    assertThat(getSingleLibraryOrderEntry(model).library).isEqualTo(newLibrary)
+    val committed = commitModifiableRootModel(model)
+    assertThat(getSingleLibraryOrderEntry(committed).libraryName).isEqualTo("bar")
+  }
+
+  @Test
+  fun `replace project library with custom scope by module library`() {
+    ModuleRootModificationUtil.addDependency(module, projectModel.addProjectLevelLibrary("foo"), DependencyScope.TEST, true)
+    val model = createModifiableModel(module)
+    val oldEntry = getSingleLibraryOrderEntry(model)
+    assertThat(oldEntry.libraryName).isEqualTo("foo")
     val newLibrary = model.moduleLibraryTable.createLibrary("bar")
     OrderEntryUtil.replaceLibraryEntryByAdded(model, oldEntry)
     assertThat(getSingleLibraryOrderEntry(model).library).isEqualTo(newLibrary)

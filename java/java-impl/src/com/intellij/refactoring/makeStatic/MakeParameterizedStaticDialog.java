@@ -25,7 +25,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 
 public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
-  private final Project myProject;
   private final String[] myNameSuggestions;
 
   private final JCheckBox myMakeClassParameter = new JCheckBox();
@@ -43,7 +42,6 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
                                        String[] nameSuggestions,
                                        InternalUsageInfo[] internalUsages) {
     super(project, member);
-    myProject = project;
     myNameSuggestions = nameSuggestions;
 
     String type = UsageViewUtil.getType(myMember);
@@ -241,7 +239,6 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     PsiMethod[] methods = myMember instanceof PsiMethod ? new PsiMethod[]{(PsiMethod)myMember} : ((PsiClass)myMember).getConstructors();
     for (PsiMethod method : methods) {
       PsiParameterList parameterList = method.getParameterList();
-      if(parameterList == null) continue;
       PsiParameter[] parameters = parameterList.getParameters();
       for (PsiParameter parameter : parameters) {
         if (parameterName.equals(parameter.getName())) return method;

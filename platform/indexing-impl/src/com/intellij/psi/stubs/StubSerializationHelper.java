@@ -8,22 +8,26 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.DataInputOutputUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -32,12 +36,12 @@ final class StubSerializationHelper {
 
   private final DataEnumeratorEx<String> myNameStorage;
 
-  private final Int2ObjectOpenHashMap<String> myIdToName = new Int2ObjectOpenHashMap<>();
-  private final Object2IntOpenHashMap<String> myNameToId = new Object2IntOpenHashMap<>();
-  private final Object2ObjectOpenHashMap<String, Supplier<ObjectStubSerializer<?, Stub>>> myNameToLazySerializer = new Object2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<String> myIdToName = new Int2ObjectOpenHashMap<>();
+  private final Object2IntMap<String> myNameToId = new Object2IntOpenHashMap<>();
+  private final Map<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> myNameToLazySerializer = CollectionFactory.createSmallMemoryFootprintMap();
 
-  private final ConcurrentIntObjectMap<ObjectStubSerializer<?, Stub>> myIdToSerializer = ContainerUtil.createConcurrentIntObjectMap();
-  private final Map<ObjectStubSerializer<?, Stub>, Integer> mySerializerToId = new ConcurrentHashMap<>();
+  private final ConcurrentIntObjectMap<ObjectStubSerializer<?, ? extends Stub>> myIdToSerializer = ContainerUtil.createConcurrentIntObjectMap();
+  private final Map<ObjectStubSerializer<?, ? extends Stub>, Integer> mySerializerToId = new ConcurrentHashMap<>();
 
   private final boolean myUnmodifiable;
   private final RecentStringInterner myStringInterner;
@@ -57,11 +61,11 @@ final class StubSerializationHelper {
     myStringInterner = new RecentStringInterner(parentDisposable);
   }
 
-  void assignId(@NotNull Supplier<ObjectStubSerializer<?, Stub>> serializer, String name) throws IOException {
-    Supplier<ObjectStubSerializer<?, Stub>> old = myNameToLazySerializer.put(name, serializer);
+  void assignId(@NotNull Supplier<ObjectStubSerializer<?, ? extends Stub>> serializer, String name) throws IOException {
+    Supplier<ObjectStubSerializer<?, ? extends Stub>> old = myNameToLazySerializer.put(name, serializer);
     if (old != null) {
-      ObjectStubSerializer<?, Stub> existing = old.get();
-      ObjectStubSerializer<?, Stub> computed = serializer.get();
+      ObjectStubSerializer<?, ? extends Stub> existing = old.get();
+      ObjectStubSerializer<?, ? extends Stub> computed = serializer.get();
       if (existing != computed) {
         throw new AssertionError("ID: " + name + " is not unique, but found in both " +
                                  existing.getClass().getName() + " and " + computed.getClass().getName());
@@ -89,8 +93,7 @@ final class StubSerializationHelper {
       return;
     }
 
-    for (Iterator<Object2ObjectMap.Entry<String, Supplier<ObjectStubSerializer<?, Stub>>>> iterator = helper.myNameToLazySerializer.object2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
-      Object2ObjectMap.Entry<String, Supplier<ObjectStubSerializer<?, Stub>>> entry = iterator.next();
+    for (Map.Entry<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> entry : helper.myNameToLazySerializer.entrySet()) {
       assignId(entry.getValue(), entry.getKey());
     }
   }
@@ -169,7 +172,7 @@ final class StubSerializationHelper {
     return idValue;
   }
 
-  private static final ThreadLocal<ObjectStubSerializer<?, Stub>> ourRootStubSerializer = new ThreadLocal<>();
+  private static final ThreadLocal<ObjectStubSerializer<?, ? extends Stub>> ourRootStubSerializer = new ThreadLocal<>();
 
   @NotNull
   Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
@@ -209,7 +212,7 @@ final class StubSerializationHelper {
   private Stub deserializeRoot(StubInputStream inputStream,
                                FileLocalStringEnumerator storage,
                                IntEnumerator serializerLocalEnumerator) throws IOException, SerializerNotFoundException {
-    ObjectStubSerializer<?, Stub> serializer = getClassById(DataInputOutputUtil.readINT(inputStream), null, serializerLocalEnumerator);
+    ObjectStubSerializer<?, ? extends Stub> serializer = getClassById(DataInputOutputUtil.readINT(inputStream), null, serializerLocalEnumerator);
     ourRootStubSerializer.set(serializer);
     try {
       Stub stub = serializer.deserialize(inputStream, null);
@@ -242,7 +245,7 @@ final class StubSerializationHelper {
   }
 
   private void deserializeStubList(StubBase<?> root,
-                                   ObjectStubSerializer<?, Stub> rootType,
+                                   ObjectStubSerializer<?, ? extends Stub> rootType,
                                    StubInputStream inputStream,
                                    FileLocalStringEnumerator storage,
                                    IntEnumerator serializerLocalEnumerator)
@@ -363,33 +366,38 @@ final class StubSerializationHelper {
 
   private ObjectStubSerializer<?, Stub> getClassById(int localId, @Nullable Stub parentStub, IntEnumerator enumerator) throws SerializerNotFoundException {
     int id = enumerator.valueOf(localId);
-    ObjectStubSerializer<?, Stub> serializer = myIdToSerializer.get(id);
+    ObjectStubSerializer<?, ? extends Stub> serializer = myIdToSerializer.get(id);
     if (serializer == null) {
       serializer = instantiateSerializer(id, parentStub);
       myIdToSerializer.put(id, serializer);
     }
-    return serializer;
+    //noinspection unchecked
+    return (ObjectStubSerializer<?, Stub>)serializer;
   }
 
-  private @NotNull ObjectStubSerializer<?, Stub> instantiateSerializer(int id, @Nullable Stub parentStub) throws SerializerNotFoundException {
+  private @NotNull ObjectStubSerializer<?, ? extends Stub> instantiateSerializer(int id, @Nullable Stub parentStub) throws SerializerNotFoundException {
     String name = myIdToName.get(id);
-    Supplier<ObjectStubSerializer<?, Stub>> lazy = name == null ? null : myNameToLazySerializer.get(name);
-    ObjectStubSerializer<?, Stub> serializer = lazy == null ? null : lazy.get();
+    Supplier<ObjectStubSerializer<?, ? extends Stub>> lazy = name == null ? null : myNameToLazySerializer.get(name);
+    ObjectStubSerializer<?, ? extends Stub> serializer = lazy == null ? null : lazy.get();
     if (serializer == null) {
-      throw reportMissingSerializer(id, parentStub);
+      throw reportMissingSerializer(id, name, parentStub);
     }
     return serializer;
   }
 
-  private SerializerNotFoundException reportMissingSerializer(int id, @Nullable Stub parentStub) {
+  private SerializerNotFoundException reportMissingSerializer(int id, @Nullable String name, @Nullable Stub parentStub) {
     String externalId = null;
     try {
       externalId = myNameStorage.valueOf(id);
-    } catch (Throwable ignore) {}
+    } catch (Throwable e) {
+      LOG.info(e);
+    }
+    var root = ourRootStubSerializer.get();
     return new SerializerNotFoundException(
-      StubSerializationUtil.brokenStubFormat(ourRootStubSerializer.get()) +
-      "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
-      "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
+      (root != null ? StubSerializationUtil.brokenStubFormat(root) : "") +
+      "No serializer is registered for stub ID: " + id + ", externalId: " + externalId + ", name: " + name +
+      "; parent stub class: " + (parentStub != null ? parentStub.getClass().getName() + ", parent stub type: " + parentStub.getStubType() : "null")
+    );
   }
 
   private void deserializeChildren(StubInputStream stream,

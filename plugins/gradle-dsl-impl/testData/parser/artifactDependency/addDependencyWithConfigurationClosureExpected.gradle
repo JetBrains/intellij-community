@@ -1,0 +1,9 @@
+dependencies {
+  androidTestCompile 'com.android.support.test.espresso:espresso-contrib:2.2.2', {
+    exclude group: 'com.android.support', module: 'support-v4'
+    exclude group: 'com.android.support', module: 'support-annotations'
+    exclude group: 'com.android.support', module: 'recyclerview-v7'
+    exclude group: 'com.android.support', module: 'design'
+  }
+  runtime group: 'org.gradle.test.classifiers', name: 'service', version: '1.0', classifier: 'jdk14', ext: 'jar'
+}

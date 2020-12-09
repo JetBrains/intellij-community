@@ -28,13 +28,9 @@ public class LineEndAction extends TextComponentEditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
+    protected void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineEnd(editor, false, !(editor instanceof TextComponentEditor));
     }
   }

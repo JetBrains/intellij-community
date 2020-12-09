@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 
@@ -38,7 +38,7 @@ public class TabIndentingTest extends LightIdeaTestCase {
   }
 
   public void testSmartTab4() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
     settings.getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
 
@@ -46,7 +46,7 @@ public class TabIndentingTest extends LightIdeaTestCase {
   }
 
   public void testSmartTab2() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
     settings.getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
     settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 2;
@@ -55,7 +55,7 @@ public class TabIndentingTest extends LightIdeaTestCase {
   }
 
   public void testSmartTab8() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
     settings.getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
     settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 8;
@@ -64,7 +64,7 @@ public class TabIndentingTest extends LightIdeaTestCase {
   }
 
   public void testTab2() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
     settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 2;
 
@@ -72,14 +72,14 @@ public class TabIndentingTest extends LightIdeaTestCase {
   }
 
   public void testTab4() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
 
     doTest("Test.java", "Tab4_after.java");
   }
 
   public void testTab8() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
     settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 8;
 

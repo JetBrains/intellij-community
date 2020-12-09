@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -144,8 +143,7 @@ public class ExtendSealedClassFix implements DefaultIntentionActionWithChoice {
       Query<PsiClass> subclassInheritors = DirectClassInheritorsSearch.search(subclass);
       if (PsiModifier.FINAL.equals(myModifier) && subclassInheritors.findFirst() != null ||
           PsiModifier.SEALED.equals(myModifier) && subclassInheritors.anyMatch(child -> !hasSealedClassSubclassModifier(child))) {
-        PsiIdentifier subclassIdentifier = subclass.getNameIdentifier();
-        if (subclassIdentifier instanceof Navigatable) ((Navigatable)subclassIdentifier).navigate(true);
+        subclass.navigate(true);
       }
     }
   }

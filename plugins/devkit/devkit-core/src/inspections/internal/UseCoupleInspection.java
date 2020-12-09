@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
@@ -23,15 +24,12 @@ public class UseCoupleInspection extends DevKitInspectionBase {
       public void visitTypeElement(PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         final PsiType type = typeElement.getType();
-        if ((type instanceof PsiClassType)) {
+        if (PsiTypesUtil.classNameEquals(type, PAIR_FQN)) {
           final PsiClassType classType = (PsiClassType)type;
-          final String canonicalText = classType.rawType().getCanonicalText();
-          if (PAIR_FQN.equals(canonicalText)) {
-            final PsiType[] parameters = classType.getParameters();
-            if (parameters.length == 2 && parameters[0].equals(parameters[1])) {
-                final String name = DevKitBundle.message("inspections.use.couple.type", parameters[0].getPresentableText());
-                holder.registerProblem(typeElement, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
-            }
+          final PsiType[] parameters = classType.getParameters();
+          if (parameters.length == 2 && parameters[0].equals(parameters[1])) {
+            final String name = DevKitBundle.message("inspections.use.couple.type", parameters[0].getPresentableText());
+            holder.registerProblem(typeElement, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
           }
         }
       }

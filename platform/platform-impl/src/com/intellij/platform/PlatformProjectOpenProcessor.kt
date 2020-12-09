@@ -118,9 +118,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var options = originalOptions
-      val lightEditProject = LightEditUtil.openFile(file)
-      if (lightEditProject != null) {
-        return lightEditProject
+      if (LightEditUtil.isForceOpenInLightEditMode()) {
+        val lightEditProject = LightEditUtil.openFile(file)
+        if (lightEditProject != null) {
+          return lightEditProject
+        }
       }
 
       var baseDirCandidate = file.parent
@@ -180,7 +182,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           task()
         }
       }
-      return moduleRef.get()
+      val module = moduleRef.get()
+      if (module == null) {
+        LOG.error("No extension configured a module for $baseDir; extensions = ${EP_NAME.extensionList}")
+      }
+      return module
     }
 
     @JvmStatic

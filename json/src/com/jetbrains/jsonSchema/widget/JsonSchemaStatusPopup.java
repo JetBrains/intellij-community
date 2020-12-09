@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.json.JsonBundle;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class JsonSchemaStatusPopup {
+public final class JsonSchemaStatusPopup {
   static final JsonSchemaInfo ADD_MAPPING = new JsonSchemaInfo("") {
     @NotNull
     @Override
@@ -62,7 +62,7 @@ public class JsonSchemaStatusPopup {
     UserDefinedJsonSchemaConfiguration mapping = configuration.findMappingForFile(virtualFile);
     if (!showOnlyEdit || mapping == null) {
       List<JsonSchemaInfo> infos = service.getAllUserVisibleSchemas();
-      Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareTo);
+      Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareToIgnoreCase);
       Stream<JsonSchemaInfo> registered = infos.stream().filter(i -> i.getProvider() != null).sorted(comparator);
       List<JsonSchemaInfo> otherList = ContainerUtil.emptyList();
 

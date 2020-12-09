@@ -3,8 +3,6 @@ package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,9 +10,14 @@ import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class EclipseFileType implements FileType {
   public static final FileType INSTANCE = new EclipseFileType();
+
+  private EclipseFileType() {
+  }
 
   @Override
   @NotNull
@@ -48,12 +51,7 @@ public class EclipseFileType implements FileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
-  public String getCharset(@NotNull final VirtualFile file, final byte @NotNull [] content) {
-    return CharsetToolkit.UTF8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

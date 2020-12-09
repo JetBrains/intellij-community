@@ -49,11 +49,25 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
 
   private static final CallMatcher CLOSE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, "close");
   private static final List<String> DEFAULT_IGNORED_TYPES =
-    Arrays.asList("java.util.stream.Stream", "java.util.stream.IntStream", "java.util.stream.LongStream", "java.util.stream.DoubleStream");
+    Arrays.asList("java.util.stream.Stream",
+                  "java.util.stream.IntStream",
+                  "java.util.stream.LongStream",
+                  "java.util.stream.DoubleStream",
+                  "java.io.ByteArrayOutputStream",
+                  "java.io.ByteArrayInputStream",
+                  "java.io.StringBufferInputStream",
+                  "java.io.CharArrayWriter",
+                  "java.io.CharArrayReader",
+                  "java.io.StringWriter",
+                  "java.io.StringReader",
+                  "java.util.Formatter",
+                  "java.util.Scanner");
   protected final MethodMatcher myMethodMatcher;
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
+  public boolean ignoreConstructorMethodReferences = true;
+  public boolean ignoreGettersReturningResource = true;
   CallMatcher STREAM_HOLDING_RESOURCE = CallMatcher.staticCall("java.nio.file.Files", "lines", "walk", "list", "find");
 
   public AutoCloseableResourceInspection() {
@@ -63,6 +77,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       .add("com.google.common.base.Preconditions", "checkNotNull")
       .add("org.hibernate.Session", "close")
       .add("java.io.PrintWriter", "printf")
+      .add("java.io.PrintStream", "printf")
       .finishDefault();
   }
 
@@ -95,6 +110,8 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     checkBox.addItemListener(e -> table2.setEnabled(e.getStateChange() == ItemEvent.DESELECTED));
     panel.add(checkBox);
     panel.add(new CheckBox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), this, "anyMethodMayClose"));
+    panel.add(new CheckBox(InspectionGadgetsBundle.message("ignore.constructor.method.references"), this, "ignoreConstructorMethodReferences"));
+    panel.add(new CheckBox(InspectionGadgetsBundle.message("ignore.getters.returning.resource"), this, "ignoreGettersReturningResource"));
     return panel;
   }
 
@@ -142,6 +159,8 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     writeBooleanOption(node, "ignoreFromMethodCall", false);
     writeBooleanOption(node, "anyMethodMayClose", true);
+    writeBooleanOption(node, "ignoreConstructorMethodReferences", true);
+    writeBooleanOption(node, "ignoreGettersReturningResource", true);
     if (!DEFAULT_IGNORED_TYPES.equals(ignoredTypes)) {
       final String ignoredTypesString = formatString(ignoredTypes);
       node.addContent(new Element("option").setAttribute("name", "ignoredTypes").setAttribute("value", ignoredTypesString));
@@ -153,7 +172,21 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   protected boolean isResourceCreation(PsiExpression expression) {
     return TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE) &&
            (isStreamHoldingResource(expression)
-            || !TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes));
+            || !TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes)) &&
+           (!ignoreGettersReturningResource || !isGetter(expression));
+  }
+
+  private static boolean isGetter(@NotNull PsiExpression expression) {
+    PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
+    if (call == null) return false;
+    String callName = call.getMethodExpression().getReferenceName();
+    if (callName == null) return false;
+    return callName.startsWith("get") && !callName.equals("getClass") && !callName.equals("getResourceAsStream");
+  }
+
+  @Override
+  protected boolean canTakeOwnership(@NotNull PsiExpression expression) {
+    return TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
   private boolean isStreamHoldingResource(PsiExpression expression) {
@@ -231,6 +264,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
+      if (ignoreConstructorMethodReferences) return;
       if (!expression.isConstructor()) {
         return;
       }
@@ -252,7 +286,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       }
       if (CLOSE.test(ExpressionUtils.getCallForQualifier(expression))) return true;
       final PsiVariable variable = ResourceInspection.getVariable(expression);
-      if (variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return true;
+      if (variable instanceof PsiResourceVariable || isResourceEscaping(variable, expression)) return true;
       if (variable == null) return false;
       return ContainerUtil.or(ImplicitResourceCloser.EP_NAME.getExtensionList(), closer -> closer.isSafelyClosed(variable));
     }

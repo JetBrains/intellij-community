@@ -159,8 +159,8 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     if (getClass() != other.getClass()) return false;
     if (!((InjectedSelfElementInfo)other).myHostContext.equals(myHostContext)) return false;
-    SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl)myInjectedFileRangeInHostFile).getElementInfo();
-    SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl)((InjectedSelfElementInfo)other).myInjectedFileRangeInHostFile).getElementInfo();
+    SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl<?>)myInjectedFileRangeInHostFile).getElementInfo();
+    SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl<?>)((InjectedSelfElementInfo)other).myInjectedFileRangeInHostFile).getElementInfo();
     return myElementInfo.pointsToTheSameElementAs(oElementInfo, manager);
   }
 
@@ -217,12 +217,12 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   @Nullable
   @Override
   Document getDocumentToSynchronize() {
-    return ((SmartPsiElementPointerImpl)myHostContext).getElementInfo().getDocumentToSynchronize();
+    return ((SmartPsiElementPointerImpl<?>)myHostContext).getElementInfo().getDocumentToSynchronize();
   }
 
   @Override
   int elementHashCode() {
-    return ((SmartPsiElementPointerImpl)myHostContext).getElementInfo().elementHashCode();
+    return ((SmartPsiElementPointerImpl<?>)myHostContext).getElementInfo().elementHashCode();
   }
 
   @NotNull

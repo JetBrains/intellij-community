@@ -25,12 +25,12 @@ import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -448,7 +448,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final MatchContext context = myMatchingVisitor.getMatchContext();
     final JavaCompiledPattern javaPattern = (JavaCompiledPattern)context.getPattern();
 
-    final Set<PsiElement> matchedElements = new THashSet<>();
+    final Set<PsiElement> matchedElements = new HashSet<>();
     context.pushMatchedElementsListener(elements -> matchedElements.addAll(elements));
     try {
       final boolean templateIsInterface = patternClass.isInterface();
@@ -1629,13 +1629,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       else {
         // match array of primitive by new 'T();
         final PsiKeyword newKeyword = PsiTreeUtil.getChildOfType(new2, PsiKeyword.class);
-        final PsiElement element = PsiTreeUtil.getNextSiblingOfType(newKeyword, PsiWhiteSpace.class);
+        final PsiKeyword typeKeyword = PsiTreeUtil.getNextSiblingOfType(newKeyword, PsiKeyword.class);
 
-        if (element != null && element.getNextSibling() instanceof PsiKeyword) {
-          if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, element.getNextSibling()))) {
+        if (typeKeyword != null ) {
+          if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, typeKeyword))) {
             matchArrayOrArguments(expression, new2);
           }
-
           return;
         }
       }

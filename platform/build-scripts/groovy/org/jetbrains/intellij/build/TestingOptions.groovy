@@ -36,6 +36,11 @@ class TestingOptions {
   boolean debugEnabled = SystemProperties.getBooleanProperty("intellij.build.test.debug.enabled", true)
 
   /**
+   * Specifies address on which the testing process will listen for connections, by default a localhost will be used.
+   */
+  String debugHost = System.getProperty("intellij.build.test.debug.host", "localhost")
+
+  /**
    * Specifies port on which the testing process will listen for connections, by default a random port will be used.
    */
   int debugPort = SystemProperties.getIntProperty("intellij.build.test.debug.port", OLD_DEBUG_PORT)
@@ -90,19 +95,29 @@ class TestingOptions {
   String testDiscoveryExcludePatterns = System.getProperty("intellij.build.test.discovery.exclude.class.patterns")
 
   /**
+   * Specifies a list of semicolon separated project artifacts that need to be built before running the tests.
+   */
+  String beforeRunProjectArtifacts = System.getProperty("intellij.build.test.beforeRun.projectArtifacts")
+
+  /**
    * If {@code true} causal profiler agent will be attached to the testing process.
    */
   boolean enableCausalProfiling = SystemProperties.getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
 
   /**
    * Pattern to match tests in {@link #mainModule} or default main module tests compilation outputs.
-   * Tests from each matched class will be executed in a fresh JVM.
+   * Tests from each matched class will be executed in a fresh jdk.jfr.internal.JVM.
    *
    * E.g. "com/intellij/util/ui/standalone/**Test.class"
    */
   String batchTestIncludes = System.getProperty("intellij.build.test.batchTest.includes")
 
   boolean performanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
+
+  /**
+   * Terminate execution immediately if any test fails. Both build script and test JVMs are terminated.
+   */
+  boolean failFast = SystemProperties.getBooleanProperty("intellij.build.test.failFast", false)
 
   public static final String ALL_EXCLUDE_DEFINED_GROUP = "ALL_EXCLUDE_DEFINED"
   private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", ALL_EXCLUDE_DEFINED_GROUP)

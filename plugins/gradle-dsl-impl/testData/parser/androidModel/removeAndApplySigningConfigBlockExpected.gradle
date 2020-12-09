@@ -1,0 +1,6 @@
+android {
+  signingConfigs {
+    config1 {
+    }
+  }
+}

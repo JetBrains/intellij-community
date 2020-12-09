@@ -7,11 +7,13 @@ import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpRequest
 import org.apache.commons.compress.utils.IOUtils
 import org.jetbrains.ide.HttpRequestHandler
+import org.jetbrains.annotations.NonNls
 
 /**
  * Created by Egor.Malyshev on 7/13/2017.
  */
 abstract class HelpRequestHandlerBase : HttpRequestHandler() {
+  @NonNls
   open val prefix: String = "/help/"
 
   override fun isAccessible(request: HttpRequest): Boolean {

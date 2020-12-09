@@ -1,0 +1,29 @@
+apply from: "../defaults.gradle"
+
+// Local overrides
+ext {
+  varInt = numbers[1]
+  varBool = bool
+  varRefString = "${numbers[3]}"
+  varProGuardFiles = [test: 'proguard-rules.txt', debug: debugFile]
+}
+
+android {
+  compileSdkVersion varInt
+  buildToolsVersion varRefString
+
+  signingConfigs {
+    myConfig {
+      storeFile file(vars['signing'].storeF)
+      storePassword vars["signing"].storeP
+      keyPassword "${vars["signing"].keyP}${letters[3]}"
+    }
+  }
+
+  defaultConfig {
+    applicationId appId
+    testApplicationId testId
+    maxSdkVersion vars.maxSdk
+    minSdkVersion vars.minSdk
+  }
+}

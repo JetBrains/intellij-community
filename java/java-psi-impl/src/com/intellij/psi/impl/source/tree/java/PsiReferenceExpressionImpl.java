@@ -241,10 +241,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
       JavaResolveResult[] variable = null;
       JavaResolveResult[] result = resolveToVariable(containingFile);
-      if (result.length == 1) {
-        if (result[0].isAccessible()) {
-          return result;
-        }
+      if (result.length == 1 && result[0].isAccessible()) {
+        return result;
+      }
+
+      if (result.length > 0) {
         variable = result;
       }
 

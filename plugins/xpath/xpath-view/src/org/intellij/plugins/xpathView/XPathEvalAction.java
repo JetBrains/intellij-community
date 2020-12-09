@@ -287,12 +287,11 @@ public class XPathEvalAction extends XPathAction {
 
     public static void showUsageView(@NotNull final Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText("XPath Expression");
+        presentation.setTargetsNodeText(XPathBundle.message("list.item.xpath.expression"));
         presentation.setCodeUsages(false);
         presentation.setCodeUsagesString(XPathBundle.message("list.item.found.matches"));
         presentation.setNonCodeUsagesString(XPathBundle.message("list.item.result"));
         presentation.setUsagesString("XPath Result");
-        presentation.setUsagesWord(XPathBundle.message("match"));
         final ItemPresentation targetPresentation = usageTarget.getPresentation();
         if (targetPresentation != null) {
           presentation

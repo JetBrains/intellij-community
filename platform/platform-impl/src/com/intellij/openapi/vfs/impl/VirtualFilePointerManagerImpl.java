@@ -81,7 +81,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     assertAllPointersDisposed();
   }
 
-  private static final class EventDescriptor {
+  private static class EventDescriptor {
     @NotNull private final VirtualFilePointerListener myListener;
     private final VirtualFilePointer @NotNull [] myPointers;
 
@@ -94,6 +94,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     private void fireBefore() {
       myListener.beforeValidityChanged(myPointers);
     }
+
 
     private void fireAfter() {
       myListener.validityChanged(myPointers);
@@ -117,7 +118,20 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                    boolean addSubdirectoryPointers,
                                    @NotNull NewVirtualFileSystem fs,
                                    @NotNull VFileEvent event) {
-    getRoot(fs).addRelevantPointersFrom(parent, file, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs, event);
+    addRelevantPointers(file, parent, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs, true, event);
+  }
+
+  private void addRelevantPointers(@Nullable VirtualFile file,
+                                   @NotNull VirtualFileSystemEntry parent,
+                                   int childNameId,
+                                   @NotNull MultiMap<? super VirtualFilePointerListener, ? super VirtualFilePointerImpl> toFirePointers,
+                                   @NotNull List<? super NodeToUpdate> toUpdateNodes,
+                                   boolean addSubdirectoryPointers,
+                                   @NotNull NewVirtualFileSystem fs,
+                                   boolean addRecursiveDirectoryPointers,
+                                   @NotNull VFileEvent event) {
+    getRoot(fs).addRelevantPointersFrom(parent, file, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs,
+                                        addRecursiveDirectoryPointers, event);
   }
 
   @NotNull
@@ -161,7 +175,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
       if (fileSystem == null) {
         // will always be null
-        return new LightFilePointer(url);
+        return new LightFilePointerUrl(url);
       }
     }
     else {
@@ -177,7 +191,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       // so for now we create normal pointers only when there are listeners.
       // maybe, later we'll fix all those tests
       VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
-      return found == null ? new LightFilePointer(url) : new LightFilePointer(found);
+      return found == null ? new LightFilePointerUrl(url) : new LightFilePointerUrl(found);
     }
 
     if (!(fileSystem instanceof VirtualFilePointerCapableFileSystem)) {
@@ -231,23 +245,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                                                       @Nullable VirtualFilePointerListener listener) {
     IdentityVirtualFilePointer pointer = myUrlToIdentity.get(url);
     if (pointer == null) {
-      pointer = new IdentityVirtualFilePointer(found, url, listener) {
-        @Override
-        public void dispose() {
-          //noinspection SynchronizeOnThis
-          synchronized (VirtualFilePointerManagerImpl.this) {
-            super.dispose();
-            myUrlToIdentity.remove(url);
-          }
-        }
-
-        @Override
-        public String toString() {
-          return "identity: url='"+url+"'; file="+found;
-        }
-      };
+      pointer = new IdentityVirtualFilePointer(found, url, myUrlToIdentity, this, listener);
       myUrlToIdentity.put(url, pointer);
-
       DelegatingDisposable.registerDisposable(parentDisposable, pointer);
     }
     pointer.incrementUsageCount(1);
@@ -272,7 +271,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
       if (next == '/' && i != 0 ||
           next == '/' && !SystemInfo.isWindows ||// additional condition for Windows UNC
-          next == '/' && SystemInfo.isWindows && slash == 2 && path.charAt(1) == ':' && OSAgnosticPathUtil.isDriveLetter(path.charAt(0)) ||// Z://foo -> Z:/foo
+          next == '/' && slash == 2 && path.charAt(1) == ':' && OSAgnosticPathUtil.isDriveLetter(path.charAt(0)) ||// Z://foo -> Z:/foo
           next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
         return cleanupTail(path, slash);
       }
@@ -522,7 +521,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
               addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
 
               // old pointers remain valid after rename, no need to fire
-              addRelevantPointers(eventFile, parent, FilePartNode.getNameId(eventFile), new MultiMap<>(), toUpdateNodes, true, fs, event);
+              addRelevantPointers(eventFile, parent, FilePartNode.getNameId(eventFile), toFirePointers, toUpdateNodes, true, fs, false, event);
             }
           }
         }
@@ -667,7 +666,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private static final class DelegatingDisposable implements Disposable {
-    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
+    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ConcurrentCollectionFactory.createConcurrentIdentityMap();
     private final Reference2IntOpenHashMap<VirtualFilePointerImpl> myCounts = new Reference2IntOpenHashMap<>(); // guarded by this
     private final Disposable myParent;
 

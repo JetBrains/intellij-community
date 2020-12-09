@@ -1,0 +1,25 @@
+android {
+  buildTypes {
+    xyz {
+    }
+  }
+}
+android.buildTypes.xyz.applicationIdSuffix "mySuffix"
+android.buildTypes.xyz.buildConfigField "abcd", "efgh", "ijkl"
+android.buildTypes.xyz.consumerProguardFiles 'proguard-android.txt', 'proguard-rules.pro'
+android.buildTypes.xyz.debuggable true
+android.buildTypes.xyz.embedMicroApp true
+android.buildTypes.xyz.jniDebuggable true
+android.buildTypes.xyz.manifestPlaceholders activityLabel1: "defaultName1", activityLabel2: "defaultName2"
+android.buildTypes.xyz.minifyEnabled true
+android.buildTypes.xyz.multiDexEnabled true
+android.buildTypes.xyz.proguardFiles 'proguard-android.txt', 'proguard-rules.pro'
+android.buildTypes.xyz.pseudoLocalesEnabled true
+android.buildTypes.xyz.renderscriptDebuggable true
+android.buildTypes.xyz.renderscriptOptimLevel 1
+android.buildTypes.xyz.resValue "mnop", "qrst", "uvwx"
+android.buildTypes.xyz.shrinkResources true
+android.buildTypes.xyz.testCoverageEnabled true
+android.buildTypes.xyz.useJack true
+android.buildTypes.xyz.versionNameSuffix "abc"
+android.buildTypes.xyz.zipAlignEnabled true

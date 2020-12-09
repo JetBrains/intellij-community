@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -53,22 +54,12 @@ public abstract class LanguageFileType implements FileType {
     return false;
   }
 
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
   /**
    * If true, this language file type will never be returned as the associated file type for the language.
    * (Used when a file type is reusing the language of another file type, e.g. XML).
    */
   public boolean isSecondary() {
     return mySecondary;
-  }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
   }
 
   /**
@@ -90,6 +81,10 @@ public abstract class LanguageFileType implements FileType {
   }
 
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
+    CharsetHint hint = getCharsetHint();
+    if (hint instanceof ForcedCharset) {
+      return ((ForcedCharset)hint).getCharset();
+    }
     return extractCharsetFromFileContent(project, file, content.toString());
   }
 }

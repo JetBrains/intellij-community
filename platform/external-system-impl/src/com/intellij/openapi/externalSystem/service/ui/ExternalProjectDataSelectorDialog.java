@@ -4,8 +4,8 @@ package com.intellij.openapi.externalSystem.service.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer;
 import com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizerImpl;
@@ -41,6 +41,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,7 +195,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
           new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
+              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
             }
           }.queue();
         });
@@ -388,7 +389,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     final CheckedTreeNode root = new CheckedTreeNode(null);
     final DataNodeCheckedTreeNode projectNode = treeNodeMap.get(myProjectInfo.getExternalProjectStructure());
 
-    String rootModuleComment = "root module";
+    String rootModuleComment = ExternalSystemBundle.message("external.project.structure.project.root.module");
     if (rootModuleNode[0] != null && projectNode != null) {
       rootModuleNode[0].comment = rootModuleComment;
       if (!projectNode.isNodeChild(rootModuleNode[0])) {
@@ -443,9 +444,9 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     private final DataNode myDataNode;
     @Nullable
     private final Icon icon;
-    private String text;
+    private @Nls String text;
     @Nullable
-    private String comment;
+    private @Nls String comment;
 
     private DataNodeCheckedTreeNode(DataNode node) {
       super(node);
@@ -477,7 +478,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
 
       icon = anIconCandidate != null ? anIconCandidate : projectStructureCustomizer.suggestIcon(node, myExternalSystemUiAware);
-      final Couple<String> representationName = projectStructureCustomizer.getRepresentationName(node);
+      final Couple<@Nls String> representationName = projectStructureCustomizer.getRepresentationName(node);
       text = representationName.first;
       comment = representationName.second;
 
@@ -573,7 +574,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         }
       }
 
-      if (!deps.isEmpty() && !selectedModules.isEmpty()) {
+      if (!deps.isEmpty()) {
         final String message = checked ? getEnableMessage(selectedModules, deps) : getDisableMessage(deps);
         if (Messages.showOkCancelDialog(message, checked ? ExternalSystemBundle.message("enable.dependant.modules")
                                                          : ExternalSystemBundle.message("disable.modules.with.dependency.on.this"),
@@ -592,36 +593,21 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
     }
 
-    private String getEnableMessage(List<? extends DataNode<Identifiable>> selectedModules, Set<? extends DataNode<Identifiable>> deps) {
+    private @Nls String getEnableMessage(List<? extends DataNode<Identifiable>> selectedModules, Set<? extends DataNode<Identifiable>> deps) {
       if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE || selectedModules.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
-        return String.format(
-          "%d disabled %s depend on %d selected %s. Would you like to enable %s too?",
-          deps.size(), StringUtil.pluralize("module", deps.size()),
-          selectedModules.size(), StringUtil.pluralize("module", selectedModules.size()),
-          deps.size() == 1 ? "it" : "them");
+        return ExternalSystemBundle.message("enable.dependant.modules.max.message", deps.size(), selectedModules.size());
       }
-
       final String listOfSelectedModules = StringUtil.join(selectedModules, node -> node.getData().getId(), ", ");
-
       final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
-      return String.format(
-        "<html>The following %s on which <b>%s</b> %s %s disabled:<br><b>%s</b><br>Would you like to enable %s?</html>",
-        StringUtil.pluralize("module", deps.size()), listOfSelectedModules,
-        StringUtil.pluralize("depend", selectedModules.size()), deps.size() == 1 ? "is" : "are",
-        listOfDependencies, deps.size() == 1 ? "it" : "them");
+      return ExternalSystemBundle.message("enable.dependant.modules.message", deps.size(), listOfSelectedModules, selectedModules.size(), listOfDependencies);
     }
 
-    private String getDisableMessage(Set<? extends DataNode<Identifiable>> deps) {
+    private @Nls String getDisableMessage(Set<? extends DataNode<Identifiable>> deps) {
       if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
-        return String.format("%d enabled modules depend on selected modules. Would you like to disable them too?", deps.size());
+        return ExternalSystemBundle.message("disable.modules.with.dependency.on.this.max.message", deps.size());
       }
-
       final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
-      return String.format(
-        "<html>The following %s <br><b>%s</b><br>%s enabled and %s on selected modules. <br>Would you like to disable %s too?</html>",
-        StringUtil.pluralize("module", deps.size()), listOfDependencies, deps.size() == 1 ? "is" : "are",
-        StringUtil.pluralize("depend", deps.size()),
-        deps.size() == 1 ? "it" : "them");
+      return ExternalSystemBundle.message("disable.modules.with.dependency.on.this.message", deps.size(), listOfDependencies);
     }
   }
 
@@ -675,7 +661,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private static class SelectionState {
     boolean isRequiredSelectionEnabled;
-    @Nullable String message;
+    @Nullable @NlsContexts.Label String message;
 
     SelectionState(boolean isRequiredSelectionEnabled, @Nullable @NlsContexts.Label String message) {
       this.isRequiredSelectionEnabled = isRequiredSelectionEnabled;

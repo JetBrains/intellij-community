@@ -72,6 +72,12 @@ public class SourceToOutputMappingImpl implements SourceToOutputMapping, Storage
     return myMapping.getState(srcPath);
   }
 
+  @Override
+  @NotNull
+  public Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException {
+    return myMapping.getStateIterator(srcPath);
+  }
+
   @NotNull
   @Override
   public Iterator<String> getSourcesIterator() throws IOException {

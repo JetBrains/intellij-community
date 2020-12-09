@@ -13,8 +13,9 @@ import javax.swing.event.ListDataListener
 open class TimelineComponent<in T : TimelineItem>(
   private val model: ListModel<T>,
   protected val itemComponentFactory: TimelineItemComponentFactory<T>,
-  private val title: JComponent? = null
-) : JPanel(VerticalLayout(UI.scale(20))) {
+  private val title: JComponent? = null,
+  offset: Int = UI.scale(20)
+) : JPanel(VerticalLayout(offset)) {
 
   init {
     isOpaque = false
@@ -47,12 +48,12 @@ open class TimelineComponent<in T : TimelineItem>(
         repaint()
       }
     })
-    for (i in 0 until model.size) {
-      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i.viewIndex())
-    }
 
     if (title != null) {
       add(title, VerticalLayout.FILL_HORIZONTAL, 0)
+    }
+    for (i in 0 until model.size) {
+      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i.viewIndex())
     }
   }
 

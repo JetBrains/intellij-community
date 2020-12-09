@@ -5,6 +5,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
@@ -14,22 +15,24 @@ public class JavaRefactoringElementDescriptionProvider implements ElementDescrip
     RefactoringDescriptionLocation rdLocation = (RefactoringDescriptionLocation) location;
 
     if (element instanceof PsiField) {
-      int options = PsiFormatUtil.SHOW_NAME;
+      int options = PsiFormatUtilBase.SHOW_NAME;
       if (rdLocation.includeParent()) {
-        options |= PsiFormatUtil.SHOW_CONTAINING_CLASS;
+        options |= PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
       }
       return JavaRefactoringBundle.message("field.description", CommonRefactoringUtil.htmlEmphasize(PsiFormatUtil.formatVariable((PsiVariable)element, options, PsiSubstitutor.EMPTY)));
     }
 
     if (element instanceof PsiMethod) {
-      int options = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS;
+      int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
       if (rdLocation.includeParent()) {
-        options |= PsiFormatUtil.SHOW_CONTAINING_CLASS;
+        options |= PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
       }
       final PsiMethod method = (PsiMethod) element;
       return method.isConstructor() ?
-             JavaRefactoringBundle.message("constructor.description", CommonRefactoringUtil.htmlEmphasize(PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE))) :
-             JavaRefactoringBundle.message("method.description", CommonRefactoringUtil.htmlEmphasize( PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE)));
+             JavaRefactoringBundle.message("constructor.description", CommonRefactoringUtil.htmlEmphasize(PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options,
+                                                                                                                                     PsiFormatUtilBase.SHOW_TYPE))) :
+             JavaRefactoringBundle.message("method.description", CommonRefactoringUtil.htmlEmphasize( PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options,
+                                                                                                                                 PsiFormatUtilBase.SHOW_TYPE)));
     }
 
     if (element instanceof PsiClassInitializer) {

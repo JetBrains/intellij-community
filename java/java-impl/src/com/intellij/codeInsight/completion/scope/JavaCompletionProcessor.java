@@ -112,7 +112,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
   @ApiStatus.Internal
   public static boolean seemsInternal(PsiClass clazz) {
     String name = clazz.getName();
-    return name != null && name.contains("$");
+    return name != null && name.startsWith("$");
   }
 
   @Override
@@ -143,6 +143,12 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     }
 
     if (element instanceof PsiClass && seemsInternal((PsiClass) element)) {
+      return true;
+    }
+
+    if (element instanceof PsiMember && !PsiNameHelper.getInstance(element.getProject()).isIdentifier(((PsiMember)element).getName())) {
+      // The member could be defined in another JVM language where its name is not a legal name in Java.
+      // In this case, just skip such the member. We cannot legally reference it from Java source.
       return true;
     }
 

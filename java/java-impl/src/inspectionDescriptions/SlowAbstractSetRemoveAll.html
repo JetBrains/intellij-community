@@ -1,0 +1,17 @@
+<html>
+<body>
+The implementation of the <code>'java.util.AbstractSet#removeAll'</code> method determines which is the smaller of this set and the
+specified collection, by invoking the size method on each. If this set has fewer elements, then the implementation iterates over
+this set, checking each element returned by the iterator in turn to see if it is contained in the specified collection. If it is
+so contained, it is removed from this set with the iterator's remove method. If the specified collection has fewer elements, then
+the implementation iterates over the specified collection, removing from this set each element returned by the iterator, using this
+set's remove method.
+
+<p>It means that if the collection to remove is of equal or larger size than the set, then the implementation of the
+<code>'java.util.List#contains'</code> method is called, which in many implementations they will perform costly linear
+searches.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

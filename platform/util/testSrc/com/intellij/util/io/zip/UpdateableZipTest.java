@@ -1,12 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import junit.framework.TestCase;
 
 import java.io.*;
@@ -119,7 +114,7 @@ public class UpdateableZipTest extends TestCase {
       int length = (int)file.length();
       byte[] buffer = new byte[length];
       file.readFully(buffer, 0, length);
-      assertFalse(new String(buffer, CharsetToolkit.US_ASCII_CHARSET).contains("second"));
+      assertFalse(new String(buffer, StandardCharsets.US_ASCII).contains("second"));
     }
   }
 

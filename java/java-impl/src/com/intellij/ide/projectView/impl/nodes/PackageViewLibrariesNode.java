@@ -2,9 +2,7 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
@@ -89,7 +87,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
-  public int getWeight() {
-    return 60;
+  public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+    return NodeSortOrder.LIBRARY_ROOT;
   }
 }

@@ -42,19 +42,18 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myValueContainer = valueContainer;
   }
 
-  @Deprecated
-  protected XValueContainerNode(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull ValueContainer valueContainer) {
-    this(tree, parent, true, valueContainer);
-  }
-
   private void loadChildren() {
     if (myValueChildren != null || myMessageChildren != null || myTemporaryMessageChildren != null) return;
     startComputingChildren();
   }
 
-  public void startComputingChildren() {
+  private void prepareForComputingChildren() {
     myCachedAllChildren = null;
     setTemporaryMessageNode(createLoadingMessageNode());
+  }
+
+  public void startComputingChildren() {
+    prepareForComputingChildren();
     myValueContainer.computeChildren(this);
   }
 
@@ -150,7 +149,17 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @Override
   public void tooManyChildren(final int remaining) {
-    invokeNodeUpdate(() -> setTemporaryMessageNode(MessageTreeNode.createEllipsisNode(myTree, this, remaining)));
+    tooManyChildren(remaining, () -> myValueContainer.computeChildren(this));
+  }
+
+  @Override
+  public void tooManyChildren(int remaining, @NotNull Runnable childrenSupplier) {
+    invokeNodeUpdate(() -> setTemporaryMessageNode(
+      MessageTreeNode.createEllipsisNode(myTree, this, remaining, () -> {
+        myTree.selectNodeOnLoad(n -> n.getParent() == this, n -> isObsolete());
+        prepareForComputingChildren();
+        childrenSupplier.run();
+      })));
   }
 
   @Override

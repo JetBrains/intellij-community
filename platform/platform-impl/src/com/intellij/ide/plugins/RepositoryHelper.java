@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.updateSettings.impl.PluginHostsProcessorHelper;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.ide.plugins.marketplace.MarketplaceRequests.parsePluginList;
@@ -47,6 +50,7 @@ public final class RepositoryHelper {
   public static List<String> getPluginHosts() {
     List<String> hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
+    hosts = PluginHostsProcessorHelper.processPluginRepositories(hosts);
     hosts.add(null);  // main plugin repository
     return hosts;
   }
@@ -98,17 +102,16 @@ public final class RepositoryHelper {
   /**
    * Use method only for getting plugins from custom repositories
    */
-  @NotNull
-  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber build,
-                                                       @Nullable ProgressIndicator indicator) throws IOException {
-    File pluginListFile;
+  public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
+                                                                @Nullable BuildNumber build,
+                                                                @Nullable ProgressIndicator indicator) throws IOException {
+    Path pluginListFile;
     Url url;
     if (repositoryUrl == null) {
       LOG.error("Using deprecated API for getting plugins from Marketplace");
       String base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
       url = Urls.newFromEncoded(base).addParameters(singletonMap("uuid", PermanentInstallationID.get()));  // NON-NLS
-      pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
+      pluginListFile = Paths.get(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     }
     else {
       url = Urls.newFromEncoded(repositoryUrl);
@@ -162,7 +165,7 @@ public final class RepositoryHelper {
     for (PluginNode node : list) {
       PluginId pluginId = node.getPluginId();
 
-      if (pluginId == null || repositoryUrl != null && node.getDownloadUrl() == null) {
+      if (repositoryUrl != null && node.getDownloadUrl() == null) {
         LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }

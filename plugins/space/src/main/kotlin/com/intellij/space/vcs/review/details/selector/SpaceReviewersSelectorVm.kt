@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.selector
 
 import circlet.client.api.*
@@ -14,8 +15,8 @@ import circlet.platform.client.XPagedListOnFlux
 import circlet.platform.client.resolveAll
 import circlet.platform.client.xTransformedPagedListOnFlux
 import com.intellij.space.vcs.review.details.CommitSetReviewDetailsVm
-import com.intellij.space.vcs.review.details.CrDetailsVm
 import com.intellij.space.vcs.review.details.MergeRequestDetailsVm
+import com.intellij.space.vcs.review.details.SpaceReviewDetailsVm
 import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
@@ -27,7 +28,7 @@ internal class SpaceReviewersSelectorVm(override val lifetime: Lifetime,
                                         val review: CodeReviewRecord,
                                         val projectKey: ProjectKey,
                                         val client: KCircletClient,
-                                        private val detailsVm: CrDetailsVm<out CodeReviewRecord>,
+                                        private val detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
                                         private val participantsVm: SpaceReviewParticipantsVm
 ) : Lifetimed {
 
@@ -66,11 +67,8 @@ internal class SpaceReviewersSelectorVm(override val lifetime: Lifetime,
           }
         }
         is CommitSetReviewDetailsVm -> {
-          projectService.getProjectMembersWhoCanViewProject(batch,
-                                                            detailsVm.projectKey.identifier,
-                                                            text)
+          projectService.getMembersWhoCanViewProject(batch, detailsVm.projectKey.identifier, text)
         }
-        else -> throw IllegalArgumentException("Unsupported review type")
       }
     }
   }

@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -108,7 +107,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
           }
         });
         String libraryText = validLibraries.size() == 1
-                             ? "'" + LibraryUtil.getPresentableName(validLibraries.iterator().next()) + "' library"
+                             ? "'" + validLibraries.iterator().next().getPresentableName() + "' library"
                              : validLibraries.size() + " libraries";
         Notifications.Bus.notify(new Notification(
           "Repository", JavaUiBundle.message("notification.title.repository.libraries.cleanup"),

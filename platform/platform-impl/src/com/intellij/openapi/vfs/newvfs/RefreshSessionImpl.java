@@ -64,8 +64,8 @@ final class RefreshSessionImpl extends RefreshSession {
     return trace ? new Throwable() : null;
   }
 
-  RefreshSessionImpl(@NotNull List<? extends VFileEvent> events) {
-    this(false, false, null, ModalityState.defaultModalityState());
+  RefreshSessionImpl(boolean async, @NotNull List<? extends VFileEvent> events) {
+    this(async, false, null, ModalityState.defaultModalityState());
     myEvents.addAll(events);
   }
 
@@ -127,7 +127,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
       if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
 
-      long t = System.nanoTime();
+      long t = System.currentTimeMillis();
       PerformanceWatcher.Snapshot snapshot = null;
       Map<String, Integer> types = null;
       if (DURATION_REPORT_THRESHOLD_MS > 0) {

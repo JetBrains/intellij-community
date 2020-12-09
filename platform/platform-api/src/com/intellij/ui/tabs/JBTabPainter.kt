@@ -33,7 +33,7 @@ interface JBTabPainter {
 
   fun paintTab(position: JBTabsPosition,
                g: Graphics2D,
-               bounds: Rectangle,
+               rect: Rectangle,
                borderThickness: Int,
                tabColor: Color?,
                active: Boolean,

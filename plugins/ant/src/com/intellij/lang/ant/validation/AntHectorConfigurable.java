@@ -42,7 +42,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   private final @Nls String myNoneText = AntBundle.message("combobox.hector.configurable.none.text");
   private @NlsSafe String myOriginalContext = myNoneText;
 
-  private JComboBox myCombo;
+  private JComboBox<String> myCombo;
   private final GlobalSearchScope myFileFilter;
   private final Project myProject;
 
@@ -64,7 +64,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(UIUtil.getToolTipActionBackground());
     panel.setBorder(IdeBorderFactory.createTitledBorder(AntBundle.message("configurable.hector.border.title.file.context"), false));
-    myCombo = new ComboBox();
+    myCombo = new ComboBox<>();
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);
     GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
                                                             GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.create(5, 0), 0, 0);

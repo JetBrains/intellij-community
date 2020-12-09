@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -16,9 +16,8 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 public final class FeatureStatisticsBundle {
-
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return AbstractBundle.message(getBundle(key), key, params);
+    return BundleBase.messageOrDefault(getBundle(key), key, null, params);
   }
 
   private static Reference<ResourceBundle> ourBundle;

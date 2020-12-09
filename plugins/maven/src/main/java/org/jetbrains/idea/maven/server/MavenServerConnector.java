@@ -2,39 +2,33 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.List;
 
 public class MavenServerConnector implements @NotNull Disposable {
-
+  public static final Logger LOG = Logger.getInstance(MavenServerConnector.class);
 
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
   private final RemoteMavenServerDownloadListener
     myDownloadListener = new RemoteMavenServerDownloadListener();
 
-  private final Project myProject;
   private final MavenServerManager myManager;
   private final Integer myDebugPort;
 
@@ -43,104 +37,39 @@ public class MavenServerConnector implements @NotNull Disposable {
   private final Sdk myJdk;
   private final MavenDistribution myDistribution;
   private final String myVmOptions;
+  private int connectedProjects;
 
-  private MavenServerRemoteProcessSupport mySupport;
+  private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
   private MavenServer myMavenServer;
 
 
-  public MavenServerConnector(@NotNull Project project,
-                              @NotNull MavenServerManager manager,
-                              @NotNull MavenWorkspaceSettings settings,
+  public MavenServerConnector(@NotNull MavenServerManager manager,
                               @NotNull Sdk jdk,
-                              @Nullable Integer debugPort) {
+                              @NotNull String vmOptions,
+                              @Nullable Integer debugPort,
+                              @NotNull MavenDistribution mavenDistribution) {
 
-    myProject = project;
     myManager = manager;
     myDebugPort = debugPort;
-    myDistribution = findMavenDistribution(project, settings);
-    settings.generalSettings.setMavenHome(myDistribution.getMavenHome().getAbsolutePath());
-    myVmOptions = readVmOptions(project, settings);
+    myDistribution = mavenDistribution;
+    myVmOptions = vmOptions;
     myJdk = jdk;
-    connect();
   }
 
-  public MavenServerConnector(@NotNull Project project,
-                              @NotNull MavenServerManager manager,
-                              @NotNull MavenWorkspaceSettings settings,
-                              @NotNull Sdk jdk) {
-    this(project, manager, settings, jdk, null);
-  }
-
-  public boolean isSettingsStillValid(MavenWorkspaceSettings settings) {
-    String baseDir = myProject.getBasePath();
-    if (baseDir == null) { //for default projects and unit tests backward-compatibility
-      return true;
-    }
-    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(LocalFileSystem.getInstance().findFileByPath(baseDir));
-    if (distributionUrl != null && !distributionUrl.equals(myDistribution.getName())) { //new maven url in maven-wrapper.properties
+  public boolean isCompatibleWith(Sdk jdk, String vmOptions, MavenDistribution distribution) {
+    if (!myDistribution.compatibleWith(distribution)) {
       return false;
     }
-    String newVmOptions = readVmOptions(myProject, settings);
-    return StringUtil.equals(newVmOptions, myVmOptions);
+    if (!StringUtil.equals(myJdk.getName(), jdk.getName())) {
+      return false;
+    }
+    return StringUtil.equals(vmOptions, myVmOptions);
   }
 
-  private static String readVmOptions(Project project, MavenWorkspaceSettings settings) {
-
-    VirtualFile baseDir = project.getBaseDir();
-    if (baseDir == null) return settings.importingSettings.getVmOptionsForImporter();
-    VirtualFile mvn = baseDir.findChild(".mvn");
-    if (mvn == null) return settings.importingSettings.getVmOptionsForImporter();
-    VirtualFile jdkOpts = mvn.findChild("jvm.config");
-    if (jdkOpts == null) return settings.importingSettings.getVmOptionsForImporter();
-    try {
-      return new String(jdkOpts.contentsToByteArray(true), CharsetToolkit.UTF8_CHARSET);
-    }
-    catch (IOException e) {
-      MavenLog.LOG.warn(e);
-      return settings.importingSettings.getVmOptionsForImporter();
-    }
-  }
-
-
-  private static @Nullable String getWrapperDistributionUrl(Project project) {
-    VirtualFile baseDir = project.getBaseDir();
-    if (baseDir == null) {
-      return null;
-    }
-    return MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
-  }
-
-  private static MavenDistribution findMavenDistribution(Project project, MavenWorkspaceSettings settings) {
-    MavenSyncConsole console = MavenProjectsManager.getInstance(project).getSyncConsole();
-    String distributionUrl = getWrapperDistributionUrl(project);
-    if (distributionUrl == null) {
-      MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
-      if (distribution == null) {
-        console.addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
-          .message("is.not.correct.maven.home.reverting.to.embedded", settings.generalSettings.getMavenHome()));
-        return MavenServerManager.resolveEmbeddedMavenHome();
-      }
-      return distribution;
-    }
-    else {
-      try {
-
-        console.startWrapperResolving();
-        MavenDistribution distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, console.progressIndicatorForWrapper());
-        console.finishWrapperResolving(null);
-        return distribution;
-      }
-      catch (RuntimeException | IOException e) {
-        MavenLog.LOG.info(e);
-        console.finishWrapperResolving(e);
-        return MavenServerManager.resolveEmbeddedMavenHome();
-      }
-    }
-  }
-
-  private void connect() {
+  void connect(Project project) {
     if (mySupport != null || myMavenServer != null) {
-      throw new IllegalStateException("Already connected");
+      connectedProjects += 1;
+      return;
     }
     try {
       if (myDebugPort != null) {
@@ -149,7 +78,17 @@ public class MavenServerConnector implements @NotNull Disposable {
         System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
       }
 
-      mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+      MavenRemoteProcessSupportFactory[] factories = MavenRemoteProcessSupportFactory.MAVEN_SERVER_SUPPORT_EP_NAME.getExtensions();
+      List<MavenRemoteProcessSupportFactory> aFactories = ContainerUtil.filter(factories, factory -> factory.isApplicable(project));
+      if (aFactories.size() > 1) {
+        LOG.warn("More than one MavenRemoteProcessSupportFactory is applicable: " + aFactories);
+      }
+      else if (aFactories.size() == 1) {
+        mySupport = aFactories.get(0).create(myJdk, myVmOptions, myDistribution, project, myDebugPort);
+      }
+      else {
+        mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, project, myDebugPort);
+      }
       myMavenServer = mySupport.acquire(this, "");
       myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;
       if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
@@ -160,6 +99,15 @@ public class MavenServerConnector implements @NotNull Disposable {
       myMavenServer.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
     }
     catch (Exception e) {
+      if (mySupport != null) {
+        try {
+          shutdown(false);
+        }
+        catch (Throwable ignored) {
+        }
+      }
+      cleanUp();
+      myManager.cleanUp(this);
       throw new CannotStartServerException(e);
     }
   }
@@ -206,7 +154,14 @@ public class MavenServerConnector implements @NotNull Disposable {
 
   @NotNull
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
-    return perform(() -> myMavenServer.interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken));
+    return perform(() -> {
+      MavenModel m = myMavenServer.interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken);
+      RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(basedir.getPath());
+      if (transformer != RemotePathTransformerFactory.Transformer.ID) {
+        new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(m);
+      }
+      return m;
+    });
   }
 
   public MavenModel assembleInheritance(final MavenModel model, final MavenModel parentModel) {
@@ -221,7 +176,17 @@ public class MavenServerConnector implements @NotNull Disposable {
       () -> myMavenServer.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles, MavenRemoteObjectWrapper.ourToken));
   }
 
-  public void shutdown(boolean wait) {
+
+  void shutdown(boolean wait) {
+    if (connectedProjects-- > 0) {
+      return;
+    }
+    shutdownForce(wait);
+  }
+
+
+  @ApiStatus.Internal
+  void shutdownForce(boolean wait) {
     myManager.unregisterConnector(this);
     if (mySupport != null) {
       mySupport.stopAll(wait);
@@ -236,14 +201,11 @@ public class MavenServerConnector implements @NotNull Disposable {
         return r.execute();
       }
       catch (RemoteException e) {
-        MavenServerRemoteProcessSupport processSupport = mySupport;
-        if (processSupport != null) {
-          processSupport.stopAll(false);
-        }
-        cleanUp();
-        connect();
+        last = e;
       }
     }
+    cleanUp();
+    myManager.cleanUp(this);
     throw new RuntimeException("Cannot reconnect.", last);
   }
 

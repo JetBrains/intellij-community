@@ -17,8 +17,10 @@ import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +171,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
   public Condition<CommitId> getContainedInBranchCondition(@NotNull final Collection<? extends CommitId> heads) {
     List<Integer> headIds = ContainerUtil.map(heads, head -> myPermanentCommitsInfo.getNodeId(head));
     if (!heads.isEmpty() && ContainerUtil.getFirstItem(heads) instanceof Integer) {
-      final IntOpenHashSet branchNodes = new IntOpenHashSet();
+      IntSet branchNodes = new IntOpenHashSet();
       myReachableNodes.walkDown(headIds, node -> branchNodes.add(((Integer)myPermanentCommitsInfo.getCommitId(node)).intValue()));
       return new IntContainedInBranchCondition<>(branchNodes);
     }
@@ -205,7 +207,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
   }
 
   private static class NotLoadedCommitsIdsGenerator<CommitId> implements NotNullFunction<CommitId, Integer> {
-    @NotNull private final Int2ObjectOpenHashMap<CommitId> myNotLoadedCommits = new Int2ObjectOpenHashMap<>();
+    @NotNull private final Int2ObjectMap<CommitId> myNotLoadedCommits = new Int2ObjectOpenHashMap<>();
 
     @NotNull
     @Override
@@ -215,15 +217,15 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
       return nodeId;
     }
 
-    @NotNull Int2ObjectOpenHashMap<CommitId> getNotLoadedCommits() {
+    @NotNull Int2ObjectMap<CommitId> getNotLoadedCommits() {
       return myNotLoadedCommits;
     }
   }
 
   private static class IntContainedInBranchCondition<CommitId> implements Condition<CommitId> {
-    private final IntOpenHashSet myBranchNodes;
+    private final IntSet myBranchNodes;
 
-    IntContainedInBranchCondition(IntOpenHashSet branchNodes) {
+    IntContainedInBranchCondition(IntSet branchNodes) {
       myBranchNodes = branchNodes;
     }
 

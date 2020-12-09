@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,9 +48,10 @@ public final class FileTypeIndexImpl
     return 3;
   }
 
-  @NotNull
   @Override
-  public UpdatableIndex<FileType, Void, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension, @NotNull IndexStorage<FileType, Void> storage) throws StorageException, IOException {
-    return new FileTypeMapReduceIndex(extension, storage);
+  public @NotNull UpdatableIndex<FileType, Void, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
+                                                                                        @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
+    throws StorageException, IOException {
+    return new FileTypeMapReduceIndex(extension, indexStorageLayout);
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.share
 
 import circlet.client.api.PR_Project
@@ -10,7 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
@@ -65,7 +66,7 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
       okAction.isEnabled = false
       asyncProcessIcon.isVisible = true
       lifetime.usingSource {
-        val ws = space.workspace.value ?: return@launch
+        val ws = SpaceWorkspaceComponent.getInstance().workspace.value ?: return@launch
         val client = ws.client
         val projectService: Projects = client.pr
         try {
@@ -81,7 +82,7 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
           throw e
         }
         catch (e: RpcException) {
-          setErrorText(e.failure.message())
+          setErrorText(e.failure.message()) // NON-NLS
         }
         catch (e: Exception) {
           setErrorText(SpaceBundle.message("create.project.dialog.error.unable.to.create.text", e.message ?: e.javaClass.simpleName))
@@ -93,7 +94,7 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
     }
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     return panel {
       row(SpaceBundle.message("create.project.dialog.name.label")) {
         projectNameField()

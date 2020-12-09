@@ -12,7 +12,7 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -30,8 +30,6 @@ import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +49,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public static boolean INIT_INSPECTIONS;
   protected final @NotNull InspectionToolsSupplier myToolSupplier;
   protected final Map<String, Element> myUninitializedSettings = new TreeMap<>(); // accessed in EDT
-  protected Map<String, ToolsImpl> myTools = new THashMap<>();
+  protected Map<String, ToolsImpl> myTools = new HashMap<>();
   protected volatile Set<String> myChangedToolNames;
   @Attribute("is_locked")
   protected boolean myLockedProfile;
@@ -170,7 +168,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public @NotNull Set<HighlightSeverity> getUsedSeverities() {
     LOG.assertTrue(wasInitialized());
-    Set<HighlightSeverity> result = new THashSet<>();
+    Set<HighlightSeverity> result = new HashSet<>();
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
         result.add(state.getLevel().getSeverity());
@@ -204,7 +202,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
     mySerializer.writeExternal(this, element);
 
-    synchronized (myLock) {
+    synchronized (lock) {
       if (!wasInitialized()) {
         for (Element el : myUninitializedSettings.values()) {
           element.addContent(el.clone());
@@ -291,14 +289,14 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  public @Nullable InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable PsiElement element) {
+  public @Nullable InspectionToolWrapper<?, ?> getInspectionTool(@NotNull String shortName, @Nullable PsiElement element) {
     final Tools toolList = getToolsOrNull(shortName, element == null ? null : element.getProject());
     return toolList == null ? null : toolList.getInspectionTool(element);
   }
 
   @Override
   public @Nullable InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element) {
-    InspectionToolWrapper tool = getInspectionTool(shortName, element);
+    InspectionToolWrapper<?, ?> tool = getInspectionTool(shortName, element);
     return tool == null ? null : tool.getTool();
   }
 
@@ -373,6 +371,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myToolShortName = toolShortName;
   }
 
+  @NonNls
   @Override
   public @NotNull String getDisplayName() {
     return getName();
@@ -469,7 +468,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return;
     }
 
-    final Map<String, List<String>> dependencies = new THashMap<>();
+    final Map<String, List<String>> dependencies = new HashMap<>();
     for (InspectionToolWrapper<?, ?> toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
       if (!(toolWrapper instanceof LocalInspectionToolWrapper &&
@@ -503,6 +502,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
       myLockedProfile = isLocked;
     }
+
     myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
       @Override
       public void toolAdded(@NotNull InspectionToolWrapper inspectionTool) {
@@ -517,7 +517,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }, project);
 
-    DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<String>() {
+     DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<>() {
       @Override
       public @NotNull Collection<String> getNodes() {
         return dependencies.keySet();
@@ -544,7 +544,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   protected void copyToolsConfigurations(@Nullable Project project) {
   }
 
-  public void addTool(@Nullable Project project, @NotNull InspectionToolWrapper toolWrapper, @Nullable Map<String, List<String>> dependencies) {
+  public final void addTool(@Nullable Project project, @NotNull InspectionToolWrapper<?, ?> toolWrapper, @Nullable Map<String, List<String>> dependencies) {
     final String shortName = toolWrapper.getShortName();
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
@@ -602,7 +602,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myTools.put(shortName, toolsList);
   }
 
-  public void removeTool(@NotNull InspectionToolWrapper inspectionTool) {
+  public void removeTool(@NotNull InspectionToolWrapper<?, ?> inspectionTool) {
     String shortName = inspectionTool.getShortName();
     removeTool(shortName);
   }
@@ -713,7 +713,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public void setDescription(@NlsContexts.DetailedDescription @Nullable String description) {
-    myDescription = StringUtil.nullize(description);
+    myDescription = Strings.nullize(description);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
@@ -826,13 +826,15 @@ public class InspectionProfileImpl extends NewInspectionProfile {
    * @return null if it has no base profile
    */
   private @Nullable Set<String> getChangedToolNames() {
-    if (myBaseProfile == null) return null;
+    if (myBaseProfile == null) {
+      return null;
+    }
     if (myChangedToolNames == null) {
-      synchronized (myLock) {
+      synchronized (lock) {
         if (myChangedToolNames == null) {
           initInspectionTools(null);
           Set<String> names = myTools.keySet();
-          Set<String> map = new THashSet<>(names.size());
+          Set<String> map = new HashSet<>(names.size());
           for (String toolId : names) {
             if (!toolSettingsAreEqual(toolId, myBaseProfile, this)) {
               map.add(toolId);

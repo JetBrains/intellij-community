@@ -34,7 +34,7 @@ public class SerializableRecordContainsIgnoredMembersInspection extends BaseInsp
   }
 
   /**
-   * @see https://docs.oracle.com/en/java/javase/14/docs/specs/records-serialization.html
+   * @see <a href="https://docs.oracle.com/en/java/javase/14/docs/specs/records-serialization.html">Record Serialization</a>
    */
   private static class SerializableRecordContainsIgnoredMembersVisitor extends BaseInspectionVisitor {
 

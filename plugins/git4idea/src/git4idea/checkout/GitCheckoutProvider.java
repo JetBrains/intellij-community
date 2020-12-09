@@ -38,6 +38,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static git4idea.GitNotificationIdsHolder.CLONE_FAILED;
+
 /**
  * Checkout provider for the Git
  */
@@ -113,7 +115,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
       !ContainerUtil.exists(NON_ERROR_LINE_PREFIXES, prefix -> StringUtil.startsWithIgnoreCase(line, prefix)));
     List<HtmlChunk> displayErrorLines = ContainerUtil.map(errorLines, msg -> HtmlChunk.text(GitUtil.cleanupErrorPrefixes(msg)));
     String description = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), displayErrorLines).toString();
-    VcsNotifier.getInstance(project).notifyError("git.clone.failed", DvcsBundle.message("error.title.cloning.repository.failed"), description, true);
+    VcsNotifier.getInstance(project).notifyError(CLONE_FAILED, DvcsBundle.message("error.title.cloning.repository.failed"), description, true);
     return false;
   }
 

@@ -17,11 +17,9 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -69,24 +67,25 @@ public final class AppUIUtil {
       ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
       String smallSvgIconUrl = appInfo.getSmallApplicationSvgIconUrl();
-      ScaleContext ctx = ScaleContext.create(window);
+      ScaleContext scaleContext = ScaleContext.create(window);
 
       if (SystemInfoRt.isUnix) {
-        @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
-        Image element = loadApplicationIconImage(svgIconUrl, ctx, 128, fallback);
-        if (element != null) {
-          images.add(element);
+        @SuppressWarnings("deprecation")
+        Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, appInfo.getBigIconUrl());
+        if (image != null) {
+          images.add(image);
         }
       }
 
-      @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      Image element = loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback);
+      @SuppressWarnings("deprecation")
+      Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, appInfo.getIconUrl());
       if (element != null) {
         images.add(element);
       }
 
       if (SystemInfoRt.isWindows) {
-        images.add(loadSmallApplicationIconImage(ctx, 16));
+        //noinspection deprecation
+        images.add(loadApplicationIconImage(smallSvgIconUrl, scaleContext, 16, appInfo.getSmallIconUrl()));
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -101,7 +100,7 @@ public final class AppUIUtil {
       if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
-      else if (!ourMacDocIconSet && (PlatformUtils.isIntelliJClient() || PluginManagerCore.isRunningFromSources())) {
+      else if (!ourMacDocIconSet) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
@@ -113,35 +112,27 @@ public final class AppUIUtil {
       return ourMacDocIconSet || (!PlatformUtils.isIntelliJClient() && !PluginManagerCore.isRunningFromSources());
     }
 
-    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
-    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
+    // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
+    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm;
   }
 
-  @SuppressWarnings("SameParameterValue")
-  private static @NotNull Image loadSmallApplicationIconImage(@NotNull ScaleContext scaleContext, int size) {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    //noinspection deprecation
-    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), scaleContext, size, appInfo.getSmallIconUrl());
+  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext) {
+    return loadSmallApplicationIcon(scaleContext, 16);
   }
 
-  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
-    return loadSmallApplicationIcon(ctx, 16);
-  }
-
-  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
+  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
-    Icon icon = smallIconUrl == null ? null : loadApplicationIcon(smallIconUrl, ctx, size);
+    Icon icon = smallIconUrl == null ? null : loadApplicationIcon(smallIconUrl, scaleContext, size);
     if (icon != null) {
       return icon;
     }
 
     @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
     Image image = ImageLoader.loadFromResource(fallbackSmallIconUrl, AppUIUtil.class);
-    //noinspection ConstantConditions
+    assert image != null : "Can't load '" + fallbackSmallIconUrl + "'";
     icon = new JBImageIcon(image);
-    scaleIconToSize(icon, size);
-    return icon;
+    return scaleIconToSize(icon, size);
   }
 
   public static @Nullable Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {
@@ -156,7 +147,7 @@ public final class AppUIUtil {
   private static @Nullable Image loadApplicationIconImage(@Nullable String svgPath, ScaleContext scaleContext, int size, @Nullable String fallbackPath) {
     Icon icon = svgPath == null ? null : loadApplicationIcon(svgPath, scaleContext, size);
     if (icon != null) {
-      return IconUtil.toImage(icon, scaleContext);
+      return IconLoader.toImage(icon, scaleContext);
     }
 
     if (fallbackPath != null) {
@@ -165,12 +156,8 @@ public final class AppUIUtil {
     return null;
   }
 
-  private static @Nullable Icon loadApplicationIcon(String svgPath, ScaleContext scaleContext, int size) {
-    if (svgPath == null) {
-      return null;
-    }
-
-    Icon icon = IconLoader.findIcon(svgPath, AppUIUtil.class);
+  private static @Nullable Icon loadApplicationIcon(@NotNull String svgPath, ScaleContext scaleContext, int size) {
+    Icon icon = IconLoader.findIcon(svgPath, AppUIUtil.class.getClassLoader());
     if (icon == null) {
       getLogger().info("Cannot load SVG application icon from " + svgPath);
       return null;
@@ -194,10 +181,12 @@ public final class AppUIUtil {
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      runnable.run();
+      if (project.isOpen() && !project.isDisposed()) {
+        runnable.run();
+      }
     }
     else {
-      application.invokeLater(runnable, o -> !project.isOpen() || project.isDisposed());
+      application.invokeLater(runnable, __ -> !project.isOpen() || project.isDisposed());
     }
   }
 
@@ -242,22 +231,15 @@ public final class AppUIUtil {
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
-    String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductNameWithEdition())
+    String name = Strings.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductNameWithEdition())
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
-    if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
+    if (PluginManagerCore.isRunningFromSources()) {
+      wmClass += "-debug";
+    }
     return wmClass;
-  }
-
-  public static void hideToolWindowBalloon(@NotNull String id, @NotNull Project project) {
-    invokeLaterIfProjectAlive(project, () -> {
-      Balloon balloon = ToolWindowManager.getInstance(project).getToolWindowBalloon(id);
-      if (balloon != null) {
-        balloon.hide();
-      }
-    });
   }
 
   private static final int MIN_ICON_SIZE = 32;
@@ -459,7 +441,6 @@ public final class AppUIUtil {
     }
   }
 
-
   /**
    * Targets the component to a (screen) device before showing.
    * In case the component is already a part of UI hierarchy (and is thus bound to a device)
@@ -478,16 +459,24 @@ public final class AppUIUtil {
    * @param comp the component to target
    */
   public static void targetToDevice(@NotNull Component comp, @Nullable Component target) {
-    if (comp.isShowing()) return;
+    if (comp.isShowing()) {
+      return;
+    }
     GraphicsConfiguration gc = target != null ? target.getGraphicsConfiguration() : null;
-    setGraphicsConfiguration(comp, gc);
-  }
-
-  public static void setGraphicsConfiguration(@NotNull Component comp, @Nullable GraphicsConfiguration gc) {
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
   }
 
   public static boolean isInFullscreen(@Nullable Window window) {
     return window instanceof IdeFrame && ((IdeFrame)window).isInFullScreen();
+  }
+
+  public static Object adjustFractionalMetrics(Object defaultValue) {
+    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) {
+      return defaultValue;
+    }
+
+    GraphicsConfiguration gc =
+      GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+    return (JBUIScale.sysScale(gc) == 1.0f)? RenderingHints.VALUE_FRACTIONALMETRICS_OFF : defaultValue;
   }
 }

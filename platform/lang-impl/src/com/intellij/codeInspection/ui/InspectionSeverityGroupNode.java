@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +33,7 @@ public class InspectionSeverityGroupNode extends InspectionTreeNode{
 
   @Override
   public String getPresentableText() {
-    return StringUtil.capitalize(StringUtil.toLowerCase(myLevel.toString()));
+    return myLevel.getSeverity().getDisplayCapitalizedName();
   }
 
   public HighlightDisplayLevel getSeverityLevel() {

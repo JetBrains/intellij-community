@@ -70,6 +70,7 @@ public class RegistryUi implements Disposable {
 
     myModel = new MyTableModel();
     myTable = new JBTable(myModel);
+    myTable.setShowGrid(false);
     myTable.setCellSelectionEnabled(true);
     myTable.setEnableAntialiasing(true);
     final MyRenderer r = new MyRenderer();
@@ -88,7 +89,6 @@ public class RegistryUi implements Disposable {
     c2.setCellRenderer(r);
     c2.setHeaderValue("Value");
     c2.setCellEditor(new MyEditor());
-    myTable.setStriped(true);
 
     myDescriptionLabel = new JTextArea(3, 50);
     myDescriptionLabel.setMargin(JBUI.insets(2));
@@ -234,7 +234,7 @@ public class RegistryUi implements Disposable {
         final boolean c2 = i2 != -1;
         if (c1 && !c2) return -1;
         if (!c1 && c2) return 1;
-        if (c1 && c2) return i1 - i2;
+        if (c1) return i1 - i2;
         return key1.compareToIgnoreCase(key2);
       });
     }

@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lexer;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
+import com.intellij.html.embedding.HtmlEmbeddedContentSupport;
+import com.intellij.html.embedding.HtmlEmbedment;
 import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,10 +28,16 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   private static final int IS_WITHIN_TAG_STATE = 0x80;
   protected static final int BASE_STATE_SHIFT = 9;
 
+
+  protected static final TokenSet ATTRIBUTE_EMBEDMENT_TOKENS = TokenSet.create(XML_ATTRIBUTE_VALUE_TOKEN, XML_ENTITY_REF_TOKEN, XML_CHAR_ENTITY_REF);
+  protected static final TokenSet TAG_EMBEDMENT_START_TOKENS = TokenSet.create(
+    XML_DATA_CHARACTERS, XML_CDATA_START, XML_COMMENT_START, XML_START_TAG_START, XML_REAL_WHITE_SPACE, XML_END_TAG_START,
+    TokenType.WHITE_SPACE, XML_ENTITY_REF_TOKEN, XML_CHAR_ENTITY_REF
+  );
+
   private boolean isWithinTag = false;
 
   protected final boolean caseInsensitive;
-  private final Project myProject;
   private final List<HtmlEmbeddedContentProvider> myEmbeddedContentProviders;
   private final TokenSet myTagEmbedmentStartTokens;
   private final TokenSet myAttributeEmbedmentTokens;
@@ -39,30 +48,21 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
                     XML_ATTRIBUTE_VALUE_TOKEN, XML_DATA_CHARACTERS,
                     XML_TAG_CHARACTERS);
 
-  protected BaseHtmlLexer(@Nullable Project project, @NotNull Lexer _baseLexer, boolean _caseInsensitive) {
+  protected BaseHtmlLexer(@NotNull Lexer _baseLexer, boolean _caseInsensitive) {
     super(_baseLexer);
     caseInsensitive = _caseInsensitive;
-    myProject = project;
-    List<HtmlEmbeddedContentSupport> supports = getEmbeddedContentSupports();
+    List<HtmlEmbeddedContentSupport> supports = getEmbeddedContentSupportList();
     myEmbeddedContentProviders = supports.stream()
       .map(factory -> factory.createEmbeddedContentProviders(this))
       .flatMap(Collection::stream)
+      .filter(this::acceptEmbeddedContentProvider)
       .collect(Collectors.toUnmodifiableList());
-    myTagEmbedmentStartTokens = supports.stream()
-      .map(HtmlEmbeddedContentSupport::getCustomTagEmbedmentTokens)
-      .reduce(TokenSet.EMPTY, (a, b) -> TokenSet.orSet(a, b));
-    myAttributeEmbedmentTokens = supports.stream()
-      .map(HtmlEmbeddedContentSupport::getCustomAttributeEmbedmentTokens)
-      .reduce(TokenSet.EMPTY, (a, b) -> TokenSet.orSet(a, b));
+    myTagEmbedmentStartTokens = createTagEmbedmentStartTokenSet();
+    myAttributeEmbedmentTokens = createAttributeEmbedmentTokenSet();
   }
 
   public boolean isCaseInsensitive() {
     return caseInsensitive;
-  }
-
-  @Nullable
-  public Project getProject() {
-    return myProject;
   }
 
   @Override
@@ -75,6 +75,8 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     isWithinTag = (initialState & IS_WITHIN_TAG_STATE) != 0;
     lexerOfCacheBufferSequence = null;
     cachedBufferSequence = null;
+    myHtmlEmbedmentInfo = null;
+    myEmbeddedContentProviders.forEach(provider -> provider.restoreState(null));
     broadcastToken();
   }
 
@@ -89,6 +91,14 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     }
     broadcastToken();
     myHtmlEmbedmentInfo = null;
+  }
+
+  protected @NotNull TokenSet createTagEmbedmentStartTokenSet() {
+    return TAG_EMBEDMENT_START_TOKENS;
+  }
+
+  protected @NotNull TokenSet createAttributeEmbedmentTokenSet() {
+    return ATTRIBUTE_EMBEDMENT_TOKENS;
   }
 
   private void broadcastToken() {
@@ -118,7 +128,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return state;
   }
 
-  protected HtmlEmbedment acquireHtmlEmbedmentInfo() {
+  protected @Nullable HtmlEmbedment acquireHtmlEmbedmentInfo() {
     IElementType type = myDelegate.getTokenType();
     if (type != null) {
       for (HtmlEmbeddedContentProvider provider : myEmbeddedContentProviders) {
@@ -149,12 +159,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     myEmbeddedContentProviders.forEach(provider -> provider.restoreState(providersState.get(provider)));
   }
 
-  @ApiStatus.Internal
-  public boolean isElLexer() {
-    return false;
-  }
-
-  protected void skipEmbedment(HtmlEmbedment embedment) {
+  protected void skipEmbedment(@NotNull HtmlEmbedment embedment) {
     myHtmlEmbedmentInfo = embedment;
   }
 
@@ -166,18 +171,18 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return isWithinTag;
   }
 
-  protected boolean isAttributeEmbedmentToken(IElementType tokenType) {
+  protected boolean isAttributeEmbedmentToken(@NotNull IElementType tokenType, @NotNull CharSequence attributeName) {
     return myAttributeEmbedmentTokens.contains(tokenType);
   }
 
-  protected boolean isTagEmbedmentStartToken(IElementType tokenType) {
+  protected boolean isTagEmbedmentStartToken(@NotNull IElementType tokenType, @NotNull CharSequence tagName) {
     return myTagEmbedmentStartTokens.contains(tokenType);
   }
 
-  private List<HtmlEmbeddedContentSupport> getEmbeddedContentSupports() {
+  protected @NotNull List<HtmlEmbeddedContentSupport> getEmbeddedContentSupportList() {
     List<HtmlEmbeddedContentSupport> supports = new ArrayList<>();
     try {
-      HtmlEmbeddedContentSupport.Companion.getEP_NAME$intellij_xml_psi_impl().extensions()
+      HtmlEmbeddedContentSupport.Companion.getContentSupports()
         .filter(support -> support.isEnabled(this))
         .forEach(supports::add);
     }
@@ -186,6 +191,10 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     }
     supports.add(new HtmlDefaultEmbeddedContentSupport());
     return supports;
+  }
+
+  protected boolean acceptEmbeddedContentProvider(@NotNull HtmlEmbeddedContentProvider provider) {
+    return true;
   }
 
   private static class HtmlLexerPosition implements LexerPosition {
@@ -218,7 +227,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return state == _HtmlLexer.START_TAG_NAME || state == _HtmlLexer.END_TAG_NAME;
   }
 
-  /* Deprecated APIs */
+  /* Deprecated APIs kept for binary compatibility */
   /**
    * This API does no longer work. The value of the field is always {@code false}.
    *
@@ -254,6 +263,24 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   protected boolean seenTag;
+
+  /**
+   * This API does no longer work. The value of the field is always {@code false}.
+   *
+   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  protected boolean seenStylesheetType;
+
+  /**
+   * This API does no longer work. The value of the field is always {@code null}.
+   *
+   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  protected String styleType;
 
   /**
    * This API does no longer work.

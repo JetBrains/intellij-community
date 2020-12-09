@@ -4,6 +4,10 @@ package com.intellij.openapi.observable.properties
 class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: () -> T)
   : GraphProperty<T>, AtomicLazyProperty<T>(initial) {
 
+  override fun dependsOn(parent: ObservableClearableProperty<*>) {
+    propertyGraph.dependsOn(this, parent)
+  }
+
   override fun dependsOn(parent: ObservableClearableProperty<*>, default: () -> T) {
     propertyGraph.dependsOn(this, parent, default)
   }

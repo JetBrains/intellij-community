@@ -19,6 +19,7 @@ import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -127,19 +128,22 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return getGroovyRtRoots(ClasspathBootstrap.getResourceFile(GroovyBuilder.class));
   }
 
-  @NotNull
   static List<String> getGroovyRtRoots(File jpsPluginRoot) {
-    return Arrays.asList(getGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar", "intellij.groovy.rt", "groovy-rt"),
-                         getGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar", "intellij.groovy.constants.rt", "groovy-constants-rt"));
+    List<String> result = new ArrayList<>();
+    addGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar",
+                       Collections.singletonList("intellij.groovy.rt"), "groovy-rt", result);
+   addGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar",
+                      Collections.singletonList("intellij.groovy.constants.rt"), "groovy-constants-rt", result);
+    return result;
   }
 
-  @NotNull
-  private static String getGroovyRtJarPath(File jpsPluginClassesRoot, String jarNameInDistribution,
-                                           String moduleName,
-                                           String mavenArtifactNamePrefix) {
-    String fileName;
+  private static void addGroovyRtJarPath(File jpsPluginClassesRoot, String jarNameInDistribution,
+                                         List<String> moduleNames,
+                                         String mavenArtifactNamePrefix,
+                                         @NotNull List<String> to) {
     File parentDir = jpsPluginClassesRoot.getParentFile();
     if (jpsPluginClassesRoot.isFile()) {
+      String fileName;
       if (jpsPluginClassesRoot.getName().equals("groovy-jps.jar")) {
         fileName = jarNameInDistribution;
       }
@@ -150,11 +154,13 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           parentDir = new File(parentDir.getParentFile().getParentFile(), mavenArtifactNamePrefix + "/" + version);
         }
       }
+      to.add(new File(parentDir, fileName).getPath());
     }
     else {
-      fileName = moduleName;
+      for (String moduleName : moduleNames) {
+        to.add(new File(parentDir, moduleName).getPath());
+      }
     }
-    return new File(parentDir, fileName).getPath();
   }
 
   public static boolean isGroovyFile(String path) {
@@ -188,27 +194,20 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
     @Override
     public void process(CompileContext context, OutputFileObject out) {
-      Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
-      if (stubToSrc == null) {
-        return;
-      }
-      File src = out.getSourceFile();
-      if (src == null) {
-        return;
-      }
-      String groovy = stubToSrc.get(FileUtil.toSystemIndependentName(src.getPath()));
-      if (groovy == null) {
-        return;
-      }
-      try {
-        final File groovyFile = new File(groovy);
-        if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
-          FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
-          FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
+      final Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
+      if (stubToSrc != null) {
+        for (String groovy : Iterators.filter(Iterators.map(out.getSourceFiles(), file -> stubToSrc.get(FileUtil.toSystemIndependentName(file.getPath()))), Iterators.notNullFilter())) {
+          try {
+            final File groovyFile = new File(groovy);
+            if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
+              FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
+              FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
+            }
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
       }
     }
   }

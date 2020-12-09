@@ -107,6 +107,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteMethodKeepEnumValues() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testDeleteMethodCascadeRecursive() throws Exception {
     doSingleFileTest();
   }

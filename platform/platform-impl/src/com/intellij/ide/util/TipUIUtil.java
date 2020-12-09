@@ -52,6 +52,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.drawImage;
@@ -109,7 +110,7 @@ public final class TipUIUtil {
       String cssText;
       File tipFile = new File(tip.fileName);
       if (tipFile.isAbsolute() && tipFile.exists()) {
-        text.append(FileUtil.loadFile(tipFile));
+        text.append(FileUtil.loadFile(tipFile, StandardCharsets.UTF_8));
         updateImages(text, null, tipFile.getParentFile().getAbsolutePath(), component);
         cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), StartupUiUtil.isUnderDarcula()
                                                                       ? "css/tips_darcula.css" : "css/tips.css"));

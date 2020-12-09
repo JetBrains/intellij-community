@@ -35,7 +35,7 @@ import java.util.*;
 public abstract class Reverter {
   private final Project myProject;
   protected LocalHistoryFacade myVcs;
-  protected IdeaGateway myGateway;
+  protected final IdeaGateway myGateway;
 
   protected Reverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw) {
     myProject = p;

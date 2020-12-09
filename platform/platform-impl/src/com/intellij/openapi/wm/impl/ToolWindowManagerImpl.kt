@@ -79,8 +79,8 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
+
+private val LOG = logger<ToolWindowManagerImpl>()
 
 @State(
   name = "ToolWindowManager",
@@ -117,7 +117,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   companion object {
-    private val LOG = logger<ToolWindowManagerImpl>()
     @JvmStatic
     @ApiStatus.Internal
     fun getRegisteredMutableInfoOrLogError(decorator: InternalDecorator): WindowInfoImpl {
@@ -188,10 +187,20 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     init {
       val awtFocusListener = AWTEventListener { event ->
-        handleFocusEvent(event as FocusEvent)
+        if (event is FocusEvent) {
+          handleFocusEvent(event)
+        }
+        else if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+          process { manager ->
+            val frame = event.getSource() as? JFrame
+            if (frame === manager.frame?.frame) {
+              manager.resetHoldState()
+            }
+          }
+        }
       }
 
-      Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK)
+      Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK or AWTEvent.WINDOW_FOCUS_EVENT_MASK)
 
       val updateHeadersAlarm = SingleAlarm(Runnable {
         processOpenedProjects { project ->
@@ -243,15 +252,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         if (event is KeyEvent) {
           process { manager ->
             manager.dispatchKeyEvent(event)
-          }
-        }
-
-        if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-          process { manager ->
-            val frame = event.getSource() as? JFrame
-            if (frame === manager.frame?.frame) {
-              manager.resetHoldState()
-            }
           }
         }
 
@@ -409,7 +409,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
       if (toolWindowPane == null) {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
-          LOG.warn("ProjectFrameAllocator is not used - use ProjectManager.openProject to open project in a correct way")
+          LOG.error("ProjectFrameAllocator is not used - use ProjectManager.openProject to open project in a correct way")
         }
 
         val toolWindowsPane = init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
@@ -450,7 +450,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val sideTool = bean.secondary || bean.side
     return RegisterToolWindowTask(
       id = bean.id,
-      icon = findIconFromBean(bean, factory),
+      icon = findIconFromBean(bean, factory, pluginDescriptor),
       anchor = getToolWindowAnchor(factory, bean),
       sideTool = sideTool,
       canCloseContent = bean.canCloseContents,
@@ -480,7 +480,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun initToolWindows(list: List<RegisterToolWindowTask>, toolWindowsPane: ToolWindowsPane) {
     runActivity("toolwindow creating") {
-
       val entries = ArrayList<String>(list.size)
       for (task in list) {
         try {
@@ -529,7 +528,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val sideTool = bean.secondary || bean.side
     val entry = doRegisterToolWindow(RegisterToolWindowTask(
       id = bean.id,
-      icon = findIconFromBean(bean, factory),
+      icon = findIconFromBean(bean, factory, pluginDescriptor),
       anchor = anchor,
       sideTool = sideTool,
       canCloseContent = bean.canCloseContents,
@@ -612,9 +611,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                  info: WindowInfoImpl,
                                  autoFocusContents: Boolean = true,
                                  source: ToolWindowEventSource? = null) {
+    if (entry.toolWindow.hasFocus) {
+      return
+    }
+
     LOG.debug { "activateToolWindow($entry)" }
 
-    ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
+    if (source != null) {
+      ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
+    }
 
     if (!entry.toolWindow.isAvailable) {
       // Tool window can be "logically" active but not focused. For example,
@@ -981,11 +986,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
-    val entry = doRegisterToolWindow(task,
-                                     toolWindowPane = toolWindowPane ?: init(
-                                       (WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project)))
+    val toolWindowPane = toolWindowPane ?: init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
+    val entry = doRegisterToolWindow(task, toolWindowPane = toolWindowPane)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
-    val toolWindowPane = toolWindowPane!!
     toolWindowPane.getStripeFor(entry.toolWindow.anchor).revalidate()
     toolWindowPane.validate()
     toolWindowPane.repaint()
@@ -1034,6 +1037,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
 
+    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow)
+
     val button = StripeButton(toolWindowPane, toolWindow)
     val entry = ToolWindowEntry(button, toolWindow, disposable)
     idToEntry[task.id] = entry
@@ -1042,6 +1047,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     button.isSelected = windowInfoSnapshot.isVisible
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
+    toolWindowPane.onStripeButtonAdded(button)
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
@@ -1058,7 +1064,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
 
-    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow)
     return entry
   }
 
@@ -1887,11 +1892,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
 
-      val layeredPane = toolWindowPane!!.layeredPane
-      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / layeredPane.height else source.width.toFloat() / layeredPane.width
+      val size = toolWindowPane!!.size
+      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / size.height else source.width.toFloat() / size.width
       info.weight = paneWeight
       if (another != null && anchor.isSplitVertically) {
-        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / layeredPane.height else another.width.toFloat() / layeredPane.width
+        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / size.height else another.width.toFloat() / size.width
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
     }
@@ -2083,15 +2088,12 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   return source != null
 }
 
-private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory): Icon? {
-  IconLoader.findIcon(bean.icon ?: return null, factory.javaClass)?.let {
-    return it
-  }
-
+private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescriptor: PluginDescriptor): Icon? {
   try {
-    return IconLoader.getIcon(bean.icon)
+    return IconLoader.findIcon(bean.icon ?: return null, factory.javaClass, pluginDescriptor.pluginClassLoader, null, true)
   }
-  catch (ignored: Exception) {
+  catch (e: Exception) {
+    LOG.error(e)
     return EmptyIcon.ICON_13
   }
 }

@@ -7,6 +7,8 @@ import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,14 +16,11 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Actions;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-import org.jetbrains.idea.devkit.dom.Separator;
+import org.jetbrains.idea.devkit.dom.*;
 
 import java.util.List;
 
-public class DescriptorI18nUtil {
+public final class DescriptorI18nUtil {
 
   @NonNls
   public static final String CORE_ACTIONS_BUNDLE = "messages.ActionsBundle";
@@ -31,18 +30,20 @@ public class DescriptorI18nUtil {
 
     Actions actions = null;
     if (domElement instanceof ActionOrGroup ||
-        domElement instanceof Separator) {
+        domElement instanceof Separator ||
+        domElement instanceof OverrideText ||
+        domElement instanceof Synonym) {
       actions = DomUtil.getParentOfType(domElement, Actions.class, true);
       if (actions == null) return null;
 
-      bundleXmlElement = actions.getResourceBundle().getXmlAttributeValue();
+      bundleXmlElement = DomUtil.hasXml(actions.getResourceBundle()) ? actions.getResourceBundle().getXmlAttributeValue() : null;
     }
 
     if (bundleXmlElement == null) {
       final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(domElement, IdeaPlugin.class, true);
       if (ideaPlugin == null) return null;
 
-      bundleXmlElement = ideaPlugin.getResourceBundle().getXmlElement();
+      bundleXmlElement = DomUtil.hasXml(ideaPlugin.getResourceBundle()) ? ideaPlugin.getResourceBundle().getXmlElement() : null;
     }
 
     if (bundleXmlElement == null) {
@@ -62,11 +63,15 @@ public class DescriptorI18nUtil {
     final Module module = actions.getModule();
     if (module == null) return false;
 
+    if (PsiUtil.isIdeaProject(module.getProject()) &&
+        (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode())) {
+      return true;
+    }
+
     final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(actions, IdeaPlugin.class, true);
     if (ideaPlugin == null) return false;
 
-    return PluginManagerCore.CORE_PLUGIN_ID.equals(ideaPlugin.getPluginId()) ||
-           PsiUtil.isIdeaProject(module.getProject()) && (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode());
+    return PluginManagerCore.CORE_PLUGIN_ID.equals(ideaPlugin.getPluginId());
   }
 
   private static @Nullable PropertiesFile findCoreActionsBundlePropertiesFile(@Nullable Actions actions) {
@@ -74,8 +79,13 @@ public class DescriptorI18nUtil {
 
     final Module module = actions.getModule();
     assert module != null;
-    final List<PropertiesFile> actionsBundleFiles =
-      PropertiesReferenceManager.getInstance(module.getProject()).findPropertiesFiles(module, CORE_ACTIONS_BUNDLE);
+    final Project project = module.getProject();
+    Module resourcesModule = ApplicationManager.getApplication().isUnitTestMode() ? module :
+                             ModuleManager.getInstance(project).findModuleByName("intellij.platform.resources.en");
+    if (resourcesModule == null) return null;
+
+    final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
+    List<PropertiesFile> actionsBundleFiles = propertiesReferenceManager.findPropertiesFiles(resourcesModule, CORE_ACTIONS_BUNDLE);
     return ObjectUtils.tryCast(ContainerUtil.getOnlyItem(actionsBundleFiles), PropertiesFile.class);
   }
 }

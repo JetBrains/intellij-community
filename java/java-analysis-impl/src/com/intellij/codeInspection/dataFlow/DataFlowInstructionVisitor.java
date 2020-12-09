@@ -43,6 +43,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiMethodReferenceExpression, ConstantResult> myMethodReferenceResults = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
+  private final Map<PsiExpression, ThreeState> myNegativeArraySizes = new HashMap<>();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
@@ -193,6 +194,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return StreamEx.ofKeys(myOutOfBoundsArrayAccesses, ThreeState.YES::equals);
   }
 
+  Stream<PsiExpression> negativeArraySizes() {
+    return StreamEx.ofKeys(myNegativeArraySizes, ThreeState.YES::equals);
+  }
+
   StreamEx<PsiCallExpression> alwaysFailingCalls() {
     return StreamEx.ofKeys(myFailingCalls, v -> v);
   }
@@ -281,6 +286,11 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
+  protected void processArrayCreation(PsiExpression expression, boolean alwaysNegative) {
+    myNegativeArraySizes.merge(expression, ThreeState.fromBoolean(alwaysNegative), ThreeState::merge);
+  }
+
+  @Override
   protected void processArrayStoreTypeMismatch(PsiAssignmentExpression assignmentExpression, PsiType fromType, PsiType toType) {
     if (assignmentExpression != null) {
       myArrayStoreProblems.put(assignmentExpression, Pair.create(fromType, toType));
@@ -295,10 +305,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return super.visitEndOfInitializer(instruction, runner, state);
   }
 
-  private static boolean hasNonTrivialFailingContracts(PsiCallExpression call) {
+  private static boolean hasTrivialFailContract(PsiCallExpression call) {
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
-    return !contracts.isEmpty() &&
-           contracts.stream().anyMatch(contract -> contract.getReturnValue().isFail() && !contract.isTrivial());
+    return contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
   }
 
   private void reportConstantExpressionValue(DfaValue value, DfaMemoryState memState, PsiExpression expression, TextRange range) {
@@ -385,7 +394,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     public void visitCallExpression(PsiCallExpression call) {
       super.visitCallExpression(call);
       Boolean isFailing = myFailingCalls.get(call);
-      if (isFailing != null || hasNonTrivialFailingContracts(call)) {
+      if (isFailing != null || !hasTrivialFailContract(call)) {
         myFailingCalls.put(call, DfaTypeValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
       }
     }

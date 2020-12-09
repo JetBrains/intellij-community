@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -323,7 +324,7 @@ public abstract class CoverageEngine {
     return false;
   }
 
-  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, Editor editor) {
+  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, @NotNull Editor editor) {
     return lines;
   }
 
@@ -349,6 +350,12 @@ public abstract class CoverageEngine {
    */
   public boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
     return false;
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public CoverageEditorAnnotator createSrcFileAnnotator(PsiFile file, Editor editor) {
+    return new CoverageEditorAnnotatorImpl(file, editor);
   }
 
   public static @TabTitle String getEditorTitle() {

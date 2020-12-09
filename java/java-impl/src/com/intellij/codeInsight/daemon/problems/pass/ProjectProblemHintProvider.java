@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
@@ -61,10 +60,10 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
         collectProblems(changes, prevState.getChanges(), problems, isInSplitEditorMode);
 
         ProjectProblemUtils.reportProblems(editor, problems);
-        if (!isInSplitEditorMode || getSelectedEditor(editorManager) == editor) {
-          FileState fileState = new FileState(snapshot, changes);
-          FileStateUpdater.updateState(file, fileState);
-        }
+        Map<PsiMember, ScopedMember> allChanges = new HashMap<>(changes);
+        prevChanges.forEach((key, value) -> allChanges.putIfAbsent(key, value));
+        FileState fileState = new FileState(snapshot, allChanges);
+        FileStateUpdater.updateState(file, fileState);
 
         PresentationFactory factory = new PresentationFactory((EditorImpl)editor);
         Document document = editor.getDocument();
@@ -97,11 +96,6 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
         HashMap<PsiMember, ScopedMember> changes = new HashMap<>(prevChanges);
         reportedMembers.forEach(m -> changes.putIfAbsent(m, null));
         return changes;
-      }
-
-      private @Nullable Editor getSelectedEditor(@NotNull FileEditorManager manager) {
-        TextEditor textEditor = tryCast(manager.getSelectedEditor(), TextEditor.class);
-        return textEditor == null ? null : textEditor.getEditor();
       }
 
       private void collectProblems(@NotNull Map<PsiMember, ScopedMember> changes,

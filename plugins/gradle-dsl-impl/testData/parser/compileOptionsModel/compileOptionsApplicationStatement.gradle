@@ -1,0 +1,2 @@
+android.compileOptions.sourceCompatibility JavaVersion.VERSION_1_6
+android.compileOptions.targetCompatibility 1.6

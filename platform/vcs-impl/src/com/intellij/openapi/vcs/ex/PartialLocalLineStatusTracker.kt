@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
+import com.intellij.openapi.vcs.impl.ActiveChangeListTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.DropDownLink
@@ -107,7 +108,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     PartialLocalLineStatusTracker,
     ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-  private val lstManager = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
+  private val lstManager = LineStatusTrackerManager.getInstanceImpl(project)
+  private val activeChangeListTracker = ActiveChangeListTracker.getInstance(project)
   private val undoManager = UndoManager.getInstance(project)
 
   private val undoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.undo")
@@ -116,7 +118,6 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   override val renderer: MyLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
 
   private var defaultMarker: ChangeListMarker
-  private var currentMarker: ChangeListMarker? = null
 
   private var initialChangeListId: String? = null
   private var lastKnownTrackerChangeListId: String? = null
@@ -195,13 +196,9 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
     setBaseRevision(vcsContent) {
       if (changelistId != null) {
-        changeListManager.executeUnderDataLock {
-          if (changeListManager.getChangeList(changelistId) != null) {
-            documentTracker.writeLock {
-              currentMarker = ChangeListMarker(changelistId)
-              documentTracker.updateFrozenContentIfNeeded()
-              currentMarker = null
-            }
+        activeChangeListTracker.runUnderChangeList(changelistId) {
+          documentTracker.writeLock {
+            documentTracker.updateFrozenContentIfNeeded()
           }
         }
       }
@@ -384,9 +381,11 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangesChanged(before: List<Block>, after: Block) {
+      val activeMarker = activeChangeListTracker.getActiveChangeListId()?.let { ChangeListMarker(it) }
+                         ?: defaultMarker
+
       if (before.isEmpty()) {
-        val marker = currentMarker ?: defaultMarker
-        val changeListBlocks = blocks.filter { it.marker == marker }
+        val changeListBlocks = blocks.filter { it.marker == activeMarker }
         // default value for new blocks: include only if all changed blocks from this changelist are included
         after.excludedFromCommit = changeListBlocks.isEmpty() || changeListBlocks.any { it.excludedFromCommit }
       }
@@ -398,7 +397,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       if (affectedMarkers.isEmpty()) {
         // put new blocks into original changelist when initializing base revision
         // put new blocks into default changelist otherwise
-        after.marker = currentMarker ?: defaultMarker
+        after.marker = activeMarker
       }
       else if (affectedMarkers.size == 1) {
         // put block into same changelist on consensus
@@ -469,6 +468,13 @@ class ChangelistsLocalLineStatusTracker(project: Project,
         }
       }
       return@readLock hasIncluded && hasExcluded
+    }
+  }
+
+  internal fun hasPendingPartialState(): Boolean {
+    return documentTracker.readLock {
+      initialExcludeState.isNotEmpty() ||
+      initialChangeListId != null && !affectedChangeListsIds.contains(initialChangeListId)
     }
   }
 

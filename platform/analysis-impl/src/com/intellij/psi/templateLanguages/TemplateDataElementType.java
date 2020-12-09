@@ -8,7 +8,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -147,7 +146,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return ((RangeCollectorImpl)rangeCollector).applyTemplateDataModifications(sourceCode, modifications);
   }
 
-  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = VolatileNotNullLazyValue.createValue(() -> {
+  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = NotNullLazyValue.volatileLazy(() -> {
     Class<?> implementationClass = ReflectionUtil.getMethodDeclaringClass(
       getClass(), "appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
     return implementationClass != TemplateDataElementType.class;
@@ -207,7 +206,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         modifications.addAll(tokenModifications);
       }
       else {
-        modifications.addOuterRange(currentRange, getTemplateDataInsertionTokens().contains(baseLexer.getTokenType()));
+        modifications.addOuterRange(currentRange, isInsertionToken(baseLexer.getTokenType(), baseLexer.getTokenSequence()));
       }
       baseLexer.advance();
     }
@@ -242,18 +241,26 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * Returns token types of template elements which are expected to insert some strings into resulting file.
-   * It's fine to include only starting token of the whole insertion range. For example, if
-   * <code><?=$myVar?></code> has three tokens <code><?=</code>, <code>$myVar</code> and <code>?></code>, only type of <code><?=</code>
-   * may be included. Moreover, other tokens shouldn't be included if they can be a part of a non-insertion range like
-   * <code><?$myVar?></code>.
+   * @deprecated Use {@link #isInsertionToken(IElementType, CharSequence)} instead.
+   */
+  @Deprecated
+  protected @NotNull TokenSet getTemplateDataInsertionTokens() {
+    return TokenSet.EMPTY;
+  }
+
+  /**
+   * Returns true if a string is expected to be inserted into resulting file in place of a current token.
+   *
+   * If insertion range contains several tokens, <code>true</code> may be returned only for the starting one. For example, if
+   * <code><?=$myVar?></code> has three tokens <code><?=</code>, <code>$myVar</code> and <code>?></code>, only <code><?=</code>
+   * may be an insertion token.
    *
    * Override this method when overriding {@link #collectTemplateModifications(CharSequence, Lexer)} is not required.
    *
    * @see RangeCollector#addOuterRange(TextRange, boolean)
    */
-  protected @NotNull TokenSet getTemplateDataInsertionTokens() {
-    return TokenSet.EMPTY;
+  protected boolean isInsertionToken(@Nullable IElementType tokenType, @NotNull CharSequence tokenSequence) {
+    return false;
   }
 
   /**

@@ -14,7 +14,7 @@ public enum IntelliJPlatformProduct {
   RUBYMINE("RM", "RubyMine", PlatformUtils.RUBY_PREFIX),
   PYCHARM("PY", "PyCharm", PlatformUtils.PYCHARM_PREFIX),
   PYCHARM_PC("PC", "PyCharm Community Edition", PlatformUtils.PYCHARM_CE_PREFIX),
-  PYCHARM_DS("PD", "PyCharm Data Science Edition", PlatformUtils.PYCHARM_DS_PREFIX),
+  PYCHARM_DS("PD", "JetBrains DataSpell", PlatformUtils.PYCHARM_DS_PREFIX),
   PYCHARM_EDU("PE", "PyCharm Educational Edition", PlatformUtils.PYCHARM_EDU_PREFIX),
   PHPSTORM("PS", "PhpStorm", PlatformUtils.PHP_PREFIX),
   WEBSTORM("WS", "WebStorm", PlatformUtils.WEB_PREFIX),

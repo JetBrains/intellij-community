@@ -80,7 +80,7 @@ public class VSCBundle extends Bundle {
                   }
                   Object configuration = ((Map)language).get("configuration");
                   if (configuration instanceof String) {
-                    idToConfig.put((String)id, (String)configuration);
+                    idToConfig.put((String)id, FileUtilRt.toSystemIndependentName((String)configuration));
                   }
                 }
               }
@@ -120,7 +120,7 @@ public class VSCBundle extends Bundle {
         }
       }
     }
-    catch (FileNotFoundException ignored) {
+    catch (FileNotFoundException | JsonSyntaxException ignored) {
     }
   }
 
@@ -135,7 +135,8 @@ public class VSCBundle extends Bundle {
   public List<Map.Entry<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
     Plist fromJson = loadLanguageConfig(file);
     //noinspection SSBasedInspection
-    return configToScopes.get(FileUtilRt.getRelativePath(bundleFile, file)).stream()
+    return configToScopes.get(FileUtilRt.toSystemIndependentName(
+      Objects.requireNonNull(FileUtilRt.getRelativePath(bundleFile, file)))).stream()
       .map(scope -> new AbstractMap.SimpleImmutableEntry<>(scope, fromJson))
       .collect(Collectors.toList());
   }

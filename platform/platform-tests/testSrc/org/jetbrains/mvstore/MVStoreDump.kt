@@ -18,7 +18,7 @@ private val fileOptions = arrayOf(StandardOpenOption.WRITE, StandardOpenOption.T
 // caddy file-server --root ~/icon-db
 fun main(args: Array<String>) {
   val storeBuilder = MVStore.Builder()
-    .backgroundExceptionHandler { _, e: Throwable -> throw e }
+    .backgroundExceptionHandler { e, store -> throw e }
     .readOnly()
 
   val mapBuilder = MVMap.Builder<Long, ByteArray>()
@@ -31,7 +31,10 @@ fun main(args: Array<String>) {
   val viewer = OpaqueValueSerializer::class.java.getResourceAsStream("tree.html")
     .readAllBytes()
     .toString(Charsets.UTF_8)
-    .replace("chart.dataSource.url = \"./file.db.json\"", "chart.dataSource.url = \"./${outFile.fileName}?lastModified=${System.currentTimeMillis().toString(36)}\"")
+    .replace("chart.dataSource.url = \"./file.db.json\"", "chart.dataSource.url = \"./${outFile.fileName}?lastModified=${
+      System.currentTimeMillis().toString(
+        36)
+    }\"")
   Files.writeString(dbFile.parent.resolve("tree.html"), viewer)
 
   val dotFile = dbFile.parent.resolve(dbFile.fileName.toString() + ".dot")
@@ -86,7 +89,12 @@ private fun mapNamesToLabel(mapNames: List<String>): String {
 }
 
 
-private fun dumpPage(page: Page<Long, ByteArray>, writer: JsonGenerator, pageName: String, dotWriter: DotWriter, parentNodeId: Int, pageIndex: Int) {
+private fun dumpPage(page: Page<Long, ByteArray>,
+                     writer: JsonGenerator,
+                     pageName: String,
+                     dotWriter: DotWriter,
+                     parentNodeId: Int,
+                     pageIndex: Int) {
   val nodeId = dotWriter.counter++
   dotWriter.writer.write("node$nodeId[label = \"${if (page.isLeaf) "leaf" else keysToLabel(page)}\"];\n")
 
@@ -154,7 +162,7 @@ private class OpaqueValueSerializer : DataType<ByteArray> {
     val height = buf.readFloat()
     val actualWidth = IntBitPacker.readVar(buf)
     val actualHeight = IntBitPacker.readVar(buf)
-    val length = IntBitPacker.readVar(buf)
+    val length = actualWidth * actualHeight * 4
     val obj = ByteBufUtil.getBytes(buf, buf.readerIndex(), length)
     buf.readerIndex(buf.readerIndex() + length)
     return obj

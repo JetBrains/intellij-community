@@ -114,6 +114,12 @@ public class ArtifactPropertiesEditors {
     return null;
   }
 
+  public void disposeUIResources() {
+    for (PropertiesEditorInfo editor : myEditors) {
+      editor.myEditor.disposeUIResources();
+    }
+  }
+
   private final class PropertiesEditorInfo {
     private final ArtifactPropertiesEditor myEditor;
     private final ArtifactProperties<?> myProperties;

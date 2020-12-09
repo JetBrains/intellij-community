@@ -107,7 +107,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
   @Override
   public void serialize(@NotNull final PsiMethodStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    TypeInfo.writeTYPE(dataStream, stub.getReturnTypeText(false));
+    TypeInfo.writeTYPE(dataStream, stub.getReturnTypeText());
     dataStream.writeByte(((PsiMethodStubImpl)stub).getFlags());
     if (stub.isAnnotationMethod()) {
       dataStream.writeName(stub.getDefaultValueText());
@@ -131,7 +131,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
       sink.occurrence(JavaStubIndexKeys.METHODS, name);
       if (RecordUtil.isStaticNonPrivateMember(stub)) {
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
-        sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getReturnTypeText(false).getShortTypeText());
+        sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getReturnTypeText().getShortTypeText());
       }
     }
 
@@ -140,7 +140,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
       if (stubElement instanceof PsiParameterListStub) {
         for (StubElement<?> paramStub : stubElement.getChildrenStubs()) {
           if (paramStub instanceof PsiParameterStub) {
-            TypeInfo type = ((PsiParameterStub)paramStub).getType(false);
+            TypeInfo type = ((PsiParameterStub)paramStub).getType();
             String typeName = PsiNameHelper.getShortClassName(type.text);
             if (TypeConversionUtil.isPrimitive(typeName) || TypeConversionUtil.isPrimitiveWrapper(typeName)) continue;
             if (!methodTypeParams.contains(typeName)) {

@@ -56,16 +56,21 @@ public final class OSAgnosticPathUtil {
   };
 
   /**
-   * Returns {@code true} absolute UNC (even incomplete), DOS and Unix paths; {@code false} otherwise.
+   * Returns {@code true} for UNC (even incomplete), absolute DOS and Unix paths; {@code false} otherwise.
    *
    * @see OSAgnosticPathUtil applicability warning
    */
   public static boolean isAbsolute(@NotNull String path) {
-    return path.length() > 2 && path.charAt(1) == ':' && isSlash(path.charAt(2)) && isDriveLetter(path.charAt(0)) ||
-           path.length() > 1 && isSlash(path.charAt(0)) && path.charAt(1) == path.charAt(0) ||
-           path.startsWith("/");
+    return isAbsoluteDosPath(path) || isUncPath(path) || path.startsWith("/");
   }
 
+  public static boolean isAbsoluteDosPath(@NotNull String path) {
+    return path.length() > 2 && path.charAt(1) == ':' && isSlash(path.charAt(2)) && isDriveLetter(path.charAt(0));
+  }
+
+  public static boolean isUncPath(@NotNull String path) {
+    return path.length() > 1 && isSlash(path.charAt(0)) && path.charAt(1) == path.charAt(0);
+  }
 
   public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
     int pathLength = path.length(), prefixLength = prefix.length();

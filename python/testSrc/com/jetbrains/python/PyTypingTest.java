@@ -447,6 +447,22 @@ public class PyTypingTest extends PyTestCase {
                          "        pass\n");
   }
 
+  // PY-42334
+  public void testStringLiteralInjectionForExplicitTypeAlias() {
+    doTestInjectedText("from typing import TypeAlias\n" +
+                       "\n" +
+                       "Alias: TypeAlias = 'any + <caret>text'",
+                       "any + text");
+  }
+
+  // PY-42334
+  public void testStringLiteralInjectionForExplicitTypeAliasUsingTypeComment() {
+    doTestInjectedText("from typing import TypeAlias\n" +
+                       "\n" +
+                       "Alias = 'any + <caret>text'  # type: TypeAlias",
+                       "any + text");
+  }
+
   // PY-22620
   public void testVariableTypeCommentInjectionTuple() {
     doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
@@ -1492,6 +1508,9 @@ public class PyTypingTest extends PyTestCase {
     doTestNoInjectedText("from typing import Literal\n" +
                          "MyType = Literal[42, \"f<caret>oo\", True]\n" +
                          "a: MyType\n");
+
+    doTestNoInjectedText("from typing import Literal, TypeAlias\n" +
+                         "MyType: TypeAlias = Literal[42, \"f<caret>oo\", True]\n");
   }
 
   // PY-41847
@@ -1535,6 +1554,14 @@ public class PyTypingTest extends PyTestCase {
                                "a = b  # type: Call<caret>able[..., int]",
                                "Callable[..., int]")
     );
+  }
+
+  // PY-42334
+  public void testExplicitTypeAliasItselfHasAnyType() {
+    doTest("Any",
+           "from typing import TypeAlias\n" +
+           "\n" +
+           "expr: TypeAlias = int\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

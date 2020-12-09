@@ -26,13 +26,13 @@ import java.util.concurrent.TimeoutException;
 public class MavenServerManagerTest extends MavenTestCase {
   public void testInitializingDoesntTakeReadAction() throws Exception {
     //make sure all components are initialized to prevent deadlocks
-    MavenServerManager.getInstance().getConnector(myProject);
+    MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       Future result = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MavenServerManager.getInstance().shutdown(true);
         try {
-          MavenServerManager.getInstance().getConnector(myProject);
+          MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
         }
         catch (Exception e) {
           throw new RuntimeException(e);
@@ -56,9 +56,9 @@ public class MavenServerManagerTest extends MavenTestCase {
     MavenWorkspaceSettingsComponent settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject);
     String vmOptions = settingsComponent.getSettings().importingSettings.getVmOptionsForImporter();
     try {
-      MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject);
+      MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
       settingsComponent.getSettings().importingSettings.setVmOptionsForImporter(vmOptions + " -DtestVm=test");
-      assertNotSame(connector, MavenServerManager.getInstance().getConnector(myProject));
+      assertNotSame(connector, MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath()));
     }
     finally {
       settingsComponent.getSettings().importingSettings.setVmOptionsForImporter(vmOptions);

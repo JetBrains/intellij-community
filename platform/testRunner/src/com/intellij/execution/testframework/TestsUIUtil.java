@@ -105,10 +105,11 @@ public final class TestsUIUtil {
       if (openFailureLine) {
         return proxy.getDescriptor(location, testConsoleProperties);
       }
-      final OpenFileDescriptor openFileDescriptor = location == null ? null : location.getOpenFileDescriptor();
-      if (openFileDescriptor != null && openFileDescriptor.getFile().isValid()) {
-        return openFileDescriptor;
+      final Navigatable navigatable = location == null ? null : location.getNavigatable();
+      if (navigatable instanceof OpenFileDescriptor && ((OpenFileDescriptor)navigatable).getFile().isValid()) {
+        return navigatable;
       }
+      return navigatable;
     }
     return null;
   }

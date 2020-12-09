@@ -19,7 +19,7 @@ class CustomConfigMigrationOptionTest : ConfigImportHelperBaseTest() {
 
   @Test
   fun `marker file with import path`() {
-    val path = "/Users/me/Library/Application Support/JetBrains/IntelliJIdea2019.3"
+    val path = PathManager.getDefaultConfigPathFor("IntelliJIdea2019.3")
     Files.createDirectories(memoryFs.fs.getPath(path))
     val configDir = createMarkerFile("import $path")
 

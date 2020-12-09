@@ -63,11 +63,6 @@ abstract class WindowsDistributionCustomizer {
   String silentInstallationConfig = null
 
   /**
-   * Name of the root directory in Windows .zip archive
-   */
-  String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
-
-  /**
    * Name of the root product windows installation directory and Desktop ShortCut
    */
   String getNameForInstallDirAndDesktopShortcut(ApplicationInfoProperties applicationInfo, String buildNumber) {

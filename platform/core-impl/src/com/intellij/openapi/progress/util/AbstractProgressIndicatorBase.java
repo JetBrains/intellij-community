@@ -19,7 +19,9 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -27,10 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
@@ -88,7 +88,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private static final Set<Class<?>> ourReportedReuseExceptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private static final Set<Class<?>> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
 
   protected boolean isReuseable() {
     return false;
@@ -224,6 +224,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void startNonCancelableSection() {
+    DeprecatedMethodException.report("Use ProgressManager#executeNonCancelableSection() instead");
     myNonCancelableSectionCount++;
   }
 
@@ -300,13 +301,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     synchronized (getLock()) {
       myRunning = indicator.isRunning();
       myCanceled = indicator.isCanceled();
-      myFraction = indicator.getFraction();
-      myIndeterminate = indicator.isIndeterminate();
-      myText = indicator.getText();
-
-      myText2 = indicator.getText2();
-
-      myFraction = indicator.getFraction();
+      boolean indeterminate = indicator.isIndeterminate();
+      setIndeterminate(indeterminate);
+      // avoid "This progress indicator is indeterminate blah blah"
+      if (!indeterminate || indicator.getFraction() != 0) {
+        setFraction(indicator.getFraction());
+      }
+      setText(indicator.getText());
+      setText2(indicator.getText2());
 
       if (indicator instanceof AbstractProgressIndicatorBase) {
         AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;

@@ -3,11 +3,13 @@ package git4idea.history
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
+import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
@@ -27,9 +29,20 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.history.GitHistoryTraverser.Traverse
 import git4idea.history.GitHistoryTraverser.TraverseCommitInfo
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.*
 
 internal class GitHistoryTraverserImpl(private val project: Project, private val logData: VcsLogData) : GitHistoryTraverser {
+  private val requestedRootsIndexingListeners = EventDispatcher.create(RequestedRootsIndexingListener::class.java)
+
+  private val indexListener = VcsLogIndex.IndexingFinishedListener {
+    requestedRootsIndexingListeners.multicaster.indexingFinished(it)
+  }
+
+  init {
+    logData.index.addListener(indexListener)
+    Disposer.register(logData, this)
+  }
+
   override fun toHash(id: TraverseCommitId) = logData.getCommitId(id)!!.hash
 
   private fun startSearch(
@@ -50,6 +63,9 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     val traverse = TraverseImpl(this)
     walker(hashNodeId, graph, visited) {
       ProgressManager.checkCanceled()
+      if (Disposer.isDisposed(this)) {
+        throw ProcessCanceledException()
+      }
       val commitId = permanentGraph.permanentCommitsInfo.getCommitId(it)
       val parents = graph.getNodes(it, LiteLinearGraph.NodeFilter.DOWN)
       traverse.commitHandler(TraverseCommitInfo(commitId, parents))
@@ -85,31 +101,16 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     )
   }
 
-  override fun withIndex(
+  override fun addIndexingListener(
     roots: Collection<VirtualFile>,
     disposable: Disposable,
-    block: GitHistoryTraverser.(Collection<GitHistoryTraverser.IndexedRoot>) -> Unit
+    listener: GitHistoryTraverser.IndexingListener
   ) {
-    val index = logData.index
-    val blockExecuted = AtomicBoolean(false)
+    val indexingListener = RequestedRootsIndexingListenerImpl(roots, this, listener)
+    requestedRootsIndexingListeners.addListener(indexingListener, disposable)
 
-    fun runBlockIfIndexed(listener: VcsLogIndex.IndexingFinishedListener) {
-      val dataGetter = index.dataGetter ?: return
-      if (roots.all { index.isIndexed(it) } && blockExecuted.compareAndSet(false, true)) {
-        index.removeListener(listener)
-        block(roots.map { root -> IndexedRootImpl(this@GitHistoryTraverserImpl, project, root, dataGetter) })
-      }
-    }
-
-    val listener = object : VcsLogIndex.IndexingFinishedListener {
-      override fun indexingFinished(indexedRoot: VirtualFile) {
-        runBlockIfIndexed(this)
-      }
-    }
-
-    index.addListener(listener)
-    Disposer.register(disposable, Disposable { index.removeListener(listener) })
-    runBlockIfIndexed(listener)
+    val indexedRoot = roots.firstOrNull { logData.index.isIndexed(it) } ?: return
+    indexingListener.indexingFinished(indexedRoot)
   }
 
   override fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata> =
@@ -131,6 +132,10 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
   }
 
   override fun getCurrentUser(root: VirtualFile): VcsUser? = logData.currentUser[root]
+
+  override fun dispose() {
+    logData.index.removeListener(indexListener)
+  }
 
   private fun getRoot(id: TraverseCommitId): VirtualFile = logData.getCommitId(id)!!.root
 
@@ -161,6 +166,25 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
       return createMetadata(id, dataGetter, storage, factory)!!
     }
   }
+
+  private class RequestedRootsIndexingListenerImpl(
+    private val requestedRoots: Collection<VirtualFile>,
+    private val traverser: GitHistoryTraverserImpl,
+    private val listener: GitHistoryTraverser.IndexingListener
+  ) : RequestedRootsIndexingListener {
+    override fun indexingFinished(root: VirtualFile) {
+      val index = traverser.logData.index
+      val dataGetter = index.dataGetter ?: return
+      val indexedRoots = requestedRoots.filter { index.isIndexed(it) }.map {
+        IndexedRootImpl(traverser, traverser.project, it, dataGetter)
+      }
+      if (indexedRoots.isNotEmpty()) {
+        listener.indexedRootsUpdated(indexedRoots)
+      }
+    }
+  }
+
+  private interface RequestedRootsIndexingListener : VcsLogIndex.IndexingFinishedListener, EventListener
 
   private class TraverseImpl(private val traverser: GitHistoryTraverser) : Traverse {
     val requests = mutableListOf<Request>()

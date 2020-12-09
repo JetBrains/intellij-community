@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.util.ui.codereview.ToggleableContainer
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Cursor
@@ -69,7 +71,7 @@ object GHPRReviewThreadComponent {
       override fun createThreadsPanel(): JComponent = JPanel(VerticalLayout(UI.scale(12))).apply {
         isOpaque = false
 
-        add(diffComponentFactory.createComponent(thread.diffHunk), VerticalLayout.FILL_HORIZONTAL)
+        add(diffComponentFactory.createComponent(thread.diffHunk, thread.startLine), VerticalLayout.FILL_HORIZONTAL)
 
         add(GHPRReviewThreadCommentsPanel.create(thread,
                                                  GHPRReviewCommentComponent.factory(reviewDataProvider, avatarIconsProvider, false)),
@@ -216,14 +218,21 @@ object GHPRReviewThreadComponent {
                      }, null)
     }
 
-    return GHPRToggleableContainer.create(toggleModel,
-                                          { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
-                                          {
-                                            GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
-                                                                                                 GithubBundle.message(
-                                                                                                   "pull.request.review.thread.reply"),
-                                                                                                 onCancel = { toggleModel.value = false })
-                                          })
+    val content = ToggleableContainer.create(
+      toggleModel,
+      { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
+      {
+        GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
+                                                             GithubBundle.message(
+                                                               "pull.request.review.thread.reply"),
+                                                             onCancel = { toggleModel.value = false })
+      }
+    )
+    return JPanel().apply {
+      isOpaque = false
+      layout = MigLayout(LC().insets("0"))
+      add(content, CC().width("${GithubUIUtil.getPRTimelineWidth() + GithubUIUtil.avatarSize.get()}"))
+    }
   }
 
   private fun createThreadActionsComponent(model: GHPRReviewThreadModel,

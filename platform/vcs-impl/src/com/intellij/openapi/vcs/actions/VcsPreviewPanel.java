@@ -17,6 +17,8 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
@@ -30,7 +32,10 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ex.Range;
@@ -39,6 +44,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -63,7 +69,7 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   @Override
-  public Component getPanel() {
+  public JComponent getPanel() {
     return myEditor.getComponent();
   }
 
@@ -132,7 +138,14 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   private void addHighlighter(@NotNull Range range, boolean isIgnored, @NotNull ColorKey colorKey) {
-    RangeHighlighter highlighter = LineStatusMarkerDrawUtil.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
+    TextRange textRange = DiffUtil.getLinesRange(myEditor.getDocument(), range.getLine1(), range.getLine2(), false);
+    TextAttributes textAttributes = new LineStatusMarkerDrawUtil.DiffStripeTextAttributes(range.getType());
+
+    RangeHighlighter highlighter = myEditor.getMarkupModel()
+      .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
+                           DiffDrawUtil.LST_LINE_MARKER_LAYER, textAttributes,
+                           HighlighterTargetArea.LINES_IN_RANGE);
+    highlighter.setThinErrorStripeMark(true);
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
       public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {

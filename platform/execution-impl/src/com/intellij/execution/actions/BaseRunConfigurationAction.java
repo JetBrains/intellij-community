@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     for (final ConfigurationFromContext fromContext : configurations) {
       final ConfigurationType configurationType = fromContext.getConfigurationType();
       final String actionName = childActionName(fromContext);
+      //noinspection DialogTitleCapitalization
       final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), fromContext.getConfiguration().getIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -221,6 +223,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @NotNull
+  @Nls
   public static String suggestRunActionName(@NotNull RunConfiguration configuration) {
     if (configuration instanceof LocatableConfigurationBase && ((LocatableConfigurationBase<?>)configuration).isGeneratedName()) {
       String actionName = ((LocatableConfigurationBase<?>)configuration).getActionName();
@@ -237,6 +240,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @NotNull
+  @Nls
   private static String childActionName(ConfigurationFromContext configurationFromContext) {
     RunConfiguration configuration = configurationFromContext.getConfiguration();
     if (!(configuration instanceof LocatableConfiguration)) {

@@ -276,7 +276,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     for (Map.Entry<OrderRootType, Set<String>> entry: toAdd.entrySet()) {
       Map<OrderRootType, Collection<File>> roots = new HashMap<>();
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
-      registerPaths(externalLibrary.isUnresolved(), roots, excludedPaths, libraryModel, externalLibrary.getInternalName());
+      registerPaths(false, roots, excludedPaths, libraryModel, externalLibrary.getInternalName());
     }
   }
 }

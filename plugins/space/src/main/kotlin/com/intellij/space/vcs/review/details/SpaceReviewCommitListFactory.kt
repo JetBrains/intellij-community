@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewRecord
@@ -14,7 +15,7 @@ import javax.swing.ScrollPaneConstants
 
 
 object SpaceReviewCommitListFactory {
-  internal fun createCommitList(reviewDetailsVm: CrDetailsVm<out CodeReviewRecord>): JComponent {
+  internal fun createCommitList(reviewDetailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>): JComponent {
     val listModel: CollectionListModel<ReviewCommitListItem> = CollectionListModel()
 
     val commitList = JBList(listModel).apply {
@@ -35,11 +36,17 @@ object SpaceReviewCommitListFactory {
       listModel.removeAll()
       if (commits != null) {
         listModel.add(commits)
+        commitList.setSelectionInterval(0, commits.size - 1)
       }
     }
 
     commitList.addListSelectionListener {
-      reviewDetailsVm.selectedCommitIndices.value = commitList.selectedIndices.toList()
+      val selectedCommitIndices = if (commitList.selectedIndices.isNotEmpty()) {
+        commitList.selectedIndices.toList()
+      } else {
+        (0 until commitList.itemsCount).toList()
+      }
+      reviewDetailsVm.selectedCommitIndices.value = selectedCommitIndices
     }
 
     return ScrollPaneFactory.createScrollPane(commitList, true).apply {

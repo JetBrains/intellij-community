@@ -21,7 +21,6 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
@@ -97,7 +96,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
 
     @Override
     public String getPresentableName() {
-      return LibraryUtil.getPresentableName(myLibrary);
+      return myLibrary.getPresentableName();
     }
 
     @Override

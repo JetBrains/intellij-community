@@ -14,6 +14,7 @@ import javax.swing.table.TableCellRenderer
 
 internal class MarkdownScriptsTable : JBTable() {
   init {
+    setShowGrid(false)
     setState(emptyMap(), null)
   }
 

@@ -49,6 +49,9 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
     myUseProjectSettings.setEnabled(localTarget);
     if (!localTarget) {
       myUseProjectSettings.setSelected(false);
+      myUseProjectSettings.setToolTipText(MavenConfigurableBundle.message("maven.settings.on.targets.general.use.project.settings.tooltip"));
+    } else {
+      myUseProjectSettings.setToolTipText(MavenConfigurableBundle.message("maven.settings.general.use.project.settings.tooltip"));
     }
 
     if (myUseProjectSettings.isSelected()) {
@@ -56,7 +59,7 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
     }
     else {
       MavenGeneralSettings generalSettings = runConfiguration.getGeneralSettings();
-      myPanel.applyTargetEnvironmentConfiguration(targetName);
+      myPanel.applyTargetEnvironmentConfiguration(runConfiguration.getProject(), targetName);
       if (generalSettings != null) {
         myPanel.setData(generalSettings);
       }

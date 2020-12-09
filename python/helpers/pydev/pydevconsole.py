@@ -255,7 +255,7 @@ def process_exec_queue(interpreter):
                 # thread can be put in the queue for later execution).
                 code_fragment()
             else:
-                more = interpreter.add_exec(code_fragment)
+                interpreter.add_exec(code_fragment)
         except KeyboardInterrupt:
             interpreter.buffer = None
             continue

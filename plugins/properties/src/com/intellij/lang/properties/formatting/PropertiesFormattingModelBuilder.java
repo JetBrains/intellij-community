@@ -13,7 +13,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PropertiesFormattingModelBuilder implements FormattingModelBuilder {
+public final class PropertiesFormattingModelBuilder implements FormattingModelBuilder {
   @Override
   public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
     final ASTNode root = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(formattingContext.getPsiElement()));

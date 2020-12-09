@@ -170,7 +170,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   public <T extends TaskRepository> void setRepositories(@NotNull List<T> repositories) {
     Set<TaskRepository> set = new HashSet<>(myRepositories);
-    set.removeAll(repositories);
+    repositories.forEach(set::remove);
     myBadRepositories.removeAll(set); // remove all changed reps
     myIssueCache.clear();
 
@@ -373,7 +373,8 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   private void restoreVcsContext(LocalTask task, boolean newTask) {
     List<ChangeListInfo> changeLists = task.getChangeLists();
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    if (changeLists.isEmpty()) {
+    if (changeLists.isEmpty() || !changeListManager.areChangeListsEnabled()) {
+      task.getChangeLists().clear();
       task.addChangelist(new ChangeListInfo(changeListManager.getDefaultChangeList()));
     }
     else {

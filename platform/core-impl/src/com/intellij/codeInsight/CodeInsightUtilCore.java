@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
@@ -29,7 +30,12 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public abstract class CodeInsightUtilCore extends FileModificationService {
+
+  private static final Logger LOG = Logger.getInstance(CodeInsightUtilCore.class);
+
   public static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
                                                             int startOffset,
                                                             int endOffset,
@@ -96,141 +102,219 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return parseStringCharacters(chars, outChars, sourceOffsets, true, true, '"', '\'');
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets, boolean slashMustBeEscaped, boolean exitOnEscapingWrongSymbol, char @NotNull ... endChars) {
-    assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
-    if (chars.indexOf('\\') < 0) {
-      outChars.append(chars);
-      if (sourceOffsets != null) {
-        for (int i = 0; i < sourceOffsets.length; i++) {
-          sourceOffsets[i] = i;
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars,
+                                              int @Nullable [] sourceOffsets, boolean slashMustBeEscaped,
+                                              boolean exitOnEscapingWrongSymbol, char @NotNull ... endChars) {
+    StringParser stringParser = new StringParser(sourceOffsets, slashMustBeEscaped, exitOnEscapingWrongSymbol, endChars);
+    return stringParser.parse(chars, outChars);
+  }
+
+  private static class StringParser {
+
+    private final int @Nullable [] mySourceOffsets;
+    private final boolean mySlashMustBeEscaped;
+    private final boolean myExitOnEscapingWrongSymbol;
+    private final char @NotNull [] myEndChars;
+
+    private StringParser(int @Nullable [] sourceOffsets, boolean slashMustBeEscaped,
+                         boolean exitOnEscapingWrongSymbol, char @NotNull ... endChars) {
+      mySourceOffsets = sourceOffsets;
+      mySlashMustBeEscaped = slashMustBeEscaped;
+      myExitOnEscapingWrongSymbol = exitOnEscapingWrongSymbol;
+      myEndChars = endChars;
+    }
+
+    private boolean parse(@NotNull String chars, @NotNull StringBuilder outChars) {
+      LOG.assertTrue(mySourceOffsets == null || mySourceOffsets.length == chars.length() + 1);
+      if (chars.indexOf('\\') < 0) {
+        outChars.append(chars);
+        if (mySourceOffsets != null) Arrays.setAll(mySourceOffsets, i -> i);
+        return true;
+      }
+      int index = 0;
+      final int outOffset = outChars.length();
+      while (index < chars.length()) {
+        char c = chars.charAt(index++);
+        if (mySourceOffsets != null) {
+          mySourceOffsets[outChars.length() - outOffset] = index - 1;
+          mySourceOffsets[outChars.length() + 1 - outOffset] = index;
+        }
+        if (c != '\\') {
+          outChars.append(c);
+          continue;
+        }
+        index = parseEscapedSymbol(chars, outChars, index, outOffset, false);
+        if (index == -1) return false;
+        if (mySourceOffsets != null) {
+          mySourceOffsets[outChars.length() - outOffset] = index;
         }
       }
       return true;
     }
-    int index = 0;
-    final int outOffset = outChars.length();
-    while (index < chars.length()) {
+
+    private int parseEscapedSymbol(@NotNull String chars, @NotNull StringBuilder outChars,
+                                   int index, int outOffset, boolean isAfterEscapedBackslash) {
+      if (index == chars.length()) return -1;
       char c = chars.charAt(index++);
-      if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()-outOffset] = index - 1;
-        sourceOffsets[outChars.length() + 1 -outOffset] = index;
+      if (parseEscapedChar(c, outChars)) {
+        return index;
       }
-      if (c != '\\') {
-        outChars.append(c);
-        continue;
-      }
-      if (index == chars.length()) return false;
-      c = chars.charAt(index++);
       switch (c) {
-        case'b':
+        case '\\':
+          boolean isUnicodeSequenceStart = isAfterEscapedBackslash && index < chars.length() && chars.charAt(index) == 'u';
+          if (isUnicodeSequenceStart) {
+            index = parseUnicodeEscape(chars, outChars, index, outOffset, true);
+          }
+          else {
+            outChars.append('\\');
+          }
+          break;
+
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+          index = parseOctalEscape(chars, outChars, c, index);
+          break;
+
+        case 'u':
+          if (isAfterEscapedBackslash) {
+            if (!handleUnexpectedChar(outChars, index - 1, outOffset, c)) return -1;
+          }
+          else {
+            index = parseUnicodeEscape(chars, outChars, index - 1, outOffset, false);
+          }
+          break;
+
+        default:
+          if (!handleUnexpectedChar(outChars, index - 1, outOffset, c)) return -1;
+      }
+      return index;
+    }
+
+    private int parseUnicodeEscape(@NotNull String s, @NotNull StringBuilder outChars, int index,
+                                   int outOffset, boolean isAfterEscapedBackslash) {
+      int len = s.length();
+      int start = index - 1;
+      // uuuuu1234 is valid too
+      do {
+        index++;
+      }
+      while (index < len && s.charAt(index) == 'u');
+      if (index + 4 > len) return -1;
+      try {
+        char c = s.charAt(index);
+        if (c == '+' || c == '-') return -1;
+        int code = Integer.parseInt(s.substring(index, index + 4), 16);
+        // line separators are invalid here
+        if (code == 0x000a || code == 0x000d) return -1;
+        char escapedChar = (char)code;
+        if (escapedChar == '\\') {
+          if (isAfterEscapedBackslash) {
+            // \u005c\u005c
+            outChars.append('\\');
+            return index + 4;
+          }
+          else {
+            // u005cxyz
+            return parseEscapedSymbol(s, outChars, index + 4, outOffset, true);
+          }
+        }
+        if (isAfterEscapedBackslash) {
+          // e.g. \u005c\u006e is converted to newline
+          if (parseEscapedChar(escapedChar, outChars)) return index + 4;
+          if (handleUnexpectedChar(outChars, start, outOffset, escapedChar)) return index + 4;
+          return -1;
+        }
+        // just single unicode escape sequence
+        outChars.append(escapedChar);
+        return index + 4;
+      }
+      catch (NumberFormatException ignored) {
+        return -1;
+      }
+    }
+
+    private boolean handleUnexpectedChar(@NotNull StringBuilder outChars, int start, int outOffset, char c) {
+      if (CharArrayUtil.indexOf(myEndChars, c, 0, myEndChars.length) != -1) {
+        outChars.append(c);
+      }
+      else if (!myExitOnEscapingWrongSymbol) {
+        if (!mySlashMustBeEscaped) {
+          outChars.append('\\');
+          if (mySourceOffsets != null) {
+            mySourceOffsets[outChars.length() - outOffset] = start;
+          }
+        }
+        outChars.append(c);
+      }
+      else {
+        return false;
+      }
+      return true;
+    }
+
+    private static boolean parseEscapedChar(char c, @NotNull StringBuilder outChars) {
+      switch (c) {
+        case 'b':
           outChars.append('\b');
-          break;
+          return true;
 
-        case't':
+        case 't':
           outChars.append('\t');
-          break;
+          return true;
 
-        case'n':
+        case 'n':
           outChars.append('\n');
-          break;
+          return true;
 
-        case'f':
+        case 'f':
           outChars.append('\f');
-          break;
+          return true;
 
-        case'r':
+        case 'r':
           outChars.append('\r');
-          break;
+          return true;
 
-        case's':
+        case 's':
           outChars.append(' ');
-          break;
+          return true;
 
         case '\n':
-          break;
+          return true;
+      }
+      return false;
+    }
 
-        case'\\':
-          outChars.append('\\');
-          break;
-
-        case'0':
-        case'1':
-        case'2':
-        case'3':
-        case'4':
-        case'5':
-        case'6':
-        case'7':
-          char startC = c;
-          int v = (int)c - '0';
-          if (index < chars.length()) {
-            c = chars.charAt(index++);
+    private static int parseOctalEscape(@NotNull String s, @NotNull StringBuilder outChars, char c, int index) {
+      char startC = c;
+      int v = (int)c - '0';
+      if (index < s.length()) {
+        c = s.charAt(index++);
+        if ('0' <= c && c <= '7') {
+          v <<= 3;
+          v += c - '0';
+          if (startC <= '3' && index < s.length()) {
+            c = s.charAt(index++);
             if ('0' <= c && c <= '7') {
               v <<= 3;
               v += c - '0';
-              if (startC <= '3' && index < chars.length()) {
-                c = chars.charAt(index++);
-                if ('0' <= c && c <= '7') {
-                  v <<= 3;
-                  v += c - '0';
-                }
-                else {
-                  index--;
-                }
-              }
             }
             else {
               index--;
             }
           }
-          outChars.append((char)v);
-          break;
-
-        case'u':
-          // uuuuu1234 is valid too
-          while (index != chars.length() && chars.charAt(index) == 'u') {
-            index++;
-          }
-          if (index + 4 <= chars.length()) {
-            try {
-              int code = Integer.parseInt(chars.substring(index, index + 4), 16);
-              //line separators are invalid here
-              if (code == 0x000a || code == 0x000d) return false;
-              c = chars.charAt(index);
-              if (c == '+' || c == '-') return false;
-              outChars.append((char)code);
-              index += 4;
-            }
-            catch (Exception e) {
-              return false;
-            }
-          }
-          else {
-            return false;
-          }
-          break;
-
-        default:
-          if (CharArrayUtil.indexOf(endChars, c, 0, endChars.length) != -1) {
-            outChars.append(c);
-          }
-          else if (!exitOnEscapingWrongSymbol) {
-            if (!slashMustBeEscaped) {
-              outChars.append('\\');
-              if (sourceOffsets != null) {
-                sourceOffsets[outChars.length() - outOffset] = index - 1;
-              }
-            }
-            outChars.append(c);
-          }
-          else {
-            return false;
-          }
+        }
+        else {
+          index--;
+        }
       }
-      if (sourceOffsets != null) {
-        sourceOffsets[outChars.length() - outOffset] = index;
-      }
+      outChars.append((char)v);
+      return index;
     }
-    return true;
   }
 }

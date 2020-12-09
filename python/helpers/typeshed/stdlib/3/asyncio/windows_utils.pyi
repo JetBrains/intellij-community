@@ -3,7 +3,7 @@ from types import TracebackType
 from typing import Callable, Optional, Protocol, Tuple, Type
 
 class _WarnFunction(Protocol):
-    def __call__(self, message: str, category: Type[Warning], source: PipeHandle) -> None: ...
+    def __call__(self, message: str, category: Type[Warning] = ..., stacklevel: int = ..., source: PipeHandle = ...) -> None: ...
 
 BUFSIZE: int
 PIPE: int

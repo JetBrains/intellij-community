@@ -102,6 +102,16 @@ final class LibraryDependentToolWindowManager implements StartupActivity {
       if (state.existing.contains(libraryToolWindow)) {
         if (toolWindow == null) {
           toolWindowManagerEx.initToolWindow(libraryToolWindow);
+
+          if (!libraryToolWindow.showOnStripeByDefault) {
+            toolWindow = toolWindowManagerEx.getToolWindow(libraryToolWindow.id);
+            if (toolWindow != null) {
+              WindowInfoImpl windowInfo = toolWindowManagerEx.getLayout().getInfo(libraryToolWindow.id);
+              if (windowInfo != null && !windowInfo.isFromPersistentSettings()) {
+                toolWindow.setShowStripeButton(false);
+              }
+            }
+          }
         }
       }
       else {

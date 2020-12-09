@@ -126,7 +126,7 @@ public final class IdempotenceChecker {
     try {
       int start = threadLog.size();
       T result = recomputeValue.compute();
-      return new ResultWithLog<>(result, threadLog.subList(start, threadLog.size()));
+      return new ResultWithLog<>(result, new ArrayList<>(threadLog.subList(start, threadLog.size())));
     }
     finally {
       if (outermost) {
@@ -385,7 +385,7 @@ public final class IdempotenceChecker {
     }
   }
 
-  public static class ResultWithLog<T> {
+  public static final class ResultWithLog<T> {
     private final T result;
     private final List<String> log;
 

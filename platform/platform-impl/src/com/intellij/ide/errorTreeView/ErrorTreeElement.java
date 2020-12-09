@@ -2,6 +2,7 @@
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public abstract class ErrorTreeElement {
   }
   
   @NotNull
-  public String getPresentableText() {
+  public @Nls String getPresentableText() {
     return getKind().getPresentableText();
   }
 }

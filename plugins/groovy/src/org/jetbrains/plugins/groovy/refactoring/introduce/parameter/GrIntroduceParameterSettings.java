@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 public interface GrIntroduceParameterSettings extends GrIntroduceSettings, IntroduceParameterInfo {
   boolean generateDelegate();
 
-  TIntArrayList parametersToRemove();
+  IntList parametersToRemove();
 
   /**
    * @see IntroduceParameterRefactoring

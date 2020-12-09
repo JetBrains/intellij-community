@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
@@ -119,7 +120,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), null, false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
     assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
-    assertErrorNotification("Can't Update: No Current Branch", GitUpdateProcess.getDetachedHeadErrorNotificationContent(community))
+    assertErrorNotification(GitBundle.message("notification.title.can.t.update.no.current.branch"), GitUpdateProcess.getDetachedHeadErrorNotificationContent(community))
   }
 
   private fun updateWithMerge(): GitUpdateResult {

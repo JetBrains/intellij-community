@@ -1,0 +1,7 @@
+android {
+  dataBinding {
+    addDefaultAdapters true
+    enabled false
+    version '1.0'
+  }
+}

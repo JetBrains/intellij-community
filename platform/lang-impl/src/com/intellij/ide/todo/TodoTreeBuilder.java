@@ -10,6 +10,8 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -31,6 +33,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +45,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author Vladimir Kondratyev
@@ -82,6 +87,9 @@ public abstract class TodoTreeBuilder implements Disposable {
   private StructureTreeModel<TodoTreeStructure> myModel;
   private boolean myDisposed;
 
+  private final Object LOCK = new Object();
+  private final List<TreeUpdater> myPendingUpdates = new SmartList<>(); // guarded by LOCK
+  
   TodoTreeBuilder(JTree tree, Project project) {
     myTree = tree;
     myProject = project;
@@ -127,6 +135,9 @@ public abstract class TodoTreeBuilder implements Disposable {
   @Override
   public final void dispose() {
     myDisposed = true;
+    synchronized (LOCK) {
+      clearPendingUpdates();
+    }
   }
 
   final boolean isUpdatable() {
@@ -307,15 +318,47 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  void rebuildCache(){
-    Set<VirtualFile> files = new HashSet<>();
-    collectFiles(virtualFile -> {
-      files.add(virtualFile);
-      return true;
-    });
-    rebuildCache(files);
+  protected void rebuildCache() {
+    TreeUpdater uiUpdater = new TreeUpdater();
+    synchronized (LOCK) {
+      clearPendingUpdates();
+      myPendingUpdates.add(uiUpdater);
+    }
+    ReadAction.nonBlocking(() -> {
+      Set<VirtualFile> files = new HashSet<>();
+      collectFiles(virtualFile -> {
+        files.add(virtualFile);
+        return true;
+      });
+      return files;
+    }).finishOnUiThread(ModalityState.NON_MODAL, uiUpdater)
+      .inSmartMode(myProject)
+      .expireWith(this)
+      .submit(NonUrgentExecutor.getInstance());
   }
 
+  private void clearPendingUpdates() {
+    for (TreeUpdater request : myPendingUpdates) {
+      request.cancel();
+    }
+    myPendingUpdates.clear();
+  }
+
+  private class TreeUpdater implements Consumer<Set<VirtualFile>> {
+    private volatile boolean myCanceled = false;
+
+    private void cancel() {
+      myCanceled = true;
+    }
+
+    @Override
+    public void accept(Set<VirtualFile> files) {
+      if (myCanceled) return;
+      rebuildCache(files);
+      updateTree();
+    }
+  }
+  
   void collectFiles(Processor<? super VirtualFile> collector) {
     TodoTreeStructure treeStructure=getTodoTreeStructure();
     PsiFile[] psiFiles= mySearchHelper.findFilesWithTodoItems();
@@ -326,7 +369,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
+  protected void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
     ApplicationManager.getApplication().assertIsWriteThread();
     myFileTree.clear();
     myDirtyFileSet.clear();
@@ -513,7 +556,6 @@ public abstract class TodoTreeBuilder implements Disposable {
       rebuildCache();
     }
     catch (IndexNotReadyException ignored) {}
-    updateTree();
   }
 
   /**
@@ -735,7 +777,6 @@ public abstract class TodoTreeBuilder implements Disposable {
         myModel.getInvoker().invoke(
           () -> ApplicationManager.getApplication().invokeLater(() -> {
             rebuildCache();
-            updateTree();
           })
         );
       }

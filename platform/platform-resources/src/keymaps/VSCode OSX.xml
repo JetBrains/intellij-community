@@ -80,6 +80,7 @@
     </action>
     <action id="CommentByLineComment">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta c" />
+        <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta u" />
         <keyboard-shortcut first-keystroke="meta slash" />
     </action>
     <action id="CompareClipboardWithSelection">
@@ -108,6 +109,7 @@
     <action id="CopyElement" />
     <action id="CopyPaths">
         <keyboard-shortcut first-keystroke="meta alt c" />
+        <keyboard-shortcut first-keystroke="meta k" second-keystroke="p" />
     </action>
     <action id="DSM.OpenInEditor">
         <keyboard-shortcut first-keystroke="f4" />
@@ -219,7 +221,7 @@
         <keyboard-shortcut first-keystroke="ctrl page_up" />
     </action>
     <action id="EditorSelectLine">
-        <keyboard-shortcut first-keystroke="meta i" />
+        <keyboard-shortcut first-keystroke="meta L" />
     </action>
     <action id="EditorSelectWord">
         <keyboard-shortcut first-keystroke="shift ctrl meta right" />
@@ -553,7 +555,7 @@
         <keyboard-shortcut first-keystroke="shift f6" />
     </action>
     <action id="ShowIntentionActions">
-        <keyboard-shortcut first-keystroke="ctrl period" />
+        <keyboard-shortcut first-keystroke="meta period" />
         <keyboard-shortcut first-keystroke="alt enter" />
     </action>
     <action id="ShowNavBar">
@@ -588,7 +590,7 @@
     <action id="TodoViewGroupByShowPackages" />
     <action id="ToggleBookmark" />
     <action id="ToggleBookmarkWithMnemonic" />
-    <action id="ToggleDistractionFreeMode">
+    <action id="ToggleZenMode">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="z" />
     </action>
     <action id="ToggleLineBreakpoint">
@@ -658,6 +660,13 @@
 
     <action id="EditorTranspose">
         <keyboard-shortcut first-keystroke="ctrl T"/>
+    </action>
+
+    <action id="SwitchHeaderSource">
+        <keyboard-shortcut first-keystroke="control meta O"/>
+    </action>
+    <action id="BuildSolutionAction">
+        <keyboard-shortcut first-keystroke="meta shift B"/>
     </action>
 
 </keymap>

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -111,11 +112,11 @@ public class ChangeListChooserPanel extends JPanel {
     myExistingListsCombo.setModel(new DefaultComboBoxModel<>(changeLists.toArray(new ChangeList[0])));
   }
 
-  public void setSuggestedName(@NotNull @Nls String name) {
+  public void setSuggestedName(@NlsSafe @NotNull String name) {
     setSuggestedName(name, null);
   }
 
-  public void setSuggestedName(@Nls @NotNull String name, @Nls @Nullable String comment) {
+  public void setSuggestedName(@NlsSafe @NotNull String name, @Nls @Nullable String comment) {
     if (StringUtil.isEmptyOrSpaces(name)) return;
     LocalChangeList changelistByName = getExistingChangelistByName(name);
     if (changelistByName != null) {

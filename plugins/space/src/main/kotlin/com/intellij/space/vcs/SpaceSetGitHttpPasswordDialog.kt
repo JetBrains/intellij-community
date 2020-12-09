@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs
 
 import circlet.client.api.TD_MemberProfile
@@ -99,7 +100,7 @@ internal class SpaceSetGitHttpPasswordDialog(
         }
         catch (e: RpcException) {
           log.error(e, e.failure.message())
-          setErrorText(e.failure.message())
+          setErrorText(e.failure.message()) // NON-NLS
         }
         catch (e: Exception) {
           log.error(e, "Unable to set password")
@@ -112,9 +113,9 @@ internal class SpaceSetGitHttpPasswordDialog(
     }
   }
 
-  override fun createCenterPanel(): JComponent? = panel {
+  override fun createCenterPanel(): JComponent = panel {
     row(SpaceBundle.message("set.http.password.dialog.username.label")) {
-      JBTextField(me.username)().component.apply {
+      JBTextField(me.username)().component.apply { // NON-NLS
         isEditable = false
       }
     }

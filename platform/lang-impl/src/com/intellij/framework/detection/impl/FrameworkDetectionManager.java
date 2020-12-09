@@ -39,7 +39,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -163,7 +162,7 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }
     Set<String> detectorsToProcess;
     synchronized (myLock) {
-      detectorsToProcess = new OpenTHashSet<>(myDetectorsToProcess);
+      detectorsToProcess = new HashSet<>(myDetectorsToProcess);
       myDetectorsToProcess.clear();
     }
     if (detectorsToProcess.isEmpty()) {
@@ -176,7 +175,10 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     List<DetectedFrameworkDescription> newDescriptions = new ArrayList<>();
     List<DetectedFrameworkDescription> oldDescriptions = new ArrayList<>();
     for (String id : detectorsToProcess) {
-      final List<? extends DetectedFrameworkDescription> frameworks = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> runDetector(id, true));
+      final List<? extends DetectedFrameworkDescription> frameworks = ReadAction
+        .nonBlocking(() -> runDetector(id, true))
+        .inSmartMode(myProject)
+        .executeSynchronously();
       oldDescriptions.addAll(frameworks);
       final Collection<? extends DetectedFrameworkDescription> updated = myDetectedFrameworksData.updateFrameworksList(id, frameworks);
       newDescriptions.addAll(updated);
@@ -187,17 +189,19 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }
 
     if (!newDescriptions.isEmpty()) {
-      Set<String> frameworkNames = new HashSet<>();
-      ReadAction.run(() -> {
+      Set<String> frameworkNames =
+      ReadAction.nonBlocking(() -> {
+        Set<String> names = new HashSet<>();
         for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
-          frameworkNames.add(description.getDetector().getFrameworkType().getPresentableName());
+          names.add(description.getDetector().getFrameworkType().getPresentableName());
         }
-      });
+        return names;
+      }).executeSynchronously();
       if (!frameworkNames.isEmpty()) {
         String names = StringUtil.join(frameworkNames, ", ");
         final String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
         FRAMEWORK_DETECTION_NOTIFICATION
-          .createNotification("Frameworks Detected", text, NotificationType.INFORMATION, null)
+          .createNotification(ProjectBundle.message("notification.title.frameworks.detected"), text, NotificationType.INFORMATION, null)
           .addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.configure")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -288,12 +292,6 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
   @TestOnly
   public List<? extends DetectedFrameworkDescription> getDetectedFrameworks() {
     return getValidDetectedFrameworks();
-  }
-
-  private static void ensureIndexIsUpToDate(@NotNull Project project, String[] detectors) {
-    for (String detectorId : detectors) {
-      FileBasedIndex.getInstance().getValues(FrameworkDetectionIndex.NAME, detectorId, GlobalSearchScope.projectScope(project));
-    }
   }
 
   private static void ensureIndexIsUpToDate(@NotNull Project project, Collection<String> detectors) {

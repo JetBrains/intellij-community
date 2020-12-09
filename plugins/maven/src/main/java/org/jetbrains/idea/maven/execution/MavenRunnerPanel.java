@@ -9,8 +9,11 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.UserActivityWatcher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +23,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -103,6 +106,7 @@ public class MavenRunnerPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     panel.add(myJdkCombo, c);
     myTargetJdkCombo = new ComboBox<>();
+    ComponentUtil.putClientProperty(myTargetJdkCombo, UserActivityWatcher.DO_NOT_WATCH, true);
     myTargetJdkCombo.setVisible(false);
     panel.add(myTargetJdkCombo, c);
     c.insets.left = 0;
@@ -125,6 +129,7 @@ public class MavenRunnerPanel {
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
+    myPropertiesPanel.getTable().setShowGrid(false);
     myPropertiesPanel.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.runner.properties.not.defined"));
 
     c.gridx = 0;
@@ -173,7 +178,7 @@ public class MavenRunnerPanel {
     if (myTargetName == null) {
       data.setJreName(myJdkCombo.getSelectedValue());
     } else {
-      data.setJreName(myTargetJdkCombo.getItem());
+      data.setJreName(StringUtil.notNullize(myTargetJdkCombo.getItem(), MavenRunnerSettings.USE_PROJECT_JDK));
     }
     data.setMavenProperties(myPropertiesPanel.getDataAsMap());
     data.setEnvironmentProperties(myEnvVariablesComponent.getEnvs());
@@ -210,7 +215,8 @@ public class MavenRunnerPanel {
         .collect(Collectors.toList());
 
       List<String> targetItems = new ArrayList<>();
-      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance(myProject)
+        .getTargets().findByName(targetName);
       if (targetEnvironmentConfiguration != null) {
         for (LanguageRuntimeConfiguration runtimeConfiguration : targetEnvironmentConfiguration.getRuntimes().resolvedConfigs()) {
           if (runtimeConfiguration instanceof JavaLanguageRuntimeConfiguration) {

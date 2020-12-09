@@ -235,11 +235,11 @@ public class IconUtil {
   }
 
   public static Image toImage(@NotNull Icon icon) {
-    return toImage(icon, null);
+    return IconLoader.toImage(icon, null);
   }
 
-  public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext ctx) {
-    return IconLoader.toImage(icon, ctx);
+  public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext context) {
+    return IconLoader.toImage(icon, context);
   }
 
   @NotNull
@@ -302,9 +302,12 @@ public class IconUtil {
     return AllIcons.ToolbarDecorator.AddLink;
   }
 
-  @NotNull
-  public static Icon getAnalyzeIcon() {
-    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png");
+  /**
+   * @deprecated This icon is not used by platform anymore.
+   */
+  @Deprecated
+  public static @NotNull Icon getAnalyzeIcon() {
+    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class);
   }
 
   public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
@@ -315,7 +318,7 @@ public class IconUtil {
 
   @NotNull
   private static @NonNls String getToolbarDecoratorIconsFolder() {
-    return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
+    return "/toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
   }
 
   /**
@@ -338,6 +341,14 @@ public class IconUtil {
   @NotNull
   public static Icon toSize(@Nullable Icon icon, int width, int height) {
     return new IconSizeWrapper(icon, width, height);
+  }
+
+  public static void paintSelectionAwareIcon(@NotNull Icon icon, @Nullable JComponent component, @NotNull Graphics g, int x, int y, boolean selected) {
+    if (selected) {
+      SVGLoader.paintIconWithSelection(icon, component, g, x, y);
+    } else {
+      icon.paintIcon(component, g, x, y);
+    }
   }
 
   public static class IconSizeWrapper implements Icon {

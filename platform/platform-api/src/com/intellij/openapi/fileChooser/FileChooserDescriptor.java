@@ -270,7 +270,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   public String getName(final VirtualFile file) {
-    return file.getPath();
+    return file.getPresentableName();
   }
 
   public @NlsSafe @Nullable String getComment(final VirtualFile file) {

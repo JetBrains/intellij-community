@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.sun.jna.Callback
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
@@ -15,12 +16,15 @@ import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
 import java.util.function.Consumer
 
-internal abstract class SystemDarkThemeDetector {
+internal sealed class SystemDarkThemeDetector {
   companion object {
-    @JvmStatic fun createDetector(syncFunction: Consumer<Boolean>) : SystemDarkThemeDetector = when {
-      SystemInfo.isMacOSMojave -> MacOSDetector(syncFunction)
-      SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
-      else -> EmptyDetector()
+    @JvmStatic
+    fun createDetector(syncFunction: Consumer<Boolean>): SystemDarkThemeDetector {
+      return when {
+        SystemInfo.isMacOSMojave -> MacOSDetector(syncFunction)
+        SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
+        else -> EmptyDetector()
+      }
     }
   }
 
@@ -31,98 +35,97 @@ internal abstract class SystemDarkThemeDetector {
    */
   protected abstract fun isDark(): Boolean
 
-  abstract val detectionSupported : Boolean
+  abstract val detectionSupported: Boolean
+}
 
-  private abstract class AsyncDetector : SystemDarkThemeDetector() {
-    abstract val syncFunction: Consumer<Boolean>
+private abstract class AsyncDetector : SystemDarkThemeDetector() {
+  abstract val syncFunction: Consumer<Boolean>
 
-    override fun check() {
-      ApplicationManager.getApplication()?.let { application ->
-        application.executeOnPooledThread {
-          val isDark = isDark()
-          application.invokeLater(Runnable { syncFunction.accept(isDark) }, ModalityState.any())
-        }
-      }
+  override fun check() {
+    NonUrgentExecutor.getInstance().execute {
+      val isDark = isDark()
+      ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(isDark) }, ModalityState.any())
+    }
+  }
+}
+
+private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
+  override val detectionSupported: Boolean
+    get() = SystemInfo.isMacOSMojave && JnaLoader.isLoaded()
+
+  val themeChangedCallback = object : Callback {
+    @Suppress("unused")
+    fun callback() { // self: ID, selector: Pointer, id: ID
+      check()
     }
   }
 
-  private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
-    override val detectionSupported: Boolean = SystemInfo.isMacOSMojave && JnaLoader.isLoaded()
-
-    val themeChangedCallback = object : Callback {
-      @Suppress("unused")
-      fun callback() { // self: ID, selector: Pointer, id: ID
-        check()
-      }
-    }
-
-    init {
-      val pool = Foundation.NSAutoreleasePool()
-      try {
-          val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSColorChangesObserver")
-          if (ID.NIL != delegateClass) {
-            if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleAppleThemeChanged:"), themeChangedCallback, "v@")) {
-              throw RuntimeException("Cannot add observer method")
-            }
-            Foundation.registerObjcClassPair(delegateClass)
+  init {
+    val pool = Foundation.NSAutoreleasePool()
+    try {
+        val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSColorChangesObserver")
+        if (ID.NIL != delegateClass) {
+          if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleAppleThemeChanged:"), themeChangedCallback, "v@")) {
+            throw RuntimeException("Cannot add observer method")
           }
+          Foundation.registerObjcClassPair(delegateClass)
+        }
 
-          val delegate = Foundation.invoke("NSColorChangesObserver", "new")
-          Foundation.invoke(Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter"), "addObserver:selector:name:object:",
-                            delegate,
-                            Foundation.createSelector("handleAppleThemeChanged:"),
-                            Foundation.nsString("AppleInterfaceThemeChangedNotification"),
-                            ID.NIL)
-      }
-      finally {
-        pool.drain()
-      }
+        val delegate = Foundation.invoke("NSColorChangesObserver", "new")
+        Foundation.invoke(Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter"), "addObserver:selector:name:object:",
+                          delegate,
+                          Foundation.createSelector("handleAppleThemeChanged:"),
+                          Foundation.nsString("AppleInterfaceThemeChangedNotification"),
+                          ID.NIL)
     }
-
-    override fun isDark(): Boolean {
-      val pool = Foundation.NSAutoreleasePool()
-      try { // https://developer.apple.com/forums/thread/118974
-        val userDefaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")
-        val appleInterfaceStyle = Foundation.toStringViaUTF8(Foundation.invoke(userDefaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle")))
-
-        //val autoMode = SystemInfo.isMacOSCatalina &&
-        //               Foundation.invoke(userDefaults, "boolForKey:", Foundation.nsString("AppleInterfaceStyleSwitchesAutomatically")).booleanValue()
-
-        return appleInterfaceStyle?.toLowerCase()?.contains("dark") ?: false
-      }
-      finally{
-        pool.drain()
-      }
+    finally {
+      pool.drain()
     }
   }
 
-  private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
-    override val detectionSupported: Boolean = SystemInfo.isWin10OrNewer && JnaLoader.isLoaded()
+  override fun isDark(): Boolean {
+    val pool = Foundation.NSAutoreleasePool()
+    try { // https://developer.apple.com/forums/thread/118974
+      val userDefaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")
+      val appleInterfaceStyle = Foundation.toStringViaUTF8(Foundation.invoke(userDefaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle")))
 
-    companion object {
-      @NonNls const val REGISTRY_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
-      @NonNls const val REGISTRY_VALUE = "AppsUseLightTheme"
+      //val autoMode = SystemInfo.isMacOSCatalina &&
+      //               Foundation.invoke(userDefaults, "boolForKey:", Foundation.nsString("AppleInterfaceStyleSwitchesAutomatically")).booleanValue()
+
+      return appleInterfaceStyle?.toLowerCase()?.contains("dark") ?: false
     }
-
-    init {
-      Toolkit.getDefaultToolkit().addPropertyChangeListener("win.lightTheme.on") { e: PropertyChangeEvent ->
-        syncFunction.accept(e.newValue != java.lang.Boolean.TRUE)
-      }
+    finally{
+      pool.drain()
     }
+  }
+}
 
-    override fun isDark(): Boolean {
-      try {
-        return Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, REGISTRY_PATH, REGISTRY_VALUE) &&
-               Advapi32Util.registryGetIntValue(WinReg.HKEY_CURRENT_USER, REGISTRY_PATH, REGISTRY_VALUE) == 0
-      }
-      catch (e: Throwable) {}
+private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
+  override val detectionSupported: Boolean
+    get() = SystemInfo.isWin10OrNewer && JnaLoader.isLoaded()
 
-      return false
+  companion object {
+    @NonNls const val REGISTRY_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
+    @NonNls const val REGISTRY_VALUE = "AppsUseLightTheme"
+  }
+
+  init {
+    Toolkit.getDefaultToolkit().addPropertyChangeListener("win.lightTheme.on") { e: PropertyChangeEvent ->
+      syncFunction.accept(e.newValue != java.lang.Boolean.TRUE)
     }
   }
 
-  private class EmptyDetector(override val detectionSupported: Boolean = false) : SystemDarkThemeDetector() {
-    override fun isDark(): Boolean = false
-    override fun check() {}
+  override fun isDark(): Boolean {
+    try {
+      return Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, REGISTRY_PATH, REGISTRY_VALUE) &&
+             Advapi32Util.registryGetIntValue(WinReg.HKEY_CURRENT_USER, REGISTRY_PATH, REGISTRY_VALUE) == 0
+    }
+    catch (e: Throwable) {}
+    return false
   }
+}
+
+private class EmptyDetector(override val detectionSupported: Boolean = false) : SystemDarkThemeDetector() {
+  override fun isDark(): Boolean = false
+  override fun check() {}
 }

@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.*;
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +37,10 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
 
     boolean dumb = DumbService.isDumb(project);
     if (!dumb || isModelDumbAware(e)) {
-      showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e, true, true);
+      String tabID = Registry.is("search.everywhere.group.contributors.by.type")
+                     ? SearchEverywhereTabDescriptor.PROJECT.getId()
+                     : ClassSearchEverywhereContributor.class.getSimpleName();
+      showInSearchEverywherePopup(tabID, e, true, true);
     }
     else {
       invokeGoToFile(project, e);

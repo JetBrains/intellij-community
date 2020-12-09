@@ -28,12 +28,6 @@ class InternalUserInvokedFullAnalysisAction : AnAction(), DumbAware {
   }
 }
 
-class UserInvokedHeapDumpSnapshotAction : AnAction(), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) {
-    HeapDumpSnapshotRunnable(MemoryReportReason.UserInvoked, SCHEDULE_ON_NEXT_START).run()
-  }
-}
-
 class InternalNonuserInvokedHeapDumpSnapshotAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     HeapDumpSnapshotRunnable(MemoryReportReason.InternalUserInvoked, SCHEDULE_ON_NEXT_START).run()

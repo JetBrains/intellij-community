@@ -34,7 +34,10 @@ class TestCustomRootModelSerializerExtension : JpsModelSerializerExtension() {
 
       FileUtil.writeToFile(File(tempPluginRoot, "META-INF/services/${JpsModelSerializerExtension::class.java.name}"),
                            TestCustomRootModelSerializerExtension::class.java.name)
-      val pluginClassLoader = UrlClassLoader.build().parent(TestCustomRootModelSerializerExtension::class.java.classLoader).urls(tempPluginRoot.toURI().toURL()).get()
+      val pluginClassLoader = UrlClassLoader.build()
+        .parent(TestCustomRootModelSerializerExtension::class.java.classLoader)
+        .files(listOf(tempPluginRoot.toPath()))
+        .get()
       val pluginDescriptor = DefaultPluginDescriptor(PluginId.getId("com.intellij.custom.source.root.test"), pluginClassLoader)
       JpsPluginBean.EP_NAME.point.registerExtension(JpsPluginBean(), pluginDescriptor, jpsPluginDisposable)
     }

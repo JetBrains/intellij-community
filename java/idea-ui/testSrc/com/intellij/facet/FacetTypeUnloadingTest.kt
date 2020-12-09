@@ -2,27 +2,19 @@
 package com.intellij.facet
 
 import com.intellij.facet.impl.invalid.InvalidFacetManager
-import com.intellij.facet.mock.MockFacet
-import com.intellij.facet.mock.MockFacetConfiguration
-import com.intellij.facet.mock.MockFacetType
-import com.intellij.facet.mock.MockSubFacetType
-import com.intellij.openapi.Disposable
+import com.intellij.facet.mock.*
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
-import junit.framework.TestCase
 
 class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
   fun `test unload and load facet`() {
     val facetManager = FacetManager.getInstance(module)
     val addedFacet = runWithRegisteredFacetTypes(MockFacetType()) {
       runWriteAction {
-        val configuration = MockFacetConfiguration().apply {
-          data = "my data"
-        }
         val model = facetManager.createModifiableModel()
-        val facet = MockFacet(module, "mock", configuration)
+        val facet = MockFacet(module, "mock", MockFacetConfiguration("my data"))
         model.addFacet(facet)
         model.commit()
         assertTrue(facet.isInitialized)
@@ -108,33 +100,10 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     assertSame(mockFacet, mockSubFacet.underlyingFacet)
   }
 
-  private inline fun <T> runWithRegisteredFacetTypes(vararg types: FacetType<*, *>, action: () -> T): T {
-    val disposable = Disposer.newDisposable()
-    for (type in types) {
-      registerFacetType(type, disposable)
-    }
-
-    try {
-      return action()
-    }
-    finally {
-      Disposer.dispose(disposable)
-    }
-  }
-
-  private fun registerFacetType(type: FacetType<*, *>, disposable: Disposable) {
-    val facetTypeDisposable = Disposer.newDisposable()
-    Disposer.register(disposable, Disposable {
-      runWriteAction {
-        Disposer.dispose(facetTypeDisposable)
-      }
-    })
-    FacetType.EP_NAME.getPoint().registerExtension(type, facetTypeDisposable)
-  }
-
   override fun setUp() {
     super.setUp()
     //initialize facet types and register listeners
     FacetTypeRegistry.getInstance().facetTypes
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({}, testRootDisposable)
   }
 }

@@ -6,8 +6,8 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -457,7 +457,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     for (DataNode<?> node : nodes) {
       node.visit(dataNode -> dataNode.setIgnored(ignored));
     }
-    ServiceManager.getService(ProjectDataManager.class).importData(projectDataNode, myProject, true);
+    ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectDataNode, myProject, true);
   }
 
   protected void importProject(@NonNls String config) throws IOException {
@@ -491,7 +491,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             System.err.println("Got null External project after import");
             return;
           }
-          ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, true);
+          ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject, true);
           System.out.println("External project was successfully imported");
         }
 
@@ -503,12 +503,11 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
 
     ExternalSystemProgressNotificationManager notificationManager =
-      ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        if (StringUtil.isEmptyOrSpaces(text)) return;
-        (stdOut ? System.out : System.err).print(text);
+        printOutput(text, stdOut);
       }
     };
     notificationManager.addNotificationListener(listener);
@@ -522,6 +521,11 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     if (!error.isNull()) {
       handleImportFailure(error.get().first, error.get().second);
     }
+  }
+
+  protected void printOutput(@NotNull String text, boolean stdOut) {
+    if (StringUtil.isEmptyOrSpaces(text)) return;
+    (stdOut ? System.out : System.err).print(text);
   }
 
   protected void handleImportFailure(@NotNull String errorMessage, @Nullable String errorDetails) {

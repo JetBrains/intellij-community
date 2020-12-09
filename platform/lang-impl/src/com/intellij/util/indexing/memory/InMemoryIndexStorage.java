@@ -4,20 +4,41 @@ package com.intellij.util.indexing.memory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
+import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
+  private final Map<K, ValueContainerImpl<V>> myMap;
 
-  private final Map<K, ValueContainerImpl<V>> myMap = new THashMap<>();
+  public InMemoryIndexStorage(@NotNull KeyDescriptor<K> keyDescriptor) {
+    myMap = new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<>() {
+      @Override
+      public int hashCode(@Nullable K o) {
+        if (o == null) return 0;
+        return keyDescriptor.getHashCode(o);
+      }
+
+      @Override
+      public boolean equals(@Nullable K a, @Nullable K b) {
+        if (a == null && b != null) return false;
+        if (b == null && a != null) return false;
+        return keyDescriptor.isEqual(a, b);
+      }
+    });
+  }
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {

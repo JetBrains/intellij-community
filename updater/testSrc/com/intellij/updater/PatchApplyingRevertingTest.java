@@ -15,10 +15,7 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
@@ -230,6 +227,28 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   @Test
+  public void testApplyingWithAbsentOptionalDirectory() throws Exception {
+    Files.createDirectory(myOlderDir.toPath().resolve("opt"));
+    Files.write(myOlderDir.toPath().resolve("opt/file.txt"), "previous content".getBytes(StandardCharsets.UTF_8));
+    Files.createDirectory(myNewerDir.toPath().resolve("opt"));
+    Files.write(myNewerDir.toPath().resolve("opt/file.txt"), "new content".getBytes(StandardCharsets.UTF_8));
+    Files.write(myNewerDir.toPath().resolve("opt/another.txt"), "content".getBytes(StandardCharsets.UTF_8));
+
+    myPatchSpec.setOptionalFiles(Collections.singletonList("opt/file.txt"));
+    createPatch();
+
+    FileUtil.delete(myOlderDir.toPath().resolve("opt"));
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertThat(preparationResult.validationResults).isEmpty();
+    assertAppliedAndReverted(preparationResult, expected -> {
+      expected.remove("opt/");
+      expected.remove("opt/file.txt");
+      expected.remove("opt/another.txt");
+    });
+  }
+
+  @Test
   public void testRevertingWithAbsentFileToDelete() throws Exception {
     createPatch();
 
@@ -334,6 +353,22 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/boot.jar",
                            ValidationResult.Action.VALIDATE,
+                           ValidationResult.MODIFIED_MESSAGE,
+                           ValidationResult.Option.NONE));
+  }
+
+  @Test
+  public void testApplyWhenCommonFileChangesStrictFile() throws Exception {
+    myPatchSpec.setStrictFiles(Collections.singletonList("lib/annotations.jar"));
+    createPatch();
+
+    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/annotations.jar"));
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.ERROR,
+                           "lib/annotations.jar",
+                           ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.NONE));
   }

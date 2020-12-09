@@ -100,7 +100,7 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     WriteCommandAction.runWriteCommandAction(getProject(),
                                              () -> {
                                                PsiTypeElement typeElement = (PsiTypeElement)JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(((PsiParameter)elementAtCaret).getTypeElement());
-                                               assertTrue(typeElement != null && typeElement.isValid());
+                                               assertTrue(typeElement.isValid());
                                                assertEquals("List<String>", typeElement.getText());
                                              });
 

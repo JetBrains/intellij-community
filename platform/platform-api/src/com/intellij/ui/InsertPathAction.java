@@ -23,12 +23,12 @@ import java.io.File;
 @SuppressWarnings("ComponentNotRegistered")
 public final class InsertPathAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(InsertPathAction.class);
-  protected final JTextComponent myTextField;
-  protected static final CustomShortcutSet CTRL_F = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
-  protected final FileChooserDescriptor myDescriptor;
-  protected final boolean myInsertSystemDependentPaths;
+  private final JTextComponent myTextField;
+  private static final ShortcutSet CTRL_F = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
+  private final FileChooserDescriptor myDescriptor;
+  private final boolean myInsertSystemDependentPaths;
   private MouseListener myPopupHandler;
-  protected static final Key INSERT_PATH_ACTION= Key.create("insertPathAction");
+  private static final Key INSERT_PATH_ACTION= Key.create("insertPathAction");
 
   private InsertPathAction(JTextComponent textField, FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
     super(UIBundle.messagePointer("insert.file.path.to.text.action.name"));
@@ -94,7 +94,7 @@ public final class InsertPathAction extends AnAction {
         textField, descriptor != null? descriptor : FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), insertSystemDependentPaths
       );
       actionGroup.add(action);
-      MouseListener popupHandler = PopupHandler.installUnknownPopupHandler(textField, actionGroup, ActionManager.getInstance());
+      MouseListener popupHandler = PopupHandler.installUnknownPopupHandler(textField, actionGroup);
       action.savePopupHandler(popupHandler);
       textField.putClientProperty(INSERT_PATH_ACTION, action);
     }

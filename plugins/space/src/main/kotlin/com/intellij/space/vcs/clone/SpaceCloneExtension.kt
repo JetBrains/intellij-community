@@ -1,15 +1,15 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.clone
 
-import com.intellij.space.settings.SpaceSettings
-import com.intellij.space.ui.cleanupUrl
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.ui.cleanupUrl
 import icons.SpaceIcons
-import platform.common.ProductName
 import javax.swing.Icon
 
 class SpaceCloneExtension : VcsCloneDialogExtension {
@@ -19,7 +19,7 @@ class SpaceCloneExtension : VcsCloneDialogExtension {
 
   override fun getIcon(): Icon = SpaceIcons.Main
 
-  override fun getName(): String = ProductName
+  override fun getName(): String = SpaceBundle.message("product.name")
 
   override fun getAdditionalStatusLines(): List<VcsCloneDialogExtensionStatusLine> {
     val server = cleanupUrl(SpaceSettings.getInstance().serverSettings.server)

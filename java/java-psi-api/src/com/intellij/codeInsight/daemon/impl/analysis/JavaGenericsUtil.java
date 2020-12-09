@@ -46,7 +46,6 @@ public final class JavaGenericsUtil {
         return true;
       }
 
-      assert parameters.length == 0;
       final PsiClassType.ClassResolveResult resolved = classType.resolveGenerics();
       final PsiClass aClass = resolved.getElement();
       if (aClass instanceof PsiTypeParameter) {

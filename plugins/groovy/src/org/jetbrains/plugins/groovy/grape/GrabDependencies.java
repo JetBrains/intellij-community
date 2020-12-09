@@ -48,7 +48,6 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -178,7 +177,7 @@ public class GrabDependencies implements IntentionAction {
         DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true, true, false);
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
         javaParameters.getProgramParametersList().add(queries.get(grabText));
-        javaParameters.setUseDynamicClasspath(true);
+        javaParameters.setUseDynamicClasspath(project);
         lines.put(grabText, javaParameters.toCommandLine());
       }
       catch (CantRunException e) {
@@ -222,8 +221,8 @@ public class GrabDependencies implements IntentionAction {
 
   static Map<@NlsSafe String, String> prepareQueries(PsiFile file) {
     final Set<GrAnnotation> grabs = new LinkedHashSet<>();
-    final Set<GrAnnotation> excludes = new THashSet<>();
-    final Set<GrAnnotation> resolvers = new THashSet<>();
+    final Set<GrAnnotation> excludes = new HashSet<>();
+    final Set<GrAnnotation> resolvers = new HashSet<>();
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {

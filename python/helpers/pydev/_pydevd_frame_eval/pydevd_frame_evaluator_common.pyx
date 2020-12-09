@@ -110,6 +110,11 @@ cdef ThreadInfo get_thread_info():
     return thread_info
 
 
+cdef clear_thread_local_info():
+    global _thread_local_info
+    _thread_local_info = threading.local()
+
+
 cdef FuncCodeInfo get_func_code_info(PyCodeObject * code_obj):
     '''
     Provides code-object related info.

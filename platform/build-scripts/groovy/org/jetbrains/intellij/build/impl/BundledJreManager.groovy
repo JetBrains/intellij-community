@@ -10,7 +10,11 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
@@ -35,29 +39,34 @@ class BundledJreManager {
     new File(buildContext.paths.communityHome, 'build/dependencies')
   }
 
-  String extractJre(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    String targetDir = "${buildContext.paths.buildOutputRoot}/jre_${os.jbrArchiveSuffix}_$arch"
-    if (new File(targetDir).exists()) {
+  Path extractJre(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
+    Path targetDir = Paths.get(buildContext.paths.buildOutputRoot, "jre_${os.jbrArchiveSuffix}_$arch")
+    if (Files.isDirectory(targetDir)) {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
 
-    File archive = findArchive(os, jreBuild, arch)
-    if (archive == null) return null
-
-    String destination = "${targetDir}/jbr"
-    buildContext.messages.block("Extracting ${archive} into ${destination}") {
-      File destinationDir = new File(destination)
-      if (destinationDir.exists()) destinationDir.deleteDir()
-      untar(archive, destination)
-      fixJbrPermissions(destination, os == OsFamily.WINDOWS)
+    File archive = findJreArchive(os, arch)
+    if (archive == null) {
+      return null
     }
 
-    targetDir
+    Path destinationDir = targetDir.resolve("jbr")
+    buildContext.messages.block("Extracting $archive into $destinationDir") {
+      destinationDir.deleteDir()
+      untar(archive, destinationDir.toString())
+      fixJbrPermissions(destinationDir, os == OsFamily.WINDOWS)
+    }
+
+    return targetDir
   }
 
   File findJreArchive(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    findArchive(os, jreBuild, arch)
+    def build =
+      buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}_${getJBRArchSuffix(arch)}") ?:
+      buildContext.dependenciesProperties.propertyOrNull("jreBuild_${os.jbrArchiveSuffix}") ?:
+      jreBuild
+    findArchive(os, build, arch)
   }
 
   private File findArchive(OsFamily os, String jreBuild, JvmArchitecture arch) {
@@ -102,17 +111,16 @@ class BundledJreManager {
     }
   }
 
-  private static void fixJbrPermissions(String destination, boolean forWin) {
+  private static void fixJbrPermissions(Path destinationDir, boolean forWin) {
     Set<PosixFilePermission> exeOrDir = EnumSet.noneOf(PosixFilePermission.class)
     Collections.addAll(exeOrDir, OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE)
-    
+
     Set<PosixFilePermission> regular = EnumSet.of(OWNER_READ, OWNER_WRITE, GROUP_READ, OTHERS_READ)
 
-    Path root = Paths.get(destination)
-    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(destinationDir, new SimpleFileVisitor<Path>() {
       @Override
       FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (dir != root && SystemInfo.isUnix) {
+        if (dir != destinationDir && SystemInfo.isUnix) {
           Files.setPosixFilePermissions(dir, exeOrDir)
         }
         return FileVisitResult.CONTINUE
@@ -155,7 +163,11 @@ class BundledJreManager {
     }
 
     String prefix
-    if (buildContext.options.bundledJrePrefix != null) {
+    if (arch == JvmArchitecture.aarch64) {
+      // prefix cannot be overridden here
+      prefix = 'jbr_nomod-'
+    }
+    else if (buildContext.options.bundledJrePrefix != null) {
       prefix = buildContext.options.bundledJrePrefix
     }
     else if (arch == JvmArchitecture.x32 || buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
@@ -165,7 +177,21 @@ class BundledJreManager {
       prefix = "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"
     }
 
-    "${prefix}${update}-${os.jbrArchiveSuffix}-${arch == JvmArchitecture.x32 ? 'x86' : 'x64'}-${build}.tar.gz"
+    def archSuffix = getJBRArchSuffix(arch)
+    "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+  }
+
+  private static String getJBRArchSuffix(JvmArchitecture arch) {
+    switch (arch) {
+      case JvmArchitecture.x32:
+        return 'x86'
+      case JvmArchitecture.x64:
+        return 'x64'
+      case JvmArchitecture.aarch64:
+        return 'aarch64'
+      default:
+        throw new IllegalStateException("Unsupported arch: $arch")
+    }
   }
 
   /**
@@ -194,14 +220,12 @@ class BundledJreManager {
 
   @CompileDynamic
   void repackageX86Jre(OsFamily osFamily) {
-    buildContext.messages.info("Packaging x86 JRE for ${osFamily}")
-
     if (x86JreDownloadUrl(osFamily) == null) {
       buildContext.messages.warning("... skipped: download URL is unknown")
       return
     }
 
-    String jreDirectoryPath = extractJre(osFamily, JvmArchitecture.x32)
+    Path jreDirectoryPath = extractJre(osFamily, JvmArchitecture.x32)
     if (jreDirectoryPath == null) {
       buildContext.messages.warning("... skipped: JRE archive not found")
       return

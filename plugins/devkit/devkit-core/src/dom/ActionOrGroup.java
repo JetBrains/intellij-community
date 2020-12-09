@@ -19,6 +19,8 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 
+import java.util.List;
+
 public interface ActionOrGroup extends DomElement {
 
   @NotNull
@@ -49,4 +51,8 @@ public interface ActionOrGroup extends DomElement {
   @NotNull
   @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
   GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
+
+  @NotNull
+  List<OverrideText> getOverrideTexts();
+  OverrideText addOverrideText();
 }

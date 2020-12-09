@@ -1,0 +1,4 @@
+dependencies {
+  compile("com.android.support:appcompat-v7:22.1.1")
+  runtime(group="org.gradle.test.classifiers", name="service", version="1.0", classifier="jdk14", ext="jar")
+}

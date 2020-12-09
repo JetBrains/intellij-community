@@ -90,7 +90,9 @@ public class StrongConnectivityHelper {
     for (Statement stat : lst) {
       set.addAll(stat.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_FORWARD));
     }
-    set.removeAll(lst);
+    for (Statement stat : lst) {
+      set.remove(stat);
+    }
 
     return (set.size() == 0);
   }

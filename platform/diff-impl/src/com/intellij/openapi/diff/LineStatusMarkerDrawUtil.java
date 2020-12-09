@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff;
 
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -10,21 +8,19 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.ex.VisibleRangeMerger.FlagsProvider;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IntPair;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,26 +28,53 @@ import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
 public class LineStatusMarkerDrawUtil {
   @NotNull
-  public static RangeHighlighter createTooltipRangeHighlighter(@NotNull Range range,
-                                                               @NotNull MarkupModel markupModel) {
-    TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
-    TextAttributes attributes = new TextAttributes() {
-      @Override
-      public Color getErrorStripeColor() {
-        return LineStatusMarkerDrawUtil.getErrorStripeColor(range);
+  public static List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
+    int lineHeight = editor.getLineHeight();
+    int triangleGap = lineHeight / 3;
+
+    Rectangle clip = new Rectangle(0, y - lineHeight, editor.getComponent().getWidth(), lineHeight * 2);
+    List<ChangesBlock<Unit>> blocks = VisibleRangeMerger.merge(editor, ranges, clip);
+
+    List<Range> result = new ArrayList<>();
+    for (ChangesBlock<Unit> block : blocks) {
+      ChangedLines<Unit> firstChange = block.changes.get(0);
+      ChangedLines<Unit> lastChange = block.changes.get(block.changes.size() - 1);
+
+      int startY = firstChange.y1;
+      int endY = lastChange.y2;
+
+      // "empty" range for deleted block
+      if (firstChange.y1 == firstChange.y2) {
+        startY -= triangleGap;
       }
-    };
+      if (lastChange.y1 == lastChange.y2) {
+        endY += triangleGap;
+      }
 
-    RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                   DiffDrawUtil.LST_LINE_MARKER_LAYER, attributes,
-                                                                   HighlighterTargetArea.LINES_IN_RANGE);
-    highlighter.setThinErrorStripeMark(true);
-    highlighter.setGreedyToLeft(true);
-    highlighter.setGreedyToRight(true);
-
-    return highlighter;
+      if (startY <= y && endY > y) {
+        result.addAll(block.ranges);
+      }
+    }
+    return result;
   }
 
+  public static Rectangle calcBounds(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int lineNum) {
+    int yStart = editor.visualLineToY(lineNum);
+    Rectangle clip = new Rectangle(0, yStart, 0, editor.getLineHeight());
+
+    List<ChangesBlock<Unit>> blocks = VisibleRangeMerger.merge(editor, ranges, clip);
+    if (blocks.isEmpty()) return null;
+
+    List<ChangedLines<Unit>> changes = blocks.get(0).changes;
+    int y = changes.get(0).y1;
+    int endY = changes.get(changes.size() - 1).y2;
+    if (y == endY) {
+      endY += editor.getLineHeight();
+    }
+
+    IntPair area = getGutterArea(editor);
+    return new Rectangle(area.first, y, area.second - area.first, endY - y);
+  }
 
   public static void paintDefault(@NotNull Editor editor,
                                   @NotNull Graphics g,
@@ -67,10 +90,10 @@ public class LineStatusMarkerDrawUtil {
     }
   }
 
-  private static void paintChangedLines(@NotNull Graphics2D g,
-                                        @NotNull Editor editor,
-                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
-                                        int framingBorder) {
+  public static void paintChangedLines(@NotNull Graphics2D g,
+                                       @NotNull Editor editor,
+                                       @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
+                                       int framingBorder) {
     EditorImpl editorImpl = (EditorImpl)editor;
 
     Color borderColor = getGutterBorderColor(editor);
@@ -237,8 +260,13 @@ public class LineStatusMarkerDrawUtil {
 
   @Nullable
   public static Color getErrorStripeColor(@NotNull Range range) {
+    return getErrorStripeColor(range.getType());
+  }
+
+  @Nullable
+  public static Color getErrorStripeColor(byte type) {
     final EditorColorsScheme scheme = getColorScheme(null);
-    switch (range.getType()) {
+    switch (type) {
       case Range.INSERTED:
         return scheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
       case Range.DELETED:
@@ -276,5 +304,22 @@ public class LineStatusMarkerDrawUtil {
   @NotNull
   private static EditorColorsScheme getColorScheme(@Nullable Editor editor) {
     return editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+  }
+
+  public static class DiffStripeTextAttributes extends TextAttributes {
+    private final byte myType;
+
+    public DiffStripeTextAttributes(byte type) {
+      myType = type;
+    }
+
+    public byte getType() {
+      return myType;
+    }
+
+    @Override
+    public Color getErrorStripeColor() {
+      return LineStatusMarkerDrawUtil.getErrorStripeColor(myType);
+    }
   }
 }

@@ -18,6 +18,7 @@ import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
+import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -203,7 +205,29 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-14384
   public void testRelativeImportInsideNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg", ""));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
+      String fileName = "nspkg/nssubpkg";
+      String toDirName = "";
+      doComparingDirectories(testDir -> {
+        PyNamespacePackagesService.getInstance(myFixture.getModule()).toggleMarkingAsNamespacePackage(testDir.findFileByRelativePath("nspkg"));
+
+        final Project project = myFixture.getProject();
+        final PsiManager manager = PsiManager.getInstance(project);
+        final VirtualFile virtualFile = testDir.findFileByRelativePath(fileName);
+        assertNotNull(virtualFile);
+        PsiElement file = manager.findFile(virtualFile);
+        if (file == null) {
+          file = manager.findDirectory(virtualFile);
+        }
+        assertNotNull(file);
+        final VirtualFile toVirtualDir = testDir.findFileByRelativePath(toDirName);
+        assertNotNull(toVirtualDir);
+        final PsiDirectory toDir = manager.findDirectory(toVirtualDir);
+        new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, toDir, false, false, null, null).run();
+
+        PyNamespacePackagesService.getInstance(myFixture.getModule()).setNamespacePackageFolders(new ArrayList<>());
+      });
+    });
   }
 
   // PY-14384
@@ -244,7 +268,7 @@ public class PyMoveTest extends PyTestCase {
       fail();
     }
     catch (IncorrectOperationException e) {
-      assertEquals("Cannot use module name 'dst-unimportable.py' in imports", e.getMessage());
+      assertEquals("Cannot use a module name 'dst-unimportable.py' in imports", e.getMessage());
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 
 internal data class CommonSdkLookupBuilder(
@@ -18,9 +19,11 @@ internal data class CommonSdkLookupBuilder(
 
   override val sdkType: SdkType? = null,
 
+  override val onDownloadingSdkDetected : (Sdk) -> SdkLookupDownloadDecision = { SdkLookupDownloadDecision.WAIT },
   override val onBeforeSdkSuggestionStarted: () -> SdkLookupDecision = { SdkLookupDecision.CONTINUE },
   override val onLocalSdkSuggested: (UnknownSdkLocalSdkFix) -> SdkLookupDecision = { SdkLookupDecision.CONTINUE },
   override val onDownloadableSdkSuggested: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision = { SdkLookupDecision.CONTINUE },
+  override val onSdkFixResolved : (UnknownSdkFixAction) -> SdkLookupDecision = { SdkLookupDecision.CONTINUE },
 
   override val sdkHomeFilter: ((String) -> Boolean)? = null,
   override val versionFilter: ((String) -> Boolean)? = null,
@@ -50,6 +53,9 @@ internal data class CommonSdkLookupBuilder(
   override fun withSdkHomeFilter(filter: (String) -> Boolean) =
     copy(sdkHomeFilter = filter)
 
+  override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision) =
+    copy(onDownloadingSdkDetected = handler)
+
   override fun withProgressIndicator(indicator: ProgressIndicator) =
     copy(progressIndicator = indicator)
 
@@ -65,14 +71,23 @@ internal data class CommonSdkLookupBuilder(
   override fun onLocalSdkSuggested(handler: (UnknownSdkLocalSdkFix) -> SdkLookupDecision) =
     copy(onLocalSdkSuggested = handler)
 
+  override fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision) =
+    copy(onSdkFixResolved = handler)
+
   override fun onDownloadableSdkSuggested(handler: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision) =
     copy(onDownloadableSdkSuggested = handler)
 
   override fun onSdkResolved(handler: (Sdk?) -> Unit) =
-    copy(onSdkResolved = handler)
+    copy(onSdkResolved = this.onSdkResolved + handler)
 
-  override fun onSdkNameResolved(callback: (Sdk?) -> Unit) =
-    copy(onSdkNameResolved = callback)
+  override fun onSdkNameResolved(handler: (Sdk?) -> Unit) =
+    copy(onSdkNameResolved = this.onSdkNameResolved + handler)
 
   override fun executeLookup() = lookup(this)
+
+  @JvmName("plusTUnit")
+  private operator fun <T> ( (T) -> Unit).plus(v : (T) -> Unit) : (T) -> Unit = {
+    this(it)
+    v(it)
+  }
 }

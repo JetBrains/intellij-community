@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class SslKeyStore extends DelegateKeyStore {
   public static final String SSL_DEFERRED_KEY_LOADING = "sslDeferredKeyLoading";
-  private static final String NAME = "idea-key-store";
+  public static final String NAME = "idea-key-store";
   private static final Map<PrivateKey, X509Certificate> ourAutoAdded = new LinkedHashMap<PrivateKey, X509Certificate>();
   static {
     ourProvider.setProperty("KeyStore." + NAME, SslKeyStore.class.getName());
@@ -36,8 +36,8 @@ public class SslKeyStore extends DelegateKeyStore {
   }
 
   private static void loadUserCert() {
-    String certPath = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH);
-    String keyPath = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH);
+    String certPath = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH);
+    String keyPath = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH);
     if (certPath != null && keyPath != null) {
       try {
         loadKey(certPath, keyPath, null);
@@ -51,9 +51,9 @@ public class SslKeyStore extends DelegateKeyStore {
   public static void loadKey(@NotNull String clientCertPath,
                              @NotNull String clientKeyPath,
                              @Nullable char[] password) throws CertificateException, IOException {
-    PrivateKey key = SslSocketFactory.readPrivateKey(clientKeyPath, password);
+    PrivateKey key = SslUtil.readPrivateKey(clientKeyPath, password);
     if (ourAutoAdded.containsKey(key)) return;
-    X509Certificate cert = SslSocketFactory.readCertificate(clientCertPath);
+    X509Certificate cert = SslUtil.readCertificate(clientCertPath);
     ourAutoAdded.put(key, cert);
   }
 

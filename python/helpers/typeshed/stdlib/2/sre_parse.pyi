@@ -1,5 +1,3 @@
-# Source: https://hg.python.org/cpython/file/2.7/Lib/sre_parse.py
-
 from typing import Any, Dict, Iterable, List, Match, Optional, Pattern as _Pattern, Set, Tuple, Union
 
 SPECIAL_CHARS: str

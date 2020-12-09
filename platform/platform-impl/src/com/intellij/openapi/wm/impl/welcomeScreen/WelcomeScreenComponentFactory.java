@@ -31,6 +31,7 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -47,6 +48,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Objects;
@@ -55,10 +57,8 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManag
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
 import static com.intellij.util.ui.UIUtil.FontSize.SMALL;
 
-public class WelcomeScreenComponentFactory {
-
-  @NotNull
-  static JComponent createSmallLogo() {
+public final class WelcomeScreenComponentFactory {
+  @NotNull static JComponent createSmallLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -81,8 +81,8 @@ public class WelcomeScreenComponentFactory {
     appName.setForeground(JBColor.foreground());
     appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
 
-    ActionLink copyAbout = new ActionLink("", AllIcons.Actions.Copy, createCopyAboutAction());
-    copyAbout.setHoveringIcon(AllIcons.General.CopyHovered);
+    ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
+    copyAbout.setHoveringIcon(AllIcons.Actions.Copy);
     copyAbout.setToolTipText(IdeBundle.message("welcome.screen.copy.about.action.text"));
 
     String appVersion = appInfo.getFullVersion();
@@ -97,16 +97,27 @@ public class WelcomeScreenComponentFactory {
     NonOpaquePanel textPanel = new NonOpaquePanel();
     textPanel.setLayout(new VerticalFlowLayout(0, 0));
     textPanel.setBorder(JBUI.Borders.empty(28, 10, 25, 10));
-    JPanel namePanel = JBUI.Panels.simplePanel(appName).addToRight(copyAbout);
+    JPanel namePanel = JBUI.Panels.simplePanel(appName).andTransparent().addToRight(copyAbout);
     textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
     panel.setToolTipText(applicationName + " " + appVersion);
+
+    panel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        copyAbout.setIcon(AllIcons.Actions.Copy);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        copyAbout.setIcon(EmptyIcon.ICON_16);
+      }
+    });
     return panel;
   }
 
-  @NotNull
-  static JComponent createLogo() {
+  @NotNull static JComponent createLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -174,7 +185,7 @@ public class WelcomeScreenComponentFactory {
   /**
    * Wraps an {@link ActionLink} component and delegates accessibility support to it.
    */
-  protected static class JActionLinkPanel extends JPanel {
+  protected static final class JActionLinkPanel extends JPanel {
     @NotNull private final ActionLink myActionLink;
 
     public JActionLinkPanel(@NotNull ActionLink actionLink) {
@@ -250,15 +261,20 @@ public class WelcomeScreenComponentFactory {
   }
 
   public static JComponent wrapActionLink(@NotNull ActionLink link) {
+    JPanel panel = (JPanel)wrapActionLinkWithoutArrow(link);
+    if (!StringUtil.isEmptyOrSpaces(link.getText())) {
+      panel.add(createArrow(link), BorderLayout.EAST);
+    }
+    return panel;
+  }
+
+  public static JComponent wrapActionLinkWithoutArrow(@NotNull ActionLink link) {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);
     link.setNormalColor(getLinkNormalColor());
     JActionLinkPanel panel = new JActionLinkPanel(link);
     panel.setBorder(JBUI.Borders.empty(4, 6));
-    if (!StringUtil.isEmptyOrSpaces(link.getText())) {
-      panel.add(createArrow(link), BorderLayout.EAST);
-    }
     return panel;
   }
 
@@ -291,7 +307,9 @@ public class WelcomeScreenComponentFactory {
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
       if (!types.isEmpty()) {
         NotificationType type = Collections.max(types);
-        actionLink.setIcon(IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
+        actionLink.setIcon(type == NotificationType.IDE_UPDATE
+                           ? AllIcons.Ide.Notification.IdeUpdate
+                           : IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
       }
       panel.setVisible(!types.isEmpty());
     });

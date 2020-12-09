@@ -12,7 +12,7 @@ import java.io.DataOutput
 
 abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdIndexEntry, Int>>(), LexingIdIndexer {
   companion object {
-    private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexAwareIdIndexer")
+    private val LOG = Logger.getInstance(PrebuiltIndexAwareIdIndexer::class.java)
     const val ID_INDEX_FILE_NAME: String = "id-index"
   }
 

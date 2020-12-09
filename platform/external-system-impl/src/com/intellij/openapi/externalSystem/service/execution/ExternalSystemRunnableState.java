@@ -115,6 +115,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myForkSocket;
   }
 
+  public boolean isReattachDebugProcess() {
+    return myConfiguration.isReattachDebugProcess();
+  }
+
+  public boolean isDebugServerProcess() {
+    return myConfiguration.isDebugServerProcess();
+  }
+
   @Nullable
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
@@ -142,15 +150,19 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     final ExecutionConsole consoleView =
       consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
-    AnAction[] restartActions;
+    AnAction[] customActions, restartActions, contextActions;
     if (consoleView == null) {
+      customActions = AnAction.EMPTY_ARRAY;
       restartActions = AnAction.EMPTY_ARRAY;
+      contextActions = AnAction.EMPTY_ARRAY;
       Disposer.register(myProject, processHandler);
     }
     else {
       Disposer.register(myProject, consoleView);
       Disposer.register(consoleView, processHandler);
+      customActions = consoleManager.getCustomActions(myProject, task, myEnv);
       restartActions = consoleManager.getRestartActions(consoleView);
+      contextActions = consoleManager.getCustomContextActions(myProject, task, myEnv);
     }
     DefaultBuildDescriptor buildDescriptor =
       new DefaultBuildDescriptor(task.getId(), executionName, task.getExternalProjectPath(), System.currentTimeMillis());
@@ -188,8 +200,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
                 .withProcessHandler(processHandler, view -> ExternalSystemRunConfiguration
                   .foldGreetingOrFarewell(consoleView, greeting, true))
                 .withContentDescriptor(() -> myContentDescriptor)
+                .withActions(customActions)
                 .withRestartAction(rerunTaskAction)
                 .withRestartActions(restartActions)
+                .withContextActions(contextActions)
                 .withExecutionEnvironment(myEnv);
               progressListener.onEvent(id,
                                        new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.status.running"))
@@ -212,8 +226,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
             DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, progressListener);
-            FailureResult failureResult =
-              ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject, dataProvider);
+            FailureResult failureResult = ExternalSystemUtil.createFailureResult(
+              executionName + " " + BuildBundle.message("build.status.failed"), e, id.getProjectSystemId(), myProject, dataProvider);
             eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                  BuildBundle.message("build.status.failed"), failureResult));
             processHandler.notifyProcessTerminated(1);
@@ -314,18 +328,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   }
 
   private BuildView createBuildView(DefaultBuildDescriptor buildDescriptor, ExecutionConsole executionConsole) {
-    return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state",
-                         new ViewManager() {
-                           @Override
-                           public boolean isConsoleEnabledByDefault() {
-                             return true;
-                           }
-
-                           @Override
-                           public boolean isBuildContentView() {
-                             return false;
-                           }
-                         });
+    ExternalSystemRunConfigurationViewManager viewManager = myProject.getService(ExternalSystemRunConfigurationViewManager.class);
+    return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state", viewManager) {
+      @Override
+      public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+        super.onEvent(buildId, event);
+        viewManager.onEvent(buildId, event);
+      }
+    };
   }
 
   public void setContentDescriptor(@Nullable RunContentDescriptor contentDescriptor) {

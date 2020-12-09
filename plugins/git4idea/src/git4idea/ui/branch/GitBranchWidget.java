@@ -7,10 +7,10 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -27,13 +27,12 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.DvcsImplIcons;
-
-import javax.swing.*;
-
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Status bar widget which displays the current branch for the file currently open in the editor.
@@ -111,6 +110,14 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     mySettings.setRecentRoot(path);
   }
 
+  @Override
+  protected @NlsContexts.Tooltip @Nullable String getToolTip(@Nullable GitRepository repository) {
+    if (repository != null && repository.getState() == Repository.State.DETACHED) {
+      return GitBundle.message("git.status.bar.widget.tooltip.detached");
+    }
+    return super.getToolTip(repository);
+  }
+
   public static class Listener implements VcsRepositoryMappingListener {
     private final Project myProject;
 
@@ -147,7 +154,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isEnabledByDefault() {
-      return !UISettings.getInstance().getShowNewNavbarVcsGroup();
+      return !Registry.is("ide.new.navbar", false);
     }
 
     @Override

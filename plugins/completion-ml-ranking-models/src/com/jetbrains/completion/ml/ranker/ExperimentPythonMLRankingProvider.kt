@@ -5,11 +5,12 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.ModelMetadata
 import com.intellij.internal.ml.completion.CompletionRankingModelBase
 import com.intellij.internal.ml.completion.JarCompletionModelProvider
-import com.jetbrains.completion.ranker.model.python.MLGlassBox
 import com.intellij.lang.Language
+import com.jetbrains.completion.ranker.model.python.exp.MLGlassBox
 
-class ExperimentPythonMLRankingProvider: JarCompletionModelProvider(
-  CompletionRankingModelsBundle.message("ml.completion.experiment.model.python"), "python_features"), ExperimentModelProvider {
+class ExperimentPythonMLRankingProvider :
+  JarCompletionModelProvider(CompletionRankingModelsBundle.message("ml.completion.experiment.model.python"), "python_features_exp"),
+  ExperimentModelProvider {
 
   override fun createModel(metadata: ModelMetadata): DecisionFunction {
     return object : CompletionRankingModelBase(metadata) {

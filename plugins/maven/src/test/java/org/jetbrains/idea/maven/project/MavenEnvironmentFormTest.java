@@ -20,8 +20,11 @@ public class MavenEnvironmentFormTest extends UsefulTestCase {
   public void shouldNotShowDuplicatedBundledMavenHome() {
     MavenGeneralPanel panel = new MavenGeneralPanel();
     assertThat(panel,
-               t -> assertSameElements("Absolute path to bundled maven should not present", t.getHistory(),
+               t -> assertContainsElements(t.getHistory(),
                                        Collections.singleton(MavenServerManager.BUNDLED_MAVEN_3)));
+    assertThat(panel,
+               t -> assertDoesntContain(t.getHistory(),
+                                           MavenServerManager.resolveEmbeddedMavenHome().getMavenHome().getAbsolutePath()));
   }
 
   @Test

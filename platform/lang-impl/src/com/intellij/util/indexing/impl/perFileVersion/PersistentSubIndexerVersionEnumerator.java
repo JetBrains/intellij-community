@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Comparing;
@@ -74,13 +74,10 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
   }
 
   private void init() throws IOException {
-    myMap = new PersistentHashMap<SubIndexerVersion, Integer>(myFile, mySubIndexerTypeDescriptor, EnumeratorIntegerDescriptor.INSTANCE) {
-      //@Override
-      //protected boolean wantNonNegativeIntegralValues() {
-      //  return true;
-      //}
+    myMap = PersistentMapBuilder.newBuilder(myFile.toPath(), mySubIndexerTypeDescriptor, EnumeratorIntegerDescriptor.INSTANCE)
+      //.wantNonNegativeIntegralValues()
+    .build();
       // getSize/remove are required here
-    };
     File nextVersionFile = getNextVersionFile(myFile);
     String intValue = nextVersionFile.exists() ? FileUtil.loadFile(nextVersionFile, StandardCharsets.UTF_8) : String.valueOf(1);
     try {
@@ -93,7 +90,7 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
   }
 
   public void clear() throws IOException {
-    PersistentHashMap.deleteMap(myMap);
+    myMap.closeAndClean();
     init();
   }
 

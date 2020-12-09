@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayBackedFMap implements KeyFMap {
+class ArrayBackedFMap implements KeyFMap {
   static final int ARRAY_THRESHOLD = 8;
   // Invariant: keys are always sorted
   private final int[] keys;

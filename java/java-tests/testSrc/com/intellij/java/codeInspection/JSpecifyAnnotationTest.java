@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,7 +22,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.EntryStream;
@@ -58,7 +56,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     }
   }; 
   
-  private static final String PACKAGE_NAME = "jspecify.annotations";
+  private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/codeanalysis/");
   @Parameterized.Parameter
   public String myFileName;
@@ -91,7 +89,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
   @Test
   public void test() throws IOException {
     Path path = PATH.resolve(myFileName);
-    String fileText = new String(Files.readAllBytes(path), CharsetToolkit.UTF8_CHARSET).replace("\r\n", "\n");
+    String fileText = Files.readString(path).replace("\r\n", "\n");
     String stripped = fileText.replaceAll("/\\*ca-[a-z\\-]+\\*/", "");
     PsiFile file = myFixture.configureByText(path.getFileName().toString(), stripped);
 

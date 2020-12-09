@@ -1,23 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dump.paths
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.util.indexing.diagnostic.dump.paths.providers.*
 import com.intellij.util.indexing.diagnostic.dump.paths.resolvers.*
-import java.io.StringWriter
-import java.io.Writer
 
 object PortableFilePaths {
 
   private val PROVIDERS: List<PortableFilePathProvider> = listOf(
     JdkPortableFilePathProvider,
     LibraryRelativePortableFilePathProvider,
-    IdePortableFilePathProvider,
-    ProjectRelativePortableFilePathProvider
+    ProjectRelativePortableFilePathProvider,
+    IdePortableFilePathProvider
   )
 
   private val RESOLVERS: List<PortableFilePathResolver> = listOf(

@@ -43,13 +43,13 @@
     <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
     <usageTypeProvider implementation="com.intellij.uiDesigner.binding.FormUsageTypeProvider"/>
 
-    <localInspection language="TEXT" displayName="Invalid property key in a UI form"
+    <localInspection language="TEXT" shortName="InvalidPropertyKeyForm" bundle="messages.UIDesignerBundle" key="inspection.invalid.property.in.form.title"
                      groupKey="form.inspections.group" alternativeId="UnresolvedPropertyKey" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.i18n.InvalidPropertyKeyFormInspection"/>
-    <localInspection language="TEXT" displayName="Typo in a UI form"
+    <localInspection language="TEXT" shortName="FormSpellChecking" bundle="messages.UIDesignerBundle" key="inspection.message.typo.in.word.title"
                      groupKey="form.inspections.group" alternativeId="SpellCheckingInspection" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.FormSpellCheckingInspection"/>
-    <localInspection language="TEXT" displayName="Hardcoded string literal in a UI form"
+    <localInspection language="TEXT" shortName="I18nForm" bundle="messages.UIDesignerBundle" key="inspection.i18n.message.in.form.title"
                      groupKey="form.inspections.group" alternativeId="HardCodedStringLiteral" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
     <localInspection language="TEXT" shortName="DuplicateMnemonic" bundle="messages.UIDesignerBundle" key="inspection.duplicate.mnemonics"

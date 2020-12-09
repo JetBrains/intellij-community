@@ -21,13 +21,15 @@ import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
+@Nls
 private fun String.fixUnderscoreMnemonic() = replace('_', '&')
 
-internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): String =
+internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): @Nls String =
   replaceMnemonicAmpersand(
     (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
      ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
@@ -42,7 +44,7 @@ internal fun CommitWorkflowUi.getIncludedPaths(): List<FilePath> =
 
 @get:ApiStatus.Internal
 val CheckinProjectPanel.isNonModalCommit: Boolean
-  get() = commitWorkflowHandler is ChangesViewCommitWorkflowHandler
+  get() = commitWorkflowHandler is NonModalCommitWorkflowHandler<*, *>
 
 private val VCS_COMPARATOR = compareBy<AbstractVcs, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
@@ -62,7 +64,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected fun getIncludedChanges() = ui.getIncludedChanges()
   protected fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
-  internal fun isCommitEmpty(): Boolean = getIncludedChanges().isEmpty() && getIncludedUnversionedFiles().isEmpty()
+  open fun isCommitEmpty(): Boolean = getIncludedChanges().isEmpty() && getIncludedUnversionedFiles().isEmpty()
 
   fun getCommitMessage(): String = ui.commitMessageUi.text
   fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
@@ -151,7 +153,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       ui.includeIntoCommit(changes)
     }
 
-  private fun doExecuteDefault(executor: CommitExecutor?): Boolean = try {
+  protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean = try {
     workflow.executeDefault(executor)
   }
   catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
@@ -185,7 +187,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
 
-  protected fun refreshChanges(callback: () -> Unit) =
+  protected open fun refreshChanges(callback: () -> Unit) =
     ChangeListManager.getInstance(project).invokeAfterUpdate(
       {
         ui.refreshData()

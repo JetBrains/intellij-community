@@ -2,12 +2,9 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import com.jetbrains.python.psi.impl.StubAwareComputation;
 import com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubImpl;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -25,34 +22,11 @@ public class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public @Nullable PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
-    return getNewTypeForCallee(referenceExpression, context);
-  }
-
-  @Override
   public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       return PyTypeUtil.notNullToRef(getNewTypeForTarget((PyTargetExpression)referenceTarget, context));
     }
 
-    return null;
-  }
-
-  @Nullable
-  private static PyTypingNewType getNewTypeForCallee(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
-    if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null;
-
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
-    final ResolveResult[] resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false);
-
-    for (PsiElement element : PyUtil.filterTopPriorityResults(resolveResults)) {
-      if (element instanceof PyTargetExpression) {
-        final PyTypingNewType typeForTarget = getNewTypeForTarget((PyTargetExpression)element, context);
-        if (typeForTarget != null) {
-          return typeForTarget;
-        }
-      }
-    }
     return null;
   }
 
@@ -99,6 +73,13 @@ public class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
       return PyUtil.as(result.toClass(), PyClassType.class);
     }
     return null;
+  }
+
+  @Override
+  public @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
+                                                                          @NotNull PyCallExpression call,
+                                                                          @NotNull TypeEvalContext context) {
+    return type instanceof PyTypingNewType ? Ref.create((PyTypingNewType)type) : null;
   }
 
   @Nullable

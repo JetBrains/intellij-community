@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.InspectionsResultUtil;
@@ -8,7 +7,6 @@ import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.Interner;
 import com.thoughtworks.xstream.io.xml.XppReader;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -142,7 +140,7 @@ public final class OfflineViewParseUtil {
                                        final OfflineProblemDescriptor descriptor) {
     Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
     if (descriptors == null) {
-      descriptors = new THashSet<>();
+      descriptors = new HashSet<>();
       package2Result.put(packageName, descriptors);
     }
     descriptors.add(descriptor);

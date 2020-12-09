@@ -38,7 +38,7 @@ public class IgnoreFileType extends LanguageFileType {
   @NotNull
   public static final IgnoreFileType INSTANCE = new IgnoreFileType();
 
-  protected IgnoreFileType() {
+  private IgnoreFileType() {
     this(IgnoreLanguage.INSTANCE);
   }
 

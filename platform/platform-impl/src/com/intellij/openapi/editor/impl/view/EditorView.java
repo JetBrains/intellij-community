@@ -352,7 +352,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     mySizeManager.reset();
   }
   
-  public void invalidateRange(int startOffset, int endOffset) {
+  public void invalidateRange(int startOffset, int endOffset, boolean invalidateSize) {
     assertIsDispatchThread();
     int textLength = myDocument.getTextLength();
     if (startOffset > endOffset || startOffset >= textLength || endOffset < 0) {
@@ -361,7 +361,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     int startLine = myDocument.getLineNumber(Math.max(0, startOffset));
     int endLine = myDocument.getLineNumber(Math.min(textLength, endOffset));
     myTextLayoutCache.invalidateLines(startLine, endLine);
-    mySizeManager.invalidateRange(startOffset, endOffset);
+    if (invalidateSize) {
+      mySizeManager.invalidateRange(startOffset, endOffset);
+    }
   }
 
   /**

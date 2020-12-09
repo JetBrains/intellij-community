@@ -1,0 +1,8 @@
+android {
+  compileOptions {
+    encoding = 'UTF8'
+    incremental = false
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+  }
+}

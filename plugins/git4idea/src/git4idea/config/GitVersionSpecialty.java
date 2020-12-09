@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.util.ObjectUtils;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * <p>
@@ -24,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * </p>
  */
 public enum GitVersionSpecialty {
-
   /**
    * This version of git has "--progress" parameter in long-going remote commands: clone, fetch, pull, push.
    * Note that other commands (like merge) don't have this parameter in this version yet.
@@ -278,6 +279,14 @@ public enum GitVersionSpecialty {
     }
   },
 
+  RESTORE_SUPPORTED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return Registry.is("git.can.use.restore.command") &&
+             version.isLaterOrEqual(new GitVersion(2, 25, 1, 0));
+    }
+  },
+
   NO_VERIFY_SUPPORTED {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -300,7 +309,7 @@ public enum GitVersionSpecialty {
    */
   public boolean existsIn(@NotNull Project project) {
     GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project);
-    return existsIn(ObjectUtils.chooseNotNull(version, GitVersion.NULL));
+    return existsIn(Objects.requireNonNullElse(version, GitVersion.NULL));
   }
 
   public boolean existsIn(@NotNull GitRepository repository) {

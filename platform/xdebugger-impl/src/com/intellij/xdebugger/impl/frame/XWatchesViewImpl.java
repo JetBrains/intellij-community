@@ -73,9 +73,9 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
     this(session, watchesInVariables, watchesInVariables);
-
   }
-  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
+
+  protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
     super(session);
     myWatchesInVariables = watchesInVariables;
     inlineWatchesEnabled = Registry.is("debugger.watches.inline.enabled");
@@ -120,7 +120,6 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
     getPanel().add(toolbar.getComponent(), vertical ? BorderLayout.WEST : BorderLayout.NORTH);
-
     installEditListeners();
   }
 
@@ -283,6 +282,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void removeInlineWatches(Collection<InlineWatch> watches) {
     InlineWatchesRootNode rootNode = (InlineWatchesRootNode)myRootNode;
+    @SuppressWarnings("unchecked")
     List<? extends XDebuggerTreeNode> nodesToRemove =
       (List<? extends XDebuggerTreeNode>)ContainerUtil.filter(rootNode.getInlineWatchChildren(), node -> watches.contains(node.getWatch()));
 
@@ -389,6 +389,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void removeAllWatches() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (inlineWatchesEnabled) {
+      List<? extends InlineWatchNode> children = ((InlineWatchesRootNode)myRootNode).getInlineWatchChildren();
+      if (!children.isEmpty()) {
+        //noinspection unchecked
+        removeInlineNodes((List<? extends XDebuggerTreeNode>)children, true);
+      }
+    }
     myRootNode.removeAllChildren();
     updateSessionData();
   }

@@ -65,7 +65,7 @@ class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
     }
   }
 
-  override fun getFamilyName(): String {
-    return GroovyBundle.message("intention.family.name.add.required.attributes.to.map.constructor")
+  override fun getName(): String {
+    return GroovyBundle.message("intention.name.add.required.attributes.to.map.constructor")
   }
 }

@@ -61,6 +61,7 @@ public class Patch {
     Set<String> ignored = new HashSet<>(spec.getIgnoredFiles());
     Set<String> critical = new HashSet<>(spec.getCriticalFiles());
     Set<String> optional = new HashSet<>(spec.getOptionalFiles());
+    Set<String> strict = new HashSet<>(spec.getStrictFiles());
 
     Map<String, Long> oldChecksums = digestFiles(olderDir, ignored, isNormalized());
     Map<String, Long> newChecksums = digestFiles(newerDir, ignored, false);
@@ -104,6 +105,7 @@ public class Patch {
         actions.add(action);
         action.setCritical(critical.contains(action.getPath()));
         action.setOptional(optional.contains(action.getPath()));
+        action.setStrict(strict.contains(action.getPath()));
       }
     }
     return actions;
@@ -341,10 +343,10 @@ public class Patch {
       File _backupDir = backupDir;
       forEach(actionsToApply, "Applying patch...", ui, action -> {
         if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
-          Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
+          Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
         else if (action instanceof UpdateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
-          Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent folder is absent.");
+          Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
         else {
           appliedActions.add(action);

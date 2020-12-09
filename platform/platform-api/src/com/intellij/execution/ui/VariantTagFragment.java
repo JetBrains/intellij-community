@@ -2,7 +2,6 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +30,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
                                                                BiConsumer<? super T, ? super V> setter,
                                                                Predicate<? super T> initialSelection) {
     Ref<VariantTagFragment<T, V>> ref = new Ref<>();
-    TagButton tagButton = new TagButton(name, () -> ref.get().toggle(false));
+    TagButton tagButton = new TagButton(name, (e) -> ref.get().toggle(false, null));
     VariantTagFragment<T, V> fragment = new VariantTagFragment<>(id, name, group, tagButton, variantsProvider, getter, setter, initialSelection);
     Disposer.register(fragment, tagButton);
     ref.set(fragment);
@@ -67,7 +66,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public void setSelectedVariant(V variant) {
     mySelectedVariant = variant;
     setSelected(!variant.equals(getVariants()[0]));
-    component().updateButton(getName() + ": " + getVariantName(variant), null);
+    component().updateButton(getName() + ": " + getVariantName(variant), null, true);
   }
 
   protected V[] getVariants() {
@@ -75,8 +74,8 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   }
 
   @Override
-  public void toggle(boolean selected) {
-    super.toggle(selected);
+  public void toggle(boolean selected, AnActionEvent e) {
+    super.toggle(selected, e);
     if (!selected) {
       setSelectedVariant(getVariants()[0]);
     }
@@ -88,14 +87,13 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   }
 
   @Override
-  protected void applyEditorTo(@NotNull T s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull T s) {
     mySetter.accept(s, mySelectedVariant);
   }
 
   @Nls
   protected String getVariantName(V variant) {
-    //noinspection HardCodedStringLiteral
-    return myVariantNameProvider == null ? StringUtil.capitalize(variant.toString()) : myVariantNameProvider.apply(variant);
+    return myVariantNameProvider == null ? StringUtil.capitalize(variant.toString()) : myVariantNameProvider.apply(variant); //NON-NLS
   }
 
   @Override
@@ -118,12 +116,19 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         if (myToggleListener != null) {
           myToggleListener.accept(s);
         }
+        logChange(state, e);
+      }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
       }
     })) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
+        e.getPresentation().setVisible(isRemovable());
       }
     };
     group.setPopup(true);

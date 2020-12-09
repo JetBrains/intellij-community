@@ -6,8 +6,6 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.impl.FrameBoundsConverter;
@@ -20,6 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -30,9 +29,9 @@ import java.nio.file.Paths;
 
 public final class SplashManager {
   private static JFrame PROJECT_FRAME;
-  private static Splash SPLASH_WINDOW;
+  static Splash SPLASH_WINDOW;
 
-  public static void show(String @NotNull [] args, Boolean visible) {
+  public static void show(String @NotNull [] args, boolean visible) {
     for (String arg : args) {
       if (CommandLineArgs.NO_SPLASH.equals(arg)) {
         System.setProperty(CommandLineArgs.NO_SPLASH, "true");
@@ -128,7 +127,7 @@ public final class SplashManager {
       return;
     }
 
-    WindowAdapter listener = new WindowAdapter() {
+    WindowListener listener = new WindowAdapter() {
       @Override
       public void windowOpened(WindowEvent e) {
         setVisible(false);
@@ -150,19 +149,6 @@ public final class SplashManager {
         splash.paint(splash.getGraphics());
       }
     }
-  }
-
-  public static @Nullable ProgressIndicator createProgressIndicator() {
-    if (SPLASH_WINDOW == null) {
-      return null;
-    }
-
-    return new EmptyProgressIndicator() {
-      @Override
-      public void setFraction(double fraction) {
-        SPLASH_WINDOW.showProgress(fraction);
-      }
-    };
   }
 
   public static @Nullable JFrame getAndUnsetProjectFrame() {

@@ -9,11 +9,9 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * @author ibessonov
@@ -47,7 +45,10 @@ public class MavenAnnotationProcessorTargetType extends ModuleBasedBuildTargetTy
   @NotNull
   @Override
   public BuildTargetLoader<MavenAnnotationProcessorTarget> createLoader(@NotNull JpsModel model) {
-    Map<String, JpsModule> modules = model.getProject().getModules().stream().collect(toMap(JpsModule::getName, identity()));
+    final Map<String, JpsModule> modules = new HashMap<>();
+    for (JpsModule module : model.getProject().getModules()) {
+      modules.put(module.getName(), module);
+    }
     return new BuildTargetLoader<MavenAnnotationProcessorTarget>() {
 
       @Nullable

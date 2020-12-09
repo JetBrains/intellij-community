@@ -338,12 +338,10 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   }
 
   private class BrowsePathListener extends BrowseFilesListener {
-    private final FileChooserDescriptor myChooserDescriptor;
     private final JTextField myField;
 
     BrowsePathListener(JTextField textField, final FileChooserDescriptor chooserDescriptor) {
       super(textField, JavaUiBundle.message("prompt.select.source.directory"), "", chooserDescriptor);
-      myChooserDescriptor = chooserDescriptor;
       myField = textField;
     }
 

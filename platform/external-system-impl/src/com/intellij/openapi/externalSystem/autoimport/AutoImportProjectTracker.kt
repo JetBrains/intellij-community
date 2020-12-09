@@ -34,16 +34,13 @@ import kotlin.streams.asStream
 
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
 class AutoImportProjectTracker(private val project: Project) : ExternalSystemProjectTracker, PersistentStateComponent<AutoImportProjectTracker.State> {
-  @Suppress("unused")
-  private val debugThrowable = Throwable("Initialized with project=(${project.isDisposed}, ${Disposer.isDisposed(project)}, $project)")
-
   private val AUTO_REPARSE_DELAY = DaemonCodeAnalyzerSettings.getInstance().autoReparseDelay
   private val AUTO_RELOAD_DELAY = 2000
 
   private val settings get() = AutoImportProjectTrackerSettings.getInstance(project)
   private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
-  private val isDisabled = AtomicBooleanProperty(ApplicationManager.getApplication().isUnitTestMode)
+  private val isDisabled = AtomicBooleanProperty(isDisabledAutoReload.get())
   private val asyncChangesProcessingProperty = AtomicBooleanProperty(!ApplicationManager.getApplication().isHeadlessEnvironment)
   private val projectChangeOperation = AnonymousParallelOperationTrace(debugName = "Project change operation")
   private val projectRefreshOperation = CompoundParallelOperationTrace<String>(debugName = "Project refresh operation")
@@ -168,18 +165,20 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   override fun register(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
+    val projectIdName = projectId.readableName
     val activationProperty = AtomicBooleanProperty(false)
-    val projectStatus = ProjectStatus(debugName = projectId.readableName)
-    val parentDisposable = Disposer.newDisposable(projectId.readableName)
+    val projectStatus = ProjectStatus(debugName = projectIdName)
+    val parentDisposable = Disposer.newDisposable(projectIdName)
     val settingsTracker = ProjectSettingsTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
     val projectData = ProjectData(projectStatus, activationProperty, projectAware, settingsTracker, parentDisposable)
     val notificationAware = ProjectNotificationAware.getInstance(project)
 
     projectDataMap[projectId] = projectData
 
-    val id = "ProjectSettingsTracker: ${projectData.projectAware.projectId.readableName}"
+    val id = "ProjectSettingsTracker: $projectIdName"
     settingsTracker.beforeApplyChanges { projectRefreshOperation.startTask(id) }
     settingsTracker.afterApplyChanges { projectRefreshOperation.finishTask(id) }
+    activationProperty.afterSet({ LOG.debug("$projectIdName is activated") }, parentDisposable)
     activationProperty.afterSet({ scheduleChangeProcessing() }, parentDisposable)
 
     Disposer.register(project, parentDisposable)
@@ -330,6 +329,16 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     @JvmStatic
     fun getInstance(project: Project): AutoImportProjectTracker {
       return ExternalSystemProjectTracker.getInstance(project) as AutoImportProjectTracker
+    }
+
+    private val isDisabledAutoReload = AtomicBooleanProperty(
+      ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("external.system.auto.import.disabled")
+    )
+
+    @TestOnly
+    fun enableAutoReloadInTests(parentDisposable: Disposable) {
+      Disposer.register(parentDisposable) { isDisabledAutoReload.reset() }
+      isDisabledAutoReload.set(false)
     }
   }
 }

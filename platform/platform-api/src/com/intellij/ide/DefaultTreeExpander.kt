@@ -9,7 +9,7 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
   constructor(tree: JTree) : this({ tree })
 
 
-  override fun canExpand() = supplier()?.let { canCollapse(it) } ?: false
+  override fun canExpand() = supplier()?.let { canExpand(it) } ?: false
 
   protected open fun canExpand(tree: JTree) = isEnabled(tree)
 
@@ -19,8 +19,7 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
   }
 
   protected open fun expandAll(tree: JTree) {
-    TreeUtil.expandAll(tree)
-    showSelectionCentered(tree)
+    TreeUtil.promiseExpandAll(tree).onSuccess { showSelectionCentered(tree) }
   }
 
 

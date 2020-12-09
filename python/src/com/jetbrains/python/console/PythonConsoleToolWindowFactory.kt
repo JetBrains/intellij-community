@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.jetbrains.python.PythonPluginDisposable
 import org.jetbrains.annotations.NonNls
 
 class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
@@ -15,7 +16,7 @@ class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
     // we need it to distinguish Console toolwindows started by Console Runner from ones started by toolwindow activation
     if (isStartedFromRunner != "true") {
       val runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, null)
-      TransactionGuard.submitTransaction(project, Runnable { runner.runSync(true) })
+      TransactionGuard.submitTransaction(PythonPluginDisposable.getInstance(project), Runnable { runner.runSync(true) })
     }
   }
 

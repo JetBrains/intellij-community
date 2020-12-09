@@ -50,6 +50,8 @@
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
+    <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
+    <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
 
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
@@ -107,16 +109,20 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.EditorWindowTracker"
                         serviceImplementation="com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl"/>
+
+    <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
   </extensions>
 
-  <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/VCS.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
-  <xi:include href="xdebugger.xml"/>
+  <xi:include href="/META-INF/xdebugger.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/GraphPlugin.xml">
     <xi:fallback/>
   </xi:include>

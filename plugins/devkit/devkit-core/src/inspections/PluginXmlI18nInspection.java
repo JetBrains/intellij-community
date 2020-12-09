@@ -59,7 +59,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
-      highlightAction(holder, (ActionOrGroup)element);
+      highlightActionOrGroup(holder, (ActionOrGroup)element);
     }
     else if (element instanceof Separator) {
       highlightSeparator(holder, (Separator)element);
@@ -68,14 +68,13 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       highlightOverrideText(holder, (OverrideText)element);
     }
     else if (element instanceof Extension) {
-      ExtensionPoint extensionPoint = ((Extension)element).getExtensionPoint();
-      if (extensionPoint != null) {
-        highlightExtension(holder, (Extension)element, extensionPoint);
-      }
+     highlightExtension(holder, (Extension)element);
     }
   }
 
-  private static void highlightExtension(DomElementAnnotationHolder holder, Extension extension, ExtensionPoint extensionPoint) {
+  private static void highlightExtension(DomElementAnnotationHolder holder, Extension extension) {
+    ExtensionPoint extensionPoint = extension.getExtensionPoint();
+    if (extensionPoint == null) return;
     final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
     if (beanClass == null) return;
 
@@ -132,25 +131,30 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   private static void highlightOverrideText(DomElementAnnotationHolder holder, OverrideText overrideText) {
     if (!DomUtil.hasXml(overrideText.getText())) return;
 
-    holder.createProblem(overrideText.getText(), DevKitBundle.message("inspections.plugin.xml.i18n.key"));
+    DomElement parent = overrideText.getParent();
+    PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(parent);
+
+    holder.createProblem(overrideText, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                         DevKitBundle.message("inspections.plugin.xml.i18n.name"),
+                         null, new ActionOrGroupQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null, parent instanceof Action));
   }
 
-  private static void highlightAction(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup action) {
-    String id = action.getId().getStringValue();
+  private static void highlightActionOrGroup(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup actionOrGroup) {
+    String id = actionOrGroup.getId().getStringValue();
     if (id == null) return;
 
-    String text = action.getText().getStringValue();
-    String desc = action.getDescription().getStringValue();
+    String text = actionOrGroup.getText().getStringValue();
+    String desc = actionOrGroup.getDescription().getStringValue();
     if (text == null && desc == null) return;
 
-    if (isInternal(action)) return;
+    if (isInternal(actionOrGroup)) return;
 
-    PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(action);
+    PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(actionOrGroup);
 
-    holder.createProblem(action, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+    holder.createProblem(actionOrGroup, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                          DevKitBundle.message("inspections.plugin.xml.i18n.name"),
-                         null, new ActionQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null,
-                                                        action instanceof Action));
+                         null, new ActionOrGroupQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null,
+                                                               actionOrGroup instanceof Action));
   }
 
   private static boolean isInternal(@NotNull DomElement action) {
@@ -298,11 +302,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
   }
 
-  private static final class ActionQuickFixAction implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static final class ActionOrGroupQuickFixAction implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
     private final VirtualFile myPropertiesFile;
     private final boolean myIsAction;
 
-    private ActionQuickFixAction(VirtualFile file, boolean isAction) {
+    private ActionOrGroupQuickFixAction(VirtualFile file, boolean isAction) {
       myPropertiesFile = file;
       myIsAction = isAction;
     }
@@ -322,7 +326,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       VirtualFile nullValue = new LightVirtualFile();
       Map<VirtualFile, List<CommonProblemDescriptor>> byPropertyFiles = Arrays.stream(descriptors)
         .filter(d -> d instanceof ProblemDescriptor)
-        .collect(Collectors.groupingBy(cd -> ObjectUtils.notNull(((ActionQuickFixAction)cd.getFixes()[0]).myPropertiesFile, nullValue)));
+        .collect(Collectors.groupingBy(cd -> ObjectUtils.notNull(((ActionOrGroupQuickFixAction)cd.getFixes()[0]).myPropertiesFile, nullValue)));
 
       //in case of multiple files in selection with different bundles, multiple clear read-only status dialog is possible
       for (Map.Entry<VirtualFile, List<CommonProblemDescriptor>> entry : byPropertyFiles.entrySet()) {
@@ -404,7 +408,13 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         String description = tag.getAttributeValue("description");
         tag.setAttribute("description", null);
 
-        String id = tag.getAttributeValue("id");
+        String id;
+        if (tag.getName().equals("override-text")) {
+          id = Objects.requireNonNull(tag.getParentTag()).getAttributeValue("id") + "." + tag.getAttributeValue("place");
+        }
+        else {
+          id = tag.getAttributeValue("id");
+        }
 
         List<PropertiesFile> propertiesFiles = Collections.singletonList(propertiesFile);
         @NonNls String actionOrGroupPrefix = isAction ? "action." : "group.";

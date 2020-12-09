@@ -52,11 +52,12 @@ public class ProperTextRange extends TextRange {
   }
 
   @Override
-  public ProperTextRange intersection(@NotNull TextRange textRange) {
-    assertProperRange(textRange);
-    TextRange range = super.intersection(textRange);
-    if (range == null) return null;
-    return new ProperTextRange(range);
+  public ProperTextRange intersection(@NotNull TextRange range) {
+    assertProperRange(range);
+
+    int newStart = Math.max(getStartOffset(), range.getStartOffset());
+    int newEnd = Math.min(getEndOffset(), range.getEndOffset());
+    return isProperRange(newStart, newEnd) ? new ProperTextRange(newStart, newEnd) : null;
   }
 
   @NotNull

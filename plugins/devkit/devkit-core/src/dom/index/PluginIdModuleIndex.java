@@ -45,8 +45,8 @@ public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
   protected Map<String, Void> performIndexing(IdeaPlugin plugin) {
     List<String> ids = new ArrayList<>();
     ids.add(StringUtil.notNullize(plugin.getPluginId()));
-    for (PluginModule module : plugin.getModules()) {
-      ContainerUtil.addIfNotNull(ids, module.getValue().getStringValue());
+    for (DomElement module : getChildrenWithoutIncludes(plugin, "module")) {
+      ContainerUtil.addIfNotNull(ids, ((PluginModule)module).getValue().getStringValue());
     }
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
@@ -59,7 +59,7 @@ public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
 
   @Override
   public int getVersion() {
-    return 1;
+    return 2;
   }
 
   public static Collection<VirtualFile> getFiles(@NotNull Project project, @NotNull String idOrModule) {

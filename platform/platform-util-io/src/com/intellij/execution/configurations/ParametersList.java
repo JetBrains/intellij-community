@@ -372,8 +372,7 @@ public final class ParametersList implements Cloneable {
     ourTestMacros = testMacros;
   }
 
-  @NotNull
-  private static Map<String, String> computeMacroMap() {
+  private static @NotNull Map<String, String> computeMacroMap() {
     // ApplicationManager.getApplication() will return null if executed in ParameterListTest
     Application application = ApplicationManager.getApplication();
     if (application == null || application.isUnitTestMode() && ourTestMacros != null) {
@@ -384,12 +383,14 @@ public final class ParametersList implements Cloneable {
     Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
     if (!pathMacros.isEmpty()) {
       for (String name : pathMacros.keySet()) {
-        ContainerUtil.putIfNotNull(name, pathMacros.get(name), map);
+        String value = pathMacros.get(name);
+        if (value != null) {
+          map.put(name, value);
+        }
       }
     }
-    Map<String, String> env = EnvironmentUtil.getEnvironmentMap();
-    for (String name : env.keySet()) {
-      ContainerUtil.putIfAbsent(name, env.get(name), map);
+    for (Map.Entry<String, String> entry : EnvironmentUtil.getEnvironmentMap().entrySet()) {
+      map.putIfAbsent(entry.getKey(), entry.getValue());
     }
     return map;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.FileContentUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ public final class EnforcedPlainTextFileTypeManager {
   private Project[] explicitlyMarkedProjects = new Project[0];
 
   public EnforcedPlainTextFileTypeManager() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         addProjectPlainTextFiles(project);
@@ -99,7 +98,6 @@ public final class EnforcedPlainTextFileTypeManager {
           }
         }
       }
-      FileContentUtilCore.reparseFiles(files);
     });
   }
 

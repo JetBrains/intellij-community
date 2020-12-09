@@ -30,7 +30,6 @@ import org.jetbrains.mvstore.type.*;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.*;
@@ -42,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 import java.util.function.Predicate;
@@ -139,8 +139,7 @@ MVStore:
  */
 @SuppressWarnings("TypeParameterExtendsFinalClass")
 public final class MVStore implements AutoCloseable {
-    //public static final boolean ASSERT_MODE = Boolean.getBoolean("mvstore.assert.mode");
-    public static final boolean ASSERT_MODE = true;
+    public static final boolean ASSERT_MODE = Boolean.getBoolean("mvstore.assert.mode");
 
     // id of map name to map id map
     private static final int MAP_NAME_MAP_ID = 0;
@@ -333,8 +332,6 @@ public final class MVStore implements AutoCloseable {
     private LZ4Compressor compressor;
     private LZ4FastDecompressor decompressor;
 
-    private final boolean recoveryMode;
-
     private volatile long currentVersion;
 
     /**
@@ -401,7 +398,6 @@ public final class MVStore implements AutoCloseable {
      *             occurred while opening
      */
     public MVStore(FileStore fileStore, Builder config) {
-        recoveryMode = config.recoveryMode;
         closeFileStoreClose = true;
         this.fileStore = fileStore;
 
@@ -542,8 +538,8 @@ public final class MVStore implements AutoCloseable {
             return Int2ObjectMaps.emptyMap();
         }
 
-        Int2ObjectOpenHashMap<MapMetadata> idToMetadata = new Int2ObjectOpenHashMap<>(size);
-        Int2ObjectOpenHashMap<AsciiString> idToName = new Int2ObjectOpenHashMap<>(size);
+        Int2ObjectMap<MapMetadata> idToMetadata = new Int2ObjectOpenHashMap<>(size);
+        Int2ObjectMap<AsciiString> idToName = new Int2ObjectOpenHashMap<>(size);
 
         int maxMapId = lastMapId.get();
         Cursor<AsciiString, MapMetadata> cursor = mapNameToMetadata.cursor(null);
@@ -852,7 +848,7 @@ public final class MVStore implements AutoCloseable {
                                        "The read format " + format + " is larger than the supported format " + FORMAT_READ);
         }
 
-        assumeCleanShutdown = assumeCleanShutdown && newest != null && !recoveryMode;
+        assumeCleanShutdown = assumeCleanShutdown && newest != null && !config.recoveryMode;
         if (assumeCleanShutdown) {
             assumeCleanShutdown = storeHeader.cleanShutdown;
         }
@@ -951,7 +947,7 @@ public final class MVStore implements AutoCloseable {
 
         if (!assumeCleanShutdown) {
             boolean quickRecovery = false;
-            if (!recoveryMode) {
+            if (!config.recoveryMode) {
                 // now we know, that previous shutdown did not go well and file
                 // is possibly corrupted but there is still hope for a quick
                 // recovery
@@ -965,7 +961,7 @@ public final class MVStore implements AutoCloseable {
                     validChunksById.put(chunk.id, chunk);
                 }
                 quickRecovery = findLastChunkWithCompleteValidChunkSet(lastChunkCandidates, validChunksByLocation,
-                        validChunksById, false);
+                                                                       validChunksById, false);
             }
 
             if (!quickRecovery) {
@@ -2379,7 +2375,7 @@ public final class MVStore implements AutoCloseable {
                 Queue<Chunk> old = findOldChunks(writeLimit, targetFillRate);
                 int oldSize = old.size();
                 if (oldSize != 0) {
-                    IntOpenHashSet idSet = new IntOpenHashSet(oldSize);
+                    IntSet idSet = new IntOpenHashSet(oldSize);
                     for (Chunk c : old) {
                         idSet.add(c.id);
                     }
@@ -2608,43 +2604,42 @@ public final class MVStore implements AutoCloseable {
             }
 
             Cache<Long, Page<?, ?>> cache = getPageCache(DataUtil.isLeafPage(pageInfo));
+            Chunk chunk = getChunk(DataUtil.getPageChunkId(pageInfo));
             if (cache == null) {
-                return doReadPage(map, pageInfo);
+                return doReadPage(map, pageInfo, chunk);
             }
             else {
                 //noinspection unchecked
-                return (Page<K, V>)cache.get(pageInfo, info -> doReadPage(map, info));
+                return (Page<K, V>)cache.get(pageInfo, info -> doReadPage(map, info, chunk));
             }
         } catch (MVStoreException e) {
-            if (recoveryMode) {
+            if (config.recoveryMode) {
                 return map.createEmptyLeaf();
             }
             throw e;
         }
     }
 
-    private @NotNull <K, V> Page<K, V> doReadPage(MVMap<K, V> map, long pageInfo) {
-        Page<K, V> page;
-        int chunkId = DataUtil.getPageChunkId(pageInfo);
-        Chunk chunk = getChunk(chunkId);
+    private @NotNull <K, V> Page<K, V> doReadPage(@NotNull MVMap<K, V> map, long pageInfo, @NotNull Chunk chunk) {
         int pageOffset = DataUtil.getPageOffset(pageInfo);
         try {
+            Page<K, V> page;
             ByteBuf buf = chunk.readBufferForPage(fileStore, pageOffset, pageInfo);
             try {
-                page = DataUtil.isLeafPage(pageInfo) ? new LeafPage<>(map, buf, pageInfo, chunkId) : new NonLeafPage<>(map, buf, pageInfo, chunkId);
+                page = DataUtil.isLeafPage(pageInfo) ? new LeafPage<>(map, buf, pageInfo, chunk.id) : new NonLeafPage<>(map, buf, pageInfo, chunk.id);
             }
             finally {
                 buf.release();
             }
             assert page.pageNo >= 0;
+            return page;
         } catch (MVStoreException e) {
             throw e;
         } catch (Exception e) {
             throw new MVStoreException(MVStoreException.ERROR_FILE_CORRUPT,
                                        "Unable to read the page (info=" + pageInfo +
-                                       ", chunk=" + chunkId + ", offset=" + pageOffset + ")", e);
+                                       ", chunk=" + chunk.id + ", offset=" + pageOffset + ")", e);
         }
-        return page;
     }
 
     private @NotNull LongArrayList getToC(Chunk chunk) {
@@ -3014,7 +3009,7 @@ public final class MVStore implements AutoCloseable {
             // find out which chunks to remove,
             // and which is the newest chunk to keep
             // (the chunk list can have gaps)
-            IntArrayList remove = new IntArrayList();
+            IntList remove = new IntArrayList();
             Chunk keep = null;
             serializationLock.lock();
             try {
@@ -3263,17 +3258,20 @@ public final class MVStore implements AutoCloseable {
     //    return m == null ? -1 : m;
     //}
 
+    public void triggerAutoSave() {
+        triggerAutoSave(false);
+    }
     /**
      * Commit and save all changes, if there are any, and compact the store if
      * needed. Some part of work is executed asynchronously.
      */
-    public void triggerAutoSave() {
+    public void triggerAutoSave(boolean force) {
         try {
             if (!isOpenOrStopping() || isReadOnly()) {
                 return;
             }
 
-            if (getTimeSinceCreation() <= (lastCommitTime + autoCommitDelay)) {
+            if (!force && (getTimeSinceCreation() <= (lastCommitTime + autoCommitDelay))) {
                 return;
             }
 
@@ -3374,7 +3372,7 @@ public final class MVStore implements AutoCloseable {
     private void handleException(Throwable error) {
         if (config.backgroundExceptionHandler != null) {
             try {
-                config.backgroundExceptionHandler.uncaughtException(Thread.currentThread(), error);
+                config.backgroundExceptionHandler.accept(error, this);
             } catch(Throwable e) {
                 if (error != e) { // OOME may be the same
                     error.addSuppressed(e);
@@ -3804,7 +3802,7 @@ public final class MVStore implements AutoCloseable {
         private int autoCompactFillRate = 90;
         private int versionsToKeep = 0;
 
-        private UncaughtExceptionHandler backgroundExceptionHandler;
+        private BiConsumer<Throwable, MVStore> backgroundExceptionHandler;
 
         private boolean readOnly;
 
@@ -3973,7 +3971,7 @@ public final class MVStore implements AutoCloseable {
          * Set the listener to be used for exceptions that occur when writing in
          * the background thread.
          */
-        public Builder backgroundExceptionHandler(Thread.UncaughtExceptionHandler exceptionHandler) {
+        public Builder backgroundExceptionHandler(BiConsumer<Throwable, MVStore> exceptionHandler) {
             backgroundExceptionHandler = exceptionHandler;
             return this;
         }

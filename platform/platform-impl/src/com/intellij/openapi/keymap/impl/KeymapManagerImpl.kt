@@ -81,7 +81,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
     isKeymapManagerInitialized = true
 
-    if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
+    if (ConfigImportHelper.isNewUser()) {
       CtrlYActionChooser.askAboutShortcut()
     }
 

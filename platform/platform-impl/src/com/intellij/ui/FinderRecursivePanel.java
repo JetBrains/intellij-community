@@ -321,7 +321,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
 
     ActionGroup contextActionGroup = new DefaultActionGroup(actions);
-    PopupHandler.installUnknownPopupHandler(list, contextActionGroup, ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(list, contextActionGroup);
   }
 
   protected AnAction[] getCustomListActions() {

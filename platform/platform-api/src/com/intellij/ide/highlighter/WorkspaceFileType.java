@@ -3,15 +3,16 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
-public final class WorkspaceFileType implements InternalFileType {
+public final class WorkspaceFileType implements InternalFileType, FileType {
   public static final WorkspaceFileType INSTANCE = new WorkspaceFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "iws";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
@@ -47,12 +48,7 @@ public final class WorkspaceFileType implements InternalFileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return true;
-  }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return CharsetToolkit.UTF8;
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

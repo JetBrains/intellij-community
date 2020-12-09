@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,52 @@
 
 package com.intellij.stats.completion.logger
 
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 class LineStorage {
 
-    private val lines = mutableListOf<String>()
+    private val lines = mutableListOf<ByteArray>()
     var size: Int = 0
         private set
 
     fun appendLine(line: String) {
-        size += line.length + System.lineSeparator().length
-        lines.add(line)
+        val gzippedLine = line.gzip()
+        size += gzippedLine.size
+        lines.add(gzippedLine)
     }
 
-    fun sizeWithNewLine(newLine: String): Int = size + newLine.length + System.lineSeparator().length
-
     fun dump(dest: File) {
-        dest.writer().use { out ->
-            lines.forEach { out.appendln(it) }
+        GZIPOutputStream(dest.outputStream()).bufferedWriter().use { out ->
+            lines.forEach { out.appendLine(it.ungzip()) }
         }
     }
 
+    companion object {
+        fun readAsZipArray(file: File): ByteArray {
+            if (file.name.endsWith(".gz")) {
+                return file.readBytes()
+            }
+
+            // fallback if non-gzipped files remain from previous versions
+            return file.readText().gzip()
+        }
+
+        fun readAsLines(file: File): List<String> {
+            return readAsZipArray(file).ungzip().lines().filter { it.isNotEmpty() }
+        }
+
+        private fun String.gzip(): ByteArray {
+            val outputStream = ByteArrayOutputStream()
+            GZIPOutputStream(outputStream).use { it.write(toByteArray()) }
+            return outputStream.toByteArray()
+        }
+
+        private fun ByteArray.ungzip(): String {
+            return GZIPInputStream(this.inputStream()).reader().readText()
+        }
+
+    }
 }

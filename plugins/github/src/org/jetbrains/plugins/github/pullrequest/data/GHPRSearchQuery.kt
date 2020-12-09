@@ -57,7 +57,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
         val colonIdx = term.indexOf(':')
         if (colonIdx < 0) {
-          result.add(Term.QueryPart(term))
+          result.add(Term.QueryPart(term.replace("#", "")))
         }
         else {
           try {
@@ -83,11 +83,24 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
     author("author") {
       override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
     },
+    label("label") {
+      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+    },
     after("created") {
       override fun createTerm(value: String) = Term.Qualifier.Date.After.from(this, value)
     },
     before("created") {
       override fun createTerm(value: String) = Term.Qualifier.Date.Before.from(this, value)
+    },
+    reviewedBy("reviewed-by") {
+      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+
+      override fun toString() = apiName
+    },
+    reviewRequested("review-requested") {
+      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+
+      override fun toString() = apiName
     },
     sortBy("sort") {
       override fun createTerm(value: String) = Term.Qualifier.Enum.from<GithubIssueSearchSort>(this, value)

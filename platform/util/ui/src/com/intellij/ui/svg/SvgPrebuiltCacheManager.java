@@ -20,14 +20,14 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApiStatus.Internal
 public final class SvgPrebuiltCacheManager {
   private final MVStore store;
-  private final Map<Double, MVMap<Long, ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
+  private final Map<Float, MVMap<Long, ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
   private final MVMap.Builder<Long, ImageValue> mapBuilder;
 
   public SvgPrebuiltCacheManager(@NotNull Path dbFile) throws IOException {
     MVStore.Builder storeBuilder = new MVStore.Builder()
       .readOnly()
-      .backgroundExceptionHandler((t, e) -> {
-        SvgCacheManager.getLogger().error(e);
+      .backgroundExceptionHandler((e, store) -> {
+        SvgCacheManager.getLogger().error("Icon Cache Error (db=" + store.getFileStore() + ")", e);
       })
       .autoCommitDelay(60_000)
       .compressHigh();
@@ -40,7 +40,7 @@ public final class SvgPrebuiltCacheManager {
   }
 
   public @Nullable Image loadFromCache(long key,
-                                       double scale,
+                                       float scale,
                                        boolean isDark,
                                        @NotNull ImageLoader.Dimension2DDouble docSize) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
@@ -51,7 +51,7 @@ public final class SvgPrebuiltCacheManager {
       }
 
       Image image = SvgCacheManager.readImage(data, docSize);
-      IconLoadMeasurer.svgPreBuiltLoad.addDurationStartedAt(start);
+      IconLoadMeasurer.svgPreBuiltLoad.end(start);
       return image;
     }
     catch (Exception e) {

@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.compact.lexer;
 
-import gnu.trove.TIntArrayList;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.kohsuke.rngom.util.Utf16;
 
 import java.io.FilterReader;
@@ -27,12 +26,9 @@ import java.io.Reader;
 /**
  * A reader that deals with escape sequences in RNC files (\x{xx}) and keeps track of their positions to build correct
  * token ranges in the lexer.
- * <p/>
- * Created by IntelliJ IDEA.
- * User: sweinreuter
  */
-class EscapePreprocessor extends FilterReader {
-  private final TIntArrayList myQueuedChars;
+final class EscapePreprocessor extends FilterReader {
+  private final IntArrayList myQueuedChars;
   private final Int2IntMap myLengthMap;
 
   private int myOffset;
@@ -40,7 +36,7 @@ class EscapePreprocessor extends FilterReader {
   EscapePreprocessor(Reader reader, int startOffset, Int2IntMap map) {
     super(reader);
     myOffset = startOffset;
-    myQueuedChars = new TIntArrayList();
+    myQueuedChars = new IntArrayList();
     myLengthMap = map;
   }
 
@@ -120,13 +116,13 @@ class EscapePreprocessor extends FilterReader {
   private int consume() {
     if (myQueuedChars.size() > 0) {
       myOffset++;
-      return myQueuedChars.remove(0);
+      return myQueuedChars.removeInt(0);
     }
     return -1;
   }
 
   private void consume(int n) {
-    myQueuedChars.remove(0, n);
+    myQueuedChars.removeElements(0, n);
   }
 
   private int peek() throws IOException {

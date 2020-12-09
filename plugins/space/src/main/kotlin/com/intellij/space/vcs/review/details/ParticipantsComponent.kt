@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.englishFullName
@@ -26,12 +27,12 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal class AuthorsComponent(
-  detailsVm: CrDetailsVm<out CodeReviewRecord>,
+  detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
   participantsVm: SpaceReviewParticipantsVm
 ) : ParticipantsComponent(detailsVm, participantsVm.authors, SpaceBundle.message("review.label.authors"))
 
 internal class ReviewersComponent(
-  private val detailsVm: CrDetailsVm<out CodeReviewRecord>,
+  private val detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
   private val participantsVm: SpaceReviewParticipantsVm
 ) : ParticipantsComponent(detailsVm, participantsVm.reviewers, SpaceBundle.message("review.label.reviewers")) {
 
@@ -67,7 +68,7 @@ internal class ReviewersComponent(
 }
 
 internal open class ParticipantsComponent(
-  detailsVm: CrDetailsVm<out CodeReviewRecord>,
+  detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
   participantsVm: Property<List<CodeReviewParticipant>?>,
   @NlsContexts.Label labelText: String
 ) : Lifetimed by detailsVm {
@@ -94,7 +95,7 @@ internal open class ParticipantsComponent(
 
       users?.forEach { codeReviewParticipant ->
         val memberProfile = codeReviewParticipant.user.resolve()
-        val fullName = memberProfile.englishFullName()
+        val fullName = memberProfile.englishFullName() // NON-NLS
         val reviewerLabel = JLabel(avatarProvider.getIcon(memberProfile)).apply {
           toolTipText = fullName
           text = fullName

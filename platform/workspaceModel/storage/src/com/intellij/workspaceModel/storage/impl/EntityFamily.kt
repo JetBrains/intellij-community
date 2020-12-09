@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.assert
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 
@@ -19,7 +17,7 @@ internal class ImmutableEntityFamily<E : WorkspaceEntity>(
 
   override fun familyCheck() {
     val emptySlotsCounter = entities.count { it == null }
-    thisLogger().assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
+    assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
   }
 }
 
@@ -72,6 +70,34 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
       amountOfGapsInEntities--
     }
     copiedToModify.add(other.id)
+  }
+
+  fun book(): Int {
+    startWrite()
+
+    val bookedId = if (availableSlots.isEmpty()) {
+      entities.add(null)
+      amountOfGapsInEntities++
+      entities.lastIndex
+    }
+    else {
+      val emptySlot = availableSlots.pop()
+      entities[emptySlot] = null
+      emptySlot
+    }
+    copiedToModify.add(bookedId)
+    return bookedId
+  }
+
+  fun insertAtId(data: WorkspaceEntityData<E>) {
+    startWrite()
+
+    val prevValue = entities[data.id]
+    entities[data.id] = data
+    availableSlots.remove(data.id)
+    if (prevValue == null) amountOfGapsInEntities--
+
+    copiedToModify.add(data.id)
   }
 
   fun replaceById(entity: WorkspaceEntityData<E>) {
@@ -168,14 +194,10 @@ internal sealed class EntityFamily<E : WorkspaceEntity> {
   inline fun assertConsistency(entityAssertion: (WorkspaceEntityData<E>) -> Unit = {}) {
     entities.forEachIndexed { idx, entity ->
       if (entity != null) {
-        LOG.assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
+        assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
         entityAssertion(entity)
       }
     }
     familyCheck()
-  }
-
-  companion object {
-    private val LOG = logger<EntityFamily<*>>()
   }
 }

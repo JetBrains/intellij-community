@@ -1,18 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer
 import org.jetbrains.plugins.groovy.util.TestUtils
+
+import java.util.function.Consumer
 
 /**
  * @author ilyas
@@ -178,19 +179,18 @@ class Fooxx <caret>{
   void testInnerInnerClass() { doTest() }
 
   private void doTest() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone()
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings)
-    settings.getCustomSettings(GroovyCodeStyleSettings.class).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3
-    try {
-      myFixture.configureByFile(getTestName(false) + ".groovy")
+    CodeStyle.doWithTemporarySettings(
+      getProject(), CodeStyle.getSettings(getProject()),
+      new Consumer<CodeStyleSettings>() {
+        @Override
+        void accept(CodeStyleSettings settings) {
+          myFixture.configureByFile(getTestName(false) + ".groovy")
 
-      doOptimizeImports()
-      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings()
-    }
+          doOptimizeImports()
+          PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+          myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
+        }
+      })
   }
 
   private void doOptimizeImports() {
@@ -407,5 +407,30 @@ void newifyImportsIncorrectlyMarkedAsUnused() {
     def b = Abc()
 }
 ''')
+  }
+
+  void 'test annotated unresolved import'() {
+    doTest '''\
+import groovy.xml.XmlUtil
+import javax.security.auth.AuthPermission
+@Grab("coordinates")
+import org.foo.Bar
+
+XmlUtil xx
+Bar bar
+''', '''\
+import groovy.xml.XmlUtil
+@Grab("coordinates")
+import org.foo.Bar
+
+XmlUtil xx
+Bar bar
+'''
+  }
+
+  private void doTest(String before, String after) {
+    myFixture.configureByText '_.groovy', before
+    doOptimizeImports()
+    myFixture.checkResult after
   }
 }

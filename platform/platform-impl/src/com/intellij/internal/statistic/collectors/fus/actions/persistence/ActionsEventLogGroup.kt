@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.configVersion
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ActionsEventLogGroup : CounterUsagesCollector() {
@@ -15,7 +14,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_INVOKED_EVENT_ID = "action.invoked"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", configVersion)
+    val GROUP = EventLogGroup("actions", 59)
 
     @JvmField
     val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", "action")
@@ -25,6 +24,9 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
 
     @JvmField
     val ACTION_PARENT = EventFields.StringValidatedByCustomRule("parent", "class_name")
+
+    @JvmField
+    val TOGGLE_ACTION = EventFields.Boolean("enable")
 
     @JvmField
     val CONTEXT_MENU = EventFields.Boolean("context_menu")
@@ -46,6 +48,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
         EventFields.InputEvent,
         EventFields.ActionPlace,
         EventFields.CurrentFile,
+        TOGGLE_ACTION,
         CONTEXT_MENU,
         DUMB,
         ACTION_ID,

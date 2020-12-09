@@ -5,6 +5,10 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_CANCELED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FAILED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_WITH_WARNINGS
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.util.ui.UIUtil
@@ -28,7 +32,7 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
 
   override fun onSuccess(commitMessage: String) = reportResult()
   override fun onCancel() {
-    notifier.notifyMinorWarning("vcs.commit.canceled", "", message("vcs.commit.canceled"))
+    notifier.notifyMinorWarning(COMMIT_CANCELED, "", message("vcs.commit.canceled"))
   }
   override fun onFailure(errors: List<VcsException>) = reportResult()
 
@@ -42,13 +46,13 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
     when {
       errorsSize > 0 -> {
         val title = message("message.text.commit.failed.with.error", errorsSize)
-        notifier.notifyError("vcs.commit.failed", title, message)
+        notifier.notifyError(COMMIT_FAILED, title, message)
       }
       warningsSize > 0 -> {
         val title = message("message.text.commit.finished.with.warning", warningsSize)
-        notifier.notifyImportantWarning("vcs.commit.finished.with.warnings", title, message)
+        notifier.notifyImportantWarning(COMMIT_FINISHED_WITH_WARNINGS, title, message)
       }
-      else -> notifier.notifySuccess("vcs.commit.finished", "", message)
+      else -> notifier.notifySuccess(COMMIT_FINISHED, "", message)
     }
   }
 

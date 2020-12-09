@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.Objects;
 
 public final class FocusUtil {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.FocusUtil");
+  private static final Logger LOG = Logger.getInstance(FocusUtil.class);
 
   public static Component findFocusableComponentIn(Container searchIn, Component toSkip) {
     List<Component> components = UIUtil.uiTraverser(searchIn).toList();

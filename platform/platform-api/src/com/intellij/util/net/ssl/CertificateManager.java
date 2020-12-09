@@ -12,7 +12,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -82,8 +82,9 @@ public final class CertificateManager implements PersistentStateComponent<Certif
 
   private Config myConfig = new Config();
 
-  private final AtomicNotNullLazyValue<ConfirmingTrustManager> myTrustManager =
-    AtomicNotNullLazyValue.createValue(() -> ConfirmingTrustManager.createForStorage(tryMigratingDefaultTruststore(), DEFAULT_PASSWORD));
+  private final NotNullLazyValue<ConfirmingTrustManager> myTrustManager = NotNullLazyValue.atomicLazy(() -> {
+    return ConfirmingTrustManager.createForStorage(tryMigratingDefaultTruststore(), DEFAULT_PASSWORD);
+  });
 
   private static @NotNull String tryMigratingDefaultTruststore() {
     final Path legacySystemPath = Paths.get(PathManager.getSystemPath(), "tasks", "cacerts");
@@ -107,7 +108,7 @@ public final class CertificateManager implements PersistentStateComponent<Certif
     return DEFAULT_PATH;
   }
 
-  private final AtomicNotNullLazyValue<SSLContext> mySslContext = AtomicNotNullLazyValue.createValue(() -> calcSslContext());
+  private final NotNullLazyValue<SSLContext> mySslContext = NotNullLazyValue.atomicLazy(this::calcSslContext);
 
   /**
    * Component initialization constructor

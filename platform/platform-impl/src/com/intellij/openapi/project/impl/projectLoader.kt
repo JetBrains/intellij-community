@@ -19,11 +19,10 @@ import org.jetbrains.annotations.ApiStatus
 
 // Code maybe located in a ProjectImpl, but it is not possible due to non-technical reasons to convert ProjectImpl into modern language.
 internal fun registerComponents(project: ProjectImpl) {
-  var activity = createActivity(
-    project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
+  var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
   //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
   @Suppress("UNCHECKED_CAST")
-  project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>)
+  project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>, null)
 
   activity = activity?.endAndStart("projectComponentRegistered")
   runOnlyCorePluginExtensions(

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
-import com.intellij.application.UtilKt;
+import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.ide.util.PropertiesComponent;
@@ -100,7 +100,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     assertEquals("foo", basePackage);
 
     Path zipFile = ArchivedTemplatesFactory.getTemplateFile("foo");
-    UtilKt.runInAllowSaveMode(() -> {
+    StoreUtilKt.runInAllowSaveMode(true, () -> {
       SaveProjectAsTemplateAction.saveProject(getProject(), zipFile, null, "bar", replaceParameters, new MockProgressIndicator(), shouldEscape);
       return Unit.INSTANCE;
     });

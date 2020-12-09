@@ -4,12 +4,14 @@ package com.intellij.ide.actions;
 import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -58,6 +60,14 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     if (file != null) {
       return VfsPresentationUtil.getPresentableNameForUI(element.getProject(), file);
     }
+
+    if (element instanceof NavigationItem) {
+      String name = Optional.ofNullable(((NavigationItem)element).getPresentation())
+        .map(presentation -> presentation.getPresentableText())
+        .orElse(null);
+      if (name != null) return name;
+    }
+
     String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
     return StringUtil.notNullize(name, "<unnamed>");
   }
@@ -71,15 +81,16 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   @Nullable
   @Override
   protected String getContainerTextForLeftComponent(PsiElement element, String name, int maxWidth, FontMetrics fm) {
-    String text = SymbolPresentationUtil.getSymbolContainerText(element);
+    String presentablePath = extractPresentablePath(element);
+    String text = ObjectUtils.chooseNotNull(presentablePath, SymbolPresentationUtil.getSymbolContainerText(element));
 
-    if (text == null) return null;
+    if (text == null || text.equals(name)) return null;
 
     if (text.startsWith("(") && text.endsWith(")")) {
       text = text.substring(1, text.length() - 1);
     }
 
-    if ((text.contains("/") || text.contains(File.separator)) && element instanceof PsiFileSystemItem) {
+    if (presentablePath == null && (text.contains("/") || text.contains(File.separator)) && element instanceof PsiFileSystemItem) {
       Project project = element.getProject();
       String basePath = Optional.ofNullable(project.getBasePath())
         .map(FileUtil::toSystemDependentName)
@@ -120,7 +131,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     while (parts.size() > 1) {
       index = parts.size() / 2 - 1;
       parts.remove(index);
-      if (fm.stringWidth(StringUtil.join(parts, separator) + "...") < maxWidth) {
+      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
         parts.add(index, "...");
         return left + StringUtil.join(parts, separator);
       }
@@ -129,6 +140,18 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     return StringUtil.trimMiddle(adjustedText, adjustedWidth);
   }
 
+  @Nullable
+  private static String extractPresentablePath(@Nullable PsiElement element) {
+    if (element == null) return null;
+
+    PsiFile file = element.getContainingFile();
+    if (file != null) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile instanceof VirtualFilePathWrapper) return ((VirtualFilePathWrapper)virtualFile).getPresentablePath();
+    }
+
+    return null;
+  }
 
   @Override
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,

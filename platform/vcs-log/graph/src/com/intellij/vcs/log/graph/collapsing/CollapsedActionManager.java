@@ -192,7 +192,7 @@ final class CollapsedActionManager {
     @NotNull
     @Override
     public Set<GraphAction.Type> supportedActionTypes() {
-      return ContainerUtil.set(GraphAction.Type.MOUSE_CLICK, GraphAction.Type.MOUSE_OVER);
+      return Set.of(GraphAction.Type.MOUSE_CLICK, GraphAction.Type.MOUSE_OVER);
     }
   };
 
@@ -256,7 +256,7 @@ final class CollapsedActionManager {
         int downNodeIndex = context.convertToDelegateNodeIndex(assertInt(dottedEdge.getDownNodeIndex()));
 
         if (context.getActionType() == GraphAction.Type.MOUSE_OVER) {
-          return LinearGraphUtils.createSelectedAnswer(context.getDelegatedGraph(), ContainerUtil.set(upNodeIndex, downNodeIndex));
+          return LinearGraphUtils.createSelectedAnswer(context.getDelegatedGraph(), Set.of(upNodeIndex, downNodeIndex));
         }
 
         Set<Integer> middleNodes = context.myDelegatedFragmentGenerators.fragmentGenerator.getMiddleNodes(upNodeIndex, downNodeIndex, true);
@@ -277,7 +277,7 @@ final class CollapsedActionManager {
     @NotNull
     @Override
     public Set<GraphAction.Type> supportedActionTypes() {
-      return ContainerUtil.set(GraphAction.Type.MOUSE_CLICK, GraphAction.Type.MOUSE_OVER);
+      return Set.of(GraphAction.Type.MOUSE_CLICK, GraphAction.Type.MOUSE_OVER);
     }
   };
 

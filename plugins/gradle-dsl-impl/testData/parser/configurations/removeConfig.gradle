@@ -1,0 +1,7 @@
+configurations {
+  badConfig {
+    transitive = true
+  }
+  worseConfig
+  worstConfig.visible = false
+}

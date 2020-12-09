@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.settings.Diff
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -64,7 +65,7 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
       row {
         row {
           right {
-            link("Reset") {
+            link(LangBundle.message("action.link.reset")) {
               setLanguageBlacklistToDefault(language)
             }
           }

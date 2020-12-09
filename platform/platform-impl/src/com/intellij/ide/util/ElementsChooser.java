@@ -16,8 +16,25 @@ import java.util.Map;
 public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
   private static final BooleanMarkStateDescriptor MARK_STATE_DESCRIPTOR = new BooleanMarkStateDescriptor();
 
+  private final Collection<StatisticsCollector<T>> myStatisticsCollectors = new ArrayList<>();
+
+  public void addStatisticsCollector(StatisticsCollector<T> collector) {
+    myStatisticsCollectors.add(collector);
+    addElementsMarkListener(collector);
+  }
+  public void removeStatisticsCollector(StatisticsCollector<T> collector) {
+    myStatisticsCollectors.remove(collector);
+    removeElementsMarkListener(collector);
+  }
+
   public interface ElementsMarkListener<T> {
     void elementMarkChanged(T element, boolean isMarked);
+  }
+
+  public interface StatisticsCollector<T> extends ElementsMarkListener<T> {
+    void selectionInverted();
+    void allSelected();
+    void noneSelected();
   }
 
   public ElementsChooser(final boolean elementsCanBeMarked) {
@@ -105,10 +122,13 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
       T type = getElementAt(i);
       setElementMarked(type, !isElementMarked(type));
     }
+    myStatisticsCollectors.forEach(StatisticsCollector::selectionInverted);
   }
 
   public void setAllElementsMarked(boolean marked) {
     setAllElementsMarked(getMarkState(marked));
+    if (marked) myStatisticsCollectors.forEach(StatisticsCollector::allSelected);
+    else myStatisticsCollectors.forEach(StatisticsCollector::noneSelected);
   }
 
   private static Boolean getMarkState(boolean marked) {

@@ -5,11 +5,17 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DeploymentConfigurationBase<Self extends DeploymentConfigurationBase> extends DeploymentConfiguration
   implements PersistentStateComponent<Self> {
+  private List<Option> myOptions = new ArrayList<>();
+
   @Override
   public PersistentStateComponent<?> getSerializer() {
     return this;
@@ -29,5 +35,17 @@ public class DeploymentConfigurationBase<Self extends DeploymentConfigurationBas
   @Override
   public void checkConfiguration(RemoteServer<?> server, DeploymentSource deploymentSource) throws RuntimeConfigurationException {
 
+  }
+
+  @XCollection
+  @NotNull
+  @Override
+  public List<Option> getSelectedOptions() {
+    return myOptions;
+  }
+
+  @Override
+  public void setSelectedOptions(@NotNull List<Option> selectedOptions) {
+    myOptions = new ArrayList<>(selectedOptions);
   }
 }

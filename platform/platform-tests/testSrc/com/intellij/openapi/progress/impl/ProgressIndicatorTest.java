@@ -360,7 +360,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         assertFalse(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
-        assertTrue(!progress.isCanceled());
+        assertFalse(progress.isCanceled());
         progress.cancel();
         assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
         assertTrue(progress.isCanceled());
@@ -685,21 +685,18 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
     String msg = "expected message";
     try {
-      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Title", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            throw new AssertionError(msg);
-          });
-          
-          // ensure previous runnable is executed during progress, not after it
-          ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
-        }
-      });
-      fail("should fail");
-    }
-    catch (Throwable e) {
-      assertTrue(e.getMessage(), e.getMessage().endsWith(msg));
+      assertThrows(AssertionError.class, () ->
+        ProgressManager.getInstance().run(new Task.Modal(getProject(), "Title", true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              throw new AssertionError(msg);
+            });
+
+            // ensure previous runnable is executed during progress, not after it
+            ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
+          }
+        }));
       assertSame(ModalityState.NON_MODAL, ModalityState.current());
     }
     finally {
@@ -797,30 +794,26 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testWithTimeout() {
-    assertEquals("a", ProgressIndicatorUtils.withTimeout(1000, () -> "a"));
+    assertEquals("a", ProgressIndicatorUtils.withTimeout(1_000_000_000, () -> "a"));
 
     assertNull(ProgressIndicatorUtils.withTimeout(1, () -> {
-      TimeoutUtil.sleep(10);
+      TimeoutUtil.sleep(50);
       ProgressManager.checkCanceled();
       return "a";
     }));
 
-    assertThrows(ProcessCanceledException.class, () -> {
-      ProgressIndicatorUtils.withTimeout(1, () -> {
-        throw new ProcessCanceledException();
-      });
-    });
+    assertThrows(ProcessCanceledException.class, () -> ProgressIndicatorUtils.withTimeout(1, () -> {
+      throw new ProcessCanceledException();
+    }));
 
     ProgressIndicatorBase outer = new ProgressIndicatorBase();
-    ProgressManager.getInstance().runProcess(() -> {
-      assertThrows(ProcessCanceledException.class, () -> {
-        ProgressIndicatorUtils.withTimeout(1, () -> {
-          outer.cancel();
-          ProgressManager.checkCanceled();
-          return null;
-        });
+    ProgressManager.getInstance().runProcess(() -> assertThrows(ProcessCanceledException.class, () -> {
+      ProgressIndicatorUtils.withTimeout(1, () -> {
+        outer.cancel();
+        ProgressManager.checkCanceled();
+        return null;
       });
-    }, outer);
+    }), outer);
   }
 
   private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
@@ -969,17 +962,15 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ProgressIndicatorEx p = new ProgressIndicatorBase();
     CountDownLatch run = new CountDownLatch(1);
     CountDownLatch exit = new CountDownLatch(1);
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ProgressManager.getInstance().runProcess(() -> {
-        try {
-          run.countDown();
-          exit.await();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }, p);
-    });
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
+      try {
+        run.countDown();
+        exit.await();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }, p));
     run.await();
     boolean allowed = true;
     try {
@@ -993,5 +984,62 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       future.get();
     }
     assertFalse("pm.runProcess() with the progress already used in the other thread must be prohibited", allowed);
+  }
+  
+  public void testRelayUiToDelegateIndicatorCopiesEverything() {
+    ProgressIndicatorBase ui = new ProgressIndicatorBase();
+    ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+    indicator.setIndeterminate(false);
+    indicator.setFraction(0.3141519);
+    indicator.setText("0.3141519");
+    indicator.setText2("2.3141519");
+    indicator.addStateDelegate(new RelayUiToDelegateIndicator(ui));
+    //make sure state is replicated correctly
+    assertFalse(ui.isIndeterminate());
+    assertEquals(0.3141519, ui.getFraction());
+    assertEquals("0.3141519", ui.getText());
+    assertEquals("2.3141519", ui.getText2());
+  }
+
+  public void testMessagePumpingInProgressWindow_startBlockingMustNotStopWhenSomeOneStoppedIndicator() {
+    ProgressManager.getInstance().run(new Task.Modal(null, "", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.stop();
+        // this makes ProgressWindows#isRunning() false, thus it stops messages processing
+        // to make it fail more predictably
+        TimeoutUtil.sleep(50);
+
+        // deadlocks, because ProgressWindow is no longer processing the message pump
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+        });
+      }
+    });
+  }
+
+  public void testMessagePumpingInProgressWindow_startBlockingMustNotStopWhenSomeOneDoesWeirdDelegateTricksWithIndicator() {
+    ProgressManager.getInstance().run(new Task.Modal(null, "", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        new ProgressIndicatorBase().addStateDelegate((ProgressIndicatorEx)indicator);
+        // this makes ProgressWindows#isRunning() false, thus it stops messages processing
+        // to make it fail more predictably
+        TimeoutUtil.sleep(50);
+
+        // deadlocks, because ProgressWindow is no longer processing the message pump
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+        });
+      }
+    });
+  }
+
+  public void testTaskWithResultMustBeAbleToComputeException() throws Exception {
+    Exception result = ProgressManager.getInstance().run(new Task.WithResult<Exception, Exception>(null, "", true) {
+      @Override
+      protected Exception compute(@NotNull ProgressIndicator indicator) {
+        return new Exception("result");
+      }
+    });
+    assertEquals("result", result.getMessage());
   }
 }

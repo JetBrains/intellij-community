@@ -4,41 +4,42 @@ package org.jetbrains.intellij.build.images.sync
 import org.jetbrains.intellij.build.images.IconRobotsData
 import org.jetbrains.intellij.build.images.ImageSyncFlags
 import org.jetbrains.intellij.build.images.ROBOTS_FILE_NAME
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 internal object IconRobotsDataReader {
   @Volatile
-  private var iconRobotsData = emptyMap<File, IconRobotsData>()
+  private var iconRobotsData = emptyMap<Path, IconRobotsData>()
   private val root = IconRobotsData(null, ignoreSkipTag = false, usedIconsRobots = null)
 
-  private fun readIconRobotsData(file: File, block: ImageSyncFlags.() -> Boolean): Boolean {
+  private fun readIconRobotsData(file: Path, block: ImageSyncFlags.() -> Boolean): Boolean {
     val robotFile = findRobotsFileName(file) ?: return false
     if (!iconRobotsData.containsKey(robotFile)) {
       synchronized(this) {
         if (!iconRobotsData.containsKey(robotFile)) {
-          iconRobotsData = iconRobotsData.plus((robotFile to root.fork(robotFile.toPath(), robotFile.toPath())))
+          iconRobotsData = iconRobotsData.plus((robotFile to root.fork(robotFile, robotFile)))
         }
       }
     }
-    return iconRobotsData.getValue(robotFile).getImageSyncFlags(file.toPath()).block()
+    return iconRobotsData.getValue(robotFile).getImageSyncFlags(file).block()
   }
 
-  private fun findRobotsFileName(file: File): File? {
-    if (file.isDirectory && File(file, ROBOTS_FILE_NAME).exists()) {
+  private fun findRobotsFileName(file: Path): Path? {
+    if (Files.isDirectory(file) && Files.exists(file.resolve(ROBOTS_FILE_NAME))) {
       return file
     }
     else {
-      return file.parentFile?.let(::findRobotsFileName)
+      return file.parent?.let(::findRobotsFileName)
     }
   }
 
-  fun isSyncSkipped(file: File): Boolean {
+  fun isSyncSkipped(file: Path): Boolean {
     return readIconRobotsData(file) {
       skipSync
     }
   }
 
-  fun isSyncForced(file: File): Boolean {
+  fun isSyncForced(file: Path): Boolean {
     return readIconRobotsData(file) {
       forceSync
     }

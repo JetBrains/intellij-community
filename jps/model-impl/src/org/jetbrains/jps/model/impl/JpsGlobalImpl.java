@@ -23,9 +23,11 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryRole;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
 public class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements JpsGlobal {
   private final JpsLibraryCollectionImpl myLibraryCollection;
+  private JpsPathMapper myPathMapper = JpsPathMapper.IDENTITY;
 
   public JpsGlobalImpl(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
@@ -71,6 +73,16 @@ public class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements 
   @Override
   public JpsFileTypesConfiguration getFileTypesConfiguration() {
     return myContainer.getChild(JpsFileTypesConfigurationImpl.ROLE);
+  }
+
+  @Override
+  public @NotNull JpsPathMapper getPathMapper() {
+    return myPathMapper;
+  }
+
+  @Override
+  public void setPathMapper(@NotNull JpsPathMapper pathMapper) {
+    myPathMapper = pathMapper;
   }
 
   @NotNull

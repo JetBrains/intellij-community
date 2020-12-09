@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -40,15 +40,18 @@ public final class SystemInfo {
   public static final boolean isUnix = SystemInfoRt.isUnix;
   public static final boolean isChromeOS = isLinux && isCrostini();
 
-  public static final boolean isAppleJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Apple");
-  public static final boolean isOracleJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Oracle");
-  public static final boolean isSunJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Sun") && StringUtil
-    .containsIgnoreCase(JAVA_VENDOR, "Microsystems");
-  public static final boolean isIbmJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "IBM");
-  public static final boolean isAzulJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Azul");
-  public static final boolean isJetBrainsJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "JetBrains");
+  public static final boolean isAppleJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Apple", 0) >= 0;
+  public static final boolean isOracleJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Oracle", 0) >= 0;
+  public static final boolean isSunJvm =
+    Strings.indexOfIgnoreCase(JAVA_VENDOR, "Sun", 0) >= 0 && Strings.indexOfIgnoreCase(JAVA_VENDOR, "Microsystems", 0) >= 0;
+  public static final boolean isIbmJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "IBM", 0) >= 0;
+  public static final boolean isAzulJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Azul", 0) >= 0;
+  public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
 
-  @ReviseWhenPortedToJDK("9")
+  /**
+   * @deprecated Doesn't make sense - Java 11+ is only supported.
+   */
+  @Deprecated
   public static final boolean IS_AT_LEAST_JAVA9 = SystemInfoRt.IS_AT_LEAST_JAVA9;
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -69,18 +72,18 @@ public final class SystemInfo {
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
 
   public static final boolean isXWindow = SystemInfoRt.isXWindow;
-  public static final boolean isWayland = isXWindow && !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
+  public static final boolean isWayland = isXWindow && !Strings.isEmpty(System.getenv("WAYLAND_DISPLAY"));
   /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
   public static final boolean isGNOME = isXWindow &&
                                         (notNull(System.getenv("GDMSESSION"), "").startsWith("gnome") ||
-                                         StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).endsWith("gnome"));
+                                         Strings.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).endsWith("gnome"));
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
-  public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
+  public static final boolean isKDE = isXWindow && !Strings.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
   public static final boolean isXfce = isXWindow && (notNull(System.getenv("GDMSESSION"), "").startsWith("xfce")) ||
-                                       StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("xfce");
+                                       Strings.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("xfce");
   public static final boolean isI3= isXWindow && (notNull(System.getenv("GDMSESSION"), "").startsWith("i3")) ||
-                                    StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("i3");
+                                    Strings.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("i3");
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
@@ -93,12 +96,12 @@ public final class SystemInfo {
   public static final boolean isArm64 = "aarch64".equals(OS_ARCH) || "arm64".equals(OS_ARCH);
   public static final boolean isMacIntel64 = isMac && isIntel64;
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
+  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = PathExecLazyValue.create("xdg-open");
   public static boolean hasXdgOpen() {
     return isXWindow && ourHasXdgOpen.getValue();
   }
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgMime = new PathExecLazyValue("xdg-mime");
+  private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
   public static boolean hasXdgMime() {
     return isXWindow && ourHasXdgMime.getValue();
   }

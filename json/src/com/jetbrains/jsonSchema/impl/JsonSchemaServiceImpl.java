@@ -44,7 +44,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   @NotNull private final Project myProject;
   @NotNull private final MyState myState;
   @NotNull private final ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
-  @NotNull private final Set<String> myRefs = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  @NotNull private final Set<String> myRefs = ContainerUtil.newConcurrentSet();
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
 
   @NotNull private final JsonSchemaCatalogManager myCatalogManager;

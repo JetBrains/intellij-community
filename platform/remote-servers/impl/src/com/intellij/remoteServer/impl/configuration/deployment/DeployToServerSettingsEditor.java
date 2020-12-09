@@ -45,6 +45,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
   private SettingsEditor<D> myDeploymentSettingsEditor;
   private DeploymentSource myLastSelectedSource;
   private RemoteServer<S> myLastSelectedServer;
+  private D myDeploymentConfiguration;
 
   public DeployToServerSettingsEditor(@NotNull ServerType<S> type,
                                       @NotNull DeploymentConfigurator<D, S> deploymentConfigurator,
@@ -79,6 +80,10 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       myDeploymentSettingsComponent.removeAll();
       myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
       if (myDeploymentSettingsEditor != null) {
+        if (myDeploymentConfiguration != null) {
+          myDeploymentSettingsEditor.resetFrom(myDeploymentConfiguration);
+        }
+        myDeploymentSettingsEditor.addSettingsEditorListener(e -> fireEditorStateChanged());
         Disposer.register(this, myDeploymentSettingsEditor);
         myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
       }
@@ -100,6 +105,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
     resetSelectedSourceFrom(configuration);
 
     D deploymentConfiguration = configuration.getDeploymentConfiguration();
+    myDeploymentConfiguration = deploymentConfiguration;
     updateDeploymentSettingsEditor();
     if (deploymentConfiguration != null && myDeploymentSettingsEditor != null) {
       myDeploymentSettingsEditor.resetFrom(deploymentConfiguration);
@@ -122,6 +128,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
         deployment = myDeploymentConfigurator.createDefaultConfiguration(deploymentSource);
         configuration.setDeploymentConfiguration(deployment);
       }
+      myDeploymentConfiguration = deployment;
       if (myDeploymentSettingsEditor != null) {
         myDeploymentSettingsEditor.applyTo(deployment);
       }

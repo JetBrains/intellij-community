@@ -114,8 +114,7 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
     @Override
     public String getGroupName(@NotNull CommittedChangeList changeList) {
       Object value = myColumn.getValue(changeList);
-
-      return value != null ? value.toString() : null;
+      return value != null ? value.toString() : null; //NON-NLS
     }
 
     @Override

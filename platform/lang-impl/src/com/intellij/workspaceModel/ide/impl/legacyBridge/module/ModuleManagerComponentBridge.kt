@@ -7,7 +7,7 @@ import com.intellij.configurationStore.saveComponentManager
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.components.stateStore
@@ -22,10 +22,10 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -34,30 +34,24 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.RootsChangeWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Callable
-import kotlin.collections.HashSet
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
-  val outOfTreeModulesPath: String =
-    FileUtilRt.toSystemIndependentName(File(PathManager.getTempPath(), "outOfTreeProjectModules-${project.locationHash}").path)
-
   private val LOG = Logger.getInstance(javaClass)
 
-  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
+  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = LinkedHashMap()
 
   override fun dispose() {
     modules().forEach {
@@ -67,11 +61,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   private fun modules(): Sequence<ModuleBridge> {
     return modules(entityStore.current)
-  }
-
-  private fun modules(storage: WorkspaceEntityStorage): Sequence<ModuleBridge> {
-    val moduleMap = storage.moduleMap
-    return storage.entities(ModuleEntity::class.java).mapNotNull { moduleMap.getDataByEntity(it) }
   }
 
   internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
@@ -136,10 +125,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
           }
 
-          if (!RootsChangeWatcher.getInstance(project).rootFilePointers.isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.beforeChanged(event)
-          }
+          rootsChangeListener.beforeChanged(event)
         }
 
         override fun changed(event: VersionedStorageChange) {
@@ -189,11 +175,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
           }
 
-          // Roots changed should be sent after syncing with legacy bridge
-          if (!RootsChangeWatcher.getInstance(project).rootFilePointers.isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.changed(event)
-          }
+          rootsChangeListener.changed(event)
         }
       })
     }
@@ -331,20 +313,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   override fun moduleDependencyComparator(): Comparator<Module> {
-    val builder = DFSTBuilder(moduleGraph(true))
-    return builder.comparator()
+    return entityStore.cachedValue(dependencyComparatorValue)
   }
 
-  override fun moduleGraph(): Graph<Module> = moduleGraph(includeTests = true)
-  override fun moduleGraph(includeTests: Boolean): Graph<Module> {
-    return GraphGenerator.generate(CachingSemiGraph.cache(object : InboundSemiGraph<Module> {
-      override fun getNodes(): Collection<Module> = modules().toMutableList()
+  override fun moduleGraph(): Graph<Module> = entityStore.cachedValue(dependencyGraphWithTestsValue)
 
-      override fun getIn(m: Module): Iterator<Module> {
-        val dependentModules = ModuleRootManager.getInstance(m).getDependencies(includeTests)
-        return dependentModules.toList().iterator()
-      }
-    }))
+  override fun moduleGraph(includeTests: Boolean): Graph<Module> {
+    return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
   private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
@@ -352,7 +327,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   private fun loadModules(entities: List<ModuleEntity>) {
     LOG.debug { "Loading modules for ${entities.size} entities" }
     val fileSystem = LocalFileSystem.getInstance()
-    entities.forEach { module -> fileSystem.refreshAndFindFileByNioFile(getModuleFilePath(module)) }
+    entities.forEach { module -> getModuleFilePath(module)?.let { fileSystem.refreshAndFindFileByNioFile(it) } }
 
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
     try {
@@ -367,6 +342,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
 
       val results = service.invokeAll(tasks)
+
       WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
         val moduleMap = builder.mutableModuleMap
         results.mapNotNull { it.get() }.forEach { (entity, module) ->
@@ -377,6 +353,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
     finally {
       service.shutdownNow()
+    }
+
+    WriteAction.runAndWait<RuntimeException> {
+      (ProjectRootManager.getInstance(project) as ProjectRootManagerBridge).setupTrackedLibrariesAndJdks()
     }
   }
 
@@ -550,14 +530,16 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
   }
 
-  internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path {
-    val entitySource = (moduleEntity.entitySource as? JpsImportedEntitySource)?.internalFile ?: moduleEntity.entitySource
-    val directoryPath = when (entitySource) {
-      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.filePath!!
-      // TODO Is this fallback fake path ok?
-      else -> outOfTreeModulesPath
+  internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path? {
+    val entitySource = when (val moduleSource = moduleEntity.entitySource) {
+      is JpsFileDependentEntitySource -> moduleSource.originalSource
+      is CustomModuleEntitySource -> moduleSource.internalSource
+      else -> moduleEntity.entitySource
     }
-    return Paths.get(directoryPath, "${moduleEntity.name}.iml")
+    if (entitySource !is JpsFileEntitySource.FileInDirectory) {
+      return null
+    }
+    return entitySource.directory.toPath().resolve("${moduleEntity.name}.iml")
   }
 
   fun createModuleInstance(moduleEntity: ModuleEntity,
@@ -575,12 +557,14 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     )
 
     module.init {
-      try {
-        val moduleStore = module.stateStore as ModuleStore
-        moduleStore.setPath(modulePath, null, isNew)
-      }
-      catch (t: Throwable) {
-        logger<ModuleManagerComponentBridge>().error(t)
+      if (modulePath != null) {
+        try {
+          val moduleStore = module.stateStore as ModuleStore
+          moduleStore.setPath(modulePath, null, isNew)
+        }
+        catch (t: Throwable) {
+          logger<ModuleManagerComponentBridge>().error(t)
+        }
       }
     }
 
@@ -620,8 +604,68 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       get() = getExternalMapping(INDEX_ID)
     internal val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(INDEX_ID)
+
+    @JvmStatic
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =
       moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
+    private val dependencyGraphWithTestsValue = CachedValue { storage ->
+      buildModuleGraph(storage, true)
+    }
+    private val dependencyGraphWithoutTestsValue = CachedValue { storage ->
+      buildModuleGraph(storage, false)
+    }
+    private val dependencyComparatorValue = CachedValue { storage ->
+      DFSTBuilder(buildModuleGraph(storage, true)).comparator()
+    }
+
+    @JvmStatic
+    fun changeModuleEntitySource(module: ModuleBridge, moduleEntityStore: WorkspaceEntityStorage, newSource: EntitySource,
+                                 moduleDiff: WorkspaceEntityStorageDiffBuilder?) {
+      val oldEntitySource = moduleEntityStore.findModuleEntity(module)?.entitySource ?: return
+      fun changeSources(diffBuilder: WorkspaceEntityStorageDiffBuilder, storage: WorkspaceEntityStorage) {
+        val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
+        entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
+          if (it !is FacetEntity) {
+            diffBuilder.changeSource(it, newSource)
+          }
+        }
+      }
+
+      if (moduleDiff != null) {
+        changeSources(moduleDiff, moduleEntityStore)
+      }
+      else {
+        WriteAction.runAndWait<RuntimeException> {
+          WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
+            changeSources(builder, builder)
+          }
+        }
+      }
+    }
+
+    private fun buildModuleGraph(storage: WorkspaceEntityStorage, includeTests: Boolean): Graph<Module> {
+      return GraphGenerator.generate(CachingSemiGraph.cache(object : InboundSemiGraph<Module> {
+        override fun getNodes(): Collection<Module> {
+          return modules(storage).toList()
+        }
+
+        override fun getIn(m: Module): Iterator<Module> {
+          val moduleMap = storage.moduleMap
+          val entity = moduleMap.getEntities(m as ModuleBridge).firstOrNull() as ModuleEntity?
+          return (entity?.dependencies?.asSequence() ?: emptySequence())
+            .filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>()
+            .filter { includeTests || it.scope != ModuleDependencyItem.DependencyScope.TEST }
+            .mapNotNull { it.module.resolve(storage) }
+            .mapNotNull { moduleMap.getDataByEntity(it) }
+            .iterator()
+        }
+      }))
+    }
+
+    private fun modules(storage: WorkspaceEntityStorage): Sequence<ModuleBridge> {
+      val moduleMap = storage.moduleMap
+      return storage.entities(ModuleEntity::class.java).mapNotNull { moduleMap.getDataByEntity(it) }
+    }
   }
 }

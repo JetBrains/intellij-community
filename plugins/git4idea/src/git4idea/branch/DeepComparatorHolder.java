@@ -2,6 +2,7 @@
 package git4idea.branch;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.vcs.log.VcsLogUi;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
+@Service(Service.Level.PROJECT)
 public final class DeepComparatorHolder implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final Map<VcsLogUi, DeepComparator> myComparators;

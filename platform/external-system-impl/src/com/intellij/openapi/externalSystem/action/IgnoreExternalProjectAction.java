@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -77,7 +77,8 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         uniqueExternalProjects.forEach(
-          externalProjectInfo -> ServiceManager.getService(ProjectDataManager.class).importData(externalProjectInfo, project, true)
+          externalProjectInfo -> ApplicationManager.getApplication().getService(ProjectDataManager.class)
+            .importData(externalProjectInfo, project, true)
         );
       }
     });

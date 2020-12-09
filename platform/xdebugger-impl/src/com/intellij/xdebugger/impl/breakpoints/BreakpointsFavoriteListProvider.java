@@ -6,6 +6,7 @@ import com.intellij.ide.favoritesTreeView.AbstractFavoritesListProvider;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -14,6 +15,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SingleAlarm;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -137,9 +139,9 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   public String getCustomName(@NotNull CommonActionsPanel.Buttons type) {
     switch (type) {
       case EDIT:
-        return "Edit breakpoint";
+        return ActionsBundle.actionText("EditBreakpoint");
       case REMOVE:
-        return "Remove breakpoint";
+        return XDebuggerBundle.message("xdebugger.remove.line.breakpoint.action.text");
       default:
         return null;
     }

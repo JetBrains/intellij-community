@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 
-class BranchedVirtualFileImpl extends BranchedVirtualFile {
+final class BranchedVirtualFileImpl extends BranchedVirtualFile {
   private final @NotNull ModelBranchImpl myBranch;
   private final boolean myDirectory;
   private @Nullable VirtualFile myOriginal;
@@ -115,13 +115,19 @@ class BranchedVirtualFileImpl extends BranchedVirtualFile {
   public void move(Object requestor, @NotNull VirtualFile _newParent) {
     assert ModelBranch.getFileBranch(_newParent) == myBranch;
     BranchedVirtualFileImpl newParent = (BranchedVirtualFileImpl)_newParent;
-
     BranchedVirtualFileImpl oldParent = getParent();
+
+    if (oldParent == null) {
+      throw new UnsupportedOperationException("Unable to move root directory");
+    }
+    if (newParent.equals(oldParent)) return;
 
     myChangedParent = newParent;
 
     oldParent.myChangedChildren = Ref.create(ArrayUtil.remove(oldParent.getChildren(), this));
-    newParent.myChangedChildren = Ref.create(ArrayUtil.insert(newParent.getChildren(), 0, this));
+    BranchedVirtualFileImpl newFile = isDirectory() ?
+                                      new BranchedVirtualFileImpl(myBranch, myOriginal, getName(), true, newParent) : this;
+    newParent.myChangedChildren = Ref.create(ArrayUtil.insert(newParent.getChildren(), 0, newFile));
 
     myBranch.addVfsStructureChange(this);
   }
@@ -143,7 +149,7 @@ class BranchedVirtualFileImpl extends BranchedVirtualFile {
     if (myChangedParent != null) return myChangedParent;
     assert myOriginal != null;
     VirtualFile parent = myOriginal.getParent();
-    return parent == null ? null : myBranch.findFileCopy(parent);
+    return parent == null ? null : myBranch.findPhysicalFileCopy(parent);
   }
 
   @Override
@@ -158,7 +164,7 @@ class BranchedVirtualFileImpl extends BranchedVirtualFile {
     VirtualFile[] baseChildren = myOriginal.getChildren();
     if (baseChildren == null) return null;
 
-    return ContainerUtil.map2Array(baseChildren, BranchedVirtualFileImpl.class, f -> Objects.requireNonNull(myBranch.findFileCopy(f)));
+    return ContainerUtil.map2Array(baseChildren, BranchedVirtualFileImpl.class, f -> Objects.requireNonNull(myBranch.findPhysicalFileCopy(f)));
   }
 
   @Override
@@ -206,4 +212,16 @@ class BranchedVirtualFileImpl extends BranchedVirtualFile {
     return original;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (!(obj instanceof BranchedVirtualFileImpl)) return false;
+    return myOriginal != null && myBranch.equals(((BranchedVirtualFileImpl)obj).myBranch) &&
+           myOriginal.equals(((BranchedVirtualFileImpl)obj).myOriginal);
+  }
+
+  @Override
+  public String toString() {
+    return "BranchedVFile[" + myBranch.hashCode() + "]: " + getPresentableUrl();
+  }
 }

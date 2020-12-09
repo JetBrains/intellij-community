@@ -21,6 +21,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.util.XmlTagUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,20 +35,19 @@ import java.util.concurrent.ConcurrentMap;
  * @author peter
  */
 public class DomUtil {
-  private static final Logger LOG = Logger.getInstance(DomUtil.class);
   public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = GenericValue.class.getTypeParameters()[0];
   private static final Class<Void> DUMMY = void.class;
-  private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
+  private static final Key<DomFileElement<?>> FILE_ELEMENT_KEY = Key.create("dom file element");
 
-  private static final ConcurrentMap<Type, Class> ourTypeParameters = ConcurrentFactoryMap.createMap(key-> {
+  private static final ConcurrentMap<Type, Class<?>> ourTypeParameters = ConcurrentFactoryMap.createMap(key-> {
       final Class<?> result = substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
       return result == null ? DUMMY : result;
     }
   );
-  private static final ConcurrentMap<Couple<Type>, Class> ourVariableSubstitutions =
+  private static final ConcurrentMap<Couple<Type>, Class<?>> ourVariableSubstitutions =
     ConcurrentFactoryMap.createMap(key -> ReflectionUtil.substituteGenericType(key.first, key.second));
 
-  public static Class extractParameterClassFromGenericType(Type type) {
+  public static Class<?> extractParameterClassFromGenericType(Type type) {
     return getGenericValueParameter(type);
   }
 
@@ -129,7 +129,7 @@ public class DomUtil {
     final DomGenericInfo genericInfo = parent.getGenericInfo();
 
     if (element instanceof GenericAttributeValue) {
-      final DomAttributeChildDescription description = genericInfo.getAttributeChildDescription(xmlElementName, namespace);
+      DomAttributeChildDescription<?> description = genericInfo.getAttributeChildDescription(xmlElementName, namespace);
       assert description != null;
       return description.getGetterMethod();
     }
@@ -143,16 +143,22 @@ public class DomUtil {
   }
 
   @Nullable
-  public static Class getGenericValueParameter(Type type) {
-    final Class aClass = ourTypeParameters.get(type);
+  public static Class<?> getGenericValueParameter(Type type) {
+    final Class<?> aClass = ourTypeParameters.get(type);
     return aClass == DUMMY ? null : aClass;
   }
 
+  @ApiStatus.Internal
+  public static void clearCaches() {
+    ourTypeParameters.clear();
+    ourVariableSubstitutions.clear();
+  }
+
   @Nullable
-  public static XmlElement getValueElement(GenericDomValue domValue) {
+  public static XmlElement getValueElement(GenericDomValue<?> domValue) {
     if (domValue instanceof GenericAttributeValue) {
-      final GenericAttributeValue value = (GenericAttributeValue)domValue;
-      final XmlAttributeValue attributeValue = value.getXmlAttributeValue();
+      GenericAttributeValue<?> value = (GenericAttributeValue<?>)domValue;
+      XmlAttributeValue attributeValue = value.getXmlAttributeValue();
       return attributeValue == null ? value.getXmlAttribute() : attributeValue;
     } else {
       return domValue.getXmlTag();
@@ -160,7 +166,7 @@ public class DomUtil {
   }
 
   public static List<? extends DomElement> getIdentitySiblings(DomElement element) {
-    final GenericDomValue nameDomElement = element.getGenericInfo().getNameDomElement(element);
+    GenericDomValue<?> nameDomElement = element.getGenericInfo().getNameDomElement(element);
     if (nameDomElement == null) return Collections.emptyList();
 
     final NameValue nameValue = nameDomElement.getAnnotation(NameValue.class);
@@ -188,9 +194,9 @@ public class DomUtil {
     final List<T> result = new SmartList<>();
     parent.acceptChildren(new DomElementVisitor() {
       @Override
-      public void visitDomElement(final DomElement element) {
+      public void visitDomElement(DomElement element) {
         if (type.isInstance(element)) {
-          result.add((T)element);
+          result.add(type.cast(element));
         }
       }
     });
@@ -216,7 +222,7 @@ public class DomUtil {
     if (parent instanceof GenericAttributeValue) return Collections.emptyList();
 
     if (parent instanceof DomFileElement) {
-      final DomFileElement element = (DomFileElement)parent;
+      DomFileElement<?> element = (DomFileElement<?>)parent;
       return tags ? Collections.singletonList(element.getRootElement()) : Collections.emptyList();
     }
 
@@ -228,10 +234,10 @@ public class DomUtil {
       if (attributes) {
         for (final XmlAttribute attribute : tag.getAttributes()) {
           if (!attribute.isValid()) {
-            LOG.error("Invalid attr: parent.valid=" + tag.isValid());
+            Logger.getInstance(DomUtil.class).error("Invalid attr: parent.valid=" + tag.isValid());
             continue;
           }
-          GenericAttributeValue element = domManager.getDomElement(attribute);
+          GenericAttributeValue<?> element = domManager.getDomElement(attribute);
           if (checkHasXml(attribute, element)) {
             ContainerUtil.addIfNotNull(result, element);
           }
@@ -240,7 +246,7 @@ public class DomUtil {
       if (tags) {
         for (final XmlTag subTag : tag.getSubTags()) {
           if (!subTag.isValid()) {
-            LOG.error("Invalid subtag: parent.valid=" + tag.isValid());
+            Logger.getInstance(DomUtil.class).error("Invalid subtag: parent.valid=" + tag.isValid());
             continue;
           }
           DomElement element = domManager.getDomElement(subTag);
@@ -256,7 +262,7 @@ public class DomUtil {
 
   private static boolean checkHasXml(XmlElement psi, DomElement dom) {
     if (dom != null && !hasXml(dom)) {
-      LOG.error("No xml for dom " + dom + "; attr=" + psi + ", physical=" + psi.isPhysical());
+      Logger.getInstance(DomUtil.class).error("No xml for dom " + dom + "; attr=" + psi + ", physical=" + psi.isPhysical());
       return false;
     }
     return true;
@@ -311,7 +317,7 @@ public class DomUtil {
          curElement != null;
          curElement = curElement.getParent()) {
       if (requiredClass.isInstance(curElement)) {
-        return (T)curElement;
+        return requiredClass.cast(curElement);
       }
     }
     return null;
@@ -351,7 +357,7 @@ public class DomUtil {
     final DomManager domManager = DomManager.getDomManager(project);
     final XmlAttribute attr = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false);
     if (attr != null) {
-      final GenericAttributeValue value = domManager.getDomElement(attr);
+      GenericAttributeValue<?> value = domManager.getDomElement(attr);
       if (value != null) return value;
     }
 
@@ -421,7 +427,6 @@ public class DomUtil {
   }
 
   public static <T extends DomElement> DomFileElement<T> getFileElement(@NotNull DomElement element) {
-
     if (element instanceof DomFileElement) {
       return (DomFileElement)element;
     }

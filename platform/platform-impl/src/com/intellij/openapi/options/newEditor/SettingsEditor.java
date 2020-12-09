@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.VerticalLayout;
@@ -27,6 +28,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +57,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final OnePixelSplitter mySplitter;
   private final SpotlightPainter mySpotlightPainter;
   private final LoadingDecorator myLoadingDecorator;
-  private final Banner myBanner;
+  private final @NotNull Banner myBanner;
 
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
   private ConfigurableController myLastController;
@@ -210,6 +212,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     };
     myEditor.setPreferredSize(JBUI.size(800, 600));
     myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
+    myLoadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
     myBanner = new Banner(myEditor.getResetAction());
     searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
     myBanner.setBorder(JBUI.Borders.empty(5, 6, 0, 10));
@@ -390,10 +393,6 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
   void updateStatus(Configurable configurable) {
     myFilter.updateSpotlight(configurable == null);
-    if (myBanner != null) {
-      myBanner.setProject(myTreeView.findConfigurableProject(configurable));
-      myBanner.setText(myTreeView.getPathNames(configurable));
-    }
     if (myEditor != null) {
       ConfigurationException exception = myFilter.myContext.getErrors().get(configurable);
       myEditor.getApplyAction().setEnabled(!myFilter.myContext.getModified().isEmpty());
@@ -410,7 +409,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     }
   }
 
-  void updateController(Configurable configurable) {
+  private void updateController(@Nullable Configurable configurable) {
+    Project project = myTreeView.findConfigurableProject(configurable);
+    myBanner.setProjectText(project != null ? getProjectText(project) : null);
+    myBanner.setText(myTreeView.getPathNames(configurable));
+
     if (myLastController != null) {
       myLastController.setBanner(null);
       myLastController = null;
@@ -456,5 +459,12 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     else if (!myFilter.myContext.getErrors().containsKey(configurable)) {
       myFilter.myContext.fireModifiedRemoved(configurable, null);
     }
+  }
+
+  private static @NotNull @Nls String getProjectText(@NotNull Project project) {
+    IdeUICustomization customization = IdeUICustomization.getInstance();
+    return project.isDefault() ?
+           customization.projectMessage("configurable.default.project.tooltip") :
+           customization.projectMessage("configurable.current.project.tooltip");
   }
 }

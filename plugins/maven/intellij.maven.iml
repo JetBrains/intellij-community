@@ -88,6 +88,10 @@
     <orderEntry type="module" module-name="intellij.maven.model" exported="" />
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" />
+    <orderEntry type="module" module-name="intellij.properties.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
   <component name="copyright">
     <Base>

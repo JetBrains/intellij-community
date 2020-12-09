@@ -26,6 +26,9 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public final class SuppressionUtil extends SuppressionUtilCore {
+
+  public static final @NonNls String FILE_PREFIX = "file:";
+
   /**
    * Common part of regexp for suppressing in line comments for different languages.
    * Comment start prefix isn't included, e.g. add '//' for Java/C/JS or '#' for Ruby
@@ -37,6 +40,7 @@ public final class SuppressionUtil extends SuppressionUtilCore {
 
   @NonNls
   public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//" + COMMON_SUPPRESS_REGEXP + ".*");  // for Java, C, JS line comments
+  public static final Pattern SUPPRESS_IN_FILE_LINE_COMMENT_PATTERN = Pattern.compile("//" + FILE_PREFIX + COMMON_SUPPRESS_REGEXP + ".*");
 
   @NonNls
   public static final String ALL = "ALL";

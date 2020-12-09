@@ -32,7 +32,7 @@ public final class DiscoveredTestDataHolder {
   private final PersistentStringEnumerator myClassEnumerator;
   private final PersistentStringEnumerator myMethodEnumerator;
   private final PersistentStringEnumerator myPathEnumerator;
-  private final PersistentEnumeratorDelegate<TestId> myTestEnumerator;
+  private final PersistentEnumerator<TestId> myTestEnumerator;
   private final PersistentObjectSeq myConstructedDataFiles = new PersistentObjectSeq();
 
   private boolean myDisposed;
@@ -67,7 +67,7 @@ public final class DiscoveredTestDataHolder {
       PersistentStringEnumerator classNameEnumerator;
       PersistentStringEnumerator methodEnumerator;
       PersistentStringEnumerator pathEnumerator;
-      PersistentEnumeratorDelegate<TestId> testEnumerator;
+      PersistentEnumerator<TestId> testEnumerator;
 
       int iterations = 0;
 
@@ -92,7 +92,7 @@ public final class DiscoveredTestDataHolder {
           pathEnumerator = new PersistentStringEnumerator(pathEnumeratorFile, true);
           myConstructedDataFiles.add(pathEnumerator);
 
-          testEnumerator = new PersistentEnumeratorDelegate<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
+          testEnumerator = new PersistentEnumerator<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
           myConstructedDataFiles.add(testEnumerator);
 
           break;
@@ -188,7 +188,7 @@ public final class DiscoveredTestDataHolder {
     final int testNameId = myTestEnumerator.enumerate(createTestId(testClassName, testMethodName, frameworkId));
     Int2ObjectMap<IntList> result = new Int2ObjectOpenHashMap<>();
     for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
-      IntArrayList methodIds = new IntArrayList(e.getValue().size());
+      IntList methodIds = new IntArrayList(e.getValue().size());
       result.put(myClassEnumerator.enumerate(e.getKey()), methodIds);
       for (String methodName : e.getValue()) {
         methodIds.add(myMethodEnumerator.enumerate(methodName));

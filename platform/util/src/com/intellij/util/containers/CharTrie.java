@@ -3,7 +3,6 @@ package com.intellij.util.containers;
 
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
 public final class CharTrie {
@@ -54,11 +53,11 @@ public final class CharTrie {
    * Returns reversed string by unique hash code.
    */
   public String getReversedString(int hashCode) {
-    return StringFactory.createShared(getReversedChars(hashCode));
+    return new String(getReversedChars(hashCode));
   }
 
   public String getString(int hashCode) {
-    return StringFactory.createShared(getChars(hashCode));
+    return new String(getChars(hashCode));
   }
 
   public int getHashCode(char[] chars) {

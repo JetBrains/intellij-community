@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.intention
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.statistics.StatisticsManager
@@ -576,7 +576,7 @@ class Tq {
   @Override
   void setUp() throws Exception {
     super.setUp()
-    settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
+    settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject())
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
   }

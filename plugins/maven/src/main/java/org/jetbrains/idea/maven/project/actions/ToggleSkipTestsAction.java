@@ -27,13 +27,17 @@ public class ToggleSkipTestsAction extends MavenToggleAction {
   protected boolean doIsSelected(AnActionEvent e) {
     final Project project = MavenActionUtil.getProject(e.getDataContext());
     if(project == null) return false;
-    return MavenRunner.getInstance(project).getState().isSkipTests();
+    MavenRunner mavenRunner = MavenRunner.getInstanceIfCreated(project);
+    if(mavenRunner == null) return false;
+    return mavenRunner.getState().isSkipTests();
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final Project project = MavenActionUtil.getProject(e.getDataContext());
     if(project == null) return;
-    MavenRunner.getInstance(project).getState().setSkipTests(state);
+    MavenRunner mavenRunner = MavenRunner.getInstanceIfCreated(project);
+    if(mavenRunner == null) return;
+    mavenRunner.getState().setSkipTests(state);
   }
 }

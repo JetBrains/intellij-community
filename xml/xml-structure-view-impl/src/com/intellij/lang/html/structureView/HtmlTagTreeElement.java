@@ -113,8 +113,7 @@ public class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements Lo
     return buf;
   }
 
-  @Nullable
-  private static String shortenTextIfLong(@NotNull StringBuilder text) {
+  private static @NotNull String shortenTextIfLong(@NotNull StringBuilder text) {
     if (text.length() <= MAX_TEXT_LENGTH) {
       return text.toString();
     }

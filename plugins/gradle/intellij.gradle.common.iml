@@ -22,7 +22,6 @@
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
-    <orderEntry type="module" module-name="intellij.gradle.toolingLoaderRt" />
     <orderEntry type="library" name="ion" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
@@ -32,5 +31,6 @@
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
   </component>
 </module>

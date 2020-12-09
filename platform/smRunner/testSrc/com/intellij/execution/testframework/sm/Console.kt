@@ -29,7 +29,7 @@ internal class Console {
 
 private fun asTcMessage(text: String): String? {
   return try {
-    if (ServiceMessage.parse(text.trim()) != null) text else null
+    if (ServiceMessageUtil.parse(text.trim(), false) != null) text else null
   }
   catch (_: ParseException) {
     null

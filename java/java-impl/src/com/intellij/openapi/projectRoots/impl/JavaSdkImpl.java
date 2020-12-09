@@ -2,6 +2,8 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
@@ -24,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
@@ -50,6 +53,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -64,7 +68,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
   private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
 
-  private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
+  private final Map<String, JdkVersionDetector.JdkVersionInfo> myCachedSdkHomeToInfo = new ConcurrentHashMap<>();
   private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
 
   public JavaSdkImpl() {
@@ -92,7 +96,7 @@ public final class JavaSdkImpl extends JavaSdk {
   private void updateCache(@NotNull VFileEvent event, @NotNull String fileName) {
     if (ArchiveFileType.INSTANCE.equals(FileTypeManager.getInstance().getFileTypeByFileName(fileName))) {
       String filePath = event.getPath();
-      if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
+      if (myCachedSdkHomeToInfo.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
         myCachedVersionStringToJdkVersion.clear();
       }
     }
@@ -177,7 +181,11 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String getVMExecutablePath(@NotNull Sdk sdk) {
-    return getBinPath(sdk) + File.separator + VM_EXE_NAME;
+    String binPath = getBinPath(sdk);
+    if (binPath.startsWith(WSLDistribution.UNC_PREFIX)) {
+      return binPath + "/java";
+    }
+    return binPath + File.separator + VM_EXE_NAME;
   }
 
   private static String getConvertedHomePath(Sdk sdk) {
@@ -239,8 +247,18 @@ public final class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
-    String suggestedName = JdkUtil.suggestJdkName(getVersionString(sdkHome));
-    return suggestedName != null ? suggestedName : currentSdkName != null ? currentSdkName : "";
+    var info = getInfo(sdkHome);
+    if (info == null) return currentSdkName != null ? currentSdkName : "";
+
+    String vendorPrefix = info.vendorPrefix;
+    if (!Registry.is("use.jdk.vendor.in.suggested.jdk.name", true)) {
+      vendorPrefix = null;
+    }
+    String name = JdkUtil.suggestJdkName(info.version, vendorPrefix);
+    if (WslDistributionManager.isWslPath(sdkHome)) {
+      return name + " (WSL)";
+    }
+    return name;
   }
 
   @Override
@@ -297,8 +315,8 @@ public final class JavaSdkImpl extends JavaSdk {
       String msg = "Paths checked:\n";
       for (String p : pathsChecked) {
         File f = new File(p);
-        //noinspection StringConcatenationInLoop yeah I know, it's more readable this way
-        msg += p + "; exists: " + f.exists() + "; siblings: " + Arrays.toString(f.getParentFile().list()) + "\n";
+        File parentFile = f.getParentFile();
+        msg += p + "; exists: " + f.exists() + (parentFile == null ? null : "; siblings: " + Arrays.toString(parentFile.list())) + "\n";
       }
       LOG.error("JDK annotations not found", msg);
       return false;
@@ -336,9 +354,9 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
-    String javaPluginClassesRootPath = PathManager.getJarPathForClass(JavaSdkImpl.class);
+    Path javaPluginClassesRootPath = PathManager.getJarForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
-    File javaPluginClassesRoot = new File(javaPluginClassesRootPath);
+    File javaPluginClassesRoot = javaPluginClassesRootPath.toFile();
     VirtualFile root;
     VirtualFileManager vfm = VirtualFileManager.getInstance();
     LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -374,12 +392,18 @@ public final class JavaSdkImpl extends JavaSdk {
     return root;
   }
 
+  @Nullable
+  private JdkVersionDetector.JdkVersionInfo getInfo(String sdkHome) {
+    return myCachedSdkHomeToInfo.computeIfAbsent(sdkHome, homePath -> {
+      return SdkVersionUtil.getJdkVersionInfo(homePath);
+    });
+  }
+
   @Override
   public final String getVersionString(String sdkHome) {
-    return myCachedSdkHomeToVersionString.computeIfAbsent(sdkHome, homePath -> {
-      JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(homePath);
-      return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
-    });
+    var info = getInfo(sdkHome);
+    if (info == null) return null;
+    return info.displayVersionString();
   }
 
   @Override

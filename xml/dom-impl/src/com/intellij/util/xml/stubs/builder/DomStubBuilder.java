@@ -1,28 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.stubs.builder;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
@@ -37,11 +20,14 @@ import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Stream;
 
 /**
  * @author Dmitry Avdeev
  */
-public class DomStubBuilder implements BinaryFileStubBuilder {
+final class DomStubBuilder implements BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<DomFileMetaData> {
   private static final Logger LOG = Logger.getInstance(DomStubBuilder.class);
 
   @Override
@@ -50,32 +36,49 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     return fileType == XmlFileType.INSTANCE && !FileBasedIndexImpl.isProjectOrWorkspaceFile(file, fileType);
   }
 
+
   @Override
-  public Stub buildStubTree(@NotNull FileContent fileContent) {
-    PsiFile psiFile = fileContent.getPsiFile();
-    if (!(psiFile instanceof XmlFile)) return null;
+  public @NotNull Stream<DomFileMetaData> getAllSubBuilders() {
+    return DomApplicationComponent.getInstance().getStubBuildingMetadata().stream();
+  }
 
-    Document document = FileDocumentManager.getInstance().getCachedDocument(fileContent.getFile());
-    Project project = fileContent.getProject();
-    if (project == null) {
-      project = psiFile.getProject();
-    }
-    if (document != null) {
-      PsiFile existingPsi = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (existingPsi instanceof XmlFile) {
-        psiFile = existingPsi;
-      }
-    }
-
-    XmlFile xmlFile = (XmlFile)psiFile;
+  @Override
+  public @Nullable DomFileMetaData getSubBuilder(@NotNull FileContent fileContent) {
     try {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);
+      PsiFile psiFile = fileContent.getPsiFile();
+      if (!(psiFile instanceof XmlFile)) return null;
+
+      Project project = fileContent.getProject();
+      XmlFile xmlFile = (XmlFile)psiFile;
       DomFileElement<? extends DomElement> fileElement = DomManager.getDomManager(project).getFileElement(xmlFile);
       if (fileElement == null) return null;
 
       DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(fileElement.getFileDescription());
       if (meta == null || !meta.hasStubs()) return null;
+      return meta;
+    }
+    finally {
+      XmlUtil.BUILDING_DOM_STUBS.set(Boolean.FALSE);
+    }
+  }
 
+  @Override
+  public @NotNull String getSubBuilderVersion(@Nullable DomFileMetaData data) {
+    return data == null ? "<no-stub>" : data.rootTagName + ":" + data.rootTagName + ":" + data.implementation;
+  }
+
+  @Override
+  public @Nullable Stub buildStubTree(@NotNull FileContent fileContent, @Nullable DomFileMetaData meta) {
+    if (meta == null) return null;
+    PsiFile psiFile = fileContent.getPsiFile();
+    if (!(psiFile instanceof XmlFile)) return null;
+
+    Project project = fileContent.getProject();
+    XmlFile xmlFile = (XmlFile)psiFile;
+    try {
+      XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);
+      DomFileElement<? extends DomElement> fileElement = DomManager.getDomManager(project).getFileElement(xmlFile);
       XmlFileHeader header = DomService.getInstance().getXmlFileHeader(xmlFile);
       if (header.getRootTagLocalName() == null) {
         LOG.error("null root tag for " + fileElement + " for " + fileContent.getFile());
@@ -94,6 +97,6 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    return 23 + DomApplicationComponent.getInstance().getCumulativeVersion(true);
+    return 23;
   }
 }

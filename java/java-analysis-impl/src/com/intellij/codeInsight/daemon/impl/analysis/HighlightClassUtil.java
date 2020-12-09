@@ -28,9 +28,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -42,6 +44,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -280,6 +283,18 @@ public final class HighlightClassUtil {
    * @return true if file correspond to the shebang script
    */
   public static boolean isJavaHashBangScript(@Nullable PsiFile containingFile) {
+    if (containingFile instanceof PsiFileEx && !((PsiFileEx)containingFile).isContentsLoaded()) {
+      final VirtualFile vFile = containingFile.getVirtualFile();
+      if (vFile.isInLocalFileSystem()) {
+        try {
+          // don't build PSI when not yet loaded -> time for scanning scope from 18 seconds to 8 seconds on IntelliJ project
+          return VfsUtilCore.loadText(vFile, 5).startsWith("#!");
+        }
+        catch (IOException e) {
+          return false;
+        }
+      }
+    }
     if (!(containingFile instanceof PsiJavaFile)) return false;
     PsiElement firstChild = containingFile.getFirstChild();
     if (firstChild instanceof PsiImportList && firstChild.getTextLength() == 0) {

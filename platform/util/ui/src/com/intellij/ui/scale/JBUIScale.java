@@ -2,15 +2,12 @@
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.DetectRetinaKit;
 import com.intellij.util.ui.JBScalableIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +44,14 @@ public final class JBUIScale {
 
   private JBUIScale() {}
 
-  private static final AtomicNotNullLazyValue<Pair<String, Integer>> systemFontData = AtomicNotNullLazyValue.createValue(() -> {
+  private static volatile Pair<String, Integer> systemFontData;
+
+  private synchronized static @NotNull Pair<String, Integer> computeSystemFontData() {
+    Pair<String, Integer> result = systemFontData;
+    if (result != null) {
+      return result;
+    }
+
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = UIManager.getFont("Label.font");
     if (SystemInfoRt.isMac) {
@@ -62,7 +66,7 @@ public final class JBUIScale {
       log.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
     }
 
-    if (SystemInfo.isLinux) {
+    if (SystemInfoRt.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
       if (isScaleVerbose) {
         log.info(String.format("gnome.Xft/DPI: %s", value));
@@ -88,8 +92,7 @@ public final class JBUIScale {
         }
       }
     }
-    else if (SystemInfo.isWindows) {
-      @SuppressWarnings("SpellCheckingInspection")
+    else if (SystemInfoRt.isWindows) {
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
         font = winFont; // comes scaled
@@ -98,15 +101,17 @@ public final class JBUIScale {
         }
       }
     }
-    Pair<String, Integer> result = Pair.create(font.getName(), font.getSize());
+
+    result = new Pair<>(font.getName(), font.getSize());
+    systemFontData = result;
     if (isScaleVerbose) {
       log.info(String.format("ourSystemFontData: %s, %d", result.first, result.second));
     }
     return result;
-  });
+  }
 
   @ApiStatus.Internal
-  public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<Float>() {
+  public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<>() {
     @Nullable
     @Override
     public Float initialize() {
@@ -136,7 +141,7 @@ public final class JBUIScale {
    * The system scale factor, corresponding to the default monitor device.
    */
   private static final MutableNotNullValue<Float> SYSTEM_SCALE_FACTOR = new MutableNotNullValue<>(() -> {
-    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+    if (!Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       return 1f;
     }
 
@@ -153,7 +158,7 @@ public final class JBUIScale {
       return 1f;
     }
 
-    float result = getFontScale(systemFontData.getValue().getSecond());
+    float result = getFontScale(getSystemFontData().getSecond());
     getLogger().info("System scale factor: " + result + " (" + (JreHiDpiUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     return result;
   });
@@ -226,7 +231,7 @@ public final class JBUIScale {
   }
 
   private static float computeUserScaleFactor(float scale) {
-    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+    if (!Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       return 1f;
     }
 
@@ -239,7 +244,7 @@ public final class JBUIScale {
     }
 
     // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
-    if (SystemInfo.isLinux && scale == 1.25f && DEF_SYSTEM_FONT_SIZE == 12) {
+    if (SystemInfoRt.isLinux && scale == 1.25f && DEF_SYSTEM_FONT_SIZE == 12) {
       // Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
@@ -261,11 +266,8 @@ public final class JBUIScale {
    * Returns the system scale factor, corresponding to the device the component is tied to.
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
-  public static float sysScale(@Nullable Component comp) {
-    if (comp != null) {
-      return sysScale(comp.getGraphicsConfiguration());
-    }
-    return sysScale();
+  public static float sysScale(@Nullable Component component) {
+    return component == null ? sysScale() : sysScale(component.getGraphicsConfiguration());
   }
 
   /**
@@ -273,13 +275,8 @@ public final class JBUIScale {
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
   public static float sysScale(@Nullable GraphicsConfiguration gc) {
-    if (JreHiDpiUtil.isJreHiDPIEnabled() && gc != null) {
-      if (gc.getDevice().getType() != GraphicsDevice.TYPE_PRINTER) {
-        if (SystemInfoRt.isMac && JreHiDpiUtil.isJreHiDPI_earlierVersion()) {
-          return DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
-        }
-        return (float)gc.getDefaultTransform().getScaleX();
-      }
+    if (JreHiDpiUtil.isJreHiDPIEnabled() && gc != null && gc.getDevice().getType() != GraphicsDevice.TYPE_PRINTER) {
+      return (float)gc.getDefaultTransform().getScaleX();
     }
     return sysScale();
   }
@@ -325,9 +322,9 @@ public final class JBUIScale {
     return discreteScale(dpi / 96f);
   }
 
-  @NotNull
-  public static Pair<String, Integer> getSystemFontData() {
-    return systemFontData.getValue();
+  public static @NotNull Pair<String, Integer> getSystemFontData() {
+    Pair<String, Integer> result = systemFontData;
+    return result == null ? computeSystemFontData() : result;
   }
 
   /**

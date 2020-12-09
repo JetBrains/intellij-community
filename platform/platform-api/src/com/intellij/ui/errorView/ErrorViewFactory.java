@@ -2,7 +2,7 @@
 package com.intellij.ui.errorView;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.ErrorTreeView;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +17,7 @@ public interface ErrorViewFactory {
     }
 
     public static ErrorViewFactory getInstance() {
-      return ServiceManager.getService(ErrorViewFactory.class);
+      return ApplicationManager.getApplication().getService(ErrorViewFactory.class);
     }
   }
 }

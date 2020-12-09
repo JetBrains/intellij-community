@@ -139,14 +139,22 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return classes[0];
   }
 
-
   @NotNull
   public PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
-    return createRecordFromText("public record " + name + "() { }", null);
+    return createRecordFromText("public record " + name + "() { }");
   }
 
+  @NotNull
   @Override
-  public PsiClass createRecordFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException {
+  public PsiRecordHeader createRecordHeaderFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
+    PsiRecordHeader header = createRecordFromText("public record Record(" + text + ") { }").getRecordHeader();
+    if (header == null) {
+      throw new IncorrectOperationException("Incorrect record component '" + text + "'");
+    }
+    return header;
+  }
+
+  private @NotNull PsiClass createRecordFromText(@NotNull String text) {
     JavaDummyElement dummyElement = new JavaDummyElement(text, DECLARATION, LanguageLevel.JDK_14_PREVIEW);
     DummyHolder holder = DummyHolderFactory.createHolder(myManager, dummyElement, null);
     PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
@@ -154,16 +162,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       throw newException("Incorrect class '" + text + "'", holder);
     }
     return (PsiClass)element;
-  }
-
-  @NotNull
-  @Override
-  public PsiRecordHeader createRecordHeaderFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
-    PsiRecordHeader header = createRecordFromText("public record Record(" + text + ") { }", null).getRecordHeader();
-    if (header == null) {
-      throw new IncorrectOperationException("Incorrect record component '" + text + "'");
-    }
-    return header;
   }
 
   @NotNull

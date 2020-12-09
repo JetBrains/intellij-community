@@ -2,30 +2,20 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
+import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
-open class GHSubmittableTextFieldModel(initialText: String, private val submitter: (String) -> CompletableFuture<*>) {
+open class GHSubmittableTextFieldModel(
+  initialText: String,
+  private val submitter: (String) -> CompletableFuture<*>
+) : SubmittableTextFieldModelBase(initialText) {
 
   constructor(submitter: (String) -> CompletableFuture<*>) : this("", submitter)
 
-  val document = DocumentImpl(initialText, true, false)
-
-  protected val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-
-  var isBusy by observableField(false, stateEventDispatcher)
-    protected set
-
-  var error: Throwable? by observableField<Throwable?>(null, stateEventDispatcher)
-    protected set
-
-  fun submit() {
+  override fun submit() {
     if (isBusy) return
 
     isBusy = true
@@ -42,6 +32,4 @@ open class GHSubmittableTextFieldModel(initialText: String, private val submitte
       isBusy = false
     }
   }
-
-  fun addStateListener(listener: () -> Unit) = SimpleEventListener.addListener(stateEventDispatcher, listener)
 }

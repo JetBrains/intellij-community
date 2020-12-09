@@ -279,9 +279,8 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     @Override
     protected final JavaParameters createJavaParameters() throws ExecutionException {
       JavaParameters javaParameters = createJavaParametersMVC();
-      for(RunConfigurationExtension ext: RunConfigurationExtension.EP_NAME.getExtensionList()) {
-        ext.updateJavaParameters(MvcRunConfiguration.this, javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
-      }
+      JavaRunConfigurationExtensionManager.getInstance()
+        .updateJavaParameters(MvcRunConfiguration.this, javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
 
       return javaParameters;
     }

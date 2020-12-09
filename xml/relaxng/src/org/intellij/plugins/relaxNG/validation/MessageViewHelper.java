@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.MessageCategory;
-import gnu.trove.THashSet;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
@@ -39,6 +38,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -47,7 +47,7 @@ public final class MessageViewHelper {
 
   private final Project myProject;
 
-  private final Set<String> myErrors = new THashSet<>();
+  private final Set<String> myErrors = new HashSet<>();
 
   private final @TabTitle String myContentName;
   private final Key<NewErrorTreeViewPanel> myKey;

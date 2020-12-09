@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -31,12 +31,9 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {
+
     @Override
-    public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-
-      if (expression.getOperationTokenType() != GroovyTokenTypes.kIN) return;
-
+    public void visitInExpression(@NotNull GrInExpression expression) {
       GrExpression leftOperand = expression.getLeftOperand();
       GrExpression rightOperand = expression.getRightOperand();
       if (rightOperand == null) return;

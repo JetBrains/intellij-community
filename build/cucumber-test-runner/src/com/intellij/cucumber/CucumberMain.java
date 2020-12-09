@@ -13,20 +13,15 @@ import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.Resource;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Dennis.Ushakov
- */
-public class CucumberMain {
+public final class CucumberMain {
   private static final Logger LOG = Logger.getInstance(CucumberMain.class);
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
@@ -37,10 +32,9 @@ public class CucumberMain {
     int exitStatus;
     try {
       ClassLoader original = Thread.currentThread().getContextClassLoader();
-      List<@NotNull URL> urls =
-        ContainerUtil.mapNotNull(System.getProperty("java.class.path").split(File.pathSeparator), CucumberMain::fileToEncodedURL);
-      UrlClassLoader loader = UrlClassLoader.build().urls(
-        urls).parent(original.getParent()).allowLock().useCache()
+      List<Path> files = ContainerUtil.mapNotNull(System.getProperty("java.class.path").split(File.pathSeparator),
+                                                          path -> new File(path).toPath());
+      UrlClassLoader loader = UrlClassLoader.build().files(files).parent(original.getParent()).useCache()
         .usePersistentClasspathIndexForLocalClassDirectories()
         .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
         .autoAssignUrlsWithProtectionDomain().get();
@@ -64,15 +58,6 @@ public class CucumberMain {
     }
     System.exit(exitStatus);
   }
-
-  public static URL fileToEncodedURL(String path) {
-    try {
-      return new File(path).toURI().toURL();
-    } catch (MalformedURLException e) {
-      return null;
-    }
-  }
-
 
   public static int run(final String[] argv, final ClassLoader classLoader) {
     final Ref<Throwable> errorRef = new Ref<>();

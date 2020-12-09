@@ -174,13 +174,13 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
     }
   }
 
-  public static String getSettingsTypeName(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
+  public static @Nls String getSettingsTypeName(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
     switch (settingsType) {
       case BLANK_LINES_SETTINGS: return ApplicationBundle.message("title.blank.lines");
       case SPACING_SETTINGS: return ApplicationBundle.message("title.spaces");
       case WRAPPING_AND_BRACES_SETTINGS: return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
       case INDENT_SETTINGS: return ApplicationBundle.message("title.tabs.and.indents");
-      case LANGUAGE_SPECIFIC: return "Language-specific"; //TODO should load from ApplciationBundle here
+      case LANGUAGE_SPECIFIC: return ApplicationBundle.message("code.style.title.lang.specific");
       default: throw new IllegalArgumentException("Unknown settings type: " + settingsType);
     }
   }

@@ -62,6 +62,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,11 +83,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindow;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
@@ -153,6 +154,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myContent.setTabName(SHELF); //NON-NLS overridden by displayName above
         MyDnDTarget dnDTarget = new MyDnDTarget(myPanel.myProject, myContent);
         myContent.putUserData(Content.TAB_DND_TARGET_KEY, dnDTarget);
+        myContent.putUserData(IS_IN_COMMIT_TOOLWINDOW_KEY, true);
 
         myContent.setCloseable(false);
         myContent.setDisposer(myPanel);
@@ -561,7 +563,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myListDateMap.forEach((l, d) -> manager.restoreList(l, d));
         notification.expire();
         if (!cantRestoreList.isEmpty()) {
-          VcsNotifier.getInstance(myProject).notifyMinorWarning("vcs.shelve.deletion.undo",
+          VcsNotifier.getInstance(myProject).notifyMinorWarning(SHELVE_DELETION_UNDO,
                                                                 VcsBundle.message("shelve.undo.deletion"),
                                                                 VcsBundle.message("shelve.changes.restore.error", cantRestoreList.size()));
         }
@@ -691,7 +693,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myToolbar.setTargetComponent(myTree);
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
       myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
-      addToolbar(isCommitToolWindow(myProject));
+      addToolbar(isCommitToolWindowShown(myProject));
       setDiffPreview();
       isEditorDiffPreview.addListener(new RegistryValueListener() {
         @Override
@@ -718,7 +720,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void toolWindowMappingChanged() {
-      addToolbar(isCommitToolWindow(myProject));
+      addToolbar(isCommitToolWindowShown(myProject));
       setDiffPreview();
     }
 
@@ -738,7 +740,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void setDiffPreview(boolean force) {
-      boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
+      boolean isEditorPreview = isCommitToolWindowShown(myProject) || isEditorDiffPreview.asBoolean();
       if (!force) {
         if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
         if (!isEditorPreview && isSplitterPreview()) return;
@@ -1007,17 +1009,22 @@ public class ShelvedChangesViewManager implements Disposable {
       String date = DateFormatUtil.formatPrettyDateTime(myList.DATE);
       renderer.append(", " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
+
+    @Override
+    public @Nls String getTextPresentation() {
+      return getUserObject().toString();
+    }
   }
 
   private static class ShelvedChangeNode extends ChangesBrowserNode<ShelvedWrapper> implements Comparable<ShelvedChangeNode> {
 
     @NotNull private final ShelvedWrapper myShelvedChange;
     @NotNull private final FilePath myFilePath;
-    @Nullable private final String myAdditionalText;
+    @Nullable @Nls private final String myAdditionalText;
 
     protected ShelvedChangeNode(@NotNull ShelvedWrapper shelvedChange,
                                 @NotNull FilePath filePath,
-                                @Nullable String additionalText) {
+                                @Nullable @Nls String additionalText) {
       super(shelvedChange);
       myShelvedChange = shelvedChange;
       myFilePath = filePath;

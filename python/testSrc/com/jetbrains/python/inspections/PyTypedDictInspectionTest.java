@@ -51,7 +51,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing import TypedDict\n" +
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
-                         "    year: int = <warning descr=\"Right hand side values are not supported in TypedDict\">42</warning>"));
+                         "    year: int = <warning descr=\"Right-hand side values are not supported in TypedDict\">42</warning>"));
   }
 
   public void testPass() {
@@ -298,6 +298,16 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                          "    return movie[<warning descr=\"TypedDict \\\"Movie\\\" has no keys ('name1', '42')\">key</warning>]\n" +
                          "def get_value(movie: Movie, key: Literal[42]) -> Union[int, str]:\n" +
                          "    return movie[<warning descr=\"TypedDict key must be a string literal; expected one of ('name', 'year')\">key</warning>]"));
+  }
+
+  // PY-44714
+  public void testNoneAsType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class X(TypedDict):\n" +
+                         "    n: None\n" +
+                         "Y = TypedDict('Y', {'n': None})\n"));
   }
 
   @NotNull

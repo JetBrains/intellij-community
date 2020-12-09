@@ -116,7 +116,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     ToolTipManager.sharedInstance().registerComponent(myTable);
   }
   protected TableCellRenderer getTableCellRenderer(final int row, final int column, final TableCellRenderer superRenderer, final Object value) {
-    return getTableModel().getColumnInfos()[column].getCustomizedRenderer(value, new StripeTableCellRenderer(superRenderer));
+    return getTableModel().getColumnInfos()[column].getCustomizedRenderer(value, superRenderer);
   }
 
   protected final void installPopup(final String place, final DefaultActionGroup group) {

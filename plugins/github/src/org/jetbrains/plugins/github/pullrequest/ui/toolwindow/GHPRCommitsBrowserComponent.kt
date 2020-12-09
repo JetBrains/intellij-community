@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsListCellRenderer
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JList
@@ -153,6 +153,7 @@ internal object GHPRCommitsBrowserComponent {
     return commitDetailsScrollPane
   }
 
+  @NlsSafe
   private fun getHashAndAuthorText(hash: String, author: GHGitActor?, committer: GHGitActor?): String {
     val authorUser = createUser(author)
     val authorTime = author?.date?.time ?: 0L

@@ -1,5 +1,5 @@
 class P<T> {
-  Object foo(List<T> t) {
+  Object foo(ArrayList<T> t) {
     m(t)
   }
 

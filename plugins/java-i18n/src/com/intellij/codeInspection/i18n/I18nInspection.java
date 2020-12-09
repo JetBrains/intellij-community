@@ -41,7 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -67,16 +66,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
+public final class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
   private static final CallMatcher ERROR_WRAPPER_METHODS = CallMatcher.anyOf(
     CallMatcher.staticCall("kotlin.PreconditionsKt__PreconditionsKt", "error").parameterCount(1),
     CallMatcher.staticCall("kotlin.StandardKt__StandardKt", "TODO").parameterCount(1)
   );
   private static final Set<UastBinaryOperator> STRING_COMPARISON_OPS =
-    Set.of(UastBinaryOperator.EQUALS, UastBinaryOperator.NOT_EQUALS, UastBinaryOperator.IDENTITY_EQUALS, 
+    Set.of(UastBinaryOperator.EQUALS, UastBinaryOperator.NOT_EQUALS, UastBinaryOperator.IDENTITY_EQUALS,
            UastBinaryOperator.IDENTITY_NOT_EQUALS);
-  
-  private static final CallMatcher IGNORED_METHODS = CallMatcher.anyOf( 
+
+  private static final CallMatcher IGNORED_METHODS = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("double"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("long"),
@@ -386,7 +385,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     final JTextField commentPattern = new JTextField(nonNlsCommentPattern);
     final FieldPanel nonNlsCommentPatternComponent =
       new FieldPanel(commentPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
-                     JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null, 
+                     JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null,
                      () -> setNonNlsCommentPattern(commentPattern.getText()));
     panel.add(nonNlsCommentPatternComponent, gc);
     gc.gridy ++;
@@ -397,7 +396,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     literalPattern.setText(nonNlsLiteralPattern);
     final FieldPanel nonNlsStringPatternComponent =
       new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
-                     JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null, 
+                     JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null,
                      () -> setNonNlsLiteralPattern(literalPattern.getText()));
     panel.add(nonNlsStringPatternComponent, gc);
 
@@ -434,7 +433,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).
               createInheritanceClassChooser(
                 JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"), scope,
-                JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", scope), true, true, null);
+                JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, scope), true, true, null);
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
             return selectedClass != null ? selectedClass.getQualifiedName() : null;
@@ -572,10 +571,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
       if (NlsInfo.forType(type).canBeUsedInLocalizedContext()) return;
-      
+
       String value = target instanceof PsiVariable ? ObjectUtils.tryCast(((PsiVariable)target).computeConstantValue(), String.class) : null;
 
-      NlsInfo targetInfo = getExpectedNlsInfo(myHolder.getProject(), ref, value, new THashSet<>(), myOnTheFly, true);
+      NlsInfo targetInfo = getExpectedNlsInfo(myHolder.getProject(), ref, value, new HashSet<>(), myOnTheFly, true);
       if (targetInfo instanceof NlsInfo.Localized) {
         AddAnnotationFix fix =
           new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
@@ -605,7 +604,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         return;
       }
 
-      Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
+      Set<PsiModifierListOwner> nonNlsTargets = new HashSet<>();
       NlsInfo info = getExpectedNlsInfo(myHolder.getProject(), expression, stringValue, nonNlsTargets, myOnTheFly, ignoreForAllButNls);
       if (!(info instanceof NlsInfo.Localized)) {
         return;
@@ -917,7 +916,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       if (STRING_COMPARISON_OPS.contains(binOp.getOperator())) {
         UResolvable left = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), UResolvable.class);
         UResolvable right = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getRightOperand()), UResolvable.class);
-        return left != null && isNonNlsCall(left, nonNlsTargets) || 
+        return left != null && isNonNlsCall(left, nonNlsTargets) ||
                right != null && isNonNlsCall(right, nonNlsTargets);
       }
     }

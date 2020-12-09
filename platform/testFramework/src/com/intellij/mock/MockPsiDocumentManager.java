@@ -146,7 +146,8 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void performLaterWhenAllCommitted(@NotNull Runnable runnable, ModalityState modalityState) {
+  public void performLaterWhenAllCommitted(@NotNull ModalityState modalityState,
+                                           @NotNull Runnable runnable) {
     throw new UnsupportedOperationException();
   }
 }

@@ -5,7 +5,10 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -18,15 +21,19 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.IconUtil
+import com.intellij.util.castSafelyTo
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import git4idea.*
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.config.GitRebaseSettings
 import git4idea.config.GitVersionSpecialty.REBASE_MERGES_REPLACES_PRESERVE_MERGES
 import git4idea.i18n.GitBundle
+import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
@@ -40,6 +47,8 @@ import java.awt.Container
 import java.awt.Insets
 import java.awt.event.*
 import java.awt.event.KeyEvent
+import java.util.*
+import java.util.Collections.synchronizedMap
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -59,7 +68,7 @@ internal class GitRebaseDialog(private val project: Project,
 
   private val localBranches = mutableListOf<GitBranch>()
   private val remoteBranches = mutableListOf<GitBranch>()
-  private val tags = mutableListOf<GitTag>()
+  private val tags = synchronizedMap(HashMap<VirtualFile, List<GitTag>>())
 
   private var currentBranch: GitBranch? = null
 
@@ -85,6 +94,8 @@ internal class GitRebaseDialog(private val project: Project,
   private val rebaseMergesAvailable = REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(gitVersion)
 
   init {
+    loadTagsInBackground()
+
     title = GitBundle.message("rebase.dialog.title")
     setOKButtonText(GitBundle.message("rebase.dialog.start.rebase"))
 
@@ -101,9 +112,8 @@ internal class GitRebaseDialog(private val project: Project,
   override fun createCenterPanel() = panel
 
   override fun doValidateAll(): List<ValidationInfo> {
-    val result = listOf(::validateNewBase,
+    val result = listOf(::validateUpstream,
                         ::validateOnto,
-                        ::validateUpstream,
                         ::validateRebaseInProgress,
                         ::validateBranch).mapNotNull { it() }
 
@@ -144,7 +154,7 @@ internal class GitRebaseDialog(private val project: Project,
     val branch = branchField.item
 
     val newBase = if (GitRebaseOption.ONTO in selectedOptions) ontoField.getText() else null
-    val upstream = upstreamField.getText().orEmpty()
+    val upstream = if (GitRebaseOption.ROOT !in selectedOptions) upstreamField.getText().orEmpty() else null
 
     return GitRebaseParams(gitVersion, branch, newBase, upstream, selectedOptions intersect REBASE_FLAGS)
   }
@@ -170,24 +180,18 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun findRef(refName: String): GitReference? {
-    val predicate: (GitReference) -> Boolean = { ref -> ref.name == refName }
+    val predicate: (GitReference) -> Boolean = { ref -> ref.name == refName || ref.fullName == refName }
     return localBranches.find(predicate)
            ?: remoteBranches.find(predicate)
-           ?: tags.find(predicate)
+           ?: getTags().find(predicate)
   }
 
-  private fun validateNewBase(): ValidationInfo? {
-    val field = if (GitRebaseOption.ONTO in selectedOptions) ontoField else upstreamField
-    if (field.getText().isNullOrEmpty()) {
-      return ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), field)
-    }
-    return null
-  }
+  private fun getTags() = tags[getSelectedRepo().root] ?: emptyList()
 
   private fun validateUpstream(): ValidationInfo? {
     val upstream = upstreamField.getText()
 
-    if (upstream.isNullOrEmpty()) {
+    if (upstream.isNullOrEmpty() && GitRebaseOption.ROOT !in selectedOptions) {
       return if (GitRebaseOption.ONTO in selectedOptions)
         ValidationInfo(GitBundle.message("rebase.dialog.error.upstream.not.selected"), upstreamField)
       else
@@ -201,7 +205,7 @@ internal class GitRebaseDialog(private val project: Project,
     if (GitRebaseOption.ONTO in selectedOptions) {
       val newBase = ontoField.getText()
 
-      if (newBase.isNullOrEmpty()) {
+      if (newBase.isNullOrEmpty() && GitRebaseOption.ROOT !in selectedOptions) {
         return ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), ontoField)
       }
 
@@ -211,6 +215,8 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun isValidRevision(revision: String): Boolean {
+    if (revision.isEmpty()) return true
+
     var result = false
     try {
       val task = ThrowableComputable<GitRevisionNumber, VcsException> { GitRevisionNumber.resolve(project, gitRoot(), revision) }
@@ -248,7 +254,6 @@ internal class GitRebaseDialog(private val project: Project,
   private fun loadRefs() {
     localBranches.clear()
     remoteBranches.clear()
-    tags.clear()
 
     val repository = getSelectedRepo()
 
@@ -256,47 +261,69 @@ internal class GitRebaseDialog(private val project: Project,
 
     localBranches += GitBranchUtil.sortBranchesByName(repository.branches.localBranches)
     remoteBranches += GitBranchUtil.sortBranchesByName(repository.branches.remoteBranches)
-
-    tags += loadTags(gitRoot())
   }
 
+  private fun loadTagsInBackground() {
+    ProgressManager.getInstance().run(
+      object : Task.Backgroundable(project, GitBundle.message("rebase.dialog.progress.loading.tags"), true) {
+        override fun run(indicator: ProgressIndicator) {
+          val sortedRoots = LinkedHashSet<VirtualFile>(roots.size).apply {
+            if (defaultRoot != null) {
+              add(defaultRoot)
+            }
+            addAll(roots)
+          }
+
+          sortedRoots.forEach { root ->
+            val tagsInRepo = loadTags(root)
+
+            tags[root] = tagsInRepo
+
+            if (getSelectedRepo().root == root) {
+              UIUtil.invokeLaterIfNeeded {
+                addRefsToOntoAndFrom(tagsInRepo, replace = false)
+              }
+            }
+          }
+        }
+      })
+  }
+
+  @RequiresBackgroundThread
   private fun loadTags(root: VirtualFile): List<GitTag> {
-    val task = ThrowableComputable<List<GitTag>, VcsException> {
-      GitBranchUtil.getAllTags(project, root).map { GitTag(it) }
+    try {
+      return GitBranchUtil.getAllTags(project, root).map { GitTag(it) }
     }
-    return ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(task, GitBundle.message("rebase.dialog.progress.loading.tags"), true, project)
+    catch (e: VcsException) {
+      LOG.warn("Failed to load tags for root: ${root.presentableUrl}", e)
+    }
+    return emptyList()
   }
 
   private fun updateBranches() {
-    branchField.removeAllItems()
-    for (b in localBranches) {
-      branchField.addItem(b.name)
-    }
-    branchField.item = null
+    branchField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(localBranches.map { it.name })
 
     updateBaseFields()
   }
 
   private fun updateBaseFields() {
+    addRefsToOntoAndFrom(localBranches + remoteBranches + getTags(), replace = true)
+  }
+
+  private fun addRefsToOntoAndFrom(refs: Collection<GitReference>, replace: Boolean = true) {
     val upstream = upstreamField.item
     val onto = ontoField.item
 
-    upstreamField.removeAllItems()
-    ontoField.removeAllItems()
+    val existingRefs = upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.items?.toSet() ?: emptySet()
+    val newRefs = refs.map { PresentableRef(it) }.toSet()
 
-    addRefsToOntoAndFrom(localBranches)
-    addRefsToOntoAndFrom(remoteBranches)
-    addRefsToOntoAndFrom(tags)
+    val result = (if (replace) newRefs else existingRefs + newRefs).toList()
+
+    upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.update(result)
+    ontoField.model.castSafelyTo<MutableCollectionComboBoxModel<PresentableRef>>()?.update(result)
 
     upstreamField.item = upstream
     ontoField.item = onto
-  }
-
-  private fun addRefsToOntoAndFrom(refs: Collection<GitReference>) = refs.forEach { gitRef ->
-    val ref = PresentableRef(gitRef)
-    upstreamField.addItem(ref)
-    ontoField.addItem(ref)
   }
 
   private fun showRootField() = roots.size > 1
@@ -400,6 +427,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun createOntoField() = ComboBoxWithAutoCompletion<PresentableRef>(MutableCollectionComboBoxModel(), project).apply {
+    prototypeDisplayValue = PresentableRef(GitLocalBranch(GIT_REF_PROTOTYPE_VALUE))
     isVisible = false
     setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) 220 else 310))
     setPlaceholder(GitBundle.message("rebase.dialog.new.base"))
@@ -408,6 +436,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun createUpstreamField() = ComboBoxWithAutoCompletion<PresentableRef>(MutableCollectionComboBoxModel(), project).apply {
+    prototypeDisplayValue = PresentableRef(GitLocalBranch(GIT_REF_PROTOTYPE_VALUE))
     setMinimumAndPreferredWidth(JBUI.scale(185))
     setPlaceholder(GitBundle.message("rebase.dialog.target"))
     @Suppress("UsePropertyAccessSyntax")
@@ -423,6 +452,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun createBranchField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
+    prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setPlaceholder(GitBundle.message("rebase.dialog.branch.field"))
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
@@ -446,7 +476,7 @@ internal class GitRebaseDialog(private val project: Project,
 
   private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
                                                             GitBundle.message("rebase.options.modify.dialog.title"),
-                                                            GitRebaseOption.values().toMutableList(),
+                                                            { GitRebaseOption.values().toMutableList() },
                                                             OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
                                                             ::optionChosen,
                                                             ::isOptionEnabled)
@@ -472,6 +502,9 @@ internal class GitRebaseDialog(private val project: Project,
     else {
       selectedOptions -= option
     }
+    if (option == GitRebaseOption.ONTO) {
+      moveNewBaseValue()
+    }
     if (option in REBASE_FLAGS) {
       updateUpstreamField()
       optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
@@ -482,8 +515,25 @@ internal class GitRebaseDialog(private val project: Project,
     }
   }
 
+  private fun moveNewBaseValue() {
+    val gitRefMapper = { source: ComboBoxWithAutoCompletion<PresentableRef> ->
+      source.getText()?.let { findRef(it) }?.let { PresentableRef(it) } ?: source.item
+    }
+
+    if (GitRebaseOption.ONTO in selectedOptions) {
+      ontoField.item = gitRefMapper(upstreamField)
+      upstreamField.item = null
+    }
+    else {
+      upstreamField.item = gitRefMapper(ontoField)
+      ontoField.item = null
+    }
+  }
+
   private fun updateUpstreamField() {
-    upstreamField.isEnabled = GitRebaseOption.ROOT !in selectedOptions
+    val enabled = GitRebaseOption.ROOT !in selectedOptions
+    upstreamField.isEnabled = enabled
+    upstreamField.isEditable = enabled
   }
 
   private fun updateUi() {
@@ -624,7 +674,9 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   companion object {
-    val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula())
+    private val LOG = logger<GitRebaseDialog>()
+
+    private val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula())
       IconUtil.brighter(AllIcons.General.ContextHelp, 3)
     else
       IconUtil.darker(AllIcons.General.ContextHelp, 3)

@@ -2,9 +2,9 @@
 package org.jetbrains.jps.util;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +18,10 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public final class JpsPathUtil {
+
+  public static final String FILE_URL_PREFIX = "file://";
+  public static final String JAR_URL_PREFIX = "jar://";
+  public static final String JAR_SEPARATOR = "!/";
 
   public static boolean isUnder(Set<File> ancestors, File file) {
     if (ancestors.isEmpty()) {
@@ -47,12 +51,13 @@ public final class JpsPathUtil {
     if (url == null) {
       return null;
     }
-    if (url.startsWith("file://")) {
-      return url.substring("file://".length());
+    if (url.startsWith(FILE_URL_PREFIX)) {
+      return url.substring(FILE_URL_PREFIX.length());
     }
-    else if (url.startsWith("jar://")) {
-      url = url.substring("jar://".length());
-      url = StringUtil.trimEnd(url, "!/");
+    else if (url.startsWith(JAR_URL_PREFIX)) {
+      url = url.substring(JAR_URL_PREFIX
+    .length());
+      url = Strings.trimEnd(url, JAR_SEPARATOR);
     }
     return url;
   }
@@ -65,7 +70,7 @@ public final class JpsPathUtil {
       String prefix = url.substring(0, idx);
       String suffix = url.substring(idx + 2);
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         url = prefix + "://" + suffix;
       }
       else {
@@ -76,12 +81,13 @@ public final class JpsPathUtil {
   }
 
   public static String pathToUrl(String path) {
-    return "file://" + path;
+    return FILE_URL_PREFIX + path;
   }
 
   public static String getLibraryRootUrl(File file) {
     String path = FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
-    return file.isDirectory() ? "file://" + path : "jar://" + path + "!/";
+    return file.isDirectory() ? FILE_URL_PREFIX + path : JAR_URL_PREFIX
+                                                         + path + "!/";
   }
 
   public static boolean isJrtUrl(@NotNull String url) {

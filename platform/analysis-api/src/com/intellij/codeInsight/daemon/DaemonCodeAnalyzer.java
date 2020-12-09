@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -27,16 +26,6 @@ public abstract class DaemonCodeAnalyzer {
   }
 
   public abstract void settingsChanged();
-
-  /**
-   * @deprecated Does nothing, unused, keeping alive for outdated plugins sake only. Please use {@code} (nothing) instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion="2020.2")
-  public void updateVisibleHighlighters(@NotNull Editor editor) {
-    DeprecatedMethodException.report("Please remove usages of this method deprecated eons ago");
-    // no need, will not work anyway
-  }
 
   public abstract void setUpdateByTimerEnabled(boolean value);
   public abstract void disableUpdateByTimer(@NotNull Disposable parentDisposable);
@@ -93,7 +82,7 @@ public abstract class DaemonCodeAnalyzer {
      * Internal class for reporting annotator-related statistics
      */
     @ApiStatus.Internal
-    public class AnnotatorStatistics {
+    class AnnotatorStatistics {
       /** the annotator this statistics is generated for */
       public final Annotator annotator;
       /** timestamp (in {@link System#nanoTime} sense) of the {@link #annotator} creation in {@link com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor} */

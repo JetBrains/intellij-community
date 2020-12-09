@@ -157,6 +157,11 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return AllIcons.Ide.LocalScope;
   }
 
+  @Override
+  public boolean isFileNestingEnabled() {
+    return true;
+  }
+
   @NotNull
   @Override
   public JComponent createComponent() {
@@ -197,6 +202,8 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
           super.update(painter, index, myTreeModel.getStripe(object, myTree.isExpanded(index)));
         }
       });
+    } else {
+      SwingUtilities.updateComponentTreeUI(myScrollPane);
     }
     return myScrollPane;
   }

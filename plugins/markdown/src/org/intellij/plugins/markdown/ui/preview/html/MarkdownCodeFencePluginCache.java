@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.preview.html;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,8 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ArrayUtilRt.EMPTY_FILE_ARRAY;
@@ -31,11 +32,12 @@ public class MarkdownCodeFencePluginCache implements Disposable {
   @NotNull public static final String MARKDOWN_FILE_PATH_KEY = "markdown-md5-file-path";
 
   @NotNull private final Alarm myAlarm = new Alarm(this);
-  @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches = ContainerUtil.newConcurrentSet();
+  @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches =
+    ContainerUtil.newConcurrentSet();
   @NotNull private final Collection<File> myAdditionalCacheToDelete = ContainerUtil.newConcurrentSet();
 
   public static MarkdownCodeFencePluginCache getInstance() {
-    return ServiceManager.getService(MarkdownCodeFencePluginCache.class);
+    return ApplicationManager.getApplication().getService(MarkdownCodeFencePluginCache.class);
   }
 
   public MarkdownCodeFencePluginCache() {

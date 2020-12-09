@@ -12,9 +12,6 @@ The master branch contains the source code which will be used to create the next
 and build numbers for older releases of IntelliJ IDEA can be found on the page of
 [Build Number Ranges](http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html).
 
-If you intend to make open-source contributions to the IntelliJ Platform,
-see [Contributing to the IntelliJ Project](http://www.jetbrains.org/display/IJOS/Contribute) for more information.
-
 _**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
 
 These Git operations can also be done through the [IntelliJ IDEA user interface](https://www.jetbrains.com/help/idea/using-git-integration.html).
@@ -45,8 +42,11 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 3. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
-   to enable the "Compile independent modules in parallel" option. Also, copy value from "Shared build process VM options" to 
-   "User-local build process VM options" and add `-Xmx2G` to it. These changes will greatly reduce compilation time.
+   to enable the "Compile independent modules in parallel" option. Also, increase build process heap size:
+   * if you use IntelliJ IDEA 2020.3 or newer, set "User-local build process heap size" to 2048. 
+   * if you use IntelliJ IDEA 2020.2 or older, copy value from "Shared build process VM options" to "User-local build process VM options" and add `-Xmx2G` to it.
+    
+    These changes will greatly reduce compilation time.
 
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.
@@ -60,7 +60,6 @@ To run tests on the build, apply these setting to the **Run | Edit Configuration
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 
-    * `-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader` 
     * `-Didea.config.path=../test-config`
     * `-Didea.system.path=../test-system`
  

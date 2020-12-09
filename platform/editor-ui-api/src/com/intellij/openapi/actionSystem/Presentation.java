@@ -3,10 +3,8 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.Nls;
@@ -33,6 +31,7 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  */
 public final class Presentation implements Cloneable {
   public static final Supplier<String> NULL_STRING = () -> null;
+  private static final Logger LOG = Logger.getInstance(Presentation.class);
 
   private SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
@@ -94,8 +93,9 @@ public final class Presentation implements Cloneable {
   private boolean myEnabled = true;
   private boolean myMultipleChoice = false;
   private double myWeight = DEFAULT_WEIGHT;
-  private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics =
-    NotNullLazyValue.createValue(() -> SystemInfo.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions());
+  private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics = NotNullLazyValue.createValue(() -> {
+    return SystemInfoRt.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions();
+  });
 
   public Presentation() {
   }
@@ -160,12 +160,12 @@ public final class Presentation implements Cloneable {
   public Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
                                                         boolean mayContainMnemonic) {
     if (mayContainMnemonic) {
-      UISettings uiSettings = UISettings.getInstanceOrNull();
-      boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
       return () -> {
         String s = text.get();
         if (s == null) return null;
         TextWithMnemonic parsed = TextWithMnemonic.parse(s);
+        UISettings uiSettings = UISettings.getInstanceOrNull();
+        boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
         return mnemonicsDisabled ? parsed.dropMnemonic(removeMnemonics.getValue()) : parsed;
       };
     }
@@ -395,9 +395,15 @@ public final class Presentation implements Cloneable {
   }
 
   public void putClientProperty(@NonNls @NotNull String key, @Nullable Object value) {
-    Object oldValue = myUserMap.get(key);
-    if (Comparing.equal(oldValue, value)) return;
-    myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
+    Object oldValue;
+    synchronized (this) {
+      oldValue = myUserMap.get(key);
+      if (Comparing.equal(oldValue, value)) return;
+      if (key.equals("customComponent") && oldValue != null) {
+        LOG.error("Trying to reset custom component in a presentation", new Throwable());
+      }
+      myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
+    }
     fireObjectPropertyChange(key, oldValue, value);
   }
 

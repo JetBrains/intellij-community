@@ -1,11 +1,12 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
 import circlet.client.api.ProjectKey
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.identifier
+import circlet.code.api.CodeReviewListItem
 import circlet.code.api.CodeReviewService
 import circlet.code.api.CodeReviewStateFilter
-import circlet.code.api.CodeReviewWithCount
 import circlet.code.api.ReviewSorting
 import circlet.code.codeReview
 import circlet.platform.client.KCircletClient
@@ -34,21 +35,20 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
     quickFiltersMap.value[DEFAULT_QUICK_FILTER] ?: error("Unable to find quick filter settings")
   )
 
-  // TODO: remove hack
-  private val refresh = Property.createMutable(0)
+  private val refresh = Property.createMutable(Unit)
 
   override fun refresh() {
-    refresh.value = refresh.value.inc()
+      refresh.value = refresh.forceNotify()
   }
 
-  override val reviews: Property<XPagedListOnFlux<CodeReviewWithCount>> = lifetime.map(refresh, spaceReviewsFilterSettings) { _, filterSettings ->
+  override val reviews: Property<XPagedListOnFlux<CodeReviewListItem>> = lifetime.map(refresh, spaceReviewsFilterSettings) { _, filterSettings ->
     lifetime.xPagedListOnFlux(
       client = client,
       batchSize = DEFAULT_BATCH_SIZE,
       keyFn = { it.review.id },
       loadImmediately = true
     ) { batch ->
-      codeReviewService.listReviews(
+      codeReviewService.listReviewsV2(
         batchInfo = batch,
         project = spaceProjectInfo.key.identifier,
         state = filterSettings.state,

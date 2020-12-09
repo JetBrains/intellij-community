@@ -1,0 +1,4 @@
+ext.versions = [
+  firebasePlugins : '1.1.5'
+  firebasePlugins : '2.1.5'
+]

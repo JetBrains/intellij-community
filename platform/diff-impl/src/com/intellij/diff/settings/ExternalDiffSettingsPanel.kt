@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.layout.*
-import org.jetbrains.annotations.Nls
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 
@@ -182,7 +181,7 @@ class ExternalDiffSettingsPanel {
                             DiffBundle.message("settings.external.diff.right.file.content"))
       val titles = listOf("Left.txt", "Base.txt", "Right.txt")
       val request = factory.createMergeRequest(null, PlainTextFileType.INSTANCE, document, contents, null, titles, callback)
-      ExternalDiffToolUtil.executeMerge(null, ExternalDiffSettings.instance, request as ThreesideMergeRequest)
+      ExternalDiffToolUtil.executeMerge(null, ExternalDiffSettings.instance, request as ThreesideMergeRequest, panel)
     }
     catch (e: Exception) {
       Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.merge"))

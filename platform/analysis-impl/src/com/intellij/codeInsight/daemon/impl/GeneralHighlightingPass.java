@@ -42,7 +42,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -257,7 +256,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull List<HighlightInfo> insideResult,
                                     @NotNull List<? super HighlightInfo> outsideResult,
                                     boolean forceHighlightParents) {
-    Set<PsiElement> skipParentsSet = new THashSet<>();
+    Set<PsiElement> skipParentsSet = new HashSet<>();
 
     HighlightInfoHolder holder = createInfoHolder(getFile());
 
@@ -268,8 +267,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
       runVisitors(elements1, ranges1, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
                   nestedRange, nestedInfos);
-      TextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
-      if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersection != null) { // do not apply when there were no elements to highlight
+      boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
+      if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
         myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
       }
       runVisitors(elements2, ranges2, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,

@@ -36,12 +36,8 @@ public final class ClassFileDecompilers {
    */
   public abstract static class Light implements Decompiler {
     public static class CannotDecompileException extends RuntimeException {
-      public CannotDecompileException(String message) {
-        super(message);
-      }
-
-      public CannotDecompileException(Throwable cause) {
-        super(cause);
+      public CannotDecompileException(String message, Throwable cause) {
+        super(message, cause);
       }
     }
 

@@ -1,0 +1,106 @@
+name: Check stubs
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  file-consistency:
+    name: Check file consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: ./tests/check_consistent.py
+
+  flake8:
+    name: Lint with flake8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: |
+          pip install $(grep flake8 requirements-tests-py3.txt)
+          flake8
+
+  black:
+    name: Check formatting with black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: |
+          pip install $(grep black requirements-tests-py3.txt)
+          black --check --diff stdlib third_party
+
+  isort:
+    name: Check imports with isort
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: |
+          pip install $(grep isort requirements-tests-py3.txt)
+          isort --check-only --diff stdlib third_party
+
+  pytype:
+    name: Run pytype against the stubs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - run: pip install -r requirements-tests-py3.txt
+      - run: ./tests/pytype_test.py
+
+  mypy:
+    name: Run mypy against the stubs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ["linux", "win32", "darwin"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: pip install -U git+git://github.com/python/mypy
+      - run: ./tests/mypy_test.py --platform=${{ matrix.platform }}
+
+  mypy-self-check:
+    name: Check mypy source with itself
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: ./tests/mypy_self_check.py
+
+  mypy-test-suite:
+    name: Run the mypy test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: ./tests/mypy_test_suite.py
+
+  stubtest:
+    name: Check stubs with stubtest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -U git+git://github.com/python/mypy@24fdf343
+      - name: Run stubtest
+        run: python tests/stubtest_test.py --ignore-unused-whitelist

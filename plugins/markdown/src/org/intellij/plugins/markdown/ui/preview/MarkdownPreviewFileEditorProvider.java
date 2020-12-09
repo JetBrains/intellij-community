@@ -15,11 +15,10 @@ import org.jetbrains.annotations.NotNull;
 public class MarkdownPreviewFileEditorProvider extends WeighedFileEditorProvider {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    final FileType fileType = file.getFileType();
-
-    return (fileType == MarkdownFileType.INSTANCE ||
-            ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == MarkdownLanguage.INSTANCE) &&
-           MarkdownHtmlPanelProvider.hasAvailableProviders();
+    if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) return false;
+    FileType fileType = file.getFileType();
+    return fileType == MarkdownFileType.INSTANCE ||
+           ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file, fileType) == MarkdownLanguage.INSTANCE;
   }
 
   @NotNull

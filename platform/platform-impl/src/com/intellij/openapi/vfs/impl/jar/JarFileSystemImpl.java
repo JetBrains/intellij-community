@@ -4,23 +4,28 @@ package com.intellij.openapi.vfs.impl.jar;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.IntegrityCheckCapableFileSystem;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCapableFileSystem {
   private final Set<String> myNoCopyJarPaths;
@@ -28,7 +33,18 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
 
   public JarFileSystemImpl() {
     boolean noCopy = SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows);
-    myNoCopyJarPaths = noCopy ? null : ConcurrentCollectionFactory.createConcurrentSet(FileUtil.PATH_HASHING_STRATEGY);
+    if (noCopy) {
+      myNoCopyJarPaths = null;
+    }
+    else {
+      if (SystemInfoRt.isFileSystemCaseSensitive) {
+        //noinspection SSBasedInspection
+        myNoCopyJarPaths = Collections.newSetFromMap(new ConcurrentHashMap<>());
+      }
+      else {
+        myNoCopyJarPaths = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.caseInsensitive());
+      }
+    }
 
     // to prevent platform .jar files from copying
     boolean runningFromDist = new File(PathManager.getLibPath(), "openapi.jar").exists();
@@ -104,6 +120,13 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     boolean useNewJarHandler = SystemInfo.isWindows && Registry.is("vfs.use.new.jar.handler");
     return VfsImplUtil.getHandler(this, entryFile, useNewJarHandler ? BasicJarHandler::new : JarHandler::new);
+  }
+
+  @TestOnly
+  public void markDirtyAndRefreshVirtualFileDeepInsideJarForTest(@NotNull VirtualFile file) {
+    // clear caches in ArchiveHandler so that refresh will actually refresh something
+    getHandler(file).dispose();
+    VfsUtil.markDirtyAndRefresh(false, true, true, file);
   }
 
   @Override

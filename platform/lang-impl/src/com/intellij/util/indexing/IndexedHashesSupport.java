@@ -5,10 +5,11 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.flavor.FileIndexingFlavorProvider;
 import com.intellij.util.indexing.flavor.HashBuilder;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,47 +20,49 @@ import java.security.MessageDigest;
 
 @ApiStatus.Internal
 public final class IndexedHashesSupport {
+  private static final boolean SKIP_CONTENT_DEPENDENT_CHARSETS = SystemProperties.is("idea.index.hash.skip.content.dependent.charset");
   // TODO replace with sha-256
   private static final HashFunction INDEXED_FILE_CONTENT_HASHER = Hashing.sha1();
+
+  public static final int HASH_SIZE_IN_BYTES = INDEXED_FILE_CONTENT_HASHER.bits() / Byte.SIZE;
 
   public static int getVersion() {
     return 3;
   }
 
   public static byte @NotNull [] getOrInitIndexedHash(@NotNull FileContentImpl content) {
-    byte[] hash = content.getHash();
+    byte[] hash = content.getIndexedFileHash();
     if (hash != null) return hash;
-
-    byte[] contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
-    if (contentHash == null) {
-      contentHash = getBinaryContentHash(content.getContent());
-      // todo store content hash in FS
-    }
-
-    hash = calculateIndexedHash(content, contentHash, false);
-    content.setHashes(hash);
+    byte[] contentHash = getBinaryContentHash(content.getContent());
+    hash = calculateIndexedHash(content, contentHash);
+    content.setIndexedFileHash(hash);
     return hash;
   }
 
   public static byte @NotNull [] getBinaryContentHash(byte @NotNull [] content) {
-    //TODO: duplicate of com.intellij.openapi.vfs.newvfs.persistent.FSRecords.calculateHash
-    MessageDigest digest = FSRecords.getContentHashDigest();
+    // TODO: simplify to calculating content hash of only the content[].
+    // Shared Indexes that are already available on CDN will have their hashes invalidated after it.
+    MessageDigest digest = DigestUtil.sha1();
     digest.update(String.valueOf(content.length).getBytes(StandardCharsets.UTF_8));
     digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
     digest.update(content);
     return digest.digest();
   }
 
-  public static byte @NotNull [] calculateIndexedHash(@NotNull IndexedFile indexedFile, byte @NotNull [] contentHash, boolean isUtf8Forced) {
+  public static byte @NotNull [] calculateIndexedHash(@NotNull IndexedFile indexedFile, byte @NotNull [] contentHash) {
     Hasher hasher = INDEXED_FILE_CONTENT_HASHER.newHasher();
     hasher.putBytes(contentHash);
 
     if (!FileContentImpl.getFileTypeWithoutSubstitution(indexedFile).isBinary()) {
-      Charset charset = isUtf8Forced ? StandardCharsets.UTF_8 :
-                        indexedFile instanceof FileContentImpl
-                        ? ((FileContentImpl)indexedFile).getCharset()
-                        : indexedFile.getFile().getCharset();
-      hasher.putString(charset.name(), StandardCharsets.UTF_8);
+      FileType fileType = indexedFile.getFileType();
+      FileType.CharsetHint charsetHint = fileType.getCharsetHint();
+      // we don't need charset if it depends only on content
+      if (charsetHint != FileType.CharsetHint.CONTENT_DEPENDENT_CHARSET || !SKIP_CONTENT_DEPENDENT_CHARSETS) {
+        Charset charset = charsetHint instanceof ForcedCharset
+                          ? ((ForcedCharset)charsetHint).getCharset()
+                          : getCharsetFromIndexedFile(indexedFile);
+        hasher.putString(charset.name(), StandardCharsets.UTF_8);
+      }
     }
 
     hasher.putString(indexedFile.getFileName(), StandardCharsets.UTF_8);
@@ -92,6 +95,11 @@ public final class IndexedHashesSupport {
     }
 
     return hasher.hash().asBytes();
+  }
+
+  @NotNull
+  private static Charset getCharsetFromIndexedFile(@NotNull IndexedFile indexedFile) {
+    return indexedFile instanceof FileContentImpl ? ((FileContentImpl)indexedFile).getCharset() : indexedFile.getFile().getCharset();
   }
 
   private static <F> void buildFlavorHash(@NotNull IndexedFile indexedFile,

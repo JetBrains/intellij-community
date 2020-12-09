@@ -43,8 +43,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -212,13 +212,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
       @Override
       protected void notifyUpdate(boolean shouldFlush) {
-        myUpdateQueue.queue(new Update(this) {
-          @Override
-          public void run() {
-            updateStatusPanel();
-            updateRevisionsList();
-          }
-        });
+        myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, this, () -> {
+          updateStatusPanel();
+          updateRevisionsList();
+        }));
         if (shouldFlush) {
           runOnEdt(() -> myUpdateQueue.flush());
         }

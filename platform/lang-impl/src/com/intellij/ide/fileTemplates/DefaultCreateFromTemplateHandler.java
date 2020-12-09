@@ -88,7 +88,10 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
   }
 
   @Override
-  public void prepareProperties(@NotNull Map<String, Object> props, String filename, @NotNull FileTemplate template) {
+  public void prepareProperties(@NotNull Map<String, Object> props,
+                                String filename,
+                                @NotNull FileTemplate template,
+                                @NotNull Project project) {
     String fileName = checkAppendExtension(filename, template);
     props.put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName);
   }

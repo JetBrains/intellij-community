@@ -155,7 +155,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private boolean myUseLastConfiguration;
   private final boolean myEditConfigOnly;
   private boolean myDoingOkAction;
-  private boolean myFilterIsShowing;
 
   // components
   private final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
@@ -573,18 +572,23 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
           .showUnderneathOf((Component)source);
       }
     };
-    final ToolbarLabel searchTemplateLabel = new ToolbarLabel(SSRBundle.message("search.template")) {
-      @Override
-      public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-        final JLabel label = (JLabel)super.createCustomComponent(presentation, place);
-        UIUtil.installCompleteMatchInfo(label, () -> myConfiguration, link -> showFilterPanel(link));
-        return label;
-      }
-    };
+    final ToolbarLabel searchTemplateLabel = new ToolbarLabel(SSRBundle.message("search.template"));
     final DefaultActionGroup historyActionGroup = new DefaultActionGroup(historyAction, searchTemplateLabel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar historyToolbar = actionManager.createActionToolbar("StructuralSearchDialog", historyActionGroup, true);
 
+    final CheckboxAction injected = new CheckboxAction(SSRBundle.message("search.in.injected.checkbox")) {
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return myConfiguration.getMatchOptions().isSearchInjectedCode();
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        myConfiguration.getMatchOptions().setSearchInjectedCode(state);
+        initiateValidation();
+      }
+    };
     final CheckboxAction recursive = new CheckboxAction(SSRBundle.message("recursive.matching.checkbox")) {
 
       @Override
@@ -706,7 +710,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         final Presentation presentation = e.getPresentation();
-        presentation.setIcon(myFilterIsShowing ? filterModifiedIcon : AllIcons.General.Filter);
+        presentation.setIcon(myFilterPanel.hasVisibleFilter() ? filterModifiedIcon : AllIcons.General.Filter);
       }
 
       @Override
@@ -720,7 +724,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
     };
     final DefaultActionGroup optionsActionGroup =
-      new DefaultActionGroup(recursive, matchCase, myFileTypeChooser, filterAction, templateActionGroup);
+      new DefaultActionGroup(injected, recursive, matchCase, myFileTypeChooser, filterAction, templateActionGroup);
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
@@ -1347,7 +1351,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
   }
 
-  public static String getUserDefined() {
+  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
     return SSRBundle.message("new.template.defaultname");
   }
 
@@ -1377,7 +1381,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         else{
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
         }
-        myFilterIsShowing = myFilterPanel.hasVisibleFilter();
         if (isFilterPanelVisible()) {
           myConfiguration.setCurrentVariableName(variableName);
         }

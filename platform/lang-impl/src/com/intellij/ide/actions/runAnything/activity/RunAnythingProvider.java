@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,6 +123,7 @@ public interface RunAnythingProvider<V> {
    * Returns help group title this provider belongs to
    */
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Title)
   default String getHelpGroupTitle() {
     return null;
   }
@@ -140,7 +142,7 @@ public interface RunAnythingProvider<V> {
    * Returns completion group title. {@code null} means that current provider doesn't provide completion.
    */
   @Nullable
-  @NlsContexts.PopupTitle
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getCompletionGroupTitle();
 
   /**

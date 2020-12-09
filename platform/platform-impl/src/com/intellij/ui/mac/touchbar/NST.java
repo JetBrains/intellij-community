@@ -3,13 +3,13 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -21,6 +21,9 @@ import sun.awt.image.WritableRasterNative;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -90,9 +93,9 @@ public final class NST {
   }
 
   static NSTLibrary loadLibrary() {
-    NativeLibraryLoader.loadPlatformLibrary("nst");
-
-    return ourNSTLibrary = Native.load("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    Path lib = PathManager.findBinFile("libnst64.dylib");
+    assert lib != null : "NST lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
+    return ourNSTLibrary = Native.load(lib.toString(), NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static boolean isAvailable() {

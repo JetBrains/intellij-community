@@ -15,6 +15,7 @@ import java.awt.datatransfer.FlavorMap;
 import java.awt.datatransfer.SystemFlavorMap;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,6 +86,23 @@ public final class FileCopyPasteUtil {
         @SuppressWarnings("unchecked")
         List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
         return ContainerUtil.filter(fileList, file -> !Strings.isEmptyOrSpaces(file.getPath()));
+      }
+      else {
+        List<Path> files = LinuxDragAndDropSupport.getFiles(transferable);
+        return files == null ? null : ContainerUtil.map(files, it -> it.toFile());
+      }
+    }
+    catch (Exception ignore) { }
+
+    return null;
+  }
+
+  public static @Nullable List<Path> getFiles(@NotNull Transferable transferable) {
+    try {
+      if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+        @SuppressWarnings("unchecked")
+        List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+        return ContainerUtil.mapNotNull(fileList, file -> Strings.isEmptyOrSpaces(file.getPath()) ? null : file.toPath());
       }
       else {
         return LinuxDragAndDropSupport.getFiles(transferable);

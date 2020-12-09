@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -77,7 +78,7 @@ public class SelectedTextFormatter {
   private static void reformatRange(final @NotNull PsiFile file, final @NotNull TextRange range) {
     final Project project = file.getProject();
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> CodeStyleManager.getInstance(project).reformatText(file, range.getStartOffset(), range.getEndOffset())),
-                                                  LangBundle.message("command.name.reformat"), null);
+                                                  CodeStyleBundle.message("command.name.reformat"), null);
   }
 
   @NotNull

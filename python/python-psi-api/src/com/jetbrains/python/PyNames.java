@@ -9,7 +9,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -240,7 +242,7 @@ public final class PyNames {
   /**
    * Contains all known predefined names of "__foo__" form.
    */
-  public static final ImmutableSet<String> UNDERSCORED_ATTRIBUTES = ImmutableSet.of(
+  public static final Set<String> UNDERSCORED_ATTRIBUTES = ImmutableSet.of(
     "__all__",
     "__annotations__",
     "__author__",
@@ -269,7 +271,7 @@ public final class PyNames {
     "__version__"
   );
 
-  public static final ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of(
+  public static final Set<String> COMPARISON_OPERATORS = ImmutableSet.of(
     "__eq__",
     "__ne__",
     "__lt__",
@@ -280,7 +282,7 @@ public final class PyNames {
     "__contains__"
   );
 
-  public static final ImmutableSet<String> SUBSCRIPTION_OPERATORS = ImmutableSet.of(
+  public static final Set<String> SUBSCRIPTION_OPERATORS = ImmutableSet.of(
     GETITEM,
     SETITEM,
     DELITEM
@@ -495,13 +497,12 @@ public final class PyNames {
     }
   }
 
-  @NotNull
-  public static ImmutableMap<String, BuiltinDescription> getModuleBuiltinMethods(@NotNull LanguageLevel level) {
+  public static @NotNull Map<String, BuiltinDescription> getModuleBuiltinMethods(@NotNull LanguageLevel level) {
     if (level.isAtLeast(LanguageLevel.PYTHON37)) {
       return PY37_MODULE_BUILTIN_METHODS;
     }
 
-    return ImmutableMap.of();
+    return Collections.emptyMap();
   }
 
   // canonical names, not forced by interpreter
@@ -550,7 +551,7 @@ public final class PyNames {
   /**
    * Contains keywords as of CPython 2.5.
    */
-  public static final ImmutableSet<String> KEYWORDS = ImmutableSet.of(
+  public static final Set<String> KEYWORDS = ImmutableSet.of(
     AND,
     DEL,
     FROM,
@@ -662,7 +663,7 @@ public final class PyNames {
    * <p/>
    * Attributes {@code __doc__}, {@code __dict__} and {@code __module__} should be inherited from object.
    */
-  public static final ImmutableSet<String> FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of(
+  public static final Set<String> FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of(
     "__defaults__",
     "__globals__",
     "__closure__",
@@ -670,7 +671,7 @@ public final class PyNames {
     "__name__"
   );
 
-  public static final ImmutableSet<String> LEGACY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of(
+  public static final Set<String> LEGACY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of(
     "func_defaults",
     "func_globals",
     "func_closure",
@@ -680,11 +681,11 @@ public final class PyNames {
     "func_dict"
   );
 
-  public static final ImmutableSet<String> PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of("__annotations__", "__kwdefaults__");
+  public static final Set<String> PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of("__annotations__", "__kwdefaults__");
 
-  public static final ImmutableSet<String> METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("__func__", "__self__", "__name__");
+  public static final Set<String> METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("__func__", "__self__", "__name__");
 
-  public static final ImmutableSet<String> LEGACY_METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("im_func", "im_self", "im_class");
+  public static final Set<String> LEGACY_METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("im_func", "im_self", "im_class");
 
   public static final String MRO = "mro";
 }

@@ -39,9 +39,9 @@ Groovy script
                 PsiElement(identifier)('param')
               PsiErrorElement:')' unexpected
                 PsiElement())(')')
+              PsiElement(new line)('\n      ')
               PsiErrorElement:',', <expression> or ']' expected, got 'case'
                 <empty list>
-    PsiWhiteSpace('\n      ')
     Case section
       Case label
         PsiElement(case)('case')
@@ -63,9 +63,11 @@ Groovy script
               Reference expression
                 PsiElement(identifier)('param')
               PsiElement(])(']')
-            PsiErrorElement:')' or ',' expected, got 'case'
+            PsiErrorElement:')' or ',' expected
               <empty list>
-    PsiWhiteSpace('\n      ')
+            PsiElement(new line)('\n      ')
+            PsiErrorElement:')', ',' or <expression> expected, got 'case'
+              <empty list>
     Case section
       Case label
         PsiElement(case)('case')
@@ -73,7 +75,7 @@ Groovy script
         Literal
           PsiElement(Integer)('2')
         PsiElement(:)(':')
-      PsiWhiteSpace('\n        ')
+      PsiElement(new line)('\n        ')
       Assignment expression
         Reference expression
           PsiElement(identifier)('param')
@@ -106,9 +108,7 @@ Groovy script
                     PsiElement(identifier)('goo')
                 PsiElement(])(']')
             PsiElement())(')')
-      PsiErrorElement:';', new line or '}' expected, got 'return'
-        <empty list>
-      PsiWhiteSpace('\n        ')
+      PsiElement(new line)('\n        ')
       RETURN statement
         PsiElement(return)('return')
         PsiWhiteSpace(' ')
@@ -117,5 +117,5 @@ Groovy script
             PsiElement(identifier)('param')
           PsiElement(.)('.')
           PsiElement(identifier)('foo')
-    PsiWhiteSpace('\n    ')
+      PsiElement(new line)('\n    ')
     PsiElement(})('}')

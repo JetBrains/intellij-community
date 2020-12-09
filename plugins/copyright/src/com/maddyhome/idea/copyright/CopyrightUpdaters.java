@@ -10,7 +10,7 @@ import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
  * @author yole
  */
 public final class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsProvider> {
-  public static final ExtensionPointName<KeyedLazyInstance<UpdateCopyrightsProvider>> EP_NAME = ExtensionPointName.create("com.intellij.copyright.updater");
+  public static final ExtensionPointName<KeyedLazyInstance<UpdateCopyrightsProvider>> EP_NAME = new ExtensionPointName<>("com.intellij.copyright.updater");
   public final static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
 
   private CopyrightUpdaters() {

@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.impl.DisposableCachedValue
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
@@ -73,6 +73,9 @@ class ModuleRootComponentBridge(
 
   override fun getOrCreateJpsRootProperties(sourceRootUrl: VirtualFileUrl, creator: () -> JpsModuleSourceRoot): JpsModuleSourceRoot {
     return creator()
+  }
+
+  override fun removeCachedJpsRootProperties(sourceRootUrl: VirtualFileUrl) {
   }
 
   override fun dispose() = Unit

@@ -17,10 +17,12 @@ import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.IntPredicate;
 
 import static com.intellij.openapi.util.text.StringUtil.isEscapedBackslash;
 
@@ -233,11 +236,10 @@ public final class LowLevelSearchUtil {
 
   // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
   // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
-  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache =
-    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = CollectionFactory.createConcurrentWeakIdentityMap();
 
   /**
-   * @deprecated please use {@link #processTextOccurrences(CharSequence, int, int, StringSearcher, TIntProcedure)}
+   * @deprecated please use {@link #processTexts(CharSequence, int, int, StringSearcher, IntPredicate)}
    */
   @ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
@@ -250,6 +252,11 @@ public final class LowLevelSearchUtil {
     return processTextOccurrences(text, startOffset, endOffset, searcher, processor);
   }
 
+  /**
+   * @deprecated Use {@link #processTexts(CharSequence, int, int, StringSearcher, IntPredicate)}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,
@@ -257,6 +264,19 @@ public final class LowLevelSearchUtil {
                                                @NotNull TIntProcedure processor) {
     for (int offset : getTextOccurrences(text, startOffset, endOffset, searcher)) {
       if (!processor.execute(offset)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean processTexts(@NotNull CharSequence text,
+                                     int startOffset,
+                                     int endOffset,
+                                     @NotNull StringSearcher searcher,
+                                     @NotNull IntPredicate processor) {
+    for (int offset : getTextOccurrences(text, startOffset, endOffset, searcher)) {
+      if (!processor.test(offset)) {
         return false;
       }
     }
@@ -294,7 +314,7 @@ public final class LowLevelSearchUtil {
       }
       cachedMap.put(searcher, cachedOccurrences);
     }
-    TIntArrayList offsets = new TIntArrayList(cachedOccurrences.length - 2);
+    IntArrayList offsets = new IntArrayList(cachedOccurrences.length - 2);
     for (int i = 2; i < cachedOccurrences.length; i++) {
       int occurrence = cachedOccurrences[i];
       if (occurrence > endOffset - searcher.getPatternLength()) break;
@@ -302,7 +322,7 @@ public final class LowLevelSearchUtil {
         offsets.add(occurrence);
       }
     }
-    return offsets.toNativeArray();
+    return offsets.toIntArray();
   }
 
   private static boolean checkJavaIdentifier(@NotNull CharSequence text,

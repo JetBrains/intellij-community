@@ -50,7 +50,7 @@ object IndexContentDiagnosticDumper {
 
   fun getIndexContentDiagnosticForProject(project: Project, indicator: ProgressIndicator): IndexContentDiagnostic {
     val providers = (FileBasedIndex.getInstance() as FileBasedIndexImpl).getOrderedIndexableFilesProviders(project)
-    val visitedFiles = ConcurrentBitSet()
+    val visitedFiles = ConcurrentBitSet.create()
 
     indicator.text = IndexingBundle.message("index.content.diagnostic.dumping")
     indicator.isIndeterminate = false

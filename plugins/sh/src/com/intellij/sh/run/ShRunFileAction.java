@@ -34,6 +34,7 @@ public class ShRunFileAction extends DumbAwareAction {
       RunManager.getInstance(project).createConfiguration(file.getName(), ShConfigurationType.class);
     ShRunConfiguration runConfiguration = (ShRunConfiguration)configurationSettings.getConfiguration();
     runConfiguration.setScriptPath(virtualFile.getPath());
+    runConfiguration.setExecuteScriptFile(true);
     runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
     if (file instanceof ShFile) {
       @NlsSafe String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");

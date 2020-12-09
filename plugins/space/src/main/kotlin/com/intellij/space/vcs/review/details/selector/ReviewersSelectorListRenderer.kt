@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.selector
 
 import circlet.client.api.englishFullName
@@ -36,7 +37,7 @@ internal class ReviewersSelectorListRenderer(private val avatarProvider: SpaceAv
 
     label.apply {
       clear()
-      append(value.reviewer.englishFullName())
+      append(value.reviewer.englishFullName()) // NON-NLS
       icon = avatarProvider.getIcon(value.reviewer)
       foreground = primaryTextColor
     }

@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -15,7 +11,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -26,8 +21,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
-
+public final class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   public NewWelcomeScreen() {
     super(new BorderLayout());
     add(createHeaderPanel(), BorderLayout.NORTH);
@@ -95,7 +89,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   private static JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
     JLabel welcome = new JLabel(IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName()),
-                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()),
+                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl(), NewWelcomeScreen.class),
                                 SwingConstants.LEFT);
     welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));
@@ -137,7 +131,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     if (isNewWelcomeScreen(e)) {
       Presentation presentation = e.getPresentation();
       presentation.setIcon(AllIcons.General.Add);
-      if (Registry.is("use.tabbed.welcome.screen")) {
+      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.setIcon(AllIcons.Welcome.CreateNewProjectTab);
         presentation.setSelectedIcon(AllIcons.Welcome.CreateNewProjectTabSelected);
       }

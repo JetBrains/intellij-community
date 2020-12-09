@@ -14,20 +14,11 @@ class UpdateOptions : BaseState() {
   @get:CollectionBean
   val ignoredBuildNumbers by list<String>()
 
-  @get:CollectionBean
-  val enabledExternalComponentSources by list<String>()
-
-  @get:CollectionBean
-  val knownExternalComponentSources by list<String>()
-
-  @get:CollectionBean
-  val externalUpdateChannels by map<String, String>()
-
   @get:OptionTag("CHECK_NEEDED")
   var isCheckNeeded by property(true)
 
-  @get:OptionTag("KEEP_PLUGINS_ARCHIVE")
-  var isKeepPluginsArchive by property(true)
+  @get:OptionTag("SHOW_WHATS_NEW_EDITOR")
+  var isShowWhatsNewEditor by property(true)
 
   @get:OptionTag("LAST_TIME_CHECKED")
   var lastTimeChecked by property(0L)

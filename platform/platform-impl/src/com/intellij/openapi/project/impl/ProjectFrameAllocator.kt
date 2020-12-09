@@ -13,11 +13,12 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.impl.ProgressResult
+import com.intellij.openapi.progress.impl.ProgressRunner
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -31,7 +32,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -39,16 +39,19 @@ import java.awt.Frame
 import java.awt.Image
 import java.io.EOFException
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.function.Function
+import javax.swing.JComponent
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open fun <T : Any> run(task: () -> T?): T? {
+  open fun <T : Any> run(task: () -> T?): CompletableFuture<T?> {
     if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
       runBlocking {
         saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
       }
     }
-    return task()
+    return CompletableFuture.completedFuture(task())
   }
 
   /**
@@ -63,160 +66,106 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
   open fun projectOpened(project: Project) {}
 }
 
-internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
+internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   // volatile not required because created in run (before executing run task)
-  private var frameHelper: ProjectFrameHelper? = null
-
-  private var isFrameBoundsCorrect = false
+  var frameManager: ProjectUiFrameManager? = null
 
   @Volatile
-  private var cancelled = false
+  var cancelled = false
+    private set
 
-  override fun <T : Any> run(task: () -> T?): T? {
-    var result: T? = null
-    val progressTitle = getProgressTitle()
-    ApplicationManager.getApplication().invokeAndWait {
-      if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
+  override fun <T : Any> run(task: () -> T?): CompletableFuture<T?> {
+    if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
+      invokeAndWaitIfNeeded {
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(ProjectManager.getInstance().defaultProject)
       }
+    }
 
-      val frame = createFrameIfNeeded()
-      val progressTask = object : Task.Modal(null, progressTitle, true) {
-        override fun run(indicator: ProgressIndicator) {
-          if (frameHelper == null) {
-            ApplicationManager.getApplication().invokeLater {
-              if (cancelled) {
-                return@invokeLater
-              }
+    frameManager = createFrameManager()
 
-              runActivity("project frame initialization") {
-                initNewFrame(frame)
-              }
-            }
-          }
+    val progress = (ApplicationManager.getApplication() as ApplicationImpl)
+      .createProgressWindowAsyncIfNeeded(getProgressTitle(), true, true, null, frameManager!!.getComponent(), null)
 
-          result = task()
-        }
-
-        override fun onThrowable(error: Throwable) {
-          if (error is StartupAbortedException || error is PluginException) {
-            StartupAbortedException.logAndExit(error)
-          }
-          else {
-            logger<ProjectFrameAllocator>().error(error)
-            projectNotLoaded(error as? CannotConvertException)
-          }
-        }
+    val progressRunner = ProgressRunner<T?>(Function {
+      frameManager!!.init(this@ProjectUiFrameAllocator)
+      try {
+        task()
       }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Exception) {
+        if (e is StartupAbortedException || e is PluginException) {
+          StartupAbortedException.logAndExit(e)
+        }
+        else {
+          logger<ProjectFrameAllocator>().error(e)
+          projectNotLoaded(e as? CannotConvertException)
+        }
+        null
+      }
+    })
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .modal()
+      .withProgress(progress)
 
-      // VfsUtil.markDirtyAndRefresh wants write-safe context
-      // but no API to start runProcessWithProgressSynchronously in a write-safe context for now
-      if (!(ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)) {
-        result = null
+    val progressResultFuture: CompletableFuture<ProgressResult<T?>>
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      progressResultFuture = CompletableFuture.completedFuture(progressRunner.submitAndGet())
+    }
+    else {
+      progressResultFuture = progressRunner.submit()
+    }
+
+    return progressResultFuture.thenCompose { result ->
+      when (result.throwable) {
+        null -> CompletableFuture.completedFuture(result.result)
+        is ProcessCanceledException -> CompletableFuture.completedFuture(null)
+        else -> CompletableFuture.failedFuture(result.throwable)
       }
     }
-    return result
   }
 
-  @NlsContexts.DialogTitle
+  @NlsContexts.ProgressTitle
   private fun getProgressTitle(): String {
     val projectName = options.projectName ?: (projectStoreBaseDir.fileName ?: projectStoreBaseDir).toString()
     return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)
   }
 
-  @RequiresEdt
-  private fun initNewFrame(frame: IdeFrameImpl) {
-    if (frame.isVisible) {
-      val frameHelper = ProjectFrameHelper(frame, null)
-      frameHelper.init()
-      // otherwise not painted if frame already visible
-      frame.validate()
-      this.frameHelper = frameHelper
-      isFrameBoundsCorrect = true
-      return
+  private fun createFrameManager(): ProjectUiFrameManager {
+    if (options.frameManager is ProjectUiFrameManager) {
+      return options.frameManager
     }
 
-    if (options.frame?.bounds == null) {
-      val recentProjectManager = RecentProjectsManager.getInstance()
-      if (recentProjectManager is RecentProjectsManagerBase) {
-        val info = recentProjectManager.getProjectMetaInfo(projectStoreBaseDir)
-        if (info != null) {
-          options = options.copy(frame = info.frame, projectWorkspaceId = info.projectWorkspaceId)
+    return invokeAndWaitIfNeeded {
+      val freeRootFrame = (WindowManager.getInstance() as WindowManagerImpl).removeAndGetRootFrame()
+      if (freeRootFrame != null) {
+        return@invokeAndWaitIfNeeded DefaultProjectUiFrameManager(frame = freeRootFrame.frame!!, frameHelper = freeRootFrame)
+      }
+
+      runMainActivity("create a frame") {
+        val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
+        if (preAllocated == null) {
+          if (options.frameManager is FrameInfo) {
+            SingleProjectUiFrameManager(options.frameManager, createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = options.frameManager))
+          }
+          else {
+            DefaultProjectUiFrameManager(frame = createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = null), frameHelper = null)
+          }
+        }
+        else {
+          SplashProjectUiFrameManager(preAllocated)
         }
       }
-    }
-
-    var projectSelfie: Image? = null
-    if (options.projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
-      try {
-        projectSelfie = ProjectSelfieUtil.readProjectSelfie(options.projectWorkspaceId!!,
-                                                            ScaleContext.create(frame))
-      }
-      catch (e: Throwable) {
-        if (e.cause !is EOFException) {
-          logger<ProjectFrameAllocator>().warn(e)
-        }
-      }
-    }
-
-    val frameHelper = ProjectFrameHelper(frame, projectSelfie)
-
-    // must be after preInit (frame decorator is required to set full screen mode)
-    var frameInfo = options.frame
-    if (frameInfo?.bounds == null) {
-      isFrameBoundsCorrect = false
-      frameInfo = (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfoHelper.info
-    }
-    else {
-      isFrameBoundsCorrect = true
-    }
-
-    if (frameInfo != null) {
-      restoreFrameState(frameHelper, frameInfo)
-    }
-
-    if (options.sendFrameBack && frame.isAutoRequestFocus) {
-      logger<ProjectFrameAllocator>().error("isAutoRequestFocus must be false")
-    }
-    frame.isVisible = true
-    frameHelper.init()
-    this.frameHelper = frameHelper
-  }
-
-  private fun createFrameIfNeeded(): IdeFrameImpl {
-    val freeRootFrame = (WindowManager.getInstance() as WindowManagerImpl).removeAndGetRootFrame()
-    if (freeRootFrame != null) {
-      isFrameBoundsCorrect = true
-      frameHelper = freeRootFrame
-      return freeRootFrame.frame!!
-    }
-
-    runMainActivity("create a frame") {
-      return SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
-             ?: createNewProjectFrame(
-               forceDisableAutoRequestFocus = options.sendFrameBack)
     }
   }
 
   override fun projectLoaded(project: Project) {
     ApplicationManager.getApplication().invokeLater(Runnable {
-      val frameHelper = frameHelper ?: return@Runnable
+      val frameHelper = frameManager?.frameHelper ?: return@Runnable
 
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
       runActivity("project frame assigning") {
-        val projectFrameBounds = ProjectFrameBounds.getInstance(project)
-        if (isFrameBoundsCorrect) {
-          // update to ensure that project stores correct frame bounds
-          val frame = frameHelper.frame!!
-          projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frame.extendedState)) null else frame.bounds)
-        }
-        else {
-          val frameInfo = projectFrameBounds.getFrameInfoInDeviceSpace()
-          if (frameInfo?.bounds != null) {
-            restoreFrameState(frameHelper, frameInfo)
-          }
-        }
-
         windowManager.assignFrame(frameHelper, project)
       }
       runActivity("tool window pane creation") {
@@ -229,8 +178,8 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     cancelled = true
 
     ApplicationManager.getApplication().invokeLater {
-      val frame = frameHelper
-      frameHelper = null
+      val frame = frameManager?.frameHelper
+      frameManager = null
 
       if (error != null) {
         ProjectManagerImpl.showCannotConvertMessage(error, frame?.frame)
@@ -243,25 +192,20 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
   }
 
   override fun projectOpened(project: Project) {
-    if (options.sendFrameBack) {
-      frameHelper?.frame?.isAutoRequestFocus = true
-    }
+    frameManager!!.projectOpened(project)
   }
 }
 
 private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo) {
-  val deviceBounds = frameInfo.bounds
-  val bounds = if (deviceBounds == null) null else FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
-  val state = frameInfo.extendedState
-  val isMaximized = FrameInfoHelper.isMaximized(state)
+  val bounds = frameInfo.bounds?.let { FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it) }
   val frame = frameHelper.frame!!
-  if (bounds != null && isMaximized && frame.extendedState == Frame.NORMAL) {
+  if (bounds != null && FrameInfoHelper.isMaximized(frameInfo.extendedState) && frame.extendedState == Frame.NORMAL) {
     frame.rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
   }
   if (bounds != null) {
     frame.bounds = bounds
   }
-  frame.extendedState = state
+  frame.extendedState = frameInfo.extendedState
 
   if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
     frameHelper.toggleFullScreen(true)
@@ -269,19 +213,159 @@ private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameI
 }
 
 @ApiStatus.Internal
-fun createNewProjectFrame(forceDisableAutoRequestFocus: Boolean): IdeFrameImpl {
+internal fun createNewProjectFrame(forceDisableAutoRequestFocus: Boolean, frameInfo: FrameInfo?): IdeFrameImpl {
   val frame = IdeFrameImpl()
   SplashManager.hideBeforeShow(frame)
 
-  val size = ScreenUtil.getMainScreenBounds().size
-  size.width = min(1400, size.width - 20)
-  size.height = min(1000, size.height - 40)
-  frame.size = size
-  frame.setLocationRelativeTo(null)
+  val deviceBounds = frameInfo?.bounds
+  if (deviceBounds == null) {
+    val size = ScreenUtil.getMainScreenBounds().size
+    size.width = min(1400, size.width - 20)
+    size.height = min(1000, size.height - 40)
+    frame.size = size
+    frame.setLocationRelativeTo(null)
+  }
+  else {
+    val bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
+    val state = frameInfo.extendedState
+    val isMaximized = FrameInfoHelper.isMaximized(state)
+    if (isMaximized && frame.extendedState == Frame.NORMAL) {
+      frame.rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
+    }
+    frame.bounds = bounds
+    frame.extendedState = state
+  }
 
   if (forceDisableAutoRequestFocus || (!ApplicationManager.getApplication().isActive && ComponentUtil.isDisableAutoRequestFocus())) {
     frame.isAutoRequestFocus = false
   }
   frame.minimumSize = Dimension(340, frame.minimumSize.height)
   return frame
+}
+
+internal interface ProjectUiFrameManager {
+  val frameHelper: ProjectFrameHelper?
+
+  fun init(allocator: ProjectUiFrameAllocator)
+
+  fun getComponent(): JComponent
+
+  fun projectOpened(project: Project) {
+  }
+}
+
+private class SplashProjectUiFrameManager(private val frame: IdeFrameImpl) : ProjectUiFrameManager {
+  override var frameHelper: ProjectFrameHelper? = null
+    private set
+
+  override fun getComponent(): JComponent = frame.rootPane
+
+  override fun init(allocator: ProjectUiFrameAllocator) {
+    assert(frameHelper == null)
+    ApplicationManager.getApplication().invokeLater {
+      if (allocator.cancelled) {
+        return@invokeLater
+      }
+
+      assert(frameHelper == null)
+
+      runActivity("project frame initialization") {
+        val frameHelper = ProjectFrameHelper(frame, null)
+        frameHelper.init()
+        // otherwise not painted if frame is already visible
+        frame.validate()
+        this.frameHelper = frameHelper
+      }
+    }
+  }
+}
+
+private class DefaultProjectUiFrameManager(private val frame: IdeFrameImpl, frameHelper: ProjectFrameHelper?) : ProjectUiFrameManager {
+  override var frameHelper: ProjectFrameHelper? = frameHelper
+    private set
+
+  override fun getComponent(): JComponent = frame.rootPane
+
+  override fun init(allocator: ProjectUiFrameAllocator) {
+    if (frameHelper != null) {
+      return
+    }
+
+    ApplicationManager.getApplication().invokeLater {
+      if (allocator.cancelled) {
+        return@invokeLater
+      }
+
+      runActivity("project frame initialization") {
+        doInit(allocator)
+      }
+    }
+  }
+
+  private fun doInit(allocator: ProjectUiFrameAllocator) {
+    val info = (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.getProjectMetaInfo(allocator.projectStoreBaseDir)
+    val frameInfo = info?.frame
+
+    val frameHelper = ProjectFrameHelper(frame, readProjectSelfie(info?.projectWorkspaceId, frame))
+
+    // must be after preInit (frame decorator is required to set full screen mode)
+    if (frameInfo?.bounds == null) {
+      (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfoHelper.info?.let {
+        restoreFrameState(frameHelper, it)
+      }
+    }
+    else {
+      restoreFrameState(frameHelper, frameInfo)
+    }
+
+    frame.isVisible = true
+    frameHelper.init()
+    this.frameHelper = frameHelper
+  }
+}
+
+private class SingleProjectUiFrameManager(private val frameInfo: FrameInfo, private val frame: IdeFrameImpl) : ProjectUiFrameManager {
+  override var frameHelper: ProjectFrameHelper? = null
+    private set
+
+  override fun getComponent(): JComponent = frame.rootPane
+
+  override fun init(allocator: ProjectUiFrameAllocator) {
+    ApplicationManager.getApplication().invokeLater {
+      if (allocator.cancelled) {
+        return@invokeLater
+      }
+
+      runActivity("project frame initialization") {
+        doInit(allocator)
+      }
+    }
+  }
+
+  private fun doInit(allocator: ProjectUiFrameAllocator) {
+    val options = allocator.options
+    val frameHelper = ProjectFrameHelper(frame, readProjectSelfie(options.projectWorkspaceId, frame))
+
+    if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+      frameHelper.toggleFullScreen(true)
+    }
+
+    frame.isVisible = true
+    frameHelper.init()
+    this.frameHelper = frameHelper
+  }
+}
+
+private fun readProjectSelfie(projectWorkspaceId: String?, frame: IdeFrameImpl): Image? {
+  if (projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state", false)) {
+    try {
+      return ProjectSelfieUtil.readProjectSelfie(projectWorkspaceId, ScaleContext.create(frame))
+    }
+    catch (e: Throwable) {
+      if (e.cause !is EOFException) {
+        logger<ProjectFrameAllocator>().warn(e)
+      }
+    }
+  }
+  return null
 }

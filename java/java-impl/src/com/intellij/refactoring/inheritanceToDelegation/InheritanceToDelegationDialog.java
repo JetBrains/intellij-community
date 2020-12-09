@@ -43,7 +43,6 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   private JCheckBox myCbGenerateGetter;
   private MemberSelectionPanel myMemberSelectionPanel;
   private JComboBox myClassCombo;
-  private final Project myProject;
   private MyClassComboItemListener myClassComboItemListener;
   private NameSuggestionsField.DataChanged myDataChangedListener;
 
@@ -52,7 +51,6 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
                                        PsiClass[] superClasses,
                                        HashMap<PsiClass,Collection<MemberInfo>> basesToMemberInfos) {
     super(project, true);
-    myProject = project;
     myClass = aClass;
     mySuperClasses = superClasses;
     myBasesToMemberInfos = basesToMemberInfos;

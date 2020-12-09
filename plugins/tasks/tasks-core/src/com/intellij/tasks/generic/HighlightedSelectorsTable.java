@@ -58,6 +58,7 @@ class HighlightedSelectorsTable extends TableView<Selector> {
         }
       }
     }, selectors, 0));
+    setShowGrid(false);
   }
 
   private static final class EditorTableCellViewer extends AbstractTableCellEditor implements TableCellRenderer {

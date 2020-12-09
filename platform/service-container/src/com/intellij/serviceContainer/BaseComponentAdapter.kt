@@ -28,9 +28,6 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
 
   protected abstract fun isImplementationEqualsToInterface(): Boolean
 
-  @Synchronized
-  fun isImplementationClassResolved() = implementationClass != null
-
   final override fun getComponentImplementation() = getImplementationClass()
 
   @Synchronized
@@ -38,7 +35,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     var result = implementationClass
     if (result == null) {
       try {
-        result = Class.forName(implementationClassName, true, pluginDescriptor.pluginClassLoader) as Class<*>
+        result = componentManager.loadClass<Any>(implementationClassName, pluginDescriptor)
       }
       catch (e: ClassNotFoundException) {
         throw PluginException("Failed to load class: ${toString()}", e, pluginDescriptor.pluginId)
@@ -67,7 +64,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     return getInstanceUncached(componentManager, keyClass, indicator ?: ProgressIndicatorProvider.getGlobalProgressIndicator())
   }
 
-  private fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T? {
+  private fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
     checkContainerIsActive(componentManager, indicator)
 
@@ -137,6 +134,17 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
 
     if (componentManager.isDisposed) {
       throwAlreadyDisposedError(componentManager, indicator)
+    }
+    if (!isGettingServiceAllowedDuringPluginUnloading(pluginDescriptor)) {
+      componentManager.componentContainerIsReadonly?.let {
+        val error = AlreadyDisposedException("Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})")
+        if (indicator == null) {
+          throw error
+        }
+        else {
+          throw ProcessCanceledException(error)
+        }
+      }
     }
   }
 

@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class DetailExceptionsIntention extends Intention {
-
+public final class DetailExceptionsIntention extends Intention {
   @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
@@ -67,7 +66,9 @@ public class DetailExceptionsIntention extends Intention {
             exceptionsToExpand.add(aExceptionsThrown);
           }
         }
-        exceptionsThrown.removeAll(exceptionsToExpand);
+        for (PsiClassType type : exceptionsToExpand) {
+          exceptionsThrown.remove(type);
+        }
 
         PsiClassType commonSuperType = null;
         PsiClass commonSuper = ObscureThrownExceptionsIntention.findCommonSuperClass(exceptionsToExpand.toArray(PsiClassType.EMPTY_ARRAY));

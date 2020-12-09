@@ -23,6 +23,6 @@ final class StubSerializationUtil {
    * @return message for broken stub format
    */
   static @NotNull @NonNls String brokenStubFormat(@NotNull ObjectStubSerializer<?, ?> root) {
-    return "Broken stub format, most likely version of " + root + " was not updated after serialization changes\n";
+    return "Broken stub format, most likely version of " + root + " (" + root.getExternalId() + ") was not updated after serialization changes\n";
   }
 }

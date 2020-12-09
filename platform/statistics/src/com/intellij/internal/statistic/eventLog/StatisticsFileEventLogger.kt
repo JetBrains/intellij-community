@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.util.concurrent.CompletableFuture
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit
 
 open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val sessionId: String,
+                                     private val headless: Boolean,
                                      private val build: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
@@ -41,8 +43,9 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     group.validateEventId(eventId)
     return try {
       CompletableFuture.runAsync(Runnable {
-        val context = EventContext.create(eventId, data)
         val validator = SensitiveDataValidator.getInstance(recorderId)
+        if (!validator.isGroupAllowed(group)) return@Runnable
+        val context = EventContext.create(eventId, data)
         val validatedEventId = validator.guaranteeCorrectEventId(group, context)
         val validatedEventData = validator.guaranteeCorrectEventData(group, context)
 
@@ -88,6 +91,10 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
       it.event.addData("system_event_id", systemEventId)
       systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
+
+      if (headless) {
+        it.event.addData("system_headless", true)
+      }
       writer.log(it)
     }
     lastEvent = null
@@ -112,6 +119,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   override fun dispose() {
     flush()
     logExecutor.shutdown()
+    Disposer.dispose(writer)
   }
 
   fun flush(): CompletableFuture<Void> {

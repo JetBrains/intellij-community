@@ -90,7 +90,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
     if (!task.filesAreTheSame) {
       val dialog = LibraryJarsDiffDialog(task.libraryFileToCompare, task.downloadedFileToCompare, mavenCoordinates,
-                                         LibraryUtil.getPresentableName(library), project)
+                                         library.presentableName, project)
       dialog.show()
       task.deleteTemporaryFiles()
       when (dialog.exitCode) {
@@ -120,7 +120,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun detectOrSpecifyMavenCoordinates(library: Library): JpsMavenRepositoryLibraryDescriptor? {
     val detectedCoordinates = detectMavenCoordinates(library.getFiles(OrderRootType.CLASSES))
-    LOG.debug("Maven coordinates for ${LibraryUtil.getPresentableName(library)} JARs: $detectedCoordinates")
+    LOG.debug("Maven coordinates for ${library.presentableName} JARs: $detectedCoordinates")
     if (detectedCoordinates.size == 1) {
       return detectedCoordinates[0]
     }

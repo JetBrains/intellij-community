@@ -5,6 +5,8 @@
   <depends config-file="anotherPlugin.xml" optional="true">anotherPlugin</depends>
   <module value="myModule"/>
 
+  <resource-bundle>MyResourceBundle</resource-bundle>
+
   <idea-version since-build="sinceBuildValue" until-build="untilBuildValue"/>
 
   <extensionPoints>
@@ -20,7 +22,7 @@
   </extensions>
   <extensions defaultExtensionNs="defaultExtensionNs" xmlns="extensionXmlNs"/>
 
-  <actions>
+  <actions resource-bundle="ActionsResourceBundle">
     <action id="actionId" text="actionText" description="descriptionText" class="actionClass" popup="false"/>
     <group id="groupId" class="groupClass" description="groupDescriptionText" text="groupText" popup="true">
       <action id="groupAction" text="groupActionText" description="groupActionDescriptionText" class="actionClass"/>

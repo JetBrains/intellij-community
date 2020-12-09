@@ -30,7 +30,7 @@ public final class VcsEP implements PluginAware {
   private PluginDescriptor pluginDescriptor;
 
   public @NotNull AbstractVcs createVcs(@NotNull Project project) {
-    return project.instantiateExtensionWithPicoContainerOnlyIfNeeded(vcsClass, pluginDescriptor);
+    return project.instantiateClass(vcsClass, pluginDescriptor);
   }
 
   public @NotNull VcsDescriptor createDescriptor() {

@@ -46,7 +46,7 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
   }
 
   val dialog = dialog(
-    title = DiagnosticBundle.message("error.report.title"),
+    title = DiagnosticBundle.message("error.report.auth.title"),
     panel = panel,
     focusedComponent = if (credentials?.userName == null) userField else passwordField,
     project = project,

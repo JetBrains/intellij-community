@@ -20,6 +20,8 @@
   <depends>com.intellij.modules.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
+    <workspaceModel.customModuleRootsSerializer implementation="org.jetbrains.idea.eclipse.config.EclipseModuleRootsSerializer"/>
+    <workspaceModel.customModuleComponentSerializer implementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerSerializer"/>
     <compileServer.plugin classpath="eclipse-jps.jar;eclipse-common.jar"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>

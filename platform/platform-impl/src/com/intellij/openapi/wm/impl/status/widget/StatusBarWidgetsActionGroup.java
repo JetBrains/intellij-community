@@ -2,7 +2,7 @@
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
@@ -60,12 +60,12 @@ public class StatusBarWidgetsActionGroup extends ActionGroup {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return ServiceManager.getService(StatusBarWidgetSettings.class).isEnabled(myWidgetFactory);
+      return ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class).isEnabled(myWidgetFactory);
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      ServiceManager.getService(StatusBarWidgetSettings.class).setEnabled(myWidgetFactory, state);
+      ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class).setEnabled(myWidgetFactory, state);
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         project.getService(StatusBarWidgetsManager.class).updateWidget(myWidgetFactory);
       }
@@ -78,7 +78,7 @@ public class StatusBarWidgetsActionGroup extends ActionGroup {
       StatusBarWidgetFactory factory = getFactory(e);
       if (factory == null) return;
 
-      ServiceManager.getService(StatusBarWidgetSettings.class).setEnabled(factory, false);
+      ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class).setEnabled(factory, false);
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         project.getService(StatusBarWidgetsManager.class).updateWidget(factory);
       }

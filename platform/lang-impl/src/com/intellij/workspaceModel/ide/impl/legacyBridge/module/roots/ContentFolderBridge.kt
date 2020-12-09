@@ -6,8 +6,8 @@ import com.intellij.openapi.roots.ExcludeFolder
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -28,8 +28,8 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
   : ContentFolderBridge(entry, sourceRootEntity.url), SourceFolder {
 
   override fun getFile(): VirtualFile? {
-    val filePointerProvider = FilePointerProvider.getInstance(entry.model.moduleBridge)
-    return filePointerProvider.getAndCacheSourceRoot(sourceRootEntity.url).file
+    val virtualFilePointer = sourceRootEntity.url as VirtualFilePointer
+    return if (virtualFilePointer.isValid) virtualFilePointer.file else null
   }
 
   private var packagePrefixVar: String? = null
@@ -122,7 +122,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
 internal class ExcludeFolderBridge(val entry: ContentEntryBridge, val excludeFolderUrl: VirtualFileUrl)
   : ContentFolderBridge(entry, excludeFolderUrl), ExcludeFolder {
   override fun getFile(): VirtualFile? {
-    val filePointerProvider = FilePointerProvider.getInstance(entry.model.moduleBridge)
-    return filePointerProvider.getAndCacheExcludedRoot(excludeFolderUrl).file
+    val virtualFilePointer = excludeFolderUrl as VirtualFilePointer
+    return if (virtualFilePointer.isValid) virtualFilePointer.file else null
   }
 }

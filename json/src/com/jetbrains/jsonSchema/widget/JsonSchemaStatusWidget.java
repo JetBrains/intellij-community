@@ -209,7 +209,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                   && !remoteSource.endsWith("!");
       String providerName = useRemoteSource ? remoteSource : provider.getPresentableName();
       String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
-      String name = useRemoteSource ? bar + new JsonSchemaInfo(remoteSource).getDescription() : (shortName.contains(JsonBundle.message("schema.of.version", "")) ? shortName : (bar + shortName));
+      String name = useRemoteSource ? provider.getPresentableName() : (shortName.contains(JsonBundle.message("schema.of.version", "")) ? shortName : (bar + shortName));
       String kind = !useRemoteSource && (provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema)
                     ? JsonBundle.message("schema.widget.bundled.postfix")
                     : "";
@@ -426,7 +426,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       String message = new HtmlBuilder()
         .append(HtmlChunk.tag("b").addText(JsonBundle.message("schema.widget.conflict.popup.title")))
         .append(HtmlChunk.br()).append(HtmlChunk.br())
-        .append(((MyWidgetState)state).getTooltip()).toString();
+        .appendRaw(((MyWidgetState)state).getTooltip()).toString();
       JComponent label = HintUtil.createErrorLabel(message);
       BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(label);
       JComponent statusBarComponent = getComponent();

@@ -8,11 +8,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 
 /**
  * Merges multiple inspections settings {@link #getSourceToolNames()} into another one {@link #getMergedToolName()}.
@@ -25,33 +22,16 @@ import java.util.concurrent.ConcurrentMap;
  * {@see com.intellij.codeInspection.ex.InspectionElementsMergerBase} to provide more fine control over xml
  */
 public abstract class InspectionElementsMerger {
-  public static final ExtensionPointName<InspectionElementsMerger> EP_NAME = ExtensionPointName.create("com.intellij.inspectionElementsMerger");
-  private static Map<String, InspectionElementsMerger> ourMergers;
+  public static final ExtensionPointName<InspectionElementsMerger> EP_NAME = new ExtensionPointName<>("com.intellij.inspectionElementsMerger");
+
   private static final ConcurrentMap<String, InspectionElementsMerger> ourAdditionalMergers = new ConcurrentHashMap<>();
 
-  static {
-    EP_NAME.addChangeListener(InspectionElementsMerger::resetMergers, null);
-  }
-
-  private static synchronized void resetMergers() {
-    ourMergers = null;
-  }
-
-  @Nullable
-  public static InspectionElementsMerger getMerger(@NotNull String shortName) {
+  public static @Nullable InspectionElementsMerger getMerger(@NotNull String shortName) {
     InspectionElementsMerger additionalMerger = ourAdditionalMergers.get(shortName);
-    return additionalMerger == null ? getMergers().get(shortName) : additionalMerger;
-  }
-
-  private static synchronized Map<String, InspectionElementsMerger> getMergers() {
-    if (ourMergers == null) {
-      Map<String, InspectionElementsMerger> mergers = new HashMap<>();
-      for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
-        mergers.put(merger.getMergedToolName(), merger);
-      }
-      return ourMergers = mergers;
+    if (additionalMerger == null) {
+      return EP_NAME.getByKey(shortName, InspectionElementsMerger.class, InspectionElementsMerger::getMergedToolName);
     }
-    return ourMergers;
+    return additionalMerger;
   }
 
   static void addMerger(@NotNull String shortName, @NotNull InspectionElementsMerger merger) {

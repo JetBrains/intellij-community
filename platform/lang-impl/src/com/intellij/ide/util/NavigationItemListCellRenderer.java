@@ -11,6 +11,7 @@ import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -159,7 +160,8 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       }
       else {
         setIcon(IconUtil.getEmptyIcon(false));
-        append(value == null ? "" : value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
+        @NlsSafe String text = value == null ? "" : value.toString();
+        append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground(true) : bgColor);

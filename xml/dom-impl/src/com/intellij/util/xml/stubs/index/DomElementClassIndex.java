@@ -41,8 +41,8 @@ public class DomElementClassIndex extends StringStubIndexExtension<PsiFile> {
     return ourInstance;
   }
 
-  public boolean hasStubElementsOfType(final DomFileElement domFileElement,
-                                       final Class<? extends DomElement> clazz) {
+  public boolean hasStubElementsOfType(@NotNull DomFileElement<?> domFileElement,
+                                       @NotNull Class<? extends DomElement> clazz) {
     final VirtualFile file = domFileElement.getFile().getVirtualFile();
     if (!(file instanceof VirtualFileWithId)) return false;
 

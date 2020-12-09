@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -13,8 +14,10 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -25,6 +28,7 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -38,6 +42,12 @@ public final class ReassignVariableUtil {
   private ReassignVariableUtil() {
   }
 
+  @TestOnly
+  public static void registerDeclaration(Editor editor, PsiDeclarationStatement declarationStatement, Disposable parentDisposable) {
+    editor.putUserData(DECLARATION_KEY, SmartPointerManager.createPointer(declarationStatement));
+    Disposer.register(parentDisposable, () -> editor.putUserData(DECLARATION_KEY, null));
+  }
+  
   @VisibleForTesting
   public static boolean reassign(final Editor editor) {
     final SmartPsiElementPointer<PsiDeclarationStatement> pointer = editor.getUserData(DECLARATION_KEY);
@@ -109,7 +119,7 @@ public final class ReassignVariableUtil {
       @Override
       protected boolean check(PsiVariable var, ResolveState state) {
         for (PsiElement element : declaration.getDeclaredElements()) {
-          if (element == var) return false;
+          if (element == var || var instanceof LightElement) return false;
         }
         return TypeConversionUtil.isAssignable(var.getType(), type);
       }

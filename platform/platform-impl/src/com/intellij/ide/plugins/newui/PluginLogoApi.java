@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -16,7 +15,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -139,20 +137,8 @@ public final class PluginLogoApi {
     return HiDPIPluginLogoIcon.loadSVG(stream, width, height);
   }
 
+  @NotNull
   private Icon getDefaultIcon(int width, int height) {
-    if (AllIcons.Plugins.PluginLogo instanceof IconLoader.CachedImageIcon) {
-      URL url = ((IconLoader.CachedImageIcon)AllIcons.Plugins.PluginLogo).getURL();
-      if (url != null) {
-        try {
-          return HiDPIPluginLogoIcon.loadSVG(url.openStream(), width, height);
-        }
-        catch (IOException e) {
-          if (myLogger != null) {
-            myLogger.error(e);
-          }
-        }
-      }
-    }
-    return AllIcons.Plugins.PluginLogo;
+    return PluginLogo.reloadIcon(AllIcons.Plugins.PluginLogo, width, height, myLogger);
   }
 }

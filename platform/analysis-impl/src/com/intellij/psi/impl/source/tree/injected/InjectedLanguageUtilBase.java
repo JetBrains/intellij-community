@@ -5,6 +5,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -115,7 +116,7 @@ public class InjectedLanguageUtilBase {
                                   boolean probeUp,
                                   @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     //do not inject into nonphysical files except during completion
-    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile) {
+    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile && ModelBranch.getPsiBranch(containingFile) == null) {
       final PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (context == null) return false;
 
@@ -140,7 +141,7 @@ public class InjectedLanguageUtilBase {
 
   /**
    * This is a quick check, that can be performed before committing document and invoking
-   * {@link #getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work
+   * {@link com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil#getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work
    * for uncommitted documents.
    */
   static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
@@ -488,5 +489,16 @@ public class InjectedLanguageUtilBase {
   public static PsiLanguageInjectionHost findInjectionHost(@Nullable VirtualFile virtualFile) {
     return virtualFile instanceof VirtualFileWindow ?
            getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow()).getHostPointer().getElement() : null;
+  }
+
+  /**
+   * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
+   */
+  @Deprecated
+  public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
+    if (!host.isPhysical()) return false;
+    final Ref<Boolean> result = Ref.create(false);
+    enumerate(host, (injectedPsi, places) -> result.set(true));
+    return result.get().booleanValue();
   }
 }

@@ -1,0 +1,5 @@
+include ':app'
+include ':lib'
+project(":lib").projectDir = new File(rootDir, "mylibrary")
+project(':app').projectDir = file('C:\\cool\\app')
+rootProject.name='My Application'

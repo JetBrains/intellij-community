@@ -10,6 +10,7 @@ import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -49,12 +50,6 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
 public final class DefaultTreeUI extends BasicTreeUI {
-  /**
-   * @deprecated use {@link RenderingHelper#SHRINK_LONG_RENDERER} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   @ApiStatus.Internal
@@ -85,6 +80,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (selected) {
       return RenderingUtil.getSelectionBackground(tree);
     }
+    if (row == TreeHoverListener.getHoveredRow(tree)) {
+      Color background = RenderingUtil.getHoverBackground(tree);
+      if (background != null) return background;
+    }
     Object node = TreeUtil.getLastUserObject(path);
     if (node instanceof ColoredItem) {
       Color background = ((ColoredItem)node).getColor();
@@ -101,6 +100,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
       if (background != null) return background;
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public static void setBackground(@NotNull JTree tree, @NotNull Component component, int row) {
+    TreePath path = tree.getPathForRow(row);
+    Color background = path == null ? null : getBackground(tree, path, row, tree.isRowSelected(row));
+    setBackground(tree, component, background, true);
   }
 
   private static void setBackground(@NotNull JTree tree, @NotNull Component component, @Nullable Color background, boolean opaque) {
@@ -228,16 +234,19 @@ public final class DefaultTreeUI extends BasicTreeUI {
           painter.paint(tree, g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected && focused);
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
-            int width = helper.getX() + helper.getWidth() - insets.left - offset - helper.getRightMargin();
+            int width = helper.getX() + helper.getWidth() - insets.left - offset;
             if (width > 0) {
               Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
+                width -= helper.getRightMargin(); // shrink a long node according to the right margin
                 if (width < bounds.width && helper.isRendererShrinkingDisabled(row)) {
                   width = bounds.width; // disable shrinking a long nodes
                 }
-                setBackground(tree, component, background, false);
-                rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
+                if (width > 0) {
+                  setBackground(tree, component, background, false);
+                  rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
+                }
               }
             }
             if (!isMac && lead && g instanceof Graphics2D) {
@@ -256,10 +265,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
         }
       }
       paintDropLine(g);
-      rendererPane.removeAll();
     }
     finally {
       g.dispose();
+      // remove all renderers
+      rendererPane.removeAll();
     }
   }
 

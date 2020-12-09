@@ -13,8 +13,10 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -23,7 +25,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -155,10 +157,12 @@ public class SMTestProxy extends AbstractTestProxy {
     if (myStacktrace == null) myStacktrace = stacktrace;
   }
 
+  @Override
   public @Nullable @NlsSafe String getStacktrace() {
     return myStacktrace;
   }
 
+  @Override
   public @Nullable @NlsSafe String getErrorMessage() {
     return myErrorMessage;
   }
@@ -274,7 +278,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
     if (myLocationMapCachedValue == null) {
       myLocationMapCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
-        Map<GlobalSearchScope, Ref<Location>> value = ContainerUtil.newConcurrentMap(1);
+        Map<GlobalSearchScope, Ref<Location>> value = new ConcurrentHashMap<>(1);
         // In some implementations calling `SMTestLocator.getLocation` might update the `ModificationTracker` from
         // `SMTestLocator.getLocationCacheModificationTracker` call.
         // Thus, calculate the first result in advance to cache with the updated modification tracker.
@@ -321,7 +325,7 @@ public class SMTestProxy extends AbstractTestProxy {
       }
     }
 
-    return location.getOpenFileDescriptor();
+    return location.getNavigatable();
   }
 
   public boolean isSuite() {
@@ -414,7 +418,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private String getDurationString() {
     final Long duration = getDuration();
-    return duration != null ? StringUtil.formatDuration(duration.longValue(), "\u2009") : null;
+    return duration != null ? NlsMessages.formatDurationApproximateNarrow(duration.longValue()) : null;
   }
   private String getDurationPaddedString() {
     final Long duration = getDuration();
@@ -1002,8 +1006,18 @@ public class SMTestProxy extends AbstractTestProxy {
     public long getExecutionId() {
       long result = myExecutionId;
       if (result == -1) {
-        ExecutionEnvironment executionEnvironment = myConsole != null ? LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(myConsole))
-                                                                      : null;
+        ExecutionEnvironment executionEnvironment = null;
+        if (myConsole != null) {
+          DataContext consoleContext = DataManager.getInstance().getDataContext(myConsole);
+          executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(consoleContext);
+          if (executionEnvironment == null) {
+            ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(consoleContext);
+            if (viewContext != null) {
+              JComponent tabsComponent = viewContext.getContentManager().getComponent();
+              executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(tabsComponent));
+            }
+          }
+        }
         myExecutionId = result = executionEnvironment != null ? executionEnvironment.getExecutionId() : 0;
       }
       return result;

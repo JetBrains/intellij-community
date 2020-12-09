@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -25,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -49,7 +47,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.treetable.DefaultTreeTableExpander;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,8 +57,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -87,7 +85,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
 
-  private final Map<String, ToolDescriptors> myInitialToolDescriptors = new THashMap<>();
+  private final Map<String, ToolDescriptors> myInitialToolDescriptors = new HashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
   private final Alarm myAlarm = new Alarm();
   private final ProjectInspectionProfileManager myProjectProfileManager;
@@ -116,10 +114,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     super(new BorderLayout());
     myProjectProfileManager = projectProfileManager;
     myProfile = profile;
-    final Project project = projectProfileManager.getProject();
-
-    // to ensure that profile initialized with proper project
-    myProfile.initInspectionTools(project);
   }
 
   public boolean differsFromDefault() {
@@ -189,7 +183,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public static @Nls String renderSeverity(HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return LangBundle.message("single.inspection.profile.panel.no.highlighting.only.fix");
-    return StringUtil.capitalizeWords(StringUtil.toLowerCase(severity.getName()), true);
+    return severity.getDisplayCapitalizedName();
   }
 
   private static boolean isDescriptorAccepted(Descriptor descriptor,
@@ -551,10 +545,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
-    TreeUtil.installActions(myTreeTable.getTree());
+    final TreeTableTree tree = myTreeTable.getTree();
+    tree.putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
+    tree.setRowHeight(renderer.getTreeCellRendererComponent(tree, "xxx", true, true, false, 0, true).getPreferredSize().height);
+    tree.setLargeModel(true);
 
-
-    myTreeTable.getTree().addTreeSelectionListener(__ -> {
+    tree.addTreeSelectionListener(__ -> {
       if (myTreeTable.getTree().getSelectionPaths() != null) {
         updateOptionsAndDescriptionPanel();
       }
@@ -575,29 +571,30 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTreeTable.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
-        final int[] selectionRows = myTreeTable.getTree().getSelectionRows();
+        final TreeTableTree tree = myTreeTable.getTree();
+        final int[] selectionRows = tree.getSelectionRows();
         if (selectionRows != null &&
-            myTreeTable.getTree().getPathForLocation(x, y) != null &&
-            Arrays.binarySearch(selectionRows, myTreeTable.getTree().getRowForLocation(x, y)) > -1) {
+            tree.getPathForLocation(x, y) != null &&
+            Arrays.binarySearch(selectionRows, tree.getRowForLocation(x, y)) > -1) {
           compoundPopup().show(comp, x, y);
         }
       }
     });
 
 
-    new TreeSpeedSearch(myTreeTable.getTree(), o -> {
+    new TreeSpeedSearch(tree, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
     });
 
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTreeTable);
-    myTreeTable.getTree().setShowsRootHandles(true);
+    tree.setShowsRootHandles(true);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM + SideBorder.LEFT + SideBorder.TOP));
-    TreeUtil.collapseAll(myTreeTable.getTree(), 1);
+    TreeUtil.collapseAll(tree, 1);
 
-    myTreeTable.getTree().addTreeExpansionListener(new TreeExpansionListener() {
+    tree.addTreeExpansionListener(new TreeExpansionListener() {
 
 
       @Override
@@ -750,7 +747,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       final JPanel severityPanel = new JPanel(new GridBagLayout());
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
 
-      final Set<String> scopesNames = new THashSet<>();
+      final Set<String> scopesNames = new HashSet<>();
       for (final InspectionConfigTreeNode.Tool node : nodes) {
         final List<ScopeToolState> nonDefaultTools = myProfile.getNonDefaultTools(node.getDefaultDescriptor().getKey().toString(), project);
         for (final ScopeToolState tool : nonDefaultTools) {
@@ -1020,7 +1017,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     JPanel descriptionPanel = new JPanel(new BorderLayout());
     descriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.description.title"), false,
-                                                                   JBUI.insetsLeft(12)).setShowLine(false));
+                                                                   JBUI.insetsLeft(UIUtil.DEFAULT_HGAP)).setShowLine(false));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
 
     JBSplitter rightSplitter =
@@ -1028,7 +1025,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     rightSplitter.setFirstComponent(descriptionPanel);
 
     myOptionsPanel = new JPanel(new GridBagLayout());
-    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(12));
+    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
     initOptionsAndDescriptionPanel();
     rightSplitter.setSecondComponent(myOptionsPanel);
     rightSplitter.setHonorComponentsMinimumSize(true);
@@ -1036,7 +1033,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final JScrollPane tree = initTreeScrollPane();
 
     final JPanel northPanel = new JPanel(new GridBagLayout());
-    northPanel.setBorder(JBUI.Borders.empty(2, 0));
+    northPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0));
     myProfileFilter.setPreferredSize(new Dimension(20, myProfileFilter.getPreferredSize().height));
     northPanel.add(myProfileFilter, new GridBagConstraints(0, 0, 1, 1, 0.5, 1, GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL,
                                                            JBUI.emptyInsets(), 0, 0));
@@ -1053,11 +1050,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     inspectionTreePanel.add(northPanel, BorderLayout.NORTH);
     inspectionTreePanel.add(mainSplitter, BorderLayout.CENTER);
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(inspectionTreePanel, BorderLayout.CENTER);
     final JBCheckBox disableNewInspectionsCheckBox = new JBCheckBox(
       AnalysisBundle.message("inspections.settings.disable.new.inspections.by.default.checkbox"),
       getProfile().isProfileLocked());
+
+    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+    panel.add(inspectionTreePanel, BorderLayout.CENTER);
     panel.add(disableNewInspectionsCheckBox, BorderLayout.SOUTH);
     disableNewInspectionsCheckBox.addItemListener(__ -> {
       final boolean enabled = disableNewInspectionsCheckBox.isSelected();
@@ -1072,7 +1070,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   public boolean isModified() {
     if (myTreeTable == null) return false;
     if (myModified) return true;
-    if (myProfile.isChanged() || myProfile.getSchemeState() == SchemeState.POSSIBLY_CHANGED) return true;
+    if (myProfile.isChanged()) return true;
     if (myProfile.getSource().isProjectLevel() != myProfile.isProjectLevel()) return true;
     if (!Comparing.strEqual(myProfile.getSource().getName(), myProfile.getName())) return true;
     if (!Arrays.equals(myInitialScopesOrder, myProfile.getScopesOrder())) return true;
@@ -1159,6 +1157,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   @Override
   public void setVisible(boolean aFlag) {
     if (aFlag && myInspectionProfilePanel == null) {
+      // to ensure that profile initialized with proper project
+      myProfile.initInspectionTools(myProjectProfileManager.getProject());
+
       initUI();
     }
     super.setVisible(aFlag);

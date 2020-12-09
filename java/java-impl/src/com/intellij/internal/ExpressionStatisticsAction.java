@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,6 +7,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressResult;
+import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
@@ -36,46 +34,50 @@ public class ExpressionStatisticsAction extends AnAction {
 
     final List<VirtualFile> javaFiles = collectJavaFiles(dir, project);
 
-    if (!ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronouslyInReadAction(project, "Traversing PSI", true, "Cancel", null, new Runnable() {
-      @Override
-      public void run() {
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        indicator.setIndeterminate(false);
-        for (int i = 0; i < javaFiles.size(); i++) {
-          VirtualFile file = javaFiles.get(i);
-          indicator.setText2(file.getPath());
-          indicator.setFraction((double)i / javaFiles.size());
-          PsiFile psiFile = psiManager.findFile(file);
-          if (psiFile instanceof PsiJavaFile) {
-            psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
-              @Override
-              public void visitElement(@NotNull PsiElement element) {
-                if (element instanceof PsiIdentifier) {
-                  int offset = element.getTextRange().getStartOffset();
-                  PsiExpression minExpression = PsiTreeUtil.getParentOfType(element, PsiExpression.class);
-                  if (minExpression != null && minExpression.getTextRange().getStartOffset() == offset) {
-                    PsiExpression maxExpression = minExpression;
-                    while (true) {
-                      PsiExpression nextExpression = PsiTreeUtil.getParentOfType(maxExpression, PsiExpression.class, true);
-                      if (nextExpression == null || nextExpression.getTextRange().getStartOffset() != offset) break;
-                      maxExpression = nextExpression;
-                    }
-                    collectExpressionData(minExpression, maxExpression, topLevelData, subData);
+    Runnable runnable = () -> {
+      final PsiManager psiManager = PsiManager.getInstance(project);
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      indicator.setIndeterminate(false);
+      for (int i = 0; i < javaFiles.size(); i++) {
+        VirtualFile file = javaFiles.get(i);
+        indicator.setText2(file.getPath());
+        indicator.setFraction((double)i / javaFiles.size());
+        PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile instanceof PsiJavaFile) {
+          psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitElement(@NotNull PsiElement element) {
+              if (element instanceof PsiIdentifier) {
+                int offset = element.getTextRange().getStartOffset();
+                PsiExpression minExpression = PsiTreeUtil.getParentOfType(element, PsiExpression.class);
+                if (minExpression != null && minExpression.getTextRange().getStartOffset() == offset) {
+                  PsiExpression maxExpression = minExpression;
+                  while (true) {
+                    PsiExpression nextExpression = PsiTreeUtil.getParentOfType(maxExpression, PsiExpression.class, true);
+                    if (nextExpression == null || nextExpression.getTextRange().getStartOffset() != offset) break;
+                    maxExpression = nextExpression;
                   }
+                  collectExpressionData(minExpression, maxExpression, topLevelData, subData);
                 }
-
-                super.visitElement(element);
               }
-            });
-          }
+
+              super.visitElement(element);
+            }
+          });
         }
       }
-    })) {
+    };
+    ProgressResult<?> result = new ProgressRunner<>(() -> ApplicationManagerEx.getApplication().runReadAction(runnable))
+      .sync()
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .modal()
+      .submitAndGet();
+
+    if (result.isCanceled()) {
       return;
     }
 
-    Messages.showMessageDialog("Top-level: " + topLevelData.toString() + "\n\n" + "Sub-expressions: " + subData.toString(), "Expression Statistics", null);
+    Messages.showMessageDialog("Top-level: " + topLevelData + "\n\n" + "Sub-expressions: " + subData.toString(), "Expression Statistics", null);
   }
 
   @NotNull

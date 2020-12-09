@@ -24,7 +24,6 @@ import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -827,7 +826,7 @@ public class GeneratedParserUtilBase {
 
   public static class CompletionState implements Function<Object, String> {
     public final int offset;
-    public final Collection<String> items = new THashSet<>();
+    public final Collection<String> items = new HashSet<>();
 
     public CompletionState(int offset_) {
       offset = offset_;

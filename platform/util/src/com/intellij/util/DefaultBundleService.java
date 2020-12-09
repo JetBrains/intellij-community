@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -11,7 +12,7 @@ import java.util.function.Supplier;
  * <p>It can be useful if a language plugin is enabled, but some computation should be invoked with a default locale
  * (e.g. getting actions' default text/description).</p>
  */
-public class DefaultBundleService {
+public final class DefaultBundleService {
   private static final DefaultBundleService INSTANCE = new DefaultBundleService();
   private static final ThreadLocal<Boolean> ourDefaultBundle = ThreadLocal.withInitial(() -> false);
 
@@ -19,7 +20,7 @@ public class DefaultBundleService {
     return INSTANCE;
   }
 
-  public <T> @NotNull T compute(@NotNull Supplier<? extends T> computable) {
+  public <T> @Nullable T compute(@NotNull Supplier<? extends T> computable) {
     final boolean isDefault = isDefaultBundle();
     if (!isDefault) {
       ourDefaultBundle.set(true);

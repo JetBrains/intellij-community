@@ -105,13 +105,26 @@ public final class EditorModificationUtil {
       }
     } else {
       deleteSelectedText(editor);
-      int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-      if (lineNumber >= document.getLineCount()){
-        return insertStringAtCaretNoScrolling(editor, s, false, toMoveCaret, s.length());
+      if (s.length() == 1 && Character.isLowSurrogate(s.charAt(0)) &&
+          oldOffset > 0 && Character.isHighSurrogate(document.getImmutableCharSequence().charAt(oldOffset - 1))) {
+        // Hack to support input of surrogate pairs in editor via InputMethodEvent.
+        // Such input is processed char-by-char using EditorImpl.processKeyTyped.
+        document.insertString(oldOffset, s);
       }
-
-      int endOffset = document.getLineEndOffset(lineNumber);
-      document.replaceString(oldOffset, Math.min(endOffset, oldOffset + s.length()), s);
+      else {
+        int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+        int lineEndOffset = document.getLineEndOffset(lineNumber);
+        int inputCodePointCount = s.codePointCount(0, s.length());
+        int endOffset;
+        try {
+          endOffset = Math.min(lineEndOffset,
+                               Character.offsetByCodePoints(document.getImmutableCharSequence(), oldOffset, inputCodePointCount));
+        }
+        catch (IndexOutOfBoundsException e) {
+          endOffset = lineEndOffset;
+        }
+        document.replaceString(oldOffset, endOffset, s);
+      }
     }
 
     int offset = oldOffset + filler.length() + caretShift;

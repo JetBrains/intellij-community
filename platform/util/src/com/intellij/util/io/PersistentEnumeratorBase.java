@@ -45,8 +45,8 @@ import java.util.List;
  * @author jeka
  */
 public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable {
-  protected static final Logger LOG = Logger.getInstance(PersistentEnumerator.class);
-  protected static final int NULL_ID = 0;
+  protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
+  protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
   private static final int META_DATA_OFFSET = 4;
   static final int DATA_START = META_DATA_OFFSET + 16;
@@ -491,6 +491,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     catch (NoDataException e) {
+      if (myFile.getFileSystem().isReadOnly()) {
+        throw e;
+      }
       markCorrupted();
       return null;
     }

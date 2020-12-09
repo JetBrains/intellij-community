@@ -19,7 +19,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   private final Set<String> myAllowedOptions = new HashSet<>();
   private boolean myAllOptionsAllowed = false;
   private boolean myIsFirstUpdate = true;
-  private final Map<String, @NlsContexts.Label String> myRenamedFields = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRenamedFields = new HashMap<>();
 
   private final MultiMap<String, IntOption> myCustomOptions = new MultiMap<>();
 

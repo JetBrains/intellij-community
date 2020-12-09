@@ -31,6 +31,7 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.ui.Messages.canShowMacSheetPanel;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.rebase.GitRebaseUtils.mentionLocalChangesRemainingInStash;
 
 class GitAbortRebaseProcess {
@@ -179,7 +180,7 @@ class GitAbortRebaseProcess {
           }
           else {
             myNotifier.notifyError(
-              "git.rebase.abort.failed",
+              REBASE_ABORT_FAILED,
               GitBundle.message("rebase.abort.notification.failed.title"),
               result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver),
               true);
@@ -229,7 +230,7 @@ class GitAbortRebaseProcess {
                 );
               }
               myNotifier.notifyImportantWarning(
-                "git.rebase.rollback.failed",
+                REBASE_ROLLBACK_FAILED,
                 GitBundle.message("rebase.abort.notification.warning.rollback.failed.title"),
                 description
               );
@@ -251,7 +252,7 @@ class GitAbortRebaseProcess {
         mySaver.load();
       }
       if (myNotifySuccess) {
-        myNotifier.notifySuccess("git.rebase.abort.succeeded", "", GitBundle.message("rebase.abort.notification.successful.message"));
+        myNotifier.notifySuccess(REBASE_ABORT_SUCCESS, "", GitBundle.message("rebase.abort.notification.successful.message"));
       }
     }
   }

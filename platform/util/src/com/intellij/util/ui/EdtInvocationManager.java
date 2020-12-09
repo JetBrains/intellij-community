@@ -2,18 +2,20 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -28,8 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class EdtInvocationManager {
   private static final AtomicReference<EdtInvocationManager> ourInstance = new AtomicReference<>();
 
-  private static final Method dispatchEventMethod =
-    Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(EventQueue.class, "dispatchEvent", AWTEvent.class));
+  private static MethodHandle dispatchEventMethod;
 
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
@@ -40,20 +41,33 @@ public abstract class EdtInvocationManager {
   public static void dispatchAllInvocationEvents() {
     assert getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: " + getEventQueueThread();
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+
+    MethodHandle dispatchEventMethod = EdtInvocationManager.dispatchEventMethod;
+    if (dispatchEventMethod == null) {
+      try {
+        Method method = EventQueue.class.getDeclaredMethod("dispatchEvent", AWTEvent.class);
+        method.setAccessible(true);
+        dispatchEventMethod = MethodHandles.lookup().unreflect(method);
+      }
+      catch (NoSuchMethodException | IllegalAccessException e) {
+        throw new RuntimeException();
+      }
+
+      EdtInvocationManager.dispatchEventMethod = dispatchEventMethod;
+    }
+
     for (int i = 1; ; i++) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
       try {
         event = eventQueue.getNextEvent();
         if (event instanceof InvocationEvent) {
-          dispatchEventMethod.invoke(eventQueue, event);
+          dispatchEventMethod.bindTo(eventQueue).invoke(event);
         }
       }
-      catch (InvocationTargetException e) {
-        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
-      }
-      catch (Exception e) {
-        ExceptionUtil.rethrow(e);
+      catch (Throwable e) {
+        ExceptionUtilRt.rethrowUnchecked(e);
+        throw new RuntimeException(e);
       }
 
       if (i % 10000 == 0) {

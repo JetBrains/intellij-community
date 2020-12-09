@@ -1,0 +1,6 @@
+ext.dep = 'a:b:1.0'
+ext.other = dep
+ext.someOther = other
+dependencies {
+  compile someOther
+}

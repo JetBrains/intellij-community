@@ -57,13 +57,13 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final @NonNls String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final @NonNls String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final @NonNls String FALLBACK_VERSION = "0.4.22";
+  private static final @NonNls String FALLBACK_VERSION = "0.5.0";
   protected static final @NonNls String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static final @NonNls String TASK_NAME_RUN_IDE = ":runIde";
   private static final @NonNls String META_INF_PATH = "/src/main/resources/META-INF";
 
-  private static class Lazy {
+  private static final class Lazy {
     static final ExecutorService EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("UPDATE_GRADLE_PLUGIN_VERSIONS");
   }
 

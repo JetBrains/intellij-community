@@ -101,11 +101,22 @@ public final class FontInfo {
 
   private static FontInfo find(List<FontInfo> list, String name) {
     for (FontInfo info : list) {
-      if (info.toString().equalsIgnoreCase(name)) {
+      if (matches(info, name)) {
         return info;
       }
     }
     return null;
+  }
+
+  private static boolean matches(FontInfo info, String name) {
+    return info.toString().equalsIgnoreCase(name);
+  }
+
+  private boolean isLogicalFont() {
+    for (String logicalFontName : DEFAULT) {
+      if (matches(this, logicalFontName)) return true;
+    }
+    return false;
   }
 
   private static FontInfo byName(String name) {
@@ -138,11 +149,9 @@ public final class FontInfo {
     List<FontInfo> list = new ArrayList<>(fonts.length);
     for (Font font : fonts) {
       FontInfo info = byFont(font);
-      if (info != null) list.add(info);
-    }
-    for (String name : DEFAULT) {
-      FontInfo info = find(list, name);
-      if (info != null) list.remove(info);
+      if (info != null && !info.isLogicalFont()) {
+        list.add(info);
+      }
     }
     list.sort(COMPARATOR);
     return Collections.unmodifiableList(list);
@@ -162,13 +171,8 @@ public final class FontInfo {
         font = font.deriveFont((float)DEFAULT_SIZE);
         name = font.getFontName(ENGLISH);
       }
-      int width = getFontWidth(font, Font.PLAIN);
-      if (!plainOnly) {
-        if (width != 0 && width != getFontWidth(font, Font.BOLD)) width = 0;
-        if (width != 0 && width != getFontWidth(font, Font.ITALIC)) width = 0;
-        if (width != 0 && width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
-      }
-      return new FontInfo(name, font, width > 0);
+      boolean monospaced = plainOnly ? isMonospaced(font) : isMonospacedWithStyles(font);
+      return new FontInfo(name, font, monospaced);
     }
     catch (Throwable ignored) {
       return null; // skip font that cannot be processed
@@ -196,6 +200,14 @@ public final class FontInfo {
 
   public static boolean isMonospaced(Font font) {
     return getFontWidth(font, Font.PLAIN) > 0;
+  }
+
+   public static boolean isMonospacedWithStyles(Font font) {
+     int width = getFontWidth(font, Font.PLAIN);
+     if (width != 0 && width != getFontWidth(font, Font.BOLD)) width = 0;
+     if (width != 0 && width != getFontWidth(font, Font.ITALIC)) width = 0;
+     if (width != 0 && width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
+     return width > 0;
   }
 
   private static int getCharWidth(Font font, char ch) {

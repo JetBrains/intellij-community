@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.startup;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public abstract class StartupManager {
   }
 
   /**
-   * @deprecated Do not use.
+   * @deprecated Use {@link #registerStartupActivity(Runnable)} instead
    */
   @Deprecated
   public void registerPreStartupActivity(@NotNull Runnable runnable) {
@@ -32,14 +33,16 @@ public abstract class StartupManager {
   /**
    * Registers an activity that is performed during project load while the "Loading Project"
    * progress bar is displayed. You may NOT access the PSI structures from the activity.
+   *
+   * @see StartupActivity#STARTUP_ACTIVITY
    */
   @ApiStatus.Internal
   public abstract void registerStartupActivity(@NotNull Runnable runnable);
 
   /**
-   * Registers an activity that is performed during project load after the "Loading Project"
-   * progress bar is displayed. You may access the PSI structures from the activity.</p>
-   *
+   * Registers an activity that is performed after project is opened without any visible progress.
+   * You may access the PSI structures from the activity, unless runnable implements {@link DumbAware}.</p>
+   * <p>
    * Consider to use {@link #runAfterOpened} if possible.
    *
    * @param runnable the activity to execute.
@@ -48,19 +51,25 @@ public abstract class StartupManager {
   public abstract void registerPostStartupActivity(@NotNull Runnable runnable);
 
   /**
-   * Registers activity that is executed after project loaded.
+   * Registers activity that is executed on pooled thread after project is opened.
    * The runnable will be executed in current thread if project is already opened.</p>
-   *
+   * <p>
    * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
+   *
+   * @see StartupActivity#POST_STARTUP_ACTIVITY
    */
   public abstract void runAfterOpened(@NotNull Runnable runnable);
 
   public abstract boolean postStartupActivityPassed();
 
   /**
-   * Executes the specified runnable immediately if invoked from AWT thread and the initialization of the current project
-   * is complete; otherwise, registers it as a post-startup activity. In the latter case, the runnable will be executed
-   * later on AWT thread in a non-modal state.
+   * Registers activity that is executed after project is opened.
+   * If runnable implements {@link DumbAware}, it will be executed on EDT thread in a non-modal state.
+   * Otherwise, it will be executed on EDT when indexes are ready.
+   * <p>
+   * The runnable can be executed immediately if method is called from EDT and project is already opened.
+   * <p>
+   * Consider to use {@link #runAfterOpened} if possible.
    *
    * @param runnable the activity to execute.
    * @see com.intellij.openapi.application.ModalityState

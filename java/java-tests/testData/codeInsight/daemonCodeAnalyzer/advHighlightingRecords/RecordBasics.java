@@ -72,3 +72,4 @@ record StaticFieldCollides(int i) {
 }
 record Incomplete(@<error descr="Class reference expected">i</error>nt a) {}
 record CStyle(int a[]) {}
+record SafeVarargComponent(<error descr="@SafeVarargs annotation cannot be applied for a record component">@SafeVarargs</error> int... component) {}

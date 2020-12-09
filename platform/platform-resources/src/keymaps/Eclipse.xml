@@ -287,6 +287,7 @@
   <action id="RenameElement">
     <keyboard-shortcut first-keystroke="shift alt R"/>
   </action>
+  <action id="SelectVirtualTemplateElement"/>
   <action id="Replace">
     <keyboard-shortcut first-keystroke="control F"/>
   </action>
@@ -382,4 +383,9 @@
   </action>
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
+  <action id="ShowIntentionActions">
+    <keyboard-shortcut first-keystroke="ctrl 1"/>
+    <keyboard-shortcut first-keystroke="alt ENTER"/>
+  </action>
+  <action id="GotoBookmark1"/>
 </keymap>

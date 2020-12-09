@@ -3,6 +3,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
+import com.intellij.openapi.util.NlsSafe;
 
 import javax.swing.*;
 
@@ -20,6 +21,7 @@ public class TabImpl extends AbstractTab implements Tab {
     return myDefaultIndex >= 0 ? myDefaultIndex : myIndex;
   }
 
+  @NlsSafe
   public String getDisplayName() {
     return myDisplayName;
   }

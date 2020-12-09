@@ -1,5 +1,3 @@
-# Stubs for http.cookies (Python 3.5)
-
 import sys
 from typing import Any, Dict, Generic, List, Mapping, Optional, TypeVar, Union
 

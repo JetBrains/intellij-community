@@ -89,10 +89,6 @@ public abstract class WindowManager {
 
   public abstract @Nullable JFrame findVisibleFrame();
 
-  public abstract void addListener(@NotNull WindowManagerListener listener);
-
-  public abstract void removeListener(WindowManagerListener listener);
-
   /**
    * @return {@code true} if full screen mode is supported in current OS.
    */
@@ -100,4 +96,7 @@ public abstract class WindowManager {
   public abstract boolean isFullScreenSupportedInCurrentOS();
 
   public abstract void requestUserAttention(@NotNull IdeFrame frame, boolean critical);
+
+  public void updateDefaultFrameInfoOnProjectClose(@NotNull Project project) {
+  }
 }

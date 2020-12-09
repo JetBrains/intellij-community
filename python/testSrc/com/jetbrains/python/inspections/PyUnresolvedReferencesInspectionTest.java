@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -396,7 +397,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     myFixture.configureByFile("inspections/" + inspectionName + "/" + testName + ".py");
     myFixture.enableInspections(getInspectionClass());
     final String attrQualifiedName = "inspections." + inspectionName + "." + testName + ".A.foo";
-    final IntentionAction intentionAction = myFixture.findSingleIntention("Ignore unresolved reference '" + attrQualifiedName + "'");
+    String quickFixName = PyBundle.message("QFIX.ignore.unresolved.reference.0", attrQualifiedName);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(quickFixName);
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
@@ -853,6 +855,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
         assertProjectFilesNotParsed(myFixture.getFile());
       });
     });
+  }
+
+  // PY-44918
+  public void testResolvePathImportToUserFile() {
+    doMultiFileTest("resolvePathImportToUserFile.py");
   }
 
   @NotNull

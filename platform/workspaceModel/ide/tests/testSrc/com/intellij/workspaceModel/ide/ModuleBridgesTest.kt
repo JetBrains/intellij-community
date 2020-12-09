@@ -9,6 +9,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeId
@@ -21,11 +22,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.io.write
@@ -37,11 +37,11 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerCom
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
-import com.intellij.workspaceModel.storage.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -166,9 +166,9 @@ class ModuleBridgesTest {
       assertSame(module, moduleManager.findModuleByName(newModuleName))
       assertEquals(newModuleName, module.name)
 
-      val moduleFile = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.file
-      assertNotNull(moduleFile)
-      assertEquals(newNameFile, moduleFile)
+      val moduleFilePath = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.presentableUrl
+      assertNotNull(moduleFilePath)
+      assertEquals(newNameFile, File(moduleFilePath!!))
       assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
@@ -395,6 +395,31 @@ class ModuleBridgesTest {
   }
 
   @Test
+  fun `test module extension saves correctly if custom options exist`() {
+    val optionValue = "foo"
+    val module = runWriteActionAndWait {
+      ModuleManager.getInstance(project).newModule(File(project.basePath, "test.iml").path, ModuleType.EMPTY.id)
+    }
+    module.setOption(Module.ELEMENT_TYPE, optionValue)
+
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    var modifiableModel = moduleRootManager.modifiableModel
+    var moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
+    moduleExtension.languageLevel = LanguageLevel.JDK_1_5
+    runWriteActionAndWait { modifiableModel.commit() }
+
+    assertEquals(LanguageLevel.JDK_1_5, moduleRootManager.getModuleExtension(TestModuleExtension::class.java).languageLevel)
+
+    modifiableModel = moduleRootManager.modifiableModel
+    moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
+    moduleExtension.languageLevel = null
+    runWriteActionAndWait { modifiableModel.commit() }
+
+    assertEquals(optionValue, module.getOptionValue(Module.ELEMENT_TYPE))
+    assertNull(moduleRootManager.getModuleExtension(TestModuleExtension::class.java).languageLevel)
+  }
+
+  @Test
   fun `test module libraries loaded from cache`() {
     val builder = WorkspaceEntityStorageBuilder.create()
 
@@ -407,7 +432,7 @@ class ModuleBridgesTest {
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
       tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()),
-      roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
+      roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
       source = source
     )
@@ -418,10 +443,7 @@ class ModuleBridgesTest {
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
-      Disposer.register(disposableRule.disposable, Disposable {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      })
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
 
@@ -448,16 +470,13 @@ class ModuleBridgesTest {
     builder.addLibraryEntity(
       name = "my_lib",
       tableId = LibraryTableId.ProjectLibraryTableId,
-      roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
+      roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager), virtualFileManager)
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
-      Disposer.register(disposableRule.disposable, Disposable {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      })
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
       invokeAndWaitIfNeeded { UIUtil.dispatchAllInvocationEvents() }
@@ -647,6 +666,34 @@ class ModuleBridgesTest {
   }
 
   @Test
+  fun `test content root equality at case insensitive FS`() {
+    IoTestUtil.assumeCaseInsensitiveFS()
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleName = "build"
+      val contentRoot = "test"
+      val tempDir = temporaryDirectoryRule.newPath().toFile()
+      val contentRootFolder = File(tempDir, StringUtil.capitalize(contentRoot))
+
+      val moduleFile = File(project.basePath, "$moduleName.iml")
+      val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        moduleModel.commit()
+        module
+      }
+
+      ModuleRootModificationUtil.updateModel(module) { model ->
+        FileUtil.createDirectory(contentRootFolder)
+        val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(File(tempDir, contentRoot).path))
+        model.addContentEntry(url)
+      }
+
+      val rootManager = ModuleRootManager.getInstance(module)
+      assertEquals(1, rootManager.contentRootUrls.size)
+      assertEquals(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(contentRootFolder.path)), rootManager.contentRootUrls[0])
+    }
+  }
+
+  @Test
   fun `test disposed module doesn't appear in rootsChanged`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleName = "build"
     val moduleFile = File(project.basePath, "$moduleName.iml")
@@ -699,8 +746,7 @@ class ModuleBridgesTest {
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
   val project = WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-    PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"))
+    PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"), disposableRule.disposable)
   }
-  disposableRule.disposable.attach { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
   return project
 }

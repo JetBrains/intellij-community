@@ -67,7 +67,7 @@ public class PatchBuilderTest extends LightPlatformTestCase {
   }
 
   public void testModifyWithCRLF() throws Exception {
-    doTest(getProject(), false, LineSeparator.CRLF.getSeparatorString());
+    doTest(getProject(), true, LineSeparator.CRLF.getSeparatorString());
   }
 
   public void testModifyLine() throws Exception {
@@ -127,7 +127,7 @@ public class PatchBuilderTest extends LightPlatformTestCase {
   }
 
   private void doTest() throws IOException, VcsException {
-    doTest(getProject(), false);
+    doTest(getProject(), true);
   }
 
   private void doTest(@Nullable Project project, boolean relativePaths) throws IOException, VcsException {

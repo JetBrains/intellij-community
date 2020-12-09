@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
@@ -22,7 +23,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -1444,7 +1444,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (RunnerAndConfigurationSettings cfg : settings) {
         MavenRunConfiguration mavenRunConfiguration = (MavenRunConfiguration)cfg.getConfiguration();
 
-        if (PathUtil.pathEqualsTo(mavenProject.getDirectoryFile(), mavenRunConfiguration.getRunnerParameters().getWorkingDirPath())) {
+        if (VfsUtilCore.pathEqualsTo(mavenProject.getDirectoryFile(), mavenRunConfiguration.getRunnerParameters().getWorkingDirPath())) {
           myChildren.add(new RunConfigurationNode(this, cfg));
         }
       }

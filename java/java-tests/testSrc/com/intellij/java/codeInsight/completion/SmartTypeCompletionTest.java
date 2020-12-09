@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -19,7 +20,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
@@ -1402,7 +1402,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
   @NeedsIndex.ForStandardLibrary(reason = "On empty indices 'get2' is filtered out by unmatching type in ReferenceExpressionCompletionContributor.addSmartReferenceSuggestions")

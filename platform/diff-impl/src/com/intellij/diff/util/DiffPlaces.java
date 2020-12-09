@@ -3,6 +3,9 @@ package com.intellij.diff.util;
 
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @see DiffUserDataKeys#PLACE
+ */
 public interface DiffPlaces {
   @NonNls String DEFAULT = "Default";
   @NonNls String CHANGES_VIEW = "ChangesView";

@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +79,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   @Override
   public void updateUI() {
-    UISettings.setupComponentAntialiasing(this);
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
   }
 
   protected void setMinHeight(int height) {
@@ -506,7 +509,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   protected class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
     @Override
     public String getAccessibleName() {
-      String name = accessibleName;
+      @NlsSafe String name = accessibleName;
       if (name == null) {
         name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
       }

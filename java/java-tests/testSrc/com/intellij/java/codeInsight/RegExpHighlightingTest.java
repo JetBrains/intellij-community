@@ -191,7 +191,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testNoNPE() {
-    doTest("(<error descr=\"Unclosed group\">\"</error>);}}//");
+    doTest("(<error descr=\"')' expected\">\"</error>);}}//");
   }
 
   public void testBadInlineOption() {
@@ -242,32 +242,37 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testConditionalExprNegative1() {
-    doTestConditionalExpr("c ? \"^Hello$\" : \"^World$\"");
+    doTestUnexpectedAnchor("c ? \"^Hello$\" : \"^World$\"");
   }
 
   public void testBinaryExprPositive1() {
-    doTestConditionalExpr("\"^good" + warningMarker('$') + "\" + \"" + warningMarker('^') + "luck$\"");
+    doTestUnexpectedAnchor("\"^good" + warningMarker('$') + "\" + \"" + warningMarker('^') + "luck$\"");
   }
 
   public void testConditionalExprPositive1() {
-    doTestConditionalExpr("c ? \" " + warningMarker('^') + "Hello" + warningMarker('$') + " \" " +
-                          ": \" " + warningMarker('^') + "World" + warningMarker('$') + " \"");
+    doTestUnexpectedAnchor("c ? \" " + warningMarker('^') + "Hello" + warningMarker('$') + " \" " +
+                           ": \" " + warningMarker('^') + "World" + warningMarker('$') + " \"");
   }
 
   public void testConditionalExprPositive2() {
-    doTestConditionalExpr("c ? \" " + warningMarker('^') + "Hello$\" " +
-                          ": \"^Have" + warningMarker('$') + "\" + \"" + warningMarker('^') + "Fun$\"");
+    doTestUnexpectedAnchor("c ? \" " + warningMarker('^') + "Hello$\" " +
+                           ": \"^Have" + warningMarker('$') + "\" + \"" + warningMarker('^') + "Fun$\"");
   }
 
   public void testConditionalExprPositive3() {
-    doTestConditionalExpr("c ? (c ? (c ? \"^go$\" : \"^od" + warningMarker('$') + "\" + \"" + warningMarker('^') + "lu$\") : \"^ck$\") " +
-                          ": (c ? \"^and" + warningMarker('$') + "\" + \"" + warningMarker('^') +
-                          "ha" + warningMarker('$') + "\" + \"" + warningMarker('^') + "ve$\" : \"^fun$\")");
+    doTestUnexpectedAnchor("c ? (c ? (c ? \"^go$\" : \"^od" + warningMarker('$') + "\" + \"" + warningMarker('^') + "lu$\") : \"^ck$\") " +
+                           ": (c ? \"^and" + warningMarker('$') + "\" + \"" + warningMarker('^') +
+                           "ha" + warningMarker('$') + "\" + \"" + warningMarker('^') + "ve$\" : \"^fun$\")");
   }
 
   public void testConditionalExprPositive4() {
-    doTestConditionalExpr("c ? \"^hello" + warningMarker('$') + "\" + getStr() + \"" + warningMarker('^') + "world$\" " +
-                          ": getStr() + \"" + warningMarker('^') + "yeah" + warningMarker('$') + " \"");
+    doTestUnexpectedAnchor("c ? \"^hello" + warningMarker('$') + "\" + getStr() + \"" + warningMarker('^') + "world$\" " +
+                           ": getStr() + \"" + warningMarker('^') + "yeah" + warningMarker('$') + " \"");
+  }
+
+  public void testConcatenationWithEmptyStrings() {
+    // "" + " ^" + "" + "$ "
+    doTestUnexpectedAnchor("\"\" +" + "\" " + warningMarker('^') + "\" + " + "\"\" + " + "\"" + warningMarker('$') + " \"");
   }
 
   private void doTest(@NonNls String code) {
@@ -276,7 +281,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.testHighlighting();
   }
 
-  private void doTestConditionalExpr(@NonNls String code) {
+  private void doTestUnexpectedAnchor(@NonNls String code) {
     myFixture.enableInspections(new UnexpectedAnchorInspection());
     myFixture.configureByText(JavaFileType.INSTANCE, "class X {" +
                                                      " void test(boolean c) {" +

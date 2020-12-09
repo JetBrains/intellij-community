@@ -1,0 +1,7 @@
+ext {
+  prop2 = false
+  prop3 = "hello"
+  prop4 = "boo"
+}
+
+apply from: "b.gradle"

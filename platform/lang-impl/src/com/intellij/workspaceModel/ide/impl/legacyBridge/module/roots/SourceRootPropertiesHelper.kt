@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
@@ -96,26 +97,24 @@ internal object SourceRootPropertiesHelper {
 
   }
 
-  internal fun <P : JpsElement?> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
+  internal fun <P : JpsElement> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
                                                      sourceRootEntity: SourceRootEntity,
                                                      properties: P,
                                                      serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
-    when (properties) {
-      is JavaSourceRootProperties -> diff.addJavaSourceRootEntity(
+    when (serializer.typeId) {
+      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff.addJavaSourceRootEntity(
         sourceRoot = sourceRootEntity,
-        generated = properties.isForGeneratedSources,
+        generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
         packagePrefix = properties.packagePrefix
       )
 
-      is JavaResourceRootProperties -> diff.addJavaResourceRootEntity(
+      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> diff.addJavaResourceRootEntity(
         sourceRoot = sourceRootEntity,
-        generated = properties.isForGeneratedSources,
+        generated = (properties as JavaResourceRootProperties).isForGeneratedSources,
         relativeOutputPath = properties.relativeOutputPath
       )
 
-      is JpsDummyElement, null -> Unit
-
-      else -> {
+      else -> if (properties !is JpsDummyElement) {
         diff.addCustomSourceRootPropertiesEntity(
           sourceRoot = sourceRootEntity,
           propertiesXmlTag = savePropertiesToString(serializer, properties)
@@ -157,7 +156,7 @@ internal object SourceRootPropertiesHelper {
 
     val serializer = findSerializer(rootType)
     if (serializer == null) {
-      SourceFolderBridge.LOG.warn("Module source root type $rootType (${entity.rootType}) is not registered as JpsModelSerializerExtension")
+      LOG.warn("Module source root type $rootType (${entity.rootType}) is not registered as JpsModelSerializerExtension")
       return elementFactory.createDummyElement()
     }
 
@@ -167,9 +166,10 @@ internal object SourceRootPropertiesHelper {
       serializer.loadProperties(element)
     }
     catch (t: Throwable) {
-      SourceFolderBridge.LOG.error("Unable to deserialize source root '${entity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
+      LOG.error("Unable to deserialize source root '${entity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
       elementFactory.createDummyElement()
     }
   }
 
+  private val LOG = logger<SourceRootPropertiesHelper>()
 }

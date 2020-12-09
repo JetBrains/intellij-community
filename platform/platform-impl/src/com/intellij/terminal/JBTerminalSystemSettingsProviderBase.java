@@ -98,9 +98,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public @NotNull TerminalActionPresentation getClearBufferActionPresentation() {
-    TerminalActionPresentation presentation = super.getClearBufferActionPresentation();
-    return new TerminalActionPresentation(IdeBundle.message("terminal.action.ClearBuffer.text"),
-                                          presentation.getKeyStrokes());
+    List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.ClearBuffer");
+    if (strokes.isEmpty()) {
+      return super.getClearBufferActionPresentation();
+    }
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.ClearBuffer.text"), strokes);
   }
 
   @Override

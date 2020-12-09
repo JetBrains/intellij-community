@@ -14,6 +14,7 @@ import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.task.ProjectTask;
 import com.intellij.task.ProjectTaskContext;
@@ -38,26 +39,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   public BuildArtifactsBeforeRunTaskProviderBase(@NotNull Class<T> taskClass, Project project) {
     myProject = project;
     myTaskClass = taskClass;
-    project.getMessageBus().connect().subscribe(ArtifactManager.TOPIC, new ArtifactAdapter() {
-      @Override
-      public void artifactRemoved(@NotNull Artifact artifact) {
-        final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-        for (RunConfiguration configuration : runManager.getAllConfigurationsList()) {
-          final List<T> tasks = runManager.getBeforeRunTasks(configuration, getId());
-          for (T task : tasks) {
-            final String artifactName = artifact.getName();
-            final List<ArtifactPointer> pointersList = task.getArtifactPointers();
-            final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[0]);
-            for (ArtifactPointer pointer : pointers) {
-              if (pointer.getArtifactName().equals(artifactName) &&
-                  ArtifactManager.getInstance(myProject).findArtifact(artifactName) == null) {
-                task.removeArtifact(pointer);
-              }
-            }
-          }
-        }
-      }
-    });
+    project.getMessageBus().connect().subscribe(ArtifactManager.TOPIC, new MyArtifactListener<>(myProject, getId()));
   }
 
   @Override
@@ -166,4 +148,33 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   protected abstract T doCreateTask(Project project);
 
   protected abstract ProjectTask createProjectTask(Project project, List<Artifact> artifacts);
+
+  private static class MyArtifactListener<T extends BuildArtifactsBeforeRunTaskBase<?>> implements ArtifactListener {
+    private final Project myProject;
+    private final Key<T> myProviderId;
+
+    private MyArtifactListener(Project project, Key<T> providerId) {
+      myProject = project;
+      myProviderId = providerId;
+    }
+
+    @Override
+    public void artifactRemoved(@NotNull Artifact artifact) {
+      final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+      for (RunConfiguration configuration : runManager.getAllConfigurationsList()) {
+        final List<T> tasks = runManager.getBeforeRunTasks(configuration, myProviderId);
+        for (T task : tasks) {
+          final String artifactName = artifact.getName();
+          final List<ArtifactPointer> pointersList = task.getArtifactPointers();
+          final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[0]);
+          for (ArtifactPointer pointer : pointers) {
+            if (pointer.getArtifactName().equals(artifactName) &&
+                ArtifactManager.getInstance(myProject).findArtifact(artifactName) == null) {
+              task.removeArtifact(pointer);
+            }
+          }
+        }
+      }
+    }
+  }
 }

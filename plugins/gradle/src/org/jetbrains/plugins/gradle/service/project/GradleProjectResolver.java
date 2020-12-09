@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -13,6 +14,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.PerformanceTrace;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
@@ -26,7 +28,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.ProjectModel;
@@ -37,6 +38,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
@@ -46,7 +48,9 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -188,15 +192,19 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
     GradleVersion gradleVersion = null;
 
+    boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
     boolean isCompositeBuildsSupported = false;
     if (buildEnvironment != null) {
       gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
       isCompositeBuildsSupported = gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       resolverCtx.setBuildEnvironment(buildEnvironment);
+      if (!isCompositeBuildsSupported && !GradleUtil.isCustomSerializationEnabled(gradleVersion)) {
+        useCustomSerialization = false;
+      }
     }
-    boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
-    final ProjectImportAction projectImportAction =
-      new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported, useCustomSerialization);
+    final ProjectImportAction projectImportAction = useCustomSerialization ?
+      new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode(), isCompositeBuildsSupported) :
+      new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported);
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -266,6 +274,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             buildFinishWaiter.countDown();
           }
         });
+      if(gradleVersion != null && DeprecatedGradleVersionIssue.isDeprecated(gradleVersion)) {
+        resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
+      }
       performanceTrace.addTrace(allModels.getPerformanceTrace());
     }
     catch (Exception e) {
@@ -282,7 +293,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     resolverCtx.checkCancelled();
     if (useCustomSerialization) {
       assert gradleVersion != null;
-      allModels.initToolingSerializer(gradleVersion);
+      allModels.initToolingSerializer(new IdeaProjectSerializationService(gradleVersion));
     }
 
     allModels.setBuildEnvironment(buildEnvironment);
@@ -578,7 +589,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   @NotNull
   private static Map<String, DefaultExternalProject> createExternalProjectsMap(@Nullable DefaultExternalProject rootExternalProject) {
-    final Map<String, DefaultExternalProject> externalProjectMap = new THashMap<>();
+    final Map<String, DefaultExternalProject> externalProjectMap = new HashMap<>();
     if (rootExternalProject == null) return externalProjectMap;
     ArrayDeque<DefaultExternalProject> queue = new ArrayDeque<>();
     queue.add(rootExternalProject);
@@ -738,6 +749,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         myCancellationMap.putValue(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
         myResolverContext.setConnection(connection);
         return doResolveProjectInfo(myResolverContext, myProjectResolverChain, myIsBuildSrcProject);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (RuntimeException e) {
         LOG.info("Gradle project resolve error", e);

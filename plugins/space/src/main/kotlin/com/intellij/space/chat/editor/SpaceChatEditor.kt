@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.editor
 
 import com.intellij.diff.util.FileEditorBase
@@ -10,7 +11,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.space.chat.ui.createSpaceChatPanel
+import com.intellij.space.chat.ui.SpaceChatPanel
 import com.intellij.space.messages.SpaceBundle
 import libraries.coroutines.extra.LifetimeSource
 import javax.swing.JComponent
@@ -23,7 +24,7 @@ private class SpaceChatEditor(private val project: Project, private val spaceCha
   }
 
   val component by lazy {
-    createSpaceChatPanel(project, editorLifetime, this, spaceChatFile.channelsVm, spaceChatFile.chatRecord)
+    SpaceChatPanel(project, editorLifetime, this, spaceChatFile.channelsVm, spaceChatFile.chatRecord, spaceChatFile.headerDetails)
   }
 
   override fun getComponent(): JComponent = component

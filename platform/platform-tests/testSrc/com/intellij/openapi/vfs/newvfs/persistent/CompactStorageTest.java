@@ -8,6 +8,7 @@ import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.Storage;
 import com.intellij.util.io.storage.StorageTestBase;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -28,7 +29,7 @@ public class CompactStorageTest extends StorageTestBase {
 
   @Test
   public void testCompactAndIterators() throws IOException {
-    IntArrayList recordsList = new IntArrayList();
+    IntList recordsList = new IntArrayList();
     // 1000 records after deletion greater than 3M limit for init time compaction
     final int recordCount = 2000;
     for (int i = 0; i < recordCount; ++i) {

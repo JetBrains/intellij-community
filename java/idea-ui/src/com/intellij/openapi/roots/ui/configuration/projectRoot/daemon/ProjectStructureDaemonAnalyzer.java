@@ -112,9 +112,9 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public void removeElements(@NotNull List<? extends ProjectStructureElement> elements) {
-    myElementWithNotCalculatedUsages.removeAll(elements);
-    myElementsToShowWarningIfUnused.removeAll(elements);
     for (ProjectStructureElement element : elements) {
+      myElementWithNotCalculatedUsages.remove(element);
+      myElementsToShowWarningIfUnused.remove(element);
       myWarningsAboutUnused.remove(element);
       myProblemHolders.remove(element);
       final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.removeAll(element);

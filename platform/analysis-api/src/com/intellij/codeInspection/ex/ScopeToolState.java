@@ -18,8 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
@@ -101,7 +99,7 @@ public final class ScopeToolState {
     return myAdditionalConfigPanelState.getPanel(isEnabled());
   }
 
-  public void resetConfigPanel(){
+  public void resetConfigPanel() {
     myAdditionalConfigPanelState = null;
   }
 
@@ -176,22 +174,18 @@ public final class ScopeToolState {
         Deque<Component> q = new ArrayDeque<>(1);
         q.addLast(optionsPanel);
         while (!q.isEmpty()) {
-          final Component current = q.removeFirst();
-          current.addPropertyChangeListener("enabled", new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-              if (!myDeafListeners) {
-                final boolean newValue = (boolean)evt.getNewValue();
-                if (newValue) {
-                  myEnableRequiredComponent.add(current);
-                }
-                else {
-                  String message = wrapper == null
-                                   ? null
-                                   : (" tool = #" + wrapper.getShortName());
-                  LOG.assertTrue(myEnableRequiredComponent.remove(current), message);
-
-                }
+          Component current = q.removeFirst();
+          current.addPropertyChangeListener("enabled", evt -> {
+            if (!myDeafListeners) {
+              final boolean newValue = (boolean)evt.getNewValue();
+              if (newValue) {
+                myEnableRequiredComponent.add(current);
+              }
+              else {
+                String message = wrapper == null
+                                 ? null
+                                 : (" tool = #" + wrapper.getShortName());
+                LOG.assertTrue(myEnableRequiredComponent.remove(current), message);
               }
             }
           });
@@ -216,7 +210,8 @@ public final class ScopeToolState {
               c.setEnabled(currentState);
             }
             myLastState = currentState;
-          } finally {
+          }
+          finally {
             myDeafListeners = false;
           }
         }

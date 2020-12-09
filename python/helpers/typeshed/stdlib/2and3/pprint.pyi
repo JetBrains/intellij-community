@@ -1,8 +1,3 @@
-# Stubs for pprint
-
-# Based on http://docs.python.org/2/library/pprint.html
-# Based on http://docs.python.org/3/library/pprint.html
-
 import sys
 from typing import IO, Any, Dict, Optional, Tuple
 

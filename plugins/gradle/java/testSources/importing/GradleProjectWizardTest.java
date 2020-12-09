@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleStructureWizardStep;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +60,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testGradleProject() throws Exception {
     final String projectName = "testProject";
-    Project project = GradleCreateProjectTestCase.waitForProjectReload(true, () -> {
+    Project project = GradleImportingTestUtil.waitForProjectReload(() -> {
       return createProject(step -> {
         if (step instanceof ProjectTypeStep) {
           assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
@@ -90,7 +91,8 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     assertNotNull(buildScript);
     assertEquals("plugins {\n" +
                  "    id 'java'\n" +
-                 "}\n\n" +
+                 "}\n" +
+                 "\n" +
                  "version '1.0-SNAPSHOT'\n" +
                  "\n" +
                  "repositories {\n" +
@@ -98,21 +100,28 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "}\n" +
                  "\n" +
                  "dependencies {\n" +
-                 "    testCompile group: 'junit', name: 'junit', version: '4.12'\n" +
-                 "}\n",
+                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'\n" +
+                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:1.7.0'\n" +
+                 "}\n" +
+                 "\n" +
+                 "test {\n" +
+                 "    useJUnitPlatform()\n" +
+                 "}",
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
 
-    Module childModule = createModuleFromTemplate("Gradle", null, project, step -> {
-      if (step instanceof ProjectTypeStep) {
-        List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-        assertEquals(3, steps.size());
-      }
-      else if (step instanceof GradleStructureWizardStep) {
-        GradleStructureWizardStep gradleStructureWizardStep = (GradleStructureWizardStep)step;
-        assertEquals(projectName, gradleStructureWizardStep.getParentData().getExternalName());
-        gradleStructureWizardStep.setArtifactId("childModule");
-        gradleStructureWizardStep.setGroupId("");
-      }
+    Module childModule = GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate("Gradle", null, project, step -> {
+        if (step instanceof ProjectTypeStep) {
+          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
+          assertEquals(3, steps.size());
+        }
+        else if (step instanceof GradleStructureWizardStep) {
+          GradleStructureWizardStep gradleStructureWizardStep = (GradleStructureWizardStep)step;
+          assertEquals(projectName, gradleStructureWizardStep.getParentData().getExternalName());
+          gradleStructureWizardStep.setArtifactId("childModule");
+          gradleStructureWizardStep.setGroupId("");
+        }
+      });
     });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
 

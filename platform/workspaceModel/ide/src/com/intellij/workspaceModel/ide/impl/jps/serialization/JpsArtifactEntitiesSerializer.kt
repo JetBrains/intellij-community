@@ -11,6 +11,8 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
@@ -140,6 +142,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun saveEntities(mainEntities: Collection<ArtifactEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                            storage: WorkspaceEntityStorage,
                             writer: JpsFileContentWriter) {
     if (mainEntities.isEmpty()) return
 

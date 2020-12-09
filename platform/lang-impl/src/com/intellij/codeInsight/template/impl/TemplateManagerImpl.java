@@ -35,8 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class TemplateManagerImpl extends TemplateManager implements Disposable {
-
+public final class TemplateManagerImpl extends TemplateManager implements Disposable {
   @NotNull
   private final Project myProject;
   private static final Key<Boolean> ourTemplateTesting = Key.create("TemplateTesting");
@@ -249,9 +248,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
     TemplateActionContext templateActionContext = TemplateActionContext.expanding(file, editor);
+    boolean multiCaretMode = editor.getCaretModel().getCaretCount() > 1;
     List<CustomLiveTemplate> customCandidates = ContainerUtil.findAll(CustomLiveTemplate.EP_NAME.getExtensions(), customLiveTemplate ->
       shortcutChar == customLiveTemplate.getShortcut() &&
-      (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)) &&
+      (!multiCaretMode || supportsMultiCaretMode(customLiveTemplate)) &&
       isApplicable(customLiveTemplate, templateActionContext));
     if (!customCandidates.isEmpty()) {
       int caretOffset = editor.getCaretModel().getOffset();
@@ -262,7 +262,12 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
           int offsetBeforeKey = caretOffset - key.length();
           CharSequence text = editor.getDocument().getImmutableCharSequence();
           if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-            return () -> customLiveTemplate.expand(key, templateCallback);
+            return () -> {
+              customLiveTemplate.expand(key, templateCallback);
+              if (multiCaretMode) {
+                PsiDocumentManager.getInstance(templateCallback.getProject()).commitDocument(editor.getDocument());
+              }
+            };
           }
         }
       }
@@ -273,17 +278,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   private static boolean supportsMultiCaretMode(CustomLiveTemplate customLiveTemplate) {
     return !(customLiveTemplate instanceof CustomLiveTemplateBase) || ((CustomLiveTemplateBase)customLiveTemplate).supportsMultiCaret();
-  }
-
-  /**
-   * @deprecated use {@link #isApplicable(CustomLiveTemplate, TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate,
-                                     @NotNull Editor editor,
-                                     @NotNull PsiFile file) {
-    return isApplicable(customLiveTemplate, TemplateActionContext.expanding(file, editor));
   }
 
   /**
@@ -317,19 +311,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       templateStart = argOffset - template.getKey().length();
     }
     return templateStart;
-  }
-
-  /**
-   * @deprecated use {@link #isApplicable(CustomLiveTemplate, TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate,
-                                     @NotNull Editor editor,
-                                     @NotNull PsiFile file, boolean wrapping) {
-    return isApplicable(
-      customLiveTemplate,
-      wrapping ? TemplateActionContext.surrounding(file, editor) : TemplateActionContext.expanding(file, editor));
   }
 
   public Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
@@ -542,9 +523,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #isApplicable(TemplateActionContext, TemplateImpl)}
+   * @deprecated use {@link #isApplicable(TemplateImpl, TemplateActionContext)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
     return isApplicable(template, TemplateActionContext.expanding(file, offset));
@@ -566,7 +547,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   /**
    * @deprecated use {@link #listApplicableTemplates(TemplateActionContext)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset, boolean selectionOnly) {
     return listApplicableTemplates(TemplateActionContext.create(file, null, offset, offset, selectionOnly));
@@ -586,34 +567,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return result;
   }
 
-  /**
-   * @deprecated use {@link #listApplicableTemplateWithInsertingDummyIdentifier(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(Editor editor, PsiFile file, boolean selectionOnly) {
-    return listApplicableTemplateWithInsertingDummyIdentifier(
-      selectionOnly ? TemplateActionContext.surrounding(file, editor) : TemplateActionContext.expanding(file, editor)
-    );
-  }
-
   public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(@NotNull TemplateActionContext templateActionContext) {
     OffsetsInFile offsets = insertDummyIdentifierWithCache(templateActionContext);
     return listApplicableTemplates(TemplateActionContext.create(
       offsets.getFile(), null, getStartOffset(offsets), getEndOffset(offsets), templateActionContext.isSurrounding()));
-  }
-
-  /**
-   * @deprecated use {@link #listApplicableTemplates(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull Editor editor,
-                                                                       @NotNull PsiFile file,
-                                                                       boolean selectionOnly) {
-    return listApplicableCustomTemplates(
-      selectionOnly ? TemplateActionContext.surrounding(file, editor) : TemplateActionContext.expanding(file, editor)
-    );
   }
 
   public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull TemplateActionContext templateActionContext) {
@@ -624,15 +581,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       }
     }
     return result;
-  }
-
-  /**
-   * @deprecated use {@link #getApplicableContextTypes(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static Set<TemplateContextType> getApplicableContextTypes(PsiFile file, int offset) {
-    return getApplicableContextTypes(TemplateActionContext.expanding(file, offset));
   }
 
   public static Set<TemplateContextType> getApplicableContextTypes(@NotNull TemplateActionContext templateActionContext) {

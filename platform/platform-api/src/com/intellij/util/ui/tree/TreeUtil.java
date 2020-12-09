@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -23,11 +24,13 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +57,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static com.intellij.util.ReflectionUtil.getField;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
@@ -112,6 +116,52 @@ public final class TreeUtil {
   public static JBIterable<TreeNode> nodeChildren(@Nullable TreeNode treeNode) {
     int count = treeNode == null ? 0 : treeNode.getChildCount();
     return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> treeNode.getChildAt(index));
+  }
+
+  public static boolean hasManyNodes(@NotNull Tree tree, int threshold) {
+    return treeTraverser(tree).traverse().take(threshold).size() >= threshold;
+  }
+
+  /**
+   * @param tree a tree, which nodes should be found
+   * @param x    a number of pixels from the left edge of the given tree
+   * @param y    a number of pixels from the top of the specified tree
+   * @return found visible tree path or {@code null}
+   */
+  public static @Nullable TreePath getPathForLocation(@NotNull JTree tree, int x, int y) {
+    TreePath path = tree.getClosestPathForLocation(x, y);
+    Rectangle bounds = tree.getPathBounds(path);
+    return bounds != null && bounds.y <= y && y < bounds.y + bounds.height ? path : null;
+  }
+
+  /**
+   * @param tree a tree, which nodes should be found
+   * @param x    a number of pixels from the left edge of the given tree
+   * @param y    a number of pixels from the top of the specified tree
+   * @return found row number or {@code -1}
+   */
+  public static int getRowForLocation(@NotNull JTree tree, int x, int y) {
+    return Math.max(-1, tree.getRowForPath(getPathForLocation(tree, x, y)));
+  }
+
+  /**
+   * @param tree a tree to repaint
+   * @param path a visible tree path to repaint
+   */
+  public static void repaintPath(@NotNull JTree tree, @Nullable TreePath path) {
+    assert EventQueue.isDispatchThread();
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+  }
+
+  /**
+   * @param tree a tree to repaint
+   * @param row  a row number to repaint
+   */
+  public static void repaintRow(@NotNull JTree tree, int row) {
+    assert EventQueue.isDispatchThread();
+    Rectangle bounds = tree.getRowBounds(row);
+    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
   }
 
   /**
@@ -1306,6 +1356,19 @@ public final class TreeUtil {
     }
   }
 
+  public static boolean isLoadingPath(@Nullable TreePath path) {
+    return path != null && isLoadingNode(path.getLastPathComponent());
+  }
+
+  public static boolean isLoadingNode(@Nullable Object node) {
+    while (node != null) {
+      if (node instanceof LoadingNode) return true;
+      if (!(node instanceof DefaultMutableTreeNode)) return false;
+      node = ((DefaultMutableTreeNode)node).getUserObject();
+    }
+    return false;
+  }
+
   @Nullable
   public static Object getUserObject(@Nullable Object node) {
     return node instanceof DefaultMutableTreeNode ? ((DefaultMutableTreeNode)node).getUserObject() : node;
@@ -1630,6 +1693,21 @@ public final class TreeUtil {
       if (LOG.isTraceEnabled()) LOG.debug("cannot scroll to: ", path);
       return false;
     }
+    internalScroll(tree, bounds, centered);
+    // notify screen readers that they should notify the user that the visual appearance of the component has changed
+    AccessibleContext context = tree.getAccessibleContext();
+    if (context != null) context.firePropertyChange(AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, false, true);
+    // try to scroll later when the tree is ready
+    long stamp = 1L + getScrollTimeStamp(tree);
+    tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, stamp);
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
+      Rectangle boundsLater = stamp != getScrollTimeStamp(tree) ? null : tree.getPathBounds(path);
+      if (boundsLater != null) internalScroll(tree, boundsLater, centered);
+    }, 5, MILLISECONDS);
+    return true;
+  }
+
+  private static void internalScroll(@NotNull JTree tree, @NotNull Rectangle bounds, boolean centered) {
     Container parent = tree.getParent();
     if (parent instanceof JViewport) {
       int width = parent.getWidth();
@@ -1638,12 +1716,9 @@ public final class TreeUtil {
         bounds.width = width;
       }
       else {
-        bounds.width = Math.min(bounds.width, width / 2);
-        bounds.x -= JBUIScale.scale(20); // TODO: calculate a control width
-        if (bounds.x < 0) {
-          bounds.width += bounds.x;
-          bounds.x = 0;
-        }
+        int control = JBUIScale.scale(20); // calculate a control width
+        bounds.x = Math.max(0, bounds.x - control);
+        bounds.width = bounds.x > 0 ? Math.min(bounds.width + control, centered ? width : width / 2) : width;
       }
       int height = parent.getHeight();
       if (height > bounds.height && height < tree.getHeight()) {
@@ -1663,14 +1738,12 @@ public final class TreeUtil {
         if (y > 0) bounds.height -= y;
       }
     }
-    scrollToVisibleWithAccessibility(tree, bounds);
-    return true;
+    tree.scrollRectToVisible(bounds);
   }
 
-  private static void scrollToVisibleWithAccessibility(@NotNull JTree tree, @NotNull Rectangle bounds) {
-    tree.scrollRectToVisible(bounds);
-    AccessibleContext context = tree.getAccessibleContext();
-    if (context != null) context.firePropertyChange(AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, false, true);
+  private static long getScrollTimeStamp(@NotNull JTree tree) {
+    Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+    return property instanceof Long ? (Long)property : Long.MIN_VALUE;
   }
 
   /**
@@ -1914,6 +1987,18 @@ public final class TreeUtil {
    * @return {@code null} if next visible path cannot be found
    */
   public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, int row, @NotNull Predicate<TreePath> predicate) {
+    return nextVisiblePath(tree, row, isCyclicScrollingAllowed(), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param cyclic    {@code true} if cyclic searching is allowed, {@code false} otherwise
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if next visible path cannot be found
+   */
+  public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, int row, boolean cyclic,
+                                                   @NotNull Predicate<TreePath> predicate) {
     assert EventQueue.isDispatchThread();
     if (row < 0) return null; // ignore illegal row
     int count = tree.getRowCount();
@@ -1921,7 +2006,7 @@ public final class TreeUtil {
     int stop = row;
     while (true) {
       row++; // NB!: increase row before checking for cycle scrolling
-      if (row == count && isCyclicScrollingAllowed()) row = 0;
+      if (row == count && cyclic) row = 0;
       if (row == count) return null; // stop scrolling on last node if no cyclic scrolling
       if (row == stop) return null; // stop scrolling when cyclic scrolling is done
       TreePath path = tree.getPathForRow(row);
@@ -1946,13 +2031,25 @@ public final class TreeUtil {
    * @return {@code null} if previous visible path cannot be found
    */
   public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, int row, @NotNull Predicate<TreePath> predicate) {
+    return previousVisiblePath(tree, row, isCyclicScrollingAllowed(), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param cyclic    {@code true} if cyclic searching is allowed, {@code false} otherwise
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if previous visible path cannot be found
+   */
+  public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, int row, boolean cyclic,
+                                                       @NotNull Predicate<TreePath> predicate) {
     assert EventQueue.isDispatchThread();
     if (row < 0) return null; // ignore illegal row
     int count = tree.getRowCount();
     if (count <= row) return null; // ignore illegal row
     int stop = row;
     while (true) {
-      if (row == 0 && isCyclicScrollingAllowed()) row = count;
+      if (row == 0 && cyclic) row = count;
       if (row == 0) return null; // stop scrolling on first node if no cyclic scrolling
       row--; // NB!: decrease row after checking for cyclic scrolling
       if (row == stop) return null; // stop scrolling when cyclic scrolling is done
@@ -1965,6 +2062,7 @@ public final class TreeUtil {
    * @return {@code true} if cyclic scrolling in trees is allowed, {@code false} otherwise
    */
   public static boolean isCyclicScrollingAllowed() {
+    if (ScreenReader.isActive()) return false;
     if (!Registry.is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
     UISettings settings = UISettings.getInstanceOrNull();
     return settings != null && settings.getCycleScrolling();

@@ -85,6 +85,11 @@ public interface FileTemplate extends Cloneable {
   String getText(@NotNull Properties attributes) throws IOException;
 
   @NotNull
+  default String getFileName() { return ""; }
+
+  default void setFileName(@NotNull String fileName) {}
+
+  @NotNull
   String getExtension();
 
   void setExtension(@NotNull String extension);
@@ -96,6 +101,10 @@ public interface FileTemplate extends Cloneable {
   boolean isLiveTemplateEnabled();
 
   void setLiveTemplateEnabled(boolean value);
+
+  default FileTemplate @NotNull[] getChildren() { return EMPTY_ARRAY; }
+
+  default void setChildren(FileTemplate @NotNull[] children) {}
 
   @NotNull
   FileTemplate clone();

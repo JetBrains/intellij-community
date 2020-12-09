@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
+
 public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
@@ -79,7 +81,9 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         for (Inlay inlay : myEditor.getInlayModel().getBlockElementsInRange(foldStartOffset, foldEndOffset)) {
           int offset = inlay.getOffset();
           boolean relatedToPrecedingText = inlay.isRelatedToPrecedingText();
-          if ((relatedToPrecedingText || offset != foldStartOffset) && (!relatedToPrecedingText || offset != foldEndOffset)) {
+          if ((relatedToPrecedingText || offset != foldStartOffset) &&
+              (!relatedToPrecedingText || offset != foldEndOffset) &&
+              !showWhenFolded(inlay)) {
             sum += inlay.getHeightInPixels();
           }
         }
@@ -222,6 +226,12 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   public FoldRegion @NotNull [] getAllFoldRegions() {
     assertReadAccess();
     return myFoldTree.fetchAllRegions();
+  }
+
+  @Override
+  public @NotNull List<@NotNull FoldRegion> getRegionsOverlappingWith(int startOffset, int endOffset) {
+    assertReadAccess();
+    return myFoldTree.fetchOverlapping(startOffset, endOffset);
   }
 
   @Override
@@ -725,7 +735,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
                                                  boolean greedyToRight,
                                                  boolean stickingToRight,
                                                  int layer) {
-      return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+      return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
         void onRemoved() {
           for (Getter<FoldRegionImpl> getter : intervals) {

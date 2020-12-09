@@ -29,7 +29,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
 
   private var testQueue: BlockingQueue<JUnitTestContainer> = LinkedBlockingQueue()
   private val core = JUnitCore()
-  private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.impl.GuiTestThread")
+  private val LOG = Logger.getInstance(GuiTestThread::class.java)
 
   companion object {
     const val GUI_TEST_THREAD_NAME: String = "GuiTest Thread"

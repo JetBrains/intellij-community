@@ -1,6 +1,6 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.actions
 
-import circlet.client.api.Navigator
 import circlet.client.api.englishFullName
 import circlet.platform.client.ConnectionStatus
 import circlet.workspaces.Workspace
@@ -10,10 +10,11 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.space.components.SpaceUserAvatarProvider
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.*
 import com.intellij.space.ui.*
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.clone.SpaceCloneAction
 import com.intellij.ui.AnimatedIcon
@@ -33,13 +34,24 @@ class SpaceMainToolBarAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val isOnNavBar = e.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR
-    e.presentation.isEnabledAndVisible = isOnNavBar
-    if (!isOnNavBar) return
+    if (!isOnNavBar) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val space = SpaceWorkspaceComponent.getInstance()
+    val connected = space.loginState.value is SpaceLoginState.Connected
+    if (!connected) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabledAndVisible = true
+
     val avatars = SpaceUserAvatarProvider.getInstance().avatars.value
-    val isConnected = space.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
+    val isOnline = space.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
     val isConnecting = space.loginState.value is SpaceLoginState.Connecting
     e.presentation.icon = when {
-      isConnected -> avatars.online
+      isOnline -> avatars.online
       isConnecting -> AnimatedIcon.Default.INSTANCE
       else -> avatars.offline
     }
@@ -47,6 +59,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val component = e.inputEvent.component
+    val space = SpaceWorkspaceComponent.getInstance()
     val workspace = space.workspace.value
     if (workspace != null) {
       buildMenu(workspace, SpaceUserAvatarProvider.getInstance().avatars.value.circle, e.project!!)
@@ -84,6 +97,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
       }
 
       is SpaceLoginState.Disconnected -> buildLoginPanel(st, true) { serverName ->
+        val space = SpaceWorkspaceComponent.getInstance()
         space.signInManually(serverName, space.lifetime, component)
       }
     }
@@ -94,7 +108,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
     val serverUrl = cleanupUrl(host)
     val menuItems: MutableList<AccountMenuItem> = mutableListOf()
     menuItems += AccountMenuItem.Account(
-      workspace.me.value.englishFullName(),
+      workspace.me.value.englishFullName(), // NON-NLS
       serverUrl,
       resizeIcon(icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
       listOf(browseAction(SpaceBundle.message("main.toolbar.open.server", serverUrl), host, true)))
@@ -107,32 +121,31 @@ class SpaceMainToolBarAction : DumbAwareAction() {
       val descriptions = context.reposInProject.keys
       if (descriptions.size > 1) {
         menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.code.reviews"), descriptions.map {
-          val reviewsUrl = Navigator.p.project(it.key).reviews.absoluteHref(host)
+          val reviewsUrl = SpaceUrls.reviews(it.key)
           browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), reviewsUrl)
         }.toList())
 
         menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.checklists"), descriptions.map {
-          val checklistsUrl = Navigator.p.project(it.key).checklists().absoluteHref(host)
+          val checklistsUrl = SpaceUrls.checklists(it.key)
           browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), checklistsUrl)
         }.toList())
 
         menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.issues"), descriptions.map {
-          val issuesUrl = Navigator.p.project(it.key).issues().absoluteHref(host)
+          val issuesUrl = SpaceUrls.issues(it.key)
           browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), issuesUrl)
         }.toList())
       }
-      else if (descriptions.size != 0) {
-        val p = Navigator.p.project(descriptions.first().key)
-
-        menuItems += browseAction(SpaceBundle.message("main.toolbar.code.reviews.action"), p.reviews.absoluteHref(host))
-        menuItems += browseAction(SpaceBundle.message("main.toolbar.checklists.action"), p.checklists().absoluteHref(host))
-        menuItems += browseAction(SpaceBundle.message("main.toolbar.issues.action"), p.issues().absoluteHref(host))
+      else if (descriptions.isNotEmpty()) {
+        val projectKey = descriptions.first().key
+        menuItems += browseAction(SpaceBundle.message("main.toolbar.code.reviews.action"), SpaceUrls.reviews(projectKey))
+        menuItems += browseAction(SpaceBundle.message("main.toolbar.checklists.action"), SpaceUrls.checklists(projectKey))
+        menuItems += browseAction(SpaceBundle.message("main.toolbar.issues.action"), SpaceUrls.issues(projectKey))
       }
     }
     menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.settings.action"),
                                         { SpaceSettingsPanel.openSettings(project) },
                                         showSeparatorAbove = true)
-    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), { space.signOut() })
+    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), { SpaceWorkspaceComponent.getInstance().signOut() })
 
     return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
   }

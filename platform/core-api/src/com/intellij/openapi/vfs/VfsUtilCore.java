@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -20,10 +21,7 @@ import com.intellij.util.UrlUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.StringFactory;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -130,6 +128,7 @@ public class VfsUtilCore {
    */
   public static @Nullable @NlsSafe String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) {
+      ModelBranchUtil.checkSameBranch(file, ancestor);
       return null;
     }
 
@@ -158,7 +157,7 @@ public class VfsUtilCore {
       }
       parent = parent.getParent();
     }
-    return StringFactory.createShared(chars);
+    return new String(chars);
   }
 
   /**
@@ -172,6 +171,7 @@ public class VfsUtilCore {
    */
   public static @Nullable String findRelativePath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     if (!src.getFileSystem().equals(dst.getFileSystem())) {
+      ModelBranchUtil.checkSameBranch(src, dst);
       return null;
     }
 
@@ -239,8 +239,8 @@ public class VfsUtilCore {
    */
   public static @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull @NonNls String newName) throws IOException {
     VirtualFile newChild = toDir.createChildData(requestor, newName);
-    newChild.setBOM(file.getBOM());
     newChild.setBinaryContent(file.contentsToByteArray(), -1, -1, requestor);
+    newChild.setBOM(file.getBOM());
     return newChild;
   }
 
@@ -375,7 +375,7 @@ public class VfsUtilCore {
 
   public static @NotNull String loadText(@NotNull VirtualFile file, int length) throws IOException {
     try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
-      return StringFactory.createShared(FileUtilRt.loadText(reader, length));
+      return new String(FileUtilRt.loadText(reader, length));
     }
   }
 
@@ -721,6 +721,75 @@ public class VfsUtilCore {
       parent = parent.getParent();
     }
     return null;
+  }
+
+  /**
+   * @return true if the {@code file} path is equal to the {@code path},
+   * according to the file's parent directories case sensitivity.
+   */
+  @ApiStatus.Experimental
+  public static boolean pathEqualsTo(@NotNull VirtualFile file, @NotNull @SystemIndependent String path) {
+    path = FileUtil.toCanonicalPath(path);
+    int li = path.length();
+    while (file != null && li != -1) {
+      int i = path.lastIndexOf('/', li-1);
+      CharSequence fileName = file.getNameSequence();
+      if (StringUtil.endsWithChar(fileName, '/')) {
+        fileName = fileName.subSequence(0, fileName.length()-1);
+      }
+      if (!StringUtil.equal(fileName, path.substring(i + 1, li), file.isCaseSensitive())) {
+        return false;
+      }
+      file = file.getParent();
+      li = i;
+    }
+    return li == -1 && file == null;
+  }
+
+  private static @NotNull List<VirtualFile> getHierarchy(@NotNull VirtualFile file) {
+    List<VirtualFile> result = new ArrayList<>();
+    while (file != null) {
+      result.add(file);
+      file = file.getParent();
+    }
+    return result;
+  }
+
+  /**
+   * @return true if the {@code ancestorPath} is equal one of {@code file}'s parents.
+   * Corresponding directories case sensitivities are taken into account automatically.
+   */
+  @ApiStatus.Experimental
+  public static boolean isAncestorOrSelf(@NotNull @SystemIndependent String ancestorPath, @NotNull VirtualFile file) {
+    ancestorPath = FileUtil.toCanonicalPath(ancestorPath);
+    List<VirtualFile> hierarchy = getHierarchy(file);
+    if (ancestorPath.isEmpty()) {
+      return true;
+    }
+    int i = 0;
+    boolean result = false;
+    int j;
+    for (j = hierarchy.size() - 1; j >= 0; j--) {
+      VirtualFile part = hierarchy.get(j);
+      String name = part.getName();
+      boolean matches = part.isCaseSensitive() ? StringUtil.startsWith(ancestorPath, i, name) :
+                        StringUtil.startsWithIgnoreCase(ancestorPath, i, name);
+      if (!matches) {
+        break;
+      }
+      i += name.length();
+      if (!name.endsWith("/")) {
+        if (i != ancestorPath.length() && ancestorPath.charAt(i) != '/') {
+          break;
+        }
+        i++;
+      }
+      if (i >= ancestorPath.length()) {
+        result = true;
+        break;
+      }
+    }
+    return result;
   }
 
   /**

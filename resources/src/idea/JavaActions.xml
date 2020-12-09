@@ -6,7 +6,7 @@
     </action>
 
 
-    <group id="NewGroup1">
+    <group id="NewGroup1" searchable="false">
       <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
               icon="AllIcons.Nodes.Module"/>
 
@@ -37,8 +37,7 @@
     <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction"
             icon="AllIcons.General.ProjectStructure">
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
-      <add-to-group group-id="MainToolBarSettings" anchor="after" relative-to-action="ShowSettings"/>
-      <add-to-group group-id="NavBarToolBar" relative-to-action="NavBarToolBarOthers" anchor="after"/>
+      <add-to-group group-id="SettingsEntryPointGroup" anchor="before" relative-to-action="ShowSettings"/>
     </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
@@ -119,14 +118,6 @@
         <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
         <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
         <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
-      </group>
-
-      <separator/>
-      <group internal="true" text="Cached Value Profiler" popup="true">
-        <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
-                internal="true"/>
-        <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
-                internal="true"/>
       </group>
 
       <separator/>
@@ -525,7 +516,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
-        <override-text place="XDebuggerTreeInlayPopup" text="Create Value Renderer"/>
+        <override-text place="XDebuggerTreeInlayPopup"/>
       </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">

@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
@@ -215,6 +216,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
         new TableSpeedSearch(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
+        TableHoverListener.DEFAULT.removeFrom(table);
         myTable = table;
         TableUtil.ensureSelectionExists(myTable);
         mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -296,9 +298,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               .createPanel();
           }
 
-          @Nullable
           @Override
-          public JComponent getPreferredFocusedComponent() {
+          public @NotNull JComponent getPreferredFocusedComponent() {
             return name;
           }
 

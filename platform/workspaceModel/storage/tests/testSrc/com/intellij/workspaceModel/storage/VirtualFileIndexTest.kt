@@ -2,12 +2,13 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.entities.ModifiableVFUEntity
 import com.intellij.workspaceModel.storage.entities.addNullableVFUEntity
 import com.intellij.workspaceModel.storage.entities.addVFU2Entity
 import com.intellij.workspaceModel.storage.entities.addVFUEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -66,8 +67,8 @@ class VirtualFileIndexTest {
 
     val virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles(entity.id)
     assertEquals(2, virtualFiles.size)
-    assertEquals(entity.fileProperty, virtualFiles.first())
-    assertEquals(entity.secondFileProperty, virtualFiles.last())
+    assertTrue(virtualFiles.contains(entity.fileProperty))
+    assertTrue(virtualFiles.contains(entity.secondFileProperty))
   }
 
   @Test

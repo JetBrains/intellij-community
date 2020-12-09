@@ -1,5 +1,3 @@
-# Stubs for requests.models (Python 3)
-
 import datetime
 from typing import Any, Dict, Iterator, List, Optional, Text, Union
 
@@ -42,7 +40,6 @@ REDIRECT_STATI: Any
 DEFAULT_REDIRECT_LIMIT: Any
 CONTENT_CHUNK_SIZE: Any
 ITER_CHUNK_SIZE: Any
-json_dumps: Any
 
 class RequestEncodingMixin:
     @property
@@ -119,7 +116,7 @@ class Response:
     def apparent_encoding(self) -> str: ...
     def iter_content(self, chunk_size: Optional[int] = ..., decode_unicode: bool = ...) -> Iterator[Any]: ...
     def iter_lines(
-        self, chunk_size: Optional[int] = ..., decode_unicode: bool = ..., delimiter: Union[Text, bytes] = ...
+        self, chunk_size: Optional[int] = ..., decode_unicode: bool = ..., delimiter: Optional[Union[Text, bytes]] = ...
     ) -> Iterator[Any]: ...
     @property
     def content(self) -> bytes: ...

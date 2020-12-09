@@ -16,6 +16,8 @@ import java.io.File
 interface FilePathChange {
   val beforePath: FilePath?
   val afterPath: FilePath?
+
+  class Simple(override val beforePath: FilePath?, override val afterPath: FilePath?) : FilePathChange
 }
 
 object RefreshVFsSynchronously {

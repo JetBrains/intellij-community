@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -37,13 +37,14 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.IntConsumer;
 
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 
 /**
  & @author ven
  */
-public class UnusedDefInspection extends GroovyLocalInspectionBase {
+public final class UnusedDefInspection extends GroovyLocalInspectionBase {
   private static final Logger LOG = Logger.getInstance(UnusedDefInspection.class);
 
   @NotNull
@@ -65,7 +66,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       return;
     }
 
-    final TIntHashSet unusedDefs = new TIntHashSet();
+    final IntOpenHashSet unusedDefs = new IntOpenHashSet();
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
         unusedDefs.add(instruction.num());
@@ -80,14 +81,12 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
           final VariableDescriptor descriptor = varInst.getDescriptor();
           DefinitionMap e = dfaResult.get(i);
           e.forEachValue(reaching -> {
-            reaching.forEach(defNum -> {
+            reaching.forEach((IntConsumer)defNum -> {
               final VariableDescriptor defDescriptor = ((ReadWriteVariableInstruction) flow[defNum]).getDescriptor();
               if (descriptor.equals(defDescriptor)) {
                 unusedDefs.remove(defNum);
               }
-              return true;
             });
-            return true;
           });
         }
       }
@@ -95,11 +94,10 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
 
     final Set<PsiElement> checked = new HashSet<>();
 
-    unusedDefs.forEach(num -> {
+    unusedDefs.forEach((IntConsumer)num -> {
       final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction)flow[num];
       final PsiElement element = instruction.getElement();
       process(element, checked, problemsHolder, GroovyBundle.message("unused.assignment.tooltip"));
-      return true;
     });
 
     owner.acceptChildren(new PsiRecursiveElementWalkingVisitor() {

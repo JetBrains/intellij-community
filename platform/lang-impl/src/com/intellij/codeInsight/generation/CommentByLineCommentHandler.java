@@ -10,7 +10,6 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -32,8 +31,8 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +85,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     while (true) {
       int firstLineStart = DocumentUtil.getLineStartOffset(startOffset, document);
       FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(firstLineStart - 1);
-      if (collapsedAt == null) break;
+      if (collapsedAt == null || isInvisibleRegionAtLineStart(collapsedAt) /* rendered doc case */) break;
       int regionStartOffset = collapsedAt.getStartOffset();
       if (regionStartOffset >= startOffset) break;
       startOffset = regionStartOffset;
@@ -134,7 +133,13 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     currentBlock.caretUpdate = startingNewLineComment ? CaretUpdate.PUT_AT_COMMENT_START :
                                !hasSelection ? CaretUpdate.SHIFT_DOWN :
                                wholeLinesSelected ? CaretUpdate.RESTORE_SELECTION : null;
-    }
+  }
+
+  private static boolean isInvisibleRegionAtLineStart(@NotNull FoldRegion region) {
+    if (!region.getPlaceholderText().isEmpty()) return false;
+    int startOffset = region.getStartOffset();
+    return startOffset == DocumentUtil.getLineStartOffset(startOffset, region.getDocument());
+  }
 
   private static boolean shouldCommentInHostFile(@NotNull PsiFile file, @NotNull PsiElement context) {
     if (file.getUserData(INJECTION_FORBIDS_LINE_COMMENTS) != null) {
@@ -161,7 +166,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       block.startOffsets = new int[endLine - startLine + 1];
       block.endOffsets = new int[endLine - startLine + 1];
       block.commenters = new Commenter[endLine - startLine + 1];
-      block.commenterStateMap = new THashMap<>();
+      block.commenterStateMap = new HashMap<>();
       CharSequence chars = document.getCharsSequence();
 
       boolean singleline = startLine == endLine;
@@ -170,7 +175,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
 
       int endOffset = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(endLine), " \t\n");
 
-      block.blockSuitableCommenter = getBlockSuitableCommenter(psiFile, offset, endOffset);
+      block.blockSuitableCommenter = getBlockSuitableCommenter(psiFile, block.editor, offset, endOffset);
       Language lineStartLanguage = getLineStartLanguage(block.editor, psiFile, startLine);
       CommonCodeStyleSettings languageSettings = CodeStyle.getLanguageSettings(psiFile, lineStartLanguage);
       block.commentWithIndent = !languageSettings.LINE_COMMENT_AT_FIRST_COLUMN;
@@ -283,7 +288,8 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
                                });
   }
 
-  private static Commenter getBlockSuitableCommenter(final PsiFile file, int offset, int endOffset) {
+  private static Commenter getBlockSuitableCommenter(final PsiFile file, Editor editor,
+                                                     int offset, int endOffset) {
     final Language languageSuitableForCompleteFragment;
     if (offset >= endOffset) {  // we are on empty line
       PsiElement element = file.findElementAt(offset);
@@ -294,9 +300,10 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       languageSuitableForCompleteFragment = PsiUtilBase.reallyEvaluateLanguageInRange(offset, endOffset, file);
     }
 
+    Commenter blockSuitableCommenter = languageSuitableForCompleteFragment == null
+                                       ? CommentByBlockCommentHandler.getCommenter(file, editor, file.getLanguage(), file.getLanguage())
+                                       : null;
 
-    Commenter blockSuitableCommenter =
-      languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(file.getLanguage()) : null;
     if (blockSuitableCommenter == null && file.getFileType() instanceof CustomSyntaxTableFileType) {
       blockSuitableCommenter = new Commenter() {
         final SyntaxTable mySyntaxTable = ((CustomSyntaxTableFileType)file.getFileType()).getSyntaxTable();
@@ -570,8 +577,8 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       return true;
     }
 
-    IntArrayList prefixes = new IntArrayList();
-    IntArrayList suffixes = new IntArrayList();
+    IntList prefixes = new IntArrayList();
+    IntList suffixes = new IntArrayList();
     for (int position = 0; position < text.length(); ) {
       int prefixPos = text.indexOf(prefix, position);
       if (prefixPos == -1) {
@@ -670,8 +677,8 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
         return true;
       }
       final String text = chars.subSequence(offset, endOffset).toString();
-      final IntArrayList prefixes = new IntArrayList();
-      final IntArrayList suffixes = new IntArrayList();
+      final IntList prefixes = new IntArrayList();
+      final IntList suffixes = new IntArrayList();
       final String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
       final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
       for (int position = 0; position < text.length(); ) {

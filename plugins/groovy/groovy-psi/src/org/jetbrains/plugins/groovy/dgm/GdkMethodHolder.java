@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -52,7 +51,7 @@ public final class GdkMethodHolder {
       }
       byName.putValue(m.getName(), m);
     }
-    myOriginalMethodByType = VolatileNotNullLazyValue.createValue(() -> groupByType(byName.values()));
+    myOriginalMethodByType = NotNullLazyValue.volatileLazy(() -> groupByType(byName.values()));
     myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name -> groupByType(byName.get(name)));
   }
 

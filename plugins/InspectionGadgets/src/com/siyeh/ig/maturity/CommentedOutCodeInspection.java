@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -14,13 +14,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class CommentedOutCodeInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public class CommentedOutCodeInspection extends BaseInspection {
 
   public int minLines = 2;
 
@@ -54,7 +55,7 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
 
   private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
 
-    DeleteCommentedOutCodeFix() {}
+    private DeleteCommentedOutCodeFix() {}
 
     @Override
     @NotNull
@@ -87,7 +88,7 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
 
   private static class UncommentCodeFix extends InspectionGadgetsFix {
 
-    UncommentCodeFix() {}
+    private UncommentCodeFix() {}
 
     @Override
     @NotNull
@@ -136,7 +137,7 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
 
   private class CommentedOutCodeVisitor extends BaseInspectionVisitor {
 
-    CommentedOutCodeVisitor() {}
+    private CommentedOutCodeVisitor() {}
 
     @Override
     public void visitComment(@NotNull PsiComment comment) {
@@ -155,23 +156,24 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
           if (lines < minLines) {
             return;
           }
-          if (isCode(text, comment)) {
+          final ThreeState code = isCode(text, comment);
+          if (code == ThreeState.YES) {
             registerErrorAtOffset(comment, 0, 2, lines);
             return;
           }
+          else if (code == ThreeState.NO) {
+            return;
+          }
           final PsiElement after = PsiTreeUtil.skipWhitespacesForward(comment);
-          if (!(after instanceof PsiComment)) {
+          if (!(after instanceof PsiComment && ((PsiComment)after).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT)) {
             break;
           }
           comment = (PsiComment)after;
-          if (comment.getTokenType() != JavaTokenType.END_OF_LINE_COMMENT) {
-            break;
-          }
         }
       }
       else {
         final String text = getCommentText(comment);
-        if (StringUtil.countNewLines(text) + 1 < minLines || !isCode(text, comment)) {
+        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != ThreeState.YES) {
           return;
         }
         registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
@@ -179,9 +181,10 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
     }
   }
 
-  static boolean isCode(String text, PsiElement context) {
+
+  private static ThreeState isCode(String text, PsiElement context) {
     if (text.isEmpty()) {
-      return false;
+      return ThreeState.NO;
     }
     final Project project = context.getProject();
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
@@ -192,6 +195,9 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
       if (!MethodUtils.isInsideMethodBody(context, method)) {
         parent = method.getParent();
       }
+    }
+    else if (parent instanceof PsiField) {
+      parent = parent.getParent();
     }
     else if (parent instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)parent;
@@ -208,10 +214,26 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
     else {
       fragment = factory.createCodeBlockCodeFragment(text, context, false);
     }
-    return !isInvalidCode(fragment);
+    final boolean allowDanglingElse = isIfStatementWithoutElse(PsiTreeUtil.getPrevSiblingOfType(context, PsiStatement.class));
+    if (!isInvalidCode(fragment, allowDanglingElse)) {
+      return ThreeState.YES;
+    }
+    else if (PsiTreeUtil.getDeepestLast(fragment) instanceof PsiErrorElement) {
+      return ThreeState.NO;
+    }
+    return ThreeState.UNSURE;
   }
 
-  static String getCommentText(PsiComment comment) {
+  private static boolean isIfStatementWithoutElse(PsiStatement statement) {
+    if (!(statement instanceof PsiIfStatement)) {
+      return false;
+    }
+    final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+    final PsiStatement elseBranch = ifStatement.getElseBranch();
+    return elseBranch == null || isIfStatementWithoutElse(elseBranch);
+  }
+
+  private static String getCommentText(PsiComment comment) {
     String lineText = getEndOfLineCommentText(comment);
     if (lineText != null) {
       final StringBuilder result = new StringBuilder();
@@ -231,11 +253,11 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
   }
 
   @Nullable
-  static String getEndOfLineCommentText(PsiComment comment) {
+  private static String getEndOfLineCommentText(PsiComment comment) {
     return (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) ? StringUtil.trimStart(comment.getText(), "//") : null;
   }
 
-  static boolean isInvalidCode(PsiElement element) {
+  private static boolean isInvalidCode(PsiElement element, boolean allowDanglingElse) {
     final PsiElement firstChild = element.getFirstChild();
     final PsiElement lastChild = element.getLastChild();
     final boolean strict = firstChild == lastChild && firstChild instanceof PsiExpressionStatement;
@@ -248,18 +270,20 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
         return true;
       }
     }
-    final CodeVisitor visitor = new CodeVisitor(strict);
+    final CodeVisitor visitor = new CodeVisitor(strict, allowDanglingElse);
     element.accept(visitor);
     return visitor.isInvalidCode();
   }
 
   private static class CodeVisitor extends JavaRecursiveElementWalkingVisitor {
     private final boolean myStrict;
+    private final boolean myAllowDanglingElse;
     private boolean invalidCode = false;
     private boolean codeFound = false;
 
-    private CodeVisitor(boolean strict) {
+    private CodeVisitor(boolean strict, boolean allowDanglingElse) {
       myStrict = strict;
+      myAllowDanglingElse = allowDanglingElse;
     }
 
     @Override
@@ -278,6 +302,9 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
 
     @Override
     public void visitErrorElement(@NotNull PsiErrorElement element) {
+      if (myAllowDanglingElse && !codeFound && JavaPsiBundle.message("else.without.if").equals(element.getErrorDescription())) {
+        return;
+      }
       invalidCode = true;
       stopWalking();
     }
@@ -306,11 +333,23 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
     @Override
     public void visitLabeledStatement(PsiLabeledStatement statement) {
       super.visitLabeledStatement(statement);
-      @NonNls final String name = statement.getName();
-      if (statement.getStatement() == null || name.equals("https") || name.equals("http")) {
+      if (isProbablyUrl(statement)) {
         invalidCode = true;
         stopWalking();
       }
+    }
+
+    private static boolean isProbablyUrl(PsiLabeledStatement statement) {
+      if (statement.getStatement() == null) {
+        return true;
+      }
+      final PsiIdentifier identifier = statement.getLabelIdentifier();
+      final PsiElement sibling = identifier.getNextSibling();
+      if (!PsiUtil.isJavaToken(sibling, JavaTokenType.COLON)) {
+        return false;
+      }
+      PsiElement element = sibling.getNextSibling();
+      return element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT;
     }
 
     @Override

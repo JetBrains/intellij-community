@@ -5,6 +5,7 @@ package com.intellij.psi.controlFlow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.Stack;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +87,7 @@ class ControlFlowImpl extends AbstractControlFlow {
     private final boolean myConstantConditionOccurred;
 
     private ImmutableControlFlow(@NotNull Instruction @NotNull [] instructions, 
-                                 @NotNull Object2LongOpenHashMap<PsiElement> myElementToOffsetMap,
+                                 @NotNull Object2LongMap<PsiElement> myElementToOffsetMap,
                                  @NotNull PsiElement @NotNull [] elementsForInstructions, boolean occurred) {
       super(myElementToOffsetMap);
       myInstructions = Arrays.asList(instructions);

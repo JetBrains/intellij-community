@@ -8,6 +8,7 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,6 +29,15 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileListeningTest extends IntegrationTestCase {
+  static final String IGNORED_EXTENSION = "pyc";
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    assertTrue("Aaaah, extension '" + IGNORED_EXTENSION+"' is no longer ignored. Please pick another ignored extension, tests count on you!",
+               FileTypeManager.getInstance().isFileIgnored("x."+IGNORED_EXTENSION));
+  }
+
   public void testCreatingFiles() throws Exception {
     VirtualFile f = createFile("file.txt");
     assertEquals(2, getRevisionsFor(f).size());
@@ -40,7 +50,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void testIgnoringFilteredFileTypes() throws Exception {
     int before = getRevisionsFor(myRoot).size();
-    createFile("file.hprof");
+    createFile("file." + IGNORED_EXTENSION);
 
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
@@ -146,7 +156,7 @@ public class FileListeningTest extends IntegrationTestCase {
   public void testRenamingFilteredFileToNonFiltered() throws Exception {
     int before = getRevisionsFor(myRoot).size();
 
-    VirtualFile file = createFile("file.hprof");
+    VirtualFile file = createFile("file." + IGNORED_EXTENSION);
     assertThat(getRevisionsFor(myRoot)).hasSize(before);
 
     rename(file, "file.txt");
@@ -160,7 +170,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.txt");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    rename(f, "file.hprof");
+    rename(f, "file." + IGNORED_EXTENSION);
     assertEquals(before + 2, getRevisionsFor(myRoot).size());
   }
 
@@ -200,7 +210,7 @@ public class FileListeningTest extends IntegrationTestCase {
   public void testIgnoringROStatusChangeForUnversionedFiles() throws Exception {
     int before = getRevisionsFor(myRoot).size();
 
-    VirtualFile f = createFile("f.hprof");
+    VirtualFile f = createFile("f." + IGNORED_EXTENSION);
     setReadOnlyAttribute(f, true);
 
     assertEquals(before, getRevisionsFor(myRoot).size());

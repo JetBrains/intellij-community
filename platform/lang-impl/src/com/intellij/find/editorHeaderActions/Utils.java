@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
@@ -37,7 +38,21 @@ public final class Utils {
                                          @NlsContexts.PopupTitle String title,
                                          final JTextComponent textField,
                                          @NlsContexts.PopupAdvertisement String ad) {
-    showCompletionPopup(toolbarComponent, list, title, textField, ad, null);
+    showCompletionPopup(toolbarComponent, list, title, textField, ad, (PopupState<JBPopup>)null);
+  }
+
+  /**
+   * @deprecated use overloaded method instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static void showCompletionPopup(JComponent toolbarComponent,
+                                         final JList list,
+                                         @NlsContexts.PopupTitle String title,
+                                         final JTextComponent textField,
+                                         @NlsContexts.PopupAdvertisement String ad,
+                                         JBPopupListener listener) {
+    showCompletionPopup(toolbarComponent, list, title, textField, ad);
   }
 
   public static void showCompletionPopup(JComponent toolbarComponent,

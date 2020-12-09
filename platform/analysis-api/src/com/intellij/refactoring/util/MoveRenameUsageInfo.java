@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.model.BranchableUsageInfo;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +35,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Objects;
 
-public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
+public class MoveRenameUsageInfo extends UsageInfo implements BranchableUsageInfo, Cloneable {
   private static final Logger LOG = Logger.getInstance(MoveRenameUsageInfo.class);
-  private SmartPsiElementPointer myReferencedElementPointer = null;
+  private SmartPsiElementPointer<?> myReferencedElementPointer;
   private PsiElement myReferencedElement;
 
   private PsiReference myReference;
-  private RangeMarker myReferenceRangeMarker = null;
+  private RangeMarker myReferenceRangeMarker;
 
   public MoveRenameUsageInfo(PsiReference reference, PsiElement referencedElement){
     this(reference.getElement(), reference, referencedElement);
@@ -101,7 +101,7 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
   public PsiReference getReference() {
     if (myReference != null) {
       final PsiElement element = myReference.getElement();
-      if (element != null && element.isValid()) {
+      if (element.isValid()) {
         if (myReferenceRangeMarker == null) {
           return myReference;
         }
@@ -137,9 +137,9 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
     return reference;
   }
 
+  @Override
   @NotNull
-  @ApiStatus.Experimental
-  public MoveRenameUsageInfo branched(@NotNull ModelBranch branch) {
+  public MoveRenameUsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
     try {
       MoveRenameUsageInfo copy = (MoveRenameUsageInfo)clone();
       Class<?> aClass = copy.getClass();

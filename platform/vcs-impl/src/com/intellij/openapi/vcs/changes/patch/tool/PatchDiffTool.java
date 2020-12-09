@@ -105,7 +105,7 @@ public class PatchDiffTool implements FrameDiffTool {
     @NotNull
     @Override
     public ToolbarComponents init() {
-      myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+      myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
       onInit();
       return new FrameDiffTool.ToolbarComponents();
     }

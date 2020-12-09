@@ -3,23 +3,31 @@ package com.intellij.debugger.memory.agent.extractor
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Path
 
-class AgentExtractor {
+object AgentExtractor {
+  private lateinit var extractedFile: File
+  private var lastModified = -1L
+
+  @Synchronized
   fun extract(agentType: AgentLibraryType, directory: Path): Path {
-    Files.createDirectories(directory)
-    Files.createTempFile(directory, "${agentType.prefix}memory_agent", agentType.suffix)
-    val file = FileUtilRt.createTempFile(directory.toFile(), "${agentType.prefix}memory_agent", agentType.suffix, true).toPath()
-    val agentFileName = "${agentType.prefix}memory_agent${agentType.suffix}"
-    val inputStream = AgentExtractor::class.java.classLoader.getResourceAsStream("bin/$agentFileName") ?: throw FileNotFoundException(agentFileName)
-    inputStream.use { input ->
-      Files.newOutputStream(file).use { output ->
-        FileUtil.copy(input, output)
-      }
+    if (!::extractedFile.isInitialized || !extractedFile.exists() || extractedFile.lastModified() != lastModified) {
+        val agentFileName = "${agentType.prefix}memory_agent${agentType.suffix}"
+        val file = FileUtilRt.createTempFile(directory.toFile(), "${agentType.prefix}memory_agent", agentType.suffix, true)
+        val inputStream = AgentExtractor::class.java.classLoader.getResourceAsStream("bin/$agentFileName") ?: throw FileNotFoundException(agentFileName)
+        inputStream.use { input ->
+          Files.newOutputStream(file.toPath()).use { output ->
+            FileUtil.copy(input, output)
+          }
+        }
+        extractedFile = file
+        lastModified = file.lastModified()
     }
-    return file
+
+    return extractedFile.toPath()
   }
 
   enum class AgentLibraryType(val prefix: String, val suffix: String) {

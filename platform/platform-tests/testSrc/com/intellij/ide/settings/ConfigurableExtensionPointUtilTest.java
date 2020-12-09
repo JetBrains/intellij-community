@@ -2,6 +2,7 @@
 package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -11,7 +12,6 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -24,29 +24,28 @@ import java.util.*;
  * @author Nikolay Matveev
  */
 public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
-
   public void testSimpleTree() throws Exception {
     matchStructures(
-      ContainerUtil.newArrayList(
+      List.of(
         createConfigurable(null, "A"),
         createConfigurable("A", "B"),
         createConfigurable("A", "C"),
         createConfigurable("C", "D")
       ),
       null,
-      ContainerUtil.newArrayList(node("A",
-                                      node("B"),
-                                      node("C",
-                                           node("D")
-                                      )
-                                 )
+      List.of(node("A",
+                   node("B"),
+                   node("C",
+                        node("D")
+                   )
+              )
       )
     );
   }
 
   public void testComplexTree() throws Exception {
     matchStructures(
-      ContainerUtil.newArrayList(
+      List.of(
         createConfigurable(null, "first"),
         createConfigurable("first", "first.first"),
         createConfigurable("first.first", "first.first.first"),
@@ -70,7 +69,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
         createConfigurable("2nd", "2nd.3rd")
       ),
       null,
-      ContainerUtil.newArrayList(node("first",
+      List.of(node("first",
                                       node("first.first",
                                            node("first.first.first"),
                                            node("first.first.second",
@@ -104,7 +103,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   public void testChildFiltering() throws Exception {
     matchStructures(
-      ContainerUtil.newArrayList(
+      List.of(
         createConfigurable(null, "parent"),
         createConfigurable("parent", "1st.child"),
         createConfigurable("1st.child", "1st.child.1"),
@@ -122,7 +121,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                  displayName.equals("2nd.child.1");
         }
       },
-      ContainerUtil.newArrayList(node("parent",
+      List.of(node("parent",
                                       node("1st.child"),
                                       node("2nd.child",
                                            node("2nd.child.1")
@@ -163,7 +162,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   @NotNull
   private static ConfigurableEP<Configurable> deserializeConfigurable(@NotNull String text) throws IOException, JDOMException {
     Element element = JDOMUtil.load(text);
-    ConfigurableEP<Configurable> bean = new ConfigurableEP<>();
+    ConfigurableEP<Configurable> bean = new ConfigurableEP<>(new DefaultPluginDescriptor("ConfigurableExtensionTest"));
     XmlSerializer.deserializeInto(element, bean);
     return bean;
   }
@@ -198,7 +197,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testSimple() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("other",
                         node("A",
                              node("B"),
@@ -212,7 +211,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testSimpleSort() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("other",
                         node("sorted",
                              node("s3"),
@@ -258,7 +257,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testComplex() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("other",
                         node("first",
                              node("first.first",
@@ -313,7 +312,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testGroupWarning() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("1",
                         node("11"),
                         node("12"),
@@ -339,7 +338,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testCyclicWarning() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("other",
                         node("0"),
                         node("4",

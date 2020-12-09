@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.codeInspection;
 
@@ -42,6 +42,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     }
     return new SuppressQuickFix[]{
       new SuppressByGroovyCommentFix(toolId),
+      new SuppressByGroovyFileCommentFix(toolId),
       new SuppressForMemberFix(toolId, false),
       new SuppressForMemberFix(toolId, true),
     };
@@ -78,6 +79,11 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
             return prev;
           }
         }
+      }
+
+      PsiElement fileLevelSuppression = SuppressByGroovyFileCommentFixKt.fileLevelSuppression(place, toolId);
+      if (fileLevelSuppression != null) {
+        return fileLevelSuppression;
       }
 
       GrMember member = null;

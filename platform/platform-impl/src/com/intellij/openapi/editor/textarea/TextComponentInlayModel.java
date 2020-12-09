@@ -22,6 +22,14 @@ final class TextComponentInlayModel implements InlayModel {
     return null;
   }
 
+  @Override
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     boolean relatesToPrecedingText,
+                                                                                     int priority,
+                                                                                     @NotNull T renderer) {
+    return null;
+  }
+
   @Nullable
   @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
@@ -37,14 +45,6 @@ final class TextComponentInlayModel implements InlayModel {
   public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
                                                                                  boolean relatesToPrecedingText,
                                                                                  @NotNull T renderer) {
-    return null;
-  }
-
-  @Override
-  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
-                                                                                           boolean relatesToPrecedingText,
-                                                                                           boolean insertFirst,
-                                                                                           @NotNull T renderer) {
     return null;
   }
 

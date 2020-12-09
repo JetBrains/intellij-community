@@ -356,4 +356,7 @@
     <keyboard-shortcut first-keystroke="PAGE_UP"/>
     <keyboard-shortcut first-keystroke="meta UP"/>
   </action>
+  <action id="ShowIntentionActions">
+    <keyboard-shortcut first-keystroke="meta 1"/>
+  </action>
 </keymap>

@@ -176,7 +176,7 @@ public final class DnDManagerImpl extends DnDManager {
       }
     }
 
-    if (currentEvent == null) return currentEvent;
+    if (currentEvent == null) return null;
 
     final DnDAction dndAction = getDnDActionForPlatformAction(nativeAction);
     if (dndAction == null) return null;
@@ -541,7 +541,7 @@ public final class DnDManagerImpl extends DnDManager {
           pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
         }
 
-        if (SystemInfo.isMac && MultiResolutionImageProvider.isMultiResolutionImageAvailable()) {
+        if (SystemInfo.isMac && true) {
           Image mrImage = MultiResolutionImageProvider.convertFromJBImage(pair.first);
           if (mrImage != null) pair = new Pair<>(mrImage, pair.second);
         }

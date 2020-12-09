@@ -166,12 +166,12 @@ class MLSorter : CompletionFinalSorter() {
                              positionsBefore: Map<LookupElement, Int>,
                              lookupStorage: MutableLookupStorage,
                              lookup: LookupImpl): Iterable<LookupElement> {
-    val mlScoresUsed = element2score.values.none { it == null }
+    val shouldSort = element2score.values.none { it == null } && lookupStorage.shouldReRank()
     if (LOG.isDebugEnabled) {
-      LOG.debug("ML sorting in completion used=$mlScoresUsed for language=${lookupStorage.language.id}")
+      LOG.debug("ML sorting in completion used=$shouldSort for language=${lookupStorage.language.id}")
     }
 
-    if (mlScoresUsed) {
+    if (shouldSort) {
       lookupStorage.fireReorderedUsingMLScores()
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
       return items.reorderByMLScores(element2score, topItemsCount).addDiagnosticsIfNeeded(positionsBefore, topItemsCount, lookup)
@@ -200,10 +200,17 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   private fun Iterable<LookupElement>.reorderByMLScores(element2score: Map<LookupElement, Double?>, toReorder: Int): Iterable<LookupElement> {
-    val result = this.sortedByDescending { element2score.getValue(it) }.take(toReorder).toCollection(linkedSetOf())
+    val result = this
+      .sortedByDescending { element2score.getValue(it) }
+      .removeDuplicatesIfNeeded()
+      .take(toReorder)
+      .toCollection(linkedSetOf())
     result.addAll(this)
     return result
   }
+
+  private fun Iterable<LookupElement>.removeDuplicatesIfNeeded(): Iterable<LookupElement> =
+    if (Registry.`is`("completion.ml.reorder.without.duplicates", false)) this.distinctBy { it.lookupString } else this
 
   private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>, reordered: Int, lookup: LookupImpl): Iterable<LookupElement> {
     if (CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {

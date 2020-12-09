@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
@@ -67,6 +68,7 @@ final class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     // doesn't make any sense (and in any case scheme manager cannot preserve order)
     editor.disableUpDownActions();
+    editor.getList().setEmptyText(KeyMapBundle.message("no.quick.lists"));
     editor.getList().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {

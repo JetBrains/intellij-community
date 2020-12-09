@@ -1,21 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
+import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 typealias TimeMillis = Long
 typealias TimeNano = Long
 typealias BytesNumber = Long
 
-data class ProjectIndexingHistory(val projectName: String) {
+data class ProjectIndexingHistory(val project: Project) {
   private val biggestContributorsPerFileTypeLimit = 10
 
-  val times = IndexingTimes()
+  val times = IndexingTimes(ZonedDateTime.now(ZoneOffset.UTC))
 
-  var numberOfIndexingThreads: Int = 0
+  val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
   val providerStatistics = arrayListOf<JsonFileProviderIndexStatistics>()
 
@@ -24,7 +28,10 @@ data class ProjectIndexingHistory(val projectName: String) {
   val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexer>()
 
   var totalNumberOfTooLargeFiles: Int = 0
-  val totalTooLargeFiles = LimitedPriorityQueue<TooLargeForIndexingFile>(5, compareBy { it.fileSize })
+
+  fun addScanningStatistics(statistics: ScanningStatistics) {
+    scanningStatistics += statistics.toJsonStatistics()
+  }
 
   fun addProviderStatistics(statistics: IndexingJobStatistics) {
     // Convert to Json to release memory occupied by statistic values.
@@ -32,7 +39,8 @@ data class ProjectIndexingHistory(val projectName: String) {
 
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
-        StatsPerFileType(0, 0, 0, 0, LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.indexingTimeInAllThreads }))
+        StatsPerFileType(0, 0, 0, 0,
+                         LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.indexingTimeInAllThreads }))
       }
       totalStats.totalNumberOfFiles += fileTypeStats.numberOfFiles
       totalStats.totalBytes += fileTypeStats.totalBytes
@@ -57,7 +65,6 @@ data class ProjectIndexingHistory(val projectName: String) {
     }
 
     totalNumberOfTooLargeFiles += statistics.numberOfTooLargeForIndexingFiles
-    statistics.tooLargeForIndexingFiles.biggestElements.forEach { totalTooLargeFiles.addElement(it) }
   }
 
   data class StatsPerFileType(
@@ -83,15 +90,13 @@ data class ProjectIndexingHistory(val projectName: String) {
   )
 
   data class IndexingTimes(
-    var indexingStart: Instant? = null,
-    var indexingEnd: Instant? = null,
-    var pushPropertiesStart: Instant? = null,
-    var pushPropertiesEnd: Instant? = null,
-    var indexExtensionsStart: Instant? = null,
-    var indexExtensionsEnd: Instant? = null,
-    var scanFilesStart: Instant? = null,
-    var scanFilesEnd: Instant? = null,
-    var suspendedDuration: Duration? = null,
+    val updatingStart: ZonedDateTime,
+    var updatingEnd: ZonedDateTime = updatingStart,
+    var indexingDuration: Duration = Duration.ZERO,
+    var pushPropertiesDuration: Duration = Duration.ZERO,
+    var indexExtensionsDuration: Duration = Duration.ZERO,
+    var scanFilesDuration: Duration = Duration.ZERO,
+    var suspendedDuration: Duration = Duration.ZERO,
     var wasInterrupted: Boolean = false
   )
 }

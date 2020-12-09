@@ -51,6 +51,9 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     else if (element instanceof Separator) {
       checkSeparator((Separator)element, holder);
     }
+    else if (element instanceof Synonym) {
+      checkSynonym((Synonym)element, holder);
+    }
     else if (element instanceof Extension) {
       checkExtension((Extension)element, holder);
     }
@@ -60,7 +63,13 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   }
 
   private static void checkSeparator(Separator separator, DomElementAnnotationHolder holder) {
-    checkPropertyCapitalization(holder, separator.getKey(), Nls.Capitalization.Title, separator.getKey().getStringValue(), false);
+    if (checkCapitalization(holder, separator.getText(), Nls.Capitalization.Title)) return;
+    checkCapitalizationWithKey(holder, separator.getKey(), Nls.Capitalization.Title);
+  }
+
+  private static void checkSynonym(Synonym synonym, DomElementAnnotationHolder holder) {
+    if (checkCapitalization(holder, synonym.getText(), Nls.Capitalization.Title)) return;
+    checkCapitalizationWithKey(holder, synonym.getKey(), Nls.Capitalization.Title);
   }
 
   private static void checkOverrideText(OverrideText overrideText, DomElementAnnotationHolder holder) {
@@ -68,11 +77,17 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
     if (DomUtil.hasXml(overrideText.getUseTextOfPlace())) return;
 
-    Action action = overrideText.getParentOfType(Action.class, true);
-    assert action != null;
-    final String resourceKey = "action." + action.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";
+    ActionOrGroup actionOrGroup = overrideText.getParentOfType(ActionOrGroup.class, true);
+    assert actionOrGroup != null;
+    String keyPrefix = getKeyPrefix(actionOrGroup);
+    final String resourceKey = keyPrefix + "." + actionOrGroup.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";
     checkPropertyCapitalization(holder, overrideText, Nls.Capitalization.Title,
                                 resourceKey, true);
+  }
+
+  @NotNull
+  private static String getKeyPrefix(ActionOrGroup actionOrGroup) {
+    return actionOrGroup instanceof Action ? "action" : "group";
   }
 
   private static void checkActionOrGroup(ActionOrGroup actionOrGroup, DomElementAnnotationHolder holder) {
@@ -112,8 +127,9 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     final Nls.Capitalization capitalization = actionOrGroupText.myCapitalization;
     if (checkCapitalization(holder, genericDomValue, capitalization)) return;
 
+    String keyPrefix = getKeyPrefix(actionOrGroup);
     checkPropertyCapitalization(holder, actionOrGroup, capitalization,
-                                "action." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix,
+                                keyPrefix + "." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix,
                                 actionOrGroupText.myRequired.apply(actionOrGroup));
   }
 

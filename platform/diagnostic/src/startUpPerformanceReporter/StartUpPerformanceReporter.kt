@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.write
@@ -28,7 +27,6 @@ import java.nio.ByteBuffer
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
-import kotlin.Comparator
 
 class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   private var startUpFinishedCounter = AtomicInteger()
@@ -41,7 +39,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "23"
+    internal const val VERSION = "25"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -63,8 +61,8 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     private fun doLogStats(projectName: String): StartUpPerformanceReporterValues? {
       val items = mutableListOf<ActivityImpl>()
       val instantEvents = mutableListOf<ActivityImpl>()
-      val activities = CollectionFactory.createSmallMemoryFootprintMap<String, MutableList<ActivityImpl>>()
-      val serviceActivities = CollectionFactory.createSmallMemoryFootprintMap<String, MutableList<ActivityImpl>>()
+      val activities = HashMap<String, MutableList<ActivityImpl>>()
+      val serviceActivities = HashMap<String, MutableList<ActivityImpl>>()
       val services = mutableListOf<ActivityImpl>()
 
       val threadNameManager = IdeThreadNameManager()
@@ -229,16 +227,13 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   }
 }
 
-private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
+private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
                                                val lastReport: ByteBuffer,
                                                val lastMetrics: Object2IntMap<String>)
 
-private fun computePluginCostMap(): MutableMap<String, Object2LongMap<String>> {
-  var result: MutableMap<String, Object2LongMap<String>>
-  synchronized(StartUpMeasurer.pluginCostMap) {
-    result = CollectionFactory.createSmallMemoryFootprintMap(StartUpMeasurer.pluginCostMap)
-    StartUpMeasurer.pluginCostMap.clear()
-  }
+private fun computePluginCostMap(): MutableMap<String, Object2LongOpenHashMap<String>> {
+  val result = HashMap(StartUpMeasurer.pluginCostMap)
+  StartUpMeasurer.pluginCostMap.clear()
 
   for (plugin in PluginManagerCore.getLoadedPlugins()) {
     val id = plugin.pluginId.idString

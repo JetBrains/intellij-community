@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -31,10 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -92,6 +89,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -104,7 +102,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
 
-public class MavenUtil {
+public final class MavenUtil {
   @ApiStatus.Experimental
   @NonNls public static final String MAVEN_NAME = "Maven";
   @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
@@ -349,6 +347,7 @@ public class MavenUtil {
     properties.setProperty("GROUP_ID", projectId.getGroupId());
     properties.setProperty("ARTIFACT_ID", projectId.getArtifactId());
     properties.setProperty("VERSION", projectId.getVersion());
+
     if (parentId != null) {
       conditions.setProperty("HAS_PARENT", "true");
       properties.setProperty("PARENT_GROUP_ID", parentId.getGroupId());
@@ -367,6 +366,18 @@ public class MavenUtil {
             properties.setProperty("PARENT_RELATIVE_PATH", relativePath);
           }
         }
+      }
+    } else {
+      //set language level only for root pom
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+        JavaSdk javaSdk = (JavaSdk)sdk.getSdkType();
+        JavaSdkVersion version = javaSdk.getVersion(sdk);
+        String description = version == null ? null : version.getDescription();
+        boolean shouldSetLangLevel = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_6);
+        conditions.setProperty("SHOULD_SET_LANG_LEVEL", String.valueOf(shouldSetLangLevel));
+        properties.setProperty("COMPILER_LEVEL_SOURCE", description);
+        properties.setProperty("COMPILER_LEVEL_TARGET", description);
       }
     }
     runOrApplyFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, conditions, interactive);
@@ -460,7 +471,7 @@ public class MavenUtil {
       @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(i, null));
+          task.run(new MavenProgressIndicator(project, i, null));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -497,9 +508,9 @@ public class MavenUtil {
                                                  @NotNull final MavenTask task,
                                                  @Nullable("null means application pooled thread")
                                                      ExecutorService executorService) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    final MavenProgressIndicator indicator = new MavenProgressIndicator(manager::getSyncConsole);
+    MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
+    Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
+    final MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;

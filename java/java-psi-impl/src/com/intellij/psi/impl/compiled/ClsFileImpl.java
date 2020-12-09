@@ -482,9 +482,11 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     // build newStub out of lock to avoid deadlock
     StubTree newStubTree = (StubTree)StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
     if (newStubTree == null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("No stub for class file in index: " + getVirtualFile().getPresentableUrl());
-      }
+      if (LOG.isDebugEnabled()) LOG.debug("No stub for class file " + getVirtualFile().getPresentableUrl());
+      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
+    }
+    else if (!(newStubTree.getRoot() instanceof PsiClassHolderFileStub)) {
+      if (LOG.isDebugEnabled()) LOG.debug("Invalid stub for class file " + getVirtualFile().getPresentableUrl() + ": " + newStubTree.getRoot());
       newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
     }
 

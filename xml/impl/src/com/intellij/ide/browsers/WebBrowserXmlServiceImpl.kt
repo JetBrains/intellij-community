@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
+import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.xhtml.XHTMLLanguage
@@ -21,6 +22,9 @@ class WebBrowserXmlServiceImpl : WebBrowserXmlService() {
   }
 
   override fun isHtmlOrXmlFile(psiFile: PsiFile): Boolean {
+    if (!isHtmlFile(psiFile.virtualFile) && psiFile.virtualFile.fileType != XmlFileType.INSTANCE) {
+      return false
+    }
     val baseLanguage: Language = psiFile.viewProvider.baseLanguage
     if (isHtmlOrXmlLanguage(baseLanguage)) {
       return true

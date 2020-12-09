@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
@@ -30,7 +31,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -198,6 +198,15 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     getOptions().setRemoteTarget(targetName);
   }
 
+  @Override
+  public void onNewConfigurationCreated() {
+    super.onNewConfigurationCreated();
+    if (!getName().equals(suggestedName())) {
+      // prevent RC name reset by RunConfigurable.installUpdateListeners on target change in UI
+      getOptions().setNameGenerated(false);
+    }
+  }
+
   public static class MavenSettings implements Cloneable {
     public static final String TAG = "MavenSettings";
 
@@ -350,9 +359,15 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
-      TargetEnvironmentRequest targetEnvironmentRequest = getTargetEnvironmentRequest();
-      if (targetEnvironmentRequest == null || targetEnvironmentRequest instanceof LocalTargetEnvironmentRequest) {
-        return MavenRunConfiguration.this.createJavaParameters(getEnvironment().getProject());
+      if (getEnvironment().getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory) {
+        JavaParameters parameters = MavenRunConfiguration.this.createJavaParameters(getEnvironment().getProject());
+        JavaRunConfigurationExtensionManager.getInstance().updateJavaParameters(
+          MavenRunConfiguration.this,
+          parameters,
+          getEnvironment().getRunnerSettings(),
+          getEnvironment().getExecutor()
+        );
+        return parameters;
       } else {
         return new JavaParameters();
       }
@@ -428,9 +443,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Override
     public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
       final ProcessHandler processHandler = startProcess();
-      EmptyProgressIndicator environmentIndicator = new EmptyProgressIndicator();
       ExecutionEnvironment environment = getEnvironment();
-      TargetEnvironment targetEnvironment = environment.getPreparedTargetEnvironment(this, environmentIndicator);
+      TargetEnvironment targetEnvironment = environment.getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
       Function<String, String> targetFileMapper = path -> {
         return path != null && SystemInfo.isWindows && path.charAt(0) == '/' ? path.substring(1) : path;
       };
@@ -444,20 +458,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
           if (targetRootPath instanceof TargetEnvironment.TargetPath.Temporary &&
               mavenProjectFolderVolumeType.getId().equals(((TargetEnvironment.TargetPath.Temporary)targetRootPath).getHint())) {
             String targetPath = TargetEnvironmentFunctions.getTargetUploadPath(uploadVolume).apply(targetEnvironment);
-            targetFileMapper = path -> {
-              if (path == null) return null;
-              boolean isWindows = targetEnvironment.getTargetPlatform().getPlatform() == Platform.WINDOWS;
-              path = isWindows && path.charAt(0) == '/' ? path.substring(1) : path;
-              if (path.startsWith(targetPath)) {
-                return Paths.get(localPath, trimStart(path, targetPath)).toString();
-              }
-              // workaround for "var -> private/var" symlink
-              // TODO target absolute path can be used instead for such mapping of target file absolute paths
-              if (path.startsWith("/private" + targetPath)) {
-                return Paths.get(localPath, trimStart(path, "/private" + targetPath)).toString();
-              }
-              return path;
-            };
+            targetFileMapper = createTargetFileMapper(targetEnvironment, localPath, targetPath);
             break;
           }
         }
@@ -511,7 +512,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         return super.createTargetedCommandLine(request, configuration);
       }
       if (configuration == null) {
-        throw new CantRunException("Cannot find target environment configuration");
+        throw new CantRunException(RunnerBundle.message("cannot.find.target.environment.configuration"));
       }
       return new MavenCommandLineSetup(getProject(), myName, request, configuration)
         .setupCommandLine(mySettings)
@@ -519,23 +520,23 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Override
-    public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator progressIndicator) {
+    public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment,
+                                               @NotNull TargetProgressIndicator targetProgressIndicator) {
       if (environment instanceof LocalTargetEnvironment) {
-        super.handleCreatedTargetEnvironment(environment, progressIndicator);
+        super.handleCreatedTargetEnvironment(environment, targetProgressIndicator);
       }
       else {
         TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
         Objects.requireNonNull(targetedCommandLineBuilder.getUserData(MavenCommandLineSetup.getSetupKey()))
-          .provideEnvironment(environment, progressIndicator);
+          .provideEnvironment(environment, targetProgressIndicator);
       }
     }
 
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
-      EmptyProgressIndicator environmentIndicator = new EmptyProgressIndicator();
       ExecutionEnvironment environment = getEnvironment();
-      TargetEnvironment remoteEnvironment = environment.getPreparedTargetEnvironment(this, environmentIndicator);
+      TargetEnvironment remoteEnvironment = environment.getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
       TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
       TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
       Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
@@ -573,6 +574,24 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
   }
 
+  private static @NotNull Function<String, String> createTargetFileMapper(@NotNull TargetEnvironment targetEnvironment,
+                                                                          @NotNull String projectRootlocalPath,
+                                                                          @NotNull String projectRootTargetPath) {
+    return path -> {
+      if (path == null) return null;
+      boolean isWindows = targetEnvironment.getTargetPlatform().getPlatform() == Platform.WINDOWS;
+      path = isWindows && path.charAt(0) == '/' ? path.substring(1) : path;
+      if (path.startsWith(projectRootTargetPath)) {
+        return Paths.get(projectRootlocalPath, trimStart(path, projectRootTargetPath)).toString();
+      }
+      // workaround for "var -> private/var" symlink
+      // TODO target absolute path can be used instead for such mapping of target file absolute paths
+      if (path.startsWith("/private" + projectRootTargetPath)) {
+        return Paths.get(projectRootlocalPath, trimStart(path, "/private" + projectRootTargetPath)).toString();
+      }
+      return path;
+    };
+  }
 
   public static class MavenHandlerFilterSpyWrapper extends ProcessHandler {
     private final ProcessHandler myOriginalHandler;

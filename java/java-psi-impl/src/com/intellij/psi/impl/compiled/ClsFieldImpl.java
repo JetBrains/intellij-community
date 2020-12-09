@@ -4,7 +4,6 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
@@ -33,13 +32,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   public ClsFieldImpl(@NotNull PsiFieldStub stub) {
     super(stub);
-    myTypeElement = new AtomicNotNullLazyValue<PsiTypeElement>() {
-      @NotNull
-      @Override
-      protected PsiTypeElement compute() {
-        return new ClsTypeElementImpl(ClsFieldImpl.this, getStub().getType(false));
-      }
-    };
+    myTypeElement = NotNullLazyValue.atomicLazy(() -> new ClsTypeElementImpl(this, getStub().getType()));
     myInitializer = new VolatileNullableLazyValue<PsiExpression>() {
       @Nullable
       @Override

@@ -356,7 +356,7 @@ public class FileTreeModelBuilder {
 
     PackageDependenciesNode dirNode = getFileParentNode(vFile);
     if (findNodeForPsiElement(dirNode, file) == null) {  //check if dir node already contains child
-      dirNode.add(new FileNode(vFile, myProject, isMarked));
+      dirNode.add(new FileNode(vFile, myProject, true));
     }
     return rootToReload;
   }

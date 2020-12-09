@@ -19,7 +19,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Immutable object representing a number of type constraints applied to some reference value.
@@ -350,7 +352,7 @@ public interface TypeConstraint {
         if (notInst.isAssignableFrom(type)) return null;
       }
       
-      List<Exact> moreGeneric = new ArrayList<>();
+      Set<Exact> newInstanceof = new THashSet<>(myInstanceOf);
       for (Exact alreadyInstanceof : myInstanceOf) {
         if (type.isAssignableFrom(alreadyInstanceof)) {
           return this;
@@ -359,12 +361,9 @@ public interface TypeConstraint {
           return null;
         }
         if (alreadyInstanceof.isAssignableFrom(type)) {
-          moreGeneric.add(alreadyInstanceof);
+          newInstanceof.remove(alreadyInstanceof);
         }
       }
-
-      Set<Exact> newInstanceof = new THashSet<>(myInstanceOf);
-      newInstanceof.removeAll(moreGeneric);
       newInstanceof.add(type);
       return new Constrained(newInstanceof, myNotInstanceOf);
     }
@@ -376,19 +375,17 @@ public interface TypeConstraint {
         if (type.isAssignableFrom(dfaTypeValue)) return null;
       }
 
-      List<Exact> moreSpecific = new ArrayList<>();
+      Set<Exact> newNotInstanceof = new THashSet<>(myNotInstanceOf);
       for (Exact alreadyNotInstanceof : myNotInstanceOf) {
         if (alreadyNotInstanceof.isAssignableFrom(type)) {
           return this;
         }
         if (type.isAssignableFrom(alreadyNotInstanceof)) {
-          moreSpecific.add(alreadyNotInstanceof);
+          newNotInstanceof.remove(alreadyNotInstanceof);
         }
       }
-
-      Set<Exact> newNotInstanceof = new THashSet<>(myNotInstanceOf);
-      newNotInstanceof.removeAll(moreSpecific);
       newNotInstanceof.add(type);
+      
       return new Constrained(myInstanceOf, newNotInstanceof);
     }
 

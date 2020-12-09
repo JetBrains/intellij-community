@@ -6,22 +6,25 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.pico.DefaultPicoContainer;
-import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @ApiStatus.Internal
-public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
+public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implements ImplementationClassResolver {
   public BeanExtensionPoint(@NotNull String name,
                             @NotNull String className,
                             @NotNull PluginDescriptor pluginDescriptor,
                             boolean dynamic) {
     super(name, className, pluginDescriptor, null, dynamic);
+  }
+
+  @Override
+  public final @NotNull Class<?> resolveImplementationClass(@NotNull ComponentManager componentManager, @NotNull ExtensionComponentAdapter adapter)
+    throws ClassNotFoundException {
+    return getExtensionClass();
   }
 
   @Override
@@ -40,35 +43,19 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
     Element effectiveElement = !JDOMUtil.isEmpty(extensionElement) ? extensionElement : null;
     // project level extensions requires Project as constructor argument, so, for now constructor injection disabled only for app level
     if (((DefaultPicoContainer)componentManager.getPicoContainer()).getParent() == null) {
-      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
+      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement, this);
     }
-    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement, this);
   }
 
   @Override
   void unregisterExtensions(@NotNull ComponentManager componentManager,
                             @NotNull PluginDescriptor pluginDescriptor,
-                            @NotNull List<? extends Element> elements,
-                            @NotNull List<? super Runnable> priorityListenerCallbacks,
-                            @NotNull List<? super Runnable> listenerCallbacks) {
-    Map<String, String> defaultAttributes = new HashMap<>();
-    try {
-      Object defaultInstance = componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(getClassName(), pluginDescriptor);
-      defaultAttributes.putAll(XmlExtensionAdapter.getSerializedDataMap(XmlSerializer.serialize(defaultInstance)));
-    }
-    catch (Exception e) {
-      if (!(e.getCause() instanceof ClassNotFoundException)) {
-        throw e;
-      }
-    }
-
-    unregisterExtensions((x, adapter) -> {
-      if (!(adapter instanceof XmlExtensionAdapter)) {
-        return true;
-      }
-      XmlExtensionAdapter xmlExtensionAdapter = (XmlExtensionAdapter)adapter;
-      return xmlExtensionAdapter.getPluginDescriptor() != pluginDescriptor ||
-             !xmlExtensionAdapter.isLoadedFromAnyElement(elements, defaultAttributes);
+                            @NotNull List<Element> elements,
+                            @NotNull List<Runnable> priorityListenerCallbacks,
+                            @NotNull List<Runnable> listenerCallbacks) {
+    unregisterExtensions(adapter -> {
+      return adapter.getPluginDescriptor() != pluginDescriptor;
     }, false, priorityListenerCallbacks, listenerCallbacks);
   }
 }

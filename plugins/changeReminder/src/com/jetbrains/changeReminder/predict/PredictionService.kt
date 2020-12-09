@@ -35,6 +35,8 @@ internal class PredictionService(val project: Project) : Disposable {
   private val userSettings = service<UserSettings>()
   private val LOCK = Object()
 
+  private var predictionRequestDisposable = Disposer.newDisposable()
+
   private var predictionData: PredictionData = PredictionData.EmptyPrediction(PredictionData.EmptyPredictionReason.SERVICE_INIT)
 
   val predictionDataToDisplay
@@ -59,16 +61,13 @@ internal class PredictionService(val project: Project) : Disposable {
   private val gitHistoryTraverserListener = object : GitHistoryTraverserListener {
     override fun traverserCreated(newTraverser: GitHistoryTraverser) = synchronized(LOCK) {
       updateTraverser(newTraverser)
+      Disposer.register(newTraverser, Disposable { onTraverserDisposed() })
     }
 
     override fun graphUpdated() = synchronized(LOCK) {
       predictionRequirements?.filesHistoryProvider?.clear()
       setEmptyPrediction(PredictionData.EmptyPredictionReason.GRAPH_CHANGED)
       calculatePrediction()
-    }
-
-    override fun traverserDisposed() = synchronized(LOCK) {
-      disposeTraverser()
     }
   }
 
@@ -145,7 +144,7 @@ internal class PredictionService(val project: Project) : Disposable {
     calculatePrediction()
   }
 
-  private fun disposeTraverser() {
+  private fun onTraverserDisposed() {
     setEmptyPrediction(PredictionData.EmptyPredictionReason.TRAVERSER_INVALID)
     val (filesHistoryProvider) = predictionRequirements ?: return
     predictionRequirements = null
@@ -154,6 +153,12 @@ internal class PredictionService(val project: Project) : Disposable {
 
   private fun calculatePrediction() = synchronized(LOCK) {
     nodeExpandedListener.tryToSubscribe()
+
+    if (!Disposer.isDisposed(predictionRequestDisposable)) {
+      Disposer.dispose(predictionRequestDisposable)
+    }
+    predictionRequestDisposable = Disposer.newDisposable()
+
     val changes = ChangeListManager.getInstance(project).defaultChangeList.changes
     if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) {
       setEmptyPrediction(PredictionData.EmptyPredictionReason.TOO_MANY_FILES)
@@ -172,7 +177,7 @@ internal class PredictionService(val project: Project) : Disposable {
     }
     val rootFiles = getGitRootFiles(project, changeListFiles)
     val roots = rootFiles.keys
-    filesHistoryProvider.traverser.withIndex(roots, this@PredictionService) { indexedRoots ->
+    filesHistoryProvider.traverser.addIndexingListener(roots, predictionRequestDisposable) { indexedRoots ->
       taskController.request(
         PredictionRequest(filesHistoryProvider, indexedRoots.map { it to rootFiles.getValue(it.root) }.toMap())
       )
@@ -191,9 +196,11 @@ internal class PredictionService(val project: Project) : Disposable {
   }
 
   private fun shutdownService() = synchronized(LOCK) {
+    Disposer.dispose(predictionRequestDisposable)
+
     nodeExpandedListener.unsubscribe()
 
-    disposeTraverser()
+    onTraverserDisposed()
 
     Disposer.dispose(serviceDisposable)
   }

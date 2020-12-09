@@ -2,6 +2,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
+import com.intellij.build.BuildContentManager
 import com.intellij.execution.*
 import com.intellij.execution.configuration.CompatibilityAwareRunProfile
 import com.intellij.execution.configurations.RunConfiguration
@@ -17,6 +18,8 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -26,11 +29,11 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -38,19 +41,28 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
+import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.Alarm
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import java.awt.BorderLayout
 import java.io.OutputStream
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 
@@ -58,6 +70,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
+
     @JvmField
     val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
 
@@ -223,6 +236,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
               val processHandler = descriptor.processHandler
               if (processHandler != null) {
                 if (!processHandler.isStartNotified) {
+                  project.messageBus.syncPublisher(EXECUTION_TOPIC).processStarting(executor.id, environment, processHandler)
                   processHandler.startNotify()
                 }
                 inProgress.remove(InProgressEntry(executor.id, environment.runner.runnerId))
@@ -527,12 +541,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   }
 
   override fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?> {
-    if (!(environment.runProfile is TargetEnvironmentAwareRunProfile &&
-          Experiments.getInstance().isFeatureEnabled("run.targets"))) {
+    if (!(environment.runProfile is TargetEnvironmentAwareRunProfile)) {
       return resolvedPromise()
     }
 
-    if ((environment.runProfile as TargetEnvironmentAwareRunProfile).defaultTargetName == null) {
+    val targetEnvironmentAwareRunProfile = environment.runProfile as TargetEnvironmentAwareRunProfile
+    if (!targetEnvironmentAwareRunProfile.needPrepareTarget()) {
       return resolvedPromise()
     }
 
@@ -540,35 +554,71 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(environment.project).console
     ProcessTerminatedListener.attach(processHandler)
     consoleView.attachToProcess(processHandler)
-    val executionResult = DefaultExecutionResult(consoleView, processHandler)
-    val descriptor = RunContentDescriptor(executionResult.executionConsole, executionResult.processHandler,
-                                          executionResult.executionConsole.component,
-                                          ExecutionBundle.message("tab.title.prepare.environment", environment.executionTarget.displayName))
+
+    val component = TargetPrepareComponent(consoleView)
+    val buildContentManager = BuildContentManager.getInstance(environment.project)
+    val contentName = targetEnvironmentAwareRunProfile.defaultTargetName?.let {
+      ExecutionBundle.message("tab.title.prepare.environment", it, environment.runProfile.name)
+    } ?: ExecutionBundle.message("tab.title.prepare.target.environment", environment.runProfile.name)
+    val toolWindow = buildContentManager.orCreateToolWindow
+    val contentManager: ContentManager = toolWindow.contentManager
+    val contentImpl = ContentImpl(component, contentName, true)
+    contentImpl.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
+    contentImpl.icon = environment.runProfile.icon
+
+    for (content in contentManager.contents) {
+      if (contentName != content.displayName) continue
+      if (content.isPinned) continue
+
+      val contentComponent = content.component
+      if (contentComponent !is TargetPrepareComponent) continue
+
+
+      if (contentComponent.isPreparationFinished()) {
+        contentManager.removeContent(content, true)
+      }
+    }
+
+    contentManager.addContent(contentImpl)
+    contentManager.setSelectedContent(contentImpl)
+    toolWindow.activate(null)
+
     val promise = AsyncPromise<Any?>()
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
-        executionResult.processHandler.startNotify()
-        val progressIndicator = object : ProgressIndicatorBase() {
-          override fun setText(text: String) {
-            processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
+        processHandler.startNotify()
+        val targetProgressIndicator = object : TargetEnvironmentAwareRunProfileState.TargetProgressIndicator {
+          @Volatile
+          var stopped = false
+
+          override fun addText(text: String, key: Key<*>) {
+            processHandler.notifyTextAvailable(text, key)
           }
 
-          override fun setText2(text: String) {
-            processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
+          override fun isCanceled(): Boolean {
+            return false
           }
+
+          override fun stop() {
+            stopped = true
+          }
+
+          override fun isStopped(): Boolean = stopped
         }
-        promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
+        promise.setResult(environment.prepareTargetEnvironment(currentState, targetProgressIndicator))
       }
       catch (t: Throwable) {
-        promise.setError(t)
+        LOG.warn(t)
+        promise.setError(ExecutionBundle.message("message.error.happened.0", t.localizedMessage))
         processHandler.notifyTextAvailable(t.localizedMessage, ProcessOutputType.STDERR)
+        processHandler.notifyTextAvailable("\n", ProcessOutputType.STDERR)
       }
       finally {
         val exitCode = if (promise.isSucceeded) 0 else -1
         processHandler.notifyProcessTerminated(exitCode)
+        component.setPreparationFinished()
       }
     }
-    RunContentManager.getInstance(environment.project).showRunContent(environment.executor, descriptor)
     return promise
   }
 
@@ -584,28 +634,71 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         return
       }
 
-      if (((showSettings && runnerAndConfigurationSettings.isEditBeforeRun) || !RunManagerImpl.canRunConfiguration(environment)) && !DumbService.isDumb(project)) {
-        if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
-          return
-        }
-
-        while (!RunManagerImpl.canRunConfiguration(environment)) {
-          val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
-          val title = ExecutionBundle.message("dialog.title.change.configuration.settings")
-          if (Messages.showYesNoDialog(project, message, title, CommonBundle.message("button.edit"), ExecutionBundle.message("run.continue.anyway"), Messages.getErrorIcon()) != Messages.YES) {
-            break
-          }
+      if (!DumbService.isDumb(project)) {
+        if (showSettings && runnerAndConfigurationSettings.isEditBeforeRun) {
           if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
             return
           }
+          editConfigurationUntilSuccess(environment, assignNewId)
         }
+        else {
+          ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
+            .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+              if (canRun) {
+                executeConfiguration(environment, environment.runner, assignNewId, this.project, environment.runnerAndConfigurationSettings)
+                return@finishOnUiThread
+              }
 
-        // corresponding runner can be changed after configuration edit
-        runner = ProgramRunner.getRunner(environment.executor.id, runnerAndConfigurationSettings.configuration)
-                 ?: throw ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for", environment.runProfile.name))
+              if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+                return@finishOnUiThread
+              }
+              editConfigurationUntilSuccess(environment, assignNewId)
+            }
+            .expireWith(this)
+            .submit(AppExecutorUtil.getAppExecutorService())
+        }
+        return
       }
     }
 
+    executeConfiguration(environment, runner, assignNewId, project, runnerAndConfigurationSettings)
+  }
+
+  private fun editConfigurationUntilSuccess(environment: ExecutionEnvironment, assignNewId: Boolean) {
+    ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
+      .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+        val runAnyway = if (!canRun) {
+          val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
+          val title = ExecutionBundle.message("dialog.title.change.configuration.settings")
+          Messages.showYesNoDialog(project, message, title, CommonBundle.message("button.edit"), ExecutionBundle.message("run.continue.anyway"), Messages.getErrorIcon()) != Messages.YES
+        } else true
+        if (canRun || runAnyway) {
+          val runner = ProgramRunner.getRunner(environment.executor.id, environment.runnerAndConfigurationSettings!!.configuration)
+          if (runner == null) {
+            ExecutionUtil.handleExecutionError(environment,
+                                               ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for",
+                                                                                          environment.runProfile.name)))
+          }
+          else {
+            executeConfiguration(environment, runner, assignNewId, project, environment.runnerAndConfigurationSettings)
+          }
+          return@finishOnUiThread
+        }
+        if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+          return@finishOnUiThread
+        }
+
+        editConfigurationUntilSuccess(environment, assignNewId)
+      }
+      .expireWith(this)
+      .submit(AppExecutorUtil.getAppExecutorService())
+  }
+
+  private fun executeConfiguration(environment: ExecutionEnvironment,
+                                   runner: @NotNull ProgramRunner<*>,
+                                   assignNewId: Boolean,
+                                   project: @NotNull Project,
+                                   runnerAndConfigurationSettings: @Nullable RunnerAndConfigurationSettings?) {
     try {
       var effectiveEnvironment = environment
       if (runner != effectiveEnvironment.runner) {
@@ -830,4 +923,23 @@ private class ProcessExecutionListener(private val project: Project,
 
 private data class InProgressEntry(val executorId: String, val runnerId: String)
 
-private data class RunningConfigurationEntry(val descriptor: RunContentDescriptor, val settings: RunnerAndConfigurationSettings?, val executor: Executor)
+private data class RunningConfigurationEntry(val descriptor: RunContentDescriptor,
+                                             val settings: RunnerAndConfigurationSettings?,
+                                             val executor: Executor)
+
+private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLayout()), Disposable {
+  init {
+    add(console.component, BorderLayout.CENTER)
+  }
+
+  @Volatile
+  private var finished = false
+  fun isPreparationFinished() = finished
+  fun setPreparationFinished() {
+    finished = true
+  }
+
+  override fun dispose() {
+    Disposer.dispose(console)
+  }
+}

@@ -1,6 +1,6 @@
 import importlib.abc
 import importlib.machinery
-import sys
+import os
 import types
 from typing import Any, Callable, List, Optional, Union
 
@@ -23,17 +23,9 @@ def spec_from_loader(
     loader_state: Optional[Any] = ...,
     is_package: Optional[bool] = ...,
 ) -> importlib.machinery.ModuleSpec: ...
-
-if sys.version_info >= (3, 6):
-    import os
-
-    _Path = Union[str, bytes, os.PathLike]
-else:
-    _Path = str
-
 def spec_from_file_location(
     name: str,
-    location: _Path,
+    location: Union[str, bytes, os.PathLike],
     *,
     loader: Optional[importlib.abc.Loader] = ...,
     submodule_search_locations: Optional[List[str]] = ...,

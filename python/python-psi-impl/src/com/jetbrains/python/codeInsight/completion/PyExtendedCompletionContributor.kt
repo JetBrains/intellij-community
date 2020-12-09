@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiNamedElement
@@ -59,7 +60,7 @@ abstract class PyExtendedCompletionContributor : CompletionContributor() {
    * Checks whether completion should be performed for a given [parameters] and delegates actual work to [doFillCompletionVariants].
    */
   final override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    if (!shouldDoCompletion(parameters)) return
+    if (!shouldDoCompletion(parameters, result)) return
     doFillCompletionVariants(parameters, result)
   }
 
@@ -68,8 +69,13 @@ abstract class PyExtendedCompletionContributor : CompletionContributor() {
    */
   protected abstract fun doFillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet)
 
-  private fun shouldDoCompletion(parameters: CompletionParameters): Boolean {
+  private fun shouldDoCompletion(parameters: CompletionParameters, result: CompletionResultSet): Boolean {
     if (!parameters.isExtendedCompletion) {
+      return false
+    }
+
+    if (result.prefixMatcher.prefix.isEmpty()) {
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().longerThan(0))
       return false
     }
 

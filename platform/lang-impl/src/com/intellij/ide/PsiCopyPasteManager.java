@@ -5,7 +5,6 @@ import com.intellij.ide.dnd.LinuxDragAndDropSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -40,7 +39,7 @@ import java.util.stream.Stream;
 @Service
 public final class PsiCopyPasteManager {
   public static PsiCopyPasteManager getInstance() {
-    return ServiceManager.getService(PsiCopyPasteManager.class);
+    return ApplicationManager.getApplication().getService(PsiCopyPasteManager.class);
   }
 
   private static final Logger LOG = Logger.getInstance(PsiCopyPasteManager.class);
@@ -50,7 +49,7 @@ public final class PsiCopyPasteManager {
 
   public PsiCopyPasteManager() {
     myCopyPasteManager = CopyPasteManagerEx.getInstanceEx();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myRecentData != null && (!myRecentData.isValid() || myRecentData.getProject() == project)) {
@@ -285,29 +284,35 @@ public final class PsiCopyPasteManager {
   public static List<File> asFileList(final PsiElement[] elements) {
     final List<File> result = new ArrayList<>();
     for (PsiElement element : elements) {
-      final PsiFileSystemItem psiFile;
-      if (element instanceof PsiFileSystemItem) {
-        psiFile = (PsiFileSystemItem)element;
-      }
-      else if (element instanceof PsiDirectoryContainer) {
-        final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
-        if (directories.length == 0) {
-          LOG.error("No directories for " + element + " of " + element.getClass());
-          return null;
-        }
-        psiFile = directories[0];
-      }
-      else {
-        psiFile = element.getContainingFile();
-      }
-      if (psiFile != null) {
-        VirtualFile vFile = psiFile.getVirtualFile();
-        if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
-          result.add(new File(vFile.getPath()));
-        }
+      VirtualFile vFile = asVirtualFile(element);
+      if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
+        result.add(new File(vFile.getPath()));
       }
     }
     return result.isEmpty() ? null : result;
+  }
+
+  @Nullable
+  public static VirtualFile asVirtualFile(@Nullable PsiElement element) {
+    PsiFileSystemItem psiFile = null;
+    if (element instanceof PsiFileSystemItem) {
+      psiFile = (PsiFileSystemItem)element;
+    }
+    else if (element instanceof PsiDirectoryContainer) {
+      final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
+      if (directories.length == 0) {
+        LOG.error("No directories for " + element + " of " + element.getClass());
+        return null;
+      }
+      psiFile = directories[0];
+    }
+    else if (element != null) {
+      psiFile = element.getContainingFile();
+    }
+    if (psiFile != null) {
+      return psiFile.getVirtualFile();
+    }
+    return null;
   }
 
   public static final class EscapeHandler extends KeyAdapter {

@@ -1,20 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
-public class TypeIconEP extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<TypeIconEP> EP_NAME = ExtensionPointName.create("com.intellij.typeIcon");
+final class TypeIconEP implements PluginAware {
+  @Transient
+  private PluginDescriptor pluginDescriptor;
 
   @Attribute("className")
   @RequiredElement
@@ -24,14 +24,12 @@ public class TypeIconEP extends AbstractExtensionPointBean {
   @RequiredElement
   public String icon;
 
-  private final NullableLazyValue<Icon> myIcon = new NullableLazyValue<Icon>() {
-    @Override
-    protected Icon compute() {
-      return IconLoader.findIcon(icon, getLoaderForClass());
-    }
-  };
+  @Transient final NullableLazyValue<Icon> lazyIcon = NullableLazyValue.createValue(() -> {
+    return IconLoader.findIcon(icon, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader());
+  });
 
-  public NullableLazyValue<Icon> getIcon() {
-    return myIcon;
+  @Override
+  public final void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
   }
 }

@@ -17,6 +17,9 @@ public abstract class UserFileType<T extends UserFileType<T>> implements FileTyp
   private Icon myIcon;
   private String myIconPath;
 
+  protected UserFileType() {
+  }
+
   public abstract SettingsEditor<T> getEditor();
 
   @Override
@@ -71,16 +74,6 @@ public abstract class UserFileType<T extends UserFileType<T>> implements FileTyp
       }
     }
     return icon;
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
   }
 
   public void copyFrom(@NotNull UserFileType<T> newType) {

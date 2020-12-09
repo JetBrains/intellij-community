@@ -33,8 +33,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -792,8 +792,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void showFailedTestInfoIfNecessary(@NotNull PyStackFrame frame) throws PyDebuggerException {
-    PyExecutionStack executionStack = ((PyExecutionStack)getSession().getSuspendContext().getActiveExecutionStack());
-    if (executionStack == null || !isFailedTestStop(executionStack.getThreadInfo())) return;
+    PyExecutionStack pyExecutionStack = null;
+    XDebugSession session = getSession();
+    if (session != null) {
+      XSuspendContext suspendContext = session.getSuspendContext();
+      if (suspendContext != null) {
+        XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
+        pyExecutionStack = executionStack != null ? (PyExecutionStack)executionStack : null;
+      }
+    }
+
+    if (pyExecutionStack == null || !isFailedTestStop(pyExecutionStack.getThreadInfo())) return;
 
     XValueChildrenList values = getFrameFromCache(frame);
     if (values == null) return;
@@ -814,14 +823,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         errorMessage = errorMessage.replaceFirst(" :: ", "");
       }
 
-      PyThreadInfo threadInfo = executionStack.getThreadInfo();
+      PyThreadInfo threadInfo = pyExecutionStack.getThreadInfo();
       List<PyStackFrameInfo> threadFrames = threadInfo.getFrames();
       boolean isTestSetUpFail = false;
       if (threadFrames != null && (threadFrames.size() == 1 || threadFrames.size() > 1 && PyUnitTestsDebuggingService.isErrorInTestSetUpOrTearDown(threadFrames))) {
         isTestSetUpFail = true;
       }
       getProject().getService(PyUnitTestsDebuggingService.class).showFailedTestInlay(
-        getSession(), frame, exceptionType, errorMessage, isTestSetUpFail);
+        session, frame, exceptionType, errorMessage, isTestSetUpFail);
     }
   }
 
@@ -845,14 +854,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         if (!isConnected()) return;
         for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
           PyDebugValue value = asyncValue.getDebugValue();
-          XValueNode node = value.getLastNode();
-          if (node != null && !node.isObsolete()) {
-            if (e.getMessage().startsWith("Timeout")) {
-              value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
-              PyVariableViewSettings.showWarningMessage(getCurrentRootNode());
-            }
-            else {
-              LOG.error(e);
+          for (XValueNode node : value.getValueNodes()) {
+            if (node != null && !node.isObsolete()) {
+              if (e.getMessage().startsWith("Timeout")) {
+                value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
+                PyVariableViewSettings.showWarningMessage(getCurrentRootNode());
+              }
+              else {
+                LOG.error(e);
+              }
             }
           }
         }

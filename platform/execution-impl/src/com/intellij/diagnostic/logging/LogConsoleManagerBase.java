@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -33,7 +34,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
   }
 
   @Override
-  public void addLogConsole(@NotNull final String name,
+  public void addLogConsole(@NlsContexts.TabTitle @NotNull final String name,
                             @NotNull final String path,
                             @NotNull Charset charset,
                             final long skippedContent,

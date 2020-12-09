@@ -8,43 +8,47 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class BaseFixture implements IdeaTestFixture {
-  private boolean myInitialized;
-  private boolean myDisposed;
-  private final Disposable myTestRootDisposable = Disposer.newDisposable();
+import static org.junit.Assert.assertFalse;
 
+public class BaseFixture implements IdeaTestFixture {
   static {
     IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
   }
 
+  private boolean myInitialized;
+  private boolean myDisposed;
+  private @Nullable List<Throwable> mySuppressedExceptions;
+  private final Disposable myTestRootDisposable = Disposer.newDisposable();
+
+  static {
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+  }
+
   @Override
   public void setUp() throws Exception {
-    Assert.assertFalse("setUp() already has been called", myInitialized);
-    Assert.assertFalse("tearDown() already has been called", myDisposed);
+    assertFalse("setUp() already has been called", myInitialized);
+    assertFalse("tearDown() already has been called", myDisposed);
     myInitialized = true;
   }
 
   @Override
   public void tearDown() throws Exception {
-    if (!myInitialized) {
-      return;
-    }
+    if (!myInitialized) return;
 
-    Assert.assertFalse("tearDown() already has been called", myDisposed);
+    assertFalse("tearDown() already has been called", myDisposed);
     new RunAll(
       () -> UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS),
       () -> disposeRootDisposable()
-    ).run(ObjectUtils.notNull(mySuppressedExceptions, ContainerUtil.emptyList()));
+    ).run(mySuppressedExceptions);
     myDisposed = true;
+
     resetClassFields(getClass());
   }
 
@@ -56,7 +60,7 @@ public class BaseFixture implements IdeaTestFixture {
     });
   }
 
-  private void resetClassFields(final Class<?> aClass) {
+  private void resetClassFields(Class<?> aClass) {
     try {
       UsefulTestCase.clearDeclaredFields(this, aClass);
     }
@@ -69,8 +73,7 @@ public class BaseFixture implements IdeaTestFixture {
     }
   }
 
-  @NotNull
-  public final Disposable getTestRootDisposable() {
+  public final @NotNull Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }
 
@@ -93,12 +96,9 @@ public class BaseFixture implements IdeaTestFixture {
    * </pre>
    */
   protected void addSuppressedException(@NotNull Throwable e) {
-    List<Throwable> list = mySuppressedExceptions;
-    if (list == null) {
-      mySuppressedExceptions = list = new SmartList<>();
+    if (mySuppressedExceptions == null) {
+      mySuppressedExceptions = new SmartList<>();
     }
-    list.add(e);
+    mySuppressedExceptions.add(e);
   }
-
-  private List<Throwable> mySuppressedExceptions;
 }

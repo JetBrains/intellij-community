@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
@@ -16,6 +15,8 @@ abstract class BaseCommitExecutorAction : JButtonAction(null) {
     isEnabledInModalContext = true
   }
 
+  override fun createButton(): JButton = JButton().apply { isOpaque = false }
+
   override fun update(e: AnActionEvent) {
     val workflowHandler = e.getContextCommitWorkflowHandler()
     val executor = getCommitExecutor(workflowHandler)
@@ -24,13 +25,6 @@ abstract class BaseCommitExecutorAction : JButtonAction(null) {
     e.presentation.isEnabled = workflowHandler != null && executor != null && workflowHandler.isExecutorEnabled(executor)
 
     updateButtonFromPresentation(e)
-  }
-
-  override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
-    button.putClientProperty("ActionToolbar.smallVariant", null)
-    button.isOpaque = false
-
-    super.updateButtonFromPresentation(button, presentation)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

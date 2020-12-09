@@ -251,7 +251,8 @@ public final class FoldingUpdate {
     Comparator<Language> preferBaseLanguage = Comparator.comparing((Language l) -> l != viewProvider.getBaseLanguage());
     List<Language> languages = ContainerUtil.sorted(viewProvider.getLanguages(), preferBaseLanguage.thenComparing(Language::getID));
 
-    DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence()) : null;
+    boolean slashR = document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR();
+    DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence(), slashR, true) : null;
     List<RangeMarker> hardRefToRangeMarkers = new ArrayList<>();
 
     for (Language language : languages) {
@@ -301,8 +302,7 @@ public final class FoldingUpdate {
     if (range1.equals(range2)) return true;
     if (range1.contains(range2) || range2.contains(range1)) return false;
 
-    TextRange intersection = range1.intersection(range2);
-    return intersection != null && !intersection.isEmpty();
+    return range1.intersectsStrict(range2);
   }
 
   private static void diagnoseIncorrectRange(@NotNull PsiFile file,

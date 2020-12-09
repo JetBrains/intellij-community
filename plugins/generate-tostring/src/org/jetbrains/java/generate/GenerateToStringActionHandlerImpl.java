@@ -62,7 +62,7 @@ import java.util.List;
  * The action-handler that does the code generation.
  */
 public class GenerateToStringActionHandlerImpl implements GenerateToStringActionHandler, CodeInsightActionHandler {
-    private static final Logger logger = Logger.getInstance("#GenerateToStringActionHandlerImpl");
+    private static final Logger LOG = Logger.getInstance(GenerateToStringActionHandlerImpl.class);
 
     @Override
     public boolean startInWriteAction() {
@@ -87,22 +87,21 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
             return;
         }
-        logger.debug("+++ doExecuteAction - START +++");
+        LOG.debug("+++ doExecuteAction - START +++");
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Current project " + project.getName());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Current project " + project.getName());
         }
 
         final PsiElementClassMember[] dialogMembers = buildMembersToShow(clazz);
 
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
-        logger.debug("Displaying member chooser dialog");
+        LOG.debug("Displaying member chooser dialog");
 
         final MemberChooser<PsiElementClassMember> chooser =
             new MemberChooser<PsiElementClassMember>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
-                @Nullable
                 @Override
-                protected String getHelpId() {
+                protected @NotNull String getHelpId() {
                     return "editing.altInsert.tostring";
                 }
 
@@ -148,7 +147,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             }
         }
 
-        logger.debug("+++ doExecuteAction - END +++");
+        LOG.debug("+++ doExecuteAction - END +++");
     }
 
     private static PsiElementClassMember[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember[] dialogMembers) {
@@ -166,12 +165,12 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     public static PsiElementClassMember[] buildMembersToShow(PsiClass clazz) {
         Config config = GenerateToStringContext.getConfig();
         PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, true, config.getFilterPattern());
-        if (logger.isDebugEnabled()) logger.debug("Number of fields after filtering: " + filteredFields.length);
+        if (LOG.isDebugEnabled()) LOG.debug("Number of fields after filtering: " + filteredFields.length);
         PsiMethod[] filteredMethods;
         if (config.enableMethods) {
             // filter methods as it is enabled from config
             filteredMethods = GenerateToStringUtils.filterAvailableMethods(clazz, config.getFilterPattern());
-            if (logger.isDebugEnabled()) logger.debug("Number of methods after filtering: " + filteredMethods.length);
+            if (LOG.isDebugEnabled()) LOG.debug("Number of methods after filtering: " + filteredMethods.length);
         } else {
           filteredMethods = PsiMethod.EMPTY_ARRAY;
         }

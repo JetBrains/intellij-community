@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.idea.Bombed;
@@ -6,7 +6,10 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.RunFirst;
+import com.intellij.testFramework.SelfSeedingTestCase;
+import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.TestSorter;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,6 +29,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.ToIntFunction;
 
@@ -345,12 +349,12 @@ public class TestCaseLoader {
     return TestFrameworkUtil.isPerformanceTest(methodName, aClass.getSimpleName());
   }
 
-  public void fillTestCases(String rootPackage, List<? extends File> classesRoots) {
+  public void fillTestCases(String rootPackage, List<Path> classesRoots) {
     long before = System.currentTimeMillis();
-    for (File classesRoot : classesRoots) {
+    for (Path classesRoot : classesRoots) {
       int oldCount = getClassesCount();
-      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      loadTestCases(classesRoot.getName(), classFinder.getClasses());
+      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
       int newCount = getClassesCount();
       if (newCount != oldCount) {
         System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classesRoot);

@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.java.guiForms.compiler" exported="" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.execution" />
@@ -36,6 +35,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.properties.psi.impl" />
   </component>
   <component name="copyright">
     <Base>

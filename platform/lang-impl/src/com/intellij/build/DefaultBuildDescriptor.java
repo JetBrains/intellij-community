@@ -186,6 +186,12 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @ApiStatus.Experimental
+  public DefaultBuildDescriptor withActions(AnAction @NotNull ... actions) {
+    myActions.addAll(Arrays.asList(actions));
+    return this;
+  }
+
+  @ApiStatus.Experimental
   public DefaultBuildDescriptor withRestartAction(@NotNull AnAction action) {
     myRestartActions.add(action);
     return this;

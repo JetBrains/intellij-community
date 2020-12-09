@@ -35,13 +35,11 @@ import java.util.List;
 import java.util.Set;
 
 public class DifferenceReverter extends Reverter {
-  private final IdeaGateway myGateway;
   private final List<? extends Difference> myDiffs;
   private final Revision myLeftRevision;
 
   public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<? extends Difference> diffs, Revision leftRevision) {
     super(p, vcs, gw);
-    myGateway = gw;
     myDiffs = diffs;
     myLeftRevision = leftRevision;
   }

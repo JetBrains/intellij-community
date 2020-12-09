@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,11 +33,6 @@ public class ResolveCache implements Disposable {
   public ResolveCache(@NotNull Project project) {
     clearCacheOnPsiChange(project.getMessageBus());
     LowMemoryWatcher.register(() -> onLowMemory(), this);
-  }
-
-  @Deprecated
-  public ResolveCache(@NotNull MessageBus bus) {
-    clearCacheOnPsiChange(bus);
   }
 
   private void clearCacheOnPsiChange(@NotNull MessageBus bus) {
@@ -91,7 +85,7 @@ public class ResolveCache implements Disposable {
   @NotNull
   private static <K,V> Map<K, V> createWeakMap() {
     //noinspection deprecation
-    return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy()){
+    return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors()) {
       @NotNull
       @Override
       protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {

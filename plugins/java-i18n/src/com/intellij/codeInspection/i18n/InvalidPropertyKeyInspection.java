@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +81,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {
     private final InspectionManager myManager;
-    private final Map<PsiElement, ProblemDescriptor> myProblems = new THashMap<>();
+    private final Map<PsiElement, ProblemDescriptor> myProblems = new HashMap<>();
     private final boolean onTheFly;
 
 
@@ -123,10 +122,16 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
           return;
         }
-        PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(PsiFieldImpl.getDetachedInitializer(field));
+        PsiExpression initializer;
+        PsiExpression highlightedExpression;
+        if (field.getContainingFile() == expression.getContainingFile()) {
+          highlightedExpression = initializer = PsiUtil.skipParenthesizedExprDown(field.getInitializer());
+        } else {
+          initializer = PsiUtil.skipParenthesizedExprDown(PsiFieldImpl.getDetachedInitializer(field));
+          highlightedExpression = expression;
+        }
         String key = computeStringValue(initializer);
-        visitPropertyKeyAnnotationParameter(expression, key,
-                                            field.getContainingFile() == expression.getContainingFile() ? initializer : expression);
+        visitPropertyKeyAnnotationParameter(expression, key, highlightedExpression);
       }
       else if (resolvedExpression instanceof PsiLocalVariable) {
         checkLocalVariable((PsiLocalVariable)resolvedExpression, expression);
@@ -220,9 +225,9 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
                 && Objects.requireNonNull(method.getParameterList().getParameter(i + 1)).isVarArgs()
                 && !hasArrayTypeAt(i + 1, methodCall)) {
               myProblems.putIfAbsent(methodCall, myManager.createProblemDescriptor(methodCall,
-                                                               JavaI18nBundle.message("property.has.more.parameters.than.passed", key, maxParamCount, args.length - i - 1),
-                                                               onTheFly, LocalQuickFix.EMPTY_ARRAY,
-                                                               ProblemHighlightType.LIKE_UNKNOWN_SYMBOL));
+                                                                                   JavaI18nBundle.message("property.has.more.parameters.than.passed", key, maxParamCount, args.length - i - 1),
+                                                                                   onTheFly, LocalQuickFix.EMPTY_ARRAY,
+                                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL));
             }
             break;
           }
@@ -247,12 +252,12 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
                                                                       I18nUtil.propertiesFilesByBundleName(bundleName, expression));
       if (problems.containsKey(expression)) return;
       problems.put(expression,
-        manager.createProblemDescriptor(
-          expression,
-          description,
-          propertiesFiles.isEmpty() ? null : new JavaCreatePropertyFix(expression, key, propertiesFiles),
-          ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly
-        )
+                   manager.createProblemDescriptor(
+                     expression,
+                     description,
+                     propertiesFiles.isEmpty() ? null : new JavaCreatePropertyFix(expression, key, propertiesFiles),
+                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly
+                   )
       );
     }
 
@@ -281,8 +286,8 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
       while (true) {
         if (parent instanceof PsiParenthesizedExpression ||
             parent instanceof PsiConditionalExpression &&
-             (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
-              expression == ((PsiConditionalExpression)parent).getElseExpression())) {
+            (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
+             expression == ((PsiConditionalExpression)parent).getElseExpression())) {
           expression = (PsiExpression)parent;
           parent = expression.getParent();
         }

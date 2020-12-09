@@ -2,6 +2,7 @@
 package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,8 +14,6 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,18 +61,21 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * Git utility/helper methods
  */
 public final class GitUtil {
-
   public static final String DOT_GIT = ".git";
 
   /**
@@ -123,15 +124,15 @@ public final class GitUtil {
     String content = readContent(dotGit);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
-    File file = findRealRepositoryDir(rootDir.getPath(), pathToDir);
+    File file = findRealRepositoryDir(rootDir.toNioPath(), pathToDir);
     if (file == null) return null;
     return VcsUtil.getVirtualFileWithRefresh(file);
   }
 
   @Nullable
-  private static File findRealRepositoryDir(@NotNull @NonNls String rootPath, @NotNull @NonNls String path) {
+  private static File findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
     if (!FileUtil.isAbsolute(path)) {
-      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath, path), true);
+      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath.toString(), path), true);
       if (canonicalPath == null) {
         return null;
       }
@@ -377,18 +378,23 @@ public final class GitUtil {
   @Deprecated
   @Nullable
   public static VirtualFile getGitRootOrNull(@NotNull final FilePath filePath) {
-    File root = filePath.getIOFile();
-    while (root != null) {
-      if (isGitRoot(root)) {
-        return LocalFileSystem.getInstance().findFileByIoFile(root);
+    try {
+      Path root = Paths.get(filePath.getPath());
+      while (root != null) {
+        if (isGitRoot(root)) {
+          return LocalFileSystem.getInstance().findFileByNioFile(root);
+        }
+        root = root.getParent();
       }
-      root = root.getParentFile();
+      return null;
     }
-    return null;
+    catch (InvalidPathException e) {
+      return null;
+    }
   }
 
   public static boolean isGitRoot(@NotNull File folder) {
-    return isGitRoot(folder.getPath());
+    return isGitRoot(folder.toPath());
   }
 
   /**
@@ -448,8 +454,7 @@ public final class GitUtil {
   @NlsSafe
   public static String adjustAuthorName(@NlsSafe String authorName, @NlsSafe String committerName) {
     if (!authorName.equals(committerName)) {
-      //noinspection HardCodedStringLiteral
-      committerName = authorName + ", via " + committerName;
+      committerName = GitBundle.message("commit.author.with.committer", authorName, committerName);
     }
     return committerName;
   }
@@ -861,7 +866,8 @@ public final class GitUtil {
 
   @Nullable
   public static GitRemote getDefaultOrFirstRemote(@NotNull Collection<GitRemote> remotes) {
-    return chooseNotNull(getDefaultRemote(remotes), ContainerUtil.getFirstItem(remotes));
+    GitRemote result = getDefaultRemote(remotes);
+    return result == null ? ContainerUtil.getFirstItem(remotes) : result;
   }
 
   @NotNull
@@ -1016,18 +1022,46 @@ public final class GitUtil {
   }
 
   public static boolean isGitRoot(@NotNull @NonNls String rootDir) {
-    String dotGit = rootDir + File.separatorChar + DOT_GIT;
-    FileAttributes attributes = FileSystemUtil.getAttributes(dotGit);
-    if (attributes == null) return false;
+    try {
+      return isGitRoot(Paths.get(rootDir));
+    }
+    catch (InvalidPathException e) {
+      return false;
+    }
+  }
+
+  public static boolean isGitRoot(@NotNull @NonNls Path rootDir) {
+    Path dotGit = rootDir.resolve(DOT_GIT);
+    BasicFileAttributes attributes;
+    try {
+      attributes = Files.readAttributes(dotGit, BasicFileAttributes.class);
+    }
+    catch (IOException ignore) {
+      return false;
+    }
 
     if (attributes.isDirectory()) {
-      FileAttributes headExists = FileSystemUtil.getAttributes(dotGit + File.separatorChar + HEAD_FILE);
-      return headExists != null && headExists.isFile();
+      try {
+        BasicFileAttributes headExists = Files.readAttributes(dotGit.resolve(HEAD_FILE), BasicFileAttributes.class);
+        return headExists.isRegularFile();
+      }
+      catch (IOException ignore) {
+        return false;
+      }
     }
-    if (!attributes.isFile()) return false;
+    if (!attributes.isRegularFile()) {
+      return false;
+    }
 
-    String content = DvcsUtil.tryLoadFileOrReturn(new File(dotGit), null, CharsetToolkit.UTF8);
-    if (content == null) return false;
+    String content;
+    try {
+      content = DvcsUtil.tryOrThrow(() -> StringUtil.convertLineSeparators(Files.readString(dotGit)).trim(), dotGit);
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return false;
+    }
+
     String pathToDir = parsePathToRepository(content);
     return findRealRepositoryDir(rootDir, pathToDir) != null;
   }

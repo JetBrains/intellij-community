@@ -8,6 +8,7 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.CharTrie;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public final class KeywordParser {
   private static final Logger LOG = Logger.getInstance(KeywordParser.class);
   private final List<Set<String>> myKeywordSets = new ArrayList<>();
   private final CharTrie myTrie = new CharTrie();
-  private final IntOpenHashSet myHashCodes = new IntOpenHashSet();
+  private final IntSet myHashCodes = new IntOpenHashSet();
   private final boolean myIgnoreCase;
 
   public KeywordParser(List<Set<String>> keywordSets, boolean ignoreCase) {

@@ -101,9 +101,9 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @RequiresEdt
   public void execute() {
-    String messageKey =
-      myChange.isMoved() ? "confirmation.resolve.tree.conflict.merge.moved" : "confirmation.resolve.tree.conflict.merge.renamed";
-    String message = message(messageKey, myOldPresentation, myNewPresentation);
+    String message = myChange.isMoved()
+                     ? message("confirmation.resolve.tree.conflict.merge.moved", myOldPresentation, myNewPresentation)
+                     : message("confirmation.resolve.tree.conflict.merge.renamed", myOldPresentation, myNewPresentation);
     int ok = showOkCancelDialog(myVcs.getProject(), message, message("dialog.title.resolve.tree.conflict"), Messages.getQuestionIcon());
     if (Messages.OK != ok) return;
 

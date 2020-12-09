@@ -13,6 +13,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiLiteralValue;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import one.util.streamex.StreamEx;
@@ -47,6 +48,13 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
     if (!realRange.contains(cursorOffset)) return Collections.emptyList();
 
     PsiElement valueElement = findValueElement(host, realRange);
+
+    // Returning segments too early would cause selectWord to ignore Psi hierarchy
+    TextRange elementRange = e.getTextRange();
+    if (!valueElement.equals(e)
+        && ContainerUtil.find(valueElement.getChildren(), el -> elementRange.contains(el.getTextRange())) == null) {
+      return Collections.emptyList();
+    }
 
     realRange = limitToCurrentLineAndStripWhiteSpace(editorText, cursorOffset, realRange);
 

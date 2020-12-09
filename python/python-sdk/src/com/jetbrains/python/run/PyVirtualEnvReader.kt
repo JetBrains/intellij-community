@@ -11,7 +11,7 @@ import java.nio.file.Paths
 
 internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
   companion object {
-    private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
+    private val LOG = Logger.getInstance(PyVirtualEnvReader::class.java)
 
     private val virtualEnvVars = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT",
                                         "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER",

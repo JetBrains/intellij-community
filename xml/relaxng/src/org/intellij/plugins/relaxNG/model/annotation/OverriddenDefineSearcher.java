@@ -3,13 +3,14 @@ package org.intellij.plugins.relaxNG.model.annotation;
 
 import com.intellij.psi.xml.XmlFile;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.plugins.relaxNG.model.*;
 
 import java.util.List;
 
 final class OverriddenDefineSearcher extends CommonElement.Visitor {
   private final Define<?, ?> myDefine;
-  private final IntArrayList myIncludes = new IntArrayList();
+  private final IntList myIncludes = new IntArrayList();
   private final XmlFile myLocalFile;
   private final List<? super Define<?, ?>> myResult;
 

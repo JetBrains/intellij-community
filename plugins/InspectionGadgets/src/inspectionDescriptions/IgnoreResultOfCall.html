@@ -15,8 +15,7 @@ The following method calls are inspected:
 legitimate, but for some methods it is almost certainly an error. Examples of methods where ignoring
 the result is likely an error include <code>java.io.inputStream.read()</code>,
 which returns the number of bytes actually read, and any method on
-<code>java.lang.String </code> or <code>java.math.BigInteger</code>,
-as all of those methods do not produce side-effects and thus pointless if ignored.
+<code>java.lang.String</code> or <code>java.math.BigInteger</code>. These methods do not produce side-effects and thus pointless if ignored.
 <!-- tooltip end -->
 <p>
 Use the panel below to specify the names of the classes containing the methods and method name patterns of the methods you wish to check.

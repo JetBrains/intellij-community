@@ -15,21 +15,17 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformUtils;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,9 +40,6 @@ import static java.awt.EventQueue.isDispatchThread;
 
 public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
-  private static final String USE_FILE_NESTING_RULES = "use-file-nesting-rules";
-
-  private boolean myUseFileNestingRules = true;
 
   public ProjectViewPane(Project project) {
     super(project);
@@ -93,6 +86,10 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @Override
   protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
+      {
+        putClientProperty(FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB, true);
+      }
+
       @Override
       public String toString() {
         return getTitle() + " " + super.toString();
@@ -111,26 +108,6 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NotNull
   public String getComponentName() {
     return "ProjectPane";
-  }
-
-  @Override
-  public void readExternal(@NotNull Element element) {
-    super.readExternal(element);
-    String useFileNestingRules = JDOMExternalizerUtil.readField(element, USE_FILE_NESTING_RULES);
-    myUseFileNestingRules = useFileNestingRules == null || Boolean.parseBoolean(useFileNestingRules);
-  }
-
-  @Override
-  public void writeExternal(Element element) {
-    super.writeExternal(element);
-    if (!myUseFileNestingRules) {
-      JDOMExternalizerUtil.writeField(element, USE_FILE_NESTING_RULES, String.valueOf(false));
-    }
-  }
-
-  @Override
-  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
-    actionGroup.addAction(new ConfigureFilesNestingAction()).setAsSecondary(true);
   }
 
   /**
@@ -162,8 +139,9 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     return false;
   }
 
-  boolean isUseFileNestingRules() {
-    return myUseFileNestingRules;
+  @Override
+  public boolean isFileNestingEnabled() {
+    return true;
   }
 
   // should be first
@@ -233,39 +211,12 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
     @Override
     public boolean isUseFileNestingRules() {
-      return myUseFileNestingRules;
+      return ProjectView.getInstance(myProject).isUseFileNestingRules(ID);
     }
 
     @Override
     public boolean isToBuildChildrenInBackground(@NotNull Object element) {
       return Registry.is("ide.projectView.ProjectViewPaneTreeStructure.BuildChildrenInBackground");
-    }
-  }
-
-  private final class ConfigureFilesNestingAction extends DumbAwareAction {
-    private ConfigureFilesNestingAction() {
-      super(IdeBundle.messagePointer("action.file.nesting.in.project.view"));
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      final ProjectView projectView = ProjectView.getInstance(myProject);
-      e.getPresentation().setEnabledAndVisible(projectView.getCurrentProjectViewPane() == ProjectViewPane.this);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      final FileNestingInProjectViewDialog dialog = new FileNestingInProjectViewDialog(myProject);
-      dialog.reset(myUseFileNestingRules);
-      dialog.show();
-      if (dialog.isOK()) {
-        dialog.apply(useFileNestingRules -> {
-          myUseFileNestingRules = useFileNestingRules;
-          ProjectViewState.getInstance(myProject).setUseFileNestingRules(useFileNestingRules);
-          ProjectViewState.getDefaultInstance().setUseFileNestingRules(useFileNestingRules);
-        });
-        updateFromRoot(true);
-      }
     }
   }
 

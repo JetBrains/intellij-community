@@ -7,10 +7,9 @@ import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -20,13 +19,14 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 
 public final class Main {
@@ -49,13 +49,13 @@ public final class Main {
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
 
+  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.ide.plugins.MainRunner";
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  private static final String[] NO_ARGS = ArrayUtilRt.EMPTY_STRING_ARRAY;
-  private static final List<@NonNls String> HEADLESS_COMMANDS = Arrays.asList(
+  private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless");
-  private static final List<@NonNls String> GUI_COMMANDS = Arrays.asList("diff", "merge");
+  private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -65,16 +65,18 @@ public final class Main {
   private Main() { }
 
   public static void main(String[] args) {
-    LinkedHashMap<@NonNls String, Long> startupTimings = new LinkedHashMap<>();
+    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>(6);
     startupTimings.put("startup begin", System.nanoTime());
 
-    if (args.length == 1 && "%f".equals(args[0])) { // NON-NLS
-      args = NO_ARGS;
+    if (args.length == 1 && "%f".equals(args[0])) {
+      //noinspection SSBasedInspection
+      args = new String[0];
     }
 
     if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
-      args = NO_ARGS;
+      //noinspection SSBasedInspection
+      args = new String[0];
     }
 
     setFlags(args);
@@ -83,13 +85,40 @@ public final class Main {
       System.exit(NO_GRAPHICS);
     }
 
-    if (!SystemInfo.isJavaVersionAtLeast(11)) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.java.version"),
-                  BootstrapBundle.message("bootstrap.error.message.cannot.start.under.java.0.java.11.or.later.is.required", SystemInfo.JAVA_RUNTIME_VERSION), true);
-      System.exit(UNSUPPORTED_JAVA_VERSION);
-    }
-
     try {
+      if (Runtime.version().feature() < 11) {
+        String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea").replace("AndroidStudio", "studio");
+        @Nls StringBuilder message = new StringBuilder(BootstrapBundle.message("bootstrap.error.message.unsupported.jre", 11)).append('\n');
+        int min = message.length();
+
+        String envVar = baseName.toUpperCase(Locale.ENGLISH) + "_JDK";
+        String envValue = System.getenv(envVar);
+        if (envValue != null && Files.isSameFile(Paths.get(envValue), Paths.get(System.getProperty("java.home")))) {
+          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.env", envVar));
+        }
+        else {
+          String configPath = PathManager.getDefaultConfigPathFor(System.getProperty("idea.paths.selector", ""));
+          String suffix = System.getProperty("os.name", "").startsWith("Windows") ? "amd64".equals(System.getProperty("os.arch")) ? "64.exe" : ".exe" : "";
+          Path file = Paths.get(configPath, baseName.toLowerCase(Locale.ENGLISH) + suffix + ".jdk");
+          try {
+            Path jdkPath = Paths.get(Files.readString(file));
+            if (Files.isSameFile(jdkPath, Paths.get(System.getProperty("java.home")))) {
+              message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.file", file));
+            }
+          }
+          catch (IOException ignored) { }
+        }
+
+        if (message.length() == min) {
+          message.append(BootstrapBundle.message("bootstrap.error.message.unsupported.jre.other", supportUrl()));
+        }
+
+        message.append("\n\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
+
+        showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.jre"), message.toString(), true);
+        System.exit(UNSUPPORTED_JAVA_VERSION);
+      }
+
       bootstrap(args, startupTimings);
     }
     catch (Throwable t) {
@@ -98,7 +127,7 @@ public final class Main {
     }
   }
 
-  private static void bootstrap(String[] args, LinkedHashMap<@NonNls String, Long> startupTimings) throws Exception {
+  private static void bootstrap(String[] args, LinkedHashMap<String, Long> startupTimings) throws Throwable {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
@@ -110,17 +139,22 @@ public final class Main {
     }
 
     startupTimings.put("classloader init", System.nanoTime());
-    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
+    UrlClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
     startupTimings.put("MainRunner search", System.nanoTime());
-    Class<?> klass = Class.forName("com.intellij.ide.plugins.MainRunner", true, newClassLoader);
-    WindowsCommandLineProcessor.ourMainRunnerClass = klass;
-    Method startMethod = klass.getMethod("start", String.class, String[].class, LinkedHashMap.class);
-    startMethod.setAccessible(true);
-    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings); //NON-NLS
+    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
+    if (mainClass == null) {
+      throw new ClassNotFoundException(MAIN_RUNNER_CLASS_NAME);
+    }
+
+    WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
+    MethodHandles.lookup()
+      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
+      .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static void installPluginUpdates() {
     if (isCommandLine() && !Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
       return;
@@ -130,8 +164,12 @@ public final class Main {
       StartupActionScriptManager.executeActionScript();
     }
     catch (IOException e) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.plugin.installation.error"),
-                  BootstrapBundle.message("bootstrap.error.message.plugin.installation.error", e.getMessage()), false);
+      showMessage("Plugin Installation Error",
+                  "The IDE failed to install some plugins.\n\n" +
+                  "Most probably, this happened because of a change in a serialization format.\n" +
+                  "Please try again, and if the problem persists, please report it\n" +
+                  "to https://jb.gg/ide/critical-startup-errors\n\n" +
+                  "The cause: " + e, false);
     }
   }
 
@@ -202,7 +240,6 @@ public final class Main {
                   true);
       return false;
     }
-
     return true;
   }
 
@@ -217,20 +254,13 @@ public final class Main {
       t = awtError;
     }
     else {
-      boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      String bugReportLink = studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
-      message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", bugReportLink));
+      message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", supportUrl()));
       message.append("\n\n");
     }
 
     t.printStackTrace(new PrintWriter(message));
 
-    Properties sp = System.getProperties();
-    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
-    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
-    String arch = sp.getProperty("os.arch", "(unknown arch)");
-    String home = sp.getProperty("java.home", "(unknown java.home)");
-    message.append(BootstrapBundle.message("bootstrap.error.title.jre.0.os.arch.1.by.vendor.2.java.home.3", jre, arch, vendor, home));
+    message.append("\n-----\n").append(BootstrapBundle.message("bootstrap.error.message.jre.details", jreDetails()));
 
     showMessage(title, message.toString(), true); //NON-NLS
   }
@@ -245,6 +275,20 @@ public final class Main {
     return null;
   }
 
+  private static @NlsSafe String jreDetails() {
+    Properties sp = System.getProperties();
+    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
+    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
+    String arch = sp.getProperty("os.arch", "(unknown arch)");
+    String home = sp.getProperty("java.home", "(unknown java.home)");
+    return jre + ' ' + arch + " (" + vendor + ")\n" + home;
+  }
+
+  private static @NlsSafe String supportUrl() {
+    boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+    return studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
+  }
+
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
   public static void showMessage(@Nls(capitalization = Nls.Capitalization.Title) String title,
                                  @Nls(capitalization = Nls.Capitalization.Sentence) String message,
@@ -255,35 +299,37 @@ public final class Main {
     stream.println(message);
 
     boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless();
-    if (!headless) {
-      try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
-      catch (Throwable ignore) { }
+    if (headless) return;
 
-      try {
-        JTextPane textPane = new JTextPane();
-        textPane.setEditable(false);
-        textPane.setText(message.replaceAll("\t", "    "));
-        textPane.setBackground(UIManager.getColor("Panel.background"));
-        textPane.setCaretPosition(0);
-        JScrollPane scrollPane = new JScrollPane(
-          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(null);
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    }
+    catch (Throwable ignore) { }
 
-        int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;
-        int maxWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
-        Dimension component = scrollPane.getPreferredSize();
-        if (component.height > maxHeight || component.width > maxWidth) {
-          scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
-        }
+    try {
+      JTextPane textPane = new JTextPane();
+      textPane.setEditable(false);
+      textPane.setText(message.replaceAll("\t", "    "));
+      textPane.setBackground(UIManager.getColor("Panel.background"));
+      textPane.setCaretPosition(0);
+      JScrollPane scrollPane = new JScrollPane(textPane,
+                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      scrollPane.setBorder(null);
 
-        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE;
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
+      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;
+      int maxWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
+      Dimension component = scrollPane.getPreferredSize();
+      if (component.height > maxHeight || component.width > maxWidth) {
+        scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
       }
-      catch (Throwable t) {
-        stream.println();
-        stream.println(BootstrapBundle.message("bootstrap.error.title.ui.exception.occurred.on.an.attempt.to.show.the.above.message"));
-        t.printStackTrace(stream);
-      }
+
+      int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE;
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
+    }
+    catch (Throwable t) {
+      stream.println("\nAlso, a UI exception occurred on an attempt to show the above message");
+      t.printStackTrace(stream);
     }
   }
 }

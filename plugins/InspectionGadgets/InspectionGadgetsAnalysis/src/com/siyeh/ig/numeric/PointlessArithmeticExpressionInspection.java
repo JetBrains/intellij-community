@@ -33,20 +33,19 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class PointlessArithmeticExpressionInspection extends BaseInspection {
-
-  private static final Set<IElementType> arithmeticTokens = new THashSet<>(9);
+public final class PointlessArithmeticExpressionInspection extends BaseInspection {
+  private static final Set<IElementType> arithmeticTokens = new HashSet<>(9);
 
   static {
     arithmeticTokens.add(JavaTokenType.PLUS);
@@ -230,7 +229,7 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
                (type.equals(JavaTokenType.DIV) && isOne(expressions[1]));
       }
       if (type.equals(JavaTokenType.ASTERISK)) {
-        return (isOne(expressions[0]) || isOne(expressions[1])) && 
+        return (isOne(expressions[0]) || isOne(expressions[1])) &&
                Objects.requireNonNull(expressions[0].getType()).equals(expressions[1].getType());
       }
       return false;

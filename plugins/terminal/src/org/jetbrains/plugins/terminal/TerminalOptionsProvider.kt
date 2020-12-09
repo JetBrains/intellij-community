@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.annotations.Property
@@ -63,7 +63,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
-    var myCopyOnSelection: Boolean = true
+    var myCopyOnSelection: Boolean = false
     var myPasteOnMiddleMouseButton: Boolean = true
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
@@ -126,6 +126,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   companion object {
     val instance: TerminalOptionsProvider
       @JvmStatic
-      get() = ServiceManager.getService(TerminalOptionsProvider::class.java)
+      get() = ApplicationManager.getApplication().getService(TerminalOptionsProvider::class.java)
   }
 }

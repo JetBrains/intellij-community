@@ -9,7 +9,6 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
@@ -36,6 +35,7 @@ import javax.swing.event.HyperlinkEvent
 private data class SdkPopupBuilderImpl(
   val project: Project? = null,
   val projectSdksModel: ProjectSdksModel? = null,
+  val ownsProjectSdksModel: Boolean = false,
   val sdkListModelBuilder: SdkListModelBuilder? = null,
 
   val sdkTypeFilter: Condition<SdkTypeId>? = null,
@@ -57,7 +57,8 @@ private data class SdkPopupBuilderImpl(
   override fun updateSdkForFile(file: PsiFile) = copy(updateSdkForPsiFile = file)
   override fun updateSdkForFile(file: VirtualFile) = copy(updateSdkForVirtualFile = file)
   override fun withProject(project: Project?) = copy(project = project)
-  override fun withProjectSdksModel(projectSdksModel: ProjectSdksModel) = copy(projectSdksModel = projectSdksModel)
+  override fun withProjectSdksModel(projectSdksModel: ProjectSdksModel) = copy(projectSdksModel = projectSdksModel, ownsProjectSdksModel = false)
+  override fun withOwnProjectSdksModel(projectSdksModel: ProjectSdksModel) = copy(projectSdksModel = projectSdksModel, ownsProjectSdksModel = true)
   override fun withSdkListModelBuilder(sdkListModelBuilder: SdkListModelBuilder) = copy(sdkListModelBuilder = sdkListModelBuilder)
   override fun withSdkType(type: SdkTypeId) = withSdkTypeFilter(Condition { sdk -> sdk == type })
   override fun withSdkTypeFilter(filter: Condition<SdkTypeId>) = copy(sdkTypeFilter = filter)
@@ -109,7 +110,7 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
 
   override fun createPopup(builder: SdkPopupBuilder): SdkPopup = (builder as SdkPopupBuilderImpl).copy().run {
     val (sdksModel, ownsModel) = if (projectSdksModel != null) {
-      projectSdksModel to false
+      projectSdksModel to ownsProjectSdksModel
     }
     else {
       ProjectSdksModel() to true

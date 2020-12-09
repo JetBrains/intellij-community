@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
@@ -56,7 +57,6 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       }
     })
 
-    // TODO It's also possible not to fire roots change event if JDK is not used
     bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
   }
 
@@ -92,7 +92,15 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     jdkChangeListener.unsubscribeListeners()
   }
 
+  fun setupTrackedLibrariesAndJdks() {
+    val currentStorage = WorkspaceModel.getInstance(project).entityStorage.current
+    for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
+      addTrackedLibraryAndJdkFromEntity(moduleEntity);
+    }
+  }
+
   private fun addTrackedLibraryAndJdkFromEntity(moduleEntity: ModuleEntity) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
     LOG.debug { "Add tracked global libraries and JDK from ${moduleEntity.name}" }
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     moduleEntity.dependencies.forEach {
@@ -138,7 +146,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
 
   // Listener for global libraries linked to module
   private inner class GlobalLibraryTableListener : LibraryTable.Listener, RootSetChangedListener {
-    private val librariesPerModuleMap = BidirectionalMultiMap<ModuleEntity, String>()
+    private val librariesPerModuleMap = BidirectionalMultiMap<ModuleId, String>()
 
     private var insideRootsChange = false
 
@@ -148,13 +156,13 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (!librariesPerModuleMap.containsValue(libraryIdentifier)) {
         (library as? RootProvider)?.addRootSetChangedListener(this)
       }
-      librariesPerModuleMap.put(moduleEntity, libraryIdentifier)
+      librariesPerModuleMap.put(moduleEntity.persistentId(), libraryIdentifier)
     }
 
     fun unTrackLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
       val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      librariesPerModuleMap.remove(moduleEntity, libraryIdentifier)
+      librariesPerModuleMap.remove(moduleEntity.persistentId(), libraryIdentifier)
       if (!librariesPerModuleMap.containsValue(libraryIdentifier)) {
         (library as? RootProvider)?.removeRootSetChangedListener(this)
       }
@@ -181,7 +189,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
           val libraryTableId = levelToLibraryTableId(libraryTable.tableLevel)
           WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
             //maybe it makes sense to simplify this code by reusing code from PEntityStorageBuilder.updateSoftReferences
-            affectedModules.mapNotNull { builder.resolve(it.persistentId()) }.forEach { module ->
+            affectedModules.mapNotNull { builder.resolve(it) }.forEach { module ->
               val updated = module.dependencies.map {
                 when {
                   it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId == libraryTableId && it.library.name == oldName ->
@@ -217,7 +225,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   }
 
   private inner class JdkChangeListener : ProjectJdkTable.Listener, RootSetChangedListener {
-    private val sdkDependencies = MultiMap.createSet<ModuleDependencyItem, ModuleEntity>()
+    private val sdkDependencies = MultiMap.createSet<ModuleDependencyItem, ModuleId>()
     private val watchedSdks = HashSet<RootProvider>()
 
     override fun jdkAdded(jdk: Sdk) {
@@ -234,7 +242,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       val affectedModules = sdkDependencies.get(sdkDependency)
       if (affectedModules.isNotEmpty()) {
         WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
-          for (module in affectedModules) {
+          for (moduleId in affectedModules) {
+            val module = moduleId.resolve(builder) ?: continue
             val updated = module.dependencies.map {
               when (it) {
                 is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
@@ -267,11 +276,11 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (sdk != null && watchedSdks.add(sdk.rootProvider)) {
         sdk.rootProvider.addRootSetChangedListener(this)
       }
-      sdkDependencies.putValue(sdkDependency, moduleEntity)
+      sdkDependencies.putValue(sdkDependency, moduleEntity.persistentId())
     }
 
     fun removeTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
-      sdkDependencies.remove(sdkDependency, moduleEntity)
+      sdkDependencies.remove(sdkDependency, moduleEntity.persistentId())
       val sdk = findSdk(sdkDependency)
       if (sdk != null && !hasDependencies(sdk) && watchedSdks.remove(sdk.rootProvider)) {
         sdk.rootProvider.removeRootSetChangedListener(this)

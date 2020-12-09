@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -26,7 +27,6 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 import static com.intellij.openapi.util.Disposer.register;
-import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 import static java.awt.EventQueue.isDispatchThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -440,7 +440,7 @@ public abstract class Invoker implements Disposable {
   }
 
   public static final class Background extends Invoker {
-    private final Set<Thread> threads = newConcurrentSet();
+    private final Set<Thread> threads = ContainerUtil.newConcurrentSet();
     private final ScheduledExecutorService executor;
 
     /**

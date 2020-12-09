@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -7,6 +7,8 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -15,7 +17,7 @@ import java.awt.*;
 
 import static com.intellij.ui.RelativeFont.BOLD;
 
-public abstract class GroupedElementsRenderer {
+public abstract class GroupedElementsRenderer implements Accessible {
   protected SeparatorWithText mySeparatorComponent = createSeparator();
 
   protected abstract JComponent createItemComponent();
@@ -115,7 +117,7 @@ public abstract class GroupedElementsRenderer {
 
     @Override
     protected final Color getSelectionForeground() {
-      return UIUtil.getListSelectionForeground();
+      return UIUtil.getListSelectionForeground(true);
     }
 
     @Override
@@ -178,4 +180,8 @@ public abstract class GroupedElementsRenderer {
     }
   }
 
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    return myRendererComponent.getAccessibleContext();
+  }
 }

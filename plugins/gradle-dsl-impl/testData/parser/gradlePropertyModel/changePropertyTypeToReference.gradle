@@ -1,0 +1,4 @@
+ext {
+  prop1 = "25"
+  prop2 = true
+}

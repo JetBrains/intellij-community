@@ -18,6 +18,7 @@ package com.siyeh.ipp.bool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
@@ -51,7 +52,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
     final CommentTracker tracker = new CommentTracker();
     final String newExpression = convertConjunctionExpression(polyadicExpression, tracker);
-    replaceExpressionWithNegatedExpressionString(newExpression, polyadicExpression, tracker);
+    PsiReplacementUtil.replaceExpressionWithNegatedExpression(polyadicExpression, newExpression, tracker);
   }
 
   private static String convertConjunctionExpression(PsiPolyadicExpression polyadicExpression, CommentTracker tracker) {

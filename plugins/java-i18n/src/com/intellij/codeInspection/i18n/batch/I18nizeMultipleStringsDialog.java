@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -40,7 +41,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.UI;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +59,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
+public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(I18nizeMultipleStringsDialog.class);
   private static final @NonNls String LAST_USED_PROPERTIES_FILE = "LAST_USED_PROPERTIES_FILE";
   private static final @NonNls String LAST_USED_CONTEXT = "I18N_FIX_LAST_USED_CONTEXT";
@@ -79,7 +79,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   public I18nizeMultipleStringsDialog(@NotNull Project project,
                                       @NotNull List<I18nizedPropertyData<D>> keyValuePairs,
                                       @NotNull Set<PsiFile> contextFiles,
-                                      @NotNull Function<D, List<UsageInfo>> usagePreviewProvider, 
+                                      @NotNull Function<D, List<UsageInfo>> usagePreviewProvider,
                                       Icon markAsNonNlsButtonIcon,
                                       boolean canShowCodeInfo) {
     super(project, true);
@@ -109,11 +109,11 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       return textGenerator.getI18nizedConcatenationText(propertyKey, paramsString, getPropertiesFile(), null);
     }
 
-    String templateName = paramsString.isEmpty() ? myResourceBundleManager.getTemplateName() 
+    String templateName = paramsString.isEmpty() ? myResourceBundleManager.getTemplateName()
                                                  : myResourceBundleManager.getConcatenationTemplateName();
     LOG.assertTrue(templateName != null);
     FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
-    Map<String, String> attributes = new THashMap<>();
+    Map<String, String> attributes = new HashMap<>();
     attributes.put(JavaI18nizeQuickFixDialog.PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(JavaI18nizeQuickFixDialog.RESOURCE_BUNDLE_OPTION_KEY, myRBEditorTextField != null ? myRBEditorTextField.getText() : null);
     attributes.put(JavaI18nizeQuickFixDialog.PROPERTY_VALUE_ATTR, propertyValue);
@@ -126,7 +126,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       return "";
     }
   }
-  
+
   @Override
   protected @Nullable String getDimensionServiceKey() {
     return "i18nInBatch";
@@ -160,7 +160,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
     if (!files.isEmpty()) {
       String contextString = getContextString();
-      String preselectedFile;
+      @NlsSafe String preselectedFile;
       if (contextString != null && contextString.equals(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_CONTEXT))) {
         preselectedFile = PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE);
       }
@@ -171,7 +171,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     }
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(component, BorderLayout.NORTH);
-    
+
     if (myShowCodeInfo && hasResourceBundleInTemplate()) {
       myRBEditorTextField = new TextFieldWithStoredHistory("RESOURCE_BUNDLE_KEYS");
       if (!myRBEditorTextField.getHistory().isEmpty()) {

@@ -11,6 +11,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-final class Stripe extends JPanel implements UISettingsListener {
+class Stripe extends JPanel implements UISettingsListener {
   private static final Dimension EMPTY_SIZE = new Dimension();
 
   private final int anchor;
@@ -40,7 +41,7 @@ final class Stripe extends JPanel implements UISettingsListener {
   private boolean myFinishingDrop;
   static final int DROP_DISTANCE_SENSITIVITY = 20;
 
-  Stripe(int anchor) {
+  Stripe(@MagicConstant(valuesFromClass = SwingConstants.class) int anchor) {
     super(new GridBagLayout());
 
     setOpaque(true);

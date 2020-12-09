@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -25,7 +25,7 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-class CommonCodeStyleSettingsManager {
+final class CommonCodeStyleSettingsManager {
   private volatile Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
   private volatile Map<String, Content> myUnknownSettingsMap;
 
@@ -182,15 +182,15 @@ class CommonCodeStyleSettingsManager {
   private static CommonCodeStyleSettings safelyGetDefaults(LanguageCodeStyleProvider provider) {
     @SuppressWarnings("deprecation")
     Ref<CommonCodeStyleSettings> defaultSettingsRef =
-      RecursionManager.doPreventingRecursion(provider, true, () -> Ref.create(provider.getDefaultCommonSettings()));
+      RecursionManager.doPreventingRecursion(provider, true, () -> new Ref<>(provider.getDefaultCommonSettings()));
     if (defaultSettingsRef == null) {
-      LOG.error(new ExtensionException(provider.getClass(), new Throwable(provider.getClass().getCanonicalName() + ".getDefaultCommonSettings() recursively creates root settings.")));
+      LOG.error(PluginException.createByClass(provider.getClass().getCanonicalName() + ".getDefaultCommonSettings() recursively creates root settings.", null, provider.getClass()));
       return null;
     }
     else {
       CommonCodeStyleSettings defaultSettings = defaultSettingsRef.get();
       if (defaultSettings instanceof CodeStyleSettings) {
-        LOG.error(new ExtensionException(provider.getClass(), new Throwable(provider.getClass().getName() + ".getDefaultCommonSettings() creates root CodeStyleSettings instead of CommonCodeStyleSettings")));
+        LOG.error(PluginException.createByClass(provider.getClass().getName() + ".getDefaultCommonSettings() creates root CodeStyleSettings instead of CommonCodeStyleSettings", null, provider.getClass()));
       }
       return defaultSettings;
     }

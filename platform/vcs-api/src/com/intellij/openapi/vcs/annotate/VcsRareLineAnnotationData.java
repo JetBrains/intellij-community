@@ -2,13 +2,14 @@
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 /**
  * @author irengrig
  */
 public final class VcsRareLineAnnotationData implements VcsLineAnnotationData {
-  private final Int2ObjectOpenHashMap<VcsRevisionNumber> myMap = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<VcsRevisionNumber> myMap = new Int2ObjectOpenHashMap<>();
   private final int mySize;
 
   public VcsRareLineAnnotationData(int size) {

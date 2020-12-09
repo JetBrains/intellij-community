@@ -235,16 +235,16 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           // must be 'self' or 'cls'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
-            final PyFunction.Modifier modifier = func.getModifier();
+            final boolean isDefinition = PyUtil.isNewMethod(func) || func.getModifier() == PyFunction.Modifier.CLASSMETHOD;
 
             final PyType genericType = new PyTypingTypeProvider().getGenericType(containingClass, context);
             if (genericType != null) {
-              return modifier == PyFunction.Modifier.CLASSMETHOD && genericType instanceof PyInstantiableType
+              return isDefinition && genericType instanceof PyInstantiableType
                      ? ((PyInstantiableType<?>)genericType).toClass()
                      : genericType;
             }
 
-            return new PyClassTypeImpl(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
+            return new PyClassTypeImpl(containingClass, isDefinition);
           }
         }
         if (isKeywordContainer()) {

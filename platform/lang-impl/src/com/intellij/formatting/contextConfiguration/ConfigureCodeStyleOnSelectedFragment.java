@@ -261,7 +261,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
             return 0;
           }
         }
-        else if (dialogBottom > myEditorComponentHeight) {
+        else {
           int extraBottomSpace = dialogBottom - myEditorComponentHeight;
           if (dialogTop - extraBottomSpace >= 0) {
             return dialogTop - extraBottomSpace;

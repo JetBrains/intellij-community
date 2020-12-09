@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.title
 import com.intellij.ui.awt.RelativeRectangle
 import javax.swing.JComponent
 
-interface CustomHeaderTitle {
+internal interface CustomHeaderTitle {
   var onBoundsChanged: (() -> Unit)?
   val view: JComponent
   fun setActive(value: Boolean)

@@ -1,6 +1,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ExcludeFolder
 import com.intellij.openapi.roots.ModuleRootModel
@@ -8,15 +8,16 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -30,17 +31,17 @@ internal class ModifiableContentEntryBridge(
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
   companion object {
-    private val LOG = Logger.getInstance(javaClass)
+    private val LOG = logger<ModifiableContentEntryBridge>()
   }
   private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
 
-  private val currentContentEntry = CachedValueImpl<ContentEntryBridge> {
+  private val currentContentEntry = CachedValueImpl {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryBridge
       ?: error("Unable to find content entry in parent modifiable root model by url: $contentEntryUrl")
-    CachedValueProvider.Result.createSingleDependency<ContentEntryBridge>(contentEntry, modifiableRootModel)
+    CachedValueProvider.Result.createSingleDependency(contentEntry, modifiableRootModel)
   }
 
-  private fun <P : JpsElement?> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
+  private fun <P : JpsElement> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
     if (!contentEntryUrl.isEqualOrParentOf(sourceFolderUrl)) {
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
     }
@@ -94,10 +95,10 @@ internal class ModifiableContentEntryBridge(
     val legacyBridgeSourceFolder = sourceFolder as SourceFolderBridge
     val sourceRootEntity = currentContentEntry.value.sourceRootEntities.firstOrNull { it == legacyBridgeSourceFolder.sourceRootEntity }
     if (sourceRootEntity == null) {
-      Logger.getInstance(javaClass).error("SourceFolder ${sourceFolder.url} is not present under content entry $contentEntryUrl")
+      LOG.error("SourceFolder ${sourceFolder.url} is not present under content entry $contentEntryUrl")
       return
     }
-
+    modifiableRootModel.removeCachedJpsRootProperties(sourceRootEntity.url)
     diff.removeEntity(sourceRootEntity)
   }
 
@@ -110,8 +111,10 @@ internal class ModifiableContentEntryBridge(
       error("Exclude folder $excludeUrl must be under content entry $contentEntryUrl")
     }
 
-    updateContentEntry {
-      excludedUrls = if (excludedUrls.contains(excludeUrl)) excludedUrls else (excludedUrls + excludeUrl)
+    if (excludeUrl !in currentContentEntry.value.entity.excludedUrls) {
+      updateContentEntry {
+        excludedUrls = excludedUrls + excludeUrl
+      }
     }
 
     return currentContentEntry.value.excludeFolders.firstOrNull {
@@ -188,19 +191,19 @@ internal class ModifiableContentEntryBridge(
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean, packagePrefix: String): SourceFolder =
     addSourceFolder(file, if (isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE)
 
-  override fun <P : JpsElement?> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>): SourceFolder =
+  override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>): SourceFolder =
     addSourceFolder(file, type, type.createDefaultProperties())
 
   override fun addSourceFolder(url: String, isTestSource: Boolean): SourceFolder =
     addSourceFolder(url, if (isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE)
 
-  override fun <P : JpsElement?> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>): SourceFolder =
+  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>): SourceFolder =
     addSourceFolder(url, type, type.createDefaultProperties())
 
-  override fun <P : JpsElement?> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
+  override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
     addSourceFolder(file.toVirtualFileUrl(virtualFileManager), type, properties)
 
-  override fun <P : JpsElement?> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
+  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
     addSourceFolder(virtualFileManager.fromUrl(url), type, properties)
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.cherrypick
 
+import git4idea.i18n.GitBundle
 import git4idea.test.*
 
 class GitCherryPickAutoCommitTest : GitCherryPickTest() {
@@ -57,9 +58,9 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     `assert merge dialog was shown`()
     changeListManager.assertChangeListExists("on_master")
-    assertWarningNotification("Cherry-pick performed with conflicts", """
+    assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Cherry-pick"), """
       ${shortHash(commit)} on_master
-      Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>
+      There are unresolved conflicts in the working tree. <a>Resolve them.<a/>
       """)
   }
 
@@ -109,9 +110,8 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     assertErrorNotification("Cherry-pick failed", """
       ${shortHash(commit2)} appended common
-      Your local changes would be overwritten by cherry-pick.
-      Commit your changes or stash them to proceed.
-      However cherry-pick succeeded for the following commit:
+      """ + GitBundle.message("apply.changes.would.be.overwritten", "cherry-pick") + """
+      """ + GitBundle.message("apply.changes.operation.successful.for.commits", "cherry-pick", 1) + """
       ${shortHash(commit1)} fix #1""")
 
   }

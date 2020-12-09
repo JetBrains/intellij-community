@@ -1,7 +1,5 @@
-# These are not exported.
-# These are exported.
 from typing import (
-    AbstractSet as Set,
+    AbstractSet,
     Any,
     Callable as Callable,
     Container as Container,
@@ -29,6 +27,8 @@ from typing import (
     ValuesView as ValuesView,
     overload,
 )
+
+Set = AbstractSet
 
 _S = TypeVar("_S")
 _T = TypeVar("_T")

@@ -1,0 +1,3 @@
+dependencies {
+  compile rootProject.ext.deps.android_gradle_plugin
+}

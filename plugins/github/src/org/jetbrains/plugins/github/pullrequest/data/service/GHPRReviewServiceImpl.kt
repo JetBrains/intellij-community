@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
+import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -111,6 +112,12 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(GHGQLRequests.PullRequest.Review.updateComment(repository.serverPath, commentId, newText))
     }.logError(LOG, "Error occurred while updating review comment")
+
+  override fun addThread(progressIndicator: ProgressIndicator, pullRequestId: String, reviewId: String?, body: String,
+                         line: Int, side: Side, startLine: Int, fileName: String): CompletableFuture<GHPullRequestReviewThread> =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, pullRequestId, reviewId, body, line, side, startLine, fileName))
+    }.logError(LOG, "Error occurred while adding review thread")
 
   override fun resolveThread(progressIndicator: ProgressIndicator,
                              pullRequestId: GHPRIdentifier,

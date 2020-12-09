@@ -80,9 +80,9 @@ abstract class MacDistributionCustomizer {
   List<String> urlSchemes = []
 
   /**
-   * CPU architectures app can be launched on, currently only x86_64 is supported
+   * CPU architectures app can be launched on, currently arm64 and x86_64 are supported
    */
-  List<String> architectures = ["x86_64"]
+  List<String> architectures = ["arm64", "x86_64"]
 
   /**
    * If {@code true} *.ipr files will be associated with the product in Info.plist
@@ -105,6 +105,10 @@ abstract class MacDistributionCustomizer {
    */
   String dmgImagePathForEAP = null
 
+  /**
+   * If {@code true} will publish sit archive as artifact
+   */
+  boolean publishArchive = false
   /**
    * Application bundle name: &lt;name&gt;.app. Current convention is to have ProductName.app for release and ProductName Version EAP.app.
    * @param applicationInfo application info that can be used to check for EAP and building version

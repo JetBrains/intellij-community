@@ -7,7 +7,8 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 public interface VirtualFileAppearanceListener {
-  Topic<VirtualFileAppearanceListener> TOPIC = new Topic<>(VirtualFileAppearanceListener.class);
+  @Topic.AppLevel
+  Topic<VirtualFileAppearanceListener> TOPIC = new Topic<>(VirtualFileAppearanceListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
    * Indicates that the presentable name or icon of the file have been updated.

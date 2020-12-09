@@ -19,7 +19,7 @@ import git4idea.GitCommit
  */
 typealias TraverseCommitId = Int
 
-interface GitHistoryTraverser {
+interface GitHistoryTraverser : Disposable {
   /**
    * Start traversing down through the repository history started from [start].
    * Each commit will be handled by [commitHandler] which could return false to finish traversing
@@ -35,11 +35,11 @@ interface GitHistoryTraverser {
   )
 
   /**
-   * Subscribe for index finishing and call [block] when given roots are fully indexed.
+   * Subscribe for roots index finishing.
    *
-   * [block] shouldn't execute long running tasks.
+   * [IndexingListener.indexedRootsUpdated] may be called few times with subsets of [roots]
    */
-  fun withIndex(roots: Collection<VirtualFile>, disposable: Disposable, block: GitHistoryTraverser.(Collection<IndexedRoot>) -> Unit)
+  fun addIndexingListener(roots: Collection<VirtualFile>, disposable: Disposable, listener: IndexingListener)
 
   /**
    * Load commit hash.
@@ -49,6 +49,8 @@ interface GitHistoryTraverser {
   /**
    * Load basic commit details like message, hash, commit time, author time, etc.
    * This method can be slow due to Git command execution, so it is better to use this method with commit batches.
+   *
+   * Result commits order may be different from [ids] if [ids] contains commits from different roots.
    */
   fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata>
 
@@ -57,6 +59,8 @@ interface GitHistoryTraverser {
    * If commit contains huge amount of changes, this method can be slow, so use it only if you need changes.
    *
    * Also, this method can be slow due to Git command execution, so it is better to use this method with commit batches.
+   *
+   * [fullDetailsHandler] calling order may be different from [ids] if [ids] contains commits from different roots.
    */
   fun loadFullDetails(
     ids: List<TraverseCommitId>,
@@ -119,6 +123,13 @@ interface GitHistoryTraverser {
        */
       class File(val file: FilePath) : TraverseCommitsFilter()
     }
+  }
+
+  fun interface IndexingListener {
+    /**
+     * Method shouldn't execute long running tasks.
+     */
+    fun indexedRootsUpdated(roots: Collection<IndexedRoot>)
   }
 
   sealed class StartNode {

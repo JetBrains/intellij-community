@@ -18,7 +18,6 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
@@ -439,6 +438,12 @@ public final class HighlightUtil {
     PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement != null && typeElement.isInferredType()) {
       if (variable instanceof PsiLocalVariable) {
+        PsiElement parent = variable.getParent();
+        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+          String message = JavaErrorBundle.message("lvti.compound");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
+        }
+
         PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
           String message = JavaErrorBundle.message("lvti.no.initializer");
@@ -448,12 +453,6 @@ public final class HighlightUtil {
           boolean lambda = initializer instanceof PsiLambdaExpression;
           String message = JavaErrorBundle.message(lambda ? "lvti.lambda" : "lvti.method.ref");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-        }
-
-        PsiElement parent = variable.getParent();
-        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
-          String message = JavaErrorBundle.message("lvti.compound");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
         }
 
         if (isArray(variable)) {
@@ -1872,7 +1871,7 @@ public final class HighlightUtil {
 
   @NotNull
   static @NlsContexts.DetailedDescription String staticContextProblemDescription(@NotNull PsiElement refElement) {
-    String type = LanguageFindUsages.getType(refElement);
+    String type = JavaElementKind.fromElement(refElement).lessDescriptive().subject();
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorBundle.message("non.static.symbol.referenced.from.static.context", type, name);
   }
@@ -2404,6 +2403,7 @@ public final class HighlightUtil {
     if (!PsiKeyword.VOID.equals(type.getText())) return null;
 
     PsiElement parent = type.getParent();
+    if (parent instanceof PsiErrorElement) return null;
     if (parent instanceof PsiTypeElement) {
       PsiElement typeOwner = parent.getParent();
       if (typeOwner != null) {
@@ -3072,7 +3072,7 @@ public final class HighlightUtil {
 
   static HighlightInfo checkMustBeThrowable(@NotNull PsiType type, @NotNull PsiElement context, boolean addCastIntention) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-    PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", context.getResolveScope());
+    PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
     if (!TypeConversionUtil.isAssignable(throwable, type)) {
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange(), 0);
       if (addCastIntention && TypeConversionUtil.areTypesConvertible(type, throwable)) {

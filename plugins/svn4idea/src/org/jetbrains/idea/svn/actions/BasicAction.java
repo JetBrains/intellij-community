@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -112,7 +113,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  protected abstract String getActionName();
+  protected abstract @Nls String getActionName();
 
   protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     Stream<VirtualFile> fileStream = Stream.of(files);

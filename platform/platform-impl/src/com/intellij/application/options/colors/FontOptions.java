@@ -67,12 +67,33 @@ public class FontOptions extends AbstractFontOptionsPanel {
       topPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(FONT_PANEL_LEFT_OFFSET, 0))), c);
       c.gridx = 1;
       c.anchor = GridBagConstraints.NORTHWEST;
-      topPanel.add(createFontSettingsPanel(), c);
+      topPanel.add(createBaseAndSecondaryFontPanel(), c);
       return topPanel;
     }
     else {
       return super.createControls();
     }
+  }
+
+  private JPanel createBaseAndSecondaryFontPanel() {
+    JPanel fontSettingsPanel = createFontSettingsPanel();
+
+    JPanel secondaryPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridx = 0;
+    c.gridy = 0;
+    createSecondaryFontComboAndLabel(secondaryPanel, c);
+
+    JPanel panel = new JPanel(new GridBagLayout());
+    GridBagConstraints c2 = new GridBagConstraints();
+    c2.gridx = 0;
+    c2.gridy = 0;
+    c2.insets = JBUI.insets(0, BASE_INSET * 2);
+    c2.anchor = GridBagConstraints.NORTH;
+    panel.add(fontSettingsPanel, c2);
+    c2.gridx ++;
+    panel.add(secondaryPanel, c2);
+    return panel;
   }
 
   @Nullable
@@ -115,7 +136,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
 
   @NotNull
   private JLabel createHyperlinkLabel() {
-    return new LinkLabel<>(getInheritedFontTitle(), null, new LinkListener<Object>() {
+    return new LinkLabel<>(getInheritedFontTitle(), null, new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
         navigateToParentFontConfigurable();

@@ -96,7 +96,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     ZipUtil.extract(jarFile, extracted, null)
     val manifestFile = File(extracted, "META-INF/MANIFEST.MF")
     assertTrue(manifestFile.exists())
-    val manifest = Manifest(FileInputStream(manifestFile))
+    val manifest = FileInputStream(manifestFile).use { Manifest(it) }
     assertEquals("MyClass", manifest.mainAttributes!!.getValue(Attributes.Name.MAIN_CLASS))
   }
 

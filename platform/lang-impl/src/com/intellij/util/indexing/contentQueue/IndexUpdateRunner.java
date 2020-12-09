@@ -21,7 +21,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
-import com.intellij.util.indexing.diagnostic.TooLargeForIndexingFile;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -144,7 +143,8 @@ public final class IndexUpdateRunner {
           // Internally checks for suspension of the indexing and blocks the current thread if necessary.
           indicator.checkCanceled();
           // Add workers if the previous have stopped for whatever reason.
-          while (numberOfRunningWorkers.get() < myNumberOfIndexingThreads) {
+          int toAddWorkersNumber = myNumberOfIndexingThreads - numberOfRunningWorkers.get();
+          for (int i = 0; i < toAddWorkersNumber; i++) {
             myIndexingExecutor.execute(worker);
             numberOfRunningWorkers.incrementAndGet();
           }
@@ -222,8 +222,7 @@ public final class IndexUpdateRunner {
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
       synchronized (indexingJob.myStatistics) {
-        TooLargeForIndexingFile tooLargeForIndexingFile = new TooLargeForIndexingFile(e.getFile().getName(), e.getFile().getLength());
-        indexingJob.myStatistics.addTooLargeForIndexingFile(e.getFile(), tooLargeForIndexingFile);
+        indexingJob.myStatistics.addTooLargeForIndexingFile(e.getFile());
       }
       FileBasedIndexImpl.LOG.info("File: " + e.getFile().getUrl() + " is too large for indexing");
       return;

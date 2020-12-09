@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TextMateSelectorLexer {
+public final class TextMateSelectorLexer {
   public static List<TextMateSelectorToken> tokenize(@NotNull CharSequence selector) {
     ArrayList<TextMateSelectorToken> result = new ArrayList<>();
     StringBuilder currentSelector = new StringBuilder();

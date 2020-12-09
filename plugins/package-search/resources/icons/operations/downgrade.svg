@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>downgrade</title>
+  <g>
+    <rect width="16" height="16" fill="#ffe1ff" opacity="0"/>
+    <path d="M11,6.5V11H6.5L8.22,9.28,4.97,6.03,6.03,4.97,9.28,8.22ZM15,8a7,7,0,1,1-2.05-4.95A6.978,6.978,0,0,1,15,8ZM14,8a6,6,0,1,0-1.757,4.243A5.985,5.985,0,0,0,14,8Z" fill="#6e6e6e"/>
+  </g>
+</svg>

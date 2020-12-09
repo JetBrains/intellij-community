@@ -176,6 +176,7 @@ private var testCounter = 0
 // Kotlin allows to easily debug code and to get clear and short stack traces
 @ApiStatus.Internal
 fun tearDownProjectAndApp(project: Project) {
+  if (project.isDisposed) return;
   val isLightProject = ProjectManagerImpl.isLight(project)
   val l = mutableListOf<Throwable>()
   val app = ApplicationManager.getApplication()

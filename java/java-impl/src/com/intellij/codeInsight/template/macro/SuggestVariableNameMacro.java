@@ -5,7 +5,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
-import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,11 +21,6 @@ public class SuggestVariableNameMacro extends Macro {
   @Override
   public String getName() {
     return "suggestVariableName";
-  }
-
-  @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.suggest.variable.name");
   }
 
   @Override

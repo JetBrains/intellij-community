@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public abstract class ConfigurationFromContext {
   private boolean myIsFromAlternativeLocation;
 
   @Nullable
+  @Nls
   private String myAlternativeLocationDisplayName;
 
   /**
@@ -143,11 +145,12 @@ public abstract class ConfigurationFromContext {
    * @return Location display name, null if name was not provided or this configuration is not from alternative location.
    */
   @Nullable
+  @Nls
   public String getAlternativeLocationDisplayName() {
     return myAlternativeLocationDisplayName;
   }
 
-  public void setAlternativeLocationDisplayName(@Nullable String alternativeLocationDisplayName) {
+  public void setAlternativeLocationDisplayName(@Nullable @Nls String alternativeLocationDisplayName) {
     this.myAlternativeLocationDisplayName = alternativeLocationDisplayName;
   }
 

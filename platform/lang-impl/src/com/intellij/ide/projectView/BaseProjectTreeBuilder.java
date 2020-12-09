@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -145,7 +144,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   public ActionCallback selectInWidth(Object element,
                                       boolean requestFocus,
-                                      Condition<AbstractTreeNode<?>> nonStopCondition) {
+                                      Condition<? super AbstractTreeNode<?>> nonStopCondition) {
     return Promises.toActionCallback(_select(element, null, requestFocus, nonStopCondition));
   }
 
@@ -162,7 +161,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     final AsyncPromise<Object> result = new AsyncPromise<>();
     UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), updater.getModalityState());
     batch(indicator -> {
-      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, null, false);
+      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, false);
       UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
     });
     return result;
@@ -175,7 +174,6 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                        AsyncPromise<Object> result,
                        @NotNull final ProgressIndicator indicator,
                        @Nullable final Ref<Object> virtualSelectTarget,
-                       FocusRequestor focusRequestor,
                        boolean isSecondAttempt) {
     AbstractTreeNode<?> alreadySelected = alreadySelectedNode(element);
 
@@ -205,7 +203,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
             result.cancel();
           }
           else {
-            _select(file, file, requestFocus, nonStopCondition, result, indicator, virtualSelectTarget, focusRequestor, true);
+            _select(file, file, requestFocus, nonStopCondition, result, indicator, virtualSelectTarget, true);
           }
         });
     }
@@ -284,7 +282,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         final DefaultMutableTreeNode rootNode = getNodeForElement(root);
         if (rootNode != null) {
           final List<AbstractTreeNode<?>> kids = collectChildren(rootNode);
-          expandChild(kids, 0, nonStopCondition, file, element, async, indicator, target);
+          expandChild(kids, 0, nonStopCondition, file, element, async, indicator, null);
         }
         else {
           async.cancel();
@@ -376,9 +374,6 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean validateNode(@NotNull final Object child) {
-    if (child == null) {
-      return false;
-    }
     if (child instanceof ProjectViewNode) {
       final ProjectViewNode projectViewNode = (ProjectViewNode)child;
       return projectViewNode.validate();

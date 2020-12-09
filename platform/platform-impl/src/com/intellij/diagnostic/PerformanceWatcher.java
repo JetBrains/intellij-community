@@ -3,26 +3,17 @@ package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
-import com.intellij.ide.IdeBundle;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -40,8 +31,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ThreadInfo;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -52,7 +41,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
@@ -63,15 +51,8 @@ public final class PerformanceWatcher implements Disposable {
   static final String DUMP_PREFIX = "threadDump-";
   private static final String DURATION_FILE_NAME = ".duration";
   private static final String PID_FILE_NAME = ".pid";
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("PerformanceWatcher", NotificationDisplayType.STICKY_BALLOON);
   private ScheduledFuture<?> myThread;
   private final File myLogDir = new File(PathManager.getLogPath());
-
-  private Method myIsCompilationEnabledMethod;
-  private Method myIsCompilationStoppedForeverMethod;
-  @NotNull
-  private CompilerState myCompilationStateLastValue = CompilerState.STATE_UNKNOWN;
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
@@ -85,18 +66,18 @@ public final class PerformanceWatcher implements Disposable {
   private FreezeCheckerTask myCurrentEDTEventChecker;
 
   private static final boolean SHOULD_WATCH = shouldWatch();
-  private final AtomicBoolean myJitProblemReported = new AtomicBoolean();
+  private final JitWatcher myJitWatcher = new JitWatcher();
 
   public static @NotNull PerformanceWatcher getInstance() {
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
-    return ServiceManager.getService(PerformanceWatcher.class);
+    return ApplicationManager.getApplication().getService(PerformanceWatcher.class);
   }
 
   public PerformanceWatcher() {
     if (!shouldWatch()) return;
 
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-    service.setNewThreadListener(new BiConsumer<Thread, Runnable>() {
+    service.setNewThreadListener(new BiConsumer<>() {
       private final int ourReasonableThreadPoolSize = RegistryManager.getInstance().intValue("core.pooled.threads");
 
       @Override
@@ -109,57 +90,11 @@ public final class PerformanceWatcher implements Disposable {
       }
     });
 
-    // jit compilation check preparations
-    try {
-      Class<?> clazz = Class.forName("com.jetbrains.management.JitState");
-
-      myIsCompilationEnabledMethod = clazz.getMethod("isCompilationEnabled");
-      myIsCompilationEnabledMethod.setAccessible(true);
-
-      myIsCompilationStoppedForeverMethod = clazz.getMethod("isCompilationStoppedForever");
-      myIsCompilationStoppedForeverMethod.setAccessible(true);
-
-      myCompilationStateLastValue = getJitCompilerState();
-      LOG.info("JIT compilation state checking enabled");
-    }
-    catch (NoSuchMethodException | ClassNotFoundException e) {
-      LOG.debug("Could not enable JIT compilation state checking", e);
-    }
-
     reportCrashesIfAny();
     cleanOldFiles(myLogDir, 0);
 
     myThread =
       myExecutor.scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
-  }
-
-
-  private enum CompilerState {
-    STATE_UNKNOWN,
-    DISABLED,
-    ENABLED,
-    STOPPED_FOREVER
-  }
-  private CompilerState getJitCompilerState() {
-    if (myIsCompilationEnabledMethod != null && myIsCompilationStoppedForeverMethod != null) {
-      try {
-        boolean compilationStateCurrentValue = (Boolean)myIsCompilationEnabledMethod.invoke(null);
-
-        if ((Boolean)myIsCompilationStoppedForeverMethod.invoke(null)) {
-          return CompilerState.STOPPED_FOREVER;
-        }
-        if (compilationStateCurrentValue) {
-          return CompilerState.ENABLED;
-        }
-        return CompilerState.DISABLED;
-      }
-      catch (IllegalAccessException | InvocationTargetException | IllegalStateException e) {
-        LOG.error("Could not perform compilation state check, disabling", e);
-        myIsCompilationEnabledMethod = null;
-        myIsCompilationStoppedForeverMethod = null;
-      }
-    }
-    return CompilerState.STATE_UNKNOWN;
   }
 
   private static void reportCrashesIfAny() {
@@ -197,6 +132,7 @@ public final class PerformanceWatcher implements Disposable {
               IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
               IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
               IdeaFreezeReporter.report(event);
+              LifecycleUsageTriggerCollector.onCrashDetected();
               break;
             }
           }
@@ -285,26 +221,7 @@ public final class PerformanceWatcher implements Disposable {
       diffMs -= getSamplingInterval();
     }
 
-    // jit compilation check
-    CompilerState compilationStateCurrentValue = getJitCompilerState();
-    if (compilationStateCurrentValue != myCompilationStateLastValue) {
-      myCompilationStateLastValue = compilationStateCurrentValue;
-      switch (myCompilationStateLastValue) {
-        case STATE_UNKNOWN:
-          break;
-        case DISABLED:
-          notifyJitDisabled();
-          LOG.warn("The JIT compiler was temporary disabled.");
-          break;
-        case ENABLED:
-          LOG.warn("The JIT compiler was enabled.");
-          break;
-        case STOPPED_FOREVER:
-          notifyJitDisabled();
-          LOG.warn("The JIT compiler was stopped forever. This will affect IDE performance.");
-          break;
-      }
-    }
+    myJitWatcher.checkJitState();
 
     SwingUtilities.invokeLater(() -> {
       long latencyMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current);
@@ -313,23 +230,6 @@ public final class PerformanceWatcher implements Disposable {
       if (ApplicationManager.getApplication().isDisposed()) return;
       getPublisher().uiResponded(latencyMs);
     });
-  }
-
-  private void notifyJitDisabled() {
-    if (myJitProblemReported.compareAndSet(false, true)) {
-      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
-      Notification notification = NOTIFICATION_GROUP.createNotification(
-        IdeBundle.message("notification.content.jit.compiler.disabled"), MessageType.ERROR)
-        .addAction(new NotificationAction(action) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          app.restart(true);
-        }
-      });
-      notification.notify(null);
-    }
   }
 
   public static @NotNull String printStacktrace(@NotNull String headerMsg,
@@ -476,10 +376,7 @@ public final class PerformanceWatcher implements Disposable {
 
   @Nullable
   String getJitProblem() {
-    if (myCompilationStateLastValue == CompilerState.DISABLED || myCompilationStateLastValue == CompilerState.STOPPED_FOREVER) {
-      return "JIT compiler " + myCompilationStateLastValue;
-    }
-    return null;
+    return myJitWatcher.getJitProblem();
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

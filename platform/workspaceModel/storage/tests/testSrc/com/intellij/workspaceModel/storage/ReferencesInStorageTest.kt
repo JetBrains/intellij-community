@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.entities.ModifiableChildEntity
 import com.intellij.workspaceModel.storage.entities.ModifiableChildWithOptionalParentEntity
@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.entities.ChildEntity
 import com.intellij.workspaceModel.storage.entities.ChildWithOptionalParentEntity
 import com.intellij.workspaceModel.storage.entities.DataClass
 import com.intellij.workspaceModel.storage.entities.ParentEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -66,7 +67,7 @@ class ReferencesInStorageTest {
     assertEquals(child, parent1.children.single())
     assertEquals(emptyList<ChildEntity>(), parent2.children.toList())
     assertEquals("parent1", child.parent.parentProperty)
-    assertEquals("parent2", child.dataClass!!.parent.resolve(builder).parentProperty)
+    assertEquals("parent2", child.dataClass!!.parent.resolve(builder)?.parentProperty)
     assertEquals(setOf(parent1, parent2), builder.entities(ParentEntity::class.java).toSet())
 
     builder.modifyEntity(ModifiableChildEntity::class.java, child) {

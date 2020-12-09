@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,7 @@ public final class LightEditPanel extends JPanel implements Disposable {
     setLayout(new BorderLayout());
     myTabs = new LightEditTabs(project,this, (LightEditorManagerImpl)editorManager);
     add(myTabs, BorderLayout.CENTER);
+    setBackground(JBColor.background().darker());
   }
 
   LightEditTabs getTabs() {

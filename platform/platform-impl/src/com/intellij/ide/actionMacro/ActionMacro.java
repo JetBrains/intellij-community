@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActionMacro {
+public final class ActionMacro {
   private String myName;
 
   private final ArrayList<ActionDescriptor> myActions = new ArrayList<>();

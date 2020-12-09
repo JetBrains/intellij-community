@@ -2,10 +2,11 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.openapi.options.ConfigurationException;
 
 /**
-* @author Dmitry Avdeev
-*/
+ * @author Dmitry Avdeev
+ */
 class TemplateConfigurable extends BaseRCSettingsConfigurable {
   private final RunnerAndConfigurationSettings myTemplate;
 
@@ -22,5 +23,11 @@ class TemplateConfigurable extends BaseRCSettingsConfigurable {
   @Override
   public String getHelpTopic() {
     return null;
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    super.apply();
+    RunManagerImpl.getInstanceImpl(myTemplate.getConfiguration().getProject()).addConfiguration(myTemplate);
   }
 }

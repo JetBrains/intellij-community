@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,16 @@ public interface IdeaPlugin extends DomElement {
   @SubTag("product-descriptor")
   @Nullable
   ProductDescriptor getProductDescriptor();
+
+  @SubTag("content")
+  @Nullable
+  @ApiStatus.Experimental
+  ContentDescriptor getContent();
+
+  @SubTag("dependencies")
+  @Nullable
+  @ApiStatus.Experimental
+  DependencyDescriptor getDependencies();
 
   @NotNull
   @NameValue
@@ -64,6 +75,9 @@ public interface IdeaPlugin extends DomElement {
   GenericAttributeValue<Boolean> getRequireRestart();
 
   @NotNull
+  GenericAttributeValue<String> getPackage();
+
+  @NotNull
   @Stubbed
   @Required(false)
   GenericDomValue<String> getName();
@@ -96,13 +110,14 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
+  @Stubbed
   GenericDomValue<String> getResourceBundle();
 
 
   @NotNull
   @Stubbed
   @SubTagList("depends")
-  List<Dependency> getDependencies();
+  List<Dependency> getDepends();
 
   @SubTagList("depends")
   Dependency addDependency();
@@ -183,4 +198,71 @@ public interface IdeaPlugin extends DomElement {
    */
   @Deprecated
   Helpset addHelpset();
+
+  interface ContentDescriptor extends DomElement {
+    @NotNull
+    @Stubbed
+    @SubTagList("module")
+    List<DependencyDescriptor.ModuleDescriptor> getModuleEntry();
+
+    @SubTagList("module")
+    DependencyDescriptor.ModuleDescriptor addModuleEntry();
+
+    @Presentation(icon = "AllIcons.Nodes.Module")
+    interface ModuleDescriptor extends DomElement {
+      @NotNull
+      @Required
+      @Stubbed
+      @NameValue
+      GenericAttributeValue<String> getName();
+
+      @NotNull
+      @Required
+      @Stubbed
+      @NameValue
+      GenericAttributeValue<String> getPackage();
+    }
+  }
+
+  interface DependencyDescriptor extends DomElement {
+    @NotNull
+    @Stubbed
+    @SubTagList("module")
+    List<ModuleDescriptor> getModuleEntry();
+
+    @SubTagList("module")
+    ModuleDescriptor addModuleEntry();
+
+    @NotNull
+    @Stubbed
+    @SubTagList("plugin")
+    List<PluginDescriptor> getPlugin();
+
+    @SubTagList("module")
+    PluginDescriptor addPlugin();
+
+    @Presentation(icon = "AllIcons.Nodes.Module")
+    interface ModuleDescriptor extends DomElement {
+      @NotNull
+      @Required
+      @Stubbed
+      @NameValue
+      GenericAttributeValue<String> getName();
+
+      @NotNull
+      @Required
+      @Stubbed
+      @NameValue
+      GenericAttributeValue<String> getPackage();
+    }
+
+    @Presentation(icon = "AllIcons.Nodes.Plugin")
+    interface PluginDescriptor extends DomElement {
+      @NotNull
+      @Required
+      @Stubbed
+      @NameValue
+      GenericAttributeValue<String> getId();
+    }
+  }
 }

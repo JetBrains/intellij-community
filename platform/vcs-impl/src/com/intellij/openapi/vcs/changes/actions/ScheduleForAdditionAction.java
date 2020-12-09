@@ -33,6 +33,7 @@ import static com.intellij.util.containers.UtilKt.isEmpty;
 import static com.intellij.util.containers.UtilKt.notNullize;
 import static kotlin.collections.CollectionsKt.intersect;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @Override

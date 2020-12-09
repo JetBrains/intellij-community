@@ -31,14 +31,38 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
   override fun initializationCode(dispatchPort: String, parameters: String) =
     //language=Gradle
     """
-    import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
+    import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper    
     gradle.taskGraph.whenReady { taskGraph ->
+      def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
+      def taskPathsList = []
+      logger.debug("idea.gradle.debug.all is ${'$'}{debugAllIsEnabled}")
+      if (!debugAllIsEnabled) {
+        def currentPath = gradle.getStartParameter().getCurrentDir().path
+        def currentProject = rootProject.allprojects.find { it.projectDir.path == currentPath }
+        if (currentProject == null) {
+          currentProject = project
+        }
+        logger.debug("Current project [${'$'}{currentProject}]")
+        
+        def startTaskNames = gradle.getStartParameter().getTaskNames()
+        if (startTaskNames.isEmpty()) {
+          startTaskNames = currentProject.getDefaultTasks() 
+        } 
+        logger.debug("Start Tasks Names: ${'$'}{startTaskNames}")
+        List<TaskContainer> allTaskContainers = currentProject.getAllprojects().collect { it.tasks }
+        taskPathsList = startTaskNames.collect { taskName -> 
+            def foundContainer = allTaskContainers.find { it.findByPath(taskName) != null }
+            foundContainer?.findByPath(taskName)?.path
+          }.findAll { it != null }
+        logger.debug("Task paths: ${'$'}{taskPathsList}")
+      }
+      
       taskGraph.allTasks.each { Task task ->
         if (task instanceof org.gradle.api.tasks.testing.Test) {
           task.maxParallelForks = 1
           task.forkEvery = 0
         }
-        if (task instanceof JavaForkOptions) {
+        if (task instanceof JavaForkOptions && (debugAllIsEnabled || taskPathsList.contains(task.path))) {
           task.doFirst {
             def moduleDir = task.project.projectDir.path
             def debugPort = ForkedDebuggerHelper.setupDebugger('${id()}', task.path, '$parameters', moduleDir)

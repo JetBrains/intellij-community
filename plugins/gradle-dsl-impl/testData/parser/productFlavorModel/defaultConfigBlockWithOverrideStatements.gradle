@@ -1,0 +1,41 @@
+android {
+  defaultConfig {
+    applicationId "com.example.myapplication"
+    consumerProguardFiles = ['proguard-android.txt', 'proguard-rules.pro']
+    dimension "abcd"
+    manifestPlaceholders = [activityLabel1: "defaultName1", activityLabel2: "defaultName2"]
+    maxSdkVersion 23
+    minSdkVersion 15
+    multiDexEnabled true
+    proguardFiles 'proguard-android.txt', 'proguard-rules.pro'
+    targetSdkVersion 22
+    testApplicationId "com.example.myapplication.test"
+    testFunctionalTest true
+    testHandleProfiling = false
+    testInstrumentationRunner = "abcd"
+    testInstrumentationRunnerArguments = [size: "medium", foo: "bar"]
+    useJack true
+    versionCode 1
+    versionName "1.0"
+  }
+}
+android.defaultConfig {
+  applicationId = "com.example.myapplication1"
+  consumerProguardFiles = ['proguard-android-1.txt', 'proguard-rules-1.pro']
+  dimension "efgh"
+  manifestPlaceholders activityLabel3: "defaultName3", activityLabel4: "defaultName4"
+  maxSdkVersion = 24
+  minSdkVersion 16
+  multiDexEnabled false
+  proguardFiles = ['proguard-android-1.txt', 'proguard-rules-1.pro']
+  targetSdkVersion 23
+  testApplicationId = "com.example.myapplication.test1"
+  testFunctionalTest false
+  testHandleProfiling true
+  testInstrumentationRunner = "efgh"
+  testInstrumentationRunnerArguments = [key: "value"]
+  useJack = false
+  versionCode 2
+  versionName = "2.0"
+}
+android.defaultConfig.versionName = "3.0"

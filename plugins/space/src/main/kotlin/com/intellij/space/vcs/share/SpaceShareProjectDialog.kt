@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.share
 
 import circlet.client.api.*
@@ -8,8 +9,9 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -100,7 +102,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
       okAction.isEnabled = false
       asyncProcessIcon.isVisible = true
       lifetime.usingSource {
-        val ws = space.workspace.value ?: return@launch
+        val ws = SpaceWorkspaceComponent.getInstance().workspace.value ?: return@launch
         val client = ws.client
         val repoService: RepositoryService = client.repoService
         val prKey = projectComboBoxModel.selected!!.key
@@ -111,7 +113,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
                                                            initialize = false) // always create empty repo
           val details = repoService.repositoryDetails(prKey, repository.name)
 
-          val url = Navigator.p.project(prKey).repo(repository.name).absoluteHref(client.server)
+          val url = SpaceUrls.repo(prKey, repository.name)
 
           result = Result(repository, details, url)
           close(OK_EXIT_CODE)
@@ -120,7 +122,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
           throw e
         }
         catch (e: RpcException) {
-          setErrorText(e.failure.message())
+          setErrorText(e.failure.message()) // NON-NLS
         }
         catch (e: Exception) {
           setErrorText(SpaceBundle.message("share.project.dialog.error.unable.to.create.repository", e.message ?: e.javaClass.simpleName))
@@ -163,7 +165,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
     if (projectComboBoxModel.selectedItem == null) {
       list.add(ValidationInfo(SpaceBundle.message("share.project.dialog.validation.text.project.should.be.specified"), projectComboBox))
     }
-    val nameError = repositoryNameValid(repoNameField.text).second
+    val nameError = repositoryNameValid(repoNameField.text).second // NON-NLS
     if (nameError != null) {
       list.addIfNotNull(ValidationInfo(nameError, repoNameField))
     }

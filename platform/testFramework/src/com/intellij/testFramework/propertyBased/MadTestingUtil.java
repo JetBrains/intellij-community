@@ -168,7 +168,6 @@ public final class MadTestingUtil {
    * "HighlightVisitorInternal" inspection has error-level by default and highlights the first token from erroneous range,
    * which is not very stable and also masks other warning-level inspections available on the same token.
    *
-   * @param disposable when this is disposed, reverts to the previous project inspection profile
    * @param except short names of inspections to disable
    */
   public static void enableAllInspections(@NotNull Project project, String... except) {
@@ -262,8 +261,8 @@ public final class MadTestingUtil {
                                                                   FileFilter fileFilter,
                                                                   BiConsumer<ImperativeCommand.Environment, VirtualFile> action) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
-    return () -> env -> new RunAll()
-      .append(() -> {
+    return () -> env -> new RunAll(
+      () -> {
         File ioFile = env.generateValue(randomFiles, "Working with %s");
         VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
         PsiFile psiFile = fixture.getPsiManager().findFile(vFile);
@@ -273,15 +272,15 @@ public final class MadTestingUtil {
           return;
         }
         action.accept(env, vFile);
-      })
-      .append(() -> WriteAction.run(() -> {
+      },
+      () -> WriteAction.run(() -> {
         for (VirtualFile file : Objects.requireNonNull(fixture.getTempDirFixture().getFile("")).getChildren()) {
           file.delete(fixture);
         }
-      }))
-      .append(() -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments())
-      .append(() -> UIUtil.dispatchAllInvocationEvents())
-      .run();
+      }),
+      () -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments(),
+      () -> UIUtil.dispatchAllInvocationEvents()
+    ).run();
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {

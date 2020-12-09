@@ -41,7 +41,7 @@ public abstract class ApplicationCommandLineState<T extends
     setupJavaParameters(params);
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
-    final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
+    final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
     if (module.getModule() != null) {
       DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
         int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.getRunClass(), false,

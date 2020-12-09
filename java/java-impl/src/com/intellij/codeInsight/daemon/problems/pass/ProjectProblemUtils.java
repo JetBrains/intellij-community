@@ -14,10 +14,13 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Key;
@@ -42,6 +45,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class ProjectProblemUtils {
 
@@ -155,6 +160,12 @@ public final class ProjectProblemUtils {
 
   static void updateTimestamp(@NotNull PsiJavaFile file, @NotNull Editor editor) {
     editor.putUserData(MODIFICATION_COUNT, file.getManager().getModificationTracker().getModificationCount());
+  }
+
+  public static boolean containsJvmLanguage(@NotNull VirtualFile file) {
+    FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
+    LanguageFileType languageFileType = tryCast(fileTypeRegistry.getFileTypeByFileName(file.getName()), LanguageFileType.class);
+    return languageFileType != null && languageFileType.getLanguage() instanceof JvmLanguage;
   }
 
   private static class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyParserUtils")
 @file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
@@ -12,7 +12,6 @@ import com.intellij.lang.parser.GeneratedParserUtilBase.*
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
-import com.intellij.openapi.util.text.StringUtil.contains
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.PropertyKey
@@ -65,6 +64,7 @@ private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.r
 private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
 private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closure.parameter")
 private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.parse.nl.before.closure.argument")
+private val parseNlBeforeAnonymousBody: Key<Boolean> = Key.create("groovy.parse.nl.before.anonymous.body")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -207,8 +207,13 @@ fun disableNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
   return true
 }
 
-fun isParseNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
-  return builder.latestDoneMarker?.tokenType == NEW_EXPRESSION || builder[parseNlBeforeClosureArgument]
+fun callTail(builder: PsiBuilder, level: Int, withNl: Parser, withoutNl: Parser): Boolean {
+  if (builder.latestDoneMarker?.tokenType == NEW_EXPRESSION || builder[parseNlBeforeClosureArgument]) {
+    return withNl.parse(builder, level)
+  }
+  else {
+    return withoutNl.parse(builder, level)
+  }
 }
 
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {
@@ -286,6 +291,7 @@ fun parseApplication(builder: PsiBuilder, level: Int,
       callParser.parse(builder, nextLevel) ||
       refParser.parse(builder, nextLevel)
     }
+    INSTANCEOF_EXPRESSION -> false
     else -> applicationParser.parse(builder, nextLevel)
   }
 }
@@ -400,15 +406,6 @@ fun withProtectedLastVariantPos(builder: PsiBuilder, level: Int, parser: Parser)
 }
 
 private val PsiBuilder.state: ErrorState get() = ErrorState.get(this)
-
-fun newLine(builder: PsiBuilder, level: Int): Boolean {
-  builder.eof() // force skip whitespaces
-  val prevStart = builder.rawTokenTypeStart(-1)
-  val currentStart = builder.rawTokenTypeStart(0)
-  return contains(builder.originalText, prevStart, currentStart, '\n')
-}
-
-fun noNewLine(builder: PsiBuilder, level: Int): Boolean = !newLine(builder, level)
 
 fun castOperandCheck(builder: PsiBuilder, level: Int): Boolean {
   return builder.tokenType !== T_LPAREN || builder.lookahead {
@@ -538,4 +535,14 @@ fun isBlockParseable(text: CharSequence): Boolean {
     }
     lexer.advance()
   }
+}
+
+fun enableNlBeforeAnonymousBody(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  return builder.withKey(parseNlBeforeAnonymousBody, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun nlBeforeAnonymousBody(builder: PsiBuilder, level: Int, newLine: Parser): Boolean {
+  return !builder[parseNlBeforeAnonymousBody] || newLine.parse(builder, level)
 }

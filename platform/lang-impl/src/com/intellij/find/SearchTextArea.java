@@ -187,6 +187,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     });
     myScrollPane.getViewport().setBorder(null);
     myScrollPane.getViewport().setOpaque(false);
+    myScrollPane.getHorizontalScrollBar().putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, Boolean.TRUE);
     myScrollPane.setOpaque(false);
 
     myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false);
@@ -222,6 +223,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(1));
     JPanel p = new NonOpaquePanel(new BorderLayout());
     p.add(myIconsPanel, BorderLayout.NORTH);
+    myIconsPanel.setBorder(JBUI.Borders.emptyRight(5));
     iconsPanelWrapper.add(p, BorderLayout.WEST);
     iconsPanelWrapper.add(myExtraActionsPanel, BorderLayout.CENTER);
 
@@ -268,7 +270,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     myExtraActionsPanel.setBorder(JBUI.Borders.empty());
     ArrayList<Component> addedButtons = new ArrayList<>();
     if (actions != null && actions.length > 0) {
-      JPanel buttonsGrid = new NonOpaquePanel(new GridLayout(1, actions.length, 0, 0));
+      JPanel buttonsGrid = new NonOpaquePanel(new GridLayout(1, actions.length, JBUI.scale(4), 0));
       for (AnAction action : actions) {
         if (action instanceof TooltipDescriptionProvider) {
           action.getTemplatePresentation().setDescription(FindBundle.message("find.embedded.buttons.description"));
@@ -279,7 +281,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
       }
       myExtraActionsPanel.setLayout(new BorderLayout());
       myExtraActionsPanel.add(buttonsGrid, BorderLayout.NORTH);
-      myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(4)));
+      myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(5)));
     }
     return addedButtons;
   }

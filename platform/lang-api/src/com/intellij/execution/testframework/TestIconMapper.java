@@ -3,6 +3,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public final class TestIconMapper implements PoolOfTestIcons {
-  private final static Int2ObjectOpenHashMap<TestStateInfo.Magnitude> magnitudes = new Int2ObjectOpenHashMap<>();
+  private final static Int2ObjectMap<TestStateInfo.Magnitude> magnitudes = new Int2ObjectOpenHashMap<>();
 
   static {
     for (TestStateInfo.Magnitude value : TestStateInfo.Magnitude.values()) {

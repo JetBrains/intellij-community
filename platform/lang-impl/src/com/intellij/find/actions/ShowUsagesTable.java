@@ -264,14 +264,14 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
     }
   }
 
-  static final class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
+  static final class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<UsageNode> {
+
     private MyModel(@NotNull List<UsageNode> data, int cols) {
       super(cols(cols), data, 0);
     }
 
-    @NotNull
-    private static ColumnInfo<UsageNode, UsageNode>[] cols(int cols) {
-      ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<UsageNode, UsageNode>("") {
+    private static ColumnInfo<UsageNode, UsageNode> @NotNull [] cols(int cols) {
+      ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<>("") {
         @Nullable
         @Override
         public UsageNode valueOf(UsageNode node) {
@@ -283,20 +283,18 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
     }
 
     @Override
-    public void addToModel(int idx, Object element) {
-      UsageNode node = element instanceof UsageNode ? (UsageNode)element : ShowUsagesAction.createStringNode(element);
-
+    public void addToModel(int idx, UsageNode element) {
       if (idx < getRowCount()) {
-        insertRow(idx, node);
+        insertRow(idx, element);
       }
       else {
-        addRow(node);
+        addRow(element);
       }
     }
 
     @Override
     public void removeRangeFromModel(int start, int end) {
-      for (int i=end; i>=start; i--) {
+      for (int i = end; i >= start; i--) {
         removeRow(i);
       }
     }

@@ -26,7 +26,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
-  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES =
+    ContainerUtil.newConcurrentSet();
 
   public static @NotNull PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
                                                                           @NotNull ProblemsHolder holder,
@@ -249,7 +249,7 @@ public final class InspectionEngine {
     }
     else if (language instanceof MetaLanguage) {
       Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
-      result = new THashSet<>();
+      result = new HashSet<>();
       for (Language matchingLanguage : matchingLanguages) {
         result.addAll(getLanguageWithDialects(matchingLanguage, applyToDialects));
       }
@@ -264,7 +264,7 @@ public final class InspectionEngine {
     List<Language> dialects = language.getDialects();
     if (!applyToDialects || dialects.isEmpty()) return Collections.singleton(language.getID());
 
-    Set<String> result = new THashSet<>(1 + dialects.size());
+    Set<String> result = new HashSet<>(1 + dialects.size());
     result.add(language.getID());
     addDialects(language, result);
     return result;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
@@ -17,6 +17,10 @@ class RecentProjectMetaInfo : BaseState() {
   @get:Attribute
   var displayName by string()
 
+  // to set frame title as earlier as possible
+  @get:Attribute
+  var frameTitle by string()
+
   var build by string()
   var productionCode by string()
   var eap by property(false)
@@ -29,7 +33,7 @@ class RecentProjectMetaInfo : BaseState() {
   var projectWorkspaceId by string()
 
   @get:Property(surroundWithTag = false)
-  var frame: FrameInfo? by property()
+  internal var frame: FrameInfo? by property()
 }
 
 class RecentProjectManagerState : BaseState() {

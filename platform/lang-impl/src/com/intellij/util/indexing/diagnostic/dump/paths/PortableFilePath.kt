@@ -16,6 +16,10 @@ sealed class PortableFilePath {
   object ProjectRoot : PortableFilePath() {
     override val presentablePath
       get() = "<project home>"
+
+    override fun equals(other: Any?) = other is ProjectRoot
+
+    override fun hashCode() = 42
   }
 
   @JsonTypeName("library")
@@ -81,4 +85,5 @@ sealed class PortableFilePath {
       get() = root.presentablePath.trimEnd('/') + '/' + relativePath
   }
 
+  override fun toString() = presentablePath
 }

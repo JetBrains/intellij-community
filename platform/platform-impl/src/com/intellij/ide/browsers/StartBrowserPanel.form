@@ -65,7 +65,7 @@
             </constraints>
             <properties>
               <labelFor value="8d247"/>
-              <text value="&amp;URL:"/>
+              <text resource-bundle="messages/IdeBundle" key="start.browser.panel.url.label"/>
             </properties>
           </component>
         </children>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.Language;
@@ -15,7 +15,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -39,10 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public final class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   @Override
@@ -107,7 +103,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
       final PsiElement topBlock = ControlFlowUtils.findControlFlowOwner(firstOperand);
       final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof GrCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
+      final Set<PsiModifierListOwner> visitedVars = new HashSet<>();
       final LinkedList<PsiElement> places = new LinkedList<>();
       places.add(firstOperand);
       final GrInjectionUtil.AnnotatedElementVisitor visitor = new GrInjectionUtil.AnnotatedElementVisitor() {

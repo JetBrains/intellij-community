@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
-import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.hamcrest.CoreMatchers
 import org.junit.Assert.*
@@ -289,5 +288,143 @@ class DiffBuilderTest {
 
     val externalMapping = target.getExternalMapping<Any>("Ext") as ExternalEntityMappingImpl<Any>
     assertEquals(1, externalMapping.index.size)
+  }
+
+  @Test
+  fun `change source in diff`() {
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    val sampleEntity = target.addSampleEntity("Prop", MySource)
+
+    val source = WorkspaceEntityStorageBuilder.from(target)
+    source.changeSource(sampleEntity, AnotherSource)
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val entitySourceIndex = target.indexes.entitySourceIndex
+    assertEquals(1, entitySourceIndex.index.size)
+    assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
+  }
+
+  @Test
+  fun `change source and data in diff`() {
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    val sampleEntity = target.addSampleEntity("Prop", MySource)
+
+    val source = WorkspaceEntityStorageBuilder.from(target)
+    source.changeSource(sampleEntity, AnotherSource)
+    source.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
+      stringProperty = "Prop2"
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val entitySourceIndex = target.indexes.entitySourceIndex
+    assertEquals(1, entitySourceIndex.index.size)
+    assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
+
+    val updatedEntity = target.entities(SampleEntity::class.java).single()
+    assertEquals("Prop2", updatedEntity.stringProperty)
+    assertEquals(AnotherSource, updatedEntity.entitySource)
+  }
+
+  @Test
+  fun `change source in target`() {
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    val sampleEntity = target.addSampleEntity("Prop", MySource)
+
+    val source = WorkspaceEntityStorageBuilder.from(target)
+    target.changeSource(sampleEntity, AnotherSource)
+
+    source.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
+      this.stringProperty = "Updated"
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val entitySourceIndex = target.indexes.entitySourceIndex
+    assertEquals(1, entitySourceIndex.index.size)
+    assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
+  }
+
+  @Test
+  fun `adding parent with child and shifting`() {
+    val parentAndChildProperty = "Bound"
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    target.addChildWithOptionalParentEntity(null, "Existing")
+
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity(parentAndChildProperty)
+    source.addChildWithOptionalParentEntity(parent, parentAndChildProperty)
+
+    target.addDiff(source)
+
+    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
+    assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
+  }
+
+  @Test
+  fun `adding parent with child and shifting and later connecting`() {
+    val parentAndChildProperty = "Bound"
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    target.addChildWithOptionalParentEntity(null, "Existing")
+
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val child = source.addChildWithOptionalParentEntity(null, parentAndChildProperty)
+    val parent = source.addParentEntity(parentAndChildProperty)
+    source.modifyEntity(ModifiableParentEntity::class.java, parent) {
+      this.optionalChildren = this.optionalChildren + child
+    }
+
+    target.addDiff(source)
+
+    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
+    assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
+  }
+
+  @Test
+  fun `adding parent with child and shifting and later child connecting`() {
+    val parentAndChildProperty = "Bound"
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    target.addChildWithOptionalParentEntity(null, "Existing")
+
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val child = source.addChildWithOptionalParentEntity(null, parentAndChildProperty)
+    val parent = source.addParentEntity(parentAndChildProperty)
+    source.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, child) {
+      this.optionalParent = parent
+    }
+
+    target.addDiff(source)
+
+    val extractedParent = assertOneElement(target.entities(ParentEntity::class.java).toList())
+    val extractedOptionalChild = assertOneElement(extractedParent.optionalChildren.toList())
+    assertEquals(parentAndChildProperty, extractedOptionalChild.childProperty)
+  }
+
+  @Test
+  fun `removing non-existing entity while adding the new one`() {
+    val initial = WorkspaceEntityStorageBuilderImpl.create()
+    val toBeRemoved = initial.addSampleEntity("En1")
+
+    val source = WorkspaceEntityStorageBuilderImpl.from(initial)
+
+    initial.removeEntity(toBeRemoved)
+    val target = WorkspaceEntityStorageBuilderImpl.from(initial.toStorage())
+
+    // In the incorrect implementation remove event will remove added entity
+    source.addSampleEntity("En2")
+    source.removeEntity(toBeRemoved)
+
+    target.addDiff(source)
+
+    assertOneElement(target.entities(SampleEntity::class.java).toList())
   }
 }

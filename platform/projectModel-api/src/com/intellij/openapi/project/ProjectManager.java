@@ -18,7 +18,7 @@ import java.nio.file.Path;
 @ApiStatus.NonExtendable
 public abstract class ProjectManager {
   @Topic.AppLevel
-  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class);
+  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
    * @return {@code ProjectManager} instance

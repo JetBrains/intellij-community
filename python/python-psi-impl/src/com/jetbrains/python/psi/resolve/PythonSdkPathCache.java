@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     if (project.isDisposed()) {
       return;
     }
-    Disposer.register(project, this);
+    Disposer.register(PythonPluginDisposable.getInstance(project), this);
     final MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
       @Override

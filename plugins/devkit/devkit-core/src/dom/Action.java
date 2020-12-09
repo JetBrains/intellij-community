@@ -48,10 +48,6 @@ public interface Action extends ActionOrGroup {
   AddToGroup addAddToGroup();
 
   @NotNull
-  List<OverrideText> getOverrideTexts();
-  OverrideText addOverrideText();
-
-  @NotNull
   List<Synonym> getSynonyms();
   Synonym addSynonym();
 

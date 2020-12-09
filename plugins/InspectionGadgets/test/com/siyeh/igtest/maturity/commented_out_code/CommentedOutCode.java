@@ -9,6 +9,43 @@ class CommentedOutCode /* extends Object */ {
   //// VARIABLE STATE \\\\
   private String s;
 
+  <warning descr="Commented out code (1 line)">//</warning> void x() {}
+  private String field;
+
+
+  private static int danglingElse(int i) {
+    if (i == 3) {
+      System.out.println(i);
+    }
+    <warning descr="Commented out code (3 lines)">//</warning>else if (i == 4) {
+    //  System.exit(-1);
+    //}
+    return i;
+    //else if (i == 4) {
+    //  System.exit(-1);
+    //}
+  }
+
+  private void danglingElse2(int i) {
+    if (i == 3) {
+      System.out.println(i);
+    } else {
+
+    }
+    //else if (i == 4) {
+    //  System.exit(-1);
+    //}
+
+    if (i == 3) {
+      System.out.println(i);
+    } else if (i == 0) {
+
+    }
+    <warning descr="Commented out code (3 lines)">//</warning>else if (i == 4) {
+    //  System.exit(-1);
+    //}
+  }
+
   int x(int i) {
     new Object() {
 
@@ -39,6 +76,11 @@ class CommentedOutCode /* extends Object */ {
     tmp.add(s);
    */
   void x(String s, String... ss) {}
+
+  void x() {
+    // file://C:/Windows/System32/Config
+    <warning descr="Commented out code (1 line)">//</warning> System.out.println();
+  }
 
   void k() {
     //noinspection unchecked

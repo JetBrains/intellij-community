@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -764,7 +763,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return true;
     }
 
-    final ImmutableMap<String, PyNames.BuiltinDescription> builtinMethods =
+    final Map<String, PyNames.BuiltinDescription> builtinMethods =
       asMethod() != null ? PyNames.getBuiltinMethods(languageLevel) : PyNames.getModuleBuiltinMethods(languageLevel);
 
     return !builtinMethods.containsKey(functionName);

@@ -2,8 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
@@ -42,7 +40,7 @@ internal object UpdateInfoPanel {
 
   private val REPORTING_LISTENER = object : BrowserHyperlinkListener() {
     override fun hyperlinkActivated(e: HyperlinkEvent) {
-      FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog", "link.clicked", FeatureUsageData().addData("url", e.url.toString()))
+      UpdateInfoStatsCollector.click(e.url.toString())
       super.hyperlinkActivated(e)
     }
   }

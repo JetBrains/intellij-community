@@ -257,10 +257,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
     addFile("module-info.java", "module M6 { requires transitive M7; exports pkg.m6.inner; }", M6)
     addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
-
     addFile("pkg/m6/C6_1.java", "package pkg.m6.inner;\npublic class C6_1 {}", M6)
-    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\nclass C6_2", M6) TODO: uncomment to fail the test
-
+    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\n class C6_2", M6) TODO: uncomment to fail the test
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
 
@@ -430,6 +428,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testClashingReads4() {
+    addFile("module-info.java", "module M2 { requires transitive lib.auto; }", M2)
+    addFile("module-info.java", "module M4 { requires transitive lib.auto; }", M4)
+    highlight("module M { requires M2; requires M4; }")
+  }
+
   fun testInaccessibleMemberType() {
     addFile("module-info.java", "module C { exports pkg.c; }", M8)
     addFile("module-info.java", "module B { requires C; exports pkg.b; }", M6)
@@ -482,7 +486,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val available = myFixture.availableIntentions
       .map { IntentionActionDelegate.unwrap(it)::class.java.simpleName }
-      .filter { it != "GutterIntentionAction" }
+      .filter { it != "GutterIntentionAction" && it != "PackageSearchQuickFix" }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>

@@ -22,6 +22,7 @@ import org.jetbrains.uast.util.UastExpressionUtils;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Contains information about localization status.
@@ -325,7 +326,15 @@ public abstract class NlsInfo {
           if (!shouldGoThroughCall) return parent;
         }
       }
-      if (next instanceof UIfExpression && AnnotationContext.expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) return parent;
+      if (next instanceof UIfExpression && AnnotationContext.expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) {
+        return parent;
+      }
+      if (next instanceof USwitchExpression) {
+        final UExpression condExpression = ((USwitchExpression)next).getExpression();
+        if (condExpression != null && AnnotationContext.expressionsAreEquivalent(parent, condExpression)) {
+          return parent;
+        }
+      }
       parent = next;
     }
   }
@@ -483,13 +492,18 @@ public abstract class NlsInfo {
   }
 
   private static @NotNull NlsInfo fromAnnotation(@NotNull PsiAnnotation annotation) {
-    UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
-    return uAnnotation == null ? Unspecified.UNKNOWN : fromAnnotation(uAnnotation);
+    return fromAnnotationInfo(
+      annotation.getQualifiedName(),
+      () -> UastContextKt.toUElement(annotation.findAttributeValue("capitalization"), UExpression.class)
+    );
   }
 
   private static @NotNull NlsInfo fromAnnotation(@NotNull UAnnotation annotation) {
-    String qualifiedName = annotation.getQualifiedName();
-    if (qualifiedName == null) return Unspecified.UNKNOWN;
+    return fromAnnotationInfo(annotation.getQualifiedName(), () -> annotation.findAttributeValue("capitalization"));
+  }
+
+  private static @NotNull NlsInfo fromAnnotationInfo(String qualifiedName, Supplier<UExpression> capitalization) {
+      if (qualifiedName == null) return Unspecified.UNKNOWN;
     if (qualifiedName.equals(AnnotationUtil.NON_NLS) ||
         qualifiedName.equals(AnnotationUtil.PROPERTY_KEY)) {
       return NonLocalized.INSTANCE;
@@ -499,19 +513,12 @@ public abstract class NlsInfo {
       return NlsSafe.INSTANCE;
     }
     if (qualifiedName.equals(AnnotationUtil.NLS)) {
-      UExpression value = annotation.findAttributeValue("capitalization");
+      UExpression value = capitalization.get();
       String name = null;
       if (value instanceof UReferenceExpression) {
         // Java plugin returns reference for enum constant in annotation value
         name = ((UReferenceExpression)value).getResolvedName();
       }
-      //else if (value instanceof PsiLiteralExpression) {
-      //  // But Kotlin plugin returns kotlin.Pair (enumClass : ClassId, constantName : Name) for enum constant in annotation value!
-      //  Pair<?, ?> pair = ObjectUtils.tryCast(((PsiLiteralExpression)value).getValue(), Pair.class);
-      //  if (pair != null && pair.getSecond() != null) {
-      //    name = pair.getSecond().toString();
-      //  }
-      //}
       if (name != null) {
         if (Capitalization.Title.name().equals(name)) {
           return Localized.NLS_TITLE;

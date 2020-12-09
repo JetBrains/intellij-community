@@ -1,0 +1,15 @@
+android.defaultConfig.applicationId = "com.example.myapplication"
+android.defaultConfig.consumerProguardFiles = ['proguard-android.txt', 'proguard-rules.pro']
+android.defaultConfig.dimension = "abcd"
+android.defaultConfig.manifestPlaceholders = [activityLabel1: "defaultName1", activityLabel2: "defaultName2"]
+android.defaultConfig.maxSdkVersion = 23
+android.defaultConfig.multiDexEnabled = true
+android.defaultConfig.proguardFiles = ['proguard-android.txt', 'proguard-rules.pro']
+android.defaultConfig.testApplicationId = "com.example.myapplication.test"
+android.defaultConfig.testFunctionalTest = true
+android.defaultConfig.testHandleProfiling = true
+android.defaultConfig.testInstrumentationRunner = "abcd"
+android.defaultConfig.testInstrumentationRunnerArguments = [size: "medium", foo: "bar"]
+android.defaultConfig.useJack = true
+android.defaultConfig.versionCode = 1
+android.defaultConfig.versionName = "1.0"

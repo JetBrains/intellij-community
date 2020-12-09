@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -38,6 +39,11 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.openapi.util.Pair.pair;
+
+/**
+ * Class must be accessed from EDT only
+ */
 public abstract class AppIcon {
   private static final Logger LOG = Logger.getInstance(AppIcon.class);
 
@@ -69,7 +75,7 @@ public abstract class AppIcon {
 
   public abstract void setErrorBadge(Project project, String text);
 
-  public abstract void setOkBadge(Project project, boolean visible);
+  public abstract void setOkBadge(@Nullable Project project, boolean visible);
 
   public abstract void requestAttention(@Nullable Project project, boolean critical);
 
@@ -84,13 +90,14 @@ public abstract class AppIcon {
    * (this is the case on Windows, where focus stealing can only be enabled using {@link WinFocusStealer}).
    */
   public void requestFocus(IdeFrame frame) {
-    Window window = frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent());
-    requestFocus(window);
+    requestFocus(frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent()));
   }
 
-  protected void requestFocus(Window window) {
+  protected void requestFocus(@Nullable Window window) {
     requestFocus();
-    if (window != null) window.toFront();
+    if (window != null) {
+      window.toFront();
+    }
   }
 
   public void requestFocus() {
@@ -130,7 +137,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public final void setOkBadge(Project project, boolean visible) {
+    public final void setOkBadge(@Nullable Project project, boolean visible) {
       if (!isAppActive() && Registry.is("ide.appIcon.badge")) {
         _setTextBadge(getIdeFrame(project), null);
         _setOkBadge(getIdeFrame(project), visible);
@@ -190,7 +197,7 @@ public abstract class AppIcon {
   @SuppressWarnings("UseJBColor")
   static final class MacAppIcon extends BaseIcon {
     private BufferedImage myAppImage;
-    private final Map<Object, AppImage> myProgressImagesCache = new HashMap<>();
+    private final Map<Object, Pair<BufferedImage, Graphics2D>> myProgressImagesCache = new HashMap<>();
 
     private BufferedImage getAppImage() {
       EDT.assertIsEdt();
@@ -198,9 +205,7 @@ public abstract class AppIcon {
       try {
         if (myAppImage != null) return myAppImage;
 
-        Object app = getApp();
-        Image appImage = (Image)getAppMethod("getDockIconImage").invoke(app);
-
+        Image appImage = (Image)getAppMethod("getDockIconImage").invoke(getApp());
         if (appImage == null) return null;
 
         // [tav] expecting two resolution variants for the dock icon: 128x128, 256x256
@@ -237,8 +242,7 @@ public abstract class AppIcon {
       try {
         getAppMethod("requestForeground", boolean.class).invoke(getApp(), true);
       }
-      catch (NoSuchMethodException ignored) {
-      }
+      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -251,8 +255,7 @@ public abstract class AppIcon {
       try {
         getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
       }
-      catch (NoSuchMethodException ignored) {
-      }
+      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -262,14 +265,19 @@ public abstract class AppIcon {
     public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
       EDT.assertIsEdt();
 
-      if (getAppImage() == null) return false;
-      if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
+      if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) {
+        return false;
+      }
 
-      setDockIcon(getAppImage());
+      BufferedImage appImage = getAppImage();
+      if (appImage == null) {
+        return false;
+      }
+
+      setDockIcon(appImage);
       myProgressImagesCache.remove(myCurrentProcessId);
       myCurrentProcessId = null;
       myLastValue = 0;
-
       return true;
     }
 
@@ -277,25 +285,27 @@ public abstract class AppIcon {
     public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
       EDT.assertIsEdt();
 
-      if (getAppImage() == null) return;
+      BufferedImage appImage = getAppImage();
+      if (appImage == null) {
+        return;
+      }
 
-      AppImage img = createAppImage();
+      Pair<BufferedImage, Graphics2D> img = createAppImage(appImage);
 
       if (visible) {
         Icon okIcon = AllIcons.Mac.AppIconOk512;
-
-        int myImgWidth = img.myImg.getWidth();
-        if (myImgWidth != 128) {
-          okIcon = IconUtil.scale(okIcon, frame != null ? frame.getRootPane() : null, myImgWidth / 128f);
+        int w = img.first.getWidth();
+        if (w != 128) {
+          okIcon = IconUtil.scale(okIcon, frame != null ? frame.getRootPane() : null, w / 128f);
         }
 
-        int x = myImgWidth - okIcon.getIconWidth();
+        int x = w - okIcon.getIconWidth();
         int y = 0;
 
-        okIcon.paintIcon(JOptionPane.getRootFrame(), img.myG2d, x, y);
+        okIcon.paintIcon(JOptionPane.getRootFrame(), img.second, x, y);
       }
 
-      setDockIcon(img.myImg);
+      setDockIcon(img.first);
     }
 
     // white 80% transparent
@@ -306,7 +316,8 @@ public abstract class AppIcon {
     public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       EDT.assertIsEdt();
 
-      if (getAppImage() == null) return false;
+      BufferedImage appImage = getAppImage();
+      if (appImage == null) return false;
 
       myCurrentProcessId = processId;
 
@@ -335,19 +346,19 @@ public abstract class AppIcon {
 
         progressArea.intersect(borderArea);
 
-        AppImage appImg = myProgressImagesCache.get(myCurrentProcessId);
-        if (appImg == null) myProgressImagesCache.put(myCurrentProcessId, appImg = createAppImage());
+        Pair<BufferedImage, Graphics2D> appImg = myProgressImagesCache.get(myCurrentProcessId);
+        if (appImg == null) myProgressImagesCache.put(myCurrentProcessId, appImg = createAppImage(appImage));
 
-        appImg.myG2d.setColor(PROGRESS_BACKGROUND_COLOR);
-        appImg.myG2d.fill(backgroundArea);
-        final Color color = isOk ? scheme.getOkColor() : scheme.getErrorColor();
-        appImg.myG2d.setColor(color);
-        appImg.myG2d.fill(progressArea);
-        appImg.myG2d.setColor(PROGRESS_OUTLINE_COLOR);
-        appImg.myG2d.draw(backgroundArea);
-        appImg.myG2d.draw(borderArea);
+        Graphics2D g2d = appImg.second;
+        g2d.setColor(PROGRESS_BACKGROUND_COLOR);
+        g2d.fill(backgroundArea);
+        g2d.setColor(isOk ? scheme.getOkColor() : scheme.getErrorColor());
+        g2d.fill(progressArea);
+        g2d.setColor(PROGRESS_OUTLINE_COLOR);
+        g2d.draw(backgroundArea);
+        g2d.draw(borderArea);
 
-        setDockIcon(appImg.myImg);
+        setDockIcon(appImg.first);
 
         myLastValue = value;
       }
@@ -361,25 +372,12 @@ public abstract class AppIcon {
       return true;
     }
 
-    private AppImage createAppImage() {
-      BufferedImage appImage = getAppImage();
-      assert appImage != null;
-      @SuppressWarnings("UndesirableClassUsage")
-      BufferedImage current = new BufferedImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    private static Pair<BufferedImage, Graphics2D> createAppImage(BufferedImage appImage) {
+      @SuppressWarnings("UndesirableClassUsage") BufferedImage current = new BufferedImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       StartupUiUtil.drawImage(g, appImage, 0, 0, null);
-      return new AppImage(current, g);
-    }
-
-    private static class AppImage {
-      BufferedImage myImg;
-      Graphics2D myG2d;
-
-      AppImage(BufferedImage img, Graphics2D g2d) {
-        myImg = img;
-        myG2d = g2d;
-      }
+      return pair(current, g);
     }
 
     static void setDockIcon(BufferedImage image) {
@@ -391,7 +389,7 @@ public abstract class AppIcon {
       }
     }
 
-    private static Method getAppMethod(@NonNls final String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
+    private static Method getAppMethod(String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
       return getAppClass().getMethod(name, args);
     }
 
@@ -405,9 +403,11 @@ public abstract class AppIcon {
   }
 
   @SuppressWarnings("UseJBColor")
-  private static class Win7AppIcon extends BaseIcon {
+  private static final class Win7AppIcon extends BaseIcon {
     @Override
     public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      EDT.assertIsEdt();
+
       myCurrentProcessId = processId;
 
       if (Math.abs(myLastValue - value) < 0.02d) {
@@ -430,6 +430,7 @@ public abstract class AppIcon {
 
     @Override
     public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
+      EDT.assertIsEdt();
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) {
         return false;
       }
@@ -553,6 +554,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setTextBadge(@Nullable JFrame frame, String text) {
+      EDT.assertIsEdt();
       if (!isValid(frame)) {
         return;
       }
@@ -582,7 +584,7 @@ public abstract class AppIcon {
           int textHeight = UIUtil.getHighestGlyphHeight(text, font, g);
 
           g.setPaint(errorBadgeTextBackgroundColor);
-          g.fillOval( size / 2 - textWidth / 2, size / 2 - textHeight / 2, textWidth, textHeight);
+          g.fillOval(size / 2 - textWidth / 2, size / 2 - textHeight / 2, textWidth, textHeight);
 
           g.setColor(Color.white);
           g.drawString(text, size / 2 - textWidth / 2, size / 2 - fontMetrics.getHeight() / 2 + fontMetrics.getAscent());
@@ -607,6 +609,7 @@ public abstract class AppIcon {
 
     @Override
     public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
+      EDT.assertIsEdt();
       if (!isValid(frame)) {
         return;
       }
@@ -641,6 +644,7 @@ public abstract class AppIcon {
 
     @Override
     public void _requestAttention(@Nullable JFrame frame, boolean critical) {
+      EDT.assertIsEdt();
       try {
         if (isValid(frame)) {
           Win7TaskBar.attention(frame);
@@ -655,7 +659,7 @@ public abstract class AppIcon {
     public void requestFocus() {
       try {
         // This is required for the focus stealing mechanism to work reliably,
-        // see WinFocusStealer.setFocusStealingEnabled's javadoc for details
+        // see WinFocusStealer.setFocusStealingEnabled javadoc for details
         Thread.sleep(Registry.intValue("win.request.focus.delay.ms"));
       }
       catch (InterruptedException e) {
@@ -668,7 +672,7 @@ public abstract class AppIcon {
     }
   }
 
-  private static class XAppIcon extends BaseIcon {
+  private static final class XAppIcon extends BaseIcon {
     @Override
     public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       return false;

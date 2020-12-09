@@ -63,14 +63,12 @@ public abstract class IntentionSettingsTree {
         final String text = getNodeText(node);
         Color background = UIUtil.getTreeBackground(selected, true);
         UIUtil.changeBackGround(this, background);
-        if (text != null) {
-          SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
-                                     text,
-                                     attributes.getStyle(),
-                                     attributes.getFgColor(),
-                                     background,
-                                     getTextRenderer());
-        }
+        SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
+                                   text,
+                                   attributes.getStyle(),
+                                   attributes.getFgColor(),
+                                   background,
+                                   getTextRenderer());
       }
     }, new CheckedTreeNode(null));
 
@@ -110,7 +108,7 @@ public abstract class IntentionSettingsTree {
 
   public void filter(List<IntentionActionMetaData> intentionsToShow) {
     refreshCheckStatus((CheckedTreeNode)myTree.getModel().getRoot());
-    reset(intentionsToShow);
+    reset(copyAndSort(intentionsToShow));
   }
 
   public void reset(){
@@ -329,7 +327,7 @@ public abstract class IntentionSettingsTree {
     void visit(CheckedTreeNode node);
   }
   private static void visitChildren(TreeNode node, CheckedNodeVisitor visitor) {
-    Enumeration children = node.children();
+    Enumeration<?> children = node.children();
     while (children.hasMoreElements()) {
       final CheckedTreeNode child = (CheckedTreeNode)children.nextElement();
       visitor.visit(child);

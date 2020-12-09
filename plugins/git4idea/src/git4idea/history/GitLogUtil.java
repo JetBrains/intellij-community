@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,14 +34,14 @@ import java.util.*;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal
-public class GitLogUtil {
+public final class GitLogUtil {
   private static final Logger LOG = Logger.getInstance(GitLogUtil.class);
   public static final String GRAFTED = "grafted";
   public static final String REPLACED = "replaced";
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
-  public static final List<String> LOG_ALL = ContainerUtil.immutableList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
+  public static final List<String> LOG_ALL = List.of(GitUtil.HEAD, "--branches", "--remotes", "--tags");
   public static final String STDIN = "--stdin";
   static final GitLogParser.GitLogOption[] COMMIT_METADATA_OPTIONS = {
     HASH, PARENTS,
@@ -98,13 +99,17 @@ public class GitLogUtil {
   public static List<? extends VcsCommitMetadata> collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
                                                                   @NotNull List<String> hashes)
     throws VcsException {
-    if (hashes.isEmpty()) {
-      return Collections.emptyList();
-    }
+    CollectConsumer<VcsCommitMetadata> collectConsumer = new CollectConsumer<>();
+    collectMetadata(project, vcs, root, hashes, collectConsumer);
+    return new ArrayList<>(collectConsumer.getResult());
+  }
+
+  public static void collectMetadata(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile root,
+                                     @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
+    throws VcsException {
+    if (hashes.isEmpty()) return;
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return Collections.emptyList();
-    }
+    if (factory == null) return;
 
     GitLineHandler h = createGitHandler(project, root);
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, COMMIT_METADATA_OPTIONS);
@@ -117,19 +122,20 @@ public class GitLogUtil {
 
     sendHashesToStdin(vcs, hashes, h);
 
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    List<GitLogRecord> records = parser.parse(output);
-
-    return ContainerUtil.map(records, record -> {
+    GitLogOutputSplitter<GitLogRecord> outputHandler = new GitLogOutputSplitter<>(h, parser, (record) -> {
       List<Hash> parents = new SmartList<>();
       for (String parent : record.getParentsHashes()) {
         parents.add(HashImpl.build(parent));
       }
       record.setUsedHandler(h);
-      return factory.createCommitMetadata(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getFullMessage(),
-                                          record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
+      consumer.consume(factory.createCommitMetadata(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
+                                                    record.getSubject(), record.getAuthorName(), record.getAuthorEmail(),
+                                                    record.getFullMessage(),
+                                                    record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp()));
     });
+
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
+    outputHandler.reportErrors();
   }
 
   @NotNull

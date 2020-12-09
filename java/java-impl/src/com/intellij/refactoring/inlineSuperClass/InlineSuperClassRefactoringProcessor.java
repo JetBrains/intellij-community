@@ -17,7 +17,9 @@
 package com.intellij.refactoring.inlineSuperClass;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -27,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inlineSuperClass.usageInfo.*;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.memberPushDown.PushDownConflicts;
@@ -238,6 +241,17 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
+    if (!ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts)), 
+                                           RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
+      return false;
+    }
+
+    checkConflicts(refUsages, conflicts);
+    return showConflicts(conflicts, refUsages.get());
+  }
+
+  private void collectConflicts(MultiMap<PsiElement, @Nls String> conflicts) {
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(mySuperClass, myMemberInfos, conflicts);
     for (PsiClass targetClass : myTargetClasses) {
       if (targetClass instanceof PsiAnonymousClass) {
@@ -273,8 +287,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         return true;
       });
     }
-    checkConflicts(refUsages, conflicts);
-    return showConflicts(conflicts, refUsages.get());
   }
 
   private boolean skipTargetClass(PsiClass targetClass) {

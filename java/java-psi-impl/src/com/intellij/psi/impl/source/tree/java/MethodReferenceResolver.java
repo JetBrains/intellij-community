@@ -19,11 +19,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
@@ -208,7 +210,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     }
 
     @Override
-    protected int getPertinentApplicabilityLevel(@NotNull MethodCandidateInfo conflict) {
+    protected int getPertinentApplicabilityLevel(@NotNull MethodCandidateInfo conflict,
+                                                 Map<MethodCandidateInfo, PsiSubstitutor> map) {
       return conflict.isVarargs() ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY;
     }
 
@@ -219,8 +222,9 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
       if (conflicts.isEmpty()) return null;
       if (conflicts.size() == 1) return conflicts.get(0);
+      final Map<MethodCandidateInfo, PsiSubstitutor> map = FactoryMap.create(key -> key.getSubstitutor(false));
 
-      checkSameSignatures(conflicts);
+      checkSameSignatures(conflicts, map);
       if (conflicts.size() == 1) return  conflicts.get(0);
 
       checkAccessStaticLevels(conflicts, true);
@@ -254,12 +258,12 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         }
       }
 
-      CandidateInfo candidateInfo = resolveConflicts(firstCandidates, secondCandidates, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
+      CandidateInfo candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
       if (candidateInfo != null) {
         return candidateInfo;
       }
 
-      candidateInfo = resolveConflicts(firstCandidates, secondCandidates, MethodCandidateInfo.ApplicabilityLevel.VARARGS);
+      candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.VARARGS);
       if (candidateInfo != null) {
         return candidateInfo;
       }
@@ -346,12 +350,15 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
     }
 
-    private CandidateInfo resolveConflicts(@NotNull List<CandidateInfo> firstCandidates, @NotNull List<CandidateInfo> secondCandidates, int applicabilityLevel) {
+    private CandidateInfo resolveConflicts(@NotNull List<CandidateInfo> firstCandidates,
+                                           @NotNull List<CandidateInfo> secondCandidates,
+                                           Map<MethodCandidateInfo, PsiSubstitutor> map,
+                                           int applicabilityLevel) {
       int firstApplicability = checkApplicability(firstCandidates);
-      checkSpecifics(firstCandidates, applicabilityLevel);
+      checkSpecifics(firstCandidates, applicabilityLevel, map, 0);
 
       int secondApplicability = checkApplicability(secondCandidates);
-      checkSpecifics(secondCandidates, applicabilityLevel, null, 1);
+      checkSpecifics(secondCandidates, applicabilityLevel, map, 1);
 
       if (firstApplicability < secondApplicability) {
         return secondCandidates.size() == 1 ? secondCandidates.get(0) : null;

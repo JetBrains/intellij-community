@@ -21,8 +21,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-
-public class ImageInfoIndex {
+public final class ImageInfoIndex {
   @Nullable
   public static ImageInfo getInfo(@NotNull VirtualFile file, @NotNull Project project) {
     return ourGist.getFileData(project, file);

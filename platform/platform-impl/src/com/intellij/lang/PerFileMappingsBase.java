@@ -76,7 +76,15 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   private void cleanup() {
-    myMappings.keySet().removeIf(file -> file != null /* PROJECT, top-level */ && !file.isValid());
+    for (Iterator<Map.Entry<VirtualFile, T>> it = myMappings.entrySet().iterator(); it.hasNext(); ) {
+      Map.Entry<VirtualFile, T> entry = it.next();
+      VirtualFile file = entry.getKey();
+      T mapping = entry.getValue();
+      if (file == null) continue;
+      if (mapping == null || !file.isValid() || isDefaultMapping(file, mapping)) {
+        it.remove();
+      }
+    }
   }
 
   @Override
@@ -149,6 +157,10 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     return null;
   }
 
+  protected boolean isDefaultMapping(@NotNull VirtualFile file, @NotNull T mapping) {
+    return false;
+  }
+
   @Nullable
   public T getImmediateMapping(@Nullable VirtualFile file) {
     synchronized (myMappings) {
@@ -210,7 +222,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   public abstract List<T> getAvailableValues();
 
   @Nullable
-  protected abstract String serialize(T t);
+  protected abstract String serialize(@NotNull T t);
 
   @Override
   public Element getState() {
@@ -277,7 +289,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       myDeferredMappings = null;
       Map<String, T> valuesMap = new HashMap<>();
       for (T value : getAvailableValues()) {
-        String key = serialize(value);
+        String key = value == null ? null : serialize(value);
         if (key != null) {
           valuesMap.put(key, value);
         }
@@ -292,7 +304,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
           value = handleUnknownMapping(file, valueStr);
           if (value == null) continue;
         }
-        if (file != null || url.equals("PROJECT")) {
+        if (file != null && !isDefaultMapping(file, value) || url.equals("PROJECT")) {
           myMappings.put(file, value);
         }
       }
@@ -353,7 +365,6 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
         if (eventsFiltered.isEmpty()) return null;
 
         Map<String, T> removed = new HashMap<>();
-        Map<String, T> added = new HashMap<>();
         NavigableSet<VirtualFile> navSet = null;
 
         synchronized (myMappings) {
@@ -383,7 +394,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
             }
           }
         }
-        return removed.isEmpty() && added.isEmpty() ? null : new MyUndoableAction(added, removed);
+        return removed.isEmpty() ? null : new MyUndoableAction(new HashMap<>(), removed);
       }
     });
   }

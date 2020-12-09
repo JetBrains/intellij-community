@@ -89,8 +89,8 @@ class GitStageLineStatusTracker(
     unstagedTracker = DocumentTracker(stagedDocument, document, LOCK)
     Disposer.register(disposable, unstagedTracker)
 
-    stagedTracker.addHandler(MyDocumentTrackerHandler(true))
-    unstagedTracker.addHandler(MyDocumentTrackerHandler(false))
+    stagedTracker.addHandler(MyDocumentTrackerHandler(false))
+    unstagedTracker.addHandler(MyDocumentTrackerHandler(true))
   }
 
 
@@ -461,7 +461,7 @@ class GitStageLineStatusTracker(
 
       val additionalPanel = createStageLinksPanel(editor, range, mousePosition, disposable)
 
-      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, additionalPanel, mousePosition, disposable)
+      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, additionalPanel, mousePosition, disposable, null)
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {
@@ -716,6 +716,9 @@ class GitStageLineStatusTracker(
           DiffBundle.message("dialog.title.diff.for.range"),
           vcsContent, stagedContent, currentContent,
           GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"))
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.add.unstaged.range"))
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT, DiffBundle.message("action.presentation.diff.revert.text"))
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.reset.staged.range"))
         DiffManager.getInstance().showDiff(myTracker.project, request)
       }
 

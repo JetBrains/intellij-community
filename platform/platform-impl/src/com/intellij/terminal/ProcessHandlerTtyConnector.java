@@ -26,6 +26,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     }
     myProcessHandler = (BaseProcessHandler<?>)processHandler;
     myPtyProcess = myProcessHandler.getProcess();
+    //noinspection InstanceofIncompatibleInterface
     if (!(myPtyProcess instanceof PtyBasedProcess) && !(myPtyProcess instanceof PtyProcess)) {
       throw new IllegalArgumentException("Not a PTY based process: " + myPtyProcess.getClass());
     }
@@ -48,12 +49,13 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
       if (myPtyProcess instanceof PtyProcess) {
         PtyProcess ptyProcess = (PtyProcess)myPtyProcess;
         if (ptyProcess.isRunning()) {
-          ptyProcess.setWinSize(new WinSize(termSize.width, termSize.height, pixelSize.width, pixelSize.height));
+          ptyProcess.setWinSize(new WinSize(termSize.width, termSize.height));
         }
       }
       else {
+        //noinspection InstanceofIncompatibleInterface
         assert myPtyProcess instanceof PtyBasedProcess;
-        ((PtyBasedProcess)myPtyProcess).resizePtyWindow(termSize.width, termSize.height, pixelSize.width, pixelSize.height);
+        ((PtyBasedProcess)myPtyProcess).setWindowSize(termSize.width, termSize.height);
       }
     }
   }
@@ -92,5 +94,9 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     OutputStream input = myProcessHandler.getProcessInput();
     input.write(bytes);
     input.flush();
+  }
+
+  public @NotNull BaseProcessHandler<?> getProcessHandler() {
+    return myProcessHandler;
   }
 }

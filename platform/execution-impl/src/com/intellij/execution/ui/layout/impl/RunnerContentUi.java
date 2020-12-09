@@ -23,10 +23,7 @@ import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.ActiveRunnable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -68,7 +65,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -94,7 +91,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private final RunnerLayout myLayoutSettings;
 
   private final @NotNull ActionManager myActionManager;
-  private final String mySessionName;
+  private final @NlsSafe String mySessionName;
   private final String myRunnerId;
   private NonOpaquePanel myComponent;
 
@@ -414,8 +411,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
     else if (Content.PROP_DISPLAY_NAME.equals(property)
              || Content.PROP_ICON.equals(property)
+             || Content.PROP_PINNED.equals(property)
              || Content.PROP_ACTIONS.equals(property)
-             || Content.PROP_DESCRIPTION.equals(property)) {
+             || Content.PROP_DESCRIPTION.equals(property)
+             || Content.PROP_TAB_COLOR.equals(property)) {
       cell.updateTabPresentation(content);
       updateTabsUI(false);
     }
@@ -844,7 +843,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       content.putUserData(RunnerLayout.DEFAULT_INDEX, null);
     }
 
-    TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
+    TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText(ExecutionBundle.message("runner.context.tab"));
 
     Wrapper leftWrapper = new Wrapper();
     Wrapper middleWrapper = new Wrapper();
@@ -995,7 +994,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       Wrapper eachPlaceholder = entry.getValue();
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.RUNNER_LAYOUT_BUTTON_TOOLBAR, myViewActions, true);
       tb.setSecondaryActionsIcon(AllIcons.Debugger.RestoreLayout);
-      tb.setSecondaryActionsTooltip("Layout Settings");
+      tb.setSecondaryActionsTooltip(ExecutionBundle.message("runner.content.tooltip.layout.settings"));
       tb.setTargetComponent(myComponent);
       tb.getComponent().setBorder(null);
       tb.setReservePlaceAutoPopupIcon(false);
@@ -1398,8 +1397,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private static class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
-    private final Color myColor = JBColor.namedColor("dropArea.base", 0x4f4fff, 0x5081c0);
-
 
     @Override
     public boolean needsRepaint() {
@@ -1410,10 +1407,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(ColorUtil.toAlpha(myColor, 200));
-      g.setStroke(new BasicStroke(2));
-      g.draw(myBoundingBox);
-      g.setColor(ColorUtil.toAlpha(myColor, 40));
+      g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
       g.fill(myBoundingBox);
     }
 
@@ -1471,7 +1465,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         r = new RelativeRectangle(cellWrapper).getRectangleOn(component);
         break;
       }
-      myBoundingBox = new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, 16, 16);
+      myBoundingBox = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
     }
   }
 

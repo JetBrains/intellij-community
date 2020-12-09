@@ -325,10 +325,13 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
     ConfigurationStoreBundle.message("configuration.project.files.changed.reload.project.proposal")
   }
 
-  @Nls val message = ConfigurationStoreBundle.message(
-    "configuration.project.ask.to.restart.message.0.non.reloadable.components.1.question.2",
-    firstMessage, nonReloadableComponentsJoined, question
-  )
+  @Suppress("HardCodedStringLiteral")
+  val message = """
+    $firstMessage
+
+    $nonReloadableComponentsJoined
+    $question
+  """.trimIndent()
 
   val title = if (store is IProjectStore)
     ConfigurationStoreBundle.message("configuration.project.files.changed.restart.prompt.title", store.projectName)

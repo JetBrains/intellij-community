@@ -23,10 +23,10 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
@@ -203,27 +203,18 @@ final class InProcessGroovyc implements GroovycFlavor {
     return new JointCompilationClassLoader(buildCompilationClassLoader(compilationClassPath, groovyClassLoader));
   }
 
-  private UrlClassLoader.Builder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent)
-    throws MalformedURLException {
+  private UrlClassLoader.Builder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent) {
     return UrlClassLoader.build().
-      urls(toUrls(compilationClassPath)).parent(parent).allowLock().
-      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
-        @Override
-        public boolean shouldCacheData(@NotNull URL url) {
-          try {
-            String file = FileUtil.toCanonicalPath(new File(url.toURI()).getPath());
-            for (String output : myOutputs) {
-              if (FileUtil.startsWith(output, file)) {
-                return false;
-              }
-            }
-            return true;
-          }
-          catch (URISyntaxException e) {
-            LOG.info(e);
+      files(toPaths(compilationClassPath))
+      .parent(parent)
+      .useCache(ourLoaderCachePool, file -> {
+        String filePath = FileUtil.toCanonicalPath(file.toString());
+        for (String output : myOutputs) {
+          if (FileUtil.startsWith(output, filePath)) {
             return false;
           }
         }
+        return true;
       });
   }
 
@@ -265,8 +256,7 @@ final class InProcessGroovyc implements GroovycFlavor {
     return null;
   }
 
-  @Nullable
-  private static ClassLoader obtainParentLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+  private static @Nullable ClassLoader obtainParentLoader(Collection<String> compilationClassPath) {
     String groovyJar = evaluatePathToGroovyJarForParentClassloader(compilationClassPath);
     if (groovyJar == null) return null;
 
@@ -305,18 +295,10 @@ final class InProcessGroovyc implements GroovycFlavor {
         return false;
       }
     };
-    UrlClassLoader.Builder builder = UrlClassLoader.build();
-    builder.urls(toUrls(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))));
-    builder.allowLock();
-    builder.useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
-      @Override
-      public boolean shouldCacheData(
-        @NotNull URL url) {
-        return true;
-      }
-    });
-    ClassLoaderUtil.addPlatformLoaderParentIfOnJdk9(builder);
-    UrlClassLoader groovyAllLoader = builder.get();
+    UrlClassLoader groovyAllLoader = UrlClassLoader.build()
+      .files(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))))
+      .useCache(ourLoaderCachePool, url -> true)
+      .parent(ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9()).get();
 
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override
@@ -344,13 +326,12 @@ final class InProcessGroovyc implements GroovycFlavor {
   }
 
 
-  @NotNull
-  private static List<URL> toUrls(Collection<String> paths) throws MalformedURLException {
-    List<URL> urls = new ArrayList<>();
+  private static @NotNull List<Path> toPaths(Collection<String> paths) {
+    List<Path> result = new ArrayList<>();
     for (String s : paths) {
-      urls.add(new File(s).toURI().toURL());
+      result.add(Paths.get(s));
     }
-    return urls;
+    return result;
   }
 
   @NotNull

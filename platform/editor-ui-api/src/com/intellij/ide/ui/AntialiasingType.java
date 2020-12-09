@@ -21,11 +21,10 @@ public enum AntialiasingType {
 
   public static Object getAAHintForSwingComponent() {
     UISettings uiSettings = UISettings.getInstanceOrNull();
-    if (uiSettings != null) {
-      AntialiasingType type = uiSettings.getIdeAAType();
-      return type.getTextInfo();
+    if (uiSettings == null) {
+      return GREYSCALE.getTextInfo();
     }
-    return GREYSCALE.getTextInfo();
+    return uiSettings.getIdeAAType().getTextInfo();
   }
 
   public static boolean canUseSubpixelAAForIDE() {

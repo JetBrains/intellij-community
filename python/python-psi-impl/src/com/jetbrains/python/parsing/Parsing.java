@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class Parsing {
   protected ParsingContext myContext;
   protected SyntaxTreeBuilder myBuilder;
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.Parsing");
+  private static final Logger LOG = Logger.getInstance(Parsing.class);
 
   protected Parsing(ParsingContext context) {
     myContext = context;

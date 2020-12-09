@@ -258,7 +258,7 @@ public class FileUtilRt {
                                           final char separatorChar,
                                           final boolean removeLastSlash,
                                           @Nullable SymlinkResolver resolver) {
-    if (path == null || path.length() == 0) {
+    if (path == null || path.isEmpty()) {
       return path;
     }
     if (path.charAt(0) == '.') {
@@ -367,7 +367,7 @@ public class FileUtilRt {
         return shareEnd;
       }
 
-      if (path.length() > 0 && path.charAt(0) == '/') {
+      if (!path.isEmpty() && path.charAt(0) == '/') {
         result.append('/');
         return 1;
       }
@@ -823,9 +823,7 @@ public class FileUtilRt {
       return chars;
     }
     else {
-      char[] newChars = new char[count];
-      System.arraycopy(chars, 0, newChars, 0, count);
-      return newChars;
+      return Arrays.copyOf(chars, count);
     }
   }
 

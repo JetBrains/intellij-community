@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="library" name="automaton" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
   </component>
 </module>

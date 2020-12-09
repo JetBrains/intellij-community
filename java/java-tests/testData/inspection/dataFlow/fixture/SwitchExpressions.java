@@ -24,7 +24,8 @@ public class SwitchExpressionsJava12 {
       case B -> 2;
     };
 
-    if (i == 0) {} // default and case C is missing: we assume that any other result is also possible
+    // default and case C is missing: we assume that IncompatibleClassChangeError is still thrown
+    if (<warning descr="Condition 'i == 0' is always 'false'">i == 0</warning>) {} 
 
     int i1 = switch(x) {
       case A -> 1;
@@ -33,6 +34,23 @@ public class SwitchExpressionsJava12 {
     };
 
     if (<warning descr="Condition 'i1 == 0' is always 'false'">i1 == 0</warning>) {} // exhaustive
+  }
+  
+  static void testEnumAndCatch(X x) {
+    int i1 = 0;
+    try {
+      i1 = switch(x) {
+        case A -> 1;
+        case B -> 2;
+        case C -> 3;
+      };
+    }
+    catch (IncompatibleClassChangeError ex) {
+      if (<warning descr="Condition 'i1 == 0' is always 'true'">i1 == 0</warning>) {}
+      if (<warning descr="Condition 'x == X.A' is always 'false'">x == X.A</warning>) {}
+      if (<warning descr="Condition 'x == X.B' is always 'false'">x == X.B</warning>) {}
+      if (<warning descr="Condition 'x == X.C' is always 'false'">x == X.C</warning>) {}
+    }
   }
 
   static void testBoxed(int i) {
@@ -192,7 +210,7 @@ public class SwitchExpressionsJava12 {
         yield 3;
       case C:
         i = 3;
-        <error descr="Break outside of enclosing switch expression">break;</error>
+        <error descr="Break out of switch expression is not allowed">break;</error>
       default: {
         i = 10;
         yield 10;/* todo one two */

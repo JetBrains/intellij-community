@@ -17,6 +17,10 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensionPoints>
+    <extensionPoint name="features.policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.features.CompletionFeaturesPolicy"/>
+    </extensionPoint>
+
     <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.completion.ml.CompletionMLPolicy"/>
     </extensionPoint>
@@ -37,7 +41,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.completion.ml.tracker.FactorsTrackerInitializer"/>
     <applicationService serviceImplementation="com.intellij.completion.ml.settings.CompletionMLRankingSettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
@@ -65,13 +68,16 @@
     <registryKey key="completion.ml.reorder.only.top.items" defaultValue="true"
                  description="Reorder only a few items on the top in the lookup to preserve a proper grouping for the items below"/>
 
+    <registryKey key="completion.ml.reorder.without.duplicates" defaultValue="false"
+                 description="Reorder only items with different names"/>
+
     <registryKey key="completion.ml.show.arrows.notification" defaultValue="true"
                  description="Show notification with question about ML completion arrows"/>
 
     <registryKey key="completion.ml.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
 
-    <registryKey key="completion.ml.override.experiment.group.number" defaultValue="-1" restartRequired="true"
+    <registryKey key="completion.ml.override.experiment.group.number" defaultValue="-1"
                  description="Set experiment bucket number. If value is negative, will be skipped."/>
 
     <registryKey key="completion.ml.path.to.zip.model" defaultValue="no path"
@@ -91,15 +97,19 @@
     <statistics.validation.customValidationRule
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.completion.ml.settings.MLCompletionSettingsCollector"/>
-  </extensions>
 
-  <applicationListeners>
-    <listener class="com.intellij.completion.ml.sorting.PositionDiffArrowInitializer"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
-  </applicationListeners>
+    <preloadingActivity implementation="com.intellij.completion.ml.ranker.PreloadCatBoostModel" />
+  </extensions>
 
   <projectListeners>
     <listener class="com.intellij.completion.ml.common.RecentPlacesFeatures$StoreRecentPlacesListener"
               topic="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener"/>
+    <listener class="com.intellij.completion.ml.tracker.CompletionFactorsInitializer"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener" />
+    <listener class="com.intellij.completion.ml.sorting.PositionDiffArrowInitializer"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"
+              activeInTestMode="false"/>
+    <listener class="com.intellij.completion.ml.ngram.NGramFileListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
   </projectListeners>
 </idea-plugin>

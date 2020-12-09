@@ -1,0 +1,7 @@
+ext {
+  def prop1 = 'value'
+  def prop2 = 25
+  def prop3 = true
+  def prop4 = ["key": 'val']
+  def prop5 = ['val1', 'val2', "val3"]
+}

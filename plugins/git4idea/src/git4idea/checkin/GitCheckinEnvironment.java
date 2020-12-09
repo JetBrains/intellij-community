@@ -7,8 +7,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -35,7 +34,6 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
@@ -49,7 +47,6 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitChangeUtils.GitDiffChange;
 import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement;
@@ -62,7 +59,7 @@ import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +82,8 @@ import static git4idea.checkin.GitCommitOptionsKt.*;
 import static git4idea.checkin.GitSkipHooksCommitHandlerFactoryKt.isSkipHooks;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 
-public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
+@Service(Service.Level.PROJECT)
+public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
   private static final Logger LOG = Logger.getInstance(GitCheckinEnvironment.class);
   @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-"; // the file name prefix for commit message file
   @NonNls private static final String GIT_COMMIT_MSG_FILE_EXT = ".txt"; // the file extension for commit message file
@@ -222,14 +220,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     }
 
     if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
-      ModalityState modality = ModalityState.defaultModalityState();
-      TransactionGuard.getInstance().assertWriteSafeContext(modality);
-
-      List<GitRepository> preselectedRepositories = new ArrayList<>(repositories);
-      GuiUtils.invokeLaterIfNeeded(
-        () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
-                                           GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),
-        modality, myProject.getDisposed());
+      GitPushAfterCommitDialog.showOrPush(myProject, repositories);
     }
     return exceptions;
   }
@@ -282,7 +273,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
             throw ex;
           }
           runWithMessageFile(myProject, root, message, messageFile -> {
-            if (!mergeCommit(myProject, root, changes, messageFile, exceptions, partialOperation)) {
+            if (!mergeCommit(repository, changes, messageFile, exceptions, partialOperation)) {
               throw ex;
             }
           });
@@ -322,12 +313,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       Collection<GitDiffChange> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
       LOG.debug("Found staged changes: " + getLogStringGitDiffChanges(rootPath, stagedChanges));
       Collection<ChangedPath> excludedStagedChanges = new ArrayList<>();
+      Collection<FilePath> excludedStagedAdditions = new ArrayList<>();
       processExcludedPaths(stagedChanges, added, removed, (before, after) -> {
         if (before != null || after != null) excludedStagedChanges.add(new ChangedPath(before, after));
+        if (before == null && after != null) excludedStagedAdditions.add(after);
       });
 
-      // Find unstaged deletions, we might not be able to restore them after
-      Collection<GitDiffChange> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, false);
+      // Find files with 'AD' status, we will not be able to restore them after using 'git add' command,
+      // getting "pathspec 'file.txt' did not match any files" error (and preventing us from adding other files).
+      Collection<GitDiffChange> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, excludedStagedAdditions, false);
       LOG.debug("Found unstaged changes: " + getLogStringGitDiffChanges(rootPath, unstagedChanges));
       Set<FilePath> excludedUnstagedDeletions = new HashSet<>();
       processExcludedPaths(unstagedChanges, added, removed, (before, after) -> {
@@ -356,7 +350,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
         // Commit the staging area
         LOG.debug("Performing commit...");
-        commitWithoutPaths(myProject, root, messageFile);
+        GitRepositoryCommitter committer = new GitRepositoryCommitter(repository, createCommitOptions());
+        committer.commitStaged(messageFile);
       }
       finally {
         // Stage back the changes unstaged before commit
@@ -371,6 +366,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return exceptions;
   }
 
+  @NotNull
+  private GitCommitOptions createCommitOptions() {
+    return new GitCommitOptions(myNextCommitAmend, myNextCommitSignOff, myNextCommitSkipHook, myNextCommitAuthor, myNextCommitAuthorDate);
+  }
 
   @NotNull
   private Pair<Runnable, List<CommitChange>> addPartialChangesToIndex(@NotNull GitRepository repository,
@@ -729,7 +728,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private static void resetExcluded(@NotNull Project project,
                                     @NotNull VirtualFile root,
                                     @NotNull Collection<? extends ChangedPath> changes) throws VcsException {
-    Set<FilePath> allPaths = new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+    Set<FilePath> allPaths = new ObjectOpenCustomHashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
     for (ChangedPath change : changes) {
       addIfNotNull(allPaths, change.afterPath);
       addIfNotNull(allPaths, change.beforePath);
@@ -794,8 +793,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     }
   }
 
-  private boolean mergeCommit(@NotNull Project project,
-                              @NotNull VirtualFile root,
+  private boolean mergeCommit(@NotNull GitRepository repository,
                               @NotNull Collection<? extends CommitChange> rootChanges,
                               @NotNull File messageFile,
                               @NotNull List<? super VcsException> exceptions,
@@ -807,7 +805,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     HashSet<FilePath> realAdded = new HashSet<>();
     HashSet<FilePath> realRemoved = new HashSet<>();
     // perform diff
-    GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
+    GitLineHandler diff = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.DIFF);
     diff.setSilent(true);
     diff.setStdoutSuppressed(true);
     diff.addParameters("--diff-filter=ADMRUX", "--name-status", "--no-renames", "HEAD");
@@ -820,7 +818,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       exceptions.add(ex);
       return false;
     }
-    String rootPath = root.getPath();
+    String rootPath = repository.getRoot().getPath();
     for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens(); ) {
       String line = lines.nextToken().trim();
       if (line.length() == 0) {
@@ -850,7 +848,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       try {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String message = GitBundle.message("commit.partial.merge.message", partialOperation.getIndex());
-          SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message, null,
+          SelectFilePathsDialog dialog = new SelectFilePathsDialog(repository.getProject(), files, message, null,
                                                                    GitBundle.message("button.commit.all.files"),
                                                                    CommonBundle.getCancelButtonText(), false);
           dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
@@ -868,51 +866,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         return false;
       }
       // update non-indexed files
-      if (!updateIndex(project, root, realAdded, realRemoved, exceptions)) {
+      if (!updateIndex(repository.getProject(), repository.getRoot(), realAdded, realRemoved, exceptions)) {
         return false;
       }
       for (FilePath f : realAdded) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(f);
+        VcsDirtyScopeManager.getInstance(repository.getProject()).fileDirty(f);
       }
       for (FilePath f : realRemoved) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(f);
+        VcsDirtyScopeManager.getInstance(repository.getProject()).fileDirty(f);
       }
     }
     // perform merge commit
     try {
-      commitWithoutPaths(project, root, messageFile);
+      GitRepositoryCommitter committer = new GitRepositoryCommitter(repository, createCommitOptions());
+      committer.commitStaged(messageFile);
     }
     catch (VcsException ex) {
       exceptions.add(ex);
       return false;
     }
     return true;
-  }
-
-  private void commitWithoutPaths(@NotNull Project project,
-                                  @NotNull VirtualFile root,
-                                  @NotNull File messageFile) throws VcsException {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
-    handler.setStdoutSuppressed(false);
-    handler.addParameters("-F");
-    handler.addAbsoluteFile(messageFile);
-    if (myNextCommitAmend) {
-      handler.addParameters("--amend");
-    }
-    if (myNextCommitAuthor != null) {
-      handler.addParameters("--author=" + myNextCommitAuthor);
-    }
-    if (myNextCommitAuthorDate != null) {
-      handler.addParameters("--date", COMMIT_DATE_FORMAT.format(myNextCommitAuthorDate));
-    }
-    if (myNextCommitSignOff) {
-      handler.addParameters("--signoff");
-    }
-    if (myNextCommitSkipHook) {
-      handler.addParameters("--no-verify");
-    }
-    handler.endOptions();
-    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   /**

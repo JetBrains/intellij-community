@@ -84,13 +84,6 @@
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="alt meta S" />
   </action>
-  <action id="BuildSolutionAction">
-    <keyboard-shortcut first-keystroke="meta B" />
-    <keyboard-shortcut first-keystroke="F6" />
-  </action>
-  <action id="RebuildSolutionAction">
-    <keyboard-shortcut first-keystroke="control meta B" />
-  </action>
   <action id="Debug">
     <keyboard-shortcut first-keystroke="meta ENTER" />
     <keyboard-shortcut first-keystroke="F5" />
@@ -176,6 +169,9 @@
   <action id="PinActiveTab">
     <keyboard-shortcut first-keystroke="alt meta P" />
   </action>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="control meta O"/>
+  </action>
 
 <!--  Rider-specific actions-->
   <action id="RiderNewSolution">
@@ -189,8 +185,16 @@
   </action>
   <action id="BuildSolutionAction">
     <keyboard-shortcut first-keystroke="meta B" />
+    <keyboard-shortcut first-keystroke="F6" />
   </action>
   <action id="RebuildSolutionAction">
-    <keyboard-shortcut first-keystroke="ctrl meta B" />
+    <keyboard-shortcut first-keystroke="control meta B" />
+  </action>
+  <action id="BuildProject">
+    <keyboard-shortcut first-keystroke="meta B" />
+    <keyboard-shortcut first-keystroke="F6" />
+  </action>
+  <action id="RebuildProject">
+    <keyboard-shortcut first-keystroke="control meta B" />
   </action>
 </keymap>

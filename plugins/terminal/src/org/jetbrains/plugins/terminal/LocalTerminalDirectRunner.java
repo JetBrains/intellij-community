@@ -21,13 +21,11 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +35,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -78,12 +73,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Nullable
   private static String findRCFile(@NotNull String shellName) {
     String rcfile = null;
-    //noinspection IfCanBeSwitch
     if (BASH_NAME.equals(shellName) || SH_NAME.equals(shellName)) {
       rcfile = "jediterm-bash.in";
     }
     else if (ZSH_NAME.equals(shellName)) {
-      rcfile = ".zshrc";
+      rcfile = ".zshenv";
     }
     else if (FISH_NAME.equals(shellName)) {
       rcfile = "fish/config.fish";
@@ -136,9 +130,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
   private Map<String, String> getTerminalEnvironment() {
-    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
-                                                                   : ContainerUtil.canonicalStrategy());
-
+    Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
@@ -305,15 +297,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         setLoginShellEnv(envs, loginShell);
       }
       else if (shellName.equals(ZSH_NAME)) {
-        String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
+        String zdotdir = envs.get(ZDOTDIR);
         if (StringUtil.isNotEmpty(zdotdir)) {
-          envs.put("_OLD_ZDOTDIR", zdotdir);
-          File zshRc = new File(FileUtil.expandUserHome(zdotdir), ".zshrc");
-          if (zshRc.exists()) {
-            envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
-          }
+          envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
-        envs.put(ZDOTDIR, new File(rcFilePath).getParent());
+        envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
       }
       else if (shellName.equals(FISH_NAME)) {
         String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);

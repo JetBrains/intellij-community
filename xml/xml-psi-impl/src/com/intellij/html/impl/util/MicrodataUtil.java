@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PairFunction;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -53,9 +54,8 @@ public final class MicrodataUtil {
   private static Map<String, XmlTag> findScopesWithItemRef(@Nullable final PsiFile file) {
     if (!(file instanceof XmlFile)) return Collections.emptyMap();
     return CachedValuesManager.getCachedValue(file, new CachedValueProvider<Map<String, XmlTag>>() {
-      @Nullable
       @Override
-      public Result<Map<String, XmlTag>> compute() {
+      public @NotNull Result<Map<String, XmlTag>> compute() {
         final Map<String, XmlTag> result = new HashMap<>();
         file.accept(new XmlRecursiveElementVisitor() {
           @Override

@@ -3,9 +3,15 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 
 import java.util.Comparator;
 
+/**
+ * Allows to sort configurables in generic configurables groups.
+ *
+ * @see DisplayPrioritySortable
+ */
 interface Weighted {
   int getWeight();
 

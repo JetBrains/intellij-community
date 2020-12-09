@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class WebBrowserXmlService {
-
   companion object {
     @JvmStatic
     fun getInstance(): WebBrowserXmlService {

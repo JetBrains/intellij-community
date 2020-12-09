@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -21,7 +21,7 @@ public class GrIntroduceExpressionSettingsImpl extends ExtractClosureHelperImpl 
   public GrIntroduceExpressionSettingsImpl(IntroduceParameterInfo info,
                                            String name,
                                            boolean declareFinal,
-                                           TIntArrayList toRemove,
+                                           IntList toRemove,
                                            boolean generateDelegate,
                                            @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
                                            int replaceFieldsWithGetters,

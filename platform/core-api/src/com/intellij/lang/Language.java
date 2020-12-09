@@ -2,6 +2,7 @@
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -119,7 +120,10 @@ public abstract class Language extends UserDataHolderBase {
 
   public static void unregisterLanguage(@NotNull Language language) {
     IElementType.unregisterElementTypes(language);
-    ReferenceProvidersRegistry.getInstance().unloadProvidersFor(language);
+    ReferenceProvidersRegistry referenceProvidersRegistry = ApplicationManager.getApplication().getServiceIfCreated(ReferenceProvidersRegistry.class);
+    if (referenceProvidersRegistry != null) {
+      referenceProvidersRegistry.unloadProvidersFor(language);
+    }
     ourRegisteredLanguages.remove(language.getClass());
     ourRegisteredIDs.remove(language.getID());
     for (String mimeType : language.getMimeTypes()) {

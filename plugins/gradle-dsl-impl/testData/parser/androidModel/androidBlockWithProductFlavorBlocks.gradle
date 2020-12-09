@@ -1,0 +1,10 @@
+android {
+  productFlavors {
+    flavor1 {
+      applicationId "com.example.myapplication.flavor1"
+    }
+    flavor2 {
+      applicationId "com.example.myapplication.flavor2"
+    }
+  }
+}

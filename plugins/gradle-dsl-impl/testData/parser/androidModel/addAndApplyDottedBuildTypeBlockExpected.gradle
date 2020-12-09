@@ -1,0 +1,7 @@
+android {
+  buildTypes {
+    'dotted.buildtype' {
+      applicationIdSuffix 'foo'
+    }
+  }
+}

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig;
 
 import com.intellij.openapi.project.Project;
@@ -8,13 +6,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiReplacementUtil {
+public final class PsiReplacementUtil {
 
   /**
    * Consider to use {@link #replaceExpression(PsiExpression, String, CommentTracker)} to preserve comments
@@ -188,5 +187,33 @@ public class PsiReplacementUtil {
       return "";
     }
     return '(' + lType.getCanonicalText() + ')';
+  }
+
+  /**
+   * Replaces the specified boolean PsiExpression with a negated expression created from the specified string.
+   * The expression is negated by surrounding with {@code !(...)} or if already surrounded removes the {@oce !(...)}.
+   * @param expression  a boolean PsiExpression
+   * @param newExpression  text for the new expression, which will be negated/inverted.
+   * @param tracker
+   */
+  public static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression expression,
+                                                            @NotNull String newExpression,
+                                                            CommentTracker tracker) {
+    PsiExpression expressionToReplace = expression;
+    final String expString;
+    if (BoolUtils.isNegated(expression)) {
+      expressionToReplace = BoolUtils.findNegation(expressionToReplace);
+      expString = newExpression;
+    }
+    else {
+      PsiElement parent = expressionToReplace.getParent();
+      while (parent instanceof PsiParenthesizedExpression) {
+        expressionToReplace = (PsiExpression)parent;
+        parent = parent.getParent();
+      }
+      expString = "!(" + newExpression + ')';
+    }
+    assert expressionToReplace != null;
+    replaceExpression(expressionToReplace, expString, tracker);
   }
 }

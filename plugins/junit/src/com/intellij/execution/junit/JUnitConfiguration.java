@@ -16,6 +16,11 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -46,7 +51,9 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
+public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport
+  implements InputRedirectAware, TargetEnvironmentAwareRunProfile {
+
   public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
@@ -164,7 +171,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config.junit", false)) {
+    if (Registry.is("ide.new.run.config.junit", true)) {
       return new JUnitSettingsEditor(this);
     }
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<>();
@@ -297,13 +304,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH;
+    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) 
+                                        : null;
   }
 
   @Override
   public void setAlternativeJrePath(String path) {
-    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
-    ALTERNATIVE_JRE_PATH = path;
+    String collapsedPath = path != null ? new AlternativeJrePathConverter().toString(path) : null;
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, collapsedPath);
+    ALTERNATIVE_JRE_PATH = collapsedPath;
     ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
@@ -478,12 +487,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   public void writeExternal(@NotNull final Element element) {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
+    DefaultJDOMExternalizer.write(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<Data>(persistentData, new Data()) {
+    DefaultJDOMExternalizer.write(persistentData, element, new DifferenceFilter<Data>(persistentData, new Data()) {
       @Override
-      public boolean isAccept(@NotNull Field field) {
-        return "TEST_OBJECT".equals(field.getName()) || super.isAccept(field);
+      public boolean test(@NotNull Field field) {
+        return "TEST_OBJECT".equals(field.getName()) || super.test(field);
       }
     });
 
@@ -602,12 +611,41 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @NotNull
   @Override
   public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
-    return new JUnitConsoleProperties(this, executor);
+    JUnitConsoleProperties properties = new JUnitConsoleProperties(this, executor);
+    properties.setIdBasedTestTree(getTestObject().isIdBasedTestTree());
+    return properties;
   }
 
   @Override
   public byte getTestFrameworkId() {
     return FRAMEWORK_ID;
+  }
+
+  @Override
+  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
+    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
+  }
+
+  @Nullable
+  @Override
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultTargetName() {
+    return getOptions().getRemoteTarget();
+  }
+
+  @Override
+  public void setDefaultTargetName(@Nullable String targetName) {
+    getOptions().setRemoteTarget(targetName);
+  }
+
+  @Override
+  public boolean needPrepareTarget() {
+    return getDefaultTargetName() != null || runsUnderWslJdk();
   }
 
   public static class Data implements Cloneable {

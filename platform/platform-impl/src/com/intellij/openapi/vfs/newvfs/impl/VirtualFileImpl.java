@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -128,7 +129,12 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
       // optimisation: take the opportunity to not load bytes again in getCharset()
       // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
       FileType fileType = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
-      if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary()) {
+
+      FileType.CharsetHint charsetHint = fileType.getCharsetHint();
+      if (charsetHint instanceof ForcedCharset) {
+        setCharset(((ForcedCharset)charsetHint).getCharset());
+      }
+      else if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary() && bytes.length != 0) {
         try {
           // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
           // and that other thread asks JspManager for encoding which requires read action for PSI
@@ -152,13 +158,10 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     checkNotTooLarge(requestor);
-    super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
-  }
-
-  @Override
-  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
-    checkNotTooLarge(null);
-    super.setBinaryContent(content, newModificationStamp, newTimeStamp);
+    // NB not using VirtualFile.getOutputStream() to avoid unneeded BOM skipping/writing
+    try (OutputStream outputStream = ourPersistence.getOutputStream(this, requestor, newModificationStamp, newTimeStamp)) {
+      outputStream.write(content);
+    }
   }
 
   @Nullable
@@ -204,11 +207,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   private void checkNotTooLarge(@Nullable Object requestor) throws FileTooBigException {
-    if (!(requestor instanceof LargeFileWriteRequestor) && isTooLarge()) throw new FileTooBigException(getPath());
-  }
-
-  private boolean isTooLarge() {
-    return FileUtilRt.isTooLarge(getLength());
+    if (!(requestor instanceof LargeFileWriteRequestor) && FileUtilRt.isTooLarge(getLength())) throw new FileTooBigException(getPath());
   }
 
   @Override

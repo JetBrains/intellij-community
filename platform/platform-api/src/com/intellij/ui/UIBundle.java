@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.DynamicBundle;
+import com.intellij.ide.IdeDeprecatedMessagesBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -18,17 +19,18 @@ public final class UIBundle extends DynamicBundle {
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    if (!INSTANCE.containsKey(key)) {
-      return UtilUiBundle.message(key, params);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getMessage(key, params);
     }
-    return INSTANCE.getMessage(key, params);
+    return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
   @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    if (!INSTANCE.containsKey(key)) {
-      return () -> UtilUiBundle.message(key, params);
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                     Object @NotNull ... params) {
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getLazyMessage(key, params);
     }
-    return INSTANCE.getLazyMessage(key, params);
+    return IdeDeprecatedMessagesBundle.messagePointer(key, params);
   }
 }

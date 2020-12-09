@@ -15,11 +15,10 @@
  */
 package org.jetbrains.jps.javac;
 
-/**
- * @author Eugene Zhuravlev
- */
+import org.jetbrains.annotations.Nls;
+
 public final class JpsInfoDiagnostic extends PlainMessageDiagnostic{
-  public JpsInfoDiagnostic(String message) {
+  public JpsInfoDiagnostic(@Nls String message) {
     super(Kind.OTHER, message);
   }
 }

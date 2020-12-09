@@ -8,7 +8,6 @@ import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionsReportConverter;
 import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -20,11 +19,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.DefaultInspectionToolResultExporter.INSPECTION_RESULTS_LANGUAGE;
 import static com.intellij.codeInspection.reference.SmartRefElementPointerImpl.*;
 
 public class JsonInspectionsReportConverter implements InspectionsReportConverter {
@@ -39,6 +40,10 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls protected static final String PROBLEM = "problem";
   @NonNls protected static final String PROBLEMS = "problems";
   @NonNls private static final String DESCRIPTION = "description";
+  @NonNls private static final String PLUGIN_ID = "pluginId";
+  @NonNls private static final String PLUGIN_VERSION = "pluginVersion";
+  @NonNls private static final String GLOBAL_TOOL = "isGlobalTool";
+  @NonNls private static final String LANGUAGE = "language";
   @NonNls private static final String SEVERITY_ATTR = "severity";
   @NonNls private static final String ATTRIBUTE_KEY_ATTR = "attribute_key";
   @NonNls private static final String HINT = "hint";
@@ -54,13 +59,6 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String GROUPS = "groups";
   @NonNls private static final String INSPECTION = "inspection";
   @NonNls private static final String HIGHLIGHTED_ELEMENT = "highlighted_element";
-  @NonNls private static final String PROJECT_FINGERPRINT = "ProjectFingerprint";
-  @NonNls private static final String FILE_FINGERPRINT = "file_fingerprint";
-  @NonNls private static final String FILE_NAME = "file_name";
-  @NonNls private static final String FILE_PATH = "file_path";
-  @NonNls private static final String LANGUAGE = "language";
-  @NonNls private static final String LINES_COUNT = "lines_count";
-  @NonNls private static final String MODIFICATION_TIMESTAMP = "modification_timestamp";
   @NonNls private static final String DUPLICATED_CODE_AGGREGATE = "DuplicatedCode" + InspectionsResultUtil.AGGREGATE;
 
   @Override
@@ -92,14 +90,11 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     for (File inspectionDataFile : inspectionsResults) {
       String fileNameWithoutExt = FileUtil.getNameWithoutExtension(inspectionDataFile);
       File jsonFile = new File(outputPath, fileNameWithoutExt + JSON_EXTENSION);
-      try (Writer writer = Files.newBufferedWriter(jsonFile.toPath(), CharsetToolkit.UTF8_CHARSET);
+      try (Writer writer = Files.newBufferedWriter(jsonFile.toPath(), StandardCharsets.UTF_8);
            JsonWriter jsonWriter = gson.newJsonWriter(writer)) {
         Document doc = builder.build(inspectionDataFile);
         if (InspectionsResultUtil.DESCRIPTIONS.equals(fileNameWithoutExt)) {
           convertDescriptions(jsonWriter, doc);
-        }
-        else if (PROJECT_FINGERPRINT.equals(fileNameWithoutExt)) {
-          convertProjectFingerprint(jsonWriter, doc);
         }
         else if (DUPLICATED_CODE_AGGREGATE.equals(fileNameWithoutExt)) {
           convertDuplicatedCode(jsonWriter, doc);
@@ -144,39 +139,6 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     jsonWriter.endObject();
   }
 
-  private static void convertProjectFingerprint(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
-    jsonWriter.beginObject();
-    jsonWriter.name(PROBLEMS);
-    jsonWriter.beginArray();
-    for (Element fileFingerprint : problems.getRootElement().getChildren(FILE_FINGERPRINT)) {
-      convertFileFingerprint(jsonWriter, fileFingerprint);
-    }
-    jsonWriter.endArray();
-    jsonWriter.endObject();
-  }
-
-  private static void convertFileFingerprint(@NotNull JsonWriter writer, @NotNull Element problem) throws IOException {
-    writer.beginObject();
-    writer.name(FILE_NAME).value(problem.getChildText(FILE_NAME));
-    writer.name(FILE_PATH).value(problem.getChildText(FILE_PATH));
-    writer.name(LANGUAGE).value(problem.getChildText(LANGUAGE));
-    try {
-      int linesCount = Integer.parseInt(problem.getChildText(LINES_COUNT));
-      writer.name(LINES_COUNT).value(linesCount);
-    }
-    catch (NumberFormatException e) {
-      writer.name(LINES_COUNT).nullValue();
-    }
-    try {
-      long modificationStamp = Long.parseLong(problem.getChildText(MODIFICATION_TIMESTAMP));
-      writer.name(MODIFICATION_TIMESTAMP).value(modificationStamp);
-    }
-    catch (NumberFormatException e) {
-      writer.name(MODIFICATION_TIMESTAMP).nullValue();
-    }
-    writer.endObject();
-  }
-
   private static void convertProblems(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
     jsonWriter.beginObject();
     jsonWriter.name(PROBLEMS);
@@ -213,6 +175,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     }
 
     writer.name(HIGHLIGHTED_ELEMENT).value(problem.getChildText(HIGHLIGHTED_ELEMENT));
+    writer.name(INSPECTION_RESULTS_LANGUAGE).value(problem.getChildText(INSPECTION_RESULTS_LANGUAGE));
     writer.name(DESCRIPTION).value(problem.getChildText(DESCRIPTION));
     writer.endObject();
   }
@@ -306,6 +269,10 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
       .name(SHORT_NAME).value(inspection.getAttributeValue(SHORT_NAME))
       .name(DISPLAY_NAME).value(inspection.getAttributeValue(DISPLAY_NAME))
       .name(DEFAULT_SEVERITY).value(inspection.getAttributeValue(DEFAULT_SEVERITY))
+      .name(PLUGIN_ID).value(inspection.getAttributeValue(PLUGIN_ID))
+      .name(PLUGIN_VERSION).value(inspection.getAttributeValue(PLUGIN_VERSION))
+      .name(LANGUAGE).value(inspection.getAttributeValue(LANGUAGE))
+      .name(GLOBAL_TOOL).value(Boolean.parseBoolean(inspection.getAttributeValue(GLOBAL_TOOL)))
       .name(ENABLED).value(Boolean.parseBoolean(inspection.getAttributeValue(ENABLED)))
       .name(DESCRIPTION).value(inspection.getValue())
       .endObject();

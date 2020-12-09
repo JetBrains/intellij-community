@@ -35,6 +35,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
+/**
+ * A set of API methods for working with injected PSI: code that resides inside other (host) PSI, e.g. string literals, XML text, etc.
+ */
 public abstract class InjectedLanguageManager {
 
   public static InjectedLanguageManager getInstance(Project project) {

@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Eugene Zhuravlev
- */
 public interface AnnotationProcessingConfiguration {
   boolean isEnabled();
 
@@ -43,4 +40,6 @@ public interface AnnotationProcessingConfiguration {
   Map<String, String> getProcessorOptions();
 
   boolean isObtainProcessorsFromClasspath();
+
+  boolean isProcOnly();
 }

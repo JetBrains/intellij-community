@@ -7,14 +7,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.nio.file.Path;
+import java.util.function.Consumer;
 
 public interface ApplicationEx extends Application {
   String LOCATOR_FILE_NAME = ".home";
@@ -72,20 +71,6 @@ public interface ApplicationEx extends Application {
   default void doNotSave() {
     setSaveAllowed(false);
   }
-
-  /**
-   * Executes {@code process} in a separate thread in the application thread pool (see {@link #executeOnPooledThread(Runnable)}).
-   * The process is run inside read action (see {@link #runReadAction(Runnable)})
-   * If run from EDT, it is guaranteed that no other read or write action is run before the process start running.
-   * If the process is running for too long, a progress window shown with {@code progressTitle} and a button with {@code cancelText}.
-   * @return true if process run successfully and was not canceled.
-   */
-  boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,
-                                                          @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                          boolean canBeCanceled,
-                                                          @NlsContexts.Button String cancelText,
-                                                          JComponent parentComponent,
-                                                          @NotNull Runnable process);
 
   default void exit(@SuppressWarnings("unused") int flags) {
     exit();
@@ -152,7 +137,7 @@ public interface ApplicationEx extends Application {
                                               boolean canBeCanceled,
                                               boolean shouldShowModalWindow,
                                               @Nullable Project project,
-                                              JComponent parentComponent,
+                                              @Nullable JComponent parentComponent,
                                               @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText);
 
   void assertIsDispatchThread(@Nullable JComponent component);
@@ -223,6 +208,10 @@ public interface ApplicationEx extends Application {
 
   @ApiStatus.Internal
   default boolean isExitInProgress() {
+    return false;
+  }
+
+  default boolean isLightEditMode() {
     return false;
   }
 }

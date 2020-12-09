@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -59,7 +62,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static final Map<String, Object2LongMap<String>> pluginCostMap = new HashMap<>();
+  public static final Map<String, Object2LongOpenHashMap<String>> pluginCostMap = new ConcurrentHashMap<>();
 
   public static long getCurrentTime() {
     return System.nanoTime();
@@ -158,7 +161,7 @@ public final class StartUpMeasurer {
   public static void setCurrentState(@NotNull LoadingState state) {
     LoadingState old = currentState.getAndSet(state);
     if (old.compareTo(state) > 0) {
-      BiConsumer<? super String, ? super Throwable> errorHandler = LoadingState.getErrorHandler();
+      BiConsumer<String, Throwable> errorHandler = LoadingState.errorHandler;
       if (errorHandler != null) {
         errorHandler.accept("New state " + state + " cannot precede old " + old, new Throwable());
       }
@@ -231,11 +234,7 @@ public final class StartUpMeasurer {
 
   @ApiStatus.Internal
   public static void addPluginCost(@NonNls @NotNull String pluginId, @NonNls @NotNull String phase, long time) {
-    if (!isMeasuringPluginStartupCosts()) {
-      return;
-    }
-
-    synchronized (pluginCostMap) {
+    if (isMeasuringPluginStartupCosts()) {
       doAddPluginCost(pluginId, phase, time, pluginCostMap);
     }
   }
@@ -245,17 +244,14 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void doAddPluginCost(@NonNls @NotNull String pluginId, @NonNls @NotNull String phase, long time, @NotNull Map<String, Object2LongMap<String>> pluginCostMap) {
-    Object2LongMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
-    if (costPerPhaseMap == null) {
-      costPerPhaseMap = new Object2LongOpenHashMap<>();
-      costPerPhaseMap.defaultReturnValue(-1);
-      pluginCostMap.put(pluginId, costPerPhaseMap);
+  public static void doAddPluginCost(@NonNls @NotNull String pluginId,
+                                     @NonNls @NotNull String phase,
+                                     long time,
+                                     @NotNull Map<String, Object2LongOpenHashMap<String>> pluginCostMap) {
+    Object2LongOpenHashMap<String> costPerPhaseMap = pluginCostMap.computeIfAbsent(pluginId, __ -> new Object2LongOpenHashMap<>());
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (costPerPhaseMap) {
+      costPerPhaseMap.addTo(phase, time);
     }
-    long oldCost = costPerPhaseMap.getLong(phase);
-    if (oldCost == -1) {
-      oldCost = 0L;
-    }
-    costPerPhaseMap.put(phase, oldCost + time);
   }
 }

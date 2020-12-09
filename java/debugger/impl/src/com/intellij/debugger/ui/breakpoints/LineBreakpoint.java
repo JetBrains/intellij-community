@@ -223,7 +223,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
             JavaPsiFacade.getInstance(myProject).findClasses(className, scope),
             aClass -> aClass.getContainingFile().getVirtualFile());
           List<VirtualFile> allFiles = ContainerUtil.map(
-            JavaPsiFacade.getInstance(myProject).findClasses(className, new EverythingGlobalScope(myProject)),
+            JavaPsiFacade.getInstance(myProject).findClasses(className, GlobalSearchScope.everythingScope(myProject)),
             aClass -> aClass.getContainingFile().getVirtualFile());
           final VirtualFile contentRoot = fileIndex.getContentRootForFile(breakpointFile);
           final Module module = fileIndex.getModuleForFile(breakpointFile);

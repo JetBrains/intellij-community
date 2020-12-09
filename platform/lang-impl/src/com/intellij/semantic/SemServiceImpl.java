@@ -18,7 +18,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,28 +56,28 @@ public final class SemServiceImpl extends SemService {
       }
     };
 
-    for (SemContributorEP contributor : SemContributor.EP_NAME.getExtensionList()) {
+    SemContributor.EP_NAME.processWithPluginDescriptor((contributor, pluginDescriptor) -> {
       SemContributor semContributor;
       try {
-        semContributor =
-          myProject.instantiateExtensionWithPicoContainerOnlyIfNeeded(contributor.implementation, contributor.getPluginDescriptor());
+        semContributor = myProject.instantiateClass(contributor.implementation, pluginDescriptor);
       }
       catch (ProcessCanceledException e) {
         throw e;
       }
       catch (ExtensionNotApplicableException e) {
-        continue;
+        return;
       }
       catch (Exception e) {
         LOG.error(e);
-        continue;
+        return;
       }
       semContributor.registerSemProviders(registrar, myProject);
-    }
+    });
 
     return map;
   }
 
+  @NotNull
   @Override
   public <T extends SemElement> List<T> getSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
     SemCacheChunk chunk = myCVManager.getCachedValue((UserDataHolder)psi, () ->
@@ -95,7 +94,7 @@ public final class SemServiceImpl extends SemService {
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
     LinkedHashSet<T> result = new LinkedHashSet<>();
-    Map<SemKey<?>, List<SemElement>> map = new THashMap<>();
+    Map<SemKey<?>, List<SemElement>> map = new HashMap<>();
 
     ProcessingContext processingContext = new ProcessingContext();
     for (SemKey<?> each : key.getInheritors()) {

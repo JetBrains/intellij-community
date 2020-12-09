@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
 import com.intellij.formatting.fileSet.FileSetDescriptorFactory;
 import com.intellij.psi.PsiFile;
@@ -42,9 +43,10 @@ public class ExcludedFiles {
   }
 
   public boolean contains(@NotNull PsiFile file) {
-    if (file.isPhysical()) {
+    PsiFile settingsFile = CodeStyle.getSettingsPsi(file);
+    if (settingsFile != null) {
       for (FileSetDescriptor descriptor : myDescriptors) {
-        if (descriptor.matches(file)) return true;
+        if (descriptor.matches(settingsFile)) return true;
       }
     }
     return false;
@@ -67,9 +69,11 @@ public class ExcludedFiles {
     public void setDescriptors(@NotNull List<FileSetDescriptor.State> states) {
       myDescriptors.clear();
       for (FileSetDescriptor.State state : states) {
-        FileSetDescriptor descriptor = FileSetDescriptorFactory.createDescriptor(state);
-        if (descriptor != null) {
-          myDescriptors.add(descriptor);
+        for (FileSetDescriptorFactory factory : FileSetDescriptorFactory.EP_NAME.getExtensionList()) {
+          FileSetDescriptor descriptor = factory.createDescriptor(state);
+          if (descriptor != null) {
+            myDescriptors.add(descriptor);
+          }
         }
       }
     }

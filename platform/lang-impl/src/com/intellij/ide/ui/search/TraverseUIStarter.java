@@ -15,9 +15,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -25,18 +25,19 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -78,8 +79,8 @@ public final class TraverseUIStarter implements ApplicationStarter {
   public void main(@NotNull List<String> args) {
     System.out.println("Starting searchable options index builder");
     try {
-      startup(OUTPUT_PATH, SPLIT_BY_RESOURCE_PATH);
-      ((ApplicationEx)ApplicationManager.getApplication()).exit(ApplicationEx.FORCE_EXIT | ApplicationEx.EXIT_CONFIRMED);
+      startup(Paths.get(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH);
+      ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.FORCE_EXIT | ApplicationEx.EXIT_CONFIRMED);
     }
     catch (Throwable e) {
       System.out.println("Searchable options index builder failed");
@@ -88,7 +89,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     }
   }
 
-  public static void startup(@NotNull final String outputPath, final boolean splitByResourcePath) throws IOException {
+  public static void startup(@NotNull Path outputPath, final boolean splitByResourcePath) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
     try {
       for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
@@ -144,12 +145,17 @@ public final class TraverseUIStarter implements ApplicationStarter {
       }
 
       for (final Map.Entry<String, Element> entry : roots.entrySet()) {
-        final String module = entry.getKey();
-        final String directory = module.isEmpty() ? "" : module + "/search/";
-        final String filePrefix = module.isEmpty() ? "" : module + ".";
-        final File output = new File(outputPath, directory + filePrefix + SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML);
-        FileUtil.ensureCanCreateFile(output);
-        JDOMUtil.writeDocument(new Document(entry.getValue()), output, "\n");
+        String module = entry.getKey();
+        Path output;
+        if (module.isEmpty()) {
+          output = outputPath.resolve(SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML);
+        }
+        else {
+          Path moduleDir = outputPath.resolve(module);
+          Files.deleteIfExists(moduleDir.resolve("classpath.index"));
+          output = moduleDir.resolve("search/" + module + '.' + SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML);
+        }
+        JDOMUtil.write(entry.getValue(), output);
       }
 
       for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
@@ -212,7 +218,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
   }
 
   private static void collectOptions(SearchableOptionsRegistrar registrar, Set<? super OptionDescription> options, @NotNull String text, String path) {
-    for (String word : registrar.getProcessedWordsWithoutStemming(text)) {
+    for (@NlsSafe String word : registrar.getProcessedWordsWithoutStemming(text)) {
       options.add(new OptionDescription(word, text, path));
     }
   }
@@ -235,7 +241,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     Set<OptionDescription> result = new TreeSet<>();
     for (String opt : optionsPath) {
-      for (String word : registrar.getProcessedWordsWithoutStemming(opt)) {
+      for (@NlsSafe String word : registrar.getProcessedWordsWithoutStemming(opt)) {
         if (word != null) {
           result.add(new OptionDescription(word, opt, path));
         }

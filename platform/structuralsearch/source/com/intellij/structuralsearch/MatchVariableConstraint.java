@@ -35,6 +35,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   private boolean invertReference;
   @NotNull
   private String referenceConstraint = "";
+  @NotNull
+  private String referenceConstraintName = "";
   private boolean partOfSearchResults;
   @NotNull
   private String nameOfExprType = "";
@@ -102,6 +104,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     greedy = constraint.greedy;
     invertReference = constraint.invertReference;
     referenceConstraint = constraint.referenceConstraint;
+    referenceConstraintName = constraint.referenceConstraintName;
     partOfSearchResults = constraint.partOfSearchResults;
     nameOfExprType = constraint.nameOfExprType;
     expressionTypes = constraint.expressionTypes;
@@ -254,6 +257,14 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   public void setReferenceConstraint(@NotNull String nameOfReferenceVar) {
     this.referenceConstraint = nameOfReferenceVar;
+  }
+
+  public @NotNull String getReferenceConstraintName() {
+    return referenceConstraintName;
+  }
+
+  public void setReferenceConstraintName(@NotNull String referenceConstraintName) {
+    this.referenceConstraintName = referenceConstraintName;
   }
 
   public boolean isStrictlyWithinHierarchy() {

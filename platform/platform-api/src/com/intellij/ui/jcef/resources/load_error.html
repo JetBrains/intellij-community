@@ -1,0 +1,56 @@
+<html>
+
+<style>
+  .table_full {
+      display: table;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background-color:${bgWebColor};
+  }
+  .table_cell_middle {
+      display: table-cell;
+      vertical-align: middle;
+  }
+  .table_h_center {
+      display: table;
+      margin: 0 auto;
+  }
+  .txt {
+      text-align:left;
+      color:${fgWebColor};
+  }
+</style>
+
+<head>
+<title>Failed to open page</title>
+</head>
+
+<body>
+<div class="table_full">
+  <div class="table_cell_middle">
+    <div class="table_h_center">
+      <table>
+        <tr>
+          <td style="vertical-align:top;border-right: 1px solid ${fgWebColor_05};">
+            <div style="padding-right:${bigFontSize_div_3}px">
+              <img src="data:image/png;base64,${base64Image}" alt="Error"/>
+            </div>
+          </td>
+          <td>
+            <div style="padding-left:${bigFontSize_div_2}px">
+              <p class="txt" style="font-size:${bigFontSize}px;">Could not load the content</p>
+              <p class="txt" style="font-size:${fontSize}px;">Page URL: ${failedUrl}</p>
+              <p class="txt" style="font-size:${fontSize}px;">Error: ${errorText}</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+
+</html>

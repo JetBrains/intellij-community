@@ -123,19 +123,10 @@ foo(a::m).toUpperCase()
   }
 
   void 'test illegal single argument lambda'() {
-    fileHighlightingTest ()
+    fileHighlightingTest()
   }
 
   void 'test type use in annotation description'() {
     fileHighlightingTest()
   }
 }
-//
-//class A {
-//  def String m(){
-//
-//  }
-//}
-//List<A> list = []
-//
-//list.sort(Comparator.comparing(A::m))

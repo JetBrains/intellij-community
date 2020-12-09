@@ -2,13 +2,14 @@
 package com.intellij.model.presentation.impl
 
 import com.intellij.model.presentation.SymbolPresentation
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 internal class DefaultSymbolPresentation(
   private val icon: Icon?,
-  private val typeString: String,
-  private val shortNameString: String,
-  private val longNameString: String? = shortNameString
+  @Nls private val typeString: String,
+  @Nls private val shortNameString: String,
+  @Nls private val longNameString: String? = shortNameString
 ) : SymbolPresentation {
   override fun getIcon(): Icon? = icon
   override fun getShortNameString(): String = shortNameString

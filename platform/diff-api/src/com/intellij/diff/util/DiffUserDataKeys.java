@@ -80,18 +80,53 @@ public interface DiffUserDataKeys {
   // Both data from DiffContext / DiffRequest will be used. Data from DiffRequest will be used first.
   //
 
-  /**
-   * Invert colors in three side conflict viewer.
-   * Default: "AB - B - AB" is colored as "Addition" (Left <- Base -> Right)
-   * With key: "AB - B - AB" is colored as "Deletion" (Left -> Merged <- Right)
-   */
-  Key<Boolean> THREESIDE_DIFF_WITH_RESULT = Key.create("Diff.ThreesideDiffWithResult");
+  enum ThreeSideDiffColors {
+    /**
+     * Default value, for merge conflict: "Left <- Base -> Right"
+     * "A - B - C" is Conflict
+     * "AB - B - AB" is Addition
+     * "B - B - AB" is Addition
+     * "AB - B - B" is Addition
+     * "B - AB - AB" is Deletion
+     */
+    MERGE_CONFLICT,
+    /**
+     * For result of a past merge: "Left -> Merged <- Right". Same as MERGE_CONFLICT, with inverted "Insertions" and "Deletions".
+     * "A - B - C" is Conflict
+     * "AB - B - AB" is Deletion
+     * "B - B - AB" is Deletion
+     * "AB - B - B" is Deletion
+     * "B - AB - AB" is Addition
+     */
+    MERGE_RESULT,
+    /**
+     * For intermediate state: "Head -> Staged -> Local"
+     * "A - B - C" is Modification
+     * "AB - B - AB" is Modification
+     * "B - B - AB" is Addition
+     * "AB - B - B" is Deletion
+     * "B - AB - AB" is Addition
+     */
+    LEFT_TO_RIGHT
+  }
+
+  Key<ThreeSideDiffColors> THREESIDE_DIFF_COLORS_MODE = Key.create("Diff.ThreesideDiffWithResult");
 
   Key<Side> MASTER_SIDE = Key.create("Diff.MasterSide");
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
   Key<ThreeSide> PREFERRED_FOCUS_THREESIDE = Key.create("Diff.PreferredFocusThreeSide");
 
+  /**
+   * @deprecated Use {@link DiffUtil#addNotification}
+   */
+  @Deprecated
   Key<List<JComponent>> NOTIFICATIONS = Key.create("Diff.Notifications");
+
+  /**
+   * Use {@link DiffUtil#addNotification}
+   */
+  Key<List<DiffNotificationProvider>> NOTIFICATION_PROVIDERS = Key.create("Diff.NotificationProviders");
+
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
   Key<Boolean> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");

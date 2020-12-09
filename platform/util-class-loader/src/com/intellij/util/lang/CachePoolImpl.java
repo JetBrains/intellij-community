@@ -3,32 +3,28 @@ package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URL;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 
-/**
- * @author peter
- */
 final class CachePoolImpl implements UrlClassLoader.CachePool {
-  private final Map<URL, ClasspathCache.LoaderData> myLoaderIndexCache = new ConcurrentHashMap<URL, ClasspathCache.LoaderData>();
+  private final Map<Path, ClasspathCache.LoaderData> loaderIndexCache = new ConcurrentHashMap<>();
+  private final Map<Path, Attributes> manifestData = new ConcurrentHashMap<>();
 
-  void cacheData(@NotNull URL url, @NotNull ClasspathCache.LoaderData data) {
-    myLoaderIndexCache.put(url, data);
+  void cacheData(@NotNull Path url, @NotNull ClasspathCache.LoaderData data) {
+    loaderIndexCache.put(url, data);
   }
 
-  ClasspathCache.LoaderData getCachedData(@NotNull URL url) {
-    return myLoaderIndexCache.get(url);
+  ClasspathCache.LoaderData getCachedData(@NotNull Path file) {
+    return loaderIndexCache.get(file);
   }
 
-  private final Map<URL, Attributes> myManifestData = new ConcurrentHashMap<URL, Attributes>();
-
-  Attributes getManifestData(@NotNull URL url) {
-    return myManifestData.get(url);
+  Attributes getManifestData(@NotNull Path file) {
+    return manifestData.get(file);
   }
 
-  void cacheManifestData(@NotNull URL url, @NotNull Attributes manifestAttributes) {
-    myManifestData.put(url, manifestAttributes);
+  void cacheManifestData(@NotNull Path file, @NotNull Attributes manifestAttributes) {
+    manifestData.put(file, manifestAttributes);
   }
 }

@@ -12,12 +12,12 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -73,7 +73,9 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
   protected void onInternalError(final VirtualFile file) {
     if (SKIP_INDEX_REPAIR_ON_ERROR) return;
     Set<VirtualFile> set = myFilesHavingProblems.get();
-    if (set == null) myFilesHavingProblems.set(set = new THashSet<>());
+    if (set == null) {
+      myFilesHavingProblems.set(set = new HashSet<>());
+    }
     set.add(file);
     // requestReindex() may want to acquire write lock (for indices not requiring content loading)
     // thus, because here we are under read lock, need to use invoke later

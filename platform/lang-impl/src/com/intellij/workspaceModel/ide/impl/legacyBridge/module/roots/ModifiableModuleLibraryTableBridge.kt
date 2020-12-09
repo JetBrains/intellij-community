@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
@@ -84,13 +85,8 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
                                   scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
     val libraryId = libraryEntity.persistentId()
 
-    modifiableModel.updateDependencies {
-      it + ModuleDependencyItem.Exportable.LibraryDependency(
-        library = libraryId,
-        exported = exported,
-        scope = scope
-      )
-    }
+    modifiableModel.appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(library = libraryId, exported = exported,
+                                                                                       scope = scope))
 
     val library = LibraryBridgeImpl(
       libraryTable = ModuleRootComponentBridge.getInstance(modifiableModel.module).moduleLibraryTable,
@@ -135,11 +131,14 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     library as LibraryBridge
 
     val libraryEntity = modifiableModel.diff.findLibraryEntity(library)
-                        ?: error("Cannot find entity for library ${library.name}")
+    if (libraryEntity == null) {
+      LOG.error("Cannot find entity for library ${library.name}")
+      return
+    }
 
     val libraryId = libraryEntity.persistentId()
-    modifiableModel.updateDependencies { dependencies ->
-      dependencies.filterNot { it is ModuleDependencyItem.Exportable.LibraryDependency && it.library == libraryId }
+    modifiableModel.removeDependencies {
+      it is ModuleDependencyItem.Exportable.LibraryDependency && it.library == libraryId
     }
 
     modifiableModel.diff.removeEntity(libraryEntity)
@@ -152,7 +151,22 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     }
   }
 
+  internal fun restoreLibraryMappingsAndDisposeCopies() {
+    libraryIterator.forEach {
+      val originalLibrary = copyToOriginal[it]
+      if (originalLibrary == null)  {
+        LOG.error("Cannot find an original library for $it")
+        return@forEach
+      }
+      val mutableLibraryMap = modifiableModel.diff.mutableLibraryMap
+      mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(it as LibraryBridge).single(), originalLibrary)
+
+      Disposer.dispose(it)
+    }
+  }
+
   internal fun disposeOriginalLibraries() {
+    if (copyToOriginal.isEmpty()) return
     libraryIterator.forEach {
       val original = copyToOriginal[it]
       if (original != null) {
@@ -167,4 +181,8 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
   override val module: Module
     get() = modifiableModel.module
+
+  companion object {
+    private val LOG = logger<ModifiableModuleLibraryTableBridge>()
+  }
 }

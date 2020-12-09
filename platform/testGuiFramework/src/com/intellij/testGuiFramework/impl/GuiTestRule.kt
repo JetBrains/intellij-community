@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
-import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestPaths.failedTestVideoDirPath
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
@@ -65,7 +64,6 @@ import java.awt.Dialog
 import java.awt.Frame
 import java.awt.KeyboardFocusManager
 import java.io.File
-import java.net.URL
 import java.nio.file.Path
 import java.time.Duration
 import java.util.*
@@ -117,12 +115,10 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
 
   private fun createScreenRecordingRuleIfNeeded(): TestRule? {
     try {
-      val screenRecorderJarUrl: URL? = getScreenRecorderJarUrl()
-      if (screenRecorderJarUrl == null) return null
+      val screenRecorderJarUrl = getScreenRecorderJarUrl() ?: return null
+      val testsToRecord = testsToRecord
 
-      val testsToRecord: List<String> = testsToRecord
-
-      val classLoader: ClassLoader = UrlClassLoader.build().urls(screenRecorderJarUrl).parent(javaClass.classLoader).get()
+      val classLoader: ClassLoader = UrlClassLoader.build().files(listOf(screenRecorderJarUrl)).parent(javaClass.classLoader).get()
       return Class.forName("org.jetbrains.intellij.deps.screenrecorder.ScreenRecorderRule", true, classLoader)
         .constructors
         .singleOrNull { it.parameterCount == 3 }
@@ -133,15 +129,12 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
     }
   }
 
-  private fun getScreenRecorderJarUrl(): URL? {
-    val jarDir: String? = screenRecorderJarDirPath
-    if (jarDir == null) return null
-
+  private fun getScreenRecorderJarUrl(): Path? {
+    val jarDir = screenRecorderJarDirPath ?: return null
     return File(jarDir)
       .listFiles { f -> f.name.startsWith("ui-screenrecorder") && f.name.endsWith("jar") }
       .firstOrNull()
-      ?.toURI()
-      ?.toURL()
+      ?.toPath()
   }
 
   inner class IdeHandling : TestRule {
@@ -341,10 +334,6 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
 
   fun findWelcomeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.minutes05): WelcomeFrameFixture {
     return WelcomeFrameFixture.find(robot(), timeout)
-  }
-
-  fun findNewProjectWizard(): NewProjectWizardFixture {
-    return NewProjectWizardFixture.find(robot())
   }
 
   fun findIdeFrame(projectName: String, projectPath: Path): IdeFrameFixture {

@@ -15,7 +15,7 @@ import java.util.Objects;
 
 public abstract class LafManager {
   public static LafManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(LafManager.class);
+    return ApplicationManager.getApplication().getService(LafManager.class);
   }
 
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();

@@ -10,46 +10,46 @@ import com.esotericsoftware.kryo.serializers.FieldSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap
-import com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntBiMap
-import com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap
-import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
-import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
-import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
-import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
+import com.intellij.workspaceModel.storage.impl.containers.*
+import com.intellij.workspaceModel.storage.impl.indices.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import org.objenesis.instantiator.ObjectInstantiator
 import org.objenesis.strategy.StdInstantiatorStrategy
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.reflect.Modifier
+import java.lang.reflect.ParameterizedType
 import java.util.*
-import java.util.HashMap
-import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
-import kotlin.reflect.KVisibility
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 
+private val LOG = logger<EntityStorageSerializerImpl>()
+
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
-                                  private val virtualFileManager: VirtualFileUrlManager,
-                                  private val registrationRequired: Boolean) : EntityStorageSerializer {
+                                  private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
+  companion object {
+    const val SERIALIZER_VERSION = "v7"
+  }
+
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   @set:TestOnly
-  override var serializerDataFormatVersion: String = "v2"
+  override var serializerDataFormatVersion: String = SERIALIZER_VERSION
 
-  private fun createKryo(): Kryo {
+  internal fun createKryo(): Kryo {
     val kryo = Kryo()
 
-    kryo.isRegistrationRequired = registrationRequired
+    kryo.isRegistrationRequired = true
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
-    kryo.register(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
+    kryo.addDefaultSerializer(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
       override fun write(kryo: Kryo, output: Output, obj: VirtualFileUrl) {
         // TODO Write IDs only
         output.writeString(obj.url)
@@ -156,6 +156,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(SmartList::class.java).instantiator = ObjectInstantiator { SmartList<Any>() }
     kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }
     kryo.register(BidirectionalMap::class.java).instantiator = ObjectInstantiator { BidirectionalMap<Any, Any>() }
+    kryo.register(BidirectionalSetMap::class.java).instantiator = ObjectInstantiator { BidirectionalSetMap<Any, Any>() }
     kryo.register(HashSet::class.java).instantiator = ObjectInstantiator { HashSet<Any>() }
     kryo.register(BidirectionalMultiMap::class.java).instantiator = ObjectInstantiator { BidirectionalMultiMap<Any, Any>() }
     kryo.register(HashBiMap::class.java).instantiator = ObjectInstantiator { HashBiMap.create<Any, Any>() }
@@ -176,11 +177,12 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
     kryo.register(MultimapStorageIndex::class.java)
-    kryo.register(VirtualFileIndex.VirtualFileUrlInfo::class.java)
 
-    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity::class.java)
-    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.RemoveEntity::class.java)
-    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity::class.java)
+    kryo.register(ChangeEntry.AddEntity::class.java)
+    kryo.register(ChangeEntry.RemoveEntity::class.java)
+    kryo.register(ChangeEntry.ReplaceEntity::class.java)
+    kryo.register(ChangeEntry.ChangeEntitySource::class.java)
+    kryo.register(ChangeEntry.ReplaceAndChangeSource::class.java)
     kryo.register(LinkedHashSet::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
@@ -233,25 +235,39 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
    * [objectClasses] - set of kotlin objects
    */
   private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableSet<TypeInfo>, objectClasses: MutableSet<TypeInfo>) {
-    val kClass = entity::class
-    if (registerKClass(kClass, kryo, objectClasses, simpleClasses)) return
+    val jClass = entity.javaClass
+    val classAlreadyRegistered = registerKClass(entity::class, jClass, kryo, objectClasses, simpleClasses)
+    if (classAlreadyRegistered) return
+    if (entity is VirtualFileUrl) return
+    if (entity is Enum<*>) return
 
-    kClass.memberProperties.forEach {
-      val retType = (it.returnType as Any).toString()
+    if (entity is WorkspaceEntityData<*>) {
+      // lateinit property seems not captured by fields
+      recursiveClassFinder(kryo, entity.entitySource, simpleClasses, objectClasses)
+    }
+    jClass.declaredFields.forEach {
+      val retType = it.type.name
 
       if ((retType.startsWith("kotlin") || retType.startsWith("java"))
           && !retType.startsWith("kotlin.collections.List")
           && !retType.startsWith("java.util.List")
       ) return@forEach
 
-      if (it.visibility != KVisibility.PUBLIC) return@forEach
-      val property = it.getter.call(entity) ?: run {
-        registerKClass(it.returnType.jvmErasure, kryo, objectClasses, simpleClasses)
+      it.trySetAccessible()
+      if (Modifier.isStatic(it.modifiers) || !it.canAccess(entity)) return@forEach
+      val property = ReflectionUtil.getFieldValue<Any>(it, entity) ?: run {
+        registerKClass(it.type.kotlin, it.type, kryo, objectClasses, simpleClasses)
         return@forEach
       }
+      if (property === entity) return@forEach
       recursiveClassFinder(kryo, property, simpleClasses, objectClasses)
 
       if (property is List<*>) {
+        val type = (it.genericType as ParameterizedType).actualTypeArguments[0] as? Class<*>
+        if (type != null) {
+          registerKClass(type.kotlin, type, kryo, objectClasses, simpleClasses)
+        }
+
         property.filterNotNull().forEach { listItem ->
           recursiveClassFinder(kryo, listItem, simpleClasses, objectClasses)
         }
@@ -260,11 +276,12 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   }
 
   private fun registerKClass(kClass: KClass<out Any>,
+                             jClass: Class<out Any>,
                              kryo: Kryo,
                              objectClasses: MutableSet<TypeInfo>,
                              simpleClasses: MutableSet<TypeInfo>): Boolean {
-    val typeInfo = TypeInfo(kClass.jvmName, typesResolver.getPluginId(kClass.java))
-    if (kryo.classResolver.getRegistration(kClass.java) != null) return true
+    val typeInfo = TypeInfo(jClass.name, typesResolver.getPluginId(jClass))
+    if (kryo.classResolver.getRegistration(jClass) != null) return true
 
     val objectInstance = kClass.objectInstance
     if (objectInstance != null) {
@@ -307,8 +324,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Write indexes
       kryo.writeClassAndObject(output, storage.indexes.softLinks)
 
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo)
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo)
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.entityId2VirtualFileUrl)
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2EntityId)
 
       kryo.writeClassAndObject(output, storage.indexes.entitySourceIndex)
       kryo.writeClassAndObject(output, storage.indexes.persistentIdIndex)
@@ -318,7 +335,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
   }
 
-  internal fun serializeDiffLog(stream: OutputStream, changeLog: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>) {
+  internal fun serializeDiffLog(stream: OutputStream, log: WorkspaceBuilderChangeLog) {
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
       val kryo = createKryo()
@@ -326,17 +343,19 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Save version
       output.writeString(serializerDataFormatVersion)
 
-      val entityDataSequence = changeLog.mapNotNull {
+      val entityDataSequence = log.changeLog.values.mapNotNull {
         when (it) {
-          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity<*> -> it.entityData
-          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.RemoveEntity -> null
-          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity<*> -> it.newData
+          is ChangeEntry.AddEntity<*> -> it.entityData
+          is ChangeEntry.RemoveEntity -> null
+          is ChangeEntry.ReplaceEntity<*> -> it.newData
+          is ChangeEntry.ChangeEntitySource<*> -> it.newData
+          is ChangeEntry.ReplaceAndChangeSource<*> -> it.dataChange.newData
         }
       }.asSequence()
 
       collectAndRegisterClasses(kryo, output, entityDataSequence)
 
-      kryo.writeClassAndObject(output, changeLog)
+      kryo.writeClassAndObject(output, log.changeLog)
     }
     finally {
       output.flush()
@@ -391,7 +410,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Read version
       val cacheVersion = input.readString()
       if (cacheVersion != serializerDataFormatVersion) {
-        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
         return null
       }
 
@@ -411,8 +430,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Read indexes
       val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
 
-      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableList<VirtualFileIndex.VirtualFileUrlInfo>>
-      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableList<VirtualFileIndex.VirtualFileUrlInfo>>
+      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as EntityId2Vfu
+      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as Vfu2EntityId
       val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
 
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
@@ -421,7 +440,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
 
       val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
-      storage.assertConsistencyInStrictMode()
       val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
 
       builder.entitiesByType.entityFamilies.forEach { family ->
@@ -451,25 +469,25 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): WorkspaceEntityStorageBuilder? {
     val builder = this.deserializeCache(storeStream) ?: return null
 
-    var log: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>
+    var log: ChangeLog
     Input(diffLogStream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
 
       // Read version
       val cacheVersion = input.readString()
       if (cacheVersion != serializerDataFormatVersion) {
-        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
         return null
       }
 
       readAndRegisterClasses(input, kryo)
 
-      log = kryo.readClassAndObject(input) as List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>
+      log = kryo.readClassAndObject(input) as ChangeLog
     }
 
     builder as WorkspaceEntityStorageBuilderImpl
-    builder.changeLogImpl.clear()
-    builder.changeLogImpl.addAll(log)
+    builder.changeLog.changeLog.clear()
+    builder.changeLog.changeLog.putAll(log)
 
     return builder
   }
@@ -481,20 +499,15 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Read version
       val cacheVersion = input.readString()
       if (cacheVersion != serializerDataFormatVersion) {
-        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
         return
       }
 
       val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
-
       val map = classes.map { (first, second) -> typesResolver.resolveClass(first.name, first.pluginId) to second }.toMap()
       ClassToIntConverter.fromMap(map)
     }
   }
 
   private data class TypeInfo(val name: String, val pluginId: String?)
-
-  companion object {
-    val logger = logger<EntityStorageSerializerImpl>()
-  }
 }

@@ -1,0 +1,4 @@
+android {
+  def myvar = 1
+  targetSdkVersion = 26 + myvar
+}

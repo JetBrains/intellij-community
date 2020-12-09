@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.structureView.StructureView;
@@ -15,7 +16,9 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.navigation.AnonymousElementProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -37,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.LangFilterCollector;
 
 /**
  * @author Konstantin Bulenkov
@@ -63,7 +68,9 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   @NotNull
   @Override
   public String getFullGroupName() {
-    return String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
+    //noinspection HardCodedStringLiteral
+    @Nls String res = String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
+    return res;
   }
 
   @NotNull
@@ -87,10 +94,15 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     return model;
   }
 
+  @Override
+  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
+    return new SearchEverywhereCommandInfo("c", IdeBundle.message("search.everywhere.filter.classes.description"), this);
+  }
+
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(includeNonProjectItemsText(), myFilter, onChanged);
+    return doGetActions(includeNonProjectItemsText(), myFilter, new LangFilterCollector(), onChanged);
   }
 
   @NotNull

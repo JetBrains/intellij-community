@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,12 +184,9 @@ public final class ParenthesesUtils {
     if (body == null) return;
     final PsiElement parent = parenthesizedExpression.getParent();
     if (!(parent instanceof PsiExpression) || !areParenthesesNeeded(body, (PsiExpression)parent, ignoreClarifyingParentheses)) {
-      PsiExpression newExpression = ExpressionUtils.replacePolyadicWithParent(parenthesizedExpression, body);
-      if (newExpression == null){
-        CommentTracker commentTracker = new CommentTracker();
-        commentTracker.markUnchanged(body);
-        newExpression = (PsiExpression)commentTracker.replaceAndRestoreComments(parenthesizedExpression, body);
-      }
+      CommentTracker commentTracker = new CommentTracker();
+      commentTracker.markUnchanged(body);
+      PsiExpression newExpression = (PsiExpression)commentTracker.replaceAndRestoreComments(parenthesizedExpression, body);
       removeParentheses(newExpression, ignoreClarifyingParentheses);
     }
     else {

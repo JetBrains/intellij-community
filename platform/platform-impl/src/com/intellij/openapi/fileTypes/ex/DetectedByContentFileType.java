@@ -42,14 +42,4 @@ public final class DetectedByContentFileType implements FileType {
   public boolean isBinary() {
     return false;
   }
-
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
-  public @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return null;
-  }
 }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -24,6 +25,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +47,13 @@ public class AssignTargetAnnotator extends PyAnnotator {
       expression.accept(new ExprVisitor(Operation.Assign));
     }
 
-    errorOnUnparenthesizedAssignmentExpression(node.getAssignedValue(),
-                                               "at the top level of the right hand side of an assignment statement");
+    PyExpression expression = node.getAssignedValue();
+    if (expression instanceof PyAssignmentExpression) {
+      getHolder()
+        .newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.unparenthesized.assignment.expression.value"))
+        .range(expression)
+        .create();
+    }
   }
 
   @Override
@@ -75,6 +82,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression target = node.getForPart().getTarget();
     if (target != null) {
       target.accept(new ExprVisitor(Operation.For));
+      checkNotAssignmentExpression(target, PyBundle.message("ANN.assignment.expression.as.a.target"));
     }
   }
 
@@ -88,27 +96,13 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyExpressionStatement(@NotNull PyExpressionStatement node) {
-    errorOnUnparenthesizedAssignmentExpression(node.getExpression(), "at the top level of an expression statement");
-  }
-
-  @Override
-  public void visitPyNamedParameter(@NotNull PyNamedParameter node) {
-    errorOnUnparenthesizedAssignmentExpression(node.getDefaultValue(), "at the top level of a function default value");
-  }
-
-  @Override
-  public void visitPyKeywordArgument(@NotNull PyKeywordArgument node) {
-    errorOnUnparenthesizedAssignmentExpression(node.getValueExpression(), "for the value of a keyword argument in a call");
-  }
-
-  @Override
-  public void visitPyLambdaExpression(@NotNull PyLambdaExpression node) {
-    errorOnUnparenthesizedAssignmentExpression(node.getBody(), "at the top level of a lambda function");
-  }
-
-  @Override
-  public void visitPyAnnotation(@NotNull PyAnnotation node) {
-    errorOnUnparenthesizedAssignmentExpression(node.getValue(), "as annotations for arguments, return values and assignments");
+    PyExpression expression = node.getExpression();
+    if (expression instanceof PyAssignmentExpression) {
+      getHolder()
+        .newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.unparenthesized.assignment.expression.statement"))
+        .range(expression)
+        .create();
+    }
   }
 
   @Override
@@ -120,10 +114,31 @@ public class AssignTargetAnnotator extends PyAnnotator {
     }
   }
 
-  private void errorOnUnparenthesizedAssignmentExpression(@Nullable PyExpression expression, @NotNull String suffix) {
-    if (expression instanceof PyAssignmentExpression) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR,
-                                PyBundle.message("ANN.unparenthesized.assignment.expressions.are.prohibited.0", suffix)).range(expression).create();
+  @Override
+  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
+    final String targetMessage = PyBundle.message("ANN.assignment.expression.as.a.target");
+    final String iterableMessage = PyBundle.message("ANN.assignment.expression.in.an.iterable");
+
+    node.getForComponents().forEach(
+      it -> {
+        checkNotAssignmentExpression(it.getIteratorVariable(), targetMessage);
+        checkNoAssignmentExpressionAsChild(it.getIteratedList(), iterableMessage);
+      }
+    );
+  }
+
+  private void checkNoAssignmentExpressionAsChild(@Nullable PyExpression expression, @NotNull @InspectionMessage String message) {
+    PsiTreeUtil
+      .findChildrenOfType(expression, PyAssignmentExpression.class)
+      .forEach(it -> checkNotAssignmentExpression(it, message));
+  }
+
+  private void checkNotAssignmentExpression(@Nullable PyExpression expression, @NotNull @InspectionMessage String message) {
+    if (PyPsiUtils.flattenParens(expression) instanceof PyAssignmentExpression) {
+      getHolder()
+        .newAnnotation(HighlightSeverity.ERROR, message)
+        .range(expression)
+        .create();
     }
   }
 

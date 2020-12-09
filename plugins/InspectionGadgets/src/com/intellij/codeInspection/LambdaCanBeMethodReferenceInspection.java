@@ -280,6 +280,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         }
         PsiType type = typeElement.getType();
         if (type instanceof PsiPrimitiveType || PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return null;
+        if (type instanceof PsiIntersectionType) return null;
         return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
       }
     }

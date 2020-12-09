@@ -6,7 +6,8 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +88,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
           }
         } else {
           // key is deleted, just properly skip bytes (used while index update)
-          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey";
+          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey for " + requestedIndex + " in " + this.getClass().getName();
           skipIndexValue(in);
         }
       }
@@ -118,18 +119,17 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     in.readFully(buffer);
     UnsyncByteArrayInputStream indexIs = new UnsyncByteArrayInputStream(buffer);
     DataInputStream indexDis = new DataInputStream(indexIs);
-    TObjectHashingStrategy<K> hashingStrategy = StubIndexKeyDescriptorCache.INSTANCE.getKeyHashingStrategy(stubIndexKey);
-    Map<K, StubIdList> result = new THashMap<>(hashingStrategy);
+    Hash.Strategy<K> hashingStrategy = StubIndexKeyDescriptorCache.INSTANCE.getKeyHashingStrategy(stubIndexKey);
+    Map<K, StubIdList> result = new Object2ObjectOpenCustomHashMap<>(hashingStrategy);
     while (indexDis.available() > 0) {
       K key = keyDescriptor.read(indexDis);
       StubIdList read = StubIdExternalizer.INSTANCE.read(indexDis);
-      if (requestedKey != null) {
-        if (hashingStrategy.equals(requestedKey, key)) {
-          result.put(key, read);
-          return result;
-        }
-      } else {
+      if (requestedKey == null) {
         result.put(key, read);
+      }
+      else if (hashingStrategy.equals(requestedKey, key)) {
+        result.put(key, read);
+        return result;
       }
     }
     return result;

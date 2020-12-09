@@ -12,7 +12,7 @@ FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET IDE_HOME=%%~fi
 
 :: ---------------------------------------------------------------------
 :: Locate a JDK installation directory which will be used to run the IDE.
-:: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jre, JDK_HOME, JAVA_HOME.
+:: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jbr[-x86], JDK_HOME, JAVA_HOME.
 :: ---------------------------------------------------------------------
 SET JDK=
 
@@ -93,7 +93,7 @@ SET ACC=
 FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
 IF EXIST "%VM_OPTIONS_FILE%" SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
 
-SET COMMON_JVM_ARGS="-XX:ErrorFile=%USERPROFILE%\java_error_in_@@product_uc@@_%%p.log" "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@product_uc@@.hprof" -Didea.vendor.name=@@product_vendor@@ -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
+SET COMMON_JVM_ARGS="-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" -Didea.vendor.name=@@product_vendor@@ -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
 SET IDE_JVM_ARGS=@@ide_jvm_args@@
 SET ALL_JVM_ARGS=%ACC% %COMMON_JVM_ARGS% %IDE_JVM_ARGS%
 

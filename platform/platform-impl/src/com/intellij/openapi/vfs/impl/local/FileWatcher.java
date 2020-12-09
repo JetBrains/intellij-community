@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -70,16 +70,14 @@ public final class FileWatcher {
   private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
   private volatile CanonicalPathMap myPathMap = CanonicalPathMap.empty();
-  private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
+  private volatile Map<Object, Set<String>> myManualWatchRoots = Collections.emptyMap();
 
   FileWatcher(@NotNull ManagingFS managingFS, @NotNull Runnable postInitCallback) {
     myManagingFS = managingFS;
     myNotificationSink = new MyFileWatcherNotificationSink();
 
     myFileWatcherExecutor.execute(() -> {
-      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
-        watcher.initialize(myManagingFS, myNotificationSink);
-      });
+      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.initialize(myManagingFS, myNotificationSink));
       if (isOperational()) {
         postInitCallback.run();
       }
@@ -101,9 +99,7 @@ public final class FileWatcher {
       LOG.error(e);
     }
 
-    PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
-      watcher.dispose();
-    });
+    PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.dispose());
   }
 
   public boolean isOperational() {
@@ -129,18 +125,18 @@ public final class FileWatcher {
   }
 
   public @NotNull Collection<@NotNull String> getManualWatchRoots() {
-    List<Collection<String>> manualWatchRoots = myManualWatchRoots;
-
     Set<String> result = null;
-    for (Collection<String> roots : manualWatchRoots) {
-      if (result == null) {
-        result = new HashSet<>(roots);
-      }
-      else {
-        result.retainAll(roots);
+    for (Set<String> rootSet : myManualWatchRoots.values()) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (rootSet) {
+        if (result == null) {
+          result = new HashSet<>(rootSet);
+        }
+        else {
+          result.retainAll(rootSet);
+        }
       }
     }
-
     return result != null ? result : Collections.emptyList();
   }
 
@@ -150,11 +146,13 @@ public final class FileWatcher {
         CanonicalPathMap pathMap = pathMapSupplier.get();
         if (pathMap == null) return;
         myPathMap = pathMap;
-        myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
+        myManualWatchRoots = new ConcurrentHashMap<>();
 
         Pair<List<String>, List<String>> roots = pathMap.getCanonicalWatchRoots();
         PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
-          watcher.setWatchRoots(roots.first, roots.second);
+          if (watcher.isOperational()) {
+            watcher.setWatchRoots(roots.first, roots.second);
+          }
         });
       }
       catch (RuntimeException | Error e) {
@@ -202,16 +200,25 @@ public final class FileWatcher {
         }
       }
 
-      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
-        watcher.resetChangedPaths();
-      });
+      PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.resetChangedPaths());
 
       return dirtyPaths;
     }
 
     @Override
     public void notifyManualWatchRoots(@NotNull Collection<String> roots) {
-      myManualWatchRoots.add(roots.isEmpty() ? Collections.emptySet() : new HashSet<>(roots));
+      registerManualWatchRoots(new Object(), roots);
+    }
+
+    @Override
+    public void notifyManualWatchRoots(@NotNull PluggableFileWatcher watcher, @NotNull Collection<String> roots) {
+      registerManualWatchRoots(watcher, roots);
+    }
+
+    private void registerManualWatchRoots(Object key, Collection<String> roots) {
+      Set<String> rootSet = myManualWatchRoots.computeIfAbsent(key, k -> new HashSet<>());
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (rootSet) { rootSet.addAll(roots); }
       notifyOnEvent(OTHER);
     }
 
@@ -305,15 +312,15 @@ public final class FileWatcher {
   public static final String RESET = "(reset)";
   public static final String OTHER = "(other)";
 
-  private volatile Consumer<? super String> myTestNotifier;
+  private volatile Consumer<String> myTestNotifier;
 
   private void notifyOnEvent(String path) {
-    Consumer<? super String> notifier = myTestNotifier;
+    Consumer<String> notifier = myTestNotifier;
     if (notifier != null) notifier.accept(path);
   }
 
   @TestOnly
-  public void startup(@Nullable Consumer<? super String> notifier) throws Exception {
+  public void startup(@Nullable Consumer<String> notifier) throws Exception {
     myTestNotifier = notifier;
     myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {

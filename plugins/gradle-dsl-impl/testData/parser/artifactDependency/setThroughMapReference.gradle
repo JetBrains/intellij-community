@@ -1,0 +1,5 @@
+ext.version = 1.0
+ext.dep = ['name': 'awesome', 'group': 'some', 'version': "$version"]
+dependencies {
+  compile dep
+}

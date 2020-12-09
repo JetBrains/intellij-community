@@ -2,21 +2,27 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
@@ -35,7 +41,6 @@ internal class LibraryModifiableModelBridgeImpl(
   private val currentLibraryValue = CachedValue { storage ->
     val newLibrary = LibraryStateSnapshot(
       libraryEntity = storage.resolve(entityId) ?: error("Can't resolve library via $entityId"),
-      filePointerProvider = originalLibrarySnapshot.filePointerProvider,
       storage = storage,
       libraryTable = originalLibrarySnapshot.libraryTable,
       parentDisposable = originalLibrary
@@ -51,6 +56,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun getKind(): PersistentLibraryKind<*>? = currentLibrary.kind
   override fun getUrls(rootType: OrderRootType): Array<String> = currentLibrary.getUrls(rootType)
   override fun getName(): String? = currentLibrary.name
+  override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
   override fun getProperties(): LibraryProperties<*>? = currentLibrary.properties
   override fun getExcludedRootUrls(): Array<String> = currentLibrary.excludedRootUrls
   override fun isJarDirectory(url: String): Boolean = currentLibrary.isJarDirectory(url)
@@ -139,8 +145,8 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addJarDirectory(url: String, recursive: Boolean, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val rootTypeId = LibraryRootTypeId(rootType.name())
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val rootTypeId = rootType.toLibraryRootType()
+    val virtualFileUrl = (virtualFileManager as IdeVirtualFileUrlManagerImpl).fromDirUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
     update {
@@ -228,8 +234,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val root = LibraryRoot(
       url = virtualFileUrl,
-      type = LibraryRootTypeId(rootType.name()),
-      inclusionOptions = LibraryRoot.InclusionOptions.ROOT_ITSELF
+      type = rootType.toLibraryRootType()
     )
 
     update {
@@ -250,7 +255,9 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val kind = currentLibrary.kind
     if (kind == null) {
-      if (properties != null && properties !is DummyLibraryProperties) error("Setting properties with null kind is unsupported")
+      if (properties != null && properties !is DummyLibraryProperties) {
+        LOG.error("Setting properties with null kind is unsupported")
+      }
       return
     }
 
@@ -338,6 +345,10 @@ internal class LibraryModifiableModelBridgeImpl(
 
   override fun isDisposed(): Boolean = disposed
 
+  override fun toString(): String {
+    return "Library '$name', roots: ${currentLibrary.libraryEntity.roots}"
+  }
+
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = currentLibrary.getInvalidRootUrls(type)
   override fun getExcludedRoots(): Array<VirtualFile> = currentLibrary.excludedRoots
   override fun getModule(): Module? = currentLibrary.module
@@ -358,4 +369,8 @@ internal class LibraryModifiableModelBridgeImpl(
 
   override fun readExternal(element: Element?) = throw UnsupportedOperationException()
   override fun writeExternal(element: Element?) = throw UnsupportedOperationException()
+
+  companion object {
+    private val LOG = logger<LibraryModifiableModelBridgeImpl>()
+  }
 }

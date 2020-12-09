@@ -142,8 +142,6 @@ public final class SheetController implements Disposable {
     }
 
     mySheetPanel = createSheetPanel(title, message, buttons);
-
-    initShadowImage();
   }
 
   private void initShadowImage() {
@@ -239,36 +237,45 @@ public final class SheetController implements Disposable {
   }
 
   private JPanel createSheetPanel(@Nls String title, @Nls String message, JButton[] buttons) {
-    JPanel sheetPanel = new JPanel() {
-      @Override
-      protected void paintComponent(@NotNull Graphics g2d) {
-        final Graphics2D g = (Graphics2D) g2d.create();
-        super.paintComponent(g);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
+    JPanel sheetPanel;
 
-        g.setColor(new JBColor(Gray._230, UIUtil.getPanelBackground()));
-        Rectangle dialog  = new Rectangle(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
+    if (SheetMessage.useTransparent()) {
+      sheetPanel = new JPanel() {
+        @Override
+        protected void paintComponent(@NotNull Graphics g2d) {
+          super.paintComponent(g2d);
+          Graphics2D g = (Graphics2D)g2d.create();
+          g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
 
-        paintShadow(g);
-        // draw the sheet background
-        if (StartupUiUtil.isUnderDarcula()) {
-          g.fillRoundRect((int)dialog.getX(), (int)dialog.getY() - 5, (int)dialog.getWidth(), (int)(5 + dialog.getHeight()), 5, 5);
-        } else {
-          //todo make bottom corners
-          g.fill(dialog);
+          g.setColor(new JBColor(Gray._230, UIUtil.getPanelBackground()));
+          Rectangle dialog = new Rectangle(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
+
+          paintShadow(g);
+          // draw the sheet background
+          if (StartupUiUtil.isUnderDarcula()) {
+            g.fillRoundRect((int)dialog.getX(), (int)dialog.getY() - 5, (int)dialog.getWidth(), (int)(5 + dialog.getHeight()), 5, 5);
+          }
+          else {
+            //todo make bottom corners
+            g.fill(dialog);
+          }
+
+          Border border = UIManager.getBorder("Window.border");
+          if (border != null) {
+            border.paintBorder(this, g, dialog.x, dialog.y, dialog.width, dialog.height);
+          }
+
+          paintShadowFromParent(g);
+          g.dispose();
         }
+      };
+      sheetPanel.setOpaque(false);
+      initShadowImage();
+    }
+    else {
+      sheetPanel = new JPanel();
+    }
 
-        Border border = UIManager.getBorder("Window.border");
-        if (border != null) {
-          border.paintBorder(this, g, dialog.x, dialog.y, dialog.width, dialog.height);
-        }
-
-        paintShadowFromParent(g);
-      }
-
-    };
-
-    sheetPanel.setOpaque(false);
     sheetPanel.setLayout(null);
 
     JPanel ico = new JPanel() {
@@ -335,6 +342,7 @@ public final class SheetController implements Disposable {
 
     messageTextPane.setSize(widestWordWidth, Short.MAX_VALUE);
     messageTextPane.setText(handleBreaks(message));
+    widestWordWidth = Math.max(widestWordWidth, messageTextPane.getMinimumSize().width);
     messageArea.setSize(widestWordWidth, messageTextPane.getPreferredSize().height);
 
     SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + widestWordWidth + RIGHT_OFFSET, SHEET_WIDTH);
@@ -484,7 +492,8 @@ public final class SheetController implements Disposable {
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    BufferedImage image = ImageUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = ImageUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT,
+                                                myShadowImage == null ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB);
 
     Graphics g = image.createGraphics();
     mySheetPanel.paint(g);

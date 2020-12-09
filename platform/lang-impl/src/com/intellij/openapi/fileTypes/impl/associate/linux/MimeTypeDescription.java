@@ -1,10 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl.associate.linux;
 
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
@@ -57,24 +58,24 @@ class MimeTypeDescription implements Comparable<MimeTypeDescription> {
   private final List<String> myGlobPatterns = new ArrayList<>();
   private final String myComment;
   private final String myType;
-  private boolean myIsStandard;
 
   MimeTypeDescription(@NotNull FileType fileType) {
     myComment = fileType.getDescription();
     myType = getMimeType(fileType);
-    for (FileNameMatcher matcher: FileTypeManager.getInstance().getAssociations(fileType)) {
-      myGlobPatterns.add(matcher.getPresentableString());
+    for (FileNameMatcher matcher: OSAssociateFileTypesUtil.getMatchers(fileType)) {
+      if (matcher instanceof ExtensionFileNameMatcher) {
+        myGlobPatterns.add(matcher.getPresentableString());
+      }
     }
   }
 
-  private String getMimeType(@NotNull FileType fileType) {
+  private static String getMimeType(@NotNull FileType fileType) {
     if (fileType instanceof LanguageFileType) {
       String[] mimeTypes = ((LanguageFileType)fileType).getLanguage().getMimeTypes();
       if (mimeTypes.length > 0) return mimeTypes[0];
     }
     String typeName = fileType.getName();
     if (OS_MIME_TYPES.containsKey(typeName)) {
-      myIsStandard = true;
       return OS_MIME_TYPES.get(typeName);
     }
     String fromName = StringUtil.toLowerCase(typeName);
@@ -99,7 +100,4 @@ class MimeTypeDescription implements Comparable<MimeTypeDescription> {
     return myType.compareTo(o.myType);
   }
 
-  boolean isStandard() {
-    return myIsStandard;
-  }
 }

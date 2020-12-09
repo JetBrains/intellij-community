@@ -1,16 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -19,6 +20,7 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.update.Activatable;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,10 +30,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import static com.intellij.ide.actions.DragEditorTabsFusEventFields.SAME_WINDOW;
 import static javax.swing.SwingConstants.*;
 
 public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
@@ -132,45 +137,73 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     EditorWindow window = null;
     final EditorTabbedContainer.DockableEditor dockableEditor = (EditorTabbedContainer.DockableEditor)content;
     VirtualFile file = dockableEditor.getFile();
+    Integer dragStartLocation = file.getUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY);
+    boolean sameWindow = myCurrentOver != null && dragStartLocation != null && dragStartLocation == System.identityHashCode(myCurrentOver);
     int dropSide = getCurrentDropSide();
     if (myCurrentOver != null) {
       final DataProvider provider = myCurrentOver.getDataProvider();
       if (provider != null) {
         window = EditorWindow.DATA_KEY.getData(provider);
       }
-      if (window != null && dropSide != -1) {
+      if (window != null && dropSide != -1 && dropSide != CENTER) {
         window.split(dropSide == BOTTOM || dropSide == TOP ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT,
-                     true, file, false, dropSide != LEFT && dropSide != TOP);
+                     true, file, true, dropSide != LEFT && dropSide != TOP);
+        recordDragStats(dropSide, false);
         return;
       }
     }
-
+    boolean dropIntoNewlyCreatedWindow = false;
     if (window == null || window.isDisposed()) {
-      window = mySplitters.getOrCreateCurrentWindow(file);
+      dropIntoNewlyCreatedWindow = true;
+      window = mySplitters.getOrCreateCurrentWindow(file);//drag outside
     }
 
     Boolean dropInBetweenPinnedTabs = null;
     if (myCurrentOver != null) {
 
       int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
-      if (index >= 0 && index < myCurrentOver.getTabCount() - 1) {
-        dropInBetweenPinnedTabs = myCurrentOver.getTabAt(index).isPinned();
+      if (index >= 0 && index <= myCurrentOver.getTabCount()) {
+        TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
+        if (file.getUserData(EditorWindow.DRAG_START_PINNED_KEY) == Boolean.TRUE) {
+          dropInBetweenPinnedTabs = index == 0 || (tabInfo != null && tabInfo.isPinned()) || myCurrentOver.getTabAt(index - 1).isPinned();
+        }
+        else {
+          dropInBetweenPinnedTabs = tabInfo != null ? tabInfo.isPinned() : null;
+        }
       }
       file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
       Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
-      Integer dragStartLocation = file.getUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY);
-      boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && dragStartLocation != null &&
-                                         dragStartLocation == System.identityHashCode(myCurrentOver);
+      boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow;
       if (!isDroppedToOriginalPlace) {
         file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, dropInBetweenPinnedTabs);
       }
     }
-
+    recordDragStats(dropIntoNewlyCreatedWindow? -1  : CENTER, sameWindow);
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
     window.setFilePinned(file, Objects.requireNonNullElseGet(dropInBetweenPinnedTabs, dockableEditor::isPinned));
   }
 
-  @MagicConstant(intValues = {TOP, LEFT, BOTTOM, RIGHT, -1})
+  private void recordDragStats(int dropSide, boolean sameWindow) {
+    String actionId = null;
+    switch (dropSide) {
+      case -1: actionId = "OpenElementInNewWindow";break;
+      case TOP: actionId = "SplitVertically";break;
+      case LEFT: actionId = "SplitHorizontally"; break;
+      case BOTTOM: actionId = "MoveTabDown"; break;
+      case RIGHT: actionId = "MoveTabRight";break;
+      case CENTER: return;// This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
+    }
+    if (actionId != null && mySplitters != null) {
+      AnActionEvent event = AnActionEvent.createFromInputEvent(
+        new MouseEvent(mySplitters, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false,
+                       MouseEvent.BUTTON1), ActionPlaces.EDITOR_TAB, null, DataContext.EMPTY_CONTEXT);
+      ActionsCollectorImpl.recordActionInvoked(myProject, ActionManager.getInstance().getAction(actionId), event,
+                                               Collections.singletonList(ActionsEventLogGroup.ADDITIONAL.with(
+                                                 new ObjectEventData(SAME_WINDOW.with(sameWindow)))));
+    }
+  }
+
+  @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1})
   public int getCurrentDropSide() {
     return myCurrentOver instanceof JBTabsEx ? ((JBTabsEx)myCurrentOver).getDropSide() : -1;
   }
@@ -269,7 +302,6 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   private class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
-    private final Color myColor = JBColor.namedColor("dropArea.base", 0x4f4fff, 0x5081c0);
 
     @Override
     public boolean needsRepaint() {
@@ -280,10 +312,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(ColorUtil.toAlpha(myColor, 200));
-      g.setStroke(new BasicStroke(2));
-      g.draw(myBoundingBox);
-      g.setColor(ColorUtil.toAlpha(myColor, 40));
+      g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
       g.fill(myBoundingBox);
     }
 
@@ -291,7 +320,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       myBoundingBox = null;
       setNeedsRepaint(true);
 
-      Rectangle r = new Rectangle(myCurrentOver.getComponent().getBounds());
+      Rectangle r = TabsUtil.getDropArea(myCurrentOver);
       int currentDropSide = getCurrentDropSide();
       if (currentDropSide == -1) {
         return;
@@ -303,16 +332,18 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
         case LEFT:
           r.width /= 2;
           break;
-        case RIGHT:
-          r.width /= 2;
-          r.x += r.width;
-          break;
         case BOTTOM:
-          r.height /= 2;
-          r.y += r.height;
+          int h = r.height / 2;
+          r.height -= h;
+          r.y += h;
+          break;
+        case RIGHT:
+          int w = r.width / 2;
+          r.width -= w;
+          r.x += w;
           break;
       }
-      myBoundingBox = new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, 16, 16);
+      myBoundingBox = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
@@ -38,9 +38,7 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
   }
 
   /**
-   * @param path
-   * @param caseSensitiveFS
-   * @return null means the file manager should delegate to base implementation
+   * @return {@code null} means the file manager should delegate to base implementation
    */
   @Nullable
   protected abstract String inferBinaryName(Iterable<? extends File> path, boolean caseSensitiveFS);

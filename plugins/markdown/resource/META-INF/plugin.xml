@@ -5,6 +5,7 @@
   <category>Languages</category>
   <resource-bundle>messages.MarkdownBundle</resource-bundle>
   <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.platform.images</depends>
   <depends optional="true" config-file="plugin-intelliLang.xml">org.intellij.intelliLang</depends>
 
   <description><![CDATA[
@@ -68,6 +69,8 @@ Includes the following features:</p>
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
 
+    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.MarkdownImagePasteProvider"/>
+
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
 
@@ -105,6 +108,7 @@ Includes the following features:</p>
     <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
 
+    <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
 
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
@@ -127,6 +131,9 @@ Includes the following features:</p>
     <registryKey key="markdown.mermaid.download.link"
                  defaultValue="https://unpkg.com/mermaid@8.6.0/dist/mermaid.js"
                  description="Link which Markdown plugin will use to download Mermaid.js library"/>
+    <registryKey key="markdown.structure.view.list.visibility"
+                 defaultValue="false"
+                 description="Determines whether lists are visible in the document structure view"/>
   </extensions>
 
   <applicationListeners>

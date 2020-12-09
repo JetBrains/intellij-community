@@ -48,7 +48,7 @@ import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
-public class ShShellcheckUtil {
+public final class ShShellcheckUtil {
   @NonNls private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHELLCHECK_UPDATE");
   private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";

@@ -259,7 +259,7 @@ private fun VcsLogFilter.withPrefix(): String {
     is VcsLogRootFilter -> return VcsLogBundle.message("vcs.log.filter.root.presentation.with.prefix", displayText)
     is VcsLogStructureFilter -> return VcsLogBundle.message("vcs.log.filter.structure.presentation.with.prefix", displayText)
   }
-  return ""
+  return displayText
 }
 
 private fun createFilterSet() = OpenTHashSet(FilterByKeyHashingStrategy())

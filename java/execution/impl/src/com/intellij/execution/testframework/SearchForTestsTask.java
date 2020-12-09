@@ -112,7 +112,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
         try {
           if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
             myIncompleteIndexUsageCallback.run();
-            FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+            DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
               search();
               return null;
             });
@@ -158,7 +158,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       try {
         if (myAllowIndexInDumbMode && DumbService.isDumb(myProject)) {
           myIncompleteIndexUsageCallback.run();
-          FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+          DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
             onFound();
             return null;
           });

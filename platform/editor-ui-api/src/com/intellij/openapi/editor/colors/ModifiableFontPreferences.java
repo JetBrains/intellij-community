@@ -31,4 +31,6 @@ public abstract class ModifiableFontPreferences extends FontPreferences {
   public abstract void setLineSpacing(float lineSpacing);
   public abstract void resetFontSizes();
   public abstract void setFontSize(@NotNull String fontFamily, int size);
+  public abstract void setRegularSubFamily(String subFamily);
+  public abstract void setBoldSubFamily(String subFamily);
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.settings
 
 import com.intellij.ide.IdeBundle
@@ -17,7 +18,7 @@ internal fun buildLoginPanel(st: SpaceLoginState.Disconnected,
                              loginAction: (String) -> Unit
 ): DialogPanel {
   return panel {
-    val serverField = JTextField(st.server, 30)
+    val serverField = JTextField(st.server, 30) // NON-NLS
 
     val loginButton = JButton(SpaceBundle.message("login.panel.log.in.button")).apply {
       addActionListener {

@@ -267,7 +267,9 @@ class Test88 {
   @NeedsIndex.ForStandardLibrary
   void testCollectorsToSet() {
     configureByTestName()
-    selectItem(myItems.find { it.lookupString.contains('toSet') })
+    assert myItems.find { it.lookupString == 'collect(Collectors.joining())' } != null 
+    assert myItems.find { it.lookupString == 'collect(Collectors.toList())' } != null 
+    selectItem(myItems.find { it.lookupString == 'collect(Collectors.toSet())' })
     checkResultByFileName()
   }
 
@@ -298,7 +300,7 @@ class Test88 {
   @NeedsIndex.ForStandardLibrary
   void testLambdaInAmbiguousCall() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
+    myFixture.assertPreferredCompletionItems(0, 'toString', 'getClass')
   }
 
   @NeedsIndex.ForStandardLibrary

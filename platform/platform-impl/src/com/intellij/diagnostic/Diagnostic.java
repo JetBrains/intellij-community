@@ -18,6 +18,6 @@ public final class Diagnostic {
 
   public static boolean assertTrue(String category, String message, boolean condition) {
     if (condition) return true;
-    return Logger.getInstance(category).assertTrue(condition, message);
+    return Logger.getInstance(category).assertTrue(false, message);
   }
 }

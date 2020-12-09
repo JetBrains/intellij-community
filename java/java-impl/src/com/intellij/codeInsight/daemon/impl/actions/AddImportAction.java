@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -136,8 +137,18 @@ public class AddImportAction implements QuestionAction {
         PopupListElementRenderer baseRenderer = (PopupListElementRenderer)super.getListElementRenderer();
         ListCellRenderer<Object> psiRenderer = new DefaultPsiElementCellRenderer();
         return (list, value, index, isSelected, cellHasFocus) -> {
-          JPanel panel = new JPanel(new BorderLayout());
           baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          JPanel panel = new JPanel(new BorderLayout()) {
+            private final AccessibleContext myAccessibleContext = baseRenderer.getAccessibleContext();
+
+            @Override
+            public AccessibleContext getAccessibleContext() {
+              if (myAccessibleContext == null) {
+                return super.getAccessibleContext();
+              }
+              return myAccessibleContext;
+            }
+          };
           panel.add(baseRenderer.getNextStepLabel(), BorderLayout.EAST);
           panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
           return panel;

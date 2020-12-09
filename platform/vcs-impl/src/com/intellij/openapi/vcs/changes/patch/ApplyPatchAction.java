@@ -45,6 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_CANNOT_FIND_PATCH_FILE;
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
 public final class ApplyPatchAction extends DumbAwareAction {
@@ -106,12 +108,12 @@ public final class ApplyPatchAction extends DumbAwareAction {
     VirtualFile vFile = VfsUtil.findFileByIoFile(file, true);
     String patchPath = file.getPath();
     if (vFile == null) {
-      VcsNotifier.getInstance(project).notifyWeakError("vcs.patch.apply.cannot.find.patch.file",
+      VcsNotifier.getInstance(project).notifyWeakError(PATCH_APPLY_CANNOT_FIND_PATCH_FILE,
                                                        VcsBundle.message("patch.apply.can.t.find.patch.file.warning", patchPath));
       return false;
     }
     if (!isPatchFile(vFile)) {
-      VcsNotifier.getInstance(project).notifyWeakError("vcs.patch.apply.not.patch.type.file",
+      VcsNotifier.getInstance(project).notifyWeakError(PATCH_APPLY_NOT_PATCH_FILE,
                                                        VcsBundle.message("patch.apply.not.patch.type.file.error", patchPath));
       return false;
     }

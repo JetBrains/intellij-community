@@ -178,6 +178,12 @@
   <action id="VcsShowNextChangeMarker"/>
   <action id="VcsShowPrevChangeMarker"/>
   <action id="CallHierarchy"/>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="control meta O"/>
+  </action>
+  <action id="ShowBookmarks">
+    <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
+  </action>
 
   <!--  Rider-specific actions-->
 

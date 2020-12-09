@@ -6,7 +6,7 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -28,7 +28,6 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.containers.ContainerUtil
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import com.maddyhome.idea.copyright.options.LanguageOptions
@@ -37,6 +36,7 @@ import com.maddyhome.idea.copyright.util.FileTypeUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
@@ -46,7 +46,7 @@ private const val COPYRIGHT = "copyright"
 private const val ELEMENT = "element"
 private const val MODULE = "module"
 
-private val LOG = Logger.getInstance(CopyrightManager::class.java)
+private val LOG = logger<CopyrightManager>()
 
 @State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
 class CopyrightManager @NonInjectable constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
@@ -217,7 +217,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
 }
 
 private class CopyrightManagerDocumentListener : BulkFileListener {
-  private val newFilePaths = ContainerUtil.newConcurrentSet<String>()
+  private val newFilePaths = Collections.newSetFromMap<String>(ConcurrentHashMap())
 
   private val isDocumentListenerAdded = AtomicBoolean()
 

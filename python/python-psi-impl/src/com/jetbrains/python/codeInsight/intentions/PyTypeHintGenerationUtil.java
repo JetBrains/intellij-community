@@ -388,6 +388,10 @@ public final class PyTypeHintGenerationUtil {
     }
   }
 
+  public static boolean isTypeHintComment(PsiElement element) {
+    return element instanceof PsiComment && element.getText().startsWith(TYPE_COMMENT_PREFIX);
+  }
+
   public static final class Pep484IncompatibleTypeException extends RuntimeException {
     public Pep484IncompatibleTypeException(String message) {
       super(message);

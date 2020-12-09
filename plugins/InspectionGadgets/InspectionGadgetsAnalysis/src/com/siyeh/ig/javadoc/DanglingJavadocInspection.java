@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -100,7 +101,7 @@ public class DanglingJavadocInspection extends BaseInspection {
     @Override
     public void visitDocComment(PsiDocComment comment) {
       super.visitDocComment(comment);
-      if (comment.getOwner() != null) {
+      if (comment.getOwner() != null || TemplateLanguageUtil.isInsideTemplateFile(comment)) {
         return;
       }
       if (JavaDocUtil.isInsidePackageInfo(comment) &&

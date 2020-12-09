@@ -42,6 +42,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -205,16 +207,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myCommonJavaParameters.setAnchor(myModule.getLabel());
     myShortenClasspathModeCombo.setAnchor(myModule.getLabel());
 
-    final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-    myChangeListLabeledComponent.getComponent().setModel(model);
-    model.addElement(JUnitBundle.message("test.discovery.by.all.changes.combo.item"));
-
-    if (!project.isDefault()) {
-      final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
-      for (LocalChangeList changeList : changeLists) {
-        model.addElement(changeList.getName());
-      }
-    }
+    setupChangeLists(project, myChangeListLabeledComponent.getComponent());
 
     myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()) {
       @Override
@@ -227,6 +220,19 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myUseModulePath.getComponent().setSelected(true);
     if (!project.isDefault()) {
       myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(myProject)).length > 0);
+    }
+  }
+
+  static void setupChangeLists(Project project, JComboBox<String> comboBox) {
+    final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+    comboBox.setModel(model);
+    model.addElement(JUnitBundle.message("test.discovery.by.all.changes.combo.item"));
+
+    if (!project.isDefault()) {
+      final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
+      for (LocalChangeList changeList : changeLists) {
+        model.addElement(changeList.getName());
+      }
     }
   }
 
@@ -290,7 +296,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     catch (NumberFormatException e) {
       configuration.setRepeatCount(1);
     }
-    configuration.getPersistentData().setUniqueIds(setArrayFromText(myUniqueIdField));
+    configuration.getPersistentData().setUniqueIds(setArrayFromText(myUniqueIdField.getComponent().getText()));
     configuration.getPersistentData().setTags(myTagsField.getComponent().getText());
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
     myModel.apply(getModuleSelector().getModule(), configuration);
@@ -315,8 +321,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     configuration.setUseModulePath(myUseModulePath.isVisible() && myUseModulePath.getComponent().isSelected());
   }
 
-  protected String[] setArrayFromText(LabeledComponent<RawCommandLineEditor> field) {
-    String text = field.getComponent().getText();
+  static String[] setArrayFromText(String text) {
     if (text.isEmpty()) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
@@ -601,14 +606,16 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     @Override
     protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
-      try {
-        return TestClassFilter.create(SourceScope.wholeProject(getProject()), null);
-      }
-      catch (JUnitUtil.NoJUnitException e) {
-        throw new NoFilterException(new MessagesEx.MessageInfo(getProject(),
-                                                               e.getMessage(),
-                                                               JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
-      }
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+        try {
+          return TestClassFilter.create(SourceScope.wholeProject(getProject()), null);
+        }
+        catch (JUnitUtil.NoJUnitException e) {
+          throw new NoFilterException(new MessagesEx.MessageInfo(getProject(),
+                                                                 e.getMessage(),
+                                                                 JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
+        }
+      });
     }
 
     @Override

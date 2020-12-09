@@ -41,6 +41,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String MODULE_MODE = "MODULE_MODE";
   public static final String REDIRECT_INPUT = "REDIRECT_INPUT";
   public static final String INPUT_FILE = "INPUT_FILE";
+  private static final Pattern QUALIFIED_NAME = Pattern.compile("^[\\p{javaJavaIdentifierPart}-.]*\\p{javaJavaIdentifierPart}$");
 
   private String myScriptName;
   private String myScriptParameters;
@@ -48,7 +49,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private boolean myEmulateTerminal = false;
   private boolean myModuleMode = false;
   @NotNull private String myInputFile = "";
-  private final Pattern myQualifiedNameRegex = Pattern.compile("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$");
   private boolean myRedirectInput = false;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
@@ -75,7 +75,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
         PyBundle.message(isModuleMode() ? "runcfg.unittest.no_module_name" : "runcfg.unittest.no_script_name"));
     }
     else {
-      if (isModuleMode() && !myQualifiedNameRegex.matcher(myScriptName).matches()) {
+      if (isModuleMode() && !QUALIFIED_NAME.matcher(myScriptName).matches()) {
         throw new RuntimeConfigurationWarning(PyBundle.message("python.provide.a.qualified.name.of.a.module"));
       }
     }

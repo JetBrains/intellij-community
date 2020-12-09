@@ -14,19 +14,20 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.BeanBinding
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 private val GROUP = EventLogGroup("settings", 9)
 private const val CHANGES_GROUP = "settings.changes"
 private const val ID_FIELD = "id"
 
-private val recordedComponents: MutableSet<String> = ContainerUtil.newConcurrentSet()
-private val recordedOptionNames: MutableSet<String> = ContainerUtil.newConcurrentSet()
+private val recordedComponents: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
+private val recordedOptionNames: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
 internal fun isComponentNameWhitelisted(name: String): Boolean {
   return recordedComponents.contains(name)

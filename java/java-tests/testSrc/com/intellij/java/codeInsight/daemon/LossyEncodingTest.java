@@ -85,16 +85,9 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     type("US-ASCII");
 
     Collection<HighlightInfo> infos = doHighlighting();
-    assertEquals(1, infos.size());
-    boolean found = false;
+    HighlightInfo info = assertOneElement(infos);
 
-    for(HighlightInfo info:infos) {
-      if (info.getDescription().equals("Unsupported characters for the charset 'US-ASCII'")) {
-        found = true;
-        break;
-      }
-    }
-    assertTrue(found);
+    assertEquals("Unsupported characters for the charset 'US-ASCII'", info.getDescription());
   }
 
   public void testMultipleRanges() throws Exception {
@@ -129,7 +122,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     doHighlighting();
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
     HighlightInfo info = assertOneElement(infos);
-    assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
+    assertEquals("The file was loaded in a wrong encoding: 'UTF-8'", info.getDescription());
   }
 
   public void testSurrogateUTF8() {

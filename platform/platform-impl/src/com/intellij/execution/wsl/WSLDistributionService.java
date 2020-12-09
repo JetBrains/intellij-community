@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
-
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
@@ -11,7 +10,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -24,9 +22,9 @@ import java.util.*;
  */
 @State(
   name = "WslDistributionsService",
-  storages = @Storage(value = "wsl.distributions.xml")
+  storages = @Storage("wsl.distributions.xml")
 )
-class WSLDistributionService implements PersistentStateComponent<WSLDistributionService> {
+final class WSLDistributionService implements PersistentStateComponent<WSLDistributionService> {
   /**
    * Current service implementation version is necessary for future migrations: fields additions and so on.
    */
@@ -80,9 +78,8 @@ class WSLDistributionService implements PersistentStateComponent<WSLDistribution
     return myDescriptors;
   }
 
-  @Nullable
   @Override
-  public WSLDistributionService getState() {
+  public @NotNull WSLDistributionService getState() {
     return this;
   }
 
@@ -97,6 +94,6 @@ class WSLDistributionService implements PersistentStateComponent<WSLDistribution
 
   @NotNull
   public static WSLDistributionService getInstance() {
-    return ServiceManager.getService(WSLDistributionService.class);
+    return ApplicationManager.getApplication().getService(WSLDistributionService.class);
   }
 }

@@ -1,0 +1,3 @@
+dependencies {
+  compile(fileTree("abc"))
+}

@@ -142,6 +142,9 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   public void testNoCastWhereCaptureArgIsExpected() {
     doTest();
   }
+  public void testCaptureOnInvalidatedReference() {
+    doTest();
+  }
 
   public void testSpecifyFormalParameterTypesWhenMethodReferenceWasExactAndTypeOfParameterIsUnknown() {
     doTest();

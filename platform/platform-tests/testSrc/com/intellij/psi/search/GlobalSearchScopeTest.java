@@ -2,16 +2,20 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
@@ -154,6 +158,28 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
     assertTrue(PsiSearchScopeUtil.isInScope(file.getResolveScope(), file));
   }
 
+  public void testPsiCopyResolveScopeMirrorsOriginalButIncludesTheCopy() throws IOException {
+    Module anotherModule = createModule("another");
+    VirtualFile anotherRoot = getTempDir().createVirtualDir("anotherRoot");
+    PsiTestUtil.addSourceContentToRoots(anotherModule, anotherRoot);
+
+    VirtualFile file = getTempDir().createVirtualFile("a.txt");
+    PsiTestUtil.addSourceContentToRoots(getModule(), file.getParent());
+    PsiFile psi = getPsiManager().findFile(file);
+
+    PsiFile copyPsi = (PsiFile)psi.copy();
+    VirtualFile copyFile = copyPsi.getViewProvider().getVirtualFile();
+
+    Function<GlobalSearchScope, List<Boolean>> checkContains = scope ->
+      List.of(scope.contains(file), scope.contains(anotherRoot), scope.contains(copyFile));
+
+    assertOrderedEquals(checkContains.fun(psi.getResolveScope()), true, false, false);
+    assertOrderedEquals(checkContains.fun(ResolveScopeManager.getInstance(myProject).getDefaultResolveScope(file)), true, false, false);
+
+    assertOrderedEquals(checkContains.fun(copyPsi.getResolveScope()), true, false, true);
+    assertOrderedEquals(checkContains.fun(ResolveScopeManager.getInstance(myProject).getDefaultResolveScope(copyFile)), true, false, true);
+  }
+
   public void testUnionWithEmptyAndUnion() {
     GlobalSearchScope scope = GlobalSearchScope.EMPTY_SCOPE.uniteWith(GlobalSearchScope.EMPTY_SCOPE);
     assertEquals(GlobalSearchScope.EMPTY_SCOPE, scope);
@@ -169,5 +195,18 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
 
     GlobalSearchScope scope4 = GlobalSearchScope.union(new GlobalSearchScope[]{GlobalSearchScope.EMPTY_SCOPE, p, GlobalSearchScope.EMPTY_SCOPE, pm, m});
     assertEquals(pm, scope4);
+  }
+
+  public void testProjectEverythingScopeDoesNotContainNonIndexableFiles() throws Exception {
+    GlobalSearchScope scope = GlobalSearchScope.everythingScope(getProject());
+
+    VirtualFile contentRoot = getVirtualFile(createTempDir("contentRoot"));
+    PsiTestUtil.removeAllRoots(getModule(), null);
+    PsiTestUtil.addContentRoot(getModule(), contentRoot);
+
+    assertTrue(scope.contains(contentRoot));
+
+    VirtualFile fileOutsideIndexingScope = getVirtualFile(createTempDir("outsideIndexingScope"));
+    assertFalse(scope.contains(fileOutsideIndexingScope));
   }
 }

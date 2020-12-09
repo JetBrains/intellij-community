@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -80,7 +80,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void prepareHttpAuth() throws IOException {
-    GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
+    GitHttpAuthService service = ApplicationManager.getApplication().getService(GitHttpAuthService.class);
     addHandlerPathToEnvironment(GitCommand.GIT_ASK_PASS_ENV, service);
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
@@ -144,7 +144,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void cleanupHttpAuth() {
     if (myHttpHandler != null) {
-      ServiceManager.getService(GitHttpAuthService.class).unregisterHandler(myHttpHandler);
+      ApplicationManager.getApplication().getService(GitHttpAuthService.class).unregisterHandler(myHttpHandler);
       myHttpHandler = null;
     }
   }
@@ -154,7 +154,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void prepareNativeSshAuth() throws IOException {
-    GitXmlRpcNativeSshService service = ServiceManager.getService(GitXmlRpcNativeSshService.class);
+    GitXmlRpcNativeSshService service = ApplicationManager.getApplication().getService(GitXmlRpcNativeSshService.class);
 
     boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
@@ -190,7 +190,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void cleanupNativeSshAuth() {
     if (myNativeSshHandler != null) {
-      ServiceManager.getService(GitXmlRpcNativeSshService.class).unregisterHandler(myNativeSshHandler);
+      ApplicationManager.getApplication().getService(GitXmlRpcNativeSshService.class).unregisterHandler(myNativeSshHandler);
       myNativeSshHandler = null;
     }
   }

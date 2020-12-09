@@ -41,10 +41,10 @@ public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
 
   @Override
   protected void tearDown() {
-    new RunAll()
-      .append(() -> myMockLocalFileSystem.disposed())
-      .append(() -> super.tearDown())
-      .run();
+    new RunAll(
+      () -> myMockLocalFileSystem.disposed(),
+      () -> super.tearDown()
+    ).run();
   }
 
   public void testAdd() {

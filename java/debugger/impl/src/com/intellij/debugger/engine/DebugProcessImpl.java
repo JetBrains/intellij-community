@@ -57,6 +57,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -89,12 +90,15 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
+
+  private final Deque<VirtualMachineData> myStashedVirtualMachines = new LinkedList<>();
 
   private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
   protected final EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class);
@@ -104,10 +108,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final StringBuilder myTextBeforeStart = new StringBuilder();
 
   enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
+
   protected final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
 
   private volatile ExecutionResult myExecutionResult;
-  private RemoteConnection myConnection;
+  private volatile RemoteConnection myConnection;
   private JavaDebugProcess myXDebugProcess;
 
   private volatile Map<String, Connector.Argument> myArguments;
@@ -119,7 +124,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = CompoundPositionManager.EMPTY;
-  private final DebuggerManagerThreadImpl myDebuggerManagerThread;
+  private volatile @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
@@ -746,6 +751,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myEvaluationDispatcher.removeListener(evaluationListener);
   }
 
+
+  @Override
+  public void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable) {
+    myDebugProcessDispatcher.addListener(listener, parentDisposable);
+  }
+
   @Override
   public void addDebugProcessListener(DebugProcessListener listener) {
     myDebugProcessDispatcher.addListener(listener);
@@ -898,44 +909,55 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  protected void closeProcess(boolean closedByUser) {
+  private void detachProcess(boolean closedByUser, boolean keepManagerThread, Consumer<@Nullable VirtualMachineData> callback) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     if (myState.compareAndSet(State.INITIAL, State.DETACHING) || myState.compareAndSet(State.ATTACHED, State.DETACHING)) {
       try {
-        getManagerThread().close();
+        if (!keepManagerThread) {
+          getManagerThread().close();
+        }
       }
       finally {
-        final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
-        myVirtualMachineProxy = null;
-        myPositionManager = CompoundPositionManager.EMPTY;
-        myReturnValueWatcher = null;
-        myNodeRenderersMap.clear();
-        myRenderers.clear();
-        DebuggerUtils.cleanupAfterProcessFinish(this);
-        myState.compareAndSet(State.DETACHING, State.DETACHED);
-        try {
-          myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
-        }
-        finally {
-          //if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
-          //  XDebugSession session = mySession.getXDebugSession();
-          //  if (session != null) {
-          //    session.setBreakpointMuted(false);
-          //  }
-          //}
-          if (vm != null) {
-            try {
-              vm.dispose(); // to be on the safe side ensure that VM mirror, if present, is disposed and invalidated
-            }
-            catch (Throwable ignored) {
-            }
+        if (!(myConnection instanceof RemoteConnectionStub)) {
+          VirtualMachineData vmData = new VirtualMachineData(myVirtualMachineProxy, myConnection, myDebuggerManagerThread);
+          myVirtualMachineProxy = null;
+          myPositionManager = CompoundPositionManager.EMPTY;
+          myReturnValueWatcher = null;
+          myNodeRenderersMap.clear();
+          myRenderers.clear();
+          DebuggerUtils.cleanupAfterProcessFinish(this);
+          myState.compareAndSet(State.DETACHING, State.DETACHED);
+          try {
+            myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
           }
-          myWaitFor.up();
+          finally {
+            callback.accept(vmData);
+          }
         }
       }
-
     }
+  }
+
+  protected void closeProcess(boolean closedByUser) {
+    detachProcess(closedByUser, false, vmData -> {
+      //if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
+      //  XDebugSession session = mySession.getXDebugSession();
+      //  if (session != null) {
+      //    session.setBreakpointMuted(false);
+      //  }
+      //}
+      if (vmData != null && vmData.vm != null) {
+        try {
+          vmData.vm.dispose(); // to be on the safe side ensure that VM mirror, if present, is disposed and invalidated
+        }
+        catch (Throwable ignored) {
+        }
+      }
+      myWaitFor.up();
+
+      unstashAndReattach();
+    });
   }
 
   @Contract(pure = true)
@@ -1022,8 +1044,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public DebuggerManagerThreadImpl getManagerThread() {
+  public @NotNull DebuggerManagerThreadImpl getManagerThread() {
     return myDebuggerManagerThread;
+  }
+
+  public boolean isCurrentVirtualMachine(@NotNull VirtualMachineProxyImpl vmProxy) {
+    VirtualMachine vm = ObjectUtils.doIfNotNull(myVirtualMachineProxy, it -> it.getVirtualMachine());
+    return vmProxy.getVirtualMachine() == vm;
   }
 
   private static int getInvokePolicy(SuspendContext suspendContext) {
@@ -1533,32 +1560,38 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     DebuggerManagerThreadImpl.assertIsManagerThread();
     qName = reformatArrayName(qName);
-    ReferenceType refType = null;
     VirtualMachineProxyImpl virtualMachine = getVirtualMachineProxy();
     ClassType classClassType = (ClassType)ContainerUtil.getFirstItem(virtualMachine.classesByName(CommonClassNames.JAVA_LANG_CLASS));
-    if (classClassType != null) {
-      final Method forNameMethod;
-      List<Value> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
-      args.add(virtualMachine.mirrorOf(qName));
-      if (classLoader != null) {
-        //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
-        forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
-        args.add(virtualMachine.mirrorOf(true));
-        args.add(classLoader);
-      }
-      else {
-        //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
-        forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
-      }
-      Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
-      if (classReference instanceof ClassObjectReference) {
-        refType = ((ClassObjectReference)classReference).reflectedType();
-        if (classLoader instanceof ClassLoaderReferenceImpl) {
-          ((ClassLoaderReferenceImpl)classLoader).addVisible(refType);
-        }
-      }
+    if (classClassType == null) {
+      LOG.error("Unable to find loaded class " + CommonClassNames.JAVA_LANG_CLASS);
+      return null;
     }
-    return refType;
+    final Method forNameMethod;
+    List<Value> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
+    args.add(virtualMachine.mirrorOf(qName));
+    if (classLoader != null) {
+      //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+      forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+      args.add(virtualMachine.mirrorOf(true));
+      args.add(classLoader);
+    }
+    else {
+      //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
+      forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
+    }
+    if (forNameMethod == null) {
+      LOG.error("Unable to find forName method in " + classClassType);
+      return null;
+    }
+    Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
+    if (classReference instanceof ClassObjectReference) {
+      ReferenceType refType = ((ClassObjectReference)classReference).reflectedType();
+      if (classLoader instanceof ClassLoaderReferenceImpl) {
+        ((ClassLoaderReferenceImpl)classLoader).addVisible(refType);
+      }
+      return refType;
+    }
+    return null;
   }
 
   public void logThreads() {
@@ -2005,11 +2038,55 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void reattach(final DebugEnvironment environment) {
+    reattach(environment, false, () -> {});
+  }
+
+  public void reattach(final DebugEnvironment environment, boolean keepCurrentVM, Runnable vmReadyCallback) {
+    reattach(environment, () -> {
+      if (keepCurrentVM) {
+        detachProcess(false, true, vmData -> {
+          myStashedVirtualMachines.addFirst(vmData);
+          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
+        });
+      } else {
+        closeProcess(false);
+      }
+    }, vmReadyCallback);
+  }
+
+  private void unstashAndReattach() {
+    VirtualMachineData vmData = myStashedVirtualMachines.pollFirst();
+    if (vmData != null && vmData.vm != null) {
+      myDebuggerManagerThread = vmData.debuggerManagerThread;
+      reattach(vmData.connection, () -> {}, () -> {
+        afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
+          @Override
+          protected void action() {
+            try {
+              commitVM(vmData.vm.getVirtualMachine());
+            }
+            catch (VMDisconnectedException e) {
+              fail();
+            }
+          }
+        }));
+      });
+    }
+  }
+
+  private void reattach(DebugEnvironment environment, Runnable detachVm, Runnable vmReadyCallback) {
+    reattach(environment.getRemoteConnection(), detachVm, () -> {
+      createVirtualMachine(environment);
+      vmReadyCallback.run();
+    });
+  }
+
+  private void reattach(RemoteConnection connection, Runnable detachVm, Runnable attachVm) {
     if (!myIsStopped.get()) {
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
-          closeProcess(false);
+          detachVm.run();
           getManagerThread().processRemaining();
           doReattach();
         }
@@ -2023,9 +2100,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
             ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
             myState.set(State.INITIAL);
-            myConnection = environment.getRemoteConnection();
+            myConnection = connection;
             getManagerThread().restartIfNeeded();
-            createVirtualMachine(environment);
+            attachVm.run();
           });
         }
       });
@@ -2044,8 +2121,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myConnection = environment.getRemoteConnection();
 
     // in client mode start target process before the debugger to reduce polling
-    boolean serverMode = myConnection.isServerMode();
-    if (serverMode) {
+    if (!(myConnection instanceof RemoteConnectionStub) && myConnection.isServerMode()) {
       createVirtualMachine(environment);
     }
 
@@ -2073,7 +2149,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw e;
     }
 
-    if (!serverMode) {
+    if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
       createVirtualMachine(environment);
     }
 
@@ -2383,6 +2459,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   void stopWatchingMethodReturn() {
     if (myReturnValueWatcher != null) {
       myReturnValueWatcher.disable();
+    }
+  }
+
+  private static class VirtualMachineData {
+    public final VirtualMachineProxyImpl vm;
+    public final RemoteConnection connection;
+    public final DebuggerManagerThreadImpl debuggerManagerThread;
+
+    private VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection, DebuggerManagerThreadImpl debuggerManagerThread) {
+      this.vm = vm;
+      this.connection = connection;
+      this.debuggerManagerThread = debuggerManagerThread;
     }
   }
 }

@@ -7,8 +7,8 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.impl.compiled.TypeAnnotationContainer;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiReferenceListImpl;
@@ -76,6 +76,9 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   @Override
   public PsiClassReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     int len = dataStream.readVarInt();
+    if (len == 0) {
+      return new PsiClassReferenceListStubImpl(this, parentStub, TypeInfo.EMPTY_ARRAY);
+    }
     boolean hasAnnotations = len < 0;
     len = Math.abs(len);
     TypeInfo[] infos = new TypeInfo[len];

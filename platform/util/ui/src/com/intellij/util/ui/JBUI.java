@@ -415,6 +415,54 @@ public class JBUI {
       }
     }
 
+    public static final class Button {
+      @NotNull
+      public static Color buttonColorStart() {
+        return JBColor.namedColor("Button.startBackground", JBColor.namedColor("Button.darcula.startColor", 0x555a5c));
+      }
+
+      @NotNull
+      public static Color buttonColorEnd() {
+        return JBColor.namedColor("Button.endBackground", JBColor.namedColor("Button.darcula.endColor", 0x414648));
+      }
+
+      @NotNull
+      public static Color defaultButtonColorStart() {
+        return JBColor.namedColor("Button.default.startBackground", JBColor.namedColor("Button.darcula.defaultStartColor", 0x384f6b));
+      }
+
+      @NotNull
+      public static Color defaultButtonColorEnd() {
+        return JBColor.namedColor("Button.default.endBackground", JBColor.namedColor("Button.darcula.defaultEndColor", 0x233143));
+      }
+
+      @NotNull
+      public static Color focusBorderColor(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.focusedBorderColor", JBColor.namedColor("Button.darcula.defaultFocusedOutlineColor", 0x87afda)) :
+               JBColor.namedColor("Button.focusedBorderColor", JBColor.namedColor("Button.darcula.focusedOutlineColor", 0x87afda));
+      }
+
+      @NotNull
+      public static Color buttonOutlineColorStart(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.startBorderColor", JBColor.namedColor("Button.darcula.outlineDefaultStartColor", Gray.xBF)) :
+               JBColor.namedColor("Button.startBorderColor",  JBColor.namedColor("Button.darcula.outlineStartColor", Gray.xBF));
+      }
+
+      @NotNull
+      public static Color buttonOutlineColorEnd(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.endBorderColor", JBColor.namedColor("Button.darcula.outlineDefaultEndColor", Gray.xB8)) :
+               JBColor.namedColor("Button.endBorderColor",  JBColor.namedColor("Button.darcula.outlineEndColor", Gray.xB8));
+      }
+
+      @NotNull
+      public static Color disabledOutlineColor() {
+        return JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", Gray.xCF));
+      }
+    }
+
     public static final class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
@@ -504,6 +552,12 @@ public class JBUI {
       public static Color underlinedTabForeground() {
         return JBColor.namedColor("DefaultTabs.underlinedTabForeground", UIUtil.getLabelForeground());
       }
+
+      @NotNull
+      public static Color inactiveColoredTabBackground() {
+        return JBColor.namedColor("DefaultTabs.inactiveColoredTabBackground", new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
+                                                                                          ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
+      }
     }
 
     public static final class DebuggerTabs {
@@ -535,6 +589,10 @@ public class JBUI {
         return UIManager.getColor("EditorTabs.underlinedTabBackground");
       }
 
+      public static Insets tabInsets() {
+        return insets("EditorTabs.tabInsets", insets(0, 8));
+      }
+
       @NotNull
       public static Color borderColor() {
         return JBColor.namedColor("EditorTabs.borderColor", DefaultTabs.borderColor());
@@ -552,8 +610,7 @@ public class JBUI {
 
       @NotNull
       public static Color inactiveColoredFileBackground() {
-        return JBColor.namedColor("EditorTabs.inactiveColoredFileBackground", new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
-                                                                              ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
+        return JBColor.namedColor("EditorTabs.inactiveColoredFileBackground", DefaultTabs.inactiveColoredTabBackground());
       }
 
       @NotNull
@@ -961,6 +1018,18 @@ public class JBUI {
       }
     }
 
+    public static final class Tooltip {
+      @NotNull
+      public static Color shortcutForeground () {
+        return JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
+      }
+    }
+
     public static final class Arrow {
       @NotNull
       public static Color foregroundColor(boolean enabled) {
@@ -1002,6 +1071,57 @@ public class JBUI {
         return getInt("NewClass.separatorWidth", JBUIScale.scale(10));
       }
     }
+
+    public static final class NotificationError {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorBackground", new JBColor(0xffcccc, 0x704745));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorBorderColor", new JBColor(0xd69696, 0x998a8a));
+      }
+    }
+
+    public static final class NotificationInfo {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeBackground", new JBColor(0xbaeeba, 0x33412E));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeBorderColor", new JBColor(0xa0bf9d, 0x85997a));
+      }
+    }
+        public static final class NotificationWarning {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningBackground", new JBColor(0xf9f78e, 0x5a5221));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningBorderColor", new JBColor(0xbab824, 0xa69f63));
+      }
+    }
+
   }
 
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {

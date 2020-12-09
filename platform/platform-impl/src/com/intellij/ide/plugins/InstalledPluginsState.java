@@ -2,8 +2,8 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ public final class InstalledPluginsState {
   }
 
   public static InstalledPluginsState getInstance() {
-    return ServiceManager.getService(InstalledPluginsState.class);
+    return ApplicationManager.getApplication().getService(InstalledPluginsState.class);
   }
 
   private final Object myLock = new Object();

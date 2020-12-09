@@ -1,5 +1,7 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.ui
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
@@ -19,7 +21,8 @@ fun resizeIcon(icon: Icon, size: Int): Icon {
   return IconUtil.scale(icon, null, scale)
 }
 
-fun cleanupUrl(url: String): String = url
+@NlsSafe
+fun cleanupUrl(@NlsSafe url: String): String = url
   .removePrefix("https://")
   .removePrefix("http://")
   .removeSuffix("/")

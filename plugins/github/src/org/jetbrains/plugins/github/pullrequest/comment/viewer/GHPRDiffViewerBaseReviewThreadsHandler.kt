@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.viewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.util.Range
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -45,4 +46,12 @@ abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(privat
 
   @RequiresEdt
   abstract fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?)
+
+  companion object {
+    internal fun getSelectedLines(editor: EditorEx, line: Int): Pair<Int, Int> {
+      return with(editor.selectionModel) {
+        (selectionEndPosition?.line ?: line) to (selectionStartPosition?.line ?: line)
+      }
+    }
+  }
 }

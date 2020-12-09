@@ -4,8 +4,9 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.externalSystem.service.execution.cmd.CommandLineCompletionProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
@@ -17,8 +18,7 @@ import java.util.List;
 /**
  * @author Sergey Evdokimov
  */
-@SuppressWarnings("AccessStaticViaInstance")
-public class MavenArgumentsCompletionProvider extends CommandLineCompletionProvider {
+public class MavenArgumentsCompletionProvider extends CommandLineCompletionProvider implements DumbAware {
 
   private static final Options ourOptions;
 
@@ -26,74 +26,45 @@ public class MavenArgumentsCompletionProvider extends CommandLineCompletionProvi
     // Copy pasted from org.apache.maven.cli.CLIManager.<init>()
 
     Options options = new Options();
-    options.addOption(OptionBuilder.withLongOpt("help").withDescription(RunnerBundle.message("maven.options.description.h")).create('h'));
+    options.addOption(Option.builder("h").longOpt("help").desc(RunnerBundle.message("maven.options.description.h")).build());
+    options.addOption(Option.builder("f").longOpt("file").hasArg().desc(RunnerBundle.message("maven.options.description.f")).build());
+    options.addOption(Option.builder("D").longOpt("define").hasArg().desc(RunnerBundle.message("maven.options.description.D")).build());
+    options.addOption(Option.builder("o").longOpt("offline").desc(RunnerBundle.message("maven.options.description.o")).build());
+    options.addOption(Option.builder("v").longOpt("version").desc(RunnerBundle.message("maven.options.description.v")).build());
+    options.addOption(Option.builder("q").longOpt("quiet").desc(RunnerBundle.message("maven.options.description.q")).build());
+    options.addOption(Option.builder("X").longOpt("debug").desc(RunnerBundle.message("maven.options.description.X")).build());
+    options.addOption(Option.builder("e").longOpt("errors").desc(RunnerBundle.message("maven.options.description.e")).build());
+    options.addOption(Option.builder("N").longOpt("non-recursive").desc(RunnerBundle.message("maven.options.description.N")).build());
+    options.addOption(Option.builder("U").longOpt("update-snapshots")
+                        .desc(MavenConfigurableBundle.message("maven.settings.general.update.snapshots.tooltip")).build());
     options.addOption(
-      OptionBuilder.withLongOpt("file").hasArg().withDescription(RunnerBundle.message("maven.options.description.f")).create('f'));
-    options.addOption(
-      OptionBuilder.withLongOpt("define").hasArg().withDescription(RunnerBundle.message("maven.options.description.D")).create('D'));
-    options.addOption(OptionBuilder.withLongOpt("offline").withDescription(
-      RunnerBundle.message("maven.options.description.o")).create('o'));
-    options.addOption(OptionBuilder.withLongOpt("version").withDescription(
-      RunnerBundle.message("maven.options.description.v")).create('v'));
-    options.addOption(OptionBuilder.withLongOpt("quiet").withDescription(
-      RunnerBundle.message("maven.options.description.q")).create('q'));
-    options.addOption(OptionBuilder.withLongOpt("debug").withDescription(
-      RunnerBundle.message("maven.options.description.X")).create('X'));
-    options.addOption(OptionBuilder.withLongOpt("errors").withDescription(
-      RunnerBundle.message("maven.options.description.e")).create('e'));
-    options.addOption(OptionBuilder.withLongOpt("non-recursive").withDescription(
-      RunnerBundle.message("maven.options.description.N")).create('N'));
-    options.addOption(OptionBuilder.withLongOpt("update-snapshots")
-                        .withDescription(MavenConfigurableBundle.message("maven.settings.general.update.snapshots.tooltip")).create('U'));
-    options.addOption(
-      OptionBuilder.withLongOpt("activate-profiles").withDescription(RunnerBundle.message("maven.options.description.P")).hasArg()
-        .create('P'));
-    options.addOption(
-      OptionBuilder.withLongOpt("batch-mode").withDescription(RunnerBundle.message("maven.options.description.B")).create('B'));
-    options.addOption(OptionBuilder.withLongOpt("no-snapshot-updates").withDescription(
-      RunnerBundle.message("maven.options.description.nsu")).create("nsu"));
-    options.addOption(OptionBuilder.withLongOpt("strict-checksums").withDescription(
-      RunnerBundle.message("maven.options.description.C")).create('C'));
-    options.addOption(OptionBuilder.withLongOpt("lax-checksums").withDescription(
-      RunnerBundle.message("maven.options.description.c")).create('c'));
-    options.addOption(
-      OptionBuilder.withLongOpt("settings").withDescription(RunnerBundle.message("maven.options.description.s")).hasArg().create('s'));
-    options.addOption(
-      OptionBuilder.withLongOpt("global-settings").withDescription(RunnerBundle.message("maven.options.description.gs")).hasArg()
-        .create("gs"));
+      Option.builder("P").longOpt("activate-profiles").desc(RunnerBundle.message("maven.options.description.P")).hasArg().build());
+    options.addOption(Option.builder("B").longOpt("batch-mode").desc(RunnerBundle.message("maven.options.description.B")).build());
     options
-      .addOption(
-        OptionBuilder.withLongOpt("toolchains").withDescription(RunnerBundle.message("maven.options.description.t")).hasArg().create('t'));
-    options
-      .addOption(OptionBuilder.withLongOpt("fail-fast").withDescription(RunnerBundle.message("maven.options.description.ff")).create("ff"));
+      .addOption(Option.builder("nsu").longOpt("no-snapshot-updates").desc(RunnerBundle.message("maven.options.description.nsu")).build());
+    options.addOption(Option.builder("C").longOpt("strict-checksums").desc(RunnerBundle.message("maven.options.description.C")).build());
+    options.addOption(Option.builder("c").longOpt("lax-checksums").desc(RunnerBundle.message("maven.options.description.c")).build());
+    options.addOption(Option.builder("s").longOpt("settings").desc(RunnerBundle.message("maven.options.description.s")).hasArg().build());
     options.addOption(
-      OptionBuilder.withLongOpt("fail-at-end").withDescription(RunnerBundle.message("maven.options.description.fae"))
-        .create("fae"));
+      Option.builder("gs").longOpt("global-settings").desc(RunnerBundle.message("maven.options.description.gs")).hasArg().build());
+    options.addOption(Option.builder("t").longOpt("toolchains").desc(RunnerBundle.message("maven.options.description.t")).hasArg().build());
+    options.addOption(Option.builder("ff").longOpt("fail-fast").desc(RunnerBundle.message("maven.options.description.ff")).build());
+    options.addOption(Option.builder("fae").longOpt("fail-at-end").desc(RunnerBundle.message("maven.options.description.fae")).build());
+    options.addOption(Option.builder("fn").longOpt("fail-never").desc(RunnerBundle.message("maven.options.description.fn")).build());
     options
-      .addOption(
-        OptionBuilder.withLongOpt("fail-never").withDescription(RunnerBundle.message("maven.options.description.fn")).create("fn"));
-    options.addOption(OptionBuilder.withLongOpt("resume-from").hasArg().withDescription(
-      RunnerBundle.message("maven.options.description.rf")).create("rf"));
-    options.addOption(OptionBuilder.withLongOpt("projects").withDescription(
-      RunnerBundle.message("maven.options.description.pl"))
-                        .hasArg().create("pl"));
-    options.addOption(
-      OptionBuilder.withLongOpt("also-make").withDescription(RunnerBundle.message("maven.options.description.am"))
-        .create("am"));
-    options.addOption(OptionBuilder.withLongOpt("also-make-dependents")
-                        .withDescription(RunnerBundle.message("maven.options.description.amd")).create("amd"));
-    options.addOption(
-      OptionBuilder.withLongOpt("log-file").hasArg().withDescription(RunnerBundle.message("maven.options.description.l")).create("l"));
+      .addOption(Option.builder("rf").longOpt("resume-from").hasArg().desc(RunnerBundle.message("maven.options.description.rf")).build());
+    options.addOption(Option.builder("pl").longOpt("projects").desc(RunnerBundle.message("maven.options.description.pl")).hasArg().build());
+    options.addOption(Option.builder("am").longOpt("also-make").desc(RunnerBundle.message("maven.options.description.am")).build());
     options
-      .addOption(
-        OptionBuilder.withLongOpt("show-version").withDescription(RunnerBundle.message("maven.options.description.V")).create('V'));
-    options
-      .addOption(OptionBuilder.withLongOpt("encrypt-master-password").hasArg().withDescription(
-        RunnerBundle.message("maven.options.description.emp")).create("emp"));
-    options.addOption(OptionBuilder.withLongOpt("encrypt-password").hasArg().withDescription(
-      RunnerBundle.message("maven.options.description.ep")).create("ep"));
+      .addOption(Option.builder("amd").longOpt("also-make-dependents").desc(RunnerBundle.message("maven.options.description.amd")).build());
+    options.addOption(Option.builder("l").longOpt("log-file").hasArg().desc(RunnerBundle.message("maven.options.description.l")).build());
+    options.addOption(Option.builder("V").longOpt("show-version").desc(RunnerBundle.message("maven.options.description.V")).build());
     options.addOption(
-      OptionBuilder.withLongOpt("threads").hasArg().withDescription(RunnerBundle.message("maven.options.description.T")).create("T"));
+      Option.builder("emp").longOpt("encrypt-master-password").hasArg().desc(RunnerBundle.message("maven.options.description.emp"))
+        .build());
+    options.addOption(
+      Option.builder("ep").longOpt("encrypt-password").hasArg().desc(RunnerBundle.message("maven.options.description.ep")).build());
+    options.addOption(Option.builder("T").longOpt("threads").hasArg().desc(RunnerBundle.message("maven.options.description.T")).build());
 
     ourOptions = options;
   }

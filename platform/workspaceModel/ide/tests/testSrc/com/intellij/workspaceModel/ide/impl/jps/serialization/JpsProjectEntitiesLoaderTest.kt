@@ -14,6 +14,8 @@ import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File

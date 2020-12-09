@@ -167,6 +167,7 @@
     </extensionPoint>
 
     <extensionPoint name="toolWindowAllowlist" beanClass="com.intellij.openapi.wm.ToolWindowAllowlistEP" dynamic="true"/>
+    <extensionPoint name="statistics.gotItTooltipAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ui.GotItTooltipAllowlistEP" dynamic="true"/>
 
     <extensionPoint name="library.toolWindow" beanClass="com.intellij.openapi.wm.ext.LibraryDependentToolWindow" dynamic="true">
       <with attribute="librarySearchClass" implements="com.intellij.openapi.wm.ext.LibrarySearchHelper"/>
@@ -177,6 +178,7 @@
     <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider"/>
     <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider" dynamic="true"/>
     <extensionPoint name="welcomeTabFactory" interface="com.intellij.openapi.wm.WelcomeTabFactory" dynamic="true"/>
+    <extensionPoint name="interactiveCourseFactory" interface="com.intellij.openapi.wm.InteractiveCourseFactory" dynamic="true"/>
     <extensionPoint name="welcomeScreenCustomization" interface="com.intellij.openapi.wm.WelcomeScreenCustomization" dynamic="true"/>
 
     <extensionPoint name="statistic.eventLog.eventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider"/>
@@ -218,6 +220,7 @@
     <extensionPoint name="statistics.validation.customValidationRule" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule" dynamic="true"/>
     <extensionPoint name="statistics.collectorExtension" interface="com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension"/>
     <extensionPoint name="statistics.actionCustomPlaceAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist" dynamic="true"/>
+    <extensionPoint name="statistics.notificationIdsHolder" interface="com.intellij.notification.impl.NotificationIdsHolder" dynamic="true"/>
 
     <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.EditorHighlighterProvider"/>
@@ -326,6 +329,7 @@
     <extensionPoint name="streamProviderFactory" interface="com.intellij.configurationStore.StreamProviderFactory" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="updateSettingsProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider" dynamic="true"/>
+    <extensionPoint name="pluginHostsProcessor" interface="com.intellij.openapi.updateSettings.impl.PluginHostsProcessor" dynamic="true"/>
     <extensionPoint name="externalComponentSource" interface="com.intellij.ide.externalComponents.ExternalComponentSource" dynamic="true"/>
 
     <extensionPoint name="webHelpProvider" interface="com.intellij.openapi.help.WebHelpProvider" dynamic="true"/>
@@ -338,7 +342,7 @@
     <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider" dynamic="true"/>
     <extensionPoint name="lafProvider" interface="com.intellij.ide.ui.LafProvider"/>
     <extensionPoint name="dateTimeFormatter" beanClass="com.intellij.util.text.DateTimeFormatterBean" dynamic="true"/>
-    <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider"/>
+    <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider" dynamic="true"/>
 
     <extensionPoint name="tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
@@ -355,7 +359,7 @@
 
     <extensionPoint name="search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper"/>
 
-    <extensionPoint name="obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean"/>
+    <extensionPoint name="obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean" dynamic="true"/>
 
     <extensionPoint name="feedbackDescriptionProvider" interface="com.intellij.ide.FeedbackDescriptionProvider"/>
 
@@ -379,7 +383,7 @@
     <extensionPoint name="unknownSdkContributor" interface="com.intellij.openapi.projectRoots.impl.UnknownSdkContributor" dynamic="true"/>
 
     <extensionPoint name="pathMacroContributor" interface="com.intellij.openapi.application.PathMacroContributor" dynamic="true"/>
-    <extensionPoint name="titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider"/>
 
     <extensionPoint name="lightEditTabAttributesProvider" interface="com.intellij.ide.lightEdit.LightEditTabAttributesProvider" dynamic="true"/>
 
@@ -392,9 +396,14 @@
     <extensionPoint name="iconDescriptionBundle" beanClass="com.intellij.ui.IconDescriptionBundleEP" dynamic="true"/>
 
     <extensionPoint name="utf8BomOptionProvider" interface="com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider" dynamic="true"/>
+    <extensionPoint name="fileEncodingProvider" interface="com.intellij.openapi.vfs.encoding.FileEncodingProvider" dynamic="true"/>
     <extensionPoint name="iw.actionProvider" interface="com.intellij.openapi.editor.markup.InspectionWidgetActionProvider" dynamic="true"/>
     <extensionPoint name="textEditorCustomizer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer" dynamic="true"/>
 
     <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider"/>
+    <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
+
+    <extensionPoint name="pluginsAuthExtension" interface="com.intellij.ide.plugins.auth.PluginsAuthExtension" dynamic="true"/>
+
   </extensionPoints>
 </idea-plugin>

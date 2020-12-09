@@ -398,4 +398,9 @@ public final class NavBarListener
   public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
     myPanel.getNavBarUI().clearItems();
   }
+
+  @Override
+  public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+    myPanel.getNavBarUI().clearItems();
+  }
 }

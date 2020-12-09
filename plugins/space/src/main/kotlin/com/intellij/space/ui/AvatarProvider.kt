@@ -1,15 +1,17 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.ui
 
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.englishFullName
 import circlet.platform.api.TID
-import com.intellij.space.ui.SpaceAvatarUtils.generateColoredAvatar
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.JBValue
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
-import org.jetbrains.annotations.CalledInAwt
 import runtime.Ui
 import java.awt.Component
 import java.awt.Graphics
@@ -26,7 +28,7 @@ class SpaceAvatarProvider(
 
   private val imageLoader: SpaceImageLoader = SpaceImageLoader.getInstance()
 
-  @CalledInAwt
+  @RequiresEdt
   fun getIcon(user: TD_MemberProfile): Icon {
     val iconSize = iconSize.get()
 
@@ -36,7 +38,7 @@ class SpaceAvatarProvider(
     }
 
     return avatarIconsCache.getOrPut(user.id) {
-      val gradientIcon = resizeIcon(JBImageIcon(ImageUtils.createCircleImage(
+      val gradientIcon = resizeIcon(JBImageIcon(ImageUtil.createCircleImage(
         generateColoredAvatar(
           user.username,
           user.englishFullName()
@@ -48,7 +50,7 @@ class SpaceAvatarProvider(
         launch(lifetime, Ui) {
           val image = imageLoader.loadImageAsync(tid)?.await()
           if (image != null) {
-            val circleImage = ImageUtils.createCircleImage(image)
+            val circleImage = ImageUtil.createCircleImage(image)
             icon.delegate = resizeIcon(JBImageIcon(circleImage), iconSize)
             component.repaint()
           }

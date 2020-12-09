@@ -34,7 +34,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,10 +109,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.mayContainTyp
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.findScriptField;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDeclaration;
 
-/**
- * @author ven
- */
-public class GroovyAnnotator extends GroovyElementVisitor {
+public final class GroovyAnnotator extends GroovyElementVisitor {
   private static final Logger LOG = Logger.getInstance(GroovyAnnotator.class);
 
   public static final Condition<PsiClass> IS_INTERFACE = aClass -> aClass.isInterface();
@@ -491,7 +487,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       }
     }
 
-    List<PsiAnnotation> annotations = 
+    List<PsiAnnotation> annotations =
       ContainerUtil.filter(typeDefinition.getAnnotations(),
                            anno -> GrGeneratedConstructorUtils.getConstructorGeneratingAnnotations().contains(anno.getQualifiedName()));
     for (PsiAnnotation anno : annotations) {
@@ -1942,7 +1938,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkDuplicateModifiers(AnnotationHolder holder, @NotNull GrModifierList list, PsiMember member) {
     final PsiElement[] modifiers = list.getModifiers();
-    Set<String> set = new THashSet<>(modifiers.length);
+    Set<String> set = new HashSet<>(modifiers.length);
     for (PsiElement modifier : modifiers) {
       if (modifier instanceof GrAnnotation) continue;
       @GrModifier.GrModifierConstant String name = modifier.getText();

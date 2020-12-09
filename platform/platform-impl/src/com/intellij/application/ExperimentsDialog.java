@@ -22,23 +22,22 @@ import javax.swing.table.TableModel;
 /**
  * @author Konstantin Bulenkov
  */
-public class ExperimentsDialog extends DialogWrapper {
-  protected ExperimentsDialog(@Nullable Project project) {
+public final class ExperimentsDialog extends DialogWrapper {
+  ExperimentsDialog(@Nullable Project project) {
     super(project);
     init();
     setTitle(IdeBundle.message("dialog.title.experimental.features"));
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     ExperimentalFeature[] features = Experiments.EP_NAME.getExtensions();
     JBTable table = new JBTable(createModel(features));
+    table.setShowGrid(false);
     table.getEmptyText().setText(IdeBundle.message("empty.text.no.features.available"));
     table.getColumnModel().getColumn(0).setCellRenderer(getIdRenderer());
     table.getColumnModel().getColumn(1).setCellRenderer(getValueRenderer());
     table.getColumnModel().getColumn(1).setCellEditor(new BooleanTableCellEditor());
-    table.setStriped(true);
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JTextArea myDescription = new JTextArea(4, 50);

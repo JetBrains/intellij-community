@@ -6,7 +6,7 @@ import com.intellij.ide.macro.Macro.ExecutionCancelledException;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ public final class MacroManager {
   private static final Pattern MACRO_PATTERN = Pattern.compile("\\$.+\\$");
 
   public static MacroManager getInstance() {
-    return ServiceManager.getService(MacroManager.class);
+    return ApplicationManager.getApplication().getService(MacroManager.class);
   }
 
   private MacroManager() {

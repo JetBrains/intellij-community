@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
@@ -59,10 +60,12 @@ open class RequireHeadlessMode : ExternalResource() {
 
 open class RestoreScaleRule : ExternalResource() {
   override fun before() {
+    IconLoader.activate()
     TestScaleHelper.setState()
   }
 
   override fun after() {
+    IconLoader.deactivate()
     TestScaleHelper.restoreState()
   }
 }
@@ -124,7 +127,7 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
 @Throws(FileComparisonFailure::class)
 internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMismatch: Boolean) {
   if (!snapshotFile.exists()) {
-    System.out.println("Write a new snapshot ${snapshotFile.fileName}")
+    println("Write a new snapshot ${snapshotFile.fileName}")
     snapshotFile.write(newData)
     return
   }
@@ -132,11 +135,11 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMis
   val uri = snapshotFile.toUri().toURL()
 
   val old = try {
-    snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
+    snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1f) } as BufferedImage
   }
   catch (e: Exception) {
     if (updateIfMismatch) {
-      System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
+      println("UPDATED snapshot ${snapshotFile.fileName}")
       snapshotFile.write(newData)
       return
     }
@@ -144,7 +147,7 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMis
     throw e
   }
 
-  val new = newData.byteInputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
+  val new = newData.byteInputStream().use { SVGLoader.load(uri, it, 1f) } as BufferedImage
   val imageMismatchError = StringBuilder("images mismatch: ")
   if (ImageComparator(ImageComparator.AASmootherComparator(0.5, 0.2, Color(0, 0, 0, 0))).compare(old, new, imageMismatchError)) {
     return

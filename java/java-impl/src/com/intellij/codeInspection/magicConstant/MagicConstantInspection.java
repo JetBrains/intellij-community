@@ -11,6 +11,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -187,11 +188,14 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       if (success) {
         modificator.commitChanges();
       }
-      // check if we really attached the necessary annotations, to avoid IDEA-247322
-      success &= getJDKToAnnotate(project) == null;
-      // avoid endless loop on JDK misconfiguration
       if (success) {
-        project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
+        DumbService.getInstance(project).runWhenSmart(() -> {
+          // check if we really attached the necessary annotations, to avoid IDEA-247322
+          if (getJDKToAnnotate(project) == null) {
+            // avoid endless loop on JDK misconfiguration
+            project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
+          }
+        });
       }
     }, project.getDisposed());
   }
@@ -476,6 +480,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static class ReplaceWithMagicConstantFix extends LocalQuickFixOnPsiElement {
+    @SafeFieldForPreview
     private final List<SmartPsiElementPointer<PsiAnnotationMemberValue>> myMemberValuePointers;
 
     ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, PsiAnnotationMemberValue @NotNull ... values) {

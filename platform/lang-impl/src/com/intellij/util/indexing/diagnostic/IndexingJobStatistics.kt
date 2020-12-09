@@ -17,13 +17,13 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
 
   var numberOfIndexedFiles: Int = 0
 
+  var numberOfFilesFullyIndexedByExtensions: Int = 0
+
   var numberOfTooLargeForIndexingFiles: Int = 0
 
   val statsPerIndexer = hashMapOf<String /* ID.name() */, StatsPerIndexer>()
 
   val statsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
-
-  val tooLargeForIndexingFiles: LimitedPriorityQueue<TooLargeForIndexingFile> = LimitedPriorityQueue(5, compareBy { it.fileSize })
 
   val indexedFiles = arrayListOf<PortableFilePath>()
 
@@ -48,6 +48,9 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     fileSize: Long
   ) {
     numberOfIndexedFiles++
+    if (fileStatistics.wasFullyIndexedByExtensions) {
+      numberOfFilesFullyIndexedByExtensions++
+    }
     fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
         StatsPerIndexer(TimeStats(), 0, 0, 0)
@@ -72,13 +75,9 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     }
   }
 
-  fun addTooLargeForIndexingFile(
-    file: VirtualFile,
-    tooLargeForIndexingFile: TooLargeForIndexingFile
-  ) {
+  fun addTooLargeForIndexingFile(file: VirtualFile) {
     numberOfIndexedFiles++
     numberOfTooLargeForIndexingFiles++
-    tooLargeForIndexingFiles.addElement(tooLargeForIndexingFile)
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       indexedFiles += getIndexedFilePath(file)
     }

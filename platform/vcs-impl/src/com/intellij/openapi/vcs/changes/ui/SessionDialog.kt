@@ -9,13 +9,14 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.vcs.commit.removeEllipsisSuffix
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 class SessionDialog @JvmOverloads constructor(
-  title: String,
+  title: @Nls String,
   project: Project,
   private val mySession: CommitSession,
   private val myChanges: List<Change>,

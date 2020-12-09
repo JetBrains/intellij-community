@@ -1,7 +1,3 @@
-# Stubs for functools (Python 2.7)
-
-# NOTE: These are incomplete!
-
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Dict, Generic, Iterable, Optional, Sequence, Tuple, Type, TypeVar, overload
 

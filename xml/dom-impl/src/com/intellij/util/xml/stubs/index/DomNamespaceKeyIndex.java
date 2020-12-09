@@ -37,7 +37,8 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
     return ourInstance;
   }
 
-  public boolean hasStubElementsWithNamespaceKey(final DomFileElement domFileElement, final String namespaceKey) {
+  public boolean hasStubElementsWithNamespaceKey(@NotNull DomFileElement<?> domFileElement,
+                                                 @NotNull String namespaceKey) {
     final VirtualFile file = domFileElement.getFile().getVirtualFile();
     if (!(file instanceof VirtualFileWithId)) return false;
 

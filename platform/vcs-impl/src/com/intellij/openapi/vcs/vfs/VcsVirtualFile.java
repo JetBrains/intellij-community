@@ -71,8 +71,8 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
         setRevision(VcsUtil.getShortRevisionString(myFileRevision.getRevisionNumber()));
         myContent = content;
         myContentLoadFailed = false;
-        if (myContent != null) {
-          myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
+        if (myContent != null && myContent.length !=0) {
+          myCharset = new CharsetToolkit(myContent, Charset.defaultCharset(), false).guessEncoding(myContent.length);
         }
       }
     }

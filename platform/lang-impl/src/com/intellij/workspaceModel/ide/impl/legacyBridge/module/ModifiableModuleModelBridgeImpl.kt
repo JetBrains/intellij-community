@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
@@ -26,10 +27,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerCom
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -78,7 +79,7 @@ internal class ModifiableModuleModelBridgeImpl(
     // TODO Handle filePath, add correct iml source with a path
 
     // TODO Must be in sync with module loading. It is not now
-    val canonicalPath = FileUtil.toSystemIndependentName(FileUtil.resolveShortWindowsName(filePath))
+    val canonicalPath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath))
 
     val existingModule = getModuleByFilePath(canonicalPath)
     if (existingModule != null) {
@@ -101,6 +102,15 @@ internal class ModifiableModuleModelBridgeImpl(
     )
 
     return createModuleInstance(moduleEntity, true)
+  }
+
+  private fun resolveShortWindowsName(filePath: String): String {
+    return try {
+      FileUtil.resolveShortWindowsName(filePath)
+    }
+    catch (ignored: IOException) {
+      filePath
+    }
   }
 
   private fun createModuleInstance(moduleEntity: ModuleEntity, isNew: Boolean): ModuleBridge {
@@ -129,10 +139,13 @@ internal class ModifiableModuleModelBridgeImpl(
     // If module name equals to already unloaded module, the previous should be removed from store
     val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(moduleName)
     if (unloadedModuleDescription != null) {
-      val moduleEntity = entityStorageOnDiff.current.resolve(
-        ModuleId(unloadedModuleDescription.name))
-                         ?: error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
-      diff.removeEntity(moduleEntity)
+      val moduleEntity = entityStorageOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
+      if (moduleEntity != null) {
+        diff.removeEntity(moduleEntity)
+      }
+      else {
+        LOG.error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
+      }
     }
   }
 
@@ -147,19 +160,23 @@ internal class ModifiableModuleModelBridgeImpl(
     removeUnloadedModule(moduleName)
 
     val builder = WorkspaceEntityStorageBuilder.create()
+    var errorMessage: String? = null
     JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), project.configLocation!!, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
-        //todo report
+        errorMessage = message
       }
     }, virtualFileManager)
+    if (errorMessage != null) {
+      throw IOException("Failed to load module from $filePath: $errorMessage")
+    }
     diff.addDiff(builder)
     val moduleEntity = diff.entities(ModuleEntity::class.java).find { it.name == moduleName }
     if (moduleEntity == null) {
       throw IOException("Failed to load module from $filePath")
     }
 
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
-      ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity))
+    val moduleFilePath = ModuleManagerComponentBridge.getInstance(project).getModuleFilePath(moduleEntity)!!
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFilePath)
     return createModuleInstance(moduleEntity, false)
   }
 
@@ -173,7 +190,8 @@ internal class ModifiableModuleModelBridgeImpl(
     module as ModuleBridge
 
     if (findModuleByName(module.name) == null) {
-      error("Module '${module.name}' is not found. Probably it's already disposed.")
+      LOG.error("Module '${module.name}' is not found. Probably it's already disposed.")
+      return
     }
 
     if (myModulesToAdd.inverse().remove(module) != null) {
@@ -182,7 +200,11 @@ internal class ModifiableModuleModelBridgeImpl(
 
     myNewNameToModule.inverse().remove(module)
     myModulesToDispose[module.name] = module
-    val moduleEntity = diff.findModuleEntity(module) ?: error("Could not find module entity to remove by $module")
+    val moduleEntity = diff.findModuleEntity(module)
+    if (moduleEntity == null) {
+      LOG.error("Could not find module entity to remove by $module")
+      return
+    }
     moduleEntity.dependencies
       .asSequence()
       .filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
@@ -313,5 +335,9 @@ internal class ModifiableModuleModelBridgeImpl(
         else -> error("Should not be reached")
       }
     }
+  }
+
+  companion object {
+    private val LOG = logger<ModifiableModuleModelBridgeImpl>()
   }
 }

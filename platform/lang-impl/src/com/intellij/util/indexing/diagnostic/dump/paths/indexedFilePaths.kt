@@ -34,7 +34,7 @@ object IndexedFilePaths {
       val fileContent = FileContentImpl.createByFile(fileOrDir) as FileContentImpl
       runReadAction {
         val contentHash = IndexedHashesSupport.getBinaryContentHash(fileContent.content)
-        val indexedHash = IndexedHashesSupport.calculateIndexedHash(fileContent, contentHash, false)
+        val indexedHash = IndexedHashesSupport.calculateIndexedHash(fileContent, contentHash)
         Base64.encode(contentHash) to Base64.encode(indexedHash)
       }
     }
@@ -48,9 +48,8 @@ object IndexedFilePaths {
 
     val fileSize = if (fileOrDir.isDirectory) null else fileOrDir.length
     val portableFilePath = PortableFilePaths.getPortableFilePath(fileOrDir, project)
-    val resolvedFile = PortableFilePaths.findFileByPath(portableFilePath, project)
     val allPusherValues = dumpFilePropertyPusherValues(fileOrDir, project).mapValues { it.value?.toString() ?: "<null-value>" }
-    val indexedFilePath = IndexedFilePath(
+    return IndexedFilePath(
       fileId,
       fileType,
       substitutedFileType,
@@ -61,15 +60,6 @@ object IndexedFilePaths {
       indexedHash,
       contentHash
     )
-    check(fileUrl == resolvedFile?.url) {
-      buildString {
-        appendln("File cannot be resolved")
-        appendln("Original URL: $fileUrl")
-        appendln("Resolved URL: ${resolvedFile?.url}")
-        appendln(indexedFilePath.toString())
-      }
-    }
-    return indexedFilePath
   }
 
   private fun dumpFilePropertyPusherValues(file: VirtualFile, project: Project): Map<String, Any?> {

@@ -64,7 +64,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private final List<PsiTypeCodeFragment> myDefaultValueTypeCodeFragments;
   private final PsiClass myClass;
   private final PsiTypeParameter[] myOriginalParameters;
-  private final Project myProject;
   private final MyTableModel myTableModel;
   private JBTable myTable;
   private final boolean myHideDefaultValueColumn;
@@ -94,7 +93,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myHideDefaultValueColumn = hideDefaultValueColumn;
     setTitle(getRefactoringName());
     myClass = aClass;
-    myProject = myClass.getProject();
     myOriginalParameters = myClass.getTypeParameters();
 
 
@@ -129,7 +127,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   @Override
   protected JComponent createCenterPanel() {
     myTable = new JBTable(myTableModel);
-    myTable.setStriped(true);
+    myTable.setShowGrid(false);
     TableColumn nameColumn = myTable.getColumnModel().getColumn(NAME_COLUMN);
     TableColumn boundColumn = myTable.getColumnModel().getColumn(BOUND_VALUE_COLUMN);
     TableColumn valueColumn = myTable.getColumnModel().getColumn(DEFAULT_VALUE_COLUMN);

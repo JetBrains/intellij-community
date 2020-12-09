@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.Nls;
 
 import java.util.List;
 
@@ -53,7 +54,7 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
     return myTestRunner;
   }
 
-  public static String getPythonsUnittestName() {
+  public static @Nls String getPythonsUnittestName() {
     return PyBundle.message("runcfg.unittest.display_name");
   }
 }

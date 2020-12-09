@@ -122,7 +122,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
       catch (RuntimeException e) {
         LOG.debug("Gradle build launcher error", e);
-        BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource);
+        BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
         final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain();
         throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
       }
@@ -136,6 +136,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
     return Optional.ofNullable(settings)
       .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_FLAG_KEY))
+      .orElse(false);
+  }
+
+  protected static boolean isDebugAllTasks(@Nullable GradleExecutionSettings settings) {
+    return Optional.ofNullable(settings)
+      .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_ALL_KEY))
       .orElse(false);
   }
 
@@ -231,6 +237,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       boolean isJdk9orLater = ExternalSystemJdkUtil.isJdk9orLater(effectiveSettings.getJavaHome());
       String jvmOpt = ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + (isJdk9orLater ? "127.0.0.1:" : "") + gradleScriptDebugPort;
       effectiveSettings.withVmOption(jvmOpt);
+    }
+    if (isDebugAllTasks(effectiveSettings)) {
+      effectiveSettings.withVmOption("-Didea.gradle.debug.all=true");
     }
   }
 

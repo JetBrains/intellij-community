@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
@@ -188,7 +189,10 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     }
   }
 
-  private static boolean isActive(IdeFrame frame) {
+  private static boolean isActive(@Nullable IdeFrame frame) {
+    if (frame instanceof ProjectFrameHelper) {
+      frame = ((ProjectFrameHelper)frame).getFrame();
+    }
     return frame instanceof Window && ((Window)frame).isActive();
   }
 
@@ -199,6 +203,7 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   private void showErrorNotification(@NotNull Project project) {
     String title = DiagnosticBundle.message("error.new.notification.title");
     String linkText = DiagnosticBundle.message("error.new.notification.link");
+    //noinspection UnresolvedPluginConfigReference
     Notification notification = new Notification("", AllIcons.Ide.FatalError, title, null, null, NotificationType.ERROR, null);
     notification.addAction(new NotificationAction(linkText) {
       @Override

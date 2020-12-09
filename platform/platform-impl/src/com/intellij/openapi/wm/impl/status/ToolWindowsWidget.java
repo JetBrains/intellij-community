@@ -4,13 +4,16 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -23,8 +26,8 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
@@ -126,7 +129,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
         if (project == null) return;
 
-        UIEventLogger.logUIEvent(UIEventId.ToolWindowsWidgetPopupShown);
+        UIEventLogger.ToolWindowsWidgetPopupShown.log(project);
 
         List<ToolWindow> toolWindows = new ArrayList<>();
         final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
@@ -139,22 +142,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         toolWindows.sort((o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));
 
         JBList<ToolWindow> list = new JBList<>(toolWindows);
-        list.setCellRenderer(new ListCellRenderer<ToolWindow>() {
-          final JBLabel label = new JBLabel();
-
-          @Override
-          public Component getListCellRendererComponent(JList<? extends ToolWindow> list, ToolWindow toolWindow, int index, boolean isSelected, boolean cellHasFocus) {
-            label.setText(toolWindow.getStripeTitle());
-            label.setIcon(toolWindow.getIcon());
-            label.setBorder(JBUI.Borders.empty(4, 10));
-            label.setForeground(UIUtil.getListForeground(isSelected));
-            label.setBackground(UIUtil.getListBackground(isSelected));
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.add(label, BorderLayout.CENTER);
-            panel.setBackground(UIUtil.getListBackground(isSelected));
-            return panel;
-          }
-        });
+        list.setCellRenderer(new ToolWindowsWidgetCellRenderer());
 
         final Dimension size = list.getPreferredSize();
         final JComponent c = this;
@@ -196,7 +184,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
   private void performAction() {
     if (isActive()) {
-      UIEventLogger.logUIEvent(UIEventId.ToolWindowsWidgetPopupClicked);
+      UIEventLogger.ToolWindowsWidgetPopupClicked.log(myStatusBar.getProject());
       UISettings.getInstance().setHideToolStripes(!UISettings.getInstance().getHideToolStripes());
       UISettings.getInstance().fireUISettingsChanged();
     }
@@ -273,5 +261,39 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", this);
     myStatusBar = null;
     popup = null;
+  }
+
+  private static class ToolWindowsWidgetCellRenderer implements ListCellRenderer<ToolWindow> {
+    private final JPanel myPanel;
+    private final JLabel myTextLabel = new JLabel();
+    private final JLabel myShortcutLabel = new JLabel();
+
+    private ToolWindowsWidgetCellRenderer() {
+      myPanel = JBUI.Panels.simplePanel().addToLeft(myTextLabel).addToRight(myShortcutLabel);
+      myShortcutLabel.setBorder(JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0));
+      myPanel.setBorder(JBUI.Borders.empty(2, 10));
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<? extends ToolWindow> list,
+                                                  ToolWindow value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+      UIUtil.setBackgroundRecursively(myPanel, UIUtil.getListBackground(isSelected, true));
+      myTextLabel.setText(value.getStripeTitle());
+      myTextLabel.setIcon(value.getIcon());
+      myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
+      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
+      KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
+      if (shortcut != null) {
+        myShortcutLabel.setText(KeymapUtil.getShortcutText(shortcut));
+      }
+      else {
+        myShortcutLabel.setText("");
+      }
+      myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
+      return myPanel;
+    }
   }
 }

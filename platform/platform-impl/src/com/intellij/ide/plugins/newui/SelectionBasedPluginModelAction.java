@@ -3,107 +3,140 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginEnableDisableAction;
 import com.intellij.ide.plugins.PluginEnabledState;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Producer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+
+import static com.intellij.openapi.util.text.StringUtil.split;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 abstract class SelectionBasedPluginModelAction<C extends JComponent> extends DumbAwareAction {
 
   protected final @NotNull MyPluginModel myPluginModel;
   protected final @NotNull List<C> mySelection;
+  private final @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> myPluginDescriptor;
 
-  protected SelectionBasedPluginModelAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String propertyKey,
+  protected SelectionBasedPluginModelAction(@NotNull @Nls String text,
+                                            @Nullable ShortcutSet shortcutSet,
                                             @NotNull MyPluginModel pluginModel,
-                                            @NotNull List<C> selection) {
-    super(IdeBundle.message(propertyKey));
+                                            @NotNull List<C> selection,
+                                            @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
+    super(text);
+    setShortcutSet(shortcutSet == null ? CustomShortcutSet.EMPTY : shortcutSet);
+
     myPluginModel = pluginModel;
     mySelection = selection;
+    myPluginDescriptor = pluginDescriptor;
   }
 
-  protected abstract @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull C component);
-
-  static abstract class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
-
-    protected final @NotNull PluginEnabledState myNewState;
-
-    protected EnableDisableAction(@NotNull MyPluginModel pluginModel,
-                                  @NotNull List<C> selection,
-                                  @NotNull PluginEnabledState newState) {
-      super(
-        getActionTextPropertyKey(newState),
-        pluginModel,
-        selection
-      );
-
-      myNewState = newState;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Set<IdeaPluginDescriptor> plugins = mySelection.stream()
-        .map(this::getPluginDescriptor)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
-
-      myPluginModel.changeEnableDisable(
-        plugins,
-        myNewState
-      );
-    }
-
-    private static @NotNull @NonNls String getActionTextPropertyKey(@NotNull PluginEnabledState newState) {
-      switch (newState) {
-        case ENABLED_FOR_PROJECT:
-          return "plugins.configurable.enable.for.current.project";
-        case ENABLED:
-          return "plugins.configurable.enable.for.all.projects";
-        case DISABLED_FOR_PROJECT:
-          return "plugins.configurable.disable.for.current.project";
-        case DISABLED:
-          return "plugins.configurable.disable.for.all.projects";
-        default:
-          throw new IllegalArgumentException();
-      }
-    }
+  protected final @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull C component) {
+    return myPluginDescriptor.apply(component);
   }
 
-  static abstract class UninstallAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
+  protected final @NotNull Set<? extends IdeaPluginDescriptor> getAllDescriptors() {
+    return map2SetNotNull(mySelection, this::getPluginDescriptor);
+  }
 
-    private final @NotNull JComponent myUiParent;
+  static final class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
-    protected UninstallAction(@NotNull MyPluginModel pluginModel,
-                              @NotNull JComponent uiParent,
-                              @NotNull List<C> selection) {
+    private final @NotNull PluginEnableDisableAction myAction;
+
+    EnableDisableAction(@Nullable ShortcutSet shortcutSet,
+                        @NotNull MyPluginModel pluginModel,
+                        @NotNull PluginEnableDisableAction action,
+                        @NotNull List<C> selection,
+                        @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
       super(
-        "plugins.configurable.uninstall.button",
+        action.toString(),
+        shortcutSet,
         pluginModel,
-        selection
+        selection,
+        pluginDescriptor
       );
-      myUiParent = uiParent;
-    }
 
-    protected boolean isBundled(@NotNull C component) {
-      IdeaPluginDescriptor descriptor = getPluginDescriptor(component);
-      return descriptor == null ||
-             descriptor.isBundled();
+      myAction = action;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = mySelection.stream()
-        .noneMatch(this::isBundled);
+      Set<? extends IdeaPluginDescriptor> descriptors = getAllDescriptors();
+      List<PluginId> pluginIds = mapNotNull(descriptors, IdeaPluginDescriptor::getPluginId);
+      List<PluginEnabledState> states = map(pluginIds, myPluginModel::getState);
 
-      e.getPresentation().setEnabledAndVisible(enabled);
+      boolean isForceEnableAll = myAction == PluginEnableDisableAction.ENABLE_GLOBALLY &&
+                                 !all(states, PluginEnabledState.ENABLED::equals);
+      boolean disabled = pluginIds.isEmpty() ||
+                         !all(states, myAction::isApplicable) ||
+                         myAction.isDisable() && exists(pluginIds, myPluginModel::isRequiredPluginForProject) ||
+                         myAction.isPerProject() && (e.getProject() == null ||
+                                                     !isPerProjectEnabled() ||
+                                                     exists(pluginIds, EnableDisableAction::isPluginExcluded) ||
+                                                     exists(descriptors, myPluginModel::requiresRestart));
+
+      e.getPresentation().setEnabledAndVisible(isForceEnableAll || !disabled);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myPluginModel.changeEnableDisable(
+        getAllDescriptors(),
+        myAction
+      );
+    }
+
+    private static boolean isPerProjectEnabled() {
+      return Registry.is("ide.plugins.per.project", false);
+    }
+
+    private static boolean isPluginExcluded(@NotNull PluginId pluginId) {
+      return split(Registry.stringValue("ide.plugins.per.project.exclusion.list"), ",")
+        .contains(pluginId.getIdString());
+    }
+  }
+
+  static final class UninstallAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
+
+    private final @NotNull JComponent myUiParent;
+
+    UninstallAction(@Nullable ShortcutSet shortcutSet,
+                    @NotNull MyPluginModel pluginModel,
+                    @NotNull JComponent uiParent,
+                    @NotNull List<C> selection,
+                    @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
+      super(
+        IdeBundle.message("plugins.configurable.uninstall.button"),
+        shortcutSet,
+        pluginModel,
+        selection,
+        pluginDescriptor
+      );
+
+      myUiParent = uiParent;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Set<? extends IdeaPluginDescriptor> descriptors = getAllDescriptors();
+
+      boolean disabled = descriptors.isEmpty() ||
+                         exists(descriptors, IdeaPluginDescriptor::isBundled) ||
+                         exists(descriptors, myPluginModel::isUninstalled);
+      e.getPresentation().setEnabledAndVisible(!disabled);
     }
 
     @Override
@@ -126,5 +159,33 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         }
       }
     }
+  }
+
+  static <C extends JComponent> void addActionsTo(@NotNull DefaultActionGroup group,
+                                                  @NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                  @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+    PluginEnableDisableAction[] actions = PluginEnableDisableAction.values();
+    for (int i = 0; i < actions.length; i++) {
+      group.add(createEnableDisableAction.apply(actions[i]));
+      if ((i + 1) % 3 == 0) {
+        group.addSeparator();
+      }
+    }
+    group.add(createUninstallAction.produce());
+  }
+
+  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                                     @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+    DefaultActionGroup result = new DefaultActionGroup();
+    addActionsTo(
+      result,
+      createEnableDisableAction,
+      createUninstallAction
+    );
+
+    return TabbedPaneHeaderComponent.createToolbar(
+      IdeBundle.message("plugin.settings.link.title"),
+      result
+    );
   }
 }

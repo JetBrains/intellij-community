@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.table;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -12,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TableLayout extends TabLayout {
@@ -28,75 +28,77 @@ public class TableLayout extends TabLayout {
   private TablePassInfo computeLayoutTable(List<TabInfo> visibleInfos) {
     final TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
 
-    final Insets insets = myTabs.getLayoutInsets();
-    data.toFitRec =
-        new Rectangle(insets.left, insets.top, myTabs.getWidth() - insets.left - insets.right, myTabs.getHeight() - insets.top - insets.bottom);
-    int eachRow = 0, eachX = data.toFitRec.x;
+    int eachXPinned = data.toFitRec.x;
+    int eachXUnpinned = data.toFitRec.x;
     TableRow eachTableRow = new TableRow(data);
     data.table.add(eachTableRow);
+    int requiredRowsPinned = 0;
+    int requiredRowsUnpinned = 0;
 
 
-    data.requiredRows = 1;
+    final int maxX = data.toFitRec.x + data.toFitRec.width;
+
+    int hGap = myTabs.getTabHGap();
+    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
+    for (TabInfo eachInfo : data.myVisibleInfos) {
+      final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
+      boolean pinned = eachLabel.isPinned();
+      final Dimension size = eachLabel.getNotStrictPreferredSize();
+      int width = size.width + hGap;
+      if (pinned && showPinnedTabsSeparately) {
+        if (eachXPinned + width >= maxX) {
+          requiredRowsPinned++;
+          eachXPinned = data.toFitRec.x;
+        }
+        else if (requiredRowsPinned == 0) {
+          requiredRowsPinned = 1;
+        }
+        myTabs.layout(eachLabel, eachXPinned, 0, size.width, 1);
+        eachXPinned += width;
+      }
+      else {
+        if (eachXUnpinned + size.width + hGap >= maxX) {
+          requiredRowsUnpinned++;
+          eachXUnpinned = data.toFitRec.x;
+        }
+        else if (requiredRowsUnpinned == 0) {
+          requiredRowsUnpinned = 1;
+        }
+        myTabs.layout(eachLabel, eachXUnpinned, 0, size.width, 1);
+        eachXUnpinned += width;
+      }
+    }
+
+    eachXPinned = data.toFitRec.x;
+    eachXUnpinned = data.toFitRec.x;
+
     for (TabInfo eachInfo : data.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
       final Dimension size = eachLabel.getNotStrictPreferredSize();
-      if (eachX + size.width >= data.toFitRec.getMaxX() || eachLabel.isNextToLastPinned()) {
-        data.requiredRows++;
-        eachX = data.toFitRec.x;
-      }
-      myTabs.layout(eachLabel, eachX, 0, size.width, 1);
-      eachX += size.width + myTabs.getTabHGap();
-      data.requiredWidth += size.width + myTabs.getTabHGap();
-    }
-
-    int selectedRow = -1;
-    eachX = data.toFitRec.x;
-    data.rowToFitMaxX = (int)data.toFitRec.getMaxX();
-
-    if (data.requiredRows > 1) {
-      final int rowFit = insets.left + data.requiredWidth / data.requiredRows;
-      for (TabInfo eachInfo : data.myVisibleInfos) {
-        final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
-        final Rectangle eachBounds = eachLabel.getBounds();
-        if (eachBounds.contains(rowFit, 0)) {
-          data.rowToFitMaxX = (int)eachLabel.getBounds().getMaxX();
-          break;
+      boolean pinned = eachLabel.isPinned();
+      int width = size.width + hGap;
+      if (pinned && showPinnedTabsSeparately) {
+        if (eachXPinned + width <= maxX) {
+          eachTableRow.add(eachInfo, width);
+          eachXPinned += width;
+        } else {
+          eachTableRow = new TableRow(data);
+          data.table.add(eachTableRow);
+          eachXPinned = data.toFitRec.x + width;
+          eachTableRow.add(eachInfo, width);
+        }
+      } else {
+        if (eachXUnpinned + size.width + hGap <= maxX && (!showPinnedTabsSeparately || !eachLabel.isNextToLastPinned())) {
+          eachTableRow.add(eachInfo, width);
+          eachXUnpinned += width;
+        } else {
+          eachTableRow = new TableRow(data);
+          data.table.add(eachTableRow);
+          eachXUnpinned = data.toFitRec.x + width;
+          eachTableRow.add(eachInfo, width);
         }
       }
     }
-
-    for (TabInfo eachInfo : data.myVisibleInfos) {
-      final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
-      final Dimension size = eachLabel.getPreferredSize();
-      if (eachX + size.width <= data.rowToFitMaxX && !eachLabel.isNextToLastPinned()) {
-        eachTableRow.add(eachInfo);
-        if (myTabs.getSelectedInfo() == eachInfo) {
-          selectedRow = eachRow;
-        }
-        eachX += size.width + myTabs.getTabHGap();
-      }
-      else {
-        eachTableRow = new TableRow(data);
-        data.table.add(eachTableRow);
-        eachRow++;
-        eachX = insets.left + size.width;
-        eachTableRow.add(eachInfo);
-        if (myTabs.getSelectedInfo() == eachInfo) {
-          selectedRow = eachRow;
-        }
-      }
-    }
-
-    List<TableRow> toMove = new ArrayList<>();
-    for (int i = selectedRow + 1; i < data.table.size(); i++) {
-      toMove.add(data.table.get(i));
-    }
-
-    //for (TableRow eachMove : toMove) {
-    //  data.table.remove(eachMove);
-    //  data.table.add(0, eachMove);
-    //}
-
 
     return data;
   }
@@ -118,6 +120,7 @@ public class TableLayout extends TabLayout {
     Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
     TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
+    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
 
     if (!myTabs.isHideTabs()) {
       data = computeLayoutTable(visibleInfos);
@@ -142,7 +145,7 @@ public class TableLayout extends TabLayout {
           label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
 
           int width;
-          if (label.isPinned()) {
+          if (label.isPinned() && showPinnedTabsSeparately) {
             width = label.getNotStrictPreferredSize().width;
           }
           else if (i < eachRow.myColumns.size() - 1 || !toAjust) {
@@ -249,7 +252,7 @@ public class TableLayout extends TabLayout {
   }
 
   @Override
-  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
   public int getDropSideFor(@NotNull Point point) {
     return TabsUtil.getDropSideFor(point, myTabs);
   }

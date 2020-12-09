@@ -26,6 +26,9 @@ public interface ContentManager extends Disposable, BusyObject {
   @NotNull
   JComponent getComponent();
 
+  /**
+   * @see #getFactory()
+   */
   void addContent(@NotNull Content content);
 
   void addContent(@NotNull Content content, int order);

@@ -23,9 +23,9 @@ final class IntArrayExternalizer implements DataExternalizer<IntList> {
   }
 
   @Override
-  public IntArrayList read(@NotNull DataInput in) throws IOException {
+  public IntList read(@NotNull DataInput in) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
-    IntArrayList array = new IntArrayList(size);
+    IntList array = new IntArrayList(size);
     for (int i = 0; i < size; i++) {
       array.add(DataInputOutputUtil.readINT(in));
     }

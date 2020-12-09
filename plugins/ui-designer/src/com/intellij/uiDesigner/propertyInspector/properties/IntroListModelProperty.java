@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -66,7 +67,7 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   @Override protected void setValueImpl(final RadComponent component, final String[] value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     DefaultComboBoxModel model = new DefaultComboBoxModel();
-    for(String s: value) {
+    for(@NlsSafe String s: value) {
       model.addElement(s);
     }
     invokeSetter(component, model);

@@ -106,6 +106,9 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
       <keyboard-shortcut first-keystroke="control shift F10" keymap="$default"/>
     </action>
+    <action id="ActivateAntToolWindow" class="com.intellij.lang.ant.config.actions.ActivateAntToolWindowAction">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
   </actions>
 </idea-plugin>
 

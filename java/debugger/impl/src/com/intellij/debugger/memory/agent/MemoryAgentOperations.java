@@ -26,57 +26,120 @@ final class MemoryAgentOperations {
   private static final Key<MemoryAgent> MEMORY_AGENT_KEY = Key.create("MEMORY_AGENT_KEY");
   private static final Logger LOG = Logger.getInstance(MemoryAgentOperations.class);
 
-  @NotNull
-  static Pair<Long, ObjectReference[]> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference)
-    throws EvaluateException {
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECT_SIZE, Collections.singletonList(reference));
-    Pair<Long, List<ObjectReference>> pair = SizeAndHeldObjectsParser.INSTANCE.parse(result);
-    return new Pair<>(pair.getFirst(), pair.getSecond().toArray(new ObjectReference[0]));
+  private static LongValue getTimeoutValue(@NotNull EvaluationContextImpl evaluationContext, long timeoutInMillis) {
+    return evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(timeoutInMillis);
   }
 
-  static long @NotNull [] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
-    throws EvaluateException {
+  @NotNull
+  static MemoryAgentActionResult<Pair<long[], ObjectReference[]>> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                     @NotNull ObjectReference reference,
+                                                                                     long timeoutInMillis) throws EvaluateException {
+    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECT_SIZE, Arrays.asList(reference, timeoutValue));
+    Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    MemoryAgentActionResult.ErrorCode errCode = errCodeAndResult.getFirst();
+    Pair<long[], ObjectReference[]> sizesAndObjects;
+    if (errCode != MemoryAgentActionResult.ErrorCode.OK) {
+      sizesAndObjects = new Pair<>(new long[0], new ObjectReference[0]);
+    } else {
+      Pair<Long[], ObjectReference[]> parsingResult = SizeAndHeldObjectsParser.INSTANCE.parse(errCodeAndResult.getSecond());
+      sizesAndObjects = new Pair<>(
+        Arrays.stream(parsingResult.getFirst()).mapToLong(Long::longValue).toArray(),
+        parsingResult.getSecond()
+      );
+    }
+
+    return new MemoryAgentActionResult<>(sizesAndObjects, errCode);
+  }
+
+  @NotNull
+  static MemoryAgentActionResult<long[]> estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext,
+                                                              @NotNull List<ObjectReference> references,
+                                                              long timeoutInMillis) throws EvaluateException {
+    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
     ArrayReference array = wrapWithArray(evaluationContext, references);
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE, Collections.singletonList(array));
-    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
-  }
-
-  static long @NotNull [] getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
-    throws EvaluateException {
-    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_SIZE_BY_CLASSES, Collections.singletonList(array));
-    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
-  }
-
-  static long @NotNull [] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
-    throws EvaluateException {
-    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
-    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE, Arrays.asList(array, timeoutValue));
+    Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    return new MemoryAgentActionResult<>(
+      LongArrayParser.INSTANCE.parse(errCodeAndResult.getSecond()).stream().mapToLong(Long::longValue).toArray(),
+      errCodeAndResult.getFirst()
+    );
   }
 
   @NotNull
-  static Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
-    throws EvaluateException {
+  static MemoryAgentActionResult<long[]> getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                 @NotNull List<ReferenceType> classes,
+                                                                 long timeoutInMillis) throws EvaluateException {
+    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
     ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_AND_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
-    Pair<List<Long>, List<Long>> pair = ShallowAndRetainedSizeParser.INSTANCE.parse(result);
-    return new Pair<>(pair.getFirst().stream().mapToLong(Long::longValue).toArray(),
-                      pair.getSecond().stream().mapToLong(Long::longValue).toArray());
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_SIZE_BY_CLASSES, Arrays.asList(array, timeoutValue));
+    Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    return new MemoryAgentActionResult<>(
+      LongArrayParser.INSTANCE.parse(errCodeAndResult.getSecond()).stream().mapToLong(Long::longValue).toArray(),
+      errCodeAndResult.getFirst()
+    );
   }
 
   @NotNull
-  static ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
-                                                        @NotNull ObjectReference reference, int pathsNumber,
-                                                        int objectsNumber) throws EvaluateException {
+  static MemoryAgentActionResult<long[]> getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                  @NotNull List<ReferenceType> classes,
+                                                                  long timeoutInMillis) throws EvaluateException {
+    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_RETAINED_SIZE_BY_CLASSES, Arrays.asList(array, timeoutValue));
+    Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    return new MemoryAgentActionResult<>(
+      LongArrayParser.INSTANCE.parse(errCodeAndResult.getSecond()).stream().mapToLong(Long::longValue).toArray(),
+      errCodeAndResult.getFirst()
+    );
+  }
+
+  @NotNull
+  static MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                          @NotNull List<ReferenceType> classes,
+                                                                                          long timeoutInMillis) throws EvaluateException {
+    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_AND_RETAINED_SIZE_BY_CLASSES, Arrays.asList(array, timeoutValue));
+    Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    Pair<List<Long>, List<Long>> shallowAndRetainedSizes = ShallowAndRetainedSizeParser.INSTANCE.parse(errCodeAndResult.getSecond());
+    return new MemoryAgentActionResult<>(
+      new Pair<>(
+        shallowAndRetainedSizes.getFirst().stream().mapToLong(Long::longValue).toArray(),
+        shallowAndRetainedSizes.getSecond().stream().mapToLong(Long::longValue).toArray()
+      ),
+      errCodeAndResult.getFirst()
+    );
+  }
+
+  @NotNull
+  static MemoryAgentActionResult<ReferringObjectsInfo> findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                 @NotNull ObjectReference reference, int pathsNumber,
+                                                                                 int objectsNumber,  long timeoutInMillis) throws EvaluateException {
+    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
     IntegerValue pathsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(pathsNumber);
     IntegerValue objectsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(objectsNumber);
-    Value value = callMethod(
+    Value result = callMethod(
       evaluationContext,
       MemoryAgentNames.Methods.FIND_PATHS_TO_CLOSEST_GC_ROOTS,
-      Arrays.asList(reference, pathsNumberValue, objectsNumberValue)
+      Arrays.asList(reference, pathsNumberValue, objectsNumberValue, timeoutValue)
     );
-    return GcRootsPathsParser.INSTANCE.parse(value);
+
+    Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    MemoryAgentActionResult.ErrorCode errCode = errCodeAndResult.getFirst();
+    ReferringObjectsInfo returnValue;
+    if (errCode != MemoryAgentActionResult.ErrorCode.OK) {
+      returnValue = new ReferringObjectsInfo(
+        Collections.singletonList(reference),
+        Collections.singletonList(
+          Collections.singletonList(new CalculationTimeoutReferringObject())
+        )
+      );
+    } else {
+      returnValue = GcRootsPathsParser.INSTANCE.parse(errCodeAndResult.getSecond());
+    }
+
+    return new MemoryAgentActionResult<>(returnValue, errCodeAndResult.getFirst());
   }
 
   @NotNull

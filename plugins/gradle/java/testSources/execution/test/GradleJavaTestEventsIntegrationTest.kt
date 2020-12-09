@@ -66,10 +66,10 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
         .generate()
     )
 
-    RunAll().append(
-      ThrowableRunnable<Throwable> { `call test task produces test events`() },
-      ThrowableRunnable<Throwable> { `call build task does not produce test events`() },
-      ThrowableRunnable<Throwable> { `call task for specific test overrides existing filters`() }
+    RunAll(
+      ThrowableRunnable { `call test task produces test events`() },
+      ThrowableRunnable { `call build task does not produce test events`() },
+      ThrowableRunnable { `call task for specific test overrides existing filters`() }
     ).run()
   }
 

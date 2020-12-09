@@ -19,6 +19,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,12 +28,13 @@ import java.util.Arrays;
 public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
   public void testWorkingDirsFileWhenConfigurationSpansToMultipleModules() throws Exception {
     final Module mod1 = setupModule("mod1", "T1");
-    final Module mod2 = setupModule("mod2", "T2");
+    //keep module file outside of module content root
+    final Module mod2 = setupModule("mod2", "T2", "mod3");
     CompilerTester compiler = createCompilerTester();
     compiler.rebuild();
 
     final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
-    configuration.setWorkingDirectory("$MODULE_DIR$");
+    configuration.setWorkingDirectory(PathMacroUtil.MODULE_WORKING_DIR);
     final JUnitConfiguration.Data persistentData = configuration.getPersistentData();
     persistentData.setScope(TestSearchScope.SINGLE_MODULE);
     configuration.setModule(mod1);
@@ -109,11 +111,16 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private Module setupModule(String moduleName, final String className) throws IOException {
+    return setupModule(moduleName, className, moduleName);
+  }
+
+  private Module setupModule(String moduleName, final String className, String contentRoot) throws IOException {
     final VirtualFile root1 = myFixture.getTempDirFixture().findOrCreateDir(moduleName);
+    final VirtualFile vContentRoot = myFixture.getTempDirFixture().findOrCreateDir(contentRoot);
     final Module module = PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), moduleName, root1);
     PsiTestUtil.removeAllRoots(module, IdeaTestUtil.getMockJdk18());
-    PsiTestUtil.addSourceRoot(module, root1, true);
-    myFixture.addFileToProject(moduleName + "/p/" + className + ".java",
+    PsiTestUtil.addSourceRoot(module, vContentRoot, true);
+    myFixture.addFileToProject(contentRoot + "/p/" + className + ".java",
                                "package p;\n" +
                                "public class " + className + " extends junit.framework.TestCase {\n" +
                                "  public void testName1(){}" +

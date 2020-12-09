@@ -33,53 +33,51 @@ import java.util.stream.Stream;
 public enum LanguageLevel {
 
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
-  PYTHON24(24, false, true, false, false),
+  PYTHON24(204),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
-  PYTHON25(25, false, true, false, false),
+  PYTHON25(205),
   /**
    * @apiNote This level is not supported since 2019.1.
    */
-  PYTHON26(26, true, true, false, false),
-  PYTHON27(27, true, true, true, false),
+  PYTHON26(206),
+  PYTHON27(207),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    * Use it only to distinguish Python 2 and Python 3.
    * Consider using {@link LanguageLevel#isPython2()}.
    * Replace {@code level.isOlderThan(PYTHON30)} with {@code level.isPython2()}
    * and {@code level.isAtLeast(PYTHON30)} with {@code !level.isPython2()}.
    */
-  @Deprecated
-  PYTHON30(30, true, false, false, true),
+  PYTHON30(300),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
-  PYTHON31(31, true, false, true, true),
+  PYTHON31(301),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
-  PYTHON32(32, true, false, true, true),
+  PYTHON32(302),
   /**
-   * @deprecated This level is not supported since 2018.1.
+   * @apiNote This level is not supported since 2018.1.
    */
-  @Deprecated
-  PYTHON33(33, true, false, true, true),
+  PYTHON33(303),
   /**
    * @apiNote This level is not supported since 2019.1.
    */
-  PYTHON34(34, true, false, true, true),
-  PYTHON35(35, true, false, true, true),
-  PYTHON36(36, true, false, true, true),
-  PYTHON37(37, true, false, true, true),
-  PYTHON38(38, true, false, true, true),
-  PYTHON39(39, true, false, true, true);
+  PYTHON34(304),
+  /**
+   * @apiNote This level is not supported since 2020.3.
+   */
+  PYTHON35(305),
+  PYTHON36(306),
+  PYTHON37(307),
+  PYTHON38(308),
+  PYTHON39(309),
+  PYTHON310(310);
 
   /**
    * This value is mostly bound to the compatibility of our debugger and helpers.
@@ -89,12 +87,12 @@ public enum LanguageLevel {
     ImmutableList.copyOf(
       Stream
         .of(values())
-        .filter(v -> v.myVersion > 34 || v.myVersion == 27)
+        .filter(v -> v.isAtLeast(PYTHON36) || v == PYTHON27)
         .collect(Collectors.toList())
     );
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON39;
+  private static final LanguageLevel DEFAULT3 = PYTHON310;
 
   @ApiStatus.Internal
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
@@ -106,44 +104,39 @@ public enum LanguageLevel {
 
   private final int myVersion;
 
-  private final boolean myHasWithStatement;
-  private final boolean myHasPrintStatement;
-  private final boolean mySupportsSetLiterals;
-  private final boolean myIsPy3K;
-
-  LanguageLevel(int version, boolean hasWithStatement, boolean hasPrintStatement, boolean supportsSetLiterals, boolean isPy3K) {
+  LanguageLevel(int version) {
     myVersion = version;
-    myHasWithStatement = hasWithStatement;
-    myHasPrintStatement = hasPrintStatement;
-    mySupportsSetLiterals = supportsSetLiterals;
-    myIsPy3K = isPy3K;
   }
 
   /**
    * @return an int where major and minor version are represented decimally: "version 2.5" is 25.
+   * @deprecated please migrate to {@link LanguageLevel#getMajorVersion()} and {@link LanguageLevel#getMinorVersion()}
+   * since this method disclose {@link LanguageLevel} internals.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public int getVersion() {
     return myVersion;
   }
 
-  public boolean hasWithStatement() {
-    return myHasWithStatement;
+  public int getMajorVersion() {
+    return myVersion / 100;
+  }
+
+  public int getMinorVersion() {
+    return myVersion % 100;
   }
 
   public boolean hasPrintStatement() {
-    return myHasPrintStatement;
-  }
-
-  public boolean supportsSetLiterals() {
-    return mySupportsSetLiterals;
+    return isPython2();
   }
 
   public boolean isPython2() {
-    return !myIsPy3K;
+    return getMajorVersion() == 2;
   }
 
   public boolean isPy3K() {
-    return myIsPy3K;
+    return getMajorVersion() == 3;
   }
 
   public boolean isOlderThan(@NotNull LanguageLevel other) {
@@ -175,13 +168,10 @@ public enum LanguageLevel {
       return DEFAULT2;
     }
     if (pythonVersion.startsWith("3")) {
-      if (pythonVersion.startsWith("3.10")) {
-        return PYTHON39;
-      }
       if (pythonVersion.startsWith("3.0")) {
         return PYTHON30;
       }
-      if (pythonVersion.startsWith("3.1")) {
+      if (pythonVersion.startsWith("3.1.") || pythonVersion.equals("3.1")) {
         return PYTHON31;
       }
       if (pythonVersion.startsWith("3.2")) {
@@ -208,17 +198,17 @@ public enum LanguageLevel {
       if (pythonVersion.startsWith("3.9")) {
         return PYTHON39;
       }
+      if (pythonVersion.startsWith("3.10")) {
+        return PYTHON310;
+      }
       return DEFAULT3;
     }
     return getDefault();
   }
 
-  @Nullable
-  @Contract("null->null;!null->!null")
-  public static String toPythonVersion(@Nullable LanguageLevel level) {
-    if (level == null) return null;
-    final int version = level.getVersion();
-    return version / 10 + "." + version % 10;
+  @NotNull
+  public String toPythonVersion() {
+    return getMajorVersion() + "." + getMinorVersion();
   }
 
   @NotNull
@@ -233,6 +223,6 @@ public enum LanguageLevel {
 
   @Override
   public String toString() {
-    return toPythonVersion(this);
+    return toPythonVersion();
   }
 }

@@ -32,7 +32,7 @@ public final class CommandLineFileType extends LanguageFileType {
    */
   static final String EXTENSION = "cmdline";
 
-  CommandLineFileType() {
+  private CommandLineFileType() {
     super(CommandLineLanguage.INSTANCE);
   }
 

@@ -80,7 +80,7 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
-    DisabledPluginsState.dontLoadDisabledPlugins();
+    DisabledPluginsState.setIgnoreDisabledPlugins(true);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
@@ -92,9 +92,7 @@ public class CoreApplicationEnvironment {
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
 
-    registerApplicationService(FileDocumentManager.class, new MockFileDocumentManagerImpl(charSequence -> {
-      return new DocumentImpl(charSequence);
-    }, null));
+    registerApplicationService(FileDocumentManager.class, new MockFileDocumentManagerImpl(null, DocumentImpl::new));
 
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileManagerListener"), VirtualFileManagerListener.class);
     List<VirtualFileSystem> fs = myJrtFileSystem != null

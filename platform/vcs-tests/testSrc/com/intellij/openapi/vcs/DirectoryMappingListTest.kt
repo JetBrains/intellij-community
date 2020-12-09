@@ -2,8 +2,8 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -17,7 +17,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.vcsUtil.VcsUtil
-import org.junit.Assume
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileSystemException
@@ -49,7 +48,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
     projectRoot = createTestProjectStructure(null, root, false, tempDir)
 
-    myProject = PlatformTestUtil.loadAndOpenProject(projectRoot.toNioPath().resolve("directoryMappings.ipr"))
+    myProject = PlatformTestUtil.loadAndOpenProject(projectRoot.toNioPath().resolve("directoryMappings.ipr"), testRootDisposable)
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)
@@ -259,7 +258,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingCaseSensitive() {
-    Assume.assumeTrue(SystemInfo.isFileSystemCaseSensitive)
+    IoTestUtil.assumeCaseSensitiveFS()
 
     val roots = listOf(
       "$rootPath/parent/Child",
@@ -292,7 +291,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingCaseInsensitive() {
-    Assume.assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+    IoTestUtil.assumeCaseInsensitiveFS()
 
     val roots = listOf(
       "$rootPath/parent/Child",

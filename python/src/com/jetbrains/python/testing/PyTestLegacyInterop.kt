@@ -32,8 +32,8 @@ import javax.swing.SwingUtilities
  * Module to support legacy configurations.
  *
  * When legacy configuration is ought to be dropped, just remove this module and all references to it.
- * It supports switching back to old runners (see [isNewTestsModeEnabled]) and importing old configs to new one.
- * [projectInitialized] shall be called for that.
+ * It supports switching back to old runners (see isNewTestsModeEnabled) and importing old configs to new one.
+ * projectInitialized shall be called for that.
  *
  * @author Ilya.Kazakevich
  */

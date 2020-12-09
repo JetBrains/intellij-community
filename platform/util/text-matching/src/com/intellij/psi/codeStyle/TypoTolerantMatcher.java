@@ -5,16 +5,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.NameUtilCore;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -786,7 +785,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
 
     public char getChar(char[] pattern, int index) {
       if (myPattern == null) {
-        myPattern = applyErrors(Arrays.copyOf(pattern, pattern.length), Integer.MAX_VALUE);
+        myPattern = applyErrors(pattern.clone(), Integer.MAX_VALUE);
       }
 
       return myPattern[index];
@@ -820,7 +819,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
         return pattern;
       }
       else if (error.second instanceof MissError) {
-        return insert(pattern, error.first, ((MissError)error.second).myMissedChar);
+        return ArrayUtil.insert(pattern, error.first, ((MissError)error.second).myMissedChar);
       }
 
       return pattern;
@@ -923,15 +922,6 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     public static Range from(int from, int length) {
       return new Range(from, from + length, 0);
     }
-  }
-
-  @Contract(pure = true)
-  public static char @NotNull [] insert(char @NotNull [] array, int index, char value) {
-    char[] result = new char[array.length + 1];
-    System.arraycopy(array, 0, result, 0, index);
-    result[index] = value;
-    System.arraycopy(array, index, result, index + 1, array.length - index);
-    return result;
   }
 
 

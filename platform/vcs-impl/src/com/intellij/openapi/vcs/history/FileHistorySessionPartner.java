@@ -63,7 +63,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
       // TODO: Logic should be revised to just append some revisions to history panel instead of creating and showing new history session
       mySession.getRevisionList().addAll(vcsFileRevisions);
       VcsHistorySession copy = mySession.copyWithCachedRevision();
-      ApplicationManager.getApplication().invokeLater(() -> myContentPanel.setHistorySession(copy));
+      ApplicationManager.getApplication().invokeLater(() -> myContentPanel.setHistorySession(copy), o -> Disposer.isDisposed(this));
     };
     myBuffer = new BufferedListConsumer<VcsFileRevision>(5, sessionRefresher, 1000) {
       @Override

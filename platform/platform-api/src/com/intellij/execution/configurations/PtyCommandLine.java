@@ -47,11 +47,23 @@ public class PtyCommandLine extends GeneralCommandLine {
     return Registry.is(RUN_PROCESSES_WITH_PTY);
   }
 
-  private boolean myUseCygwinLaunch;
+  private boolean myUseCygwinLaunch = false;
+  /**
+   * Setting this to true means that process started with this command line will works with our default ConsoleViewImpl.
+   * <p>
+   * Namely:
+   * <ul>
+   *   <li>Terminal echo suppressed (like {@code stty -echo}).</li>
+   *   <li>Process {@code stderr} will be available separately from process {@code stdout}, unlike regular terminal, when they are merged together.</li>
+   * </ul>
+   * <p>
+   * False means terminal console going to be used, which is working more like regular terminal window.
+   */
   private boolean myConsoleMode = true;
   private int myInitialColumns = -1;
   private int myInitialRows = -1;
   private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
+  private boolean myUnixOpenTtyToPreserveOutputAfterTermination = false;
 
   public PtyCommandLine() { }
 
@@ -92,11 +104,17 @@ public class PtyCommandLine extends GeneralCommandLine {
     return this;
   }
 
+  /**
+   * @see #myConsoleMode
+   */
   public PtyCommandLine withConsoleMode(boolean consoleMode) {
     myConsoleMode = consoleMode;
     return this;
   }
 
+  /**
+   * @see #myConsoleMode
+   */
   public boolean isConsoleMode() {
     return myConsoleMode;
   }
@@ -128,6 +146,18 @@ public class PtyCommandLine extends GeneralCommandLine {
   @NotNull
   PtyCommandLine withWindowsAnsiColorDisabled() {
     myWindowsAnsiColorEnabled = false;
+    return this;
+  }
+
+  /**
+   * Allow to preserve the subprocess output after its termination on certain *nix OSes (notably, macOS).
+   * Side effect is that the subprocess won't terminate until all the output has been read from it.
+   *
+   * @see PtyProcessBuilder#setUnixOpenTtyToPreserveOutputAfterTermination(boolean)
+   */
+  @NotNull
+  public PtyCommandLine withUnixOpenTtyToPreserveOutputAfterTermination(boolean unixOpenTtyToPreserveOutputAfterTermination) {
+    myUnixOpenTtyToPreserveOutputAfterTermination = unixOpenTtyToPreserveOutputAfterTermination;
     return this;
   }
 
@@ -234,7 +264,8 @@ public class PtyCommandLine extends GeneralCommandLine {
       .setCygwin(cygwin)
       .setLogFile(app != null && app.isEAP() ? new File(PathManager.getLogPath(), "pty.log") : null)
       .setRedirectErrorStream(isRedirectErrorStream())
-      .setWindowsAnsiColorEnabled(myWindowsAnsiColorEnabled);
+      .setWindowsAnsiColorEnabled(myWindowsAnsiColorEnabled)
+      .setUnixOpenTtyToPreserveOutputAfterTermination(myUnixOpenTtyToPreserveOutputAfterTermination);
     return builder.start();
   }
 }

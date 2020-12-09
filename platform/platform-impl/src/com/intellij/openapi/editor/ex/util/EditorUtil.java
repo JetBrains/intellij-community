@@ -48,6 +48,8 @@ import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
+
 public final class EditorUtil {
   private static final Logger LOG = Logger.getInstance(EditorUtil.class);
 
@@ -677,6 +679,7 @@ public final class EditorUtil {
    * <p>
    * The second value is a sub-range no other logical line maps to (or {@code null} if there's no such sub-range).
    *
+   * @return EXCLUSIVE intervals [startY, endY)
    * @see #yToLogicalLineRange(Editor, int)
    */
   @NotNull
@@ -732,6 +735,7 @@ public final class EditorUtil {
    * rendered form. In the former case, all logical lines corresponding to the visual line will be returned, in the latter case - all
    * logical lines of the rendered comment.
    *
+   * @return INCLUSIVE interval [startLogicalLine, endLogicalLine]
    * @see #logicalLineToYRange(Editor, int)
    */
   @NotNull
@@ -876,6 +880,14 @@ public final class EditorUtil {
            (attributes != null && (attributes.getFontType() != Font.PLAIN || attributes.getForegroundColor() != null));
   }
 
+  public static boolean attributesImpactFontStyle(@Nullable TextAttributes attributes) {
+    return attributes == TextAttributes.ERASE_MARKER || (attributes != null && attributes.getFontType() != Font.PLAIN);
+  }
+
+  public static boolean attributesImpactForegroundColor(@Nullable TextAttributes attributes) {
+    return attributes == TextAttributes.ERASE_MARKER || (attributes != null && attributes.getForegroundColor() != null);
+  }
+
   public static boolean isCurrentCaretPrimary(@NotNull Editor editor) {
     return editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret();
   }
@@ -985,6 +997,9 @@ public final class EditorUtil {
    * Tells whether given inlay element is invisible due to folding of text in editor
    */
   public static boolean isInlayFolded(@NotNull Inlay inlay) {
+    if (showWhenFolded(inlay)) {
+      return false;
+    }
     Editor editor = inlay.getEditor();
     Inlay.Placement placement = inlay.getPlacement();
     int offset = inlay.getOffset();

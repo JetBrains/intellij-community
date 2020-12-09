@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -11,7 +12,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
+private val LOG = Logger.getInstance(StatisticsEventLogger::class.java)
 private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
 
 interface StatisticsEventLogger {
@@ -59,10 +60,19 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
+    val isHeadless = app != null && app.isHeadlessEnvironment
     val config = EventLogConfiguration
-    val writer = EventLogNotificationProxy(StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, config.build), recorderId)
-    val logger = StatisticsFileEventLogger(recorderId, config.sessionId, config.build, config.bucket.toString(), version.toString(), writer,
-                                           UsageStatisticsPersistenceComponent.getInstance())
+    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, config.build)
+
+    val configService = EventLogConfigOptionsService.getInstance()
+    val throttledWriter = StatisticsEventLogThrottleWriter(
+      configService, recorderId, version.toString(), EventLogNotificationProxy(writer, recorderId)
+    )
+
+    val logger = StatisticsFileEventLogger(
+      recorderId, config.sessionId, isHeadless, config.build, config.bucket.toString(), version.toString(), throttledWriter,
+      UsageStatisticsPersistenceComponent.getInstance()
+    )
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }

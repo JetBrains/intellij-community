@@ -45,25 +45,12 @@ public final class SdkConfigurationUtil {
                                @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                SdkType @NotNull ... sdkTypes) {
-    createSdk(project, existingSdks, onSdkCreatedCallBack, createIfExists, true, sdkTypes);
-  }
-
-  public static void createSdk(@Nullable final Project project,
-                               Sdk @NotNull [] existingSdks,
-                               @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
-                               final boolean createIfExists,
-                               final boolean followSymLinks,
-                               SdkType @NotNull ... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
       return;
     }
 
     FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
-    // XXX: Workaround for PY-21787 since the native macOS dialog always follows symlinks
-    if (!followSymLinks) {
-      descriptor.setForcedToUseIdeaFileChooser(true);
-    }
     VirtualFile suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
@@ -150,8 +137,17 @@ public final class SdkConfigurationUtil {
                "customSdkSuggestedName=[" + customSdkSuggestedName + "]; " +
                "sdk=[" + sdk + "]", e);
       if (!silent) {
-        Messages.showErrorDialog(ProjectBundle.message("dialog.message.error.configuring.sdk.0.please.make.sure.that.1.is.a.valid.home.path.for.this.sdk.type", e.getMessage(),
-                                                       FileUtil.toSystemDependentName(homeDir.getPath())), ProjectBundle.message("dialog.title.error.configuring.sdk"));
+        ApplicationManager.getApplication().invokeLater(
+          () ->
+            Messages.showErrorDialog(
+              ProjectBundle.message(
+                "dialog.message.error.configuring.sdk.0.please.make.sure.that.1.is.a.valid.home.path.for.this.sdk.type",
+                e.getMessage(),
+                FileUtil.toSystemDependentName(homeDir.getPath())
+              ),
+              ProjectBundle.message("dialog.title.error.configuring.sdk")
+            )
+        );
       }
       return null;
     }
@@ -255,8 +251,9 @@ public final class SdkConfigurationUtil {
    */
   @Nullable
   public static Sdk createAndAddSDK(@NotNull String path, @NotNull SdkType sdkType) {
-    VirtualFile sdkHome =
-      WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
+    VirtualFile sdkHome = WriteAction.compute(() -> {
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
+    });
     if (sdkHome != null) {
       final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
       if (newSdk != null) {

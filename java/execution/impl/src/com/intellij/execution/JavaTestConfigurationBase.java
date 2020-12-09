@@ -5,11 +5,6 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.LanguageRuntimeType;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
-import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -25,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
-  implements RefactoringListenerProvider, SMRunnerConsolePropertiesProvider, TargetEnvironmentAwareRunProfile {
+  implements RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
 
   private ShortenCommandLine myShortenCommandLine = null;
   private boolean myUseModulePath = true;
@@ -96,27 +91,4 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
   public void setUseModulePath(boolean useModulePath) {
     myUseModulePath = useModulePath;
   }
-
-  @Override
-  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
-    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
-  }
-
-  @Nullable
-  @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
-    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
-  }
-
-  @Nullable
-  @Override
-  public String getDefaultTargetName() {
-    return getOptions().getRemoteTarget();
-  }
-
-  @Override
-  public void setDefaultTargetName(@Nullable String targetName) {
-    getOptions().setRemoteTarget(targetName);
-  }
-
 }

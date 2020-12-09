@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,11 +30,11 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   private static final Logger LOG = Logger.getInstance(LineMarkerActionWrapper.class);
   public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
-  protected final PsiElement myElement;
+  protected final SmartPsiElementPointer<PsiElement> myElement;
   private final AnAction myOrigin;
 
   public LineMarkerActionWrapper(PsiElement element, @NotNull AnAction origin) {
-    myElement = element;
+    myElement = SmartPointerManager.createPointer(element);
     myOrigin = origin;
     copyFrom(origin);
   }
@@ -46,7 +48,10 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
         final AnAction[] children =
           ((ExecutorRegistryImpl.ExecutorGroupActionGroup)((ExecutorAction)myOrigin).getOrigin()).getChildren(null);
         LOG.assertTrue(ContainerUtil.all(Arrays.asList(children), o -> o instanceof RunContextAction));
-        return ContainerUtil.map(children, o -> new LineMarkerActionWrapper(myElement, o)).toArray(AnAction.EMPTY_ARRAY);
+        return ContainerUtil.mapNotNull(children, o -> {
+          PsiElement element = myElement.getElement();
+          return element != null ? new LineMarkerActionWrapper(element, o) : null;
+        }).toArray(AnAction.EMPTY_ARRAY);
       }
     }
     if (myOrigin instanceof ActionGroup) {
@@ -99,8 +104,9 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   @NotNull
   private DataContext wrapContext(DataContext dataContext) {
     Pair<PsiElement, MyDataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
-    if (pair == null || pair.first != myElement) {
-      pair = Pair.pair(myElement, new MyDataContext(dataContext));
+    PsiElement element = myElement.getElement();
+    if (pair == null || pair.first != element) {
+      pair = Pair.pair(element, new MyDataContext(dataContext));
       DataManager.getInstance().saveInDataContext(dataContext, LOCATION_WRAPPER, pair);
     }
     return pair.second;
@@ -133,7 +139,10 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     @Nullable
     @Override
     public synchronized Object getData(@NotNull @NonNls String dataId) {
-      if (Location.DATA_KEY.is(dataId)) return myElement.isValid() ? new PsiLocation<>(myElement) : null;
+      if (Location.DATA_KEY.is(dataId)) {
+        PsiElement element = myElement.getElement();
+        return element != null && element.isValid() ? new PsiLocation<>(element) : null;
+      }
       return myDelegate.getData(dataId);
     }
   }

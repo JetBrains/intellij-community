@@ -309,7 +309,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     JPanel statusPanel = new NonOpaquePanel();
     statusPanel.setVisible(!myEditor.isOneLineMode());
     statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
-    statusPanel.add(statusToolbar.getComponent());
+    statusPanel.add(toolbar);
     statusPanel.add(smallIconLabel);
 
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
@@ -399,8 +399,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     InspectionWidgetActionProvider.EP_NAME.getExtensionList().
       forEach(extension -> {
         AnAction action = extension.createAction(myEditor);
-        extensionActions.put(extension, action);
-        epActions.add(action);
+        if (action != null) {
+          extensionActions.put(extension, action);
+          epActions.add(action);
+        }
       });
 
     InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<InspectionWidgetActionProvider>() {
@@ -475,7 +477,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     myStatusUpdates.queue(Update.create("icon", () -> {
       if (myErrorStripeRenderer != null) {
-        AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus(myEditor);
+        AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus();
         if (!AnalyzerStatus.equals(newStatus, analyzerStatus)) {
           changeStatus(newStatus);
         }
@@ -732,12 +734,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       disposeErrorPanel();
       MyErrorPanel panel = new MyErrorPanel();
       myEditor.getVerticalScrollBar().setPersistentUI(panel);
-      rebuildErrorStripeMarksModel();
     }
     else {
-      myErrorStripeMarkersModel.clear();
       myEditor.getVerticalScrollBar().setPersistentUI(JBScrollBar.createUI(null));
     }
+    myErrorStripeMarkersModel.setActive(val);
   }
 
   private @Nullable MyErrorPanel getErrorPanel() {
@@ -791,6 +792,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   @Override
   public void dispose() {
+    myErrorStripeMarkersModel.dispose();
     disposeErrorPanel();
 
     if (myErrorStripeRenderer instanceof Disposable) {
@@ -821,22 +823,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   public void rebuild() {
-    rebuildErrorStripeMarksModel();
-  }
-
-  private void rebuildErrorStripeMarksModel() {
-    ErrorStripeMarkersModel errorStripeMarkersModel = myErrorStripeMarkersModel;
-    errorStripeMarkersModel.clear();
-
-    int textLength = myEditor.getDocument().getTextLength();
-    processRangeHighlightersOverlappingWith(0, textLength, ex -> {
-      errorStripeMarkersModel.afterAdded(ex, false);
-      return true;
-    });
-    myEditor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, ex -> {
-      errorStripeMarkersModel.afterAdded(ex, true);
-      return true;
-    });
+    myErrorStripeMarkersModel.rebuild();
   }
 
   void repaint() {
@@ -1220,11 +1207,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         return;
       }
 
-      if (e.getY() < buttonHeight && myErrorStripeRenderer != null) {
-        showTrafficLightTooltip(e);
-        return;
-      }
-
       if (e.getX() > 0 && e.getX() <= getWidth() && showToolTipByMouseMove(e)) {
         UIUtil.setCursor(scrollbar, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return;
@@ -1252,16 +1234,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
       myRowAdjuster = myWheelAccumulator / myEditor.getLineHeight();
       showToolTipByMouseMove(e);
-    }
-
-    private @Nullable TrafficTooltipRenderer myTrafficTooltipRenderer;
-
-    private void showTrafficLightTooltip(@NotNull MouseEvent e) {
-      if (myTrafficTooltipRenderer == null) {
-        myTrafficTooltipRenderer = myTooltipRendererProvider.createTrafficTooltipRenderer(() -> myTrafficTooltipRenderer = null, myEditor);
-      }
-      showTooltip(myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setMayCenterPosition(true).setContentActive(false)
-        .setPreferredPosition(Balloon.Position.atLeft));
     }
 
     private void cancelMyToolTips(final MouseEvent e, boolean checkIfShouldSurvive) {
@@ -1372,6 +1344,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         final Object tooltipObject = highlighter.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
 
+        //noinspection HardCodedStringLiteral
         final String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
         if (text == null) continue;
 
@@ -1399,30 +1372,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public @NotNull TooltipRenderer calcTooltipRenderer(final @NotNull String text, final int width) {
       return new LineTooltipRenderer(text, width, new Object[]{text});
-    }
-
-    @Override
-    public @NotNull TrafficTooltipRenderer createTrafficTooltipRenderer(final @NotNull Runnable onHide, @NotNull Editor editor) {
-      return new TrafficTooltipRenderer() {
-        @Override
-        public void repaintTooltipWindow() { }
-
-        @Override
-        public @NotNull LightweightHint show(@NotNull Editor editor,
-                                             @NotNull Point p,
-                                             boolean alignToRight,
-                                             @NotNull TooltipGroup group,
-                                             @NotNull HintHint hintHint) {
-          JLabel label = new JLabel("WTF");  // NON-NLS (non-observable)
-          return new LightweightHint(label) {
-            @Override
-            public void hide() {
-              super.hide();
-              onHide.run();
-            }
-          };
-        }
-      };
     }
   }
 

@@ -43,7 +43,6 @@ private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*
 private const val MAX_SSH_CONNECTIONS = 10 // by default SSH server has a limit of 10 multiplexed ssh connection
 
 internal class GitFetchSupportImpl(private val project: Project) : GitFetchSupport {
-
   private val git get() = Git.getInstance() as GitImpl
   private val progressManager get() = ProgressManager.getInstance()
 
@@ -106,9 +105,15 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         val results = waitForFetchTasks(tasks)
 
         val mergedResults = mutableMapOf<GitRepository, RepoResult>()
+        val succeedResults = mutableListOf<SingleRemoteResult>()
         for (result in results) {
           val res = mergedResults[result.repository]
           mergedResults[result.repository] = mergeRepoResults(res, result)
+          if (result.success()) succeedResults.add(result)
+        }
+        val successFetchesMap = succeedResults.groupBy({ it.repository }, { it.remote })
+        if (successFetchesMap.isNotEmpty()) {
+          GitFetchHandler.afterSuccessfulFetch(project, successFetchesMap, progressManager.progressIndicator ?: EmptyProgressIndicator())
         }
         activity.finished()
         FetchResultImpl(project, VcsNotifier.getInstance(project), mergedResults)

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -117,14 +116,19 @@ public final class AsyncStacksUtils {
             String className = dis.readUTF();
             String methodName = dis.readUTF();
             int line = dis.readInt();
-            Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
+            ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
+            if (classType == null) {
+              LOG.error("Unable to find loaded class " + className);
+              return null;
+            }
+            Location location = findLocation(process, classType, methodName, line);
             item = new ProcessStackFrameItem(location, className, methodName);
           }
           res.add(item);
         }
         return res;
       }
-      catch (IOException e) {
+      catch (Exception e) {
         LOG.error(e);
       }
     }
@@ -225,8 +229,8 @@ public final class AsyncStacksUtils {
     }
   }
 
-  private static Location findLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int line) {
-    if (type != null && line >= 0) {
+  private static Location findLocation(DebugProcessImpl debugProcess, @NotNull ReferenceType type, String methodName, int line) {
+    if (line >= 0) {
       for (Method method : DebuggerUtilsEx.declaredMethodsByName(type, methodName)) {
         List<Location> locations = DebuggerUtilsEx.locationsOfLine(method, line);
         if (!locations.isEmpty()) {

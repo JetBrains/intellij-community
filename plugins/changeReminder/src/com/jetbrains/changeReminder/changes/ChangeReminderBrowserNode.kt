@@ -10,12 +10,13 @@ import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.jetbrains.changeReminder.ChangeReminderBundle
 import com.jetbrains.changeReminder.predict.PredictionData
 import com.jetbrains.changeReminder.predict.PredictionService
+import org.jetbrains.annotations.Nls
 
 internal class ChangeReminderBrowserNode(
   private val predictionData: PredictionData,
   private val predictionService: PredictionService
 ) : ChangesBrowserNode<PredictionData>(predictionData) {
-  private fun ChangesBrowserNodeRenderer.appendCustomState(state: String) {
+  private fun ChangesBrowserNodeRenderer.appendCustomState(state: @Nls String) {
     this.append("${if (countText.isEmpty()) spaceAndThinSpace() else ", "}$state", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }
 
@@ -42,4 +43,6 @@ internal class ChangeReminderBrowserNode(
       defaultChangeList.name
     )
   }
+
+  override fun getTextPresentation(): String = ChangeReminderBundle.message("changes.browser.node.title")
 }

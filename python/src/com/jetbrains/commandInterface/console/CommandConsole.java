@@ -35,6 +35,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
+import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.toolWindowWithActions.ConsoleWithProcess;
 import kotlin.jvm.functions.Function1;
@@ -70,7 +71,7 @@ import java.util.Collection;
  *
  * @author Ilya.Kazakevich
  */
-@SuppressWarnings({"SerializableClassInSecureContext"}) // Nobody will serialize console
+@SuppressWarnings("SerializableClassInSecureContext") // Nobody will serialize console
 final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>, Condition<LanguageConsoleView>, ConsoleWithProcess {
   /**
    * Width of border to create around console
@@ -160,7 +161,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     console.switchToCommandMode();
     console.getComponent(); // For some reason console does not have component until this method is called which leads to some errros.
     console.getConsoleEditor().getSettings().setAdditionalLinesCount(2); // to prevent PY-15583
-    Disposer.register(module.getProject(), console); // To dispose console when project disposes
+    Disposer.register(PythonPluginDisposable.getInstance(module.getProject()), console); // To dispose console when project disposes
     console.addMessageFilter(new UrlFilter());
     return console;
   }

@@ -64,7 +64,7 @@ internal class FileNavigationLogger : CounterUsagesCollector() {
         data.add(probability.with(candidate.probability))
       }
       data.add(features.with(candidate.features))
-      return ObjectEventData(*data.toTypedArray())
+      return ObjectEventData(data)
     }
 
     private fun toPerformanceMetrics(totalDuration: Long, refsComputation: Long,

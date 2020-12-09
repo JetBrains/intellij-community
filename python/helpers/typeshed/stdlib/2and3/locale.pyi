@@ -1,5 +1,3 @@
-# Stubs for locale
-
 import sys
 from decimal import Decimal
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union

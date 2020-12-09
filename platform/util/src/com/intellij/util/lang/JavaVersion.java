@@ -2,12 +2,13 @@
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+// this class is used in bootstrap - please use only JDK API
 
 /**
  * A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.
@@ -183,7 +184,6 @@ public final class JavaVersion implements Comparable<JavaVersion> {
    * Attempts to use Runtime.version() method available since Java 9.
    */
   @ReviseWhenPortedToJDK("9")
-  @SuppressWarnings("JavaReflectionMemberAccess")
   private static @Nullable JavaVersion rtVersion() {
     try {
       Object version = Runtime.class.getMethod("version").invoke(null);
@@ -254,9 +254,9 @@ public final class JavaVersion implements Comparable<JavaVersion> {
           }
           if (p < separators.size()) {
             String s = separators.get(p);
-            if (StringUtil.startsWithChar(s, '-')) {
+            if (s != null && s.length() != 0 && s.charAt(0) == '-') {
               ea = startsWithWord(s, "-ea") || startsWithWord(s, "-internal");
-              if (p < numbers.size() && StringUtil.endsWithChar(s, '+')) {
+              if (p < numbers.size() && s.charAt(s.length() - 1) == '+') {
                 build = Integer.parseInt(numbers.get(p));
               }
               p++;
@@ -277,7 +277,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
                 update = Integer.parseInt(numbers.get(3));
                 if (separators.size() > 4) {
                   String s = separators.get(4);
-                  if (StringUtil.startsWithChar(s, '-')) {
+                  if (s != null && s.length() != 0 && s.charAt(0) == '-') {
                     ea = startsWithWord(s, "-ea") || startsWithWord(s, "-internal");
                   }
                   p = 4;

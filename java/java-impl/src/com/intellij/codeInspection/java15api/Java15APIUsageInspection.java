@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java15api;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -31,7 +31,6 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +160,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     }
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
-      return new THashSet<>(FileUtil.loadLines(reader));
+      return new HashSet<>(FileUtil.loadLines(reader));
     }
     catch (IOException ex) {
       Logger.getInstance(Java15APIUsageInspection.class).warn("cannot load: " + fileName, ex);

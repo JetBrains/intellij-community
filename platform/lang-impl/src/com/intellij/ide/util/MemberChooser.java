@@ -407,9 +407,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
       if (lastPathComponent == null) return null;
       String text = lastPathComponent.getDelegate().getText();
-      if (text != null) {
-        text = convertElementText(text);
-      }
+      text = convertElementText(text);
       return text;
     });
     treeSpeedSearch.setComparator(getSpeedSearchComparator());
@@ -901,6 +899,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
             return element1.getTextOffset() - element2.getTextOffset();
           }
           else {
+            if (file2 == null) return -1;
+            if (file1 == null) return 1;
             return comparing(PsiFile::getVirtualFile, nullsLast(comparing(VirtualFile::getPath))).compare(file1, file2);
           }
         }

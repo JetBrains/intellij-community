@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jdom.Element;
@@ -101,6 +100,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionAdditionalFormData;
   private final List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
+  private String myDefaultLightLaf;
+  private String myDefaultDarkLaf;
+
   private static final @NonNls String ELEMENT_VERSION = "version";
   private static final @NonNls String ATTRIBUTE_MAJOR = "major";
   private static final @NonNls String ATTRIBUTE_MINOR = "minor";
@@ -175,6 +177,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
   private static final @NonNls String PROGRESS_SLIDE = "progressSlide";
   private static final @NonNls String PROGRESS_PERCENT = "progressPercent";
+
+  private static final @NonNls String ELEMENT_DEFAULT_LAF = "default-laf";
+  private static final @NonNls String ATTRIBUTE_LAF_LIGHT = "light";
+  private static final @NonNls String ATTRIBUTE_LAF_DARK = "dark";
 
   static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
@@ -366,7 +372,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
-      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v3/%s/%s.json";
+      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
     }
 
     Element tvElement = getChild(element, ELEMENT_JB_TV);
@@ -398,6 +404,19 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
       mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
       mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+    }
+
+    Element defaultLafElement = getChild(element, ELEMENT_DEFAULT_LAF);
+    if (defaultLafElement != null) {
+      String laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_LIGHT);
+      if (laf != null) {
+        myDefaultLightLaf = laf.trim();
+      }
+
+      laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_DARK);
+      if (laf != null) {
+        myDefaultDarkLaf = laf.trim();
+      }
     }
   }
 
@@ -814,7 +833,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public List<ProgressSlide> getProgressSlides() {
+  public @NotNull List<ProgressSlide> getProgressSlides() {
     return myProgressSlides;
   }
 
@@ -874,7 +893,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
 
       String builtinPluginsUrl = element.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
-      if (StringUtil.isNotEmpty(builtinPluginsUrl)) {
+      if (builtinPluginsUrl != null && !builtinPluginsUrl.isEmpty()) {
         myBuiltinPluginsUrl = builtinPluginsUrl;
       }
     }
@@ -949,8 +968,19 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return PluginManagerCore.CORE_ID == pluginId || Collections.binarySearch(myEssentialPluginsIds, pluginId) >= 0;
   }
 
+  @Override
   public @NotNull List<PluginId> getEssentialPluginsIds() {
     return myEssentialPluginsIds;
+  }
+
+  @Override
+  public @Nullable String getDefaultLightLaf() {
+    return myDefaultLightLaf;
+  }
+
+  @Override
+  public @Nullable String getDefaultDarkLaf() {
+    return myDefaultDarkLaf;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

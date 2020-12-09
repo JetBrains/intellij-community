@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.codeStyle.autodetect;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
@@ -9,7 +10,6 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public abstract class AbstractNewLineBlocksIteratorTest extends LightPlatformCod
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(getFile());
     Assert.assertNotNull(builder);
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     FormattingModel model = builder.createModel(FormattingContext.create(getFile(), settings));
 
     Block root = model.getRootBlock();

@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
@@ -150,7 +151,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   fun `test commit unstaged case rename - case ignored on case insensitive system`() {
-    assumeCaseInsensitiveSystem()
+    IoTestUtil.assumeCaseInsensitiveFS()
 
     tac("a.java", "old content")
     rm("a.java")
@@ -167,7 +168,7 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
   }
 
   fun `test commit wrongly staged case rename - case ignored on case insensitive system`() {
-    assumeCaseInsensitiveSystem()
+    IoTestUtil.assumeCaseInsensitiveFS()
 
     tac("a.java", "old content")
     rm("a.java")
@@ -182,10 +183,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     repo.assertCommitted {
       modified("a.java")
     }
-  }
-
-  private fun assumeCaseInsensitiveSystem() {
-    assumeTrue("Case-insensitive system expected", !SystemInfo.isFileSystemCaseSensitive)
   }
 
   fun `test commit case rename + one staged file`() {

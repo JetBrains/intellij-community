@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.containers.ContainerUtil.exists;
+import static git4idea.GitNotificationIdsHolder.BRANCH_DELETION_ROLLBACK_ERROR;
 import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
@@ -182,7 +183,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = doRollback();
     if (!result.totalSuccess()) {
-      myNotifier.notifyError("git.branch.deletion.rollback.error",
+      myNotifier.notifyError(BRANCH_DELETION_ROLLBACK_ERROR,
                              GitBundle.message("delete.branch.operation.error.during.rollback.of.branch.deletion"),
                              result.getErrorOutputWithReposIndication(),
                              true);
@@ -363,7 +364,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       notification.expire();
     }
     else {
-      myNotifier.notifyError("git.branch.deletion.rollback.error",
+      myNotifier.notifyError(BRANCH_DELETION_ROLLBACK_ERROR,
                              GitBundle.message("delete.branch.operation.could.not.restore.branch.error", formatBranchName(myBranchName)),
                              result.getErrorOutputWithReposIndication(),
                              true);

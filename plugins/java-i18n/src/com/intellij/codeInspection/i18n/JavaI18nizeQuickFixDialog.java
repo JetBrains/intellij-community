@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -6,6 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -28,7 +29,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UI;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +39,13 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQuickFixDialog {
+  private static final String RESOURCE_BUNDLE_EXPRESSION_USED = "RESOURCE_BUNDLE_EXPRESSION_USED";
   private final T myLiteralExpression;
 
   private final JLabel myPreviewLabel;
@@ -197,10 +199,19 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     Set<String> result = JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression.getSourcePsi());
     if (result.isEmpty()) {
       result.add(getResourceBundleText());
+      ContainerUtil.addIfNotNull(result, PropertiesComponent.getInstance(myProject).getValue(RESOURCE_BUNDLE_EXPRESSION_USED));
     }
 
     myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(result));
     SwingUtilities.invokeLater(() -> myRBEditorTextField.setSelectedIndex(0));
+  }
+
+  @Override
+  protected void doOKAction() {
+    if (myShowJavaCodeInfo) {
+      PropertiesComponent.getInstance(myProject).setValue(RESOURCE_BUNDLE_EXPRESSION_USED, myRBEditorTextField.getText());
+    }
+    super.doOKAction();
   }
 
   public static boolean showResourceBundleTextField(String templateName, Project project) {
@@ -252,7 +263,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     String templateName = getTemplateName();
     LOG.assertTrue(templateName != null);
     FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
-    Map<String, String> attributes = new THashMap<>();
+    Map<String, String> attributes = new HashMap<>();
     attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
     attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));

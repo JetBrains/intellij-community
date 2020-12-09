@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +37,16 @@ public class FontPreferences {
   @NlsSafe
   public String getFontFamily() {
     return FALLBACK_FONT_FAMILY;
+  }
+
+  @NlsSafe
+  public @Nullable String getRegularSubFamily() {
+    return null;
+  }
+
+  @NlsSafe
+  public @Nullable String getBoldSubFamily() {
+    return null;
   }
 
   public int getSize(@NotNull String fontFamily) {

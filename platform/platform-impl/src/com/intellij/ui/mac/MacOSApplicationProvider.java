@@ -23,7 +23,8 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -37,6 +38,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +52,7 @@ public final class MacOSApplicationProvider {
   private MacOSApplicationProvider() { }
 
   public static void initApplication() {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       try {
         Worker.initMacApplication();
       }
@@ -91,13 +94,17 @@ public final class MacOSApplicationProvider {
 
       application.setOpenFileHandler(event -> {
         List<File> files = event.getFiles();
-        if (files.isEmpty()) return;
+        if (files.isEmpty()) {
+          return;
+        }
+
+        List<Path> list = ContainerUtil.map(files, file -> file.toPath());
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
           Project project = getProject(false);
-          submit("OpenFile", () -> ProjectUtil.tryOpenFileList(project, files, "MacMenu"));
+          submit("OpenFile", () -> ProjectUtil.tryOpenFiles(project, list, "MacMenu"));
         }
         else {
-          IdeStarter.openFilesOnLoading(files);
+          IdeStarter.openFilesOnLoading(list);
         }
       });
 
@@ -119,7 +126,6 @@ public final class MacOSApplicationProvider {
       Callback impl = new Callback() {
         @SuppressWarnings("unused")
         public void callback(ID self, String selector) {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             ActionManager actionManager = ActionManager.getInstance();
             MouseEvent mouseEvent = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
@@ -188,7 +194,7 @@ public final class MacOSApplicationProvider {
       ID urlTypes = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
       if (urlTypes.equals(ID.NIL)) {
         BuildNumber build = ApplicationInfoImpl.getShadowInstance().getBuild();
-        if (!(build == null || build.isSnapshot())) {
+        if (!build.isSnapshot()) {
           LOG.warn("No URL bundle (CFBundleURLTypes) is defined in the main bundle.\n" +
                    "To be able to open external links, specify protocols in the app layout section of the build file.\n" +
                    "Example: args.urlSchemes = [\"your-protocol\"] will handle following links: your-protocol://open?file=file&line=line");
@@ -206,7 +212,8 @@ public final class MacOSApplicationProvider {
           }
 
           if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            IdeStarter.openFilesOnLoading(Collections.singletonList(new File(file)));
+            // handle paths like /file/foo\qwe
+            IdeStarter.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
             return;
           }
 
@@ -222,6 +229,7 @@ public final class MacOSApplicationProvider {
             args.add(column);
           }
           args.add(file);
+
           ApplicationManager.getApplication().invokeLater(() -> {
             CommandLineProcessorResult result = CommandLineProcessor.processExternalCommandLine(args, null);
             result.showErrorIfFailed();

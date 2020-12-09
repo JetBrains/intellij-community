@@ -157,10 +157,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
     }
 
     private void addPath(FileChooserDescriptor descriptor) {
-      int selected = -1 /*myExcludedTable.getSelectedRow() + 1*/;
-      if(selected < 0) {
-        selected = myExcludeEntryDescriptions.size();
-      }
+      int selected  = myExcludeEntryDescriptions.size();
       int savedSelected = selected;
       VirtualFile[] chosen = FileChooser.chooseFiles(descriptor, myProject, null);
       for (final VirtualFile chosenFile : chosen) {
@@ -302,6 +299,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
       };
 
       myExcludedTable = new JBTable(dataModel);
+      myExcludedTable.setShowGrid(false);
       myExcludedTable.setEnableAntialiasing(true);
 
       myExcludedTable.getEmptyText().setText(JavaCompilerBundle.message("no.excludes"));

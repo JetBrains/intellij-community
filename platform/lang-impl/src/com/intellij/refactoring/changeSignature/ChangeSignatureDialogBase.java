@@ -447,6 +447,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       }
     };
 
+    myParametersTable.setShowGrid(false);
     myParametersTable.setCellSelectionEnabled(true);
     myParametersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
@@ -469,7 +470,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
       myPropagateParamChangesButton.setEnabled(false);
       myPropagateParamChangesButton.setVisible(false);
-      myParametersTable.setStriped(true);
 
       myParametersTableModel.addTableModelListener(mySignatureUpdater);
 

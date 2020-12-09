@@ -12,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.*;
 
 import javax.swing.text.MutableAttributeSet;
@@ -102,8 +101,6 @@ public class StringUtil extends StringUtilRt {
       return myBuffer.toString();
     }
   }
-
-  private static final MyHtml2Text html2TextParser = new MyHtml2Text(false);
 
   public static final NotNullFunction<String, String> QUOTER = s -> "\"" + s + "\"";
 
@@ -230,8 +227,13 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String html, boolean convertBreaks) {
-    if (convertBreaks) {
-      html = html.replaceAll("<br/?>", "\n\n");
+    return stripHtml(html, convertBreaks ? "\n\n" : null);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String stripHtml(@NotNull String html, @Nullable String breaks) {
+    if (breaks != null) {
+      html = html.replaceAll("<br/?>", breaks);
     }
 
     return html.replaceAll("<(.|\n)*?>", "");
@@ -731,8 +733,15 @@ public class StringUtil extends StringUtilRt {
     if (escaped) buffer.append('\\');
   }
 
+  /**
+   * Pluralize English word. Could be used when e.g. generating collection name by element type.
+   * Do not use this method in localized context, as it works for English language only.
+   *
+   * @param word word to pluralize
+   * @return word in plural form
+   */
   @Contract(pure = true)
-  public static @NotNull String pluralize(@NotNull String word) {
+  public static @NotNull @NonNls String pluralize(@NotNull @NonNls String word) {
     return Strings.pluralize(word);
   }
 
@@ -1092,11 +1101,12 @@ public class StringUtil extends StringUtilRt {
     return ExceptionUtil.getMessage(e);
   }
 
+  @ReviseWhenPortedToJDK("11") // Character.toString(aChar).repeat(count)
   @Contract(pure = true)
   public static @NotNull String repeatSymbol(final char aChar, final int count) {
     char[] buffer = new char[count];
     Arrays.fill(buffer, aChar);
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
   @Contract(pure = true)
@@ -1438,7 +1448,7 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatFileSize(fileSize, unitSeparator);
   }
 
-  /** 
+  /**
    * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}).
    * This method is intended to be used in non-localized contexts (primarily in log output).
    * See com.intellij.ide.nls.NlsMessages for localized output.
@@ -1448,7 +1458,7 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatDuration(duration);
   }
 
-  /** 
+  /**
    * Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds)
    * This method is intended to be used in non-localized contexts (primarily in log output).
    * See com.intellij.ide.nls.NlsMessages for localized output.
@@ -1458,8 +1468,12 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatDuration(duration);
   }
 
-  /** Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
+  /** 
+   * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}).
+   * @deprecated use NlsMessages#formatDurationApproximateNarrow for localized output
+   */
   @Contract(pure = true)
+  @Deprecated
   public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
     return Formats.formatDuration(duration, unitSeparator);
   }
@@ -1533,7 +1547,7 @@ public class StringUtil extends StringUtilRt {
 
     char[] buffer = displayString.toCharArray();
     buffer[0] = uppedFirstChar;
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
   /**
@@ -2007,12 +2021,13 @@ public class StringUtil extends StringUtilRt {
     return removeHtmlTags(htmlString, false);
   }
 
+  @Contract(pure = true)
   public static @NotNull String removeHtmlTags(@NotNull String htmlString, boolean isRemoveStyleTag) {
     if (isEmpty(htmlString)) {
       return "";
     }
 
-    final MyHtml2Text parser = isRemoveStyleTag ? new MyHtml2Text(true) : html2TextParser;
+    final MyHtml2Text parser = isRemoveStyleTag ? new MyHtml2Text(true) : new MyHtml2Text(false);
     try {
       parser.parse(new StringReader(htmlString));
     }
@@ -2043,7 +2058,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String htmlEmphasize(@NotNull @Nls String text) {
+  public static @NlsSafe @NotNull String htmlEmphasize(@NotNull @Nls String text) {
     return HtmlChunk.tag("code").addText(text)
       .wrapWith("b").toString();
   }
@@ -2779,7 +2794,7 @@ public class StringUtil extends StringUtilRt {
     final int textLength = text.length();
     if (textLength > maxLength) {
       final int prefixLength = maxLength - suffixLength - symbol.length();
-      assert prefixLength > 0;
+      assert prefixLength >= 0;
       return text.substring(0, prefixLength) + symbol + text.substring(textLength - suffixLength);
     }
     else {

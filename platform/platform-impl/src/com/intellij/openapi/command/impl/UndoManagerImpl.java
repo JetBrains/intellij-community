@@ -23,10 +23,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -171,7 +168,7 @@ public class UndoManagerImpl extends UndoManager {
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
 
-  private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
+  private void onCommandFinished(final Project project, final @NlsContexts.Command String commandName, final Object commandGroupId) {
     commandFinished(commandName, commandGroupId);
     if (myCommandLevel == 0) {
       for (UndoProvider undoProvider : getUndoProviders()) {
@@ -215,7 +212,7 @@ public class UndoManagerImpl extends UndoManager {
     myCommandLevel++;
   }
 
-  private void commandFinished(String commandName, Object groupId) {
+  private void commandFinished(@NlsContexts.Command String commandName, Object groupId) {
     if (myCommandLevel == 0) return; // possible if command listener was added within command
     myCommandLevel--;
     if (myCommandLevel > 0) return;

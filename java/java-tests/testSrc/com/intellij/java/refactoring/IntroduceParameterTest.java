@@ -17,7 +17,7 @@ import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -207,6 +207,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   }
 
   public void testRemoveParameterInHierarchy() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
+  }
+
+  public void testRemoveParameterInHierarchy1() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
   }
 
@@ -474,8 +478,8 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       initializer = expr;
       occurrences = new ExpressionOccurrenceManager(expr, method, null).findExpressionOccurrences();
     }
-    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, occurrences)
-                                                              : new TIntArrayList();
+    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, initializer, occurrences).toNativeArray())
+                                                             : new IntArrayList();
     IntroduceParameterProcessor processor = new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, initializer, expr, localVar, true, parameterName, replaceAllOccurrences,
       replaceFieldsWithGetters, declareFinal, generateDelegate, null, parametersToRemove
@@ -520,8 +524,8 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     final PsiLocalVariable localVariable = (PsiLocalVariable)element;
     final PsiExpression parameterInitializer = localVariable.getInitializer();
     assertNotNull(parameterInitializer);
-    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, parameterInitializer, null)
-                                                              : new TIntArrayList();
+    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, parameterInitializer, null).toNativeArray())
+                                                              : new IntArrayList();
 
     new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, parameterInitializer, null, localVariable, removeLocalVariable,

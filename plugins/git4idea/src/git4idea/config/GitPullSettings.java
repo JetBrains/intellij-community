@@ -1,32 +1,29 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import git4idea.pull.GitPullOption;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Set;
 
+import static java.util.EnumSet.copyOf;
+
 @State(name = "Git.Pull.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class GitPullSettings implements PersistentStateComponent<GitPullSettings.State> {
 
-  private static final EnumSet<GitPullOption> NO_OPTIONS = EnumSet.noneOf(GitPullOption.class);
+  public static class State {
+    public @NotNull Set<GitPullOption> OPTIONS = none();
+  }
 
   private State myState = new State();
 
-  public static class State {
-    public Set<GitPullOption> OPTIONS = NO_OPTIONS;
-    public String BRANCH = null;
-  }
-
   @Override
-  public @NotNull GitPullSettings.State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -36,20 +33,14 @@ public class GitPullSettings implements PersistentStateComponent<GitPullSettings
   }
 
   public @NotNull Set<GitPullOption> getOptions() {
-    return ImmutableSet.copyOf(myState.OPTIONS);
+    return copyOf(myState.OPTIONS);
   }
 
   public void setOptions(@NotNull Set<GitPullOption> options) {
-    myState.OPTIONS = !options.isEmpty()
-                      ? EnumSet.copyOf(options)
-                      : NO_OPTIONS;
+    myState.OPTIONS = !options.isEmpty() ? copyOf(options) : none();
   }
 
-  public @Nullable String getBranch() {
-    return myState.BRANCH;
-  }
-
-  public void setBranch(@Nullable String branch) {
-    myState.BRANCH = branch;
+  private static @NotNull Set<GitPullOption> none() {
+    return EnumSet.noneOf(GitPullOption.class);
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +25,11 @@ import static java.awt.event.KeyEvent.*;
 
 @ApiStatus.Internal
 public final class ShortcutDataProvider {
+  /**
+   * Modifiers that can be used as a separate double click shortcut (Shift+Shift as example)
+   */
+  private static final Collection<Integer> DOUBLE_CLICK_MODIFIER_KEYS = Arrays.asList(VK_CONTROL, VK_SHIFT);
+
   @Nullable
   public static String getActionEventText(@Nullable AnActionEvent event) {
     return event != null ? getInputEventText(event.getInputEvent(), event.getPlace()) : null;
@@ -55,6 +63,7 @@ public final class ShortcutDataProvider {
     if (event == null) return null;
 
     String res = getMouseButtonText(event.getButton());
+    if (event.getID() == MouseEvent.MOUSE_DRAGGED) res += "Drag";
 
     int clickCount = event.getClickCount();
     if (clickCount > 1) {
@@ -86,8 +95,16 @@ public final class ShortcutDataProvider {
   }
 
   private static String getShortcutText(KeyboardShortcut shortcut) {
-    String results = "";
     int modifiers = shortcut.getFirstKeyStroke().getModifiers();
+    int code = shortcut.getFirstKeyStroke().getKeyCode();
+
+    // Handling shortcuts that looks like [double <modifier_key>] (to avoid FUS-551)
+    if (modifiers == 0 && DOUBLE_CLICK_MODIFIER_KEYS.contains(code)) {
+      String strCode = getLocaleUnawareKeyText(code);
+      return strCode + "+" + strCode;
+    }
+
+    String results = "";
     if (modifiers > 0) {
       final String keyModifiersText = getLocaleUnawareKeyModifiersText(modifiers);
       if (!keyModifiersText.isEmpty()) {
@@ -95,7 +112,7 @@ public final class ShortcutDataProvider {
       }
     }
 
-    results += getLocaleUnawareKeyText(shortcut.getFirstKeyStroke().getKeyCode());
+    results += getLocaleUnawareKeyText(code);
     return results;
   }
 
@@ -139,7 +156,7 @@ public final class ShortcutDataProvider {
     return StringUtil.join(pressed, "+");
   }
 
-  private static final Int2ObjectOpenHashMap<String> ourKeyCodes = new Int2ObjectOpenHashMap<>();
+  private static final Int2ObjectMap<String> ourKeyCodes = new Int2ObjectOpenHashMap<>();
 
   static {
     ourKeyCodes.put(VK_ENTER, "Enter");

@@ -21,7 +21,7 @@ import javax.swing.*;
 public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   private   final @NlsContexts.DialogTitle String myTitle;
   private   final @NlsContexts.Label String myDescription;
-  protected final TextComponentAccessor<? super T> myAccessor;
+  protected final @NotNull TextComponentAccessor<? super T> myAccessor;
   protected final FileChooserDescriptor myFileChooserDescriptor;
 
   protected  T myTextComponent;
@@ -32,7 +32,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
                               @Nullable Project project,
                               FileChooserDescriptor fileChooserDescriptor,
                               @Nullable T component,
-                              TextComponentAccessor<? super T> accessor) {
+                              @NotNull TextComponentAccessor<? super T> accessor) {
     if (fileChooserDescriptor != null && fileChooserDescriptor.isChooseMultiple()) {
       //LOG.error("multiple selection not supported");
       fileChooserDescriptor = new FileChooserDescriptor(fileChooserDescriptor) {

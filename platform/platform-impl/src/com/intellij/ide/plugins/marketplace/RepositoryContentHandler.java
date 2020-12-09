@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.marketplace;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -72,7 +73,7 @@ class RepositoryContentHandler extends DefaultHandler {
       }
     }
     else if (qName.equals(IDEA_PLUGIN)) {
-      currentPlugin = new PluginNode();
+      currentPlugin = new PluginNode(PluginId.getId("unknown"));
       currentPlugin.setCategory(buildCategoryName());
       currentPlugin.setDownloads(attributes.getValue(DOWNLOADS));
       currentPlugin.setSize(attributes.getValue(SIZE));
@@ -92,11 +93,8 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setVendorUrl(attributes.getValue(URL));
     }
     else if (qName.equals(PLUGIN)) {
-      currentPlugin = new PluginNode();
       String id = attributes.getValue(ID);
-      if (id != null) {
-        currentPlugin.setId(id);
-      }
+      currentPlugin = id == null ? new PluginNode(PluginId.getId("unknown")) : new PluginNode(PluginId.getId(id));
       currentPlugin.setDownloadUrl(attributes.getValue(URL));
       currentPlugin.setVersion(attributes.getValue(VERSION));
       currentPlugin.setIncomplete(true);

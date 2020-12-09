@@ -110,6 +110,7 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 
 fun exportSettings(exportableItems: Set<ExportableItem>,
                    out: OutputStream,
+                   exportableThirdPartyFiles: Map<FileSpec, Path> = mapOf(),
                    storageManager: StateStorageManagerImpl = getAppStorageManager()) {
   val filter = HashSet<String>()
   Compressor.Zip(out)
@@ -125,6 +126,14 @@ fun exportSettings(exportableItems: Set<ExportableItem>,
             zip.addFile(item.fileSpec.relativePath, content)
           }
         }
+      }
+
+      // dotSettings file for Rider backend
+      for ((fileSpec, path) in exportableThirdPartyFiles) {
+        LOG.assertTrue(!fileSpec.isDirectory, "fileSpec should not be directory")
+        LOG.assertTrue(path.isFile(), "path should be file")
+
+        zip.addFile(fileSpec.relativePath, Files.readAllBytes(path))
       }
 
       exportInstalledPlugins(zip)
@@ -143,7 +152,7 @@ data class ExportableItem(val fileSpec: FileSpec,
 data class LocalExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
 fun exportInstalledPlugins(zip: Compressor) {
-  val plugins = PluginManagerCore.getPlugins().asSequence().filter { !it.isBundled && it.isEnabled }.map { it.pluginId }.toList()
+  val plugins = PluginManagerCore.getLoadedPlugins().asSequence().filter { !it.isBundled }.map { it.pluginId }.toList()
   if (plugins.isNotEmpty()) {
     val buffer = StringWriter()
     PluginManagerCore.writePluginsList(plugins, buffer)

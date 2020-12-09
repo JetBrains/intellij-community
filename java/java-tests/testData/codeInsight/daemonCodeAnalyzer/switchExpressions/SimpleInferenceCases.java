@@ -116,12 +116,30 @@ class MyTest {
 
     System.out.println(c.getCanonicalName());
   }
-  
-  static void testNull(int i) {
-    var v = switch(i) {
-      case 1 -> "abcd";
-      default -> null;
+
+  interface I {
+    void m();
+  }
+  interface I1 extends I {}
+  interface I2 extends I {}
+
+  static void n(I1 i1, I2 i2, int s) {
+    var i_ = switch (s) {
+      case 1 -> i1;
+      case 2 -> null;
+      default -> i2;
     };
-    System.out.println(v.<error descr="Cannot resolve method 'substring' in 'Object'">substring</error>(1));
+    if (i_ != null) {
+      i_.m();
+    }
+    
+    var i__ = switch (s) {
+      case 2 -> null;
+      case 1 -> i1;
+      default -> i2;
+    };
+    if (i__ != null) {
+      i__.m();
+    }
   }
 }

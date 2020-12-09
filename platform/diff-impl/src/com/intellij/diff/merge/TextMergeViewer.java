@@ -1317,7 +1317,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           boolean isResolved = mergeChange.isResolved(mySide);
           if (!handler.processResolvable(mergeChange.getStartLine(left), mergeChange.getEndLine(left),
                                          mergeChange.getStartLine(right), mergeChange.getEndLine(right),
-                                         getEditor(), mergeChange.getDiffType(), isResolved)) {
+                                         mergeChange.getDiffType(), isResolved)) {
             return;
           }
         }

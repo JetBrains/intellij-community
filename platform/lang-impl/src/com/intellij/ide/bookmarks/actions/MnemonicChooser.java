@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.ide.bookmarks.actions;
 
+import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
@@ -82,7 +79,7 @@ public class MnemonicChooser extends JPanel {
   private final class MnemonicLabel extends JLabel {
     private MnemonicLabel(final char c) {
       setOpaque(true);
-      setText(Character.toString(c));
+      setText(Bookmark.toString(c, false));
       setBorder(JBUI.Borders.customLine(new JBColor(Gray._192, Gray._150)));
       setHorizontalAlignment(CENTER);
 
@@ -91,7 +88,7 @@ public class MnemonicChooser extends JPanel {
       addMouseListener(new MouseAdapter() {
         @Override
         public void mouseEntered(MouseEvent e) {
-          setForeground(UIUtil.getListSelectionForeground());
+          setForeground(UIUtil.getListSelectionForeground(true));
           setBackground(UIUtil.getListSelectionBackground(true));
         }
 

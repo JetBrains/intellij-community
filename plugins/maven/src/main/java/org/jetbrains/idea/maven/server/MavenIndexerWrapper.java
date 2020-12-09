@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
-  private final TIntObjectHashMap<IndexData> myDataMap = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<IndexData> myDataMap = new Int2ObjectOpenHashMap<>();
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
     super(parent);
@@ -29,7 +30,10 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   @Override
   protected synchronized void onError() {
     super.onError();
-    for (int each : myDataMap.keys()) {
+    MavenLog.LOG.debug("MavenIndexerWrapper on error:");
+    for (IntIterator iterator = myDataMap.keySet().iterator(); iterator.hasNext(); ) {
+      int each = iterator.nextInt();
+      MavenLog.LOG.debug("clear remote id for " + each);
       myDataMap.get(each).remoteId = -1;
     }
   }
@@ -41,6 +45,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
                                       @NotNull final File indexDir) throws MavenServerIndexerException {
     IndexData data = new IndexData(indexId, repositoryId, file, url, indexDir);
     final int localId = System.identityHashCode(data);
+    MavenLog.LOG.debug("addIndex " + localId);
     myDataMap.put(localId, data);
 
     perform(() -> getRemoteId(localId));
@@ -49,6 +54,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   public synchronized void releaseIndex(int localId) throws MavenServerIndexerException {
+    MavenLog.LOG.debug("releaseIndex " + localId);
     IndexData data = myDataMap.remove(localId);
     if (data == null) {
       MavenLog.LOG.warn("index " + localId + " not found");
@@ -122,7 +128,9 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
 
   private synchronized int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
     IndexData result = myDataMap.get(localId);
-    MavenLog.LOG.assertTrue(result != null, "index " + localId + " not found");
+    if(result == null) {
+      MavenLog.LOG.error("index " + localId + " not found, known ids are:" + myDataMap.keySet());
+    }
 
     if (result.remoteId == -1) {
       result.remoteId = getOrCreateWrappee().createIndex(result.indexId, result.repositoryId, result.file, result.url, result.indexDir,

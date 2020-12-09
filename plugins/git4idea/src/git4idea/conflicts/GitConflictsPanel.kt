@@ -27,6 +27,7 @@ import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import git4idea.GitNotificationIdsHolder.Companion.CANNOT_RESOLVE_CONFLICT
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.merge.GitMergeUtil
@@ -207,7 +208,7 @@ internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selecte
   for (conflict in conflicts) {
     val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
     if (file == null) {
-      VcsNotifier.getInstance(project).notifyError("git.cannot.resolve.conflict",
+      VcsNotifier.getInstance(project).notifyError(CANNOT_RESOLVE_CONFLICT,
                                                    GitBundle.message("conflicts.merge.window.error.title"),
                                                    GitBundle.message("conflicts.merge.window.error.message", conflict.filePath))
       continue
@@ -295,16 +296,7 @@ private class MyChangesTree(project: Project)
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
     val groupingSupport = ChangesGroupingSupport(myProject, this, false)
-
-    val propertiesComponent = PropertiesComponent.getInstance(project)
-    groupingSupport.setGroupingKeysOrSkip(propertiesComponent.getValues(GROUPING_KEYS_PROPERTY)?.toSet() ?: setOf(DIRECTORY_GROUPING))
-    groupingSupport.addPropertyChangeListener(PropertyChangeListener {
-      propertiesComponent.setValues(GROUPING_KEYS_PROPERTY, groupingSupport.groupingKeys.toTypedArray())
-
-      val oldSelection = VcsTreeModelData.selected(this).userObjects()
-      rebuildTree()
-      setSelectedChanges(oldSelection)
-    })
+    installGroupingSupport(this, groupingSupport, GROUPING_KEYS_PROPERTY, DIRECTORY_GROUPING)
     return groupingSupport
   }
 

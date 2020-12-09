@@ -245,7 +245,7 @@ public final class PaintUtil {
       }
     }
     catch (Exception e) {
-      Logger.getInstance("#com.intellij.ui.paint.PaintUtil").error(e);
+      Logger.getInstance(PaintUtil.class).error(e);
     }
     return null;
   }

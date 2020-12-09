@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
@@ -19,7 +19,8 @@ import static org.junit.Assume.assumeFalse;
 
 @TestOnly
 public abstract class BareTestFixtureTestCase {
-  @Rule public final TestName myNameRule = new TestName();
+  @Rule public final TestName testName = new TestName();
+  @Rule public final TestRule testLoggerWatcher = TestLoggerFactory.createTestWatcher();
 
   private BareTestFixture myFixture;
 
@@ -34,7 +35,7 @@ public abstract class BareTestFixtureTestCase {
 
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createBareFixture();
     myFixture.setUp();
-    Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
+    Disposer.register(getTestRootDisposable(), () -> ApplicationInfoImpl.setInStressTest(false));
   }
 
   @After
@@ -45,16 +46,11 @@ public abstract class BareTestFixtureTestCase {
     }
   }
 
-  @NotNull
-  protected final String getTestName(boolean lowercaseFirstLetter) {
-    return PlatformTestUtil.getTestName(myNameRule.getMethodName(), lowercaseFirstLetter);
+  protected final @NotNull String getTestName(boolean lowercaseFirstLetter) {
+    return PlatformTestUtil.getTestName(testName.getMethodName(), lowercaseFirstLetter);
   }
 
-  @NotNull
-  public final Disposable getTestRootDisposable() {
+  protected final @NotNull Disposable getTestRootDisposable() {
     return myFixture.getTestRootDisposable();
   }
-
-  @Rule
-  public TestRule testLoggerWatcher = TestLoggerFactory.createTestWatcher();
 }

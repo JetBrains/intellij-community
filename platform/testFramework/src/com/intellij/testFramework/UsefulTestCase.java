@@ -64,7 +64,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -116,13 +118,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   private @Nullable Disposable myTestRootDisposable;
 
+  private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
-    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     Logger.setFactory(TestLoggerFactory.class);
 
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
@@ -262,8 +265,21 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @ApiStatus.Internal
-  void removeGlobalTempDirectory(@NotNull Path dir) {
-    PathKt.delete(dir);
+  void removeGlobalTempDirectory(@NotNull Path dir) throws Exception {
+    if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
+      PathKt.delete(dir);
+    }
+    else {
+      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(dir)) {
+        for (Path file : directoryStream) {
+          if (!shouldKeepTmpFile(file)) {
+            FileUtil.delete(file);
+          }
+        }
+      }
+      catch (NoSuchFileException ignore) {
+      }
+    }
   }
 
   protected boolean isIconRequired() {
@@ -282,16 +298,41 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (myTempDir != null) {
           FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-          removeGlobalTempDirectory(myTempDir);
+          try {
+            removeGlobalTempDirectory(myTempDir);
+          }
+          catch (Throwable e) {
+            printThreadDump();
+            throw e;
+          }
         }
       },
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
       () -> clearFields(this)
-    ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
+    ).run(mySuppressedExceptions);
   }
 
   protected final void disposeRootDisposable() {
     Disposer.dispose(getTestRootDisposable());
+  }
+
+  protected void addTmpFileToKeep(@NotNull Path file) {
+    if (myPathsToKeep == null) {
+      myPathsToKeep = new ArrayList<>();
+    }
+    myPathsToKeep.add(file.toAbsolutePath());
+  }
+
+  private boolean shouldKeepTmpFile(@NotNull Path file) {
+    if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
+      return false;
+    }
+    for (Path pathToKeep : myPathsToKeep) {
+      if (file.equals(pathToKeep)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
@@ -341,8 +382,8 @@ public abstract class UsefulTestCase extends TestCase {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll()
-      .append(() -> {
+    new RunAll(
+      () -> {
         try {
           checkCodeInsightSettingsEqual(defaultSettings, settings);
         }
@@ -357,8 +398,8 @@ public abstract class UsefulTestCase extends TestCase {
           }
           throw error;
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         currentCodeStyleSettings.getIndentOptions(FileTypeManager.getInstance().getStdFileType("JAVA"));
         try {
           checkCodeStyleSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings);
@@ -366,8 +407,8 @@ public abstract class UsefulTestCase extends TestCase {
         finally {
           currentCodeStyleSettings.clearCodeStyleSettings();
         }
-      })
-      .run();
+      }
+    ).run();
   }
 
   /**
@@ -779,16 +820,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
-    Iterator<? extends T> iterator = collection.iterator();
-    String toString = toString(collection);
-    Assert.assertTrue(toString, iterator.hasNext());
-    T t = iterator.next();
-    Assert.assertFalse(toString, iterator.hasNext());
-    return t;
+    Assert.assertEquals(collection.toString(), 1, collection.size());
+    return collection.iterator().next();
   }
 
   public static <T> T assertOneElement(T @NotNull [] ts) {
-    Assert.assertEquals(Arrays.asList(ts).toString(), 1, ts.length);
+    Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
     return ts[0];
   }
 
@@ -1181,8 +1218,7 @@ public abstract class UsefulTestCase extends TestCase {
   protected final class TestDisposable implements Disposable {
     private volatile boolean myDisposed;
 
-    public TestDisposable() {
-    }
+    public TestDisposable() { }
 
     @Override
     public void dispose() {

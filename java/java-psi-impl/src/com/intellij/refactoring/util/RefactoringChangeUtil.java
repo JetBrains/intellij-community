@@ -141,11 +141,11 @@ public final class RefactoringChangeUtil {
      }
    }
 
-  public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
+  public static @NotNull PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
     return createQualifiedExpression(manager, qualifierClass, "this");
   }
 
-  public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
+  public static @NotNull PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
     return createQualifiedExpression(manager, qualifierClass, "super");
   }
 }

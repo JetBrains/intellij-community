@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetConfiguration
+import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetType
+import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
@@ -58,11 +63,11 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
       projectRootDir = baseProjectDir.root.toPath()
       if (forceEnableWorkspaceModel) {
         WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-          project = PlatformTestUtil.loadAndOpenProject(projectRootDir)
+          project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
         }
       }
       else {
-        project = PlatformTestUtil.loadAndOpenProject(projectRootDir)
+        project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
       }
       filePointerTracker = VirtualFilePointerTracker()
     }
@@ -183,6 +188,19 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   fun removeModule(module: Module) {
     runWriteActionAndWait { moduleManager.disposeModule(module) }
+  }
+
+  fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C): F {
+    val facetManager = FacetManager.getInstance(module)
+    val model = facetManager.createModifiableModel()
+    val facet = facetManager.createFacet(type, type.defaultFacetName, configuration, null)
+    model.addFacet(facet)
+    runWriteActionAndWait { model.commit() }
+    return facet
+  }
+
+  fun removeFacet(facet: Facet<*>) {
+    FacetUtil.deleteFacet(facet)
   }
 
   val sdkType: SdkTypeId

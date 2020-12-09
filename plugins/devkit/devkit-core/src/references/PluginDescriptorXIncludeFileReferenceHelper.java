@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  */
 public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHelper {
   @Override
-  public boolean isMine(Project project, @NotNull VirtualFile file) {
+  public boolean isMine(@NotNull Project project, @NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) &&
            PsiUtil.isPluginProject(project) &&
            DescriptorUtil.isPluginXml(PsiManager.getInstance(project).findFile(file));
@@ -39,7 +39,7 @@ public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHe
 
   @NotNull
   @Override
-  public Collection<PsiFileSystemItem> getContexts(Project project, @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
     return getRootsContainingPluginXmlFiles(project);
   }
 
@@ -53,7 +53,7 @@ public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHe
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
 
       Collection<VirtualFile> pluginXmlFilesInProductionScope =
-        DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project,
+        DomService.getInstance().getDomFileCandidates(IdeaPlugin.class,
                                                       PluginRelatedLocatorsUtils.getCandidatesScope(project));
 
       ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);

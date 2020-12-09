@@ -26,6 +26,7 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -53,7 +54,7 @@ data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
 private class PyCollectImportsTask(
   private val module: Module,
   private val psiManager: PsiManager,
-  @NlsContexts.ProgressTitle title: String
+  @NlsContexts.DialogTitle title: String
 ) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
 
   override fun compute(indicator: ProgressIndicator): Set<String> {
@@ -75,7 +76,7 @@ internal fun syncWithImports(module: Module) {
   val notificationGroup = NotificationGroup.balloonGroup("Sync Python requirements", PyBundle.message("python.requirements.balloon"))
   val sdk = PythonSdkUtil.findPythonSdk(module)
   if (sdk == null) {
-    val configureSdkAction = NotificationAction.createSimpleExpiring(PyBundle.message("configure.python.interpreter")) {
+    val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
       PySdkPopupFactory.createAndShow(module.project, module)
     }
     showNotification(notificationGroup,

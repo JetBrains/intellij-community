@@ -8,12 +8,12 @@ import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
@@ -243,6 +243,6 @@ public final class QuickFixPreviewPanelFactory {
 
   private static void appendTextToLabel(SimpleColoredComponent label,
                                         int problemsCount) {
-    label.append(problemsCount + " " + StringUtil.pluralize("problem", problemsCount) + ":");
+    label.append(LangBundle.message("label.n.problems", problemsCount));
   }
 }

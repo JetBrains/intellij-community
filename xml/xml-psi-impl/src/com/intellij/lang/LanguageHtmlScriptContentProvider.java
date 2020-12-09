@@ -20,10 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @deprecated use {@link com.intellij.lexer.HtmlEmbeddedContentSupport#getScriptTagEmbedmentInfo()} API
- */
-@Deprecated
 public class LanguageHtmlScriptContentProvider extends LanguageExtension<HtmlScriptContentProvider> {
   public final static LanguageHtmlScriptContentProvider INSTANCE = new LanguageHtmlScriptContentProvider();
 

@@ -31,8 +31,8 @@
       <option name="DOC_COMMENT_GUIDE" value="e8e8e8"/>
       <option name="DOC_COMMENT_LINK" value="4585be"/>
       <option name="INLINE_REFACTORING_SETTINGS_DEFAULT" value="d8d8d88c"/>
-      <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="cccccc8c" />
-      <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="cccccc8c" />
+      <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="B3B3B38c" />
+      <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="B3B3B38c" />
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
@@ -75,6 +75,8 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="d9e4f9"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="fffbcf"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="ffbfc3"/>
+
+      <option name="Table.hoverBackground" value="EDF5FC"/>
 
       <option name="ScrollBar.background" value="F5F5F5"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
@@ -1305,8 +1307,8 @@
       <option name="DOC_COMMENT_GUIDE" value="3b4b38"/>
       <option name="DOC_COMMENT_LINK" value="4f86cd"/>
       <option name="INLINE_REFACTORING_SETTINGS_DEFAULT" value="5959598c"/>
-      <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="6969698c"/>
-      <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="6969698c"/>
+      <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="7373738c"/>
+      <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="7373738c"/>
 
       <option name="MODIFIED_TAB_ICON" value="4083C9"/>
 
@@ -1315,6 +1317,8 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="41444a"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="484248"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="4c393a"/>
+
+      <option name="Table.hoverBackground" value="464A4D"/>
 
       <option name="ScrollBar.background" value="3F4244"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
@@ -1392,32 +1396,32 @@
       </option>
       <option name="CONSOLE_BLACK_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="ffffff" />
+          <option name="FOREGROUND" value="000000" />
         </value>
       </option>
       <option name="CONSOLE_BLUE_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="5394EC" />
+          <option name="FOREGROUND" value="3A91CF" />
         </value>
       </option>
       <option name="CONSOLE_BLUE_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="7EAEF1" />
+          <option name="FOREGROUND" value="1EA0FC" />
         </value>
       </option>
       <option name="CONSOLE_CYAN_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="299999" />
+          <option name="FOREGROUND" value="009191" />
         </value>
       </option>
       <option name="CONSOLE_CYAN_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="6CDADA" />
+          <option name="FOREGROUND" value="00FFFF" />
         </value>
       </option>
       <option name="CONSOLE_DARKGRAY_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="555555" />
+          <option name="FOREGROUND" value="4F4F4F" />
         </value>
       </option>
       <option name="CONSOLE_ERROR_OUTPUT">
@@ -1428,27 +1432,27 @@
       </option>
       <option name="CONSOLE_GRAY_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="999999" />
+          <option name="FOREGROUND" value="7A7A7A" />
         </value>
       </option>
       <option name="CONSOLE_GREEN_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="a8c023" />
+          <option name="FOREGROUND" value="548C26" />
         </value>
       </option>
       <option name="CONSOLE_GREEN_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="a8c023" />
+          <option name="FOREGROUND" value="61AB11" />
         </value>
       </option>
       <option name="CONSOLE_MAGENTA_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="ae8abe" />
+          <option name="FOREGROUND" value="A575BA" />
         </value>
       </option>
       <option name="CONSOLE_MAGENTA_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="FF99FF" />
+          <option name="FOREGROUND" value="E55CE5" />
         </value>
       </option>
       <option name="CONSOLE_NORMAL_OUTPUT">
@@ -1469,12 +1473,12 @@
       </option>
       <option name="CONSOLE_RED_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="FF6B68" />
+          <option name="FOREGROUND" value="DB5451" />
         </value>
       </option>
       <option name="CONSOLE_RED_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="FF8785" />
+          <option name="FOREGROUND" value="FF5452" />
         </value>
       </option>
       <option name="CONSOLE_SYSTEM_OUTPUT">
@@ -1484,12 +1488,12 @@
       </option>
       <option name="CONSOLE_WHITE_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="1f1f1f" />
+          <option name="FOREGROUND" value="FFFFFF" />
         </value>
       </option>
       <option name="CONSOLE_YELLOW_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="d6bf55" />
+          <option name="FOREGROUND" value="A89022" />
         </value>
       </option>
       <option name="CONSOLE_YELLOW_BRIGHT_OUTPUT">

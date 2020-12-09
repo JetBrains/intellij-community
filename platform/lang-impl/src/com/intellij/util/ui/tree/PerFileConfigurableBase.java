@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -45,6 +46,7 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -287,7 +289,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     TableUtil.editCellAt(myTable, myTable.getSelectedRow(), 0);
     TextFieldWithBrowseButton panel = ObjectUtils.tryCast(myTable.getEditorComponent(), TextFieldWithBrowseButton.class);
     if (panel != null) {
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (myTable.getEditorComponent() == panel) {
           panel.getButton().doClick();
         }
@@ -351,7 +353,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   public void reset() {
     myModel.data.clear();
     for (Map.Entry<VirtualFile, T> e : myMappings.getMappings().entrySet()) {
-      if (myMappings instanceof LanguagePerFileMappings && e.getKey() == null) continue;
+      if (e.getKey() == null) continue;
       myModel.data.add(pair(e.getKey(), e.getValue()));
     }
     for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
@@ -413,7 +415,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected int[] findRow(VirtualFile file, boolean strict, boolean all) {
-    TIntArrayList rows = new TIntArrayList();
+    IntArrayList rows = new IntArrayList();
     List<Pair<Object, T>> reversed = ContainerUtil.reverse(myModel.data);
     for (int i = 0, size = reversed.size(); i < size; i++) {
       Pair<Object, T> p = reversed.get(i);
@@ -422,7 +424,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         if (!all) break;
       }
     }
-    return rows.toNativeArray();
+    return rows.toIntArray();
   }
 
   private static String keyToString(Object o) {
@@ -621,7 +623,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private int clearSubdirectoriesOnDemandOrCancel(boolean keysToo, Object... keys) {
-    TIntArrayList rows = new TIntArrayList();
+    IntArrayList rows = new IntArrayList();
     boolean toOverride = false;
     for (int i = 0, size = myModel.data.size(); i < size; i++) {
       Pair<Object, T> p = myModel.data.get(i);
@@ -642,7 +644,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     int ret = !toOverride ? Messages.NO : askUserToOverrideSubdirectories();
     if (ret == Messages.CANCEL) return ret;
     int count = 0;
-    for (int i : rows.toNativeArray()) {
+    for (int i : rows.toIntArray()) {
       if (i >= 0 && ret == Messages.NO) continue;
       int index = (i >= 0 ? i : -i - 1) - count;
       if (canRemoveTarget(myModel.data.get(index).first)) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.ui
 
 import circlet.platform.api.TID
@@ -7,7 +8,7 @@ import com.google.common.cache.CacheBuilder
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -33,13 +34,13 @@ class SpaceImageLoader {
   private val lifetime = LifetimeSource()
 
   init {
-    space.workspace.forEach(lifetime) {
+    SpaceWorkspaceComponent.getInstance().workspace.forEach(lifetime) {
       imageCache.cleanUp()
     }
   }
 
   suspend fun loadImageAsync(imageTID: TID): Deferred<BufferedImage?>? {
-    val kCircletClient = space.workspace.value?.client ?: return null
+    val kCircletClient = SpaceWorkspaceComponent.getInstance().workspace.value?.client ?: return null
 
     val server: String = kCircletClient.server.removeSuffix("/")
     val imagesEndpoint = "${server}/d"

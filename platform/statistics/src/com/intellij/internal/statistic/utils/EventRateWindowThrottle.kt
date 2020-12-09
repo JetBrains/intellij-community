@@ -5,6 +5,10 @@ class EventsRateWindowThrottle(private var threshold: Int, private val periodMs:
   private var count: Int = 0
   private var lastPeriod: Long = startTime / periodMs
 
+  fun setThreshold(newThreshold: Int) {
+    threshold = newThreshold
+  }
+
   @Synchronized
   fun tryPass(now: Long): EventRateThrottleResult {
     val period = now / periodMs
@@ -32,8 +36,4 @@ class EventsRateWindowThrottle(private var threshold: Int, private val periodMs:
     count = 1
     lastPeriod = period
   }
-}
-
-enum class EventRateThrottleResult {
-  ACCEPT, DENY_AND_REPORT, DENY
 }

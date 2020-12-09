@@ -1,0 +1,12 @@
+def signing = [
+  storeF: "store.txt",
+  storeP: ["fed", "grt"],
+  keyF  : "key.file"
+  keyP  : ["cfv", "bnn"]
+]
+
+ext.vars = [
+  "minSdk" : 17,
+  "maxSdk" : ext.vars.minSdk,
+  "signing": signing
+]

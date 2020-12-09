@@ -15,6 +15,8 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -94,7 +96,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   // must be called on EDT
   private fun init() {
-    project.messageBus.connect().subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+    val messageBusConnection = project.messageBus.connect()
+    messageBusConnection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun stateChanged(toolWindowManager: ToolWindowManager) {
         toolWindowIdZBuffer.retainAll(toolWindowManager.toolWindowIdSet)
         val activeToolWindowId = toolWindowManager.activeToolWindowId
@@ -103,16 +106,33 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         }
       }
     })
+
+    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        processToolWindowContentManagers { _, contentManager ->
+          val contents = contentManager.contents
+          for (content in contents) {
+            val runContentDescriptor = getRunContentDescriptorByContent(content) ?: continue
+            if (runContentDescriptor.processHandler?.isProcessTerminated == true) {
+              contentManager.removeContent(content, true)
+            }
+          }
+        }
+      }
+    })
   }
 
-  private fun registerToolWindow(executor: Executor, toolWindowManager: ToolWindowManager): ContentManager {
+  @ApiStatus.Internal
+  fun registerToolWindow(executor: Executor): ContentManager {
+    val toolWindowManager = getToolWindowManager()
     val toolWindowId = executor.toolWindowId
     var toolWindow = toolWindowManager.getToolWindow(toolWindowId)
     if (toolWindow != null) {
       return toolWindow.contentManager
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(id = toolWindowId, icon = executor.toolWindowIcon))
+    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
+      id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       private var insideGetData = 0
@@ -357,7 +377,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       return dashboardManager.dashboardContentManager
     }
     else {
-      return registerToolWindow(executor, getToolWindowManager())
+      return registerToolWindow(executor)
     }
   }
 

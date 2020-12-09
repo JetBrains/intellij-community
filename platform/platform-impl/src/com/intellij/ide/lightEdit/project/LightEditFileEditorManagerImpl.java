@@ -44,7 +44,7 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
                                                                          @NotNull VirtualFile file,
                                                                          boolean focusEditor) {
-    LightEditService.getInstance().openFile(file, true);
+    LightEditService.getInstance().openFile(file);
     return getEditorsWithProviders(file);
   }
 
@@ -140,8 +140,7 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
 
   @Override
   protected @Nullable EditorWithProviderComposite getEditorComposite(@NotNull FileEditor editor) {
-    VirtualFile virtualFile = editor.getFile();
-    return virtualFile != null ? LightEditUtil.findEditorComposite(virtualFile) : null;
+    return LightEditUtil.findEditorComposite(editor);
   }
 
   @Override

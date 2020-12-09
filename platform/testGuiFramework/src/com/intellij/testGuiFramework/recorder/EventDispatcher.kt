@@ -34,7 +34,7 @@ import javax.swing.SwingUtilities
 
 object EventDispatcher {
 
-  private val LOG = Logger.getInstance("#${EventDispatcher::class.qualifiedName}")
+  private val LOG = Logger.getInstance(EventDispatcher::class.java)
   private val MAC_NATIVE_ACTIONS = arrayOf("ShowSettings", "EditorEscape")
 
   object SelectionProcessor {

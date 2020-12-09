@@ -8,6 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
@@ -31,8 +32,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
 
   public static TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey key) {
     if (key == null) return base;
-    TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
-    System.arraycopy(base, 0, result, 0, base.length);
+    TextAttributesKey[] result = Arrays.copyOf(base, base.length + 1);
     result[base.length] = key;
     return result;
   }
@@ -50,9 +50,8 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     if (t1 != null) add++;
     if (t2 != null) add++;
     if (add == 0) return base;
-    TextAttributesKey[] result = new TextAttributesKey[base.length + add];
+    TextAttributesKey[] result = Arrays.copyOf(base, base.length + add);
     add = base.length;
-    System.arraycopy(base, 0, result, 0, base.length);
     if (t1 != null) result[add++] = t1;
     if (t2 != null) result[add] = t2;
     return result;

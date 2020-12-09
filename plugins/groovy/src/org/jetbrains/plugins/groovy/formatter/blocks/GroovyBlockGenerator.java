@@ -6,7 +6,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -51,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -60,8 +60,7 @@ import static com.intellij.formatting.Indent.*;
 import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.flattenQualifiedReference;
 import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.shouldHandleAsSimpleClosure;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * Utility class to generate myBlock hierarchy
@@ -567,10 +566,16 @@ public class GroovyBlockGenerator {
   }
 
   private boolean fieldGroupEnded(PsiElement psi) {
-    if (!myContext.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS) return true;
+    if (!myContext.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS) {
+      return true;
+    }
+    int maxBlankLines = myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS;
+    if (maxBlankLines == 0) {
+      return false;
+    }
     PsiElement prevSibling = psi.getPrevSibling();
     return prevSibling != null &&
-           StringUtil.countChars(prevSibling.getText(), '\n') >= myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS;
+           StringUtil.countChars(prevSibling.getText(), '\n') > 1;
   }
 
   private static List<LeafPsiElement> getSpockTable(GrStatement statement) {
@@ -650,9 +655,22 @@ public class GroovyBlockGenerator {
 
     return TokenSets.KEYWORDS.contains(node.getElementType()) ||
            TokenSets.BRACES.contains(node.getElementType()) &&
-           !PlatformPatterns.psiElement().withText(")").withParent(GrArgumentList.class).afterLeaf(",").accepts(node.getPsi());
+           !isClosingParenthesisAfterTrailingComma(node);
   }
 
+  private static boolean isClosingParenthesisAfterTrailingComma(ASTNode node) {
+    if (node.getElementType() != T_RPAREN) {
+      return false;
+    }
+    if (!(node.getTreeParent().getPsi() instanceof GrArgumentList)) {
+      return false;
+    }
+    PsiElement prev = PsiUtilKt.skipWhiteSpacesAndNewLinesBackward(node.getPsi());
+    if (prev == null) {
+      return false;
+    }
+    return prev.getNode().getElementType() == T_COMMA;
+  }
 
   private List<Block> generateForMultiLineString() {
     final ArrayList<Block> subBlocks = new ArrayList<>();

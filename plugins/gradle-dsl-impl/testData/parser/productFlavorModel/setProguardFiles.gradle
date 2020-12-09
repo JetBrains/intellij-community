@@ -1,0 +1,5 @@
+android {
+  defaultConfig {
+    setProguardFiles([getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'])
+  }
+}

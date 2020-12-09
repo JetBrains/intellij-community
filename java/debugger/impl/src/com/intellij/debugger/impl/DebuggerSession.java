@@ -41,6 +41,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
@@ -262,8 +263,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         return JavaDebuggerBundle.message("status.app.running");
       case WAITING_ATTACH:
         RemoteConnection connection = getProcess().getConnection();
-        return JavaDebuggerBundle.message(connection.isServerMode() ? "status.listening" : "status.connecting",
-                                          DebuggerUtilsImpl.getConnectionDisplayName(connection));
+        return DebuggerUtilsImpl.getConnectionWaitStatus(connection);
       case PAUSED:
         return JavaDebuggerBundle.message("status.paused");
       case WAIT_EVALUATION:
@@ -434,10 +434,15 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   private void attach() throws ExecutionException {
     RemoteConnection remoteConnection = myDebugEnvironment.getRemoteConnection();
+
     myDebugProcess.attachVirtualMachine(myDebugEnvironment, this);
-    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH,
-                                 JavaDebuggerBundle.message("status.waiting.attach",
-                                                            DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection)));
+
+    StringBuilder description = new StringBuilder(JavaDebuggerBundle.message("status.waiting.attach"));
+    if (!(remoteConnection instanceof RemoteConnectionStub)) {
+      String connectionName = DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection);
+      description.append("; ").append(JavaDebuggerBundle.message("status.waiting.attach.address", connectionName));
+    }
+    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
   }
 
   private class MyDebugProcessListener extends DebugProcessAdapterImpl {
@@ -509,10 +514,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
           }
           else {
             // heuristics: try to pre-select EventDispatchThread
-            currentThread = allThreads.stream().filter(thread -> ThreadState.isEDT(thread.name())).findFirst().orElse(null);
+            currentThread = ContainerUtil.find(allThreads, thread -> ThreadState.isEDT(thread.name()));
             if (currentThread == null) {
               // heuristics: try to pre-select main thread
-              currentThread = allThreads.stream().filter(thread -> "main".equals(thread.name())).findFirst().orElse(null);
+              currentThread = ContainerUtil.find(allThreads, thread -> "main".equals(thread.name()));
             }
             if (currentThread == null) {
               // heuristics: display the first thread with RUNNABLE status

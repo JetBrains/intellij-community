@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component>
-  <exclude-output />
+<component inheritJdk="true">
   <contentEntry url="file://$MODULE_DIR$" />
   <lib name="test.jar" scope="COMPILE">
     <srcroot url="jar://$variable$/test.jar!/" />
-    <srcroot url="jar://$srcvariable$/test.jar!/" bind="false" />
+    <srcroot bind="false" url="jar://$srcvariable$/test.jar!/" />
   </lib>
 </component>

@@ -150,7 +150,8 @@ public final class ExportHTMLAction extends AnAction implements DumbAware {
       InspectionsResultUtil.writeInspectionResult(view.getProject(), shortName, wrappers, outputDirectory, (wrapper -> view.getGlobalInspectionContext().getPresentation(wrapper)));
     }
 
-    InspectionsResultUtil.writeProfileName(outputDirectory, profile.getName());
+    final Path descriptionsFile = outputDirectory.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
+    InspectionsResultUtil.describeInspections(descriptionsFile, profile.getName(), profile);
   }
 
 

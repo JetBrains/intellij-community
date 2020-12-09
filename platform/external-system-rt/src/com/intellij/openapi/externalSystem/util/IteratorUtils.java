@@ -54,7 +54,7 @@ public final class IteratorUtils {
         myToProcess.removeFirst();
         return hasNext();
       }
-      return !myToProcess.isEmpty();
+      return true;
     }
 
     @Override

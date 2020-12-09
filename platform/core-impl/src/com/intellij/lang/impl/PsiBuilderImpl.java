@@ -31,6 +31,7 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.Nls;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -84,7 +86,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private IElementType myCachedTokenType;
 
-  private final Int2ObjectOpenHashMap<LazyParseableToken> myChameleonCache = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<LazyParseableToken> myChameleonCache = new Int2ObjectOpenHashMap<>();
   private final MarkerPool myPool = new MarkerPool(this);
   private final MarkerOptionalData myOptionalData = new MarkerOptionalData();
   private final MarkerProduction myProduction = new MarkerProduction(myPool, myOptionalData);
@@ -589,7 +591,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       int[] lexStarts = new int[tokenCount + 1];
       System.arraycopy(getBuilder().myLexStarts, myStartIndex, lexStarts, 0, tokenCount);
       int diff = getBuilder().myLexStarts[myStartIndex];
-      for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
+      for(int i = 0; i < tokenCount; ++i) {
+        lexStarts[i] -= diff;
+      }
       lexStarts[tokenCount] = getEndOffset() - getStartOffset();
 
       IElementType[] lexTypes = new IElementType[tokenCount + 1];
@@ -1320,12 +1324,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static final class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
-    private final TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> myCustom;
-    private final List<CustomLanguageASTComparator> myCustomLanguageASTComparators;
+    private final TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>
+      myCustom;
+    private final @NotNull List<? extends CustomLanguageASTComparator> myCustomLanguageASTComparators;
     private final MyTreeStructure myTreeStructure;
 
-    private MyComparator(TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
-                         @NotNull List<CustomLanguageASTComparator> customLanguageASTComparators,
+    private MyComparator(TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
+                         @NotNull List<? extends CustomLanguageASTComparator> customLanguageASTComparators,
                          @NotNull MyTreeStructure treeStructure) {
       myCustom = custom;
       myCustomLanguageASTComparators = customLanguageASTComparators;
@@ -1579,9 +1584,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         nodes = old;
       }
       else if (count >= old.length) {
-        LighterASTNode[] newStore = new LighterASTNode[count * 3 / 2];
-        System.arraycopy(old, 0, newStore, 0, count);
-        nodes = newStore;
+        nodes = Arrays.copyOf(old, count * 3 / 2);
       }
     }
 

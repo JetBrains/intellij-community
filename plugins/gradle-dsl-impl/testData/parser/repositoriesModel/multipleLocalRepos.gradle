@@ -1,0 +1,15 @@
+allprojects {
+ repositories {
+
+  maven {
+    name "test2"
+    url "file:/some/other/repo"
+  }
+  maven {
+    url "file:/the/best/repo"
+  }
+  maven {
+    url "file:/some/repo"
+  }
+ }
+}

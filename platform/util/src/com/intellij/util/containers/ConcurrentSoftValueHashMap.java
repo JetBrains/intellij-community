@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,7 @@ import java.lang.ref.SoftReference;
  * Concurrent strong key:K -> soft value:V map
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * Use {@link ContainerUtil#createConcurrentSoftValueMap()} to create this
+ * Use {@link CollectionFactory#createConcurrentSoftValueMap()} to create this
  */
 final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
   private static final class MySoftReference<K, V> extends SoftReference<V> implements ValueReference<K, V> {

@@ -20,6 +20,7 @@ import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.net.URL;
 import java.util.*;
 
@@ -168,9 +169,8 @@ public class PyEnvTaskRunner {
   @NotNull
   protected Sdk getSdk(@NotNull final String executable, @NotNull final PyTestTask testTask) {
     try {
-      final URL rootUrl = new URL(String.format("file:///%s", executable));
-      final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
-      assert url != null : "No file " + rootUrl;
+      final VirtualFile url = VfsUtil.findFileByIoFile(new File(executable), true);
+      assert url != null : "No file " + executable;
       return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
     }
     catch (Exception ex) {

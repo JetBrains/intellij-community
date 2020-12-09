@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.SelectionWatcher;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.PlatformColors;
@@ -79,7 +80,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     }
   }
 
-  private void putToolTip(Component relativeTo, Point pnt, @Nullable String text) {
+  private void putToolTip(Component relativeTo, Point pnt, @Nullable @NlsSafe String text) {
     if (text == null) {
       if (myToolTip.getParent() == this) {
         remove(myToolTip);

@@ -10,6 +10,7 @@ import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -37,6 +38,8 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
+import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -94,8 +97,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,16 +110,17 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class ExternalSystemUtil {
   private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
   @NotNull private static final Map<String, String> RUNNER_IDS = new HashMap<>();
 
-  public static final TObjectHashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
-    new TObjectHashingStrategy<Pair<ProjectSystemId, File>>() {
+  public static final HashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
+    new HashingStrategy<>() {
       @Override
-      public int computeHashCode(Pair<ProjectSystemId, File> object) {
+      public int hashCode(Pair<ProjectSystemId, File> object) {
         return object.first.hashCode() + FileUtil.fileHashCode(object.second);
       }
 
@@ -389,7 +394,8 @@ public final class ExternalSystemUtil {
           });
         }
 
-        ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
+        ExternalSystemProcessingManager processingManager =
+          ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
         if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
           if (callback != null) {
             callback.onFailure(resolveProjectTask.getId(), ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
@@ -445,7 +451,12 @@ public final class ExternalSystemUtil {
                 public void actionPerformed(@NotNull AnActionEvent e) {
                   Presentation p = e.getPresentation();
                   p.setEnabled(false);
-                  refreshProject(externalProjectPath, importSpec);
+                  Runnable rerunRunnable = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getRerunAction() : null;
+                  if (rerunRunnable == null) {
+                    refreshProject(externalProjectPath, importSpec);
+                  } else {
+                    rerunRunnable.run();
+                  }
                 }
               };
               String systemId = id.getProjectSystemId().getReadableName();
@@ -468,7 +479,9 @@ public final class ExternalSystemUtil {
                   contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
                   contentDescriptor.setAutoFocusContent(reportRefreshError);
                   return contentDescriptor;
-                });
+                })
+                .withActions(consoleManager.getCustomActions(project, resolveProjectTask, null))
+                .withContextActions(consoleManager.getCustomContextActions(project, resolveProjectTask, null));
               Filter[] filters = consoleManager.getCustomExecutionFilters(project, resolveProjectTask, null);
               Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
               eventDispatcher.onEvent(id, new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.event.message.syncing")));
@@ -654,7 +667,7 @@ public final class ExternalSystemUtil {
 
   @ApiStatus.Internal
   @NotNull
-  public static FailureResultImpl createFailureResult(@NotNull String title,
+  public static FailureResultImpl createFailureResult(@NotNull @Nls(capitalization = Sentence) String title,
                                                       @NotNull Exception exception,
                                                       @NotNull ProjectSystemId externalSystemId,
                                                       @NotNull Project project,
@@ -696,7 +709,11 @@ public final class ExternalSystemUtil {
       notificationData.getFilePath() != null ? findLocalFileByPath(notificationData.getFilePath()) : null;
 
     final Navigatable navigatable;
-    if (notificationData.getNavigatable() == null || notificationData.getNavigatable() instanceof NonNavigatable) {
+    Navigatable buildIssueNavigatable = exception instanceof BuildIssueException ? ((BuildIssueException)exception).getBuildIssue().getNavigatable(project) : null;
+    if (!isNullOrNonNavigatable(buildIssueNavigatable)) {
+      navigatable = buildIssueNavigatable;
+    }
+    else if (isNullOrNonNavigatable(notificationData.getNavigatable())) {
       navigatable = virtualFile != null ? new OpenFileDescriptor(project, virtualFile, line, column) : NonNavigatable.INSTANCE;
     }
     else {
@@ -715,8 +732,18 @@ public final class ExternalSystemUtil {
         notificationData.getTitle(), notificationData.getMessage(),
         notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
     }
-    return new FailureResultImpl(
-      Collections.singletonList(new FailureImpl(notificationData.getMessage(), exception, notification, navigatable)));
+    FailureImpl failure;
+    if (exception instanceof BuildIssueException) {
+      BuildIssue buildIssue = ((BuildIssueException)exception).getBuildIssue();
+      failure = new FailureImpl(buildIssue.getTitle(), notificationData.getMessage(), Collections.emptyList(), exception, notification, navigatable);
+    } else {
+      failure = new FailureImpl(notificationData.getMessage(), exception, notification, navigatable);
+    }
+    return new FailureResultImpl(Collections.singletonList(failure));
+  }
+
+  private static boolean isNullOrNonNavigatable(@Nullable Navigatable navigatable) {
+    return navigatable == null || navigatable == NonNavigatable.INSTANCE;
   }
 
   public static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
@@ -1018,7 +1045,7 @@ public final class ExternalSystemUtil {
           }
           return;
         }
-        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, true);
+        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, true);
         if (importResultCallback != null) {
           importResultCallback.consume(true);
         }
@@ -1130,7 +1157,7 @@ public final class ExternalSystemUtil {
       if (externalProject == null) {
         return;
       }
-      ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, true);
+      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject, true);
     }
 
     @Override

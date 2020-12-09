@@ -6,7 +6,7 @@
 
 
 #import <Foundation/Foundation.h>
-#import <JavaVM/jni.h>
+#import <JavaNativeFoundation/jnf_fallback_jni.h>
 
 
 @interface Launcher : NSObject {
@@ -19,3 +19,12 @@ BOOL validationJavaVersion();
 
 - (void) launch;
 @end
+
+NSString *getExecutable();
+NSString *jvmVersion(NSBundle *bundle);
+NSString *requiredJvmVersions();
+NSString *getPropertiesFilePath();
+NSString *getPreferencesFolderPath();
+BOOL meetMinRequirements(NSString *vmVersion);
+BOOL satisfies(NSString *vmVersion, NSString *requiredVersion);
+typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, JNIEnv **env, void *args);

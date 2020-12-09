@@ -19,6 +19,7 @@ import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.*;
@@ -314,10 +315,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @NotNull
   public static PsiFile copyFile(@NotNull PsiFile file, @NotNull StringBuilder fileContentWithoutKey) {
-    final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(file.getProject());
-    Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile());
+    PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(file.getProject());
+    FileType fileType = file.getFileType();
+    Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile(), fileType);
     PsiFile copy = language != null ? psiFileFactory.createFileFromText(file.getName(), language, fileContentWithoutKey, false, true)
-                                    : psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
+                                    : psiFileFactory.createFileFromText(file.getName(), fileType, fileContentWithoutKey);
 
     if (copy instanceof PsiFileImpl) {
       ((PsiFileImpl)copy).setOriginalFile(TemplateLanguageUtil.getBaseFile(file));

@@ -75,6 +75,7 @@ public class ProjectSettingsPanel {
     ColumnInfo[] columns = {new ScopeColumn(), new SettingColumn()};
     myScopeMappingModel = new ListTableModel<>(columns, new ArrayList<>(), 0);
     myScopeMappingTable = new TableView<>(myScopeMappingModel);
+    myScopeMappingTable.setShowGrid(false);
 
     reloadCopyrightProfiles();
     myProfilesComboBox.setRenderer(SimpleListCellRenderer.create(CopyrightBundle.message("copyright.no.text"), CopyrightProfile::getName));

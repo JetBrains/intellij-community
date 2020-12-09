@@ -15,12 +15,9 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.JavaPsiBoxingUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import one.util.streamex.StreamEx;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -195,8 +192,8 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       PsiLoopStatement loop =
         PsiTreeUtil.getParentOfType(expression, PsiLoopStatement.class, false, PsiClass.class, PsiLambdaExpression.class, PsiMethod.class);
       if (loop != null
-          && StreamEx.of(scopeElements).anyMatch(scopeElement -> PsiTreeUtil.isAncestor(scopeElement, loop, false))
-                           && !PsiTreeUtil.isAncestor(loop, boxingInfo.myVariable, true)) {
+          && ContainerUtil.or(scopeElements, scopeElement -> PsiTreeUtil.isAncestor(scopeElement, loop, false))
+          && !PsiTreeUtil.isAncestor(loop, boxingInfo.myVariable, true)) {
         impact *= IN_LOOP_OPERATION_MULTIPLIER;
       }
       return impact;
@@ -251,12 +248,28 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       PsiCallExpression callExpression = (PsiCallExpression)grandParent;
       PsiMethod method = callExpression.resolveMethod();
       if (method == null) return null;
+      if (!changedCallResolvesToSameMethod(callExpression, arguments[argumentsIndex], method)) return null;
       PsiParameter[] parameters = method.getParameterList().getParameters();
       int parameterIndex = parameters.length < argumentsIndex + 1 ? parameters.length - 1 : argumentsIndex;
       if (parameterIndex < 0) return null;
       PsiParameter parameter = parameters[parameterIndex];
       PsiType type = parameter.getType();
       return type instanceof PsiPrimitiveType ? -1 : 1;
+    }
+
+    private static boolean changedCallResolvesToSameMethod(PsiCallExpression call, PsiExpression argument, PsiMethod method) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
+      final PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) return false;
+      final int indexOfArgument = ArrayUtil.indexOf(argumentList.getExpressions(), argument);
+      final PsiCallExpression callCopy = (PsiCallExpression)call.copy();
+      final PsiExpression argumentCopy = Objects.requireNonNull(callCopy.getArgumentList()).getExpressions()[indexOfArgument];
+      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(argumentCopy.getType());
+      if (unboxedType == null) return false;
+      final PsiExpression argumentWithNewType =
+        factory.createExpressionFromText("(" + unboxedType.getCanonicalText() + ")(" + argumentCopy.getText() + ")", argumentCopy);
+      argumentCopy.replace(argumentWithNewType);
+      return callCopy.resolveMethod() == method;
     }
 
     /**

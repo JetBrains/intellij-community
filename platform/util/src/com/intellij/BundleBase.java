@@ -10,13 +10,13 @@ import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-/**
- * @author yole
- */
+@ApiStatus.NonExtendable
+@ApiStatus.Internal
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
   public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
@@ -40,7 +40,7 @@ public abstract class BundleBase {
    * {@code {0}..{params.length-1}} will be substituted using passed params array. The remaining parameters
    * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
    * could be applied once more.
-   * 
+   *
    * @param bundle resource bundle to find the message in
    * @param key resource key
    * @param unassignedParams number of unassigned parameters
@@ -52,8 +52,7 @@ public abstract class BundleBase {
                                            int unassignedParams,
                                            Object @NotNull ... params) {
     if (unassignedParams <= 0) throw new IllegalArgumentException();
-    Object[] newParams = new Object[params.length + unassignedParams];
-    System.arraycopy(params, 0, newParams, 0, params.length);
+    Object[] newParams = Arrays.copyOf(params, params.length + unassignedParams);
     @NonNls String prefix = "#$$$TemplateParameter$$$#";
     @NonNls String suffix = "#$$$/TemplateParameter$$$#";
     for (int i = 0; i < unassignedParams; i++) {
@@ -96,7 +95,7 @@ public abstract class BundleBase {
     if (bundle == null) return defaultValue;
 
     boolean resourceFound = true;
-    
+
     String value;
     try {
       value = bundle.getString(key);

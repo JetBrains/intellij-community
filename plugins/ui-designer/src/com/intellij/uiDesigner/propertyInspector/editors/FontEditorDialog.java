@@ -73,7 +73,8 @@ public class FontEditorDialog extends DialogWrapper {
     myFontSizeEdit.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        myFontSizeList.setSelectedValue(myFontSizeEdit.getValue().toString(), true);
+        @NlsSafe String value = myFontSizeEdit.getValue().toString();
+        myFontSizeList.setSelectedValue(value, true);
         updateValue();
       }
     });

@@ -2,14 +2,18 @@
 package com.intellij.ide.impl
 
 import com.intellij.codeInsight.actions.ReaderModeProvider
-import com.intellij.codeInsight.actions.ReaderModeSettings
 import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider
+import com.intellij.codeInsight.actions.ReaderModeSettings
 import com.intellij.codeInsight.hints.InlayHintsPassFactory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 
 class JavaInlaysReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
+  override fun applyModeChanged(project: Project,
+                                editor: Editor,
+                                readerMode: Boolean,
+                                fileIsOpenAlready: Boolean,
+                                preferGlobalSettings: Boolean) {
     InlayHintsPassFactory.setAlwaysEnabledHintsProviders(editor,if (readerMode && ReaderModeSettings.instance(project).showInlaysHints)
     { listOf(JavaCodeVisionProvider.getSettingsKey()) } else { null })
   }

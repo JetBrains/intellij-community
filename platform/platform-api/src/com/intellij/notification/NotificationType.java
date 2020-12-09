@@ -19,6 +19,7 @@ package com.intellij.notification;
  * @author spleaner
  */
 public enum NotificationType {
+  IDE_UPDATE,
   INFORMATION,
   WARNING,
   ERROR

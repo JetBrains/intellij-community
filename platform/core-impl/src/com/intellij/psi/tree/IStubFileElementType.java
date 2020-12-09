@@ -1,24 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Arrays;
 
-/*
- * @author max
- */
 public class IStubFileElementType<T extends PsiFileStub> extends StubFileElementType<T> {
-  private static volatile int templateStubVersion = -1;
+  private static final AtomicClearableLazyValue<Integer> TEMPLATE_STUB_BASE_VERSION = new AtomicClearableLazyValue<Integer>() {
+    @Override
+    protected @NotNull Integer compute() {
+      return calcTemplateStubBaseVersion();
+    }
+  };
+
   public IStubFileElementType(final Language language) {
     super(language);
   }
@@ -26,8 +31,9 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   public IStubFileElementType(@NonNls final String debugName, final Language language) {
     super(debugName, language);
     if (hasNonTrivialExternalId() && !isOutOfOurControl()) {
-      IStubElementType.checkNotInstantiatedTooLate();
+      IStubElementType.checkNotInstantiatedTooLate(getClass());
     }
+    dropTemplateStubBaseVersion();
   }
 
   private boolean hasNonTrivialExternalId() {
@@ -46,7 +52,7 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
    * @return stub version
    */
   public int getStubVersion() {
-    return getLanguage() instanceof TemplateLanguage ? getTemplateStubVersion() : 0;
+    return getLanguage() instanceof TemplateLanguage ? TEMPLATE_STUB_BASE_VERSION.getValue() : 0;
   }
 
   public StubBuilder getBuilder() {
@@ -78,14 +84,18 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
     return true;
   }
 
-  public static int getTemplateStubVersion() {
-    if (templateStubVersion == -1) templateStubVersion = calcStubVersion();
-    return templateStubVersion;
+  public static int getTemplateStubBaseVersion() {
+    return TEMPLATE_STUB_BASE_VERSION.getValue().intValue();
   }
 
-  private static int calcStubVersion() {
+  private static int calcTemplateStubBaseVersion() {
     IElementType[] dataElementTypes = IElementType.enumerate(
       (elementType) -> elementType instanceof IStubFileElementType && !(elementType.getLanguage() instanceof TemplateLanguage));
     return Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType)e).getStubVersion()).sum();
+  }
+
+  @ApiStatus.Internal
+  public static void dropTemplateStubBaseVersion() {
+    TEMPLATE_STUB_BASE_VERSION.drop();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.actionSystem.DataKey
@@ -16,7 +16,7 @@ import javax.swing.tree.DefaultTreeModel
 
 private val PREDEFINED_PRIORITIES = mapOf(DIRECTORY_GROUPING to 10, MODULE_GROUPING to 20, REPOSITORY_GROUPING to 30)
 
-class ChangesGroupingSupport(val project: Project, source: Any, val showConflictsNode: Boolean) {
+open class ChangesGroupingSupport(val project: Project, source: Any, val showConflictsNode: Boolean) {
   private val changeSupport = PropertyChangeSupport(source)
   private val groupingConfig: MutableMap<String, Boolean>
 
@@ -66,10 +66,15 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
   fun setGroupingKeysOrSkip(groupingKeys: Set<String>) {
     groupingConfig.entries.forEach { it.setValue(it.key in groupingKeys) }
   }
-  fun isAvailable(groupingKey: String) = findFactory(groupingKey) != null
+  open fun isAvailable(groupingKey: String) = findFactory(groupingKey) != null
 
-  fun addPropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.addPropertyChangeListener(listener)
-  fun removePropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.removePropertyChangeListener(listener)
+  fun addPropertyChangeListener(listener: PropertyChangeListener) {
+    changeSupport.addPropertyChangeListener(listener)
+  }
+
+  fun removePropertyChangeListener(listener: PropertyChangeListener) {
+    changeSupport.removePropertyChangeListener(listener)
+  }
 
   companion object {
     @JvmField
@@ -87,7 +92,7 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
     }
 
     private fun findFactory(key: String): ChangesGroupingPolicyFactory? {
-      return KeyedExtensionFactory.findByKey(key, ChangesGroupingPolicyFactory.EP_NAME, ApplicationManager.getApplication().picoContainer)
+      return KeyedExtensionFactory.findByKey(key, ChangesGroupingPolicyFactory.EP_NAME, ApplicationManager.getApplication())
     }
   }
 }

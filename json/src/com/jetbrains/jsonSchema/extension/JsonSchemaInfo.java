@@ -26,7 +26,7 @@ import java.util.Set;
 
 public class JsonSchemaInfo {
   @Nullable private final JsonSchemaFileProvider myProvider;
-  @Nullable private final String myUrl;
+  @Nullable @NlsSafe private final String myUrl;
   @Nullable private @Nls String myName = null;
   @Nullable private @Nls String myDocumentation = null;
   @NotNull  private final static Set<String> myDumbNames = ContainerUtil.set(
@@ -92,6 +92,10 @@ public class JsonSchemaInfo {
       return sanitizeName(providerName);
     }
 
+    if (getName() != null) {
+      return getName();
+    }
+
     assert myUrl != null;
 
     if (myWeirdNames.containsKey(myUrl)) {
@@ -102,9 +106,8 @@ public class JsonSchemaInfo {
 
     return ContainerUtil.reverse(StringUtil.split(url, "/"))
       .stream()
-      .map(p -> sanitizeName(p))
       .filter(p -> !isVeryDumbName(p))
-      .findFirst().orElse(sanitizeName(myUrl));
+      .findFirst().orElse(myUrl);
   }
 
   @Nullable

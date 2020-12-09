@@ -68,6 +68,7 @@ import java.beans.PropertyChangeEvent;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
@@ -82,6 +83,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int ROOT_NAME_MAX_WIDTH = 300;
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
+
+  @SuppressWarnings("UseJBColor")
+  private static final Color DEFAULT_HOVERED_BACKGROUND = new JBColor(ColorUtil.withAlpha(new Color(0xC3D2E3), 0.4),
+                                                                      new Color(0x464A4D));
+  private static final Color HOVERED_BACKGROUND = JBColor.namedColor("VersionControl.Log.Commit.hoveredBackground",
+                                                                     DEFAULT_HOVERED_BACKGROUND);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final String myId;
@@ -608,16 +615,28 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
-
-    VcsCommitStyle defaultStyle = createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
-                                              baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+    VcsCommitStyle style = createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
+                                       baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
     int commitId = rowInfo.getCommit();
     VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
-    if (details == null) return defaultStyle;
+    if (details != null) {
+      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, selected));
+      style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
+    }
 
-    List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, selected));
-    return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
+    if (!selected && row == getHoveredRow(this)) {
+      Color background = Objects.requireNonNull(style.getBackground());
+      VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(getHoveredBackgroundColor(background));
+      style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));
+    }
+
+    return style;
+  }
+
+  @Override
+  protected @Nullable Color getHoveredRowBackground() {
+    return null; // do not overwrite renderer background
   }
 
   public void viewportSet(JViewport viewport) {
@@ -732,6 +751,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public boolean isResizingColumns() {
     return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+  }
+
+  @NotNull
+  private static Color getHoveredBackgroundColor(@NotNull Color background) {
+    int alpha = HOVERED_BACKGROUND.getAlpha();
+    if (alpha == 255) return HOVERED_BACKGROUND;
+    if (alpha == 0) return background;
+    return ColorUtil.mix(new Color(HOVERED_BACKGROUND.getRGB()), background, alpha / 255.0);
   }
 
   @NotNull

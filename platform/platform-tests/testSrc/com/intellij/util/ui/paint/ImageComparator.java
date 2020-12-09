@@ -9,8 +9,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferInt;
 
-import static junit.framework.TestCase.assertTrue;
-
 /**
  * @author tav
  */
@@ -107,8 +105,9 @@ public final class ImageComparator {
    */
   public void compareAndAssert(@NotNull Image img1, @NotNull Image img2, @Nullable String errMsgPrefix) {
     StringBuilder sb = new StringBuilder(errMsgPrefix == null ? "images mismatch: " : errMsgPrefix);
-    boolean equal = compare(img1, img2, sb);
-    assertTrue(sb.toString(), equal);
+    if (!compare(img1, img2, sb)) {
+      throw new AssertionError(sb.toString());
+    }
   }
 
   /**

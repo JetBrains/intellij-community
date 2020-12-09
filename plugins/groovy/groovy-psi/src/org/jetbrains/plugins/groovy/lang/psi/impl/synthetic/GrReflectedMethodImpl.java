@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -282,7 +283,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     if (aClass == null) return GrReflectedMethod.EMPTY_ARRAY;
 
     PsiClass enclosingClass = aClass.getContainingClass();
-    if (enclosingClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
+    if (enclosingClass != null && !GrModifierListUtil.hasCodeModifierProperty(aClass, PsiModifier.STATIC)) {
       GrParameter[] parameters = GrInnerClassConstructorUtil
         .addEnclosingInstanceParam(method, enclosingClass, method.getParameterList().getParameters(), false);
       GrReflectedMethod[] reflectedMethods = doCreateReflectedMethods(method, null, parameters);

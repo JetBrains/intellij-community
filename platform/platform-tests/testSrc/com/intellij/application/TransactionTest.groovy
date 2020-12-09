@@ -17,6 +17,7 @@ package com.intellij.application
 
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -24,7 +25,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
@@ -33,7 +33,6 @@ import org.junit.Assume
 import javax.swing.*
 import java.awt.*
 import java.util.List
-
 /**
  * @author peter
  */
@@ -102,7 +101,7 @@ class TransactionTest extends LightPlatformTestCase {
   private void assertWritingProhibited() {
     boolean writeActionFailed = false
     def disposable = Disposer.newDisposable('assertWritingProhibited')
-    LoggedErrorProcessor.instance.disableStderrDumping(disposable)
+    DefaultLogger.disableStderrDumping(disposable)
     try {
       app.runWriteAction { makeRootsChange() }
     }
@@ -232,7 +231,7 @@ class TransactionTest extends LightPlatformTestCase {
   }
 
   void "test no synchronous transactions inside invokeLater"() {
-    LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)
+    DefaultLogger.disableStderrDumping(testRootDisposable)
     SwingUtilities.invokeLater {
       log << '1'
       try {
@@ -303,7 +302,7 @@ class TransactionTest extends LightPlatformTestCase {
   }
 
   void "test writing is allowed inside invokeLater on not yet shown modal dialog component"() {
-    Assume.assumeFalse(GraphicsEnvironment.headless)
+    Assume.assumeFalse("Can't run in headless environment", GraphicsEnvironment.headless)
 
     app.invokeLater {
       assert guard.writingAllowed

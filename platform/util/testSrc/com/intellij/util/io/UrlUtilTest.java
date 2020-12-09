@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.io;
 
@@ -17,6 +17,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 
+import static com.intellij.ide.plugins.PluginDescriptorLoader.urlToFilePath;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
@@ -54,6 +55,20 @@ public class UrlUtilTest {
     assertNotNull(pair);
     assertEquals(expected1, pair.first);
     assertEquals(expected2, pair.second);
+  }
+
+  @Test
+  public void urlToPath() {
+    String p1 = urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar!/", false);
+    String p2 = urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar", false);
+    String p3 = urlToFilePath("C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar", false);
+    assertThat(p1).isEqualTo(p2);
+    assertThat(p1).isEqualTo(p3);
+    assertThat(p1).isEqualTo("C:\\Program Files\\JetBrains\\IntelliJ IDEA 211.2638\\lib\\resources.jar");
+    assertThat(urlToFilePath("file:/C:\\Program%20Files\\JetBrains\\resources.jar!/", true)).isEqualTo("C:\\Program Files\\JetBrains\\resources.jar");
+    assertThat(urlToFilePath("file:/Users/foo/r.jar", false)).isEqualTo("/Users/foo/r.jar");
+    assertThat(urlToFilePath("file:/Users/path with space/r.jar", false)).isEqualTo("/Users/path with space/r.jar");
+    assertThat(urlToFilePath("/Users/path with space/r.jar", false)).isEqualTo("/Users/path with space/r.jar");
   }
 
   @Test

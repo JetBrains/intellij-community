@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -47,10 +48,7 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +96,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Map<VirtualFile, IntArrayList> files2lines = CollectionFactory.createSmallMemoryFootprintMap();
+        Map<VirtualFile, IntList> files2lines = CollectionFactory.createSmallMemoryFootprintMap();
         Int2ObjectMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
 
         ApplicationManager.getApplication().runReadAction(() -> {
@@ -111,9 +109,9 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
           }
         });
 
-        for (Map.Entry<VirtualFile, IntArrayList> entry : files2lines.entrySet()) {
+        for (Map.Entry<VirtualFile, IntList> entry : files2lines.entrySet()) {
           VirtualFile file = entry.getKey();
-          IntArrayList value = entry.getValue();
+          IntList value = entry.getValue();
           indicator.checkCanceled();
           LastRevision revision = getLastRevision(file);
           if (revision == null) {
@@ -181,8 +179,8 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
             return LastRevision.create(list.get(0));
           }
         }
-        catch (VcsException ignored) {
-          LOG.warn(ignored);
+        catch (VcsException e) {
+          LOG.warn(e);
           return null;
         }
       }
@@ -228,6 +226,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     }
 
     @NotNull
+    @NlsSafe
     public String getAuthor() {
       return myAuthor;
     }

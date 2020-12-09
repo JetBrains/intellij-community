@@ -13,7 +13,7 @@ public class ShUrlReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     PsiReferenceProvider provider = CommentsReferenceContributor.COMMENTS_REFERENCE_PROVIDER_TYPE.getProvider();
-    registrar.registerReferenceProvider(new PsiElementPattern.Capture<ShLiteral>(ShLiteral.class) {},
+    registrar.registerReferenceProvider(new PsiElementPattern.Capture<>(ShLiteral.class) {},
                                         provider, PsiReferenceRegistrar.LOWER_PRIORITY);
   }
 }

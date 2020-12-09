@@ -25,29 +25,34 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 public class GradleRunConfiguration extends ExternalSystemRunConfiguration implements SMRunnerConsolePropertiesProvider {
 
   public static final String DEBUG_FLAG_NAME = "GradleScriptDebugEnabled";
+  public static final String DEBUG_ALL_NAME = "DebugAllEnabled";
   public static final Key<Boolean> DEBUG_FLAG_KEY = Key.create("DEBUG_GRADLE_SCRIPT");
+  public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
 
   @ApiStatus.Internal
   public static final Key<String> DEBUGGER_PARAMETERS_KEY = Key.create("DEBUGGER_PARAMETERS");
 
-  private boolean isScriptDebugEnabled = true;
+  private boolean isDebugAllEnabled = false;
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(GradleConstants.SYSTEM_ID, project, factory, name);
+    setDebugServerProcess(true);
+    setReattachDebugProcess(true);
   }
 
   public boolean isScriptDebugEnabled() {
-    return isScriptDebugEnabled;
+    return isDebugServerProcess();
   }
 
   public void setScriptDebugEnabled(boolean scriptDebugEnabled) {
-    isScriptDebugEnabled = scriptDebugEnabled;
+    setDebugServerProcess(scriptDebugEnabled);
   }
 
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
-    putUserData(DEBUG_FLAG_KEY, Boolean.valueOf(isScriptDebugEnabled));
+    putUserData(DEBUG_FLAG_KEY, Boolean.valueOf(isDebugServerProcess()));
+    putUserData(DEBUG_ALL_KEY, Boolean.valueOf(isDebugAllEnabled));
     return super.getState(executor, env);
   }
 
@@ -56,16 +61,20 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     super.readExternal(element);
     final Element child = element.getChild(DEBUG_FLAG_NAME);
     if (child != null) {
-      isScriptDebugEnabled = Boolean.valueOf(child.getText());
+      setDebugServerProcess(Boolean.valueOf(child.getText()));
+    }
+    final Element debugAll = element.getChild(DEBUG_ALL_NAME);
+    if (debugAll != null) {
+      isDebugAllEnabled = Boolean.valueOf(debugAll.getText());
     }
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    final Element child = new Element(DEBUG_FLAG_NAME);
-    child.setText(String.valueOf(isScriptDebugEnabled));
-    element.addContent(child);
+    final Element debugAll = new Element(DEBUG_ALL_NAME);
+    debugAll.setText(String.valueOf(isDebugAllEnabled));
+    element.addContent(debugAll);
   }
 
   @NotNull
@@ -84,5 +93,13 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   @Override
   public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
     return GradleIdeManager.getInstance().createTestConsoleProperties(getProject(), executor, this);
+  }
+
+  public boolean isDebugAllEnabled() {
+    return isDebugAllEnabled;
+  }
+
+  public void setDebugAllEnabled(boolean debugAllEnabled) {
+    isDebugAllEnabled = debugAllEnabled;
   }
 }

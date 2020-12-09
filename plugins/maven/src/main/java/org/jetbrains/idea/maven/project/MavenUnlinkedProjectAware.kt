@@ -7,14 +7,13 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjec
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
-import gnu.trove.THashSet
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
-class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
+internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
   override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {
@@ -23,7 +22,9 @@ class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    return mavenProjectsManager.projects.any { PathUtil.pathEqualsTo(it.directoryFile, externalProjectPath) }
+    return mavenProjectsManager.projects.any {
+      VfsUtilCore.pathEqualsTo(it.directoryFile, externalProjectPath)
+    }
   }
 
   override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
@@ -51,6 +52,6 @@ class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     private fun getMavenProjectPaths() =
       mavenProjectsManager.projects.asSequence()
         .map { it.directory }
-        .toCollection(THashSet<String>(FileUtil.PATH_HASHING_STRATEGY))
+        .toCollection(CollectionFactory.createFilePathSet())
   }
 }

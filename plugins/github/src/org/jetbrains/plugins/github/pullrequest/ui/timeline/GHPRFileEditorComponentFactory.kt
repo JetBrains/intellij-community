@@ -128,24 +128,27 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       isOpaque = false
       border = JBUI.Borders.empty(24, 20)
 
-      val maxWidth = (GithubUIUtil.getFontEM(this) * 42).toInt()
+      val maxWidth = GithubUIUtil.getPRTimelineWidth()
 
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill()
                            .flowY(),
-                         AC().size(":$maxWidth:$maxWidth").gap("push"))
+                         AC().grow().gap("push"))
 
-      add(header, CC().growX())
+      add(header, CC().growX().maxWidth("$maxWidth"))
       add(timeline, CC().growX().minWidth(""))
-      add(errorPanel, CC().hideMode(2).alignX("center"))
-      add(loadingIcon, CC().hideMode(2).alignX("center"))
+
+      val fullTimelineWidth = GithubUIUtil.avatarSize.get() + maxWidth
+
+      add(errorPanel, CC().hideMode(2).width("$fullTimelineWidth"))
+      add(loadingIcon, CC().hideMode(2).width("$fullTimelineWidth"))
 
       if (editor.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
         val commentField = createCommentField(editor.commentsData,
                                               avatarIconsProvider,
                                               editor.securityService.currentUser)
-        add(commentField, CC().growX())
+        add(commentField, CC().growX().pushX().maxWidth("$fullTimelineWidth"))
       }
     }
 

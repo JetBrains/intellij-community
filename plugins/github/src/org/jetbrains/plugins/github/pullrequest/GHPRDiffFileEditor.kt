@@ -5,13 +5,13 @@ import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.fileEditor.FileEditor.PROP_VALID
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
-import org.jetbrains.plugins.github.pullrequest.ui.changes.MutableDiffRequestChainProcessor
 import java.awt.event.KeyEvent
 import javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW
 import javax.swing.KeyStroke

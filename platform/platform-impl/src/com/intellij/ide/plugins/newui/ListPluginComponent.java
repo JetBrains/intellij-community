@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
@@ -31,12 +32,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
-import java.awt.event.InputEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * @author Alexander Lobas
@@ -44,24 +46,27 @@ import java.util.Set;
 public class ListPluginComponent extends JPanel {
   public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
   public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
-  public static final Color HOVER_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xEDF6FE, 0x464A4D));
+  public static final Color SELECTION_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xEDF6FE, 0x464A4D));
+  public static final Color HOVER_COLOR = JBColor.namedColor("Plugins.hoverBackground", new JBColor(0xEDF6FE, 0x464A4D));
 
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
-  public IdeaPluginDescriptor myPlugin;
+  private @NotNull IdeaPluginDescriptor myPlugin;
   private boolean myUninstalled;
   private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
-  private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo_40);
+  private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
   protected JButton myRestartButton;
   protected InstallButton myInstallButton;
   protected JButton myUpdateButton;
-  private JCheckBox myEnableDisableButton;
+  private JComponent myEnableDisableButton;
+  private JCheckBox myChooseUpdateButton;
   private JComponent myAlignButton;
+  private JPanel myMetricsPanel;
   private JLabel myRating;
   private JLabel myDownloads;
   private JLabel myVersion;
@@ -165,12 +170,10 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else {
-      JCheckBox enableDisableButton = createEnableDisableButton();
-
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
         myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
-        myUninstalled = true;
+        myPluginModel.addUninstalled(myPlugin);
       }
       else {
         InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
@@ -179,15 +182,25 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
-          myEnableDisableButton.setOpaque(false);
-          myEnableDisableButton.addActionListener(e -> {
-            UIUtilsKt.changeEnableDisable(
-              myPluginModel,
-              Set.of(myPlugin),
-              !myPluginModel.isEnabled(myPlugin)
+          if (Registry.is("ide.plugins.per.project", false)) {
+            myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
+              action -> createEnableDisableAction(action, List.of(this)),
+              () -> createUninstallAction(List.of(this))
             );
-          });
+            myEnableDisableButton.setBorder(JBUI.Borders.emptyLeft(5));
+            myEnableDisableButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+          }
+          else {
+            myEnableDisableButton = createEnableDisableButton(
+              __ -> myPluginModel.changeEnableDisable(
+                Set.of(myPlugin),
+                PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isDisabled())
+              )
+            );
+          }
+
+          myLayout.addButtonComponent(myEnableDisableButton);
+          myEnableDisableButton.setOpaque(false);
           updateEnabledStateUI();
         }
       }
@@ -195,17 +208,23 @@ public class ListPluginComponent extends JPanel {
       myLayout.addButtonComponent(myAlignButton = new JComponent() {
         @Override
         public Dimension getPreferredSize() {
-          return enableDisableButton.getPreferredSize();
+          return myEnableDisableButton instanceof JCheckBox ?
+                 myEnableDisableButton.getPreferredSize() :
+                 super.getPreferredSize();
         }
       });
       myAlignButton.setOpaque(false);
     }
   }
 
-  @NotNull
-  private static JCheckBox createEnableDisableButton() {
+  private static @NotNull JCheckBox createEnableDisableButton(@NotNull ActionListener listener) {
     return new JCheckBox() {
-      int myBaseline = -1;
+
+      private int myBaseline = -1;
+
+      {
+        addActionListener(listener);
+      }
 
       @Override
       public int getBaseline(int width, int height) {
@@ -226,25 +245,28 @@ public class ListPluginComponent extends JPanel {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
-        return new Dimension(size.width + JBUIScale.scale(8), size.height + JBUIScale.scale(2));
+        return new Dimension(
+          size.width + JBUIScale.scale(8),
+          size.height + JBUIScale.scale(2)
+        );
       }
     };
   }
 
   private void createMetricsPanel() {
-    JPanel panel = new NonOpaquePanel(new TextHorizontalLayout(JBUIScale.scale(7)));
-    panel.setBorder(JBUI.Borders.emptyTop(5));
-    myLayout.addLineComponent(panel);
+    myMetricsPanel = new NonOpaquePanel(new TextHorizontalLayout(JBUIScale.scale(7)));
+    myMetricsPanel.setBorder(JBUI.Borders.emptyTop(5));
+    myLayout.addLineComponent(myMetricsPanel);
 
     if (myMarketplace) {
       String downloads = PluginManagerConfigurable.getDownloads(myPlugin);
       if (downloads != null) {
-        myDownloads = createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
+        myDownloads = createRatingLabel(myMetricsPanel, downloads, AllIcons.Plugins.Downloads);
       }
 
       String rating = PluginManagerConfigurable.getRating(myPlugin);
       if (rating != null) {
-        myRating = createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
+        myRating = createRatingLabel(myMetricsPanel, rating, AllIcons.Plugins.Rating);
       }
     }
     else {
@@ -252,13 +274,13 @@ public class ListPluginComponent extends JPanel {
         !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : IdeBundle.message("plugin.status.bundled");
 
       if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = createRatingLabel(panel, version, null);
+        myVersion = createRatingLabel(myMetricsPanel, version, null);
       }
     }
 
     String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
     if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      myVendor = createRatingLabel(panel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+      myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
     }
   }
 
@@ -288,7 +310,7 @@ public class ListPluginComponent extends JPanel {
     myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(component));
   }
 
-  private void setTagTooltip(@Nullable String text) {
+  private void setTagTooltip(@Nullable @Nls String text) {
     if (myLayout.myTagComponent != null) {
       myLayout.myTagComponent.setToolTipText(text);
     }
@@ -324,15 +346,42 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  public void setOnlyUpdateMode(@Nullable IdeaPluginDescriptor descriptor) {
+  public void setOnlyUpdateMode() {
     myOnlyUpdateMode = true;
 
-    if (myEnableDisableButton != null) {
-      myLayout.removeButtonComponent(myEnableDisableButton);
-      myEnableDisableButton = null;
+    removeButtons(false);
+
+    myLayout.setCheckBoxComponent(myChooseUpdateButton = new JCheckBox((String)null, true));
+    myChooseUpdateButton.setOpaque(false);
+
+    IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(myPlugin.getPluginId());
+    if (descriptor != null) {
+      if (myDownloads != null) {
+        myMetricsPanel.remove(myDownloads);
+      }
+      if (myRating != null) {
+        myMetricsPanel.remove(myRating);
+      }
+      if (myVendor != null) {
+        myMetricsPanel.remove(myVendor);
+      }
+      if (myVersion != null) {
+        myMetricsPanel.remove(myVendor);
+      }
+
+      String version = PluginManagerConfigurable.getVersion(descriptor, myPlugin);
+      String size = PluginManagerConfigurable.getSize(myPlugin);
+      if (!StringUtil.isEmpty(size)) {
+        version += " | " + size;
+      }
+      myVersion = createRatingLabel(myMetricsPanel, null, version, null, null, false);
     }
 
-    setUpdateDescriptor(descriptor);
+    updateColors(EventHandler.SelectionType.NONE);
+  }
+
+  public JCheckBox getChooseUpdateButton() {
+    return myChooseUpdateButton;
   }
 
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
@@ -403,7 +452,9 @@ public class ListPluginComponent extends JPanel {
   }
 
   protected void updateColors(@NotNull EventHandler.SelectionType type) {
-    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE ? PluginManagerConfigurable.MAIN_BG_COLOR : HOVER_COLOR);
+    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE
+                             ? PluginManagerConfigurable.MAIN_BG_COLOR
+                             : (type == EventHandler.SelectionType.HOVER ? HOVER_COLOR : SELECTION_COLOR));
   }
 
   protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
@@ -421,8 +472,9 @@ public class ListPluginComponent extends JPanel {
       }
     }
     if (calcColor && !myMarketplace) {
-      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || isEnabledState());
-      if (!enabled) {
+      boolean disabled = myPluginModel.isUninstalled(myPlugin) ||
+                         !MyPluginModel.isInstallingOrUpdate(myPlugin) && !isEnabledState();
+      if (disabled) {
         nameForeground = otherForeground = DisabledColor;
       }
     }
@@ -446,9 +498,9 @@ public class ListPluginComponent extends JPanel {
 
   public void updateErrors() {
     Ref<@Nls String> enableAction = new Ref<>();
-    String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
+    String message = myOnlyUpdateMode ? null : myPluginModel.getErrorMessage(myPlugin, enableAction);
     boolean errors = message != null;
-    updateIcon(errors, myUninstalled || !isEnabledState());
+    updateIcon(errors, myPluginModel.isUninstalled(myPlugin) || !isEnabledState());
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null);
@@ -485,7 +537,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, false, errors, disabled));
+    myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, errors, disabled));
   }
 
   public void showProgress() {
@@ -529,6 +581,10 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void enableRestart() {
+    removeButtons(true);
+  }
+
+  private void removeButtons(boolean showRestart) {
     if (myInstallButton != null) {
       myLayout.removeButtonComponent(myInstallButton);
       myInstallButton = null;
@@ -541,7 +597,7 @@ public class ListPluginComponent extends JPanel {
       myLayout.removeButtonComponent(myEnableDisableButton);
       myEnableDisableButton = null;
     }
-    if (myRestartButton == null) {
+    if (showRestart && myRestartButton == null) {
       myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel), 0);
     }
     if (myAlignButton != null) {
@@ -550,7 +606,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateEnabledState() {
-    if (!myUninstalled) {
+    if (!myPluginModel.isUninstalled(myPlugin)) {
       updateEnabledStateUI();
     }
 
@@ -559,20 +615,18 @@ public class ListPluginComponent extends JPanel {
   }
 
   private void updateEnabledStateUI() {
-    PluginEnabledState state = myPluginModel.getState(myPlugin);
+    ProjectDependentPluginEnabledState state = myPluginModel.getProjectDependentState(myPlugin);
 
-    if (myEnableDisableButton != null) {
-      myEnableDisableButton.setSelected(state.isEnabled());
+    if (myEnableDisableButton instanceof JCheckBox) {
+      ((JCheckBox)myEnableDisableButton).setSelected(state.isEnabled());
     }
-    myNameComponent.setIcon(UIUtilsKt.perProjectIcon(state));
+    myNameComponent.setIcon(state.getIcon());
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
-    myUninstalled = true;
+    myPluginModel.addUninstalled(myPlugin);
     updateColors(mySelection);
-    if (needRestartForUninstall) {
-      enableRestart();
-    }
+    removeButtons(needRestartForUninstall);
   }
 
   public void updatePlugin() {
@@ -611,6 +665,10 @@ public class ListPluginComponent extends JPanel {
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
                               @NotNull List<ListPluginComponent> selection) {
+    if (myOnlyUpdateMode) {
+      return;
+    }
+
     for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -664,21 +722,24 @@ public class ListPluginComponent extends JPanel {
       }
     }
 
-    if (myOnlyUpdateMode) {
-      return;
-    }
-
-    group.add(createAction(selection, KeyEvent.VK_SPACE));
-    group.add(createAction(selection, KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK));
-
-    if (group.getChildrenCount() > 0) {
-      group.addSeparator();
-    }
-    group.add(createAction(selection, EventHandler.DELETE_CODE));
+    SelectionBasedPluginModelAction.addActionsTo(
+      group,
+      action -> createEnableDisableAction(action, selection),
+      () -> createUninstallAction(selection)
+    );
   }
 
   public void handleKeyAction(@NotNull KeyEvent event,
                               @NotNull List<ListPluginComponent> selection) {
+    if (myOnlyUpdateMode) {
+      if (event.getKeyCode() == KeyEvent.VK_SPACE) {
+        for (ListPluginComponent component : selection) {
+          component.myChooseUpdateButton.doClick();
+        }
+      }
+      return;
+    }
+
     for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -732,18 +793,26 @@ public class ListPluginComponent extends JPanel {
         }
       }
     }
-    else if (!restart && !update && !myOnlyUpdateMode) {
-      DumbAwareAction action = createAction(
-        selection,
-        KeyStroke.getKeyStrokeForEvent(event)
-      );
-      ActionManager.getInstance().tryToExecute(
-        action,
-        event,
-        this,
-        ActionPlaces.UNKNOWN,
-        true
-      );
+    else if (!restart && !update) {
+      if (keyCode == KeyEvent.VK_SPACE && event.getComponent() instanceof JCheckBox) {
+        return;
+      }
+
+      DumbAwareAction action = keyCode == KeyEvent.VK_SPACE && event.getModifiersEx() == 0 ?
+                               createEnableDisableAction(getEnableDisableAction(selection), selection) :
+                               keyCode == EventHandler.DELETE_CODE ?
+                               createUninstallAction(selection) :
+                               null;
+
+      if (action != null) {
+        ActionManager.getInstance().tryToExecute(
+          action,
+          event,
+          this,
+          ActionPlaces.UNKNOWN,
+          true
+        );
+      }
     }
   }
 
@@ -754,110 +823,61 @@ public class ListPluginComponent extends JPanel {
     parent.repaint();
   }
 
-  @NotNull
-  public IdeaPluginDescriptor getPluginDescriptor() {
+  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
   }
 
-  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
-                                                                                     int keyCode) {
-    return createAction(selection, keyCode, 0);
+  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+    myPlugin = plugin;
   }
 
-  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
-                                                                                     int keyCode,
-                                                                                     int modifiers) {
-    return createAction(selection, KeyStroke.getKeyStroke(keyCode, modifiers));
-  }
+  private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<ListPluginComponent> selection) {
+    Iterator<ListPluginComponent> iterator = selection.iterator();
+    BooleanSupplier isGloballyEnabledGenerator = () ->
+      myPluginModel.getState(iterator.next().myPlugin) == PluginEnabledState.ENABLED;
 
-  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
-                                                                                     @NotNull KeyStroke keyStroke) {
-    int keyCode = keyStroke.getKeyCode();
-    if (keyCode == KeyEvent.VK_SPACE) {
-      boolean firstEnabled = selection.get(0).isEnabledState();
-      boolean setTrue = false;
-
-      for (ListIterator<ListPluginComponent> iterator = selection.listIterator(1); iterator.hasNext(); ) {
-        if (firstEnabled != iterator.next().isEnabledState()) {
-          setTrue = true;
-          break;
-        }
+    boolean firstDisabled = !isGloballyEnabledGenerator.getAsBoolean();
+    while (iterator.hasNext()) {
+      if (firstDisabled == isGloballyEnabledGenerator.getAsBoolean()) {
+        return PluginEnableDisableAction.ENABLE_GLOBALLY;
       }
+    }
 
-      PluginEnabledState newState = PluginEnabledState.getState(
-        setTrue || !firstEnabled,
-        (keyStroke.getModifiers() & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK
-      );
-
-      return new EnableDisableAction(
-        myPluginModel,
-        selection,
-        keyStroke,
-        newState
-      );
-    }
-    else if (keyCode == EventHandler.DELETE_CODE) {
-      return new UninstallAction(selection, keyStroke);
-    }
-    else {
-      throw new IllegalArgumentException();
-    }
+    return PluginEnableDisableAction.globally(firstDisabled);
   }
 
-  private static final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
-
-    private EnableDisableAction(@NotNull MyPluginModel pluginModel,
-                                @NotNull List<ListPluginComponent> selection,
-                                @NotNull KeyStroke keyStroke,
-                                @NotNull PluginEnabledState newState) {
-      super(pluginModel, selection, newState);
-      setShortcutSet(new CustomShortcutSet(keyStroke));
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
-      return component.myPlugin;
-    }
+  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
+                                                                                                                      @NotNull List<ListPluginComponent> selection) {
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(
+      action.isPerProject() ? null : new CustomShortcutSet(KeyEvent.VK_SPACE),
+      myPluginModel,
+      action,
+      selection,
+      ListPluginComponent::getPluginDescriptor
+    );
   }
 
-  private class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> {
+  private SelectionBasedPluginModelAction.@NotNull UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
 
-    UninstallAction(@NotNull List<ListPluginComponent> selection,
-                    @NotNull KeyStroke keyStroke) {
-      super(
-        ListPluginComponent.this.myPluginModel,
-        ListPluginComponent.this,
-        selection
-      );
-
-      ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
-      ShortcutSet shortcutSet = deleteShortcutSet != null ?
-                                deleteShortcutSet :
-                                new CustomShortcutSet(keyStroke);
-      setShortcutSet(shortcutSet);
-    }
-
-    @Override
-    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
-      return component.myPlugin;
-    }
-
-    @Override
-    protected boolean isBundled(@NotNull ListPluginComponent component) {
-      return component.myUninstalled ||
-             super.isBundled(component);
-    }
+    ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
+    return new SelectionBasedPluginModelAction.UninstallAction<>(
+      deleteShortcutSet != null ? deleteShortcutSet : new CustomShortcutSet(EventHandler.DELETE_CODE),
+      myPluginModel,
+      this,
+      selection,
+      ListPluginComponent::getPluginDescriptor
+    );
   }
 
   @NotNull
-  static JLabel createRatingLabel(@NotNull JPanel panel, @NotNull String text, @Nullable Icon icon) {
+  static JLabel createRatingLabel(@NotNull JPanel panel, @NotNull @Nls String text, @Nullable Icon icon) {
     return createRatingLabel(panel, null, text, icon, null, true);
   }
 
   @NotNull
   static JLabel createRatingLabel(@NotNull JPanel panel,
                                   @Nullable Object constraints,
-                                  @NotNull String text,
+                                  @NotNull @Nls String text,
                                   @Nullable Icon icon,
                                   @Nullable Color color,
                                   boolean tiny) {
@@ -897,6 +917,7 @@ public class ListPluginComponent extends JPanel {
     private JLabel myNameComponent;
     private JComponent myProgressComponent;
     private JComponent myTagComponent;
+    private JComponent myCheckBoxComponent;
     private final List<JComponent> myButtonComponents = new ArrayList<>();
     private final List<JComponent> myLineComponents = new ArrayList<>();
     private boolean[] myButtonEnableStates;
@@ -906,6 +927,12 @@ public class ListPluginComponent extends JPanel {
       Dimension result = new Dimension(myNameComponent.getPreferredSize());
 
       if (myProgressComponent == null) {
+        if (myCheckBoxComponent != null) {
+          Dimension size = myCheckBoxComponent.getPreferredSize();
+          result.width += size.width + myHOffset.get();
+          result.height = Math.max(result.height, size.height);
+        }
+
         if (myTagComponent != null) {
           Dimension size = myTagComponent.getPreferredSize();
           result.width += size.width + 2 * myHOffset.get();
@@ -958,6 +985,12 @@ public class ListPluginComponent extends JPanel {
       Insets insets = getInsets();
       int x = insets.left;
       int y = insets.top;
+
+      if (myProgressComponent == null && myCheckBoxComponent != null) {
+        Dimension size = myCheckBoxComponent.getPreferredSize();
+        myCheckBoxComponent.setBounds(x, (parent.getHeight() - size.height) / 2, size.width, size.height);
+        x += size.width + myHGap.get();
+      }
 
       Dimension iconSize = myIconComponent.getPreferredSize();
       myIconComponent.setBounds(x, y, iconSize.width, iconSize.height);
@@ -1015,6 +1048,10 @@ public class ListPluginComponent extends JPanel {
 
       if (myProgressComponent != null) {
         return width - myProgressComponent.getPreferredSize().width - myHOffset.get();
+      }
+
+      if (myCheckBoxComponent != null) {
+        width -= myCheckBoxComponent.getPreferredSize().width + myHOffset.get();
       }
 
       if (myTagComponent != null) {
@@ -1085,6 +1122,13 @@ public class ListPluginComponent extends JPanel {
       myButtonComponents.remove(component);
       remove(component);
       updateVisibleOther();
+    }
+
+    public void setCheckBoxComponent(@NotNull JComponent checkBoxComponent) {
+      assert myCheckBoxComponent == null;
+      myCheckBoxComponent = checkBoxComponent;
+      add(checkBoxComponent);
+      doLayout();
     }
 
     public void setProgressComponent(@NotNull JComponent progressComponent) {

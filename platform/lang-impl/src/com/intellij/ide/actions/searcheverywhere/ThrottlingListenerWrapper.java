@@ -10,12 +10,12 @@ import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 
 /**
- * Implementation of {@link MultiThreadSearcher.Listener} which decrease events rate and raise batch updates
+ * Implementation of {@link SESearcher.Listener} which decrease events rate and raise batch updates
  * each {@code throttlingDelay} milliseconds.
  * <br>
  * Not thread-safe and should be notified only in EDT
  */
-class ThrottlingListenerWrapper implements MultiThreadSearcher.Listener {
+class ThrottlingListenerWrapper implements SESearcher.Listener {
 
   public final int myThrottlingDelay;
 
@@ -28,7 +28,7 @@ class ThrottlingListenerWrapper implements MultiThreadSearcher.Listener {
   private final Alarm flushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private boolean flushScheduled;
 
-  ThrottlingListenerWrapper(int throttlingDelay, MultiThreadSearcher.Listener delegateListener, Executor delegateExecutor) {
+  ThrottlingListenerWrapper(int throttlingDelay, SESearcher.Listener delegateListener, Executor delegateExecutor) {
     myThrottlingDelay = throttlingDelay;
     myDelegateListener = delegateListener;
     myDelegateExecutor = delegateExecutor;

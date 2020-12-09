@@ -3,6 +3,7 @@ package com.intellij.formatting;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 /**
@@ -38,7 +39,7 @@ public enum WrapType {
    */
   CHOP_DOWN_IF_LONG(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM);
 
-  private static final Int2ObjectOpenHashMap<WrapType> LEGACY_MAPPINGS = new Int2ObjectOpenHashMap<>();
+  private static final Int2ObjectMap<WrapType> LEGACY_MAPPINGS = new Int2ObjectOpenHashMap<>();
 
   static {
     for (WrapType wrapType : values()) {

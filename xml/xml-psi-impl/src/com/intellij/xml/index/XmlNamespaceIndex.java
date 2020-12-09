@@ -62,7 +62,8 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     }
   }
 
-  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getResourcesByNamespace(String namespace,
+  @NotNull
+  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getResourcesByNamespace(@NotNull String namespace,
                                                                                                    @NotNull Project project,
                                                                                                    @Nullable Module module) {
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>> resources = IndexedRelevantResource.getResources(NAME, namespace, module, project, null);
@@ -73,7 +74,7 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   }
 
   @Nullable
-  private static IndexedRelevantResource<String, XsdNamespaceBuilder> getResourceByLocalFile(String namespace,
+  private static IndexedRelevantResource<String, XsdNamespaceBuilder> getResourceByLocalFile(@NotNull String namespace,
                                                                                              @NotNull Project project,
                                                                                              @Nullable Module module) {
     String protocol = VirtualFileManager.extractProtocol(namespace);

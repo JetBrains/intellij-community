@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
     }
   };
 
-  private Int2ObjectOpenHashMap<String> myMnemonics;
+  private Int2ObjectMap<String> myMnemonics;
 
   /**
    * @see #init(Component)

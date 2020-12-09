@@ -78,7 +78,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       if (!configuration.isInitialized()) {
         return new Object[] {AntBundle.message("progress.text.loading.ant.config")};
       }
-      return configuration.getBuildFileList().isEmpty() ? new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")} : configuration.getBuildFiles();
+      return configuration.getBuildFiles();
     }
 
     if (element instanceof AntBuildFile) {

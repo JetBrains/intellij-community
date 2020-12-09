@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.text.DateFormatUtil.formatPrettyDateTime
+import org.jetbrains.annotations.Nls
 
 private val KEY = Key<EditorNotificationPanel>("OutdatedVersionNotifier")
 
@@ -21,7 +22,7 @@ class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationP
   override fun getKey(): Key<EditorNotificationPanel> = KEY
 
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    val cache = CommittedChangesCache.getInstance(project)
+    val cache = CommittedChangesCache.getInstanceIfCreated(project) ?: return null
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null
     if (!isIncomingChangesAvailable(incomingChangeList.vcs)) return null
 
@@ -56,7 +57,7 @@ private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: 
     setText(getOutdatedVersionText(changeList, change))
   }
 
-private fun getOutdatedVersionText(changeList: CommittedChangeList, change: Change): String {
+private fun getOutdatedVersionText(changeList: CommittedChangeList, change: Change): @Nls String {
   val formattedDate = formatPrettyDateTime(changeList.commitDate)
   return message("outdated.version.text", changeList.committerName, formattedDate, changeList.comment.getSubject(),
                  if (change.type == Change.Type.DELETED) 1 else 0)

@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
-import com.intellij.ide.HelpTooltip
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
@@ -22,9 +21,9 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi.HIDE_ID_LABEL
+import com.intellij.ui.GotItTooltip
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativePoint.getSouthOf
-import com.intellij.util.ui.JBUI.emptyInsets
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.update.Activatable
@@ -48,7 +47,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 
   override fun shouldBeAvailable(project: Project): Boolean {
-    return super.shouldBeAvailable(project) && project.isCommitToolWindow
+    return super.shouldBeAvailable(project) && project.isCommitToolWindowShown
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -88,41 +87,19 @@ internal class SwitchToCommitDialogHint(private val toolWindow: ToolWindowEx, pr
   override fun toolWindowMappingChanged() = hideHint(true)
 
   private fun showHint() {
-    balloon = createBalloon(createContent())
-    balloon?.run {
-      setAnimationEnabled(false)
-      show(SouthPositionTracker(toolbar.getGearButton() ?: toolbar.component), Balloon.Position.below)
-    }
+    val c : JComponent = toolbar.getGearButton() ?: toolbar.component
+    GotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"), toolbarVisibilityTracker).
+      setOnBalloonCreated { balloon = it }.
+      show(c, GotItTooltip.BOTTOM_MIDDLE)
   }
 
   private fun hideHint(dispose: Boolean) {
-    balloon?.hide()
+    balloon?.hide(true)
+    GotItUsageCollector.instance.logClose("changes.view.toolwindow", GotItUsageCollectorGroup.CloseType.AncestorRemoved)
     balloon = null
 
     if (dispose) Disposer.dispose(toolbarVisibilityTracker)
   }
-
-  private fun createContent(): JComponent =
-    object : HelpTooltip() {
-      init {
-        setDescription(message("switch.to.commit.dialog.hint.text"))
-        setLink(message("switch.to.commit.dialog.hint.got.it.text")) { hideHint(true) }
-      }
-
-      fun createComponent(): JComponent = createTipPanel()
-    }.createComponent()
-
-  private fun createBalloon(content: JComponent): Balloon =
-    JBPopupFactory.getInstance().createBalloonBuilder(content)
-      .setBorderInsets(emptyInsets())
-      .setFillColor(content.background ?: HintUtil.getInformationColor())
-      .setHideOnClickOutside(false)
-      .setHideOnAction(false)
-      .setHideOnFrameResize(false)
-      .setHideOnKeyOutside(false)
-      .setBlockClicksThroughBalloon(true)
-      .setDisposable(toolbarVisibilityTracker)
-      .createBalloon()
 
   companion object {
     fun install(project: Project) {

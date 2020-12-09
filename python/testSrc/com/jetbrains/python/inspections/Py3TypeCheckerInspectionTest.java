@@ -455,16 +455,43 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
   }
 
-  // PY-44227
+  // PY-43838
   public void testParameterizedClassAgainstType() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON37,
+      LanguageLevel.getLatest(),
       () -> doTestByText("from typing import Type, Any, List\n" +
                          "\n" +
                          "def my_function(param: Type[Any]):\n" +
                          "    pass\n" +
                          "\n" +
                          "my_function(List[str])")
+    );
+  }
+
+  // PY-43838
+  public void testUnionAgainstType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Type, Any, Union\n" +
+                         "\n" +
+                         "def my_function(param: Type[Any]):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "my_function(Union[int, str])")
+    );
+  }
+
+  // PY-44575
+  public void testArgsCallableAgainstOneParameterCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Any, Callable, Iterable, TypeVar\n" +
+                         "_T1 = TypeVar(\"_T1\")\n" +
+                         "def mymap(c: Callable[[_T1], Any], i: Iterable[_T1]) -> Iterable[_T1]:\n" +
+                         "  pass\n" +
+                         "def myfoo(*args: int) -> int:\n" +
+                         "  pass\n" +
+                         "mymap(myfoo, [1, 2, 3])\n")
     );
   }
 }

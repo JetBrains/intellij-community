@@ -1,15 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
-import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +29,7 @@ public class ReplaceConfiguration extends Configuration {
                        : new ReplaceOptions(configuration.getMatchOptions().copy());
   }
 
-  public ReplaceConfiguration(@NotNull String name, @NotNull String category) {
+  public ReplaceConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name, @NotNull String category) {
     super(name, category);
     myReplaceOptions = new ReplaceOptions();
   }
@@ -39,13 +37,6 @@ public class ReplaceConfiguration extends Configuration {
   @Override
   public @NotNull ReplaceConfiguration copy() {
     return new ReplaceConfiguration(this);
-  }
-
-  @Override
-  public @NlsSafe String getTailText() {
-    final String fileType = StringUtil.toLowerCase(getMatchOptions().getFileType().getName());
-    return isPredefined() ? SSRBundle.message("predefined.configuration.replace.tail.text", fileType)
-                          : SSRBundle.message("predefined.configuration.replace.tail.text.user.defined", fileType);
   }
 
   @Override

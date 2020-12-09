@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ import javax.swing.event.DocumentEvent;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final int MAX_FILES_TO_ON_THE_FLY_SEARCH = 10;
 
   @SuppressWarnings("WeakerAccess") public int MIN_STRING_LENGTH = 5;
@@ -114,7 +114,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     StringSearcher searcher = new StringSearcher(stringToFind, true, true);
 
     List<PsiLiteralExpression> foundExpr = new SmartList<>();
-    LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, offset -> {
+    LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, offset -> {
       PsiElement element = file.findElementAt(offset);
       if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
       PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
@@ -131,7 +131,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
                                             final boolean isOnTheFly) {
     PsiExpression[] foundExpr = getDuplicateLiterals(holder.getProject(), originalExpression, isOnTheFly);
     if (foundExpr.length == 0) return;
-    Set<PsiClass> classes = new THashSet<>();
+    Set<PsiClass> classes = new HashSet<>();
     for (PsiElement aClass : foundExpr) {
       if (aClass == originalExpression) continue;
       ProgressManager.checkCanceled();
@@ -430,9 +430,9 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     if (!(literalExpression instanceof PsiLiteralExpression)) return null;
     Project project = literalExpression.getProject();
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      return getDuplicateLiterals(project,
-                                  (PsiLiteralExpression)literalExpression,
-                                  false /* here we want find all the expressions */);
+      return ReadAction.compute(()->getDuplicateLiterals(project,
+                                             (PsiLiteralExpression)literalExpression,
+                                             false /* here we want find all the expressions */));
     }, JavaI18nBundle.message("progress.title.searching.for.duplicates.of.0", ((PsiLiteralExpression)literalExpression).getValue()), true, project);
   }
 

@@ -26,7 +26,21 @@ public interface EventLogSystemEvents {
    */
   String STATE_COLLECTOR_FAILED = "invocation.failed";
 
+  /**
+   * Indicates that the number of events from group is bigger than a soft threshold
+   *
+   * Events will be still recorded until final threshold is reached
+   */
+  String TOO_MANY_EVENTS_ALERT = "validation.too_many_events.alert";
+
+  /**
+   * Indicates that too many events were reported from a group or in total
+   *
+   * If this threshold is reached, events won't be recorded till the end of the hour
+   */
+  String TOO_MANY_EVENTS = "validation.too_many_events";
+
   Set<String> SYSTEM_EVENTS = ContainerUtil.newHashSet(
-    COLLECTOR_REGISTERED, STATE_COLLECTOR_INVOKED, STATE_COLLECTOR_FAILED
+    COLLECTOR_REGISTERED, STATE_COLLECTOR_INVOKED, STATE_COLLECTOR_FAILED, TOO_MANY_EVENTS, TOO_MANY_EVENTS_ALERT
   );
 }

@@ -1,5 +1,3 @@
-"""Stub file for the 'zipimport' module."""
-
 import os
 import sys
 from types import CodeType, ModuleType

@@ -1,11 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -75,6 +82,19 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
       val source = createEntitySource(libraryTag) ?: continue
       val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
+
+      val libraryId = LibraryId(name, libraryTableId)
+      val existingLibraryEntity = builder.resolve(libraryId)
+      if (existingLibraryEntity != null) {
+        logger<JpsLibraryEntitiesSerializer>().error("""Error during entities loading
+          |Entity with this library id already exists.
+          |Library id: $libraryId
+          |fileUrl: ${fileUrl.presentableUrl}
+          |library table id: $libraryTableId
+          |internal entity source: $internalEntitySource
+        """.trimMargin())
+      }
+
       loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager)
     }
   }
@@ -83,6 +103,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
   override fun saveEntities(mainEntities: Collection<LibraryEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                            storage: WorkspaceEntityStorage,
                             writer: JpsFileContentWriter) {
     if (mainEntities.isEmpty()) return
 
@@ -132,7 +153,7 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
         for (rootTag in childElement.getChildren(JpsJavaModelSerializerExtension.ROOT_TAG)) {
           val url = rootTag.getAttributeValueStrict(JpsModuleRootModelSerializer.URL_ATTRIBUTE)
           val inclusionOptions = jarDirectories[Pair(rootType, url)] ?: LibraryRoot.InclusionOptions.ROOT_ITSELF
-          roots.add(LibraryRoot(virtualFileManager.fromUrl(url), LibraryRootTypeId(rootType), inclusionOptions))
+          roots.add(LibraryRoot(virtualFileManager.fromUrl(url), libraryRootTypes[rootType]!!, inclusionOptions))
         }
       }
     }
@@ -143,6 +164,8 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
   }
   return libraryEntity
 }
+
+private val libraryRootTypes = ConcurrentFactoryMap.createMap<String, LibraryRootTypeId> { LibraryRootTypeId(it) }
 
 internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Element {
   val libraryTag = Element(LIBRARY_TAG)
@@ -198,7 +221,7 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Ele
   return libraryTag
 }
 
-private val ROOT_TYPES_TO_WRITE_EMPTY_TAG = listOf("CLASSES", "SOURCES", "JAVADOC").map { LibraryRootTypeId(it) }
+private val ROOT_TYPES_TO_WRITE_EMPTY_TAG = listOf("CLASSES", "SOURCES", "JAVADOC").map { libraryRootTypes[it]!! }
 private const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
 private const val UNIQUE_INDEX_LIBRARY_NAME_SUFFIX = "-d1a6f608-UNIQUE-INDEX-f29c-4df6-"
 

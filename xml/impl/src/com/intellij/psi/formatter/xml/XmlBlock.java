@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
@@ -92,7 +78,7 @@ public class XmlBlock extends AbstractXmlBlock {
         return result;
       }
       return splitComment();
-    } 
+    }
 
     if (myNode.getFirstChildNode() != null) {
       boolean keepWhitespaces = shouldKeepWhitespaces();
@@ -122,7 +108,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   private boolean shouldKeepWhitespaces() {
-    if (myNode.getElementType() == XmlElementType.XML_TEXT) {
+    if (isTextNode(myNode.getElementType())) {
       if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
         return true;
       }
@@ -249,12 +235,12 @@ public class XmlBlock extends AbstractXmlBlock {
     final ASTNode node2 = ((AbstractBlock)child2).getNode();
     final IElementType type2 = node2.getElementType();
 
-    if ((isXmlTag(node2) || type2 == XmlTokenType.XML_END_TAG_START || type2 == XmlElementType.XML_TEXT) && myXmlFormattingPolicy
+    if ((isXmlTag(node2) || type2 == XmlTokenType.XML_END_TAG_START || isTextNode(type2)) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
       return Spacing.getReadOnlySpacing();
     }
 
-    if (elementType == XmlElementType.XML_TEXT) {
+    if (isTextNode(elementType)) {
       return getSpacesInsideText(type1, type2);
 
     }
@@ -319,7 +305,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
   @Override
   public boolean isTextElement() {
-    return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
+    return isTextNode(myNode.getElementType()) || myNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
            myNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF || myNode.getElementType() == XmlElementType.XML_ENTITY_REF;
   }
 

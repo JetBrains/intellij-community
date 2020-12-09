@@ -19,13 +19,11 @@ import java.util.*;
 
 class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer, SerializedStubTree> {
   private static final Logger LOG = Logger.getInstance(SerializedStubTree.class);
-  private final int myInputId;
   @Nullable
   private final SerializedStubTree myCurrentTree;
 
   StubCumulativeInputDiffBuilder(int inputId, @Nullable SerializedStubTree currentTree) {
     super(inputId);
-    myInputId = inputId;
     myCurrentTree = currentTree;
   }
 

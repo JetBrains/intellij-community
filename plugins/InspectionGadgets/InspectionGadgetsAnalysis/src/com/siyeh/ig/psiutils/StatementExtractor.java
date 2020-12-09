@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class StatementExtractor {
+public final class StatementExtractor {
   private static final Node EMPTY = new Node(null) {
     @Override
     public Node prepend(Node node) {

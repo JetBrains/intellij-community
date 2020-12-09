@@ -1,8 +1,3 @@
-# Stubs for struct
-
-# Based on http://docs.python.org/3.2/library/struct.html
-# Based on http://docs.python.org/2/library/struct.html
-
 import sys
 from array import array
 from mmap import mmap

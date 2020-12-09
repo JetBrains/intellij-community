@@ -1,13 +1,20 @@
 <html>
-<meta charset="UTF-8">
 <body>
-Reports the code that seems to use a wrong encoding.
-<p>Possible indications of issues:</p>
-<list>
-  <li>Non-ASCII characters in identifiers, literals, and comments, for example, <code>int поле = 0</code></li>
-  <li>Several alphabets mixed in a single identifier, for example, <code>void printСообщение()</code></li>
-  <li>Unicode symbols in comments and literals, for example, <code>→</code> or  <code>—</code></li>
-  <li>Files containing BOM</li>
-</list>
+Reports code that uses non-ASCII symbols in suspicious context.<br>
+
+For example:<br>
+<ul>
+  <li>
+    Non-ASCII characters in identifiers, strings, or comments
+  </li>
+  <li>
+    Identifiers written in different languages, such as <code>my<span color="red">C</span>ollection</code> with
+    letter <code><span color="red">C</span></code> written in Cyrillic.
+  </li>
+  <li>
+    Comments or strings containing Unicode symbols, such as long dashes and arrows
+  </li>
+</ul>
+
 </body>
 </html>

@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
@@ -46,8 +45,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
-public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.StatusCallback {
-
+public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.StatusCallback {
   private static final Logger LOG = Logger.getInstance(PlaybackDebugger.class);
 
   private static final Color ERROR_COLOR = JBColor.RED;
@@ -84,7 +82,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myLog.setEditable(false);
 
 
-    myState = ServiceManager.getService(PlaybackDebuggerState.class);
+    myState = ApplicationManager.getApplication().getService(PlaybackDebuggerState.class);
 
     final DefaultActionGroup controlGroup = new DefaultActionGroup();
     controlGroup.add(new RunOnFameActivationAction());
@@ -160,7 +158,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private class SaveAction extends AnAction {
   SaveAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.save"),
-          IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.Menu_saveall);
+          IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.MenuSaveall);
   }
 
     @Override
@@ -204,7 +202,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private class SetScriptFileAction extends AnAction {
   SetScriptFileAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.set.script.file"),
-          IdeBundle.messagePointer("action.AnAction.description.set.script.file"), AllIcons.Actions.Menu_open);
+          IdeBundle.messagePointer("action.AnAction.description.set.script.file"), AllIcons.Actions.MenuOpen);
   }
 
     @Override

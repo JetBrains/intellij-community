@@ -74,6 +74,9 @@
     <localInspection language="RegExp" shortName="RegExpRedundantNestedCharacterClass" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.redundant.nested.character.class"
                      implementationClass="org.intellij.lang.regexp.inspection.RedundantNestedCharacterClassInspection"/>
+    <localInspection language="RegExp" shortName="RegExpUnnecessaryNonCapturingGroup" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.unnecessary.non.capturing.group"
+                     implementationClass="org.intellij.lang.regexp.inspection.UnnecessaryNonCapturingGroupInspection"/>
 
   </extensions>
 </idea-plugin>

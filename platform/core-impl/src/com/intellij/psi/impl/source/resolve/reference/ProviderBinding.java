@@ -35,6 +35,11 @@ public interface ProviderBinding {
       this.processingContext = processingContext;
       this.priority = priority;
     }
+
+    @Override
+    public String toString() {
+      return "ProviderInfo{provider=" + provider + ", priority=" + priority + '}';
+    }
   }
   void addAcceptableReferenceProviders(@NotNull PsiElement position,
                                        @NotNull List<? super ProviderInfo<ProcessingContext>> list,

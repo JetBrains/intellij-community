@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
-import com.jediterm.terminal.ProcessTtyConnector
 
 class TerminalTabCloseListener(val content: Content,
                                val project: Project) : BaseContentCloseListener(content, project) {
@@ -27,8 +26,7 @@ class TerminalTabCloseListener(val content: Content,
     if (widget == null || !widget.isSessionRunning) {
       return true
     }
-    val connector = widget.ttyConnector as? ProcessTtyConnector
-    try {
+    val connector = ShellTerminalWidget.getProcessTtyConnector(widget.ttyConnector);    try {
       if (connector != null && !TerminalUtil.hasRunningCommands(connector)) {
         return true
       }

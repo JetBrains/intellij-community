@@ -668,17 +668,21 @@ public class ChangeListWorker {
     if (myChangeListsEnabled == enabled) return;
 
     LOG.debug("[setChangeListsEnabled] - " + enabled);
-    if (!enabled) {
-      removeAllChangeLists();
+    if (enabled) {
+      myChangeListsEnabled = true;
+      enableChangeLists();
     }
-    myChangeListsEnabled = enabled;
+    else {
+      disableChangeLists();
+      myChangeListsEnabled = false;
+    }
 
     myDelayedNotificator.allChangeListsMappingsChanged();
     myDelayedNotificator.changeListAvailabilityChanged();
     LOG.debug("after [setChangeListsEnabled] - " + enabled);
   }
 
-  private void removeAllChangeLists() {
+  private void disableChangeLists() {
     ListData fallbackList = getDataByName(LocalChangeList.getDefaultName());
     if (fallbackList == null) {
       fallbackList = putNewListData(new ListData(null, LocalChangeList.getDefaultName()));
@@ -692,7 +696,7 @@ public class ChangeListWorker {
     boolean defaultChanged = setDefaultList(fallbackList.name) != null;
 
     List<LocalChangeList> removedLists = new ArrayList<>();
-    for (ListData list : myLists) {
+    for (ListData list : new ArrayList<>(myLists)) {
       if (list.isDefault) continue;
       removedLists.add(getChangeListByName(list.name));
       removeChangeList(list.name);
@@ -709,6 +713,14 @@ public class ChangeListWorker {
       if (!movedChanges.isEmpty()) myDelayedNotificator.changesMoved(movedChanges, oldList, newList);
       myDelayedNotificator.changeListRemoved(oldList);
     }
+  }
+
+  private void enableChangeLists() {
+    LOG.assertTrue(myLists.size() == 1);
+    boolean readOnlyChanged = setReadOnly(myDefault.name, false);
+
+    LocalChangeListImpl newList = toChangeList(myDefault);
+    if (readOnlyChanged) myDelayedNotificator.changeListChanged(newList);
   }
 
   public boolean areChangeListsEnabled() {
@@ -851,7 +863,7 @@ public class ChangeListWorker {
     for (String listId : tracker.getAffectedChangeListsIds()) {
       ListData partialList = getDataById(listId);
       if (myMainWorker && partialList == null) {
-        LOG.error(String.format("Unknown changelist %s", listId));
+        LOG.warn(String.format("Unknown changelist %s for file %s", listId, tracker));
         tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id), null);
       }
       data.add(partialList != null ? partialList : myDefault);
@@ -971,6 +983,15 @@ public class ChangeListWorker {
           }
         }
       }
+
+      for (ChangeListChangeAssigner extension : ChangeListChangeAssigner.EP_NAME.getExtensions(myWorker.myProject)) {
+        try {
+          extension.beforeChangesProcessing(scope);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
     }
 
     private void putPathBeforeUpdate(@Nullable FilePath path, @NotNull String listId) {
@@ -1002,7 +1023,7 @@ public class ChangeListWorker {
     }
 
     @NotNull
-    private List<Change> removeChangesUnderScope(@Nullable VcsModifiableDirtyScope scope) {
+    private List<Change> removeChangesUnderScope(@Nullable VcsDirtyScope scope) {
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("Process scope: %s", scope));
       }
@@ -1044,7 +1065,7 @@ public class ChangeListWorker {
     }
 
 
-    public void notifyDoneProcessingChanges(@NotNull DelayedNotificator dispatcher) {
+    public void notifyDoneProcessingChanges(@NotNull DelayedNotificator dispatcher, @Nullable VcsDirtyScope scope) {
       List<ChangeList> changedLists = new ArrayList<>();
       final Map<LocalChangeListImpl, List<Change>> removedChanges = new HashMap<>();
       final Map<LocalChangeListImpl, List<Change>> addedChanges = new HashMap<>();
@@ -1080,6 +1101,15 @@ public class ChangeListWorker {
 
       myChangesBeforeUpdateMap.clear();
       myListsForPathsBeforeUpdate.clear();
+
+      for (ChangeListChangeAssigner extension : ChangeListChangeAssigner.EP_NAME.getExtensions(myWorker.myProject)) {
+        try {
+          extension.markChangesProcessed(scope);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
     }
 
     private void doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
@@ -1195,9 +1225,7 @@ public class ChangeListWorker {
       for (ChangeListWorker.ListData list : myWorker.myLists) {
         Set<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
         if (changesBeforeUpdate.contains(change)) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("[addChangeToCorrespondingList] matched by change: " + list.name);
-          }
+          LOG.debug("[addChangeToCorrespondingList] matched by change: ", list.name);
           return list;
         }
       }
@@ -1206,10 +1234,22 @@ public class ChangeListWorker {
       if (listId != null) {
         ListData list = myWorker.getDataById(listId);
         if (list != null) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("[addChangeToCorrespondingList] matched by paths: " + list.name);
-          }
+          LOG.debug("[addChangeToCorrespondingList] matched by paths: ", list.name);
           return list;
+        }
+      }
+
+      String assignedChangeListId = ChangeListChangeAssigner.EP_NAME.computeSafeIfAny(myWorker.myProject, assigner -> {
+        return assigner.getChangeListIdFor(change, this);
+      });
+      if (assignedChangeListId != null) {
+        ListData list = myWorker.getDataById(assignedChangeListId);
+        if (list != null) {
+          LOG.debug("[addChangeToCorrespondingList] added to list from assigner: ", list.name);
+          return list;
+        }
+        else {
+          LOG.debug("[addChangeToCorrespondingList] failed to add to non-existent list from assigner: ", assignedChangeListId);
         }
       }
 
@@ -1219,9 +1259,7 @@ public class ChangeListWorker {
         return null;
       }
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("[addChangeToCorrespondingList] added to default list");
-      }
+      LOG.debug("[addChangeToCorrespondingList] added to default list");
       return myWorker.myDefault;
     }
 

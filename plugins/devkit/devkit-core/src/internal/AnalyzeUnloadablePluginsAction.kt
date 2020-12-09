@@ -73,72 +73,72 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
   private fun showReport(project: Project, result: List<PluginUnloadabilityStatus>) {
     @NlsSafe val report = buildString {
       if (result.any { it.analysisErrors.isNotEmpty() }) {
-        appendln("Analysis errors:")
+        appendLine("Analysis errors:")
         for (status in result.filter { it.analysisErrors.isNotEmpty() }) {
-          appendln(status.pluginId)
+          appendLine(status.pluginId)
           for (analysisError in status.analysisErrors) {
-            appendln(analysisError)
+            appendLine(analysisError)
           }
-          appendln()
+          appendLine()
         }
       }
 
       val unloadablePlugins = result.filter { it.getStatus() == UnloadabilityStatus.UNLOADABLE }
-      appendln("Can unload ${unloadablePlugins.size} plugins out of ${result.size}")
+      appendLine("Can unload ${unloadablePlugins.size} plugins out of ${result.size}")
       for (status in unloadablePlugins) {
-        appendln(status.pluginId)
+        appendLine(status.pluginId)
       }
-      appendln()
+      appendLine()
 
       val pluginsUsingComponents = result.filter { it.getStatus() == UnloadabilityStatus.USES_COMPONENTS }.sortedByDescending { it.components.size }
-      appendln("Plugins using components (${pluginsUsingComponents.size}):")
+      appendLine("Plugins using components (${pluginsUsingComponents.size}):")
       for (status in pluginsUsingComponents) {
-        appendln("${status.pluginId} (${status.components.size})")
+        appendLine("${status.pluginId} (${status.components.size})")
         for (componentName in status.components) {
-          appendln("  $componentName")
+          appendLine("  $componentName")
         }
       }
-      appendln()
+      appendLine()
 
       val pluginsUsingServiceOverrides = result.filter { it.getStatus() == UnloadabilityStatus.USES_SERVICE_OVERRIDES }.sortedByDescending { it.serviceOverrides.size }
-      appendln("Plugins using service overrides (${pluginsUsingServiceOverrides.size}):")
+      appendLine("Plugins using service overrides (${pluginsUsingServiceOverrides.size}):")
       for (status in pluginsUsingServiceOverrides) {
-        appendln("${status.pluginId} (${status.serviceOverrides.joinToString()})")
+        appendLine("${status.pluginId} (${status.serviceOverrides.joinToString()})")
       }
-      appendln()
+      appendLine()
 
       val pluginsWithOptionalDependencies = result.filter { it.getStatus() == UnloadabilityStatus.NON_DYNAMIC_IN_DEPENDENCIES }
-      appendln("Plugins not unloadable because of optional dependencies (${pluginsWithOptionalDependencies.size}):")
+      appendLine("Plugins not unloadable because of optional dependencies (${pluginsWithOptionalDependencies.size}):")
       for (status in pluginsWithOptionalDependencies) {
-        appendln(status.pluginId)
+        appendLine(status.pluginId)
         for ((pluginId, eps) in status.nonDynamicEPsInDependencies) {
-          appendln("  ${pluginId} - ${eps.joinToString()}")
+          appendLine("  ${pluginId} - ${eps.joinToString()}")
         }
       }
-      appendln()
+      appendLine()
 
       val nonDynamicPlugins = result.filter { it.getStatus() == UnloadabilityStatus.USES_NON_DYNAMIC_EPS }
       if (nonDynamicPlugins.isNotEmpty()) {
-        appendln("Plugins with EPs explicitly marked as dynamic=false:")
+        appendLine("Plugins with EPs explicitly marked as dynamic=false:")
         for (nonDynamicPlugin in nonDynamicPlugins) {
-          appendln("${nonDynamicPlugin.pluginId} (${nonDynamicPlugin.nonDynamicEPs.size})")
+          appendLine("${nonDynamicPlugin.pluginId} (${nonDynamicPlugin.nonDynamicEPs.size})")
           for (ep in nonDynamicPlugin.nonDynamicEPs) {
-            appendln("  $ep")
+            appendLine("  $ep")
           }
         }
-        appendln()
+        appendLine()
       }
 
       val closePlugins = result.filter { it.unspecifiedDynamicEPs.any { !it.startsWith("cidr") && !it.startsWith("appcode") } }
       if (closePlugins.isNotEmpty()) {
-        appendln("Plugins with non-dynamic EPs (${closePlugins.size}):")
+        appendLine("Plugins with non-dynamic EPs (${closePlugins.size}):")
         for (status in closePlugins.sortedBy { it.unspecifiedDynamicEPs.size }) {
-          appendln("${status.pluginId} (${status.unspecifiedDynamicEPs.size})")
+          appendLine("${status.pluginId} (${status.unspecifiedDynamicEPs.size})")
           for (ep in status.unspecifiedDynamicEPs) {
-            appendln("  $ep")
+            appendLine("  $ep")
           }
         }
-        appendln()
+        appendLine()
       }
 
       val epUsagesMap = mutableMapOf<String, Int>()
@@ -149,10 +149,10 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
 
       val epUsagesList = epUsagesMap.toList().filter { !it.first.startsWith("cidr") }.sortedByDescending { it.second }
-      appendln("EP usage statistics (${epUsagesList.size} non-dynamic EPs remaining):")
+      appendLine("EP usage statistics (${epUsagesList.size} non-dynamic EPs remaining):")
       for (pair in epUsagesList) {
         append("${pair.second}: ${pair.first}")
-        appendln()
+        appendLine()
       }
     }
 
@@ -171,7 +171,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     analyzePluginFile(ideaPlugin, analysisErrors, components, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, true)
 
     fun analyzeDependencies(ideaPlugin: IdeaPlugin) {
-      for (dependency in ideaPlugin.dependencies) {
+      for (dependency in ideaPlugin.depends) {
         val configFileName = dependency.configFile.stringValue ?: continue
         val depIdeaPlugin = resolvePluginDependency(dependency)
         if (depIdeaPlugin == null) {
@@ -189,7 +189,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
     val serviceOverridesInDependencies = mutableListOf<String>()
     for (descriptor in allPlugins.mapNotNull { DescriptorUtil.getIdeaPlugin(it) }) {
-      for (dependency in descriptor.dependencies) {
+      for (dependency in descriptor.depends) {
         if (dependency.optional.value == true && dependency.value == ideaPlugin) {
           val depIdeaPlugin = resolvePluginDependency(dependency)
           if (depIdeaPlugin == null) {

@@ -233,17 +233,18 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
   companion object {
     fun inferNullability(expressionGroup: List<PsiExpression>): Nullability {
-      if (expressionGroup.any { it.type == PsiType.NULL }) return Nullability.NULLABLE
+      val expressionSet = expressionGroup.toHashSet()
+      if (expressionSet.any { it.type == PsiType.NULL }) return Nullability.NULLABLE
 
-      if (expressionGroup.isEmpty()) return Nullability.UNKNOWN
-      val fragmentToAnalyze = ControlFlowUtil.findCodeFragment(expressionGroup.first())
+      if (expressionSet.isEmpty()) return Nullability.UNKNOWN
+      val fragmentToAnalyze = ControlFlowUtil.findCodeFragment(expressionSet.first())
       val dfaRunner = DataFlowRunner(fragmentToAnalyze.project)
 
       var nullability = DfaNullability.NOT_NULL
 
       class Visitor : StandardInstructionVisitor() {
         override fun beforeExpressionPush(value: DfaValue, expr: PsiExpression, range: TextRange?, state: DfaMemoryState) {
-          if (expr in expressionGroup) {
+          if (expr in expressionSet) {
             val expressionNullability = when {
               state.isNotNull(value) -> DfaNullability.NOT_NULL
               state.isNull(value) -> DfaNullability.NULL

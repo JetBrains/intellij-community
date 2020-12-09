@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.cef.JCefAppConfig;
+import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.cef.CefSettings.LogSeverity;
@@ -27,10 +28,12 @@ import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +54,7 @@ public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
   static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("JCEF errors", NotificationDisplayType.BALLOON, true);
+    NotificationGroup.create("JCEF errors", NotificationDisplayType.BALLOON, true, null, null, null, null);
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
@@ -128,7 +131,7 @@ public final class JBCefApp {
       throw new IllegalStateException("CefApp failed to start");
     }
     CefSettings settings = config.getCefSettings();
-    settings.windowless_rendering_enabled = false;
+    settings.windowless_rendering_enabled = isOffScreenRenderingMode();
     settings.log_severity = getLogLevel();
     settings.log_file = System.getProperty("ide.browser.jcef.log.path",
       System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log");
@@ -262,32 +265,22 @@ public final class JBCefApp {
       {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
-      String version;
+      JCefVersionDetails version;
       try {
-        version = JCefAppConfig.getVersion();
+        version = JCefAppConfig.getVersionDetails();
       }
-      catch (NoSuchMethodError e) {
+      catch (Throwable e) {
         return unsupported.apply("JCEF runtime version is not supported");
       }
-      if (version == null) {
-        return unsupported.apply("JCEF runtime version is not available");
+      if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
+        return unsupported.apply("JCEF minimum supported major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
+                                 ", current is " + version.cefVersion.major);
       }
-      String[] split = version.split("\\.");
-      if (split.length == 0) {
-        return unsupported.apply("JCEF runtime version has wrong format: " + version);
+      URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
+      if (url == null) {
+        return unsupported.apply("JCefAppConfig.class not found");
       }
-      try {
-        int majorVersion = Integer.parseInt(split[0]);
-        if (MIN_SUPPORTED_CEF_MAJOR_VERSION > majorVersion) {
-          return unsupported.apply("JCEF minimum supported major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
-                                   ", current is " + majorVersion);
-        }
-      }
-      catch (NumberFormatException e) {
-        return unsupported.apply("JCEF runtime version has wrong format: " + version);
-      }
-
-      String path = JCefAppConfig.class.getResource("JCefAppConfig.class").toString();
+      String path = url.toString();
       String name = JCefAppConfig.class.getName().replace('.', '/');
       boolean isJbrModule = path != null && path.contains("/jcef/" + name);
       if (!isJbrModule) {
@@ -301,6 +294,14 @@ public final class JBCefApp {
   @NotNull
   public JBCefClient createClient() {
     return new JBCefClient(myCefApp.createClient());
+  }
+
+  /**
+   * Returns true if JCEF is run in off-screen rendering mode.
+   */
+  @ApiStatus.Experimental
+  public static boolean isOffScreenRenderingMode() {
+    return RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
   }
 
   /**

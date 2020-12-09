@@ -31,6 +31,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -182,7 +183,7 @@ open class GHOpenInBrowserActionGroup
                                     editor: Editor?) {
         val relativePath = VfsUtilCore.getRelativePath(virtualFile, repositoryRoot)
         if (relativePath == null) {
-          GithubNotifications.showError(project, "github.open.in.browser.file.is.not.under.repo",
+          GithubNotifications.showError(project, GithubNotificationIdsHolder.OPEN_IN_BROWSER_FILE_IS_NOT_UNDER_REPO,
                                         GithubBundle.message("cannot.open.in.browser"),
                                         GithubBundle.message("open.on.github.file.is.not.under.repository"),
                                         "Root: " + repositoryRoot.presentableUrl + ", file: " + virtualFile.presentableUrl)
@@ -192,7 +193,7 @@ open class GHOpenInBrowserActionGroup
         val hash = getCurrentFileRevisionHash(project, virtualFile)
         if (hash == null) {
           GithubNotifications.showError(project,
-                                        "github.open.in.browser.cannot.get.last.revision",
+                                        GithubNotificationIdsHolder.OPEN_IN_BROWSER_CANNOT_GET_LAST_REVISION,
                                         GithubBundle.message("cannot.open.in.browser"),
                                         GithubBundle.message("cannot.get.last.revision"))
           return

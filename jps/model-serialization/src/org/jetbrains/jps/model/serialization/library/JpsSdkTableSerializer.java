@@ -19,6 +19,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
 import java.io.File;
 import java.util.List;
@@ -51,13 +52,15 @@ public final class JpsSdkTableSerializer {
   private static final String URL_ATTRIBUTE = "url";
   private static final String ADDITIONAL_TAG = "additional";
 
-  public static void loadSdks(@Nullable Element sdkListElement, JpsLibraryCollection result) {
+  public static void loadSdks(@Nullable Element sdkListElement,
+                              JpsLibraryCollection result,
+                              @NotNull JpsPathMapper pathMapper) {
     for (Element sdkElement : JDOMUtil.getChildren(sdkListElement, JDK_TAG)) {
-      result.addLibrary(loadSdk(sdkElement));
+      result.addLibrary(loadSdk(sdkElement, pathMapper));
     }
   }
 
-  private static JpsLibrary loadSdk(Element sdkElement) {
+  private static JpsLibrary loadSdk(Element sdkElement, @NotNull JpsPathMapper pathMapper) {
     String name = getAttributeValue(sdkElement, NAME_TAG);
     String typeId = getAttributeValue(sdkElement, TYPE_TAG);
     LOG.debug("Loading " + typeId + " SDK '" + name + "'");
@@ -68,7 +71,7 @@ public final class JpsSdkTableSerializer {
       JpsLibraryRootTypeSerializer rootTypeSerializer = getRootTypeSerializer(rootTypeElement.getName());
       if (rootTypeSerializer != null) {
         for (Element rootElement : rootTypeElement.getChildren()) {
-          loadRoots(rootElement, library, rootTypeSerializer.getType());
+          loadRoots(rootElement, library, rootTypeSerializer.getType(), pathMapper);
         }
       }
       else {
@@ -85,15 +88,17 @@ public final class JpsSdkTableSerializer {
     return library;
   }
 
-  private static void loadRoots(Element rootElement, JpsLibrary library, JpsOrderRootType rootType) {
+  private static void loadRoots(Element rootElement, JpsLibrary library, JpsOrderRootType rootType, @NotNull JpsPathMapper pathMapper) {
     final String type = rootElement.getAttributeValue(TYPE_ATTRIBUTE);
     if (type.equals(COMPOSITE_TYPE)) {
       for (Element element : rootElement.getChildren()) {
-        loadRoots(element, library, rootType);
+        loadRoots(element, library, rootType, pathMapper);
       }
     }
     else if (type.equals(SIMPLE_TYPE)) {
-      library.addRoot(rootElement.getAttributeValue(URL_ATTRIBUTE), rootType);
+      String url = rootElement.getAttributeValue(URL_ATTRIBUTE);
+      if (url == null) return;
+      library.addRoot(pathMapper.mapUrl(url), rootType);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
@@ -19,6 +19,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.sdk.*
 import icons.PythonIcons
@@ -51,7 +52,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   private val baseSdkField = PySdkPathChoosingComboBox()
   private val pathField = TextFieldWithBrowseButton().apply {
     text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
-    addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.virtualenv.title"), null, project,
+    addBrowseFolderListener(PySdkBundle.message("python.venv.location.chooser"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
   private val inheritSitePackagesField = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
@@ -60,8 +61,8 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   init {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PyBundle.message("sdk.create.venv.dialog.label.location"), pathField)
-      .addLabeledComponent(PyBundle.message("base.interpreter"), baseSdkField)
+      .addLabeledComponent(PySdkBundle.message("python.venv.location.label"), pathField)
+      .addLabeledComponent(PySdkBundle.message("python.venv.base.label"), baseSdkField)
       .addComponent(inheritSitePackagesField)
       .addComponent(makeSharedField)
       .panel
@@ -75,11 +76,10 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     val root = pathField.text
-    val baseSdk = baseSdkField.selectedSdk
-      .let { if (it is PySdkToInstall) it.install(module) { detectSystemWideSdks(module, existingSdks, context) } else it }
+    val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, module, existingSdks, context)
     if (baseSdk == null) return null
 
-    val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.virtualenv.title"), false) {
+    val task = object : Task.WithResult<String, ExecutionException>(project, PySdkBundle.message("python.creating.venv.title"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
         val packageManager = PyPackageManager.getInstance(baseSdk)
@@ -93,10 +93,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       sdk.associateWithModule(module, newProjectPath)
     }
     moduleToExcludeSdkFrom(root, project)?.excludeInnerVirtualEnv(sdk)
-    with(PySdkSettings.instance) {
-      setPreferredVirtualEnvBasePath(FileUtil.toSystemIndependentName(pathField.text), projectBasePath)
-      preferredVirtualEnvBaseSdk = baseSdk.homePath
-    }
+    PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
     return sdk
   }
 

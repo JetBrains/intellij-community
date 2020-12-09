@@ -2,7 +2,6 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.application.options.OptionsApplicabilityFilter;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
@@ -11,6 +10,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -78,7 +78,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -163,6 +162,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myCurrentState.setAutoscrollToSource(selected);
       getDefaultState().setAutoscrollToSource(selected);
       getGlobalOptions().setAutoscrollToSource(selected);
+    }
+  };
+
+  private final Option myOpenInPreviewTab = new Option() {
+    @Override
+    public boolean isSelected() {
+      return UISettings.getInstance().getOpenInPreviewTabIfPossible();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      UISettings.getInstance().setOpenInPreviewTabIfPossible(selected);
     }
   };
 
@@ -487,7 +498,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = Comparator.comparingInt(AbstractProjectViewPane::getWeight);
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
-  private final Map<String, Element> myUninitializedPaneState = new THashMap<>();
+  private final Map<String, Element> myUninitializedPaneState = new HashMap<>();
   private final Map<String, SelectInTarget> mySelectInTargets = new LinkedHashMap<>();
   private ContentManager myContentManager;
 
@@ -505,7 +516,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
-        return myAutoscrollToSource.isSelected();
+        return myAutoscrollToSource.isSelected() || myOpenInPreviewTab.isSelected();
       }
 
       @Override
@@ -1020,19 +1031,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
-    AnAction action = ActionManager.getInstance().getAction("SelectOpenedFileInProjectView");
+    AnAction action = ActionManager.getInstance().getAction("ProjectViewToolbar");
     if (action != null) titleActions.add(action);
-    AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new DefaultTreeExpander(() -> {
-      AbstractProjectViewPane pane = getCurrentProjectViewPane();
-      return pane == null ? null : pane.myTree;
-    }) {
-      @Override
-      protected void collapseAll(@NotNull JTree tree, boolean strict, int keepSelectionLevel) {
-        super.collapseAll(tree, false, keepSelectionLevel);
-      }
-    }, getComponent());
-    collapseAllAction.getTemplatePresentation().setIcon(AllIcons.Actions.Collapseall);
-    titleActions.add(collapseAllAction);
   }
 
   protected boolean isShowMembersOptionSupported() {
@@ -1795,6 +1795,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isUseFileNestingRules(String paneId) {
+    if (!myCurrentState.getUseFileNestingRules()) return false;
+    AbstractProjectViewPane pane = myId2Pane.get(paneId);
+    return pane != null && pane.isFileNestingEnabled();
+  }
+
+  @Override
+  public void setUseFileNestingRules(boolean useFileNestingRules) {
+    if (myProject.isDisposed()) return;
+    boolean updated = useFileNestingRules != myCurrentState.getUseFileNestingRules();
+    myCurrentState.setUseFileNestingRules(useFileNestingRules);
+    getDefaultState().setUseFileNestingRules(useFileNestingRules);
+    if (updated) updatePanes(false);
+  }
+
+  @Override
   public boolean isCompactDirectories(String paneId) {
     return myCompactDirectories.isSelected() && myCompactDirectories.isEnabled(paneId);
   }
@@ -2036,8 +2052,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return !isAutoscrollFromSource(myCurrentViewId);
   }
 
-  void performSelectOpenedFile() {
-    myAutoScrollFromSourceHandler.scrollFromSource(true);
+  @Nullable Runnable getSelectOpenedFile() {
+    SimpleSelectInContext context = myAutoScrollFromSourceHandler.findSelectInContext();
+    return context == null ? null : () -> context.selectInCurrentTarget(true);
   }
 
   @NotNull
@@ -2120,6 +2137,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     static final class AutoscrollToSource extends Action {
       AutoscrollToSource() {
         super(view -> view.myAutoscrollToSource);
+      }
+    }
+
+    static final class OpenInPreviewTab extends Action {
+      OpenInPreviewTab() {
+        super(view -> view.myOpenInPreviewTab);
       }
     }
 

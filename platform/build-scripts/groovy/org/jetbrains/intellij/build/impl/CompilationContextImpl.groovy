@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -7,7 +7,11 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.GradleRunner
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.jps.model.JpsElementFactory
@@ -25,6 +29,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 
@@ -63,11 +68,13 @@ class CompilationContextImpl implements CompilationContext {
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
-    if (!options.isInDevelopmentMode) {
-      setupCompilationDependencies(gradle, options)
-    }
-    else {
-      gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
+    if (!options.skipDependencySetup) {
+      if (!options.isInDevelopmentMode) {
+        setupCompilationDependencies(gradle, options)
+      }
+      else {
+        gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
+      }
     }
 
     projectHome = toCanonicalPath(projectHome)
@@ -186,7 +193,7 @@ class CompilationContextImpl implements CompilationContext {
     model
   }
 
-  static boolean dependenciesInstalled
+  private static boolean dependenciesInstalled
   static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options) {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
@@ -204,7 +211,7 @@ class CompilationContextImpl implements CompilationContext {
     def kotlinPluginLibPath = "$kotlinHomePath/lib"
     def kotlincLibPath = "$kotlinHomePath/kotlinc/lib"
     if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar"].each {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar", "kotlin-common.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
       }
       ["kotlin-stdlib.jar"].each {
@@ -243,7 +250,9 @@ class CompilationContextImpl implements CompilationContext {
       it.outputPath = "$baseArtifactsOutput/${PathUtilRt.getFileName(it.outputPath)}"
     }
 
-    messages.info("Incremental compilation: " + options.incrementalCompilation)
+    if (!options.useCompiledClassesFromProjectOutput) {
+      messages.info("Incremental compilation: " + options.incrementalCompilation)
+    }
     if (options.incrementalCompilation) {
       System.setProperty("kotlin.incremental.compilation", "true")
       outputDirectoriesToKeep.add(dataDirName)
@@ -256,7 +265,8 @@ class CompilationContextImpl implements CompilationContext {
 
     if (options.cleanOutputFolder) {
       cleanOutput(outputDirectoriesToKeep)
-    } else {
+    }
+    else {
       messages.info("cleanOutput step was skipped")
     }
   }
@@ -487,13 +497,13 @@ class CompilationContextImpl implements CompilationContext {
 @CompileStatic
 class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
-    this.communityHome = communityHome
+    super(Paths.get(communityHome), Paths.get("$buildOutputRoot/temp"))
+
     this.projectHome = projectHome
     this.buildOutputRoot = buildOutputRoot
     this.jdkHome = jdkHome
     this.kotlinHome = kotlinHome
     artifacts = "$buildOutputRoot/artifacts"
     distAll = "$buildOutputRoot/dist.all"
-    temp = "$buildOutputRoot/temp"
   }
 }

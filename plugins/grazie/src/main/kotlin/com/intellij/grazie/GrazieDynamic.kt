@@ -38,20 +38,20 @@ internal object GrazieDynamic : DynamicPluginListener {
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
-        .urls(GrazieRemote.allAvailableLocally().map { it.remote.file.toUri().toURL() }).get()
+        .files(GrazieRemote.allAvailableLocally().map { it.remote.file }).get()
     )
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
       myDynClassLoaders.clear()
+      Authenticator.setDefault(null)
     }
   }
 
   override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
       if (Lang.isAnyLanguageLoadExceptEnglish()) throw CannotUnloadPluginException("Grazie can unload only English language")
-      if (Authenticator.getDefault()?.javaClass?.classLoader == GraziePlugin.classLoader) Authenticator.setDefault(null)
     }
   }
 

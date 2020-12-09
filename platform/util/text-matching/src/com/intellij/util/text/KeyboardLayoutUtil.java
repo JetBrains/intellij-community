@@ -33,7 +33,7 @@ public final class KeyboardLayoutUtil {
   }
 
   public static void storeAsciiForChar(int keyCode, char keyChar, int asciiFirstKeyCode, int asciiLastKeyCode) {
-    if (keyChar < asciiFirstKeyCode || asciiLastKeyCode < keyChar) return;
+    if (keyCode < asciiFirstKeyCode || asciiLastKeyCode < keyCode) return;
     if ('a' <= keyChar && keyChar <= 'z' || 'A' <= keyChar && keyChar <= 'Z') return;
     if (ourLLtoASCII.containsKey(keyChar)) return;
 

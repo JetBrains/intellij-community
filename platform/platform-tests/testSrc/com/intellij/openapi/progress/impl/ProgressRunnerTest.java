@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -304,6 +305,8 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
    */
   @Test
   public void testPumpingExceptionPropagation() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
     final String failureMessage = "Expected Failure";
     ProgressResult<?> result = new ProgressRunner<>(() ->
                                                       UIUtil.invokeAndWaitIfNeeded(() -> {
@@ -314,7 +317,6 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
       .modal()
       .sync()
       .submitAndGet();
-    if (result == null) return;
     assertFalse(result.isCanceled());
     Throwable throwable = result.getThrowable();
 

@@ -5,6 +5,7 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,7 +123,9 @@ public class JBColor extends Color {
     return !Lazy.DARK;
   }
 
-  private Color getDarkVariant() {
+  @ApiStatus.Internal
+  //For CodeWithMe only
+  public Color getDarkVariant() {
     return darkColor;
   }
 

@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApiStatus.Internal
 public final class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
-  public static final Topic<SuspenderListener> TOPIC = Topic.create("ProgressSuspender", SuspenderListener.class);
+  public static final Topic<SuspenderListener> TOPIC = new Topic<>("ProgressSuspender", SuspenderListener.class, Topic.BroadcastDirection.NONE);
 
   private final Object myLock = new Object();
   private static final Application ourApp = ApplicationManager.getApplication();

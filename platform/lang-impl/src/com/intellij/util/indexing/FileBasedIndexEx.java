@@ -115,7 +115,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project) {
-    return processAllKeys(indexId, processor, project == null ? new EverythingGlobalScope() : GlobalSearchScope.allScope(project), null);
+    return processAllKeys(indexId, processor, project == null ? new EverythingGlobalScope() : GlobalSearchScope.everythingScope(project), null);
   }
 
   @Override
@@ -177,6 +177,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                            @NotNull K dataKey,
                                                            @NotNull GlobalSearchScope filter) {
+    if (LightEdit.owns(filter.getProject())) return Collections.emptyList();
     Set<VirtualFile> files = new HashSet<>();
     processValuesInScope(indexId, dataKey, false, filter, null, (file, value) -> {
       files.add(file);
@@ -354,6 +355,16 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                @NotNull Processor<? super VirtualFile> processor) {
     ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
     IntSet set = null;
+
+    if (filter instanceof GlobalSearchScope.FilesScope) {
+      set = new IntOpenHashSet();
+      for (VirtualFile file : (Iterable<VirtualFile>)filter) {
+        if (file instanceof VirtualFileWithId) {
+          set.add(((VirtualFileWithId)file).getId());
+        }
+      }
+    }
+
     //noinspection rawtypes
     for (AllKeysQuery query : queries) {
       @SuppressWarnings("unchecked")
@@ -364,7 +375,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         set = new IntOpenHashSet(queryResult);
       }
       else {
-        set.retainAll(queryResult);
+        set = queryResult;
       }
     }
     return set != null && processVirtualFiles(set, filter, processor);
@@ -397,7 +408,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
     List<IndexableFilesIterator> providers = getOrderedIndexableFilesProviders(project);
-    ConcurrentBitSet visitedFileSet = new ConcurrentBitSet();
+    ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
     boolean wasIndeterminate = false;
     if (indicator != null) {
       wasIndeterminate = indicator.isIndeterminate();
@@ -472,7 +483,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                              @NotNull VirtualFileFilter filter,
                                              @NotNull Processor<? super VirtualFile> processor) {
     // ensure predictable order because result might be cached by consumer
-    IntArrayList sortedIds = new IntArrayList(ids);
+    IntList sortedIds = new IntArrayList(ids);
     sortedIds.sort(null);
 
     PersistentFS fs = PersistentFS.getInstance();

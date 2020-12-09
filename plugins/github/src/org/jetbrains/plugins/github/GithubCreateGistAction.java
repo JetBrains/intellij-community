@@ -16,10 +16,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
@@ -30,10 +32,7 @@ import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileConte
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
-import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubSettings;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
@@ -47,6 +46,7 @@ import java.util.List;
  */
 public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;
+  private static final Condition<@Nullable VirtualFile> FILE_WITH_CONTENT = f -> f != null && !(f.getFileType().isBinary());
 
   protected GithubCreateGistAction() {
     super(GithubBundle.messagePointer("create.gist.action.title"),
@@ -64,8 +64,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    boolean hasFilesWithContent = FILE_WITH_CONTENT.value(file) || (files != null && ContainerUtil.exists(files, FILE_WITH_CONTENT));
 
-    if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
+    if (!hasFilesWithContent || editor != null && editor.getDocument().getTextLength() == 0) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -86,7 +87,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    createGistAction(project, editor, file, files);
+    createGistAction(project, editor, FILE_WITH_CONTENT.value(file) ? file : null, filterFilesWithContent(files));
+  }
+
+  private static VirtualFile @Nullable [] filterFilesWithContent(@Nullable VirtualFile @Nullable [] files) {
+    if (files == null) return null;
+
+    return ContainerUtil.filter(files, FILE_WITH_CONTENT).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   private static void createGistAction(@NotNull final Project project,
@@ -144,7 +151,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
         else {
           GithubNotifications
             .showInfoURL(project,
-                         "github.gist.created",
+                         GithubNotificationIdsHolder.GIST_CREATED,
                          GithubBundle.message("create.gist.success"),
                          GithubBundle.message("create.gist.url"), url.get());
         }
@@ -207,7 +214,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                            @Nullable String filename) {
     if (contents.isEmpty()) {
       GithubNotifications.showWarning(project,
-                                      "github.gist.cannot.create",
+                                      GithubNotificationIdsHolder.GIST_CANNOT_CREATE,
                                       GithubBundle.message("cannot.create.gist"),
                                       GithubBundle.message("create.gist.error.empty"));
       return null;
@@ -221,7 +228,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     catch (IOException e) {
       GithubNotifications.showError(project,
-                                    "github.gist.cannot.create",
+                                    GithubNotificationIdsHolder.GIST_CANNOT_CREATE,
                                     GithubBundle.message("cannot.create.gist"),
                                     e);
       return null;
@@ -248,7 +255,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     if (file.getFileType().isBinary()) {
       GithubNotifications
-        .showWarning(project, "github.gist.cannot.create",
+        .showWarning(project, GithubNotificationIdsHolder.GIST_CANNOT_CREATE,
                      GithubBundle.message("cannot.create.gist"),
                      GithubBundle.message("create.gist.error.binary.file", file.getName()));
       return Collections.emptyList();
@@ -271,7 +278,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (content == null) {
       GithubNotifications
         .showWarning(project,
-                     "github.gist.cannot.create",
+                     GithubNotificationIdsHolder.GIST_CANNOT_CREATE,
                      GithubBundle.message("cannot.create.gist"),
                      GithubBundle.message("create.gist.error.content.read", file.getName()));
       return Collections.emptyList();

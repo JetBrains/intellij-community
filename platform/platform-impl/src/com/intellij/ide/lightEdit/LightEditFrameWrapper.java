@@ -2,6 +2,9 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.diagnostic.IdeMessagePanel;
+import com.intellij.ide.RecentProjectMetaInfo;
+import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
 import com.intellij.ide.lightEdit.statusBar.*;
 import com.intellij.openapi.Disposable;
@@ -19,11 +22,15 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
@@ -70,7 +77,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   }
 
   @Override
-  protected void initTitleInfoProviders(@NotNull Project project) {
+  protected @NotNull List<TitleInfoProvider> getTitleInfoProviders() {
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -144,9 +152,24 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   }
 
   static @NotNull LightEditFrameWrapper allocate(@NotNull Project project, @NotNull BooleanSupplier closeHandler) {
-    return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(
-      project,
-      () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false), closeHandler));
+    return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(project, () -> {
+      FrameInfo info = getFrameInfo(project);
+      return new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false, info), closeHandler);
+    });
+  }
+
+  private static @Nullable FrameInfo getFrameInfo(@NotNull Project project) {
+    RecentProjectsManagerBase projectsManagerBase = ObjectUtils.tryCast(RecentProjectsManager.getInstance(), RecentProjectsManagerBase.class);
+    if (projectsManagerBase != null) {
+      String projectPath = projectsManagerBase.getProjectPath(project);
+      if (projectPath != null) {
+        RecentProjectMetaInfo metaInfo = projectsManagerBase.getProjectMetaInfo(Paths.get(projectPath));
+        if (metaInfo != null) {
+          return metaInfo.getFrame$intellij_platform_ide_impl();
+        }
+      }
+    }
+    return null;
   }
 
   void setFrameTitleUpdateEnabled(boolean frameTitleUpdateEnabled) {

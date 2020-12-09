@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.ProjectRule
 import org.junit.*
 import org.junit.rules.TestName
@@ -127,8 +128,7 @@ abstract class UiDslTest {
 
   @Test
   fun `checkbox rows with big components`() {
-    // ComboBoxes in MacOs LaF have different border insets, that are used to build layout constraints
-    Assume.assumeTrue(!SystemInfo.isMac)
+    Assume.assumeFalse("ComboBoxes in MacOs LaF have different border insets, that are used to build layout constraints", SystemInfo.isMac)
     doTest { checkboxRowsWithBigComponents() }
   }
 

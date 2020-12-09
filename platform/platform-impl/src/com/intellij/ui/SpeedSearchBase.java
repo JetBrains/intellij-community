@@ -4,8 +4,6 @@ package com.intellij.ui;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -359,12 +357,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  private void logEvent(UIEventId id) {
-    FeatureUsageData data = new FeatureUsageData();
-    data.addData("class", myComponent.getClass().getName());
-    UIEventLogger.logUIEvent(id, data);
-  }
-
   public Comp getComponent() {
     return myComponent;
   }
@@ -392,7 +384,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   public boolean adjustSelection(int keyCode, @NotNull String searchQuery) {
     if (isUpDownHomeEnd(keyCode)) {
-      logEvent(UIEventId.IncrementalSearchNextPrevItemSelected);
+      UIEventLogger.IncrementalSearchNextPrevItemSelected.log(myComponent.getClass());
       Object element = findTargetElement(keyCode, searchQuery);
       if (element != null) {
         selectElement(element, searchQuery);
@@ -481,7 +473,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           }
         }
         else {
-          logEvent(UIEventId.IncrementalSearchKeyTyped);
+          UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
           element = findElement(s);
         }
         updateSelection(element);
@@ -591,7 +583,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       project = null;
     }
     if (mySearchPopup != null) {
-      logEvent(UIEventId.IncrementalSearchCancelled);
+      UIEventLogger.IncrementalSearchCancelled.log(myComponent.getClass());
       if (myPopupLayeredPane != null) {
         myPopupLayeredPane.remove(mySearchPopup);
         myPopupLayeredPane.validate();
@@ -606,7 +598,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");
-      logEvent(UIEventId.IncrementalSearchActivated);
+      UIEventLogger.IncrementalSearchActivated.log(project, myComponent.getClass());
     }
 
     mySearchPopup = myComponent.isShowing() ? searchPopup : null;
@@ -614,8 +606,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     fireStateChanged();
 
     //select here!
-
-
 
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 

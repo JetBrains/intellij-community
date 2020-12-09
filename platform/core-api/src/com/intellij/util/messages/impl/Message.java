@@ -6,25 +6,26 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import java.util.List;
 
-final class Message {
-  final Topic<?> topic;
-  final Method listenerMethod;
+final class Message<L> {
+  final Topic<L> topic;
+  final String methodName;
+  final MethodHandle method;
   final Object[] args;
-  final List<Object> handlers;
+  final List<L> handlers;
   final @Nullable ClientId clientId;
 
   // to avoid creating Message for each handler
   // see note about pumpMessages in createPublisher (invoking job handlers can be stopped and continued as part of another pumpMessages call)
   int currentHandlerIndex;
 
-  Message(@NotNull Topic<?> topic, @NotNull Method listenerMethod, Object[] args, @NotNull List<Object> handlers) {
+  Message(@NotNull Topic<L> topic, @NotNull MethodHandle method, @NotNull String methodName, Object[] args, @NotNull List<L> handlers) {
     this.topic = topic;
-    listenerMethod.setAccessible(true);
-    this.listenerMethod = listenerMethod;
+    this.method = method;
+    this.methodName = methodName;
     this.args = args;
     this.handlers = handlers;
     clientId = ClientId.getCurrentOrNull();
@@ -34,7 +35,7 @@ final class Message {
   public String toString() {
     return "Message(" +
            "topic=" + topic +
-           ", listenerMethod=" + listenerMethod +
+           ", method=" + methodName +
            ", args=" + Arrays.toString(args) +
            ", handlers=" + handlers +
            ')';

@@ -73,13 +73,13 @@ public final class VfsRootAccess {
           assert local != null : child;
         }
         for (String root : allowed) {
-          if (PathUtil.isAncestorOrSelf(root, local)) {
+          if (VfsUtilCore.isAncestorOrSelf(root, local)) {
             isUnder = true;
             break;
           }
           if (root.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
             String rootLocalPath = FileUtil.toSystemIndependentName(PathUtil.toPresentableUrl(root));
-            isUnder = PathUtil.isAncestorOrSelf(rootLocalPath, local);
+            isUnder = VfsUtilCore.isAncestorOrSelf(rootLocalPath, local);
             if (isUnder) break;
           }
         }

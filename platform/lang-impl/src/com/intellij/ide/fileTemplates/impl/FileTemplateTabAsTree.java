@@ -203,4 +203,9 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   public void addTemplate(FileTemplate newTemplate) {
     // not supported
   }
+
+  @Override
+  public void insertTemplate(FileTemplate newTemplate, int index) {
+    // not supported
+  }
 }

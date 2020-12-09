@@ -1,4 +1,4 @@
-def <T> void foo(List<? extends List<T>> a, List<? extends List<? extends T>> b) {
+def <T> void foo(ArrayList<? extends ArrayList<T>> a, ArrayList<? extends ArrayList<? extends T>> b) {
   a.get(0).add(b.get(0).get(0))
 }
 

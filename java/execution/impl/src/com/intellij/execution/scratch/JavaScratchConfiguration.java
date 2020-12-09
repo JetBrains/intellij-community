@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -133,12 +134,24 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
   @Nullable
   public VirtualFile getScratchVirtualFile() {
     final String url = getScratchFileUrl();
-    return url == null? null : VirtualFileManager.getInstance().findFileByUrl(url);
+    return url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
   @NotNull
   @Override
   protected JavaScratchConfigurationOptions getOptions() {
     return (JavaScratchConfigurationOptions)super.getOptions();
+  }
+
+  @Nullable
+  @Override
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultTargetName() {
+    return null;
   }
 }

@@ -9,16 +9,14 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.BitUtil;
-import com.intellij.util.Functions;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.text.ByteArrayCharSequence;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-
-import static com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry.ALL_FLAGS_MASK;
 
 /**
  * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
@@ -68,8 +64,10 @@ public final class VfsData {
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
-  private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
-  private IntOpenHashSet myDyingIds = new IntOpenHashSet();
+  private final ConcurrentBitSet myInvalidatedIds = ConcurrentBitSet.create();
+
+  /** guarded by {@link #myDeadMarker} */
+  private IntSet myDyingIds = new IntOpenHashSet();
 
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
@@ -125,11 +123,10 @@ public final class VfsData {
     if (o instanceof DirectoryData) {
       if (putToMemoryCache) {
         return persistentFS.getOrCacheDir(id, new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()));
-      } else {
-        VirtualFileSystemEntry entry = persistentFS.getCachedDir(id);
-        if (entry != null) return entry;
-        return new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem());
       }
+      VirtualFileSystemEntry entry = persistentFS.getCachedDir(id);
+      if (entry != null) return entry;
+      return new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem());
     }
     return new VirtualFileImpl(id, segment, parent);
   }
@@ -260,7 +257,8 @@ public final class VfsData {
     }
 
     boolean getFlag(int id, @VirtualFileSystemEntry.Flags int mask) {
-      assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
+      BitUtil.assertOneBitMask(mask);
+      assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       return (myIntArray.get(getOffset(id) * 2 + 1) & mask) != 0;
     }
 
@@ -268,46 +266,28 @@ public final class VfsData {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
       }
-      assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
+      assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       int offset = getOffset(id) * 2 + 1;
-      while (true) {
-        int oldInt = myIntArray.get(offset);
-        int updated = BitUtil.set(oldInt, mask, value);
-        if (myIntArray.compareAndSet(offset, oldInt, updated)) {
-          return;
-        }
-      }
+      myIntArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
     void setFlags(int id, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Set flags " + Integer.toHexString(combinedMask) + "=" + combinedValue + " for id=" + id);
       }
-      assert (combinedMask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
+      assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue)+ ") set bits outside mask ("+
                                                     Integer.toHexString(combinedMask)+")";
       int offset = getOffset(id) * 2 + 1;
-      while (true) {
-        int oldInt = myIntArray.get(offset);
-        int updated = oldInt & ~combinedMask | combinedValue;
-        if (myIntArray.compareAndSet(offset, oldInt, updated)) {
-          return;
-        }
-      }
+      myIntArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
 
     long getModificationStamp(int id) {
-      return myIntArray.get(getOffset(id) * 2 + 1) & ~ALL_FLAGS_MASK;
+      return myIntArray.get(getOffset(id) * 2 + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
     void setModificationStamp(int id, long stamp) {
       int offset = getOffset(id) * 2 + 1;
-      while (true) {
-        int oldInt = myIntArray.get(offset);
-        int updated = (oldInt & ALL_FLAGS_MASK) | ((int)stamp & ~ALL_FLAGS_MASK);
-        if (myIntArray.compareAndSet(offset, oldInt, updated)) {
-          return;
-        }
-      }
+      myIntArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) | ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
@@ -321,7 +301,8 @@ public final class VfsData {
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
   static final class DirectoryData {
-    private static final AtomicFieldUpdater<DirectoryData, KeyFMap> MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
+    private static final AtomicFieldUpdater<DirectoryData, KeyFMap>
+      MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     @NotNull
     volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
     /**
@@ -330,6 +311,7 @@ public final class VfsData {
      * @see VirtualDirectoryImpl#findIndex(int[], CharSequence)
      */
     volatile int @NotNull [] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
+    volatile boolean myAllChildrenLoaded;
 
     // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
     private volatile Set<CharSequence> myAdoptedNames;
@@ -346,6 +328,13 @@ public final class VfsData {
         children[i] = child;
       }
       return children;
+    }
+
+    boolean allChildrenLoaded() {
+      return myAllChildrenLoaded;
+    }
+    void setAllChildrenLoaded() {
+      myAllChildrenLoaded = true;
     }
 
     boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {

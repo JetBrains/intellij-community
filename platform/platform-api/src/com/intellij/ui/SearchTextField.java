@@ -1,18 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.JBMenuItem;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SearchTextField extends JPanel {
+
   public static final DataKey<SearchTextField> KEY = DataKey.create("search.text.field");
   public static final KeyStroke SHOW_HISTORY_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK);
   public static final CustomShortcutSet SHOW_HISTORY_SHORTCUT = new CustomShortcutSet(SHOW_HISTORY_KEYSTROKE);
@@ -42,10 +42,10 @@ public class SearchTextField extends JPanel {
   private final MyModel myModel;
   private final TextFieldWithProcessing myTextField;
 
+  @Nullable
   private JBPopup myPopup;
-  private JPopupMenu myNativeSearchPopup;
-  private JMenuItem myNoItems;
   private String myHistoryPropertyName;
+  private final boolean historyPopupEnabled;
 
   public SearchTextField() {
     this(true);
@@ -61,9 +61,9 @@ public class SearchTextField extends JPanel {
 
   public SearchTextField(boolean historyPopupEnabled, @Nullable String historyPropertyName) {
     super(new BorderLayout());
+    this.historyPopupEnabled = historyPopupEnabled;
 
     myModel = new MyModel();
-
     myTextField = new TextFieldWithProcessing() {
       @Override
       public void processKeyEvent(final KeyEvent e) {
@@ -77,6 +77,14 @@ public class SearchTextField extends JPanel {
         //noinspection unchecked
         if (ui instanceof Condition && ((Condition)ui).value(e)) return;
 
+        if(e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
+          myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          if (e.getClickCount() == 1) {
+           showPopup();
+          }
+        } else {
+          myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+        }
         super.processMouseEvent(e);
       }
 
@@ -108,15 +116,7 @@ public class SearchTextField extends JPanel {
 
     setHistoryPropertyName(historyPropertyName);
 
-    if (historyPopupEnabled) {
-      DumbAwareAction.create(event -> {
-        if (myNativeSearchPopup != null) {
-          myNativeSearchPopup.show(myTextField, 5, myTextField.getHeight());
-        } else if (myPopup == null || !myPopup.isVisible()) {
-          showPopup();
-        }
-      }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
-    } else if (historyPropertyName != null) {
+    if (historyPropertyName != null) {
       myTextField.getActionMap().put("showPrevHistoryItem", new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -147,15 +147,9 @@ public class SearchTextField extends JPanel {
       myTextField.setText("");
       onFieldCleared();
     });
-
-    if (historyPopupEnabled) {
-      myNativeSearchPopup = new JBPopupMenu();
-      myNoItems = new JBMenuItem(IdeBundle.message("no.recent.searches"));
-      myNoItems.setEnabled(false);
-
-      updateMenu();
-      myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup);
-    }
+    DumbAwareAction.create(event -> {
+      showPopup();
+    }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
   }
 
   @Override
@@ -182,22 +176,6 @@ public class SearchTextField extends JPanel {
   }
 
   protected void onFocusGained() {
-  }
-
-  private void updateMenu() {
-    if (myNativeSearchPopup != null) {
-      myNativeSearchPopup.removeAll();
-      final int itemsCount = myModel.getSize();
-      if (itemsCount == 0) {
-        myNativeSearchPopup.add(myNoItems);
-      }
-      else {
-        for (int i = 0; i < itemsCount; i++) {
-          final String item = myModel.getElementAt(i);
-          addMenuItem(item);
-        }
-      }
-    }
   }
 
   /**
@@ -265,23 +243,11 @@ public class SearchTextField extends JPanel {
   public void addCurrentTextToHistory() {
     if (myModel.addElement(getText()) && myHistoryPropertyName != null) {
       PropertiesComponent.getInstance().setValue(myHistoryPropertyName, StringUtil.join(getHistory(), "\n"));
+      reInitPopup();
     }
   }
 
   protected void historyItemChosen(String item) {
-  }
-
-  private void addMenuItem(@NlsSafe String item) {
-    if (myNativeSearchPopup != null) {
-      myNativeSearchPopup.remove(myNoItems);
-      final JMenuItem menuItem = new JBMenuItem(item);
-      myNativeSearchPopup.add(menuItem);
-      menuItem.addActionListener(e -> {
-        myTextField.setText(item);
-        addCurrentTextToHistory();
-        historyItemChosen(item);
-      });
-    }
   }
 
   public void selectText() {
@@ -300,7 +266,7 @@ public class SearchTextField extends JPanel {
   @Override
   public void requestFocus() {
     IdeFocusManager.getGlobalInstance()
-                   .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getTextEditor(), true));
+            .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getTextEditor(), true));
   }
 
   protected void setHistoryPropertyName(String historyPropertyName) {
@@ -392,7 +358,7 @@ public class SearchTextField extends JPanel {
 
     public void fireContentsChanged() {
       fireContentsChanged(this, -1, -1);
-      updateMenu();
+      reInitPopup();
     }
 
     public void setItems(List<String> aList) {
@@ -401,7 +367,7 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  private void hidePopup() {
+  protected void hidePopup() {
     if (myPopup != null) {
       myPopup.cancel();
       myPopup = null;
@@ -413,25 +379,29 @@ public class SearchTextField extends JPanel {
       final String value = (String)list.getSelectedValue();
       getTextEditor().setText(value != null ? value : "");
       addCurrentTextToHistory();
-      if (myPopup != null) {
-        myPopup.cancel();
-        myPopup = null;
-      }
+      reInitPopup();
     };
   }
 
   protected void showPopup() {
     addCurrentTextToHistory();
-    if (myPopup == null || !myPopup.isVisible()) {
-      final JList<String> list = new JBList<>(myModel);
-      final Runnable chooseRunnable = createItemChosenCallback(list);
+    if ((myPopup == null || !myPopup.isVisible()) && historyPopupEnabled) {
+      reInitPopup();
+      if (isShowing()) {
+        myPopup.showUnderneathOf(getPopupLocationComponent());
+      }
+    }
+  }
+
+  private void reInitPopup() {
+    hidePopup();
+    final JList<String> list = new JBList<>(myModel);
+    final Runnable chooseRunnable = createItemChosenCallback(list);
+    if(ApplicationManager.getApplication() != null && JBPopupFactory.getInstance() != null) {
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(chooseRunnable).createPopup();
-      if (isShowing()) {
-        myPopup.showUnderneathOf(getPopupLocationComponent());
-      }
     }
   }
 
@@ -459,7 +429,7 @@ public class SearchTextField extends JPanel {
   }
 
   protected boolean preprocessEventForTextField(KeyEvent e) {
-    if (SHOW_HISTORY_KEYSTROKE.equals(KeyStroke.getKeyStrokeForEvent(e)) && getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu) {
+    if (SHOW_HISTORY_KEYSTROKE.equals(KeyStroke.getKeyStrokeForEvent(e))) {
       showPopup();
       return true;
     }
@@ -474,6 +444,7 @@ public class SearchTextField extends JPanel {
   public void setSearchIcon(final Icon icon) {
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   public static final class FindAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {

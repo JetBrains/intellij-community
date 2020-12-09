@@ -19,8 +19,9 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -56,6 +57,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
 
 import java.util.*;
+import java.util.function.IntConsumer;
 
 /**
  * @author Maxim.Medvedev
@@ -87,8 +89,8 @@ public final class GroovyIntroduceParameterUtil {
     }
   }
 
-  public static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, final TIntArrayList parametersToRemove) {
-    parametersToRemove.forEach(paramNum -> {
+  public static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, final IntList parametersToRemove) {
+    parametersToRemove.forEach((IntConsumer)paramNum -> {
       try {
         final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
         for (PsiElement arg : actualArg.args) {
@@ -98,11 +100,10 @@ public final class GroovyIntroduceParameterUtil {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
     });
   }
 
-  public static void removeParamsFromUnresolvedCall(GrCall callExpression, PsiParameter[] parameters, TIntArrayList parametersToRemove) {
+  public static void removeParamsFromUnresolvedCall(GrCall callExpression, PsiParameter[] parameters, IntList parametersToRemove) {
     final GrExpression[] arguments = callExpression.getExpressionArguments();
     final GrClosableBlock[] closureArguments = callExpression.getClosureArguments();
     final GrNamedArgument[] namedArguments = callExpression.getNamedArguments();
@@ -121,7 +122,8 @@ public final class GroovyIntroduceParameterUtil {
       hasNamedArgs = false;
     }
 
-    parametersToRemove.forEachDescending(paramNum -> {
+    for (int i = parametersToRemove.size() - 1; i >= 0; i--) {
+      int paramNum = parametersToRemove.getInt(i);
       try {
         if (paramNum == 0 && hasNamedArgs) {
           for (GrNamedArgument namedArgument : namedArguments) {
@@ -141,8 +143,7 @@ public final class GroovyIntroduceParameterUtil {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
-    });
+    }
   }
 
   public static void detectAccessibilityConflicts(@Nullable GroovyPsiElement elementToProcess,
@@ -215,12 +216,11 @@ public final class GroovyIntroduceParameterUtil {
     final GrSignature signature = GrClosureSignatureUtil.createSignature((PsiMethod)resolved, resolveResult.getSubstitutor());
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, methodCall);
     LOG.assertTrue(argInfos != null);
-    settings.parametersToRemove().forEach(value -> {
+    settings.parametersToRemove().forEach((IntConsumer)value -> {
       final List<PsiElement> args = argInfos[value].args;
       for (PsiElement arg : args) {
         arg.delete();
       }
-      return true;
     });
   }
 
@@ -276,8 +276,8 @@ public final class GroovyIntroduceParameterUtil {
     return method;
   }
 
-  public static TObjectIntHashMap<GrParameter> findParametersToRemove(IntroduceParameterInfo helper) {
-    final TObjectIntHashMap<GrParameter> result = new TObjectIntHashMap<>();
+  public static Object2IntMap<GrParameter> findParametersToRemove(IntroduceParameterInfo helper) {
+    final Object2IntMap<GrParameter> result = new Object2IntOpenHashMap<>();
 
     final TextRange range = ExtractUtil.getRangeOfRefactoring(helper);
 

@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -62,6 +63,8 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    component.setForeground(RenderingUtil.getForeground(table, isSelected));
+    component.setBackground(RenderingUtil.getBackground(table, isSelected));
     component.setEnabled(((ScopesAndSeveritiesTable)table).isRowEnabled(row));
     return component;
   }

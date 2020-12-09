@@ -12,6 +12,9 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -54,7 +57,8 @@ object JpsProjectEntitiesLoader {
                           errorReporter: ErrorReporter,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
-    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source)
+    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source,
+                                                                             virtualFileManager)
     serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
   }
 
@@ -65,7 +69,7 @@ object JpsProjectEntitiesLoader {
                                                virtualFileManager: VirtualFileUrlManager,
                                                externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
     val externalStorageRoot = externalStoragePath.toVirtualFileUrl(virtualFileManager)
-    val externalStorageMapping = JpsExternalStorageMappingImpl(externalStorageRoot, configLocation)
+    val externalStorageMapping = JpsExternalStorageMappingImpl(externalStorageRoot, virtualFileManager, configLocation)
     return when (configLocation) {
       is JpsProjectConfigLocation.FileBased -> createIprProjectSerializers(configLocation, reader, externalStorageMapping, serializeArtifacts, virtualFileManager)
       is JpsProjectConfigLocation.DirectoryBased -> createDirectoryProjectSerializers(configLocation, reader, externalStorageMapping,
@@ -90,13 +94,15 @@ object JpsProjectEntitiesLoader {
     val externalStorageRoot = externalStorageMapping.externalStorageRoot
     val internalLibrariesDirUrl = virtualFileManager.fromUrl(librariesDirectoryUrl)
     val externalStorageEnabled = isExternalStorageEnabled(reader, projectDirUrl)
-    val librariesExternalStorageFile = JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/libraries.xml"), configLocation)
-    val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot)
+    val librariesExternalStorageFile = JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/libraries.xml", virtualFileManager),
+                                                                     configLocation)
+    val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot, virtualFileManager)
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = listOf(JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, internalLibrariesDirUrl)),
       directorySerializersFactories = directorySerializersFactories,
       moduleListSerializers = listOf(
-        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", externalModuleListSerializer, externalStorageConfigurationManager),
+        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", virtualFileManager, externalModuleListSerializer,
+                                 externalStorageConfigurationManager),
         externalModuleListSerializer
       ),
       configLocation = configLocation,
@@ -127,7 +133,7 @@ object JpsProjectEntitiesLoader {
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = entityTypeSerializers,
       directorySerializersFactories = emptyList(),
-      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.url)),
+      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.url, virtualFileManager)),
       configLocation = configLocation,
       reader = reader,
       virtualFileManager = virtualFileManager,
@@ -145,13 +151,16 @@ object JpsProjectEntitiesLoader {
 
   fun createEntitySourceForProjectLibrary(project: Project, externalSource: ProjectModelExternalSource?): EntitySource {
     val location = project.configLocation ?: return NonPersistentEntitySource
-    val internalFile = createJpsEntitySourceForProjectLibrary(location)
+    val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val internalFile = createJpsEntitySourceForProjectLibrary(location, virtualFileUrlManager)
     if (externalSource == null) return internalFile
     return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
   }
 
-  fun createJpsEntitySourceForProjectLibrary(configLocation: JpsProjectConfigLocation) = when (configLocation) {
-    is JpsProjectConfigLocation.DirectoryBased -> JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(".idea/libraries"), configLocation)
+  fun createJpsEntitySourceForProjectLibrary(configLocation: JpsProjectConfigLocation,
+                                             virtualFileUrlManager: VirtualFileUrlManager) = when (configLocation) {
+    is JpsProjectConfigLocation.DirectoryBased ->
+      JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(".idea/libraries", virtualFileUrlManager), configLocation)
     is JpsProjectConfigLocation.FileBased -> JpsFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
   }
 }

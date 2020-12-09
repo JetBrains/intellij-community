@@ -85,7 +85,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
                                   NativeMavenProjectHolder nativeMavenProject) {
         scheduleUpdateIndicesList();
       }
-    });
+    }, this);
   }
 
   private void scheduleUpdateIndicesList() {
@@ -105,7 +105,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         }
 
         List<MavenIndex> newProjectIndices;
-        MavenIndicesManager mavenIndicesManager = MavenIndicesManager.getInstance();
+        MavenIndicesManager mavenIndicesManager = MavenIndicesManager.getInstance(myProject);
         if (remoteRepositoriesIdsAndUrls.isEmpty()) {
           newProjectIndices = new ArrayList<>();
         }
@@ -157,15 +157,15 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   public void scheduleUpdateAll() {
-    MavenIndicesManager.getInstance().scheduleUpdate(myProject, myProjectIndices);
+    MavenIndicesManager.getInstance(myProject).scheduleUpdate(myProject, myProjectIndices);
   }
 
   public void scheduleUpdate(List<MavenIndex> indices) {
-    MavenIndicesManager.getInstance().scheduleUpdate(myProject, indices);
+    MavenIndicesManager.getInstance(myProject).scheduleUpdate(myProject, indices);
   }
 
   public MavenIndicesManager.IndexUpdatingState getUpdatingState(MavenSearchIndex index) {
-    return MavenIndicesManager.getInstance().getUpdatingState(index);
+    return MavenIndicesManager.getInstance(myProject).getUpdatingState(index);
   }
 
   private MavenProjectsManager getMavenProjectManager() {

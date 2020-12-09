@@ -3,10 +3,7 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.CopyPasteSupport;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
@@ -18,7 +15,6 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -122,7 +118,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
 
     Disposer.register(project, this);
-    AccessibleContextUtil.setName(this, "Navigation Bar");
+    AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"));
   }
 
   /**
@@ -598,7 +594,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   protected void navigateInsideBar(int sourceItemIndex, final Object object) {
-    UIEventLogger.logUIEvent(UIEventId.NavBarNavigate);
+    UIEventLogger.NavBarNavigate.log(myProject);
 
     boolean restorePopup = shouldRestorePopupOnSelect(object, sourceItemIndex);
     Object obj = expandDirsWithJustOneSubdir(object);

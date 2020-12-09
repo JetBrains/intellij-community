@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,21 @@ import com.intellij.stats.completion.network.assertNotEDT
 import com.intellij.stats.completion.storage.FilePathProvider
 import java.io.File
 
-class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogger {
+class LogFileManager(private val filePathProvider: FilePathProvider, private val chunkSizeLimit: Int = MAX_CHUNK_SIZE) : FileLogger {
     private companion object {
-        const val MAX_SIZE_BYTE = 250 * 1024
+        const val MAX_CHUNK_SIZE = 100 * 1024
     }
 
     private var storage = LineStorage()
 
-    override fun println(message: String) {
+    override fun printLines(lines: List<String>) {
         synchronized(this) {
-            if (storage.size > 0 && storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
+            for (line in lines) {
+                storage.appendLine(line)
+            }
+            if (storage.size > chunkSizeLimit) {
                 flushImpl()
             }
-            storage.appendLine(message)
         }
     }
 
@@ -53,7 +55,7 @@ class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogge
     private fun saveDataChunk(storage: LineStorage) {
         assertNotEDT()
         val dir = filePathProvider.getStatsDataDirectory()
-        val tmp = File(dir, "tmp_data")
+        val tmp = File(dir, "tmp_data.gz")
         storage.dump(tmp)
         tmp.renameTo(filePathProvider.getUniqueFile())
     }

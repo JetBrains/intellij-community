@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +100,7 @@ public class TemplateStateBase {
     return myDocument == null;
   }
 
-  protected void restoreEmptyVariables(IntArrayList indices) {
+  protected void restoreEmptyVariables(IntList indices) {
     List<TextRange> rangesToRemove = new ArrayList<>();
     for (int i = 0; i < indices.size(); i++) {
       int index = indices.getInt(i);

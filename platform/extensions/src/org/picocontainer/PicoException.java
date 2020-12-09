@@ -1,12 +1,12 @@
-/*****************************************************************************
- * Copyright (C) PicoContainer Organization. All rights reserved.            *
+/*
+ * Copyright (c) PicoContainer Organization. All rights reserved.            *
  * ------------------------------------------------------------------------- *
  * The software in this package is published under the terms of the BSD      *
  * style license a copy of which has been included with this distribution in *
  * the LICENSE.txt file.                                                     *
  *                                                                           *
- * Original code by                                                          *
- *****************************************************************************/
+ * Idea by Rachel Davies, Original code by Aslak Hellesoy and Paul Hammant
+ */
 package org.picocontainer;
 
 import org.jetbrains.annotations.NotNull;
@@ -80,8 +80,6 @@ public class PicoException extends RuntimeException {
 
   /**
    * Overridden to provide 1.4 style stack traces on pre-1.4.
-   *
-   * @param s the {@link PrintStream} used to print the stack trace
    */
   @Override
   public void printStackTrace() {

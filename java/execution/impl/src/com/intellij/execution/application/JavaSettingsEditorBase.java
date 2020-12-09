@@ -41,7 +41,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
 
     CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), hasModule);
     fragments.addAll(commonParameterFragments.getFragments());
-    fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
+    fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent, this));
 
     String group = ExecutionBundle.message("group.java.options");
     RawCommandLineEditor vmOptions = new RawCommandLineEditor();
@@ -85,20 +85,16 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
       }
     };
     LabeledComponent<ShortenCommandLineModeCombo> component = LabeledComponent.create(combo,
-                                                                                      ExecutionBundle.message("application.configuration.shorten.command.line.label"),
+                                                                                      ExecutionBundle.message(
+                                                                                        "application.configuration.shorten.command.line.label"),
                                                                                       BorderLayout.WEST);
     SettingsEditorFragment<T, LabeledComponent<ShortenCommandLineModeCombo>> fragment =
       new SettingsEditorFragment<>("shorten.command.line",
                                    ExecutionBundle.message("application.configuration.shorten.command.line"),
                                    ExecutionBundle.message("group.java.options"),
                                    component,
-                                   (t, c) -> c
-                                     .getComponent()
-                                     .setItem(t.getShortenCommandLine()),
-                                   (t, c) -> t.setShortenCommandLine(
-                                       c.isVisible()
-                                       ? c.getComponent().getSelectedItem()
-                                       : null),
+                                   (t, c) -> c.getComponent().setItem(t.getShortenCommandLine()),
+                                   (t, c) -> t.setShortenCommandLine(c.isVisible() ? c.getComponent().getSelectedItem() : null),
                                    configuration -> configuration.getShortenCommandLine() != null);
     fragment.setActionHint(ExecutionBundle.message("select.a.method.to.shorten.the.command.if.it.exceeds.the.os.limit"));
     return fragment;
@@ -110,10 +106,11 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
 
   @Override
   public void targetChanged(String targetName) {
+    super.targetChanged(targetName);
     SettingsEditorFragment<T, ?> fragment = ContainerUtil.find(getFragments(), f -> CommonJavaFragments.JRE_PATH == f.getId());
     if (fragment != null) {
-      if (((JrePathEditor)fragment.component()).updateModel(targetName)) {
-        fragment.resetFrom(getRunConfiguration());
+      if (((JrePathEditor)fragment.component()).updateModel(getProject(), targetName)) {
+        fragment.resetFrom(mySettings);
       }
     }
   }

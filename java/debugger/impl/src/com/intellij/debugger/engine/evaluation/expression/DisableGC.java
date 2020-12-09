@@ -32,14 +32,6 @@ public final class DisableGC implements Evaluator {
     return result;
   }
 
-  /**
-   * @deprecated use {@link #unwrap(Evaluator)} instead
-   */
-  @Deprecated
-  public Evaluator getDelegate() {
-    return myDelegate;
-  }
-
   @Override
   public Modifier getModifier() {
     return myDelegate.getModifier();

@@ -1,10 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems.pass;
 
+import com.intellij.codeInsight.daemon.problems.FileStateCache;
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
+import com.intellij.codeInsight.hints.InlayHintsPassFactory;
 import com.intellij.codeInsight.hints.InlayHintsSettings;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -16,9 +21,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.util.messages.MessageBusConnection;
@@ -30,10 +34,10 @@ import java.util.List;
 import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider.hintsEnabled;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-final class ProjectProblemFileSelectionListener implements FileEditorManagerListener,
-                                                           InlayHintsSettings.SettingsListener,
-                                                           BulkFileListener,
-                                                           RefactoringEventListener {
+final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter implements FileEditorManagerListener,
+                                                                                        InlayHintsSettings.SettingsListener,
+                                                                                        BulkFileListener,
+                                                                                        RefactoringEventListener {
   private final Project myProject;
 
   private ProjectProblemFileSelectionListener(@NotNull Project project) {
@@ -55,6 +59,10 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
     Editor newEditor = getEditor(event.getNewEditor());
     if (newEditor == null || !ProjectProblemUtils.isProjectUpdated(newJavaFile, newEditor)) return;
     FileStateUpdater.setPreviousState(newJavaFile);
+    boolean isInSplitEditorMode = FileEditorManager.getInstance(myProject).getSelectedEditors().length > 1;
+    if (isInSplitEditorMode) {
+      InlayHintsPassFactory.Companion.forceHintsUpdateOnNextPass();
+    }
   }
 
   @Override
@@ -138,8 +146,59 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
     FileStateUpdater.setPreviousState(psiJavaFile);
   }
 
+  @Override
+  public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
+    updateFileState(event.getFile());
+  }
+
+  @Override
+  public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
+    updateFileState(event.getFile());
+  }
+
+  @Override
+  public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
+    updateFileState(event.getFile());
+  }
+
+  @Override
+  public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
+    updateFileState(event.getFile());
+  }
+
+  @Override
+  public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
+    updateFileState(event.getFile());
+  }
+
+  @Override
+  public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
+    updateFileState(event.getFile());
+  }
+
+  private void updateFileState(@Nullable PsiFile psiFile) {
+    VirtualFile changedFile = PsiUtilCore.getVirtualFile(psiFile);
+    if (changedFile == null) return;
+    Editor[] editors = EditorFactory.getInstance().getAllEditors();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+    for (Editor editor : editors) {
+      EditorImpl editorImpl = tryCast(editor, EditorImpl.class);
+      if (editorImpl == null || !editorImpl.getContentComponent().isShowing()) continue;
+      VirtualFile editorFile = editorImpl.getVirtualFile();
+      if (editorFile == null) {
+        DocumentEx document = editorImpl.getDocument();
+        editorFile = FileDocumentManager.getInstance().getFile(document);
+      }
+      if (editorFile == null || changedFile.equals(editorFile) || !fileIndex.isInContent(editorFile)) continue;
+      PsiJavaFile psiJavaFile = getJavaFile(myProject, editorFile);
+      if (psiJavaFile == null) continue;
+      FileStateUpdater.setPreviousState(psiJavaFile);
+    }
+  }
+
   private static @Nullable PsiJavaFile getJavaFile(@NotNull Project project, @Nullable VirtualFile file) {
     if (file == null || file instanceof VirtualFileWindow || !file.isValid()) return null;
+    if (!ProjectProblemUtils.containsJvmLanguage(file)) return null;
     return tryCast(PsiManager.getInstance(project).findFile(file), PsiJavaFile.class);
   }
 
@@ -157,6 +216,7 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
       connection.subscribe(InlayHintsSettings.getINLAY_SETTINGS_CHANGED(), listener);
       connection.subscribe(VirtualFileManager.VFS_CHANGES, listener);
       connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, listener);
+      PsiManager.getInstance(project).addPsiTreeChangeListener(listener, FileStateCache.SERVICE.INSTANCE.getInstance(project));
     }
   }
 }

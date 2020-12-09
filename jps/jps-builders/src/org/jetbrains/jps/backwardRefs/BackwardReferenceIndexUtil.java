@@ -78,7 +78,7 @@ public final class BackwardReferenceIndexUtil {
           final CompilerRef
             ref = writer.enumerateNames(def.getDefinedElement(), name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
           final CompilerRef.JavaCompilerClassRef returnType = writer.asClassUsage(((JavacDef.JavacMemberDef)def).getReturnType());
-          if (ref != null && returnType != null) {
+          if (ref != null) {
             final SignatureData data = new SignatureData(returnType.getName(), ((JavacDef.JavacMemberDef)def).getIteratorKind(), ((JavacDef.JavacMemberDef)def).isStatic());
             signatureData.computeIfAbsent(data, element -> new SmartList<>()).add(ref);
           }

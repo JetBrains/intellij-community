@@ -1,21 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetInterner;
+import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -57,18 +56,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   private final Map<String, PluginId> optionalConfigNames;
 
-  private final Path bundledPluginsPath;
-  final boolean loadBundledPlugins;
-
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
   }
 
   DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
-    this(flags, disabledPlugins, result, null);
-  }
-
-  DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result, @Nullable Path bundledPluginsPath) {
     this.result = result;
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
@@ -95,13 +87,6 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       PluginXmlFactory factory = new PluginXmlFactory();
       xmlFactorySupplier = () -> factory;
     }
-
-    loadBundledPlugins = bundledPluginsPath != null || !PluginManagerCore.isUnitTestMode;
-    this.bundledPluginsPath = bundledPluginsPath;
-  }
-
-  @NotNull Path getBundledPluginsPath() {
-    return bundledPluginsPath == null ? Paths.get(PathManager.getPreInstalledPluginsPath()) : bundledPluginsPath;
   }
 
   boolean isPluginDisabled(@NotNull PluginId id) {
@@ -188,30 +173,28 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   // doesn't make sense to intern class name since it is unique
   // ouch, do we really cannot agree how to name implementation class attribute?
-  private static final @NonNls Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
-    "implementation-class", "implementation",
+  private static final @NonNls Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(new String[]{
+    "implementation", "implementationClass", "builderClass",
     "serviceImplementation", "class", "className", "beanClass",
-    "serviceInterface", "interface", "interfaceClass", "instance",
-    "qualifiedName"));
+    "serviceInterface", "interface", "interfaceClass", "instance", "implementation-class",
+    "qualifiedName"});
+
   private static final List<String> EXTRA_STRINGS = Arrays.asList("id",
                                                                   PluginManagerCore.VENDOR_JETBRAINS,
                                                                   XmlReader.APPLICATION_SERVICE,
                                                                   XmlReader.PROJECT_SERVICE,
                                                                   XmlReader.MODULE_SERVICE);
-
-  private final ObjectOpenHashSet<String> strings = new ObjectOpenHashSet<>(CLASS_NAMES.size() + EXTRA_STRINGS.size());
+  private final Interner<String> strings = new HashSetInterner<>(ContainerUtil.union(CLASS_NAMES, EXTRA_STRINGS));
 
   final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
   final List<String> visitedFiles = new ArrayList<>(3);
 
   PluginXmlFactory() {
-    strings.addAll(CLASS_NAMES);
-    strings.addAll(EXTRA_STRINGS);
   }
 
   @NotNull String intern(@NotNull String string) {
     // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-    return string.length() < 64 ? strings.addOrGet(string) : string;
+    return string.length() < 64 ? strings.intern(string) : string;
   }
 
   @Override

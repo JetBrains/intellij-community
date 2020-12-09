@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.concurrency.Semaphore;
@@ -36,8 +37,7 @@ import java.util.List;
  * @author Vassiliy Kudryashov
  */
 public class RunConfigurationBeforeRunProvider
-  extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask> {
-
+  extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask> implements DumbAware {
   public static final Key<RunConfigurableBeforeRunTask> ID = Key.create("RunConfigurationTask");
 
   private static final Logger LOG = Logger.getInstance(RunConfigurationBeforeRunProvider.class);
@@ -202,6 +202,7 @@ public class RunConfigurationBeforeRunProvider
 
     final ExecutionEnvironment environment = builder.target(effectiveTarget).build();
     environment.setExecutionId(env.getExecutionId());
+    env.copyUserDataTo(environment);
 
     if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
       return false;
@@ -257,7 +258,7 @@ public class RunConfigurationBeforeRunProvider
           targetDone.up();
           LOG.error(e);
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.defaultModalityState());
     }
     catch (Exception e) {
       LOG.error(e);

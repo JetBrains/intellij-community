@@ -3,6 +3,7 @@ package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
@@ -106,11 +108,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final String LONG_TEXT3 = "<p>Help JetBrains improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on types of files, number of files per project, etc.</p>" +
       "<br style=\"font-size:8;\"/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
 
+    private static final String GOT_IT_HEADER = "IDE features trainer";
+    private static final String GOT_IT_TEXT = "Learn the most useful shortcuts <icon src=\"AllIcons.Actions.More\"/> and essential IDE features interactively." +
+      " Use <icon src=\"AllIcons.Actions.Diff\" valign=\"1.0f\"/> for details.";
+    private static final String GOT_IT_TEXT2 = "Some textfield that actually means nothing";
+
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
     private JTabbedPane   pane;
     private final Project project;
+
+    private JButton abracadabraButton;
 
     private ComponentPanelTest(Project project) {
       super(project);
@@ -121,9 +130,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       setTitle("Component Panel Test Action");
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @NotNull JComponent createCenterPanel() {
       pane = new JBTabbedPane(SwingConstants.TOP);
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());
@@ -135,7 +143,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("ComboBox", createComboBoxTab());
 
       pane.addChangeListener(e -> {
-        if (pane.getSelectedIndex() == 2) {
+        if (pane.getSelectedIndex() == 4) {
           myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
         } else {
           myAlarm.cancelRequest(progressTimerRequest);
@@ -164,6 +172,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       southPanel.add(placementCombo);
       southPanel.add(new Box.Filler(JBUI.size(0), JBUI.size(0), JBUI.size(Integer.MAX_VALUE, 0)));
 
+      ActionLink externalLink = new ActionLink("External link", event -> {
+        BrowserUtil.browse("http://google.com");
+      });
+      externalLink.setExternalLinkIcon();
+      southPanel.add(externalLink);
       panel.addToBottom(southPanel);
 
       return panel;
@@ -255,13 +268,26 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             }
           }).createPanel(), gc);
 
+      // Abracadaba button
       gc.gridy++;
-      JButton button = new JButton("Abracadabra");
-      new HelpTooltip().setDescription(LONG_TEXT2).installOn(button);
+      abracadabraButton = new JButton("Abracadabra");
+      new HelpTooltip().setDescription(LONG_TEXT2).installOn(abracadabraButton);
+      topPanel.add(UI.PanelFactory.panel(abracadabraButton).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
-      topPanel.add(UI.PanelFactory.panel(button).
-        withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
+      try {
+        new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
+          andShowCloseShortcut().
+          withShowCount(3).
+          withHeader(GOT_IT_HEADER).
+          withIcon(AllIcons.General.BalloonInformation).
+          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
+          show(abracadabraButton, GotItTooltip.BOTTOM_MIDDLE);
 
+        new GotItTooltip("textfield", GOT_IT_TEXT2, project).withShowCount(5).show(text1, GotItTooltip.BOTTOM_MIDDLE);
+
+      } catch (MalformedURLException ex) {}
+
+      // Combobox with comment
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).resizeX(false).
         withComment("Combobox comment").createPanel(), gc);
@@ -811,8 +837,13 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       DefaultActionGroup toolbarActions = new DefaultActionGroup();
       toolbarActions.add(new SplitButtonAction(actions));
-      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1).withShortCut("control K"));
-      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating2).withShortCut("control N"));
+      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1) {
+        {
+          GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
+          actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
+        }
+      }.withShortCut("control K"));
+      toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
       toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3).withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);

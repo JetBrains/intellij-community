@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.sf.cglib.asm.$ClassVisitor;
 import net.sf.cglib.asm.$Label;
@@ -375,9 +376,9 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
     ClassLoader nonPluginLoader = null;
 
     List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
-    NotNullLazyValue<Object2IntOpenHashMap<PluginId>> idToIndex = NotNullLazyValue.createValue(() -> {
+    NotNullLazyValue<Object2IntMap<PluginId>> idToIndex = NotNullLazyValue.createValue(() -> {
       int count = 0;
-      Object2IntOpenHashMap<PluginId > map = new Object2IntOpenHashMap<>(plugins.size());
+      Object2IntMap<PluginId > map = new Object2IntOpenHashMap<>(plugins.size());
       for (IdeaPluginDescriptor descriptor : plugins) {
         map.put(descriptor.getPluginId(), count++);
       }

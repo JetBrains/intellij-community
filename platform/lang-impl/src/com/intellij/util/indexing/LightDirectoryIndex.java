@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class LightDirectoryIndex<T> {
   private final Map<VirtualFile, T> myRootInfos = new ConcurrentHashMap<>();
-  private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
+  private final ConcurrentBitSet myNonInterestingIds = ConcurrentBitSet.create();
   private final T myDefValue;
   private final Consumer<LightDirectoryIndex<T>> myInitializer;
 

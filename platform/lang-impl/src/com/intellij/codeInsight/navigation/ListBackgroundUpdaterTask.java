@@ -18,7 +18,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
@@ -41,11 +41,11 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
    * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
    */
   @Deprecated
-  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
+  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull @ProgressTitle final String title) {
     this(project, title, null);
   }
 
-  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final @NlsContexts.ProgressTitle String title, @Nullable Comparator<PsiElement> comparator) {
+  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final @ProgressTitle String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title, comparator);
   }
 

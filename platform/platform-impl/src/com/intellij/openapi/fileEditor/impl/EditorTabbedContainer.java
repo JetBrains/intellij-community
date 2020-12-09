@@ -36,6 +36,7 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
+import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -51,7 +52,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -144,8 +144,13 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   }
 
   @NotNull
-  public static DockableEditor createDockableEditor(Project project, Image image, VirtualFile file, Presentation presentation, EditorWindow window) {
-    return new DockableEditor(project, image, file, presentation, window.getSize(), window.isFilePinned(file));
+  public static DockableEditor createDockableEditor(Project project,
+                                                    Image image,
+                                                    VirtualFile file,
+                                                    Presentation presentation,
+                                                    EditorWindow window,
+                                                    boolean isNorthPanelAvailable) {
+    return new DockableEditor(project, image, file, presentation, window.getSize(), window.isFilePinned(file), isNorthPanelAvailable);
   }
 
   @NotNull
@@ -176,9 +181,12 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     myTabs.getTabAt(index).setDefaultForeground(color);
   }
 
+  void setStyleAt(int index, @SimpleTextAttributes.StyleAttributeConstant int style) {
+    myTabs.getTabAt(index).setDefaultStyle(style);
+  }
+
   void setWaveColor(int index, @Nullable Color color) {
     TabInfo tab = myTabs.getTabAt(index);
-    tab.setDefaultStyle(color == null ? SimpleTextAttributes.STYLE_PLAIN : SimpleTextAttributes.STYLE_WAVED);
     tab.setDefaultWaveColor(color);
   }
 
@@ -472,7 +480,11 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       myFile.putUserData(EditorWindow.DRAG_START_PINNED_KEY, isPinnedAtStart);
       Presentation presentation = new Presentation(info.getText());
       presentation.setIcon(info.getIcon());
-      mySession = getDockManager().createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow));
+      EditorWithProviderComposite windowFileComposite = myWindow.findFileComposite(myFile);
+      FileEditor[] editors = windowFileComposite != null ? windowFileComposite.getEditors() : FileEditor.EMPTY_ARRAY;
+      boolean isNorthPanelAvailable = DockManagerImpl.isNorthPanelAvailable(editors);
+      mySession = getDockManager()
+        .createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow, isNorthPanelAvailable));
     }
 
     private DockManager getDockManager() {
@@ -523,15 +535,32 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     private final Presentation myPresentation;
     private final Dimension myPreferredSize;
     private final boolean myPinned;
+    private final boolean myNorthPanelAvailable;
     private final VirtualFile myFile;
 
-    public DockableEditor(Project project, Image img, VirtualFile file, Presentation presentation, Dimension preferredSize, boolean isFilePinned) {
+    public DockableEditor(Project project,
+                          Image img,
+                          VirtualFile file,
+                          Presentation presentation,
+                          Dimension preferredSize,
+                          boolean isFilePinned) {
+      this(project, img, file, presentation, preferredSize, isFilePinned, DockManagerImpl.isNorthPanelVisible(UISettings.getInstance()));
+    }
+
+    public DockableEditor(Project project,
+                          Image img,
+                          VirtualFile file,
+                          Presentation presentation,
+                          Dimension preferredSize,
+                          boolean isFilePinned,
+                          boolean isNorthPanelAvailable) {
       myImg = img;
       myFile = file;
       myPresentation = presentation;
       myContainer = new DockableEditorTabbedContainer(project);
       myPreferredSize = preferredSize;
       myPinned = isFilePinned;
+      myNorthPanelAvailable = isNorthPanelAvailable;
     }
 
     @NotNull
@@ -572,6 +601,10 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     public boolean isPinned() {
       return myPinned;
     }
+
+    public boolean isNorthPanelAvailable() {
+      return myNorthPanelAvailable;
+    }
   }
 
   private final class MyTransferHandler extends TransferHandler {
@@ -600,8 +633,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       super(project, parentDisposable);
 
       myWindow = window;
-      IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), parentDisposable);
-      setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
+      UIUtil.addAwtListener(e -> updateActive(), AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
+      setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()));
 
       project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
         @Override
@@ -661,15 +694,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     public ActionCallback select(@NotNull TabInfo info, boolean requestFocus) {
       active = true;
       return super.select(info, requestFocus);
-    }
-
-    private IdeEventQueue.EventDispatcher createFocusDispatcher() {
-      return e -> {
-        if (e instanceof FocusEvent) {
-          updateActive();
-        }
-        return false;
-      };
     }
 
     private void updateActive() {

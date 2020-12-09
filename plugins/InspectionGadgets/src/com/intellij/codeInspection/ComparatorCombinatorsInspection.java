@@ -44,9 +44,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
         super.visitLambdaExpression(lambda);
         PsiType type = lambda.getFunctionalInterfaceType();
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
-        if (parameters.length != 2 ||
-            !(type instanceof PsiClassType) ||
-            !((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_UTIL_COMPARATOR)) {
+        if (parameters.length != 2 || !PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_UTIL_COMPARATOR)) {
           return;
         }
         String replacementText = generateSimpleCombinator(lambda, parameters[0], parameters[1]);

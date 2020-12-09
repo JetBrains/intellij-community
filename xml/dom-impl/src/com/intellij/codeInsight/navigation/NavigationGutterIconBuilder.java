@@ -290,13 +290,7 @@ public class NavigationGutterIconBuilder<T> {
       return NotNullLazyValue.createConstantValue(calcPsiTargets(project, targets.create(), converter));
     }
 
-    return new NotNullLazyValue<List<SmartPsiElementPointer<?>>>() {
-      @Override
-      @NotNull
-      public List<SmartPsiElementPointer<?>> compute() {
-        return calcPsiTargets(project, targets.create(), converter);
-      }
-    };
+    return NotNullLazyValue.lazy(() -> calcPsiTargets(project, targets.create(), converter));
   }
 
   @NotNull

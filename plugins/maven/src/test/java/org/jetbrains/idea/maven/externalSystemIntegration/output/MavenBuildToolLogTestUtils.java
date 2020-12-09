@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtilRt;
@@ -37,7 +38,7 @@ import static com.intellij.build.events.MessageEvent.Kind.WARNING;
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
+public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
   protected ExternalSystemTaskId myTaskId;
 
   public interface ThrowingRunnable {
@@ -206,7 +207,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
     private List<BuildEvent> collect() {
       CollectConsumer collectConsumer = new CollectConsumer();
-      MavenLogOutputParser parser = new MavenLogOutputParser(myTaskId, myParsers);
+      MavenLogOutputParser parser = new MavenLogOutputParser(getProject(), myTaskId, myParsers);
 
       collectConsumer.accept(new StartBuildEventImpl(
         new DefaultBuildDescriptor(myTaskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));

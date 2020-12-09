@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.collect.ImmutableList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -70,6 +71,7 @@ data class JdkItem(
   private val jdkVendorVersion: String?,
   val suggestedSdkName: String,
 
+  val os: String,
   val arch: String,
   val packageType: JdkPackageType,
   val url: String,
@@ -154,6 +156,9 @@ data class JdkItem(
   val presentableVersionString
     get() = JavaVersion.tryParse(jdkVersion)?.toFeatureMinorUpdateString() ?: jdkVersion
 
+  val presentableMajorVersionString
+    get() = JavaVersion.tryParse(jdkVersion)?.toFeatureString() ?: jdkMajorVersion.toString()
+
   val versionPresentationText: String
     get() = jdkVersion
 
@@ -171,14 +176,14 @@ enum class JdkPackageType(@NonNls val type: String) {
       val decompressor = Decompressor.Zip(archiveFile)
       return when {
         SystemInfo.isWindows -> decompressor
-        else -> decompressor.withUnixPermissionsAndSymlinks()
+        else -> decompressor.withZipExtensions()
       }
     }
   },
 
   @Suppress("SpellCheckingInspection", "unused")
   TAR_GZ("targz") {
-    override fun openDecompressor(archiveFile: Path) = Decompressor.Tar(archiveFile).withSymlinks()
+    override fun openDecompressor(archiveFile: Path) = Decompressor.Tar(archiveFile)
   };
 
   abstract fun openDecompressor(archiveFile: Path): Decompressor
@@ -189,19 +194,19 @@ enum class JdkPackageType(@NonNls val type: String) {
 }
 
 data class JdkPredicate(
-  private val ideBuildNumber: BuildNumber,
-  private val expectedOS: String
+  private val ideBuildNumber: BuildNumber
 ) {
 
   companion object {
     fun createInstance(): JdkPredicate {
-      val expectedOS = when {
-        SystemInfo.isWindows -> "windows"
-        SystemInfo.isMac -> "macOS"
-        SystemInfo.isLinux -> "linux"
-        else -> error("Unsupported OS")
-      }
-      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, expectedOS)
+      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build)
+    }
+
+    val currentOS = when {
+      SystemInfo.isWindows -> "windows"
+      SystemInfo.isMac -> "macOS"
+      SystemInfo.isLinux -> "linux"
+      else -> error("Unsupported OS")
     }
   }
 
@@ -211,7 +216,6 @@ data class JdkPredicate(
   }
 
   fun testJdkPackage(pkg: ObjectNode): Boolean {
-    if (pkg["os"]?.asText() != expectedOS) return false
     if (pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) == null) return false
     return testPredicate(pkg["filter"]) == true
   }
@@ -300,55 +304,56 @@ object JdkListParser {
 
     val result = mutableListOf<JdkItem>()
     for (item in items.filterIsInstance<ObjectNode>()) {
-      result += parseJdkItem(item, filters) ?: continue
+      result += parseJdkItem(item, filters)
     }
 
     return result.toList()
   }
 
-  fun parseJdkItem(item: ObjectNode, filters: JdkPredicate): JdkItem? {
+  fun parseJdkItem(item: ObjectNode, filters: JdkPredicate): List<JdkItem> {
     // check this package is OK to show for that instance of the IDE
-    if (!filters.testJdkProduct(item)) return null
+    if (!filters.testJdkProduct(item)) return emptyList()
 
-    val packages = item["packages"] as? ArrayNode ?: return null
-    // take the first matching package
-    val pkg = packages.filterIsInstance<ObjectNode>().firstOrNull(filters::testJdkPackage) ?: return null
-
+    val packages = item["packages"] as? ArrayNode ?: return emptyList()
     val product = JdkProduct(
-      vendor = item["vendor"]?.asText() ?: return null,
+      vendor = item["vendor"]?.asText() ?: return emptyList(),
       product = item["product"]?.asText(),
       flavour = item["flavour"]?.asText()
     )
 
     val contents = ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(item)
-    return JdkItem(product = product,
-                   isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
-                   isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
+    return packages.filterIsInstance<ObjectNode>().filter(filters::testJdkPackage).map { pkg ->
+      JdkItem(product = product,
+              isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
+              isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
 
-                   jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: return null,
-                   jdkVersion = item["jdk_version"]?.asText() ?: return null,
-                   jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
-                   suggestedSdkName = item["suggested_sdk_name"]?.asText() ?: return null,
+              jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: return emptyList(),
+              jdkVersion = item["jdk_version"]?.asText() ?: return emptyList(),
+              jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
+              suggestedSdkName = item["suggested_sdk_name"]?.asText() ?: return emptyList(),
 
-                   arch = pkg["arch"]?.asText() ?: return null,
-                   packageType = pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) ?: return null,
-                   url = pkg["url"]?.asText() ?: return null,
-                   sha256 = pkg["sha256"]?.asText() ?: return null,
-                   archiveSize = pkg["archive_size"]?.asLong() ?: return null,
-                   archiveFileName = pkg["archive_file_name"]?.asText() ?: return null,
-                   packageRootPrefix = pkg["package_root_prefix"]?.asText() ?: return null,
-                   packageToBinJavaPrefix = pkg["package_to_java_home_prefix"]?.asText() ?: return null,
+              os = pkg["os"]?.asText() ?: return emptyList(),
+              arch = pkg["arch"]?.asText() ?: return emptyList(),
+              packageType = pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) ?: return emptyList(),
+              url = pkg["url"]?.asText() ?: return emptyList(),
+              sha256 = pkg["sha256"]?.asText() ?: return emptyList(),
+              archiveSize = pkg["archive_size"]?.asLong() ?: return emptyList(),
+              archiveFileName = pkg["archive_file_name"]?.asText() ?: return emptyList(),
+              packageRootPrefix = pkg["package_root_prefix"]?.asText() ?: return emptyList(),
+              packageToBinJavaPrefix = pkg["package_to_java_home_prefix"]?.asText() ?: return emptyList(),
 
-                   unpackedSize = pkg["unpacked_size"]?.asLong() ?: return null,
-                   installFolderName = pkg["install_folder_name"]?.asText() ?: return null,
+              unpackedSize = pkg["unpacked_size"]?.asLong() ?: return emptyList(),
+              installFolderName = pkg["install_folder_name"]?.asText() ?: return emptyList(),
 
-                   sharedIndexAliases = (item["shared_index_aliases"] as? ArrayNode)?.mapNotNull { it.asText() } ?: listOf(),
+              sharedIndexAliases = (item["shared_index_aliases"] as? ArrayNode)?.mapNotNull { it.asText() } ?: listOf(),
 
-                   saveToFile = { file -> file.write(contents) }
-    )
+              saveToFile = { file -> file.write(contents) }
+      )
+    }
   }
 }
 
+@Service
 class JdkListDownloader : JdkListDownloaderBase() {
   companion object {
     @JvmStatic
@@ -378,21 +383,31 @@ abstract class JdkListDownloaderBase {
    * contains few more entries than the result of the [downloadForUI] call.
    * Entries are sorter from the best suggested to the worst suggested items.
    */
-  fun downloadModelForJdkInstaller(progress: ProgressIndicator?): List<JdkItem> {
-    return downloadJdksListWithCache(feedUrl, progress)
+  fun downloadModelForJdkInstaller(progress: ProgressIndicator?, os: String = JdkPredicate.currentOS): List<JdkItem> {
+    return downloadJdksListWithCache(feedUrl, progress).filter { it.os == os }
   }
 
   /**
    * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
    */
   fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null) : List<JdkItem> {
-    val list = downloadJdksListWithCache(feedUrl, progress)
+    //we intentionally disable cache here for all user UI requests, as of IDEA-252237
+    val url = feedUrl ?: this.feedUrl
+    val list = downloadJdksListNoCache(url, progress)
+
+    //setting value to the cache, just in case
+    jdksListCache.setValue(url, list)
 
     if (ApplicationManager.getApplication().isInternal) {
-      return list
+      return list.filter { it.os == JdkPredicate.currentOS }
     }
 
-    return list.filter { it.isVisibleOnUI }
+    return list.filter { it.isVisibleOnUI && it.os == JdkPredicate.currentOS }
+  }
+
+  fun findWslJdk(item: JdkItem): JdkItem {
+    val jdkList = downloadJdksListWithCache(feedUrl, null)
+    return jdkList.firstOrNull { it.product.vendor == item.product.vendor && it.versionString == item.versionString && it.os == "linux" } ?: item
   }
 
   private val jdksListCache = CachedValueWithTTL<List<JdkItem>>(15 to TimeUnit.MINUTES)
@@ -483,10 +498,14 @@ private class CachedValueWithTTL<T : Any>(
       }
 
       ProgressManager.checkCanceled()
-      this.value = value
-      computed = now()
-      cachedUrl = url
-      return value
+      return setValue(url, value)
     }
+  }
+
+  fun setValue(url: String, value: T): T = lock.write {
+    this.value = value
+    computed = now()
+    cachedUrl = url
+    return value
   }
 }

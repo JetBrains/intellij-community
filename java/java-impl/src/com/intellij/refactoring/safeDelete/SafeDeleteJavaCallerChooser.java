@@ -45,13 +45,11 @@ import java.util.Set;
 
 abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final PsiMethod myMethod;
-  private final Project myProject;
   private final ArrayList<? super UsageInfo> myResult;
 
   SafeDeleteJavaCallerChooser(PsiMethod method, Project project, ArrayList<? super UsageInfo> result) {
     super(method, project, JavaRefactoringBundle.message("safe.delete.select.methods.to.propagate.delete.parameters.dialog.title"), null, EmptyConsumer.getInstance());
     myMethod = method;
-    myProject = project;
     myResult = result;
   }
 
@@ -84,11 +82,9 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter, nodeMethod, parameter));
         ReferencesSearch.search(nodeMethod).forEach(reference -> {
           final PsiElement element = reference.getElement();
-          if (element != null) {
-            JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
-            if (safeDeleteDelegate != null) {
-              safeDeleteDelegate.createUsageInfoForParameter(reference, foreignMethodUsages, parameter, nodeMethod);
-            }
+          JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
+          if (safeDeleteDelegate != null) {
+            safeDeleteDelegate.createUsageInfoForParameter(reference, foreignMethodUsages, parameter, nodeMethod);
           }
           return true;
         });

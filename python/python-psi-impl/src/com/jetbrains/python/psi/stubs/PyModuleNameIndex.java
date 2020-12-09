@@ -86,16 +86,16 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   @NotNull
   public static List<PyFile> find(@NotNull String name, @NotNull Project project, boolean includeNonProjectItems) {
     final List<PyFile> results = new ArrayList<>();
-    final GlobalSearchScope scope = includeNonProjectItems
+    final GlobalSearchScope baseScope = includeNonProjectItems
                                     ? PySearchUtilBase.excludeSdkTestsScope(project)
                                     : GlobalSearchScope.projectScope(project);
+    final GlobalSearchScope scope = baseScope
+      .intersectWith(GlobalSearchScope.notScope(PyUserSkeletonsUtil.getUserSkeletonsDirectoryScope(project)));
     final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
     for (VirtualFile virtualFile : files) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile instanceof PyFile) {
-        if (!PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(psiFile)) {
-          results.add((PyFile)psiFile);
-        }
+        results.add((PyFile)psiFile);
       }
     }
     return results;

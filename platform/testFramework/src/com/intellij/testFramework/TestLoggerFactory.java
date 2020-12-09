@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.*;
@@ -18,8 +17,14 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,54 +43,35 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private TestLoggerFactory() { }
 
-  @NotNull
   @Override
-  public synchronized Logger getLoggerInstance(@NotNull final String name) {
-    if (!myInitialized) {
-      init();
+  public synchronized @NotNull Logger getLoggerInstance(@NotNull String name) {
+    if (!myInitialized && reconfigure()) {
+      myInitialized = true;
     }
 
     return new TestLogger(org.apache.log4j.Logger.getLogger(name));
   }
 
-  private void init() {
-    if (!reconfigure()) return;
-    myInitialized = true;
-  }
-
   public static boolean reconfigure() {
     try {
-      File logXmlFile = new File(PathManager.getHomePath(), "test-log.xml");
-
-      if (!logXmlFile.exists()) {
+      Path logXmlFile = Paths.get(PathManager.getHomePath(), "test-log.xml");
+      if (!Files.exists(logXmlFile)) {
         return false;
       }
 
-      final String logDir = getTestLogDir();
-      String text = FileUtil.loadFile(logXmlFile);
+      String logDir = getTestLogDir();
+      String text = Files.readString(logXmlFile);
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
       text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(logDir, "\\", "\\\\"));
-
-      final File logDirFile = new File(logDir);
-      if (!logDirFile.mkdirs() && !logDirFile.exists()) {
-        throw new IOException("Unable to create log dir: " + logDirFile);
-      }
+      Files.createDirectories(Paths.get(logDir));
 
       System.setProperty("log4j.defaultInitOverride", "true");
-      try {
-        final DOMConfigurator domConfigurator = new DOMConfigurator();
-        domConfigurator.doConfigure(new StringReader(text), LogManager.getLoggerRepository());
-      }
-      catch (ClassCastException e) {
-        // shit :-E
-        System.err.println("log.xml content:\n" + text);
-        throw e;
-      }
+      new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());
 
-      File ideaLog = new File(getTestLogDir(), "idea.log");
-      if (ideaLog.exists() && ideaLog.length() >= LOG_SIZE_LIMIT) {
-        FileUtil.writeToFile(ideaLog, "");
+      Path logFile = Paths.get(getTestLogDir(), "idea.log");
+      if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
+        Files.writeString(logFile, "");
       }
 
       return true;
@@ -97,20 +83,19 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static String getTestLogDir() {
-    if (System.getProperty(PROPERTY_LOG_PATH) != null) return System.getProperty(PROPERTY_LOG_PATH);
-
-    return PathManager.getSystemPath() + "/" + LOG_DIR;
+    String property = System.getProperty(PROPERTY_LOG_PATH);
+    return property != null ? property : PathManager.getSystemPath() + '/' + LOG_DIR;
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
-    File ideaLog = new File(getTestLogDir(), "idea.log");
-    if (ideaLog.exists()) {
+    Path logFile = Paths.get(getTestLogDir(), "idea.log");
+    if (Files.exists(logFile)) {
       try {
-        long length = ideaLog.length();
+        long length = Files.size(logFile);
         String logText;
 
         if (length > LOG_SEEK_WINDOW) {
-          try (RandomAccessFile file = new RandomAccessFile(ideaLog, "r")) {
+          try (RandomAccessFile file = new RandomAccessFile(logFile.toFile(), "r")) {
             file.seek(length - LOG_SEEK_WINDOW);
             byte[] bytes = new byte[(int)LOG_SEEK_WINDOW];
             int read = file.read(bytes);
@@ -118,7 +103,7 @@ public final class TestLoggerFactory implements Logger.Factory {
           }
         }
         else {
-          logText = FileUtil.loadFile(ideaLog);
+          logText = Files.readString(logFile);
         }
 
         System.out.println("\n\nIdea Log:");
@@ -137,26 +122,24 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static void enableDebugLogging(@NotNull Disposable parentDisposable, String @NotNull ... categories) {
     for (String category : categories) {
-      final Logger logger = Logger.getInstance(category);
+      Logger logger = Logger.getInstance(category);
       logger.setLevel(Level.DEBUG);
       Disposer.register(parentDisposable, () -> logger.setLevel(Level.INFO));
     }
   }
 
+  static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';
+
   private static final StringWriter STRING_WRITER = new StringWriter();
   private static final StringBuffer BUFFER = STRING_WRITER.getBuffer();
-  static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';
-  // inserted unicode whitespace to be able to tell these failed tests log lines from the others and fold them
+  /** <b>NOTE:</b> inserted Unicode whitespace to be able to tell these failed tests log lines from the others and fold them */
   private static final WriterAppender APPENDER = new WriterAppender(new PatternLayout("%d{HH:mm:ss,SSS} %p %.30c - %m%n"), STRING_WRITER);
   private static final int MAX_BUFFER_LENGTH = 10_000_000;
-  private static final String CFQN = Category.class.getName();
-  static void log(@NotNull org.apache.log4j.Logger logger, @NotNull Level level, @Nullable String message, @Nullable Throwable t) {
-    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-      //return;
-    }
-    LoggingEvent event = new LoggingEvent(CFQN, logger, level, message, t);
-    APPENDER.doAppend(event);
 
+  static void log(@NotNull org.apache.log4j.Logger logger, @NotNull Level level, @Nullable String message, @Nullable Throwable t) {
+    APPENDER.doAppend(new LoggingEvent(Category.class.getName(), logger, level, message, t));
+
+    //noinspection DoubleCheckedLocking
     if (BUFFER.length() > MAX_BUFFER_LENGTH) {
       synchronized (BUFFER) {
         if (BUFFER.length() > MAX_BUFFER_LENGTH) {
@@ -170,6 +153,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     // clear buffer from tests which failed to report their termination properly
     BUFFER.setLength(0);
   }
+
   public static void onTestFinished(boolean success) {
     if (!success && BUFFER.length() != 0) {
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
@@ -194,8 +178,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     BUFFER.setLength(0);
   }
 
-  @NotNull
-  public static TestRule createTestWatcher() {
+  public static @NotNull TestRule createTestWatcher() {
     return new TestWatcher() {
       @Override
       protected void succeeded(Description description) {

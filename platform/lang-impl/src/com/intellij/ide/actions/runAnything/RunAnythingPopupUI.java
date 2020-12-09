@@ -56,6 +56,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,8 +66,10 @@ import javax.swing.border.Border;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
@@ -92,7 +95,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
-  private final Project myProject;
   private final Module myModule;
 
   private RunAnythingContext mySelectedExecutingContext;
@@ -587,7 +589,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
 
   public void setAdText(@NlsContexts.PopupAdvertisement @NotNull final String s) {
-    myHintLabel.setText(s);
+    myHintLabel.clearAdvertisements();
+    myHintLabel.addAdvertisement(s, null);
   }
 
   @NotNull
@@ -680,7 +683,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myCurrentWorker = ActionCallback.DONE;
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    myProject = Objects.requireNonNull(actionEvent.getData(CommonDataKeys.PROJECT));
     myModule = actionEvent.getData(LangDataKeys.MODULE);
 
     init();
@@ -798,16 +800,18 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return res;
   }
 
+
   @NotNull
   @Override
-  protected String getInitialHint() {
-    return IdeBundle.message("run.anything.hint.initial.text",
-                             KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
-                             KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE));
+  protected @NlsContexts.PopupAdvertisement String[] getInitialHints() {
+    return new String[]{IdeBundle.message("run.anything.hint.initial.text",
+                                          KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
+                                          KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE))};
   }
 
   @Override
-  protected @NotNull String getAccessibleName() {
+  @Nls
+  protected String getAccessibleName() {
     return IdeBundle.message("run.anything.accessible.name");
   }
 

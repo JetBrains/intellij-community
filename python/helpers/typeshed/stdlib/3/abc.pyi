@@ -1,11 +1,9 @@
 from typing import Any, Callable, Type, TypeVar
 
-# Stubs for abc.
-
 _T = TypeVar("_T")
 _FuncT = TypeVar("_FuncT", bound=Callable[..., Any])
 
-# Thesee definitions have special processing in mypy
+# These definitions have special processing in mypy
 class ABCMeta(type):
     def register(cls: ABCMeta, subclass: Type[_T]) -> Type[_T]: ...
 

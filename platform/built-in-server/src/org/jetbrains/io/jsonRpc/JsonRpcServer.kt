@@ -19,6 +19,7 @@ import com.intellij.util.io.releaseIfError
 import com.intellij.util.io.writeUtf8
 import io.netty.buffer.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
@@ -331,7 +332,7 @@ private class IntArrayListTypeAdapter<T> : TypeAdapter<T>() {
   override fun write(out: JsonWriter, value: T) {
     var error: IOException? = null
     out.beginArray()
-    val iterator = (value as IntArrayList).iterator()
+    val iterator = (value as IntList).iterator()
     while (iterator.hasNext()) {
       try {
         out.value(iterator.nextInt().toLong())

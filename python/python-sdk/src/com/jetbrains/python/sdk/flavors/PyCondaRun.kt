@@ -81,4 +81,12 @@ fun listCondaEnvironments(sdk: Sdk?): List<String> {
   return envList.envs
 }
 
+@Throws(ExecutionException::class, JsonSyntaxException::class)
+fun listCondaEnvironments(condaExecutable: String): List<String> {
+  val output = runConda(condaExecutable, listOf("env", "list", "--json"))
+  val text = output.stdout
+  val envList = Gson().fromJson(text, CondaEnvironmentsList::class.java)
+  return envList.envs
+}
+
 private data class CondaEnvironmentsList(@SerializedName("envs") var envs: List<String>)

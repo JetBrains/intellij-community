@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Batkovich
@@ -42,7 +40,7 @@ public class InspectionNodeInfo extends JPanel {
                             @NotNull final Project project) {
     setLayout(new GridBagLayout());
     setBorder(JBUI.Borders.emptyTop(11));
-    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(false);
+    final InspectionToolWrapper<?, ?> toolWrapper = tree.getSelectedToolWrapper(false);
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     boolean enabled = currentProfile.getTools(toolWrapper.getShortName(), project).isEnabled();
@@ -77,7 +75,7 @@ public class InspectionNodeInfo extends JPanel {
     }
     final String toolDescription =
       stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
-    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
+    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription, false));
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;
     pane.setMaximumSize(new Dimension(maxWidth, Integer.MAX_VALUE));
@@ -130,17 +128,8 @@ public class InspectionNodeInfo extends JPanel {
 
   public static @InspectionMessage String stripUIRefsFromInspectionDescription(@InspectionMessage @NotNull String description) {
     final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
-    if (descriptionEnd < 0) {
-      final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
-      final Matcher matcher = pattern.matcher(description);
-      int startFindIdx = 0;
-      while (matcher.find(startFindIdx)) {
-        final int end = matcher.end(1);
-        startFindIdx = end;
-        description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
-      }
-    } else {
-      description = description.substring(0, descriptionEnd);
+    if (descriptionEnd >= 0) {
+      return description.substring(0, descriptionEnd);
     }
     return description;
   }

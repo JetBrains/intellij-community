@@ -9,14 +9,19 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -30,19 +35,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SelectWordHandler extends EditorActionHandler {
+public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
   private static final Logger LOG = Logger.getInstance(SelectWordHandler.class);
 
   private final EditorActionHandler myOriginalHandler;
 
   public SelectWordHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    assert caret != null;
+  public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }
@@ -84,6 +87,27 @@ public class SelectWordHandler extends EditorActionHandler {
 
   @Nullable("null means unable to select")
   private static TextRange selectWord(@NotNull Caret caret, @NotNull Project project) {
+    ThrowableComputable<TextRange, Exception> computable = () -> {
+      return ReadAction.compute(() -> {
+        return doSelectWord(caret, project);
+      });
+    };
+    try {
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(computable,
+                                                                               EditorBundle.message("select.word.progress"),
+                                                                               true, project);
+    }
+    catch (ProcessCanceledException pce) {
+      return null;
+    }
+    catch (Exception e) {
+      LOG.error("Cannot select word at given offset", e);
+      return null;
+    }
+  }
+
+  @Nullable
+  private static TextRange doSelectWord(@NotNull Caret caret, @NotNull Project project) {
     Document document = caret.getEditor().getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
@@ -93,6 +117,9 @@ public class SelectWordHandler extends EditorActionHandler {
     int caretOffset = adjustCaretOffset(caret);
 
     PsiElement element = findElementAt(file, caretOffset);
+    if (element == null) {
+      return null;
+    }
 
     if (element instanceof PsiWhiteSpace && caretOffset > 0) {
       PsiElement anotherElement = findElementAt(file, caretOffset - 1);
@@ -184,10 +211,9 @@ public class SelectWordHandler extends EditorActionHandler {
   @Nullable
   private static PsiElement findElementAt(@NotNull final PsiFile file, final int caretOffset) {
     PsiElement elementAt = file.findElementAt(caretOffset);
-    if (elementAt != null && isLanguageExtension(file, elementAt)) {
-      return file.getViewProvider().findElementAt(caretOffset, file.getLanguage());
-    }
-    return elementAt;
+    return elementAt != null && isLanguageExtension(file, elementAt)
+           ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
+           : elementAt;
   }
 
   private static boolean isLanguageExtension(@NotNull final PsiFile file, @NotNull final PsiElement elementAt) {

@@ -17,7 +17,8 @@ abstract class SetChangesGroupingAction : ToggleAction(), DumbAware {
     e.presentation.isEnabledAndVisible = getGroupingSupport(e)?.isAvailable(groupingKey) ?: false
   }
 
-  override fun isSelected(e: AnActionEvent): Boolean = e.presentation.isEnabledAndVisible && getGroupingSupport(e)?.get(groupingKey) ?: false
+  override fun isSelected(e: AnActionEvent): Boolean =
+    getGroupingSupport(e)?.let { it.isAvailable(groupingKey) && it[groupingKey] } ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     getGroupingSupport(e)!![groupingKey] = state

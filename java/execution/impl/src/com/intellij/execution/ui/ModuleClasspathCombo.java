@@ -106,12 +106,12 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   }
 
   @Override
-  public void setModules(Collection<? extends Module> modules) {
+  public void setModules(@NotNull Collection<? extends Module> modules) {
     buildModel(modules);
   }
 
   @Override
-  public void allowEmptySelection(String noModuleText) {
+  public void allowEmptySelection(@NotNull String noModuleText) {
     myNoModule = noModuleText;
   }
 
@@ -122,7 +122,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   }
 
   @Override
-  public void setSelectedModule(Project project, String name) {
+  public void setSelectedModule(@NotNull Project project, @NotNull String name) {
     List<Item> items = ((CollectionComboBoxModel<Item>)super.getModel()).getItems();
     Item selectedItem = ContainerUtil.find(items, item -> item.myModule != null && item.myModule.getName().equals(name));
     setSelectedItem(selectedItem);

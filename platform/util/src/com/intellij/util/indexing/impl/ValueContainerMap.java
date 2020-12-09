@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -29,7 +14,7 @@ import java.nio.file.Path;
 /**
  * @author Dmitry Avdeev
  */
-class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValueContainer<Value>> {
+class ValueContainerMap<Key, Value> extends PersistentMapImpl<Key, UpdatableValueContainer<Value>> {
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 
@@ -37,8 +22,11 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile,
-                    @NotNull ValueContainerInputRemapping inputRemapping) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping));
+                    @NotNull ValueContainerInputRemapping inputRemapping,
+                    boolean isReadonly,
+                    boolean compactOnClose) throws IOException {
+    super(PersistentMapBuilder
+            .newBuilder(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping)).withReadonly(isReadonly).withCompactOnClose(compactOnClose));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
@@ -52,7 +40,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
       // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
       // file) and there is no benefit to accumulate values for particular key because only one value exists
       if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
-        appendData(key, new PersistentHashMap.ValueDataAppender() {
+        appendData(key, new AppendablePersistentMap.ValueDataAppender() {
           @Override
           public void append(@NotNull final DataOutput out) throws IOException {
             valueContainer.saveTo(out, myValueExternalizer);
@@ -64,6 +52,32 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
         super.doPut(key, valueContainer);
       }
     }
+  }
+
+  @NotNull
+  public ChangeTrackingValueContainer<Value> createChangeTrackingValueContainer(final Key key) {
+    return new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
+      @Override
+      public @NotNull Object getLock() {
+        return ValueContainerMap.this.getDataAccessLock();
+      }
+
+      @NotNull
+      @Override
+      public ValueContainer<Value> compute() {
+        ValueContainer<Value> value;
+        try {
+          value = ValueContainerMap.this.get(key);
+          if (value == null) {
+            value = new ValueContainerImpl<>();
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return value;
+      }
+    });
   }
 
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {

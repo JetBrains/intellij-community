@@ -3,6 +3,11 @@
   2,
   3,
 ])
+@Bar([
+  1,
+  2,
+  3
+])
 class A {}
 -----
 Groovy script
@@ -17,19 +22,43 @@ Groovy script
           Annotation member value pair
             Annotation array initializer
               PsiElement([)('[')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('1')
               PsiElement(,)(',')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('2')
               PsiElement(,)(',')
-              PsiWhiteSpace('\n  ')
+              PsiElement(new line)('\n  ')
               Literal
                 PsiElement(Integer)('3')
               PsiElement(,)(',')
-              PsiWhiteSpace('\n')
+              PsiElement(new line)('\n')
+              PsiElement(])(']')
+          PsiElement())(')')
+      PsiElement(new line)('\n')
+      Annotation
+        PsiElement(@)('@')
+        Reference element
+          PsiElement(identifier)('Bar')
+        Annotation arguments
+          PsiElement(()('(')
+          Annotation member value pair
+            Annotation array initializer
+              PsiElement([)('[')
+              PsiElement(new line)('\n  ')
+              Literal
+                PsiElement(Integer)('1')
+              PsiElement(,)(',')
+              PsiElement(new line)('\n  ')
+              Literal
+                PsiElement(Integer)('2')
+              PsiElement(,)(',')
+              PsiElement(new line)('\n  ')
+              Literal
+                PsiElement(Integer)('3')
+              PsiElement(new line)('\n')
               PsiElement(])(']')
           PsiElement())(')')
     PsiElement(new line)('\n')

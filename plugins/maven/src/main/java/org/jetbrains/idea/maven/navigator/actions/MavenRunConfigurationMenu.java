@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.navigator.actions;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class MavenRunConfigurationMenu extends DefaultActionGroup implements DumbAware {
@@ -32,7 +34,16 @@ public final class MavenRunConfigurationMenu extends DefaultActionGroup implemen
       return;
     }
 
-    List<Executor> executors = Executor.EXECUTOR_EXTENSION_NAME.getExtensionList();
+    @SuppressWarnings("DuplicatedCode")
+    final List<Executor> executors = new ArrayList<>();
+    for (final Executor executor: Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
+      if (executor instanceof ExecutorGroup) {
+        executors.addAll(((ExecutorGroup<?>)executor).childExecutors());
+      }
+      else {
+        executors.add(executor);
+      }
+    }
     for (int i = executors.size(); --i >= 0; ) {
       Executor executor = executors.get(i);
       if (!executor.isApplicable(project)) {

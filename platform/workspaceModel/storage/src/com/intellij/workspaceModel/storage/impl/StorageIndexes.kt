@@ -2,11 +2,9 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.assert
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntityData
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
@@ -14,6 +12,8 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
+import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
@@ -31,10 +31,8 @@ internal open class StorageIndexes(
   ) : this(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, emptyMap())
 
   companion object {
-    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false),
-                               EntityStorageInternalIndex(true), HashMap())
-
-    private val LOG = logger<StorageIndexes>()
+    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false), EntityStorageInternalIndex(true),
+                               HashMap())
   }
 
   fun toMutable(): MutableStorageIndexes {
@@ -54,10 +52,12 @@ internal open class StorageIndexes(
 
     assertSoftLinksIndex(storage)
 
+    assertVirtualFileIndex(storage)
+
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
       for ((id, obj) in mappings.index) {
-        LOG.assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
+        assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
       }
     }
   }
@@ -79,8 +79,8 @@ internal open class StorageIndexes(
         }
         else {
           val actualLinks = (data as SoftLinkable).getLinks()
-          LOG.assert(expectedLinks.size == actualLinks.size) { "Different sizes: $expectedLinks, $actualLinks" }
-          LOG.assert(expectedLinks.all { it in actualLinks }) { "Different sets: $expectedLinks, $actualLinks" }
+          assert(expectedLinks.size == actualLinks.size) { "Different sizes: $expectedLinks, $actualLinks" }
+          assert(expectedLinks.all { it in actualLinks }) { "Different sets: $expectedLinks, $actualLinks" }
         }
       }
     }
@@ -92,17 +92,17 @@ internal open class StorageIndexes(
     entityData.dependencies.forEach { dependency ->
       when (dependency) {
         is ModuleDependencyItem.Exportable.ModuleDependency -> {
-          LOG.assertTrue(dependency.module in expectedLinks)
+          assert(dependency.module in expectedLinks)
           actualRefs += dependency.module
         }
         is ModuleDependencyItem.Exportable.LibraryDependency -> {
-          LOG.assertTrue(dependency.library in expectedLinks)
+          assert(dependency.library in expectedLinks)
           actualRefs += dependency.library
         }
         else -> Unit
       }
     }
-    LOG.assertTrue(actualRefs.size == expectedLinks.size)
+    assert(actualRefs.size == expectedLinks.size)
   }
 
   private fun assertPersistentIdIndex(storage: AbstractEntityStorage) {
@@ -116,12 +116,12 @@ internal open class StorageIndexes(
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
         val expectedPersistentId = persistentIdIndex.getEntryById(mutableId)
-        LOG.assert(expectedPersistentId == data.persistentId(storage)) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId(storage)}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
+        assert(expectedPersistentId == data.persistentId(storage)) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId(storage)}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
         expectedSize++
       }
     }
 
-    LOG.assert(expectedSize == persistentIdIndex.index.size) { "Incorrect size of persistent id index. Expected: $expectedSize, actual: ${persistentIdIndex.index.size}" }
+    assert(expectedSize == persistentIdIndex.index.size) { "Incorrect size of persistent id index. Expected: $expectedSize, actual: ${persistentIdIndex.index.size}" }
   }
 
   private fun assertEntitySourceIndex(storage: AbstractEntityStorage) {
@@ -135,12 +135,34 @@ internal open class StorageIndexes(
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
         val expectedEntitySource = entitySourceIndex.getEntryById(mutableId)
-        LOG.assert(expectedEntitySource == data.entitySource) { "Entity $data isn't found in entity source index. Entity source: ${data.entitySource}, Id: $mutableId. Expected entity source: $expectedEntitySource" }
+        assert(expectedEntitySource == data.entitySource) { "Entity $data isn't found in entity source index. Entity source: ${data.entitySource}, Id: $mutableId. Expected entity source: $expectedEntitySource" }
         expectedSize++
       }
     }
 
-    LOG.assert(expectedSize == entitySourceIndex.index.size) { "Incorrect size of entity source index. Expected: $expectedSize, actual: ${entitySourceIndex.index.size}" }
+    assert(expectedSize == entitySourceIndex.index.size) { "Incorrect size of entity source index. Expected: $expectedSize, actual: ${entitySourceIndex.index.size}" }
+  }
+
+  private fun assertVirtualFileIndex(storage: AbstractEntityStorage) {
+    val existingVfuInFirstMap = HashSet<VirtualFileUrl>()
+    val vfuIndex = storage.indexes.virtualFileIndex
+    vfuIndex.entityId2VirtualFileUrl.forEach { (entityId, property2Vfu) ->
+      property2Vfu.forEach { (property, vfuSet) ->
+        vfuSet.forEach { vfu ->
+          existingVfuInFirstMap.add(vfu)
+          val property2EntityId = vfuIndex.vfu2EntityId[vfu]
+          assert(property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
+
+          val compositeKey = "${entityId}_$property"
+          val existingEntityId = property2EntityId!![compositeKey]
+          assert(existingEntityId != null) { "VirtualFileUrl: $vfu exist in both maps but EntityId: $entityId with Property: $property absent at other" }
+        }
+      }
+    }
+    val existingVfuISecondMap = vfuIndex.vfu2EntityId.keys
+    assert(existingVfuInFirstMap.size == existingVfuISecondMap.size) { "Different count of VirtualFileUrls EntityId2VirtualFileUrl: ${existingVfuInFirstMap.size} Vfu2EntityId: ${existingVfuISecondMap.size}" }
+    existingVfuInFirstMap.removeAll(existingVfuISecondMap)
+    assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 }
 
@@ -153,7 +175,7 @@ internal class MutableStorageIndexes(
 ) : StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, externalMappings) {
 
   fun <T : WorkspaceEntity> entityAdded(entityData: WorkspaceEntityData<T>, builder: WorkspaceEntityStorageBuilderImpl) {
-    val pid = entityData.createPid()
+    val pid = entityData.createEntityId()
 
     // Update soft links index
     if (entityData is SoftLinkable) {
@@ -162,15 +184,18 @@ internal class MutableStorageIndexes(
       }
     }
 
-    entitySourceIndex.index(pid, entityData.entitySource)
+    val entitySource = entityData.entitySource
+    entitySourceIndex.index(pid, entitySource)
 
     entityData.persistentId(builder)?.let { persistentId ->
       persistentIdIndex.index(pid, persistentId)
     }
+
+    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
   }
 
   fun updateSoftLinksIndex(softLinkable: SoftLinkable) {
-    val pid = (softLinkable as WorkspaceEntityData<*>).createPid()
+    val pid = (softLinkable as WorkspaceEntityData<*>).createEntityId()
 
     for (link in softLinkable.getLinks()) {
       softLinks.index(pid, link)
@@ -178,32 +203,32 @@ internal class MutableStorageIndexes(
   }
 
   fun removeFromSoftLinksIndex(softLinkable: SoftLinkable) {
-    val pid = (softLinkable as WorkspaceEntityData<*>).createPid()
+    val pid = (softLinkable as WorkspaceEntityData<*>).createEntityId()
 
     for (link in softLinkable.getLinks()) {
       softLinks.remove(pid, link)
     }
   }
 
-  fun updateIndices(oldEntityId: EntityId, newEntityId: EntityId, builder: AbstractEntityStorage) {
+  fun updateIndices(oldEntityId: EntityId, newEntityData: WorkspaceEntityData<*>, builder: AbstractEntityStorage) {
+    val newEntityId = newEntityData.createEntityId()
     builder.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldEntityId)
-      .groupBy({ it.propertyName }, { it.vfu })
       .forEach { (property, vfus) ->
         virtualFileIndex.index(newEntityId, property, vfus)
       }
-    builder.indexes.entitySourceIndex.getEntryById(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
+    entitySourceIndex.index(newEntityId, newEntityData.entitySource)
     builder.indexes.persistentIdIndex.getEntryById(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
 
   fun removeFromIndices(entityId: EntityId) {
-    virtualFileIndex.index(entityId)
     entitySourceIndex.index(entityId)
     persistentIdIndex.index(entityId)
+    virtualFileIndex.removeRecordsByEntityId(entityId)
     externalMappings.values.forEach { it.remove(entityId) }
   }
 
   fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>) {
-    val pid = copiedData.createPid()
+    val pid = copiedData.createEntityId()
     if (copiedData is SoftLinkable) {
       val beforeSoftLinks = HashSet(this.softLinks.getEntriesById(pid))
       val afterSoftLinks = copiedData.getLinks()

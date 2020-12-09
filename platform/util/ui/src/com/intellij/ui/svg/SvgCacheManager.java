@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 @SuppressWarnings("UndesirableClassUsage")
 @ApiStatus.Internal
@@ -32,19 +33,33 @@ public final class SvgCacheManager {
   private static final ComponentColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8, 8}, true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
 
   private final MVStore store;
-  private final Map<Double, MVMap<byte[], ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
+  private final Map<Float, MVMap<byte[], ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
   private final MVMap.Builder<byte[], ImageValue> mapBuilder;
 
+  private static final class StoreErrorHandler implements BiConsumer<Throwable, MVStore> {
+    private boolean isStoreOpened;
+
+    @Override
+    public void accept(Throwable e, MVStore store) {
+      if (isStoreOpened) {
+        getLogger().error("Icon Cache Error (db=" + store.getFileStore() + ")", e);
+      }
+      else {
+        getLogger().warn("Icon Cache will be recreated or previous version of data reused (db=" + store.getFileStore() + ")", e);
+      }
+    }
+  }
+
   public SvgCacheManager(@NotNull Path dbFile) {
+    StoreErrorHandler storeErrorHandler = new StoreErrorHandler();
     MVStore.Builder storeBuilder = new MVStore.Builder()
-      .backgroundExceptionHandler((t, e) -> {
-        getLogger().error(e);
-      })
+      .backgroundExceptionHandler(storeErrorHandler)
       .autoCommitDelay(60_000)
       .compressHigh();
     store = storeBuilder.openOrNewOnIoError(dbFile, true, e -> {
-      getLogger().error("Cannot open icon cache database", e);
+      getLogger().debug("Cannot open icon cache database", e);
     });
+    storeErrorHandler.isStoreOpened = true;
 
     MVMap.Builder<byte[], ImageValue> mapBuilder;
     mapBuilder = new MVMap.Builder<>();
@@ -57,13 +72,13 @@ public final class SvgCacheManager {
     return Logger.getInstance(SvgCacheManager.class);
   }
 
-  public static <K, V> @NotNull MVMap<K, V> getMap(double scale,
+  public static <K, V> @NotNull MVMap<K, V> getMap(float scale,
                                                    boolean isDark,
-                                                   @NotNull Map<Double, MVMap<K, V>> scaleToMap,
+                                                   @NotNull Map<Float, MVMap<K, V>> scaleToMap,
                                                    @NotNull MVStore store,
                                                    @NotNull MVMap.MapBuilder<MVMap<K, V>, K, V> mapBuilder) {
-    return scaleToMap.computeIfAbsent(scale, scale2 -> {
-      return store.openMap("icons-v1" + (isDark ? "_d" : "") + "@" + scale2, mapBuilder);
+    return scaleToMap.computeIfAbsent(scale + (isDark ? 10_000 : 0), __ -> {
+      return store.openMap("icons-v1@" + scale + (isDark ? "_d" : ""), mapBuilder);
     });
   }
 
@@ -99,7 +114,7 @@ public final class SvgCacheManager {
 
   public final @Nullable Image loadFromCache(byte @NotNull [] theme,
                                              byte @NotNull [] imageBytes,
-                                             double scale,
+                                             float scale,
                                              boolean isDark,
                                              @NotNull ImageLoader.Dimension2DDouble docSize) {
     byte[] key = getCacheKey(theme, imageBytes);
@@ -113,7 +128,7 @@ public final class SvgCacheManager {
       }
 
       Image image = readImage(data, docSize);
-      IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
+      IconLoadMeasurer.svgCacheRead.end(start);
       return image;
     }
     catch (Exception e) {
@@ -121,7 +136,8 @@ public final class SvgCacheManager {
       try {
         map.remove(key);
       }
-      catch (Exception ignore) {
+      catch (Exception e1) {
+        getLogger().error("Cannot remove invalid entry", e1);
       }
       return null;
     }
@@ -129,7 +145,7 @@ public final class SvgCacheManager {
 
   public void storeLoadedImage(byte @NotNull [] theme,
                                byte @NotNull [] imageBytes,
-                               double scale,
+                               float scale,
                                @NotNull BufferedImage image,
                                @NotNull ImageLoader.Dimension2DDouble size) {
     byte[] key = getCacheKey(theme, imageBytes);

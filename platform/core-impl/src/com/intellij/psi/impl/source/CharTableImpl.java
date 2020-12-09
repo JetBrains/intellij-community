@@ -6,8 +6,6 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.StringFactory;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,9 +65,7 @@ public final class CharTableImpl implements CharTable {
     if (text instanceof String) {
       return ((String)text).substring(startOffset, endOffset);
     }
-    char[] buf = new char[endOffset - startOffset];
-    CharArrayUtil.getChars(text, buf, startOffset, 0, buf.length);
-    return StringFactory.createShared(buf); // this way the .toString() doesn't create another instance (as opposed to new CharArrayCharSequence())
+    return text.subSequence(startOffset, endOffset).toString();
   }
 
   @Nullable

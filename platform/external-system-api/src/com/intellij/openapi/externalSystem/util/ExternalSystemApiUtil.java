@@ -43,10 +43,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -536,14 +533,15 @@ public final class ExternalSystemApiUtil {
    * @return error message for the given exception
    */
   @NotNull
-  public static String buildErrorMessage(@NotNull Throwable e) {
+  public static @Nls String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
     String reason = unwrapped.getLocalizedMessage();
     if (!StringUtil.isEmpty(reason)) {
       return reason;
     }
     else if (unwrapped.getClass() == ExternalSystemException.class) {
-      return String.format("exception during working with external system: %s", ((ExternalSystemException)unwrapped).getOriginalReason());
+      String originalReason = ((ExternalSystemException)unwrapped).getOriginalReason();
+      return ExternalSystemBundle.message("external.system.api.error.message.prefix", originalReason);
     }
     else {
       return stacktraceAsString(unwrapped);
@@ -551,7 +549,7 @@ public final class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static String stacktraceAsString(@NotNull Throwable throwable) {
+  public static @NlsSafe String stacktraceAsString(@NotNull Throwable throwable) {
     Throwable unwrapped = RemoteUtil.unwrap(throwable);
     StringWriter writer = new StringWriter();
     unwrapped.printStackTrace(new PrintWriter(writer));

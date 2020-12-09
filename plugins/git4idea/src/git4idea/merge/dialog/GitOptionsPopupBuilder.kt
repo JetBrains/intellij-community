@@ -10,13 +10,13 @@ import java.awt.event.InputEvent
 
 internal class GitOptionsPopupBuilder<T>(private val project: Project,
                                          @Nls private val title: String,
-                                         private val options: List<T>,
+                                         private val optionsProvider: () -> List<T>,
                                          private val renderer: OptionListCellRenderer<T>,
                                          private val selectHandler: (T) -> Unit = {},
                                          private val optionEnabledPredicate: (T) -> Boolean = { true }) {
 
   fun createPopup(): ListPopup {
-    return object : ListPopupImpl(project, createPopupStep(title, options)) {
+    return object : ListPopupImpl(project, createPopupStep(title, optionsProvider())) {
 
       override fun getListElementRenderer() = renderer
 

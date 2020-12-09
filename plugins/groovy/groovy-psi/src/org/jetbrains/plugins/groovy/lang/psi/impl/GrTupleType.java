@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -12,8 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.List;
 
 public abstract class GrTupleType extends GrLiteralClassType {
-
-  private final VolatileNotNullLazyValue<PsiType[]> myParameters = VolatileNotNullLazyValue.createValue(() -> {
+  private final NotNullLazyValue<PsiType[]> myParameters = NotNullLazyValue.volatileLazy(() -> {
     List<PsiType> types = getComponentTypes();
     if (types.isEmpty()) return PsiType.EMPTY_ARRAY;
     final PsiType leastUpperBound = getLeastUpperBound(types.toArray(PsiType.EMPTY_ARRAY));
@@ -21,7 +20,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return new PsiType[]{leastUpperBound};
   });
 
-  private final VolatileNotNullLazyValue<List<PsiType>> myComponents = VolatileNotNullLazyValue.createValue(this::inferComponents);
+  private final NotNullLazyValue<List<PsiType>> myComponents = NotNullLazyValue.volatileLazy(this::inferComponents);
 
   public GrTupleType(@NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
     this(scope, facade, LanguageLevel.JDK_1_5);

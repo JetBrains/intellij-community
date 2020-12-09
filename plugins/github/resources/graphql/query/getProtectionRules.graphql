@@ -1,0 +1,13 @@
+query($repoOwner: String!, $repoName: String!, $pageSize: Int = 100, $cursor: String) {
+    repository(owner: $repoOwner, name: $repoName) {
+        branchProtectionRules(first: $pageSize, after: $cursor) {
+           pageInfo {
+              ...pageInfo
+           }
+           nodes {
+              ...nodeInfo
+              pattern
+           }
+        }
+    }
+}

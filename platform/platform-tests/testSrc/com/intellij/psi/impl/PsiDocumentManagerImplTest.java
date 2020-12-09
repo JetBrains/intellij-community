@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
@@ -176,7 +175,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void changeDocument(Document document, PsiDocumentManagerImpl manager) {
-    DocumentEventImpl event = new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false);
+    DocumentEventImpl event = new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false, 0, 0, 0);
     manager.beforeDocumentChange(event);
     manager.documentChanged(event);
   }
@@ -198,39 +197,34 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     Document document = getDocument(file);
 
-    Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"));
-    try {
-      PsiManager alienManager = PsiManager.getInstance(alienProject);
-      final String alienText = "alien";
+    Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"), getTestRootDisposable());
+    PsiManager alienManager = PsiManager.getInstance(alienProject);
+    final String alienText = "alien";
 
-      LightVirtualFile alienVirt = new LightVirtualFile("foo.txt", alienText);
-      final PsiFile alienFile = alienManager.findFile(alienVirt);
-      final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
-      final Document alienDocument = alienDocManager.getDocument(alienFile);
-      assertEquals(0, alienDocManager.getUncommittedDocuments().length);
+    LightVirtualFile alienVirt = new LightVirtualFile("foo.txt", alienText);
+    final PsiFile alienFile = alienManager.findFile(alienVirt);
+    final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
+    final Document alienDocument = alienDocManager.getDocument(alienFile);
+    assertEquals(0, alienDocManager.getUncommittedDocuments().length);
+    assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      changeDocument(alienDocument, getPsiDocumentManager());
       assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+      assertEquals(0, alienDocManager.getUncommittedDocuments().length);
 
-      WriteCommandAction.runWriteCommandAction(null, () -> {
-        changeDocument(alienDocument, getPsiDocumentManager());
-        assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
-        assertEquals(0, alienDocManager.getUncommittedDocuments().length);
+      changeDocument(alienDocument, alienDocManager);
+      assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+      assertEquals(1, alienDocManager.getUncommittedDocuments().length);
 
-        changeDocument(alienDocument, alienDocManager);
-        assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
-        assertEquals(1, alienDocManager.getUncommittedDocuments().length);
+      changeDocument(document, getPsiDocumentManager());
+      assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
+      assertEquals(1, alienDocManager.getUncommittedDocuments().length);
 
-        changeDocument(document, getPsiDocumentManager());
-        assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
-        assertEquals(1, alienDocManager.getUncommittedDocuments().length);
-
-        changeDocument(document, alienDocManager);
-        assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
-        assertEquals(1, alienDocManager.getUncommittedDocuments().length);
-      });
-    }
-    finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject);
-    }
+      changeDocument(document, alienDocManager);
+      assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
+      assertEquals(1, alienDocManager.getUncommittedDocuments().length);
+    });
   }
 
   public void testCommitInBackground() {
@@ -340,38 +334,33 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     final Document document = getDocument(file);
 
-    Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"));
-    try {
-      PsiManager alienManager = PsiManager.getInstance(alienProject);
+    Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"), getTestRootDisposable());
+    PsiManager alienManager = PsiManager.getInstance(alienProject);
 
-      final PsiFile alienFile = alienManager.findFile(virtualFile);
-      assertNotNull(alienFile);
-      final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
-      final Document alienDocument = alienDocManager.getDocument(alienFile);
-      assertSame(document, alienDocument);
-      assertEmpty(alienDocManager.getUncommittedDocuments());
-      assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
+    final PsiFile alienFile = alienManager.findFile(virtualFile);
+    assertNotNull(alienFile);
+    final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
+    final Document alienDocument = alienDocManager.getDocument(alienFile);
+    assertSame(document, alienDocument);
+    assertEmpty(alienDocManager.getUncommittedDocuments());
+    assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
 
-      WriteCommandAction.runWriteCommandAction(null, () -> {
-        document.setText("xxx");
-        assertOrderedEquals(getPsiDocumentManager().getUncommittedDocuments(), document);
-        assertOrderedEquals(alienDocManager.getUncommittedDocuments(), alienDocument);
-      });
-      assertEquals("xxx", document.getText());
-      assertEquals("xxx", alienDocument.getText());
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.setText("xxx");
+      assertOrderedEquals(getPsiDocumentManager().getUncommittedDocuments(), document);
+      assertOrderedEquals(alienDocManager.getUncommittedDocuments(), alienDocument);
+    });
+    assertEquals("xxx", document.getText());
+    assertEquals("xxx", alienDocument.getText());
 
-      waitForCommits();
-      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+    waitForCommits();
+    assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
 
-      TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
-      while (!alienDocManager.isCommitted(alienDocument) && !t.timedOut()) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-      assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
+    TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
+    while (!alienDocManager.isCommitted(alienDocument) && !t.timedOut()) {
+      UIUtil.dispatchAllInvocationEvents();
     }
-    finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject);
-    }
+    assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
   }
 
   public void testFileChangesToText() {

@@ -32,7 +32,7 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
   private String myPresentableName;
 
   static {
-    TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
+    TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PropertiesComponent.PROPERTY_KEY.getTextAttributesKey()).clone();
     groupKeyTextAttributes.setFontType(Font.ITALIC);
     GROUP_KEY = TextAttributesKey.createTextAttributesKey("GROUP_KEY", groupKeyTextAttributes);
   }
@@ -53,15 +53,13 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     return element.isValid() ? element : null;
   }
 
-  @NotNull
   @Override
-  public IProperty[] getProperties() {
+  public IProperty @NotNull [] getProperties() {
     return new IProperty[] {myProperty};
   }
 
-  @Nullable
   @Override
-  public PsiFile[] getFiles() {
+  public PsiFile @Nullable [] getFiles() {
     return null;
   }
 
@@ -122,8 +120,9 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
 
       @Override
       public TextAttributes getTextAttributes(EditorColorsScheme colorsScheme) {
-        final TextAttributesKey baseAttrKey =
-          (getPresentableName() != null && getPresentableName().isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
+        final TextAttributesKey baseAttrKey = (getPresentableName() != null && getPresentableName().isEmpty())
+          ? GROUP_KEY
+          : PropertiesHighlighter.PropertiesComponent.PROPERTY_KEY.getTextAttributesKey();
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
         if (getPsiElement() != null) {
           TextAttributes highlightingAttributes = getErrorTextAttributes(colorsScheme);

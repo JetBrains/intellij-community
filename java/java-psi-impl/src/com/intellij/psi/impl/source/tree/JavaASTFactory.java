@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.DefaultASTFactory;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagValueImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocTokenImpl;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class JavaASTFactory extends ASTFactory {
-  private final DefaultASTFactory myDefaultASTFactory = ServiceManager.getService(DefaultASTFactory.class);
+  private final DefaultASTFactory myDefaultASTFactory = ApplicationManager.getApplication().getService(DefaultASTFactory.class);
 
   @Override
   public LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {

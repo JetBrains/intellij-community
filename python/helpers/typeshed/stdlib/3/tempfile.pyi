@@ -4,6 +4,9 @@ from types import TracebackType
 from typing import IO, Any, AnyStr, Generic, Iterable, Iterator, List, Optional, Tuple, Type, TypeVar, Union, overload
 from typing_extensions import Literal
 
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
+
 # global variables
 TMP_MAX: int
 tempdir: Optional[str]
@@ -11,10 +14,7 @@ template: str
 
 _S = TypeVar("_S")
 _T = TypeVar("_T")  # for pytype, define typevar in same file as alias
-if sys.version_info >= (3, 6):
-    _DirT = Union[_T, os.PathLike[_T]]
-else:
-    _DirT = Union[_T]
+_DirT = Union[_T, os.PathLike[_T]]
 
 if sys.version_info >= (3, 8):
     @overload
@@ -287,6 +287,8 @@ class TemporaryDirectory(Generic[AnyStr]):
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 def mkstemp(
     suffix: Optional[AnyStr] = ..., prefix: Optional[AnyStr] = ..., dir: Optional[_DirT[AnyStr]] = ..., text: bool = ...

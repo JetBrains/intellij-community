@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
 import com.intellij.psi.tree.TokenSet;
@@ -78,6 +79,15 @@ public final class JavaSharedImplUtil {
 
     // annotation is misplaced (either located before the anchor or has no following brackets)
     return !found || stop ? null : annotations;
+  }
+
+  @NotNull
+  public static PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
+    String typeText = TypeInfo.createTypeText(typeInfo);
+    assert typeText != null : owner;
+    PsiType type = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeFromText(typeText, owner);
+    type = applyAnnotations(type, owner.getModifierList());
+    return typeInfo.getTypeAnnotations().applyTo(type, owner);
   }
 
   @NotNull
@@ -217,7 +227,9 @@ public final class JavaSharedImplUtil {
       PsiAnnotation[] result = myCache;
       if (result == null) {
         List<PsiAnnotation> filtered = JBIterable.of(myCandidates)
-          .filter(annotation -> AnnotationTargetUtil.isTypeAnnotation(annotation))
+          .filter(annotation ->
+                    !annotation.isValid() || // avoid exceptions in the next line, enable isValid checks at more specific call sites
+                    AnnotationTargetUtil.isTypeAnnotation(annotation))
           .append(myOriginalProvider.getAnnotations())
           .toList();
         myCache = result = filtered.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : filtered.toArray(PsiAnnotation.EMPTY_ARRAY);

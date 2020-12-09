@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
-private val LOG = Logger.getInstance("#com.intellij.internal.statistic.IdeActivity")
+private val LOG = Logger.getInstance(IdeActivity::class.java)
 
 private enum class State { NOT_STARTED, STARTED, FINISHED }
 

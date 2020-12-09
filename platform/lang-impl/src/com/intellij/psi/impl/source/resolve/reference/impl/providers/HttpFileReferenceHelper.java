@@ -13,7 +13,7 @@ import java.util.Collections;
 final class HttpFileReferenceHelper extends FileReferenceHelper {
   @Nullable
   @Override
-  public PsiFileSystemItem findRoot(Project project, @NotNull VirtualFile file) {
+  public PsiFileSystemItem findRoot(@NotNull Project project, @NotNull VirtualFile file) {
     VirtualFile root = file;
     VirtualFile parent;
     while ((parent = root.getParent()) != null) {
@@ -24,13 +24,13 @@ final class HttpFileReferenceHelper extends FileReferenceHelper {
 
   @NotNull
   @Override
-  public Collection<PsiFileSystemItem> getContexts(Project project, @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFileSystemItem item = getPsiFileSystemItem(project, file);
     return item == null ? Collections.emptyList() : Collections.singleton(item);
   }
 
   @Override
-  public boolean isMine(Project project, @NotNull VirtualFile file) {
+  public boolean isMine(@NotNull Project project, @NotNull VirtualFile file) {
     return file instanceof HttpVirtualFile;
   }
 }

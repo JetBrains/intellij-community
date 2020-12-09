@@ -246,12 +246,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     return null;
   }
 
-  protected static boolean isChangeSelected(@NotNull ThreesideDiffChangeBase change, @NotNull BitSet lines, @NotNull ThreeSide side) {
-    int line1 = change.getStartLine(side);
-    int line2 = change.getEndLine(side);
-    return DiffUtil.isSelectedByLine(lines, line1, line2);
-  }
-
   //
   // Actions
   //
@@ -323,12 +317,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   protected class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
     public MyToggleExpandByDefaultAction() {
-      super(getTextSettings());
-    }
-
-    @Override
-    protected void expandAll(boolean expand) {
-      myFoldingModel.expandAll(expand);
+      super(getTextSettings(), myFoldingModel);
     }
   }
 

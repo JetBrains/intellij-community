@@ -98,6 +98,11 @@ public class AtomicConversionRule extends TypeConversionRule {
             return new TypeConversionDescriptor("++$qualifier$", "$qualifier$.incrementAndGet()");
           }
 
+          if (operationSign == JavaTokenType.MINUS && 
+              !(context.getParent() instanceof PsiAssignmentExpression)) {
+            return wrapWithNewExpression(to, from, (PsiExpression)context, context, type);
+          }
+
         }
         else if (context instanceof PsiAssignmentExpression) {
           final PsiJavaToken signToken = ((PsiAssignmentExpression)context).getOperationSign();

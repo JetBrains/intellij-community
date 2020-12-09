@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -37,6 +38,23 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       return;
     }
 
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
+    getSelectedTextAsync(evaluator, dataContext)
+            .onSuccess(pair -> {
+              var evalExpression = pair.first;
+              var evalMode = pair.second;
+              if (evalExpression == null && value != null) {
+                value.calculateEvaluationExpression().onSuccess(
+                        expression -> AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression)));
+              } else {
+                AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator,
+                        XExpressionImpl.fromText(evalExpression, evalMode)));
+              }
+            });
+  }
+
+  public static Promise<Pair<@Nullable String, EvaluationMode>> getSelectedTextAsync(@NotNull XDebuggerEvaluator evaluator, @NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     EvaluationMode mode = EvaluationMode.EXPRESSION;
@@ -56,20 +74,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       expressionTextPromise = evaluator.getWhenDataIsReady(editor, selectedText);
     }
 
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-
     EvaluationMode finalMode = mode;
-    XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
-    expressionTextPromise.onSuccess(expressionText -> {
-      if (expressionText == null && value != null) {
-          value.calculateEvaluationExpression().onSuccess(
-            expression -> AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression)));
-      }
-      else {
-        AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator,
-                                               XExpressionImpl.fromText(expressionText, finalMode)));
-      }
-    });
+    return expressionTextPromise.then(expression -> Pair.create(expression, finalMode));
   }
 
   private static void showDialog(@NotNull XDebugSession session,

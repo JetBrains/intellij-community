@@ -108,24 +108,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<RatedResolveResult> targets = resolveInner();
     if (targets.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
-    // change class results to constructor results if there are any
-    if (myElement.getParent() instanceof PyCallExpression) { // we're a call
-      final ListIterator<RatedResolveResult> iterator = targets.listIterator();
-      while (iterator.hasNext()) {
-        final RatedResolveResult rrr = iterator.next();
-        final PsiElement element = rrr.getElement();
-        if (element instanceof PyClass) {
-          final PyClass cls = (PyClass)element;
-          final TypeEvalContext context = myContext.getTypeEvalContext();
-          final Collection<? extends PsiElement> constructors = PyCallExpressionHelper.resolveConstructors(cls, myElement, context, false);
-          if (!constructors.isEmpty()) {
-            iterator.remove();
-            constructors.forEach(c -> iterator.add(rrr.replace(c)));
-          }
-        }
-      }
-    }
-
     return RatedResolveResult.sorted(targets).toArray(ResolveResult.EMPTY_ARRAY);
   }
 
@@ -611,8 +593,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  private boolean resolvesToSameGlobal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner,
-                                       PsiElement resolveResult) {
+  private boolean resolvesToSameGlobal(@NotNull PsiElement element,
+                                       @Nullable String elementName,
+                                       @NotNull ScopeOwner ourScopeOwner,
+                                       @NotNull ScopeOwner theirScopeOwner,
+                                       @Nullable PsiElement resolveResult) {
     // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
     final PsiFile ourFile = getElement().getContainingFile();
     final PsiFile theirFile = element.getContainingFile();
@@ -623,7 +608,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         return true;
       }
     }
-    if (ScopeUtil.getScopeOwner(resolveResult) == ourFile && ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
+
+    final var resolvedScopeOwner = ScopeUtil.getScopeOwner(resolveResult);
+    if (resolvedScopeOwner != null && resolveResult.getContainingFile() == theirFile) {
+      if (ControlFlowCache.getScope(resolvedScopeOwner).isGlobal(elementName) &&
+          ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
+        return true;
+      }
+    }
+
+    if (resolvedScopeOwner == ourFile && ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
       return true;
     }
     return false;

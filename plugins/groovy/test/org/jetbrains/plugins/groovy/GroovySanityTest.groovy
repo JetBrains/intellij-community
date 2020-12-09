@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -50,6 +51,21 @@ class GroovySanityTest {
   @Test
   void 'incremental highlighter update'() {
     PropertyChecker.checkScenarios(actionsOnGroovyFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks))
+  }
+
+  @Test
+  void 'inc'() {
+    def file = fixture.configureByText '_.groovy', '''
+/**1*/
+/**2*/
+a={}
+/**3*/
+'''
+    def document = fixture.getDocument(file)
+    WriteCommandAction.runWriteCommandAction(fixture.project) {
+      document.deleteString(8, 15)
+      document.insertString(0, '[')
+    }
   }
 
   @Test

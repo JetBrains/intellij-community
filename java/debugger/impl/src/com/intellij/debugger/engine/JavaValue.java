@@ -280,10 +280,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     }
   }
 
-  private int myChildrenRemaining = -1;
-
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
+    computeChildren(-1, node);
+  }
+
+  private void computeChildren(int remainingElements, @NotNull final XCompositeNode node) {
     scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
@@ -313,8 +315,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               @Override
               public void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength) {
                 renderer.START_INDEX = 0;
-                if (myChildrenRemaining >= 0) {
-                  renderer.START_INDEX = Math.max(0, arrayLength - myChildrenRemaining);
+                if (remainingElements >= 0) {
+                  renderer.START_INDEX = Math.max(0, arrayLength - remainingElements);
                 }
               }
 
@@ -359,8 +361,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
               @Override
               public void tooManyChildren(int remaining) {
-                myChildrenRemaining = remaining;
-                node.tooManyChildren(remaining);
+                node.tooManyChildren(remaining, () -> computeChildren(remaining, node));
               }
 
               @Override
@@ -622,7 +623,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   public void reBuild(final XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myChildrenRemaining = -1;
     node.invokeNodeUpdate(() -> {
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);

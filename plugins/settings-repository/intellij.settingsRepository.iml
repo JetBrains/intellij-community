@@ -33,12 +33,12 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

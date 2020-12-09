@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -9,6 +8,8 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.text.MessageFormat;
 import java.util.HashMap;
@@ -20,19 +21,19 @@ import java.util.Map;
 public final class DeleteUtil {
   private DeleteUtil() { }
 
-  public static @NlsContexts.DialogMessage String generateWarningMessage(@NlsContexts.DialogMessage String messageTemplate, final PsiElement[] elements) {
+  public static @NlsContexts.DialogMessage String generateWarningMessage(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key,
+                                                                         PsiElement @NotNull [] elements) {
     if (elements.length == 1) {
       String name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE);
       String type = ElementDescriptionUtil.getElementDescription(elements[0], DeleteTypeDescriptionLocation.SINGULAR);
-      return MessageFormat.format(messageTemplate, type + (StringUtil.isEmptyOrSpaces(name) ? "" : " \"" + name + "\""));
+      return IdeBundle.message(key, type + (StringUtil.isEmptyOrSpaces(name) ? "" : " \"" + name + '"'));
     }
 
-    Map<String, Integer> countMap = FactoryMap.create(key -> 0);
+    Map<String, Integer> countMap = FactoryMap.create(k -> 0);
     Map<String, String> pluralToSingular = new HashMap<>();
     int directoryCount = 0;
     String containerType = null;
-
-    for (final PsiElement elementToDelete : elements) {
+    for (PsiElement elementToDelete : elements) {
       String type = ElementDescriptionUtil.getElementDescription(elementToDelete, DeleteTypeDescriptionLocation.PLURAL);
       pluralToSingular.put(type, ElementDescriptionUtil.getElementDescription(elementToDelete, DeleteTypeDescriptionLocation.SINGULAR));
       int oldCount = countMap.get(type).intValue();
@@ -48,8 +49,8 @@ public final class DeleteUtil {
       if (buffer.length() > 0) {
         buffer.append(" ").append(IdeBundle.message("prompt.delete.and")).append(" ");
       }
-      final int count = entry.getValue().intValue();
 
+      int count = entry.getValue().intValue();
       buffer.append(count).append(" ");
       if (count == 1) {
         buffer.append(pluralToSingular.get(entry.getKey()));
@@ -62,6 +63,7 @@ public final class DeleteUtil {
         buffer.append(" ").append(IdeBundle.message("prompt.delete.directory.paren", directoryCount));
       }
     }
-    return MessageFormat.format(messageTemplate, buffer.toString());
+
+    return IdeBundle.message(key, buffer.toString());
   }
 }

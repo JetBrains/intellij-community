@@ -46,22 +46,22 @@ public abstract class FileReferenceHelper {
   }
 
   @NotNull
-  public List<? extends LocalQuickFix> registerFixes(FileReference reference) {
+  public List<? extends LocalQuickFix> registerFixes(@NotNull FileReference reference) {
     return emptyList();
   }
 
   @Nullable
-  public PsiFileSystemItem getPsiFileSystemItem(final Project project, @NotNull final VirtualFile file) {
+  public PsiFileSystemItem getPsiFileSystemItem(@NotNull Project project, @NotNull final VirtualFile file) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     return getPsiFileSystemItem(psiManager, file);
   }
 
-  public static PsiFileSystemItem getPsiFileSystemItem(PsiManager psiManager, VirtualFile file) {
+  public static PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager psiManager, @NotNull VirtualFile file) {
     return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
   }
 
   @Nullable
-  public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {
+  public PsiFileSystemItem findRoot(@NotNull Project project, @NotNull final VirtualFile file) {
     return null;
   }
 
@@ -76,9 +76,9 @@ public abstract class FileReferenceHelper {
   }
 
   @NotNull
-  public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);
+  public abstract Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull final VirtualFile file);
 
-  public abstract boolean isMine(final Project project, @NotNull final VirtualFile file);
+  public abstract boolean isMine(@NotNull Project project, @NotNull final VirtualFile file);
 
   public boolean isFallback() {
     return false;

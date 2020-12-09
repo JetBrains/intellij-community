@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectListActionProvider;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -19,7 +20,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAction {
+public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAction implements LightEditCompatible {
   @Nullable
   public static DefaultListModel getDataModel(@NotNull AnActionEvent e) {
     JList list = getList(e);

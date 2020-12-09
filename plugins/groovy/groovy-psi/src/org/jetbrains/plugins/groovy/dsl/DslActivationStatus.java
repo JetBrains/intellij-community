@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -9,17 +13,13 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 @State(name = "DslActivationStatus", storages = @Storage(value = "dslActivationStatus.xml", roamingType = RoamingType.DISABLED))
-public class DslActivationStatus implements PersistentStateComponent<DslActivationStatus.State> {
+public final class DslActivationStatus implements PersistentStateComponent<DslActivationStatus.State> {
   enum Status {
     ACTIVE,
     MODIFIED,
@@ -84,7 +84,7 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
     }
   }
 
-  private final THashMap<VirtualFile, Entry> myStatus = new THashMap<>();
+  private final Map<VirtualFile, Entry> myStatus = new HashMap<>();
 
   @Nullable
   public Entry getGdslFileInfo(@NotNull VirtualFile file) {
@@ -111,18 +111,12 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
   public State getState() {
     synchronized (myStatus) {
       // remove default entries
-      myStatus.retainEntries(new TObjectObjectProcedure<VirtualFile, Entry>() {
-        @Override
-        public boolean execute(VirtualFile file, Entry entry) {
-          return !(entry.status == Status.ACTIVE && entry.error == null);
-        }
-      });
-
+      myStatus.entrySet().removeIf(entry -> entry.getValue().status == Status.ACTIVE && entry.getValue().error == null);
       if (myStatus.isEmpty()) {
         return new State(Collections.emptyList());
       }
 
-      Entry[] entries = myStatus.values().toArray(new Entry[myStatus.size()]);
+      Entry[] entries = myStatus.values().toArray(new Entry[0]);
       Arrays.sort(entries);
       return new State(Arrays.asList(entries));
     }
@@ -148,6 +142,6 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
   }
 
   public static DslActivationStatus getInstance() {
-    return ServiceManager.getService(DslActivationStatus.class);
+    return ApplicationManager.getApplication().getService(DslActivationStatus.class);
   }
 }

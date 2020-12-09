@@ -13,8 +13,8 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,12 +121,9 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
                              LocalChangesBrowser.this, LocalChangesBrowser.this);
 
     private void doUpdate() {
-      myUpdateQueue.queue(new Update("update") {
-        @Override
-        public void run() {
-          myViewer.rebuildTree();
-        }
-      });
+      myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
+        myViewer.rebuildTree();
+      }));
     }
 
     @Override

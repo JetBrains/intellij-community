@@ -18,9 +18,7 @@ asyncio.events.AbstractEventLoop.sock_sendfile
 asyncio.futures.Future.__init__
 asyncio.futures.Future._callbacks
 asyncio.proactor_events._ProactorBasePipeTransport.__del__
-builtins.compile
 builtins.dict.get
-builtins.reversed
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame
@@ -35,9 +33,6 @@ collections.abc.AsyncGenerator.ag_running
 collections.abc.ItemsView.__reversed__
 collections.abc.KeysView.__reversed__
 collections.abc.ValuesView.__reversed__
-# pending merge of https://github.com/python/cpython/pull/22023
-concurrent.futures.Executor.shutdown
-concurrent.futures._base.Executor.shutdown
 contextvars.Context.__init__
 contextvars.Context.get
 copy.PyStringMap
@@ -47,6 +42,7 @@ dataclasses.field
 dummy_threading
 email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
+fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 ftplib.FTP.__init__
 ftplib.FTP_TLS.__init__
 functools.partialmethod.__get__
@@ -97,7 +93,6 @@ ssl.PROTOCOL_SSLv3
 ssl.RAND_egd
 symtable.SymbolTable.has_exec
 sys.UnraisableHookArgs
-threading.ExceptHookArgs
 time.CLOCK_PROF
 time.CLOCK_UPTIME
 types.ClassMethodDescriptorType.__get__
@@ -152,7 +147,6 @@ collections.abc.Coroutine.send
 collections.abc.Coroutine.throw
 collections.abc.Generator.send
 collections.abc.Generator.throw
-contextlib.AbstractContextManager.__exit__
 contextlib.AsyncExitStack.callback
 contextlib.AsyncExitStack.push_async_callback
 contextlib.ExitStack.callback
@@ -186,3 +180,14 @@ signal.sigtimedwait
 signal.sigwaitinfo
 trace.Trace.runfunc
 zipfile.ZipExtFile.seek
+# These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
+enum.IntFlag.__new__
+pstats.SortKey.__new__
+re.RegexFlag.__new__
+socket.AddressInfo.__new__
+socket.MsgFlag.__new__
+ssl.Options.__new__
+ssl.TLSVersion.__new__
+ssl.VerifyFlags.__new__
+ssl.VerifyMode.__new__
+tkinter.EventType.__new__

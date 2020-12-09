@@ -284,13 +284,13 @@ public class MessageBusTest implements MessageBusOwner {
       public void t12() {
       }
     });
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1_000; i++) {
       new MessageBusImpl(this, childBus);
     }
 
-    PlatformTestUtil.assertTiming("Too long", 3000, () -> {
+    PlatformTestUtil.assertTiming("Too long", 3_000, () -> {
       T1Listener publisher = myBus.syncPublisher(TOPIC1);
-      for (int i = 0; i < 1000000; i++) {
+      for (int i = 0; i < 1_000_000; i++) {
         publisher.t11();
       }
     });
@@ -445,9 +445,7 @@ public class MessageBusTest implements MessageBusOwner {
     child.syncPublisher(TO_PARENT_TOPIC).run();
 
     Ref<Boolean> isCalled = new Ref<>(false);
-    myBus.connect().subscribe(TO_PARENT_TOPIC, () -> {
-      isCalled.set(true);
-    });
+    myBus.connect().subscribe(TO_PARENT_TOPIC, () -> isCalled.set(true));
     child.syncPublisher(TO_PARENT_TOPIC).run();
     assertThat(isCalled.get()).isTrue();
   }
@@ -460,9 +458,7 @@ public class MessageBusTest implements MessageBusOwner {
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
 
     Ref<Boolean> isCalled = new Ref<>(false);
-    child.connect().subscribe(RUNNABLE_TOPIC, () -> {
-      isCalled.set(true);
-    });
+    child.connect().subscribe(RUNNABLE_TOPIC, () -> isCalled.set(true));
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
     assertThat(isCalled.get()).isTrue();
   }
@@ -475,16 +471,15 @@ public class MessageBusTest implements MessageBusOwner {
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
 
     AtomicInteger callCounter = new AtomicInteger();
-    Runnable listener = () -> {
-      callCounter.incrementAndGet();
-    };
+    Runnable listener = () -> callCounter.incrementAndGet();
 
     // add twice
     child.connect().subscribe(RUNNABLE_TOPIC, listener);
     child.connect().subscribe(RUNNABLE_TOPIC, listener);
 
-    myBus.disconnectPluginConnections(new Predicate<Class<?>>() {
+    myBus.disconnectPluginConnections(new Predicate<>() {
       boolean isRemoved;
+
       @Override
       public boolean test(Class<?> aClass) {
         // remove first one
@@ -511,7 +506,7 @@ public class MessageBusTest implements MessageBusOwner {
       Future<?> thread = AppExecutorUtil.getAppScheduledExecutorService().submit(() -> {
         try {
           MessageBusConnection connection = myBus.connect();
-          ((MessageBusImpl.RootBus)myBus)._removeEmptyConnectionsRecursively();
+          myBus.removeEmptyConnectionsRecursively();
           connection.subscribe(RUNNABLE_TOPIC, () -> eventCounter.incrementAndGet());
         }
         catch (Throwable e) {
@@ -543,9 +538,7 @@ public class MessageBusTest implements MessageBusOwner {
 
     Disposable disposable = Disposer.newDisposable();
     MessageBusConnectionImpl connection = myBus.connect(disposable);
-    connection.subscribe(TOPIC, () -> {
-      fail("must be not called");
-    });
+    connection.subscribe(TOPIC, () -> fail("must be not called"));
     Disposer.dispose(disposable);
     myBus.syncPublisher(TOPIC).run();
   }

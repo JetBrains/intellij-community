@@ -17,11 +17,12 @@ private object GHRepositoryEditorKt {
     )?.token
   }
 
-  private fun tryParse(host: String): GithubServerPath? =
-    try {
+  private fun tryParse(host: String): GithubServerPath? {
+    return try {
       GithubServerPath.from(host)
     }
     catch (ignored: GithubParseException) {
       null
     }
+  }
 }

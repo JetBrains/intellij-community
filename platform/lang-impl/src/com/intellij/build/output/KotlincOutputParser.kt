@@ -42,8 +42,8 @@ class KotlincOutputParser : BuildOutputParser {
 
     val fileExtension = file.extension.toLowerCase()
     if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) { //NON-NLS
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), line),
-                        consumer)
+      val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
+      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
 
     val lineWoPath = lineWoSeverity.substringAfterAndTrim(colonIndex2)
@@ -91,8 +91,8 @@ class KotlincOutputParser : BuildOutputParser {
       return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), message, details), consumer)
     }
     else {
-      val text = lineWoSeverity.amendNextLinesIfNeeded(reader)
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), text, text), consumer)
+      val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
+      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
   }
 
@@ -179,7 +179,7 @@ class KotlincOutputParser : BuildOutputParser {
                             messageKind: MessageEvent.Kind,
                             text: @BuildEventsNls.Message String,
                             detail: @BuildEventsNls.Description String): MessageEvent {
-    return MessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail)
+    return MessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail) //NON-NLS
   }
 
   private fun createMessageWithLocation(
@@ -191,7 +191,7 @@ class KotlincOutputParser : BuildOutputParser {
     columnIndex: Int,
     detail: @BuildEventsNls.Description String
   ): FileMessageEventImpl {
-    return FileMessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail,
+    return FileMessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail, //NON-NLS
                                 FilePosition(File(file), lineNumber - 1, columnIndex - 1))
   }
 

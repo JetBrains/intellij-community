@@ -11,7 +11,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +98,6 @@ public final class FileTextFieldUtil {
           }
         }
 
-        int currentDiff = Integer.MIN_VALUE;
         FileLookup.LookupFile toPreselect = result.myPreselected;
 
         if (toPreselect == null || !result.myToComplete.contains(toPreselect)) {
@@ -108,13 +106,9 @@ public final class FileTextFieldUtil {
             for (FileLookup.LookupFile each : result.myToComplete) {
               String eachName = StringUtil.toUpperCase(each.getName());
               if (!eachName.startsWith(result.effectivePrefix)) continue;
-              int diff = result.effectivePrefix.compareTo(eachName);
-              currentDiff = Math.max(diff, currentDiff);
-              if (currentDiff == diff) {
-                toPreselect = each;
-                toPreselectFixed = true;
-                break;
-              }
+              toPreselect = each;
+              toPreselectFixed = true;
+              break;
             }
 
             if (!toPreselectFixed) {
@@ -135,7 +129,7 @@ public final class FileTextFieldUtil {
               }
             }
 
-            if (toPreselect == null && !result.myToComplete.contains(toPreselect) && result.myToComplete.size() > 0) {
+            if (toPreselect == null && !result.myToComplete.contains(null) && result.myToComplete.size() > 0) {
               toPreselect = result.myToComplete.get(0);
             }
           }

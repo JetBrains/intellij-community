@@ -15,14 +15,18 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.psi.PsiReturnStatement;
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UReturnExpression;
+import org.jetbrains.uast.util.UastControlFlowUtils;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-public class ReturnFromFinallyBlockInspection extends BaseInspection {
+public class ReturnFromFinallyBlockInspection extends AbstractBaseUastLocalInspectionTool {
 
   @Override
   @NotNull
@@ -31,30 +35,31 @@ public class ReturnFromFinallyBlockInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("return.from.finally.block.problem.descriptor");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ReturnFromFinallyBlockVisitor();
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(),
+                                           new ReturnFromFinallyBlockVisitor(holder),
+                                           new Class[] {UReturnExpression.class});
   }
 
-  private static class ReturnFromFinallyBlockVisitor extends BaseInspectionVisitor {
+  private static final class ReturnFromFinallyBlockVisitor extends AbstractUastNonRecursiveVisitor {
+    private final ProblemsHolder myHolder;
+
+    private ReturnFromFinallyBlockVisitor(@NotNull ProblemsHolder holder) {
+      myHolder = holder;
+    }
 
     @Override
-    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
-      super.visitReturnStatement(statement);
-      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-        return;
+    public boolean visitReturnExpression(@NotNull UReturnExpression node) {
+      PsiElement returnExpr = node.getSourcePsi();
+      if (returnExpr != null && UastControlFlowUtils.isInFinallyBlock(node)) {
+        myHolder.registerProblem(returnExpr, InspectionGadgetsBundle.message("return.from.finally.block.problem.descriptor"));
       }
-      registerStatementError(statement);
+      return false;
     }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tools
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -28,9 +29,9 @@ fun createSdkForPerformance(module: Module,
 }
 
 
-fun openProjectWithPythonSdk(projectPath: String, sdkHome: String?): Pair<Project, Sdk?> {
+fun openProjectWithPythonSdk(projectPath: String, sdkHome: String?, testRootDisposable: Disposable): Pair<Project, Sdk?> {
   val sdkProducer = if (sdkHome == null) {_,_->null} else createPythonSdkProducer(sdkHome)
-  return openProjectWithSdk(projectPath, PyNames.PYTHON_MODULE_ID, sdkProducer)
+  return openProjectWithSdk(projectPath, PyNames.PYTHON_MODULE_ID, sdkProducer, testRootDisposable)
 }
 
 fun createPythonSdkProducer(sdkHome: String): (Project, Module) -> Sdk {
@@ -38,7 +39,7 @@ fun createPythonSdkProducer(sdkHome: String): (Project, Module) -> Sdk {
     run {
       val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
       UIUtil.invokeAndWaitIfNeeded(Runnable {
-        PythonSdkUpdater.update(sdk, null, project, null)
+        PythonSdkUpdater.update(sdk, project, null)
       })
       sdk
     }

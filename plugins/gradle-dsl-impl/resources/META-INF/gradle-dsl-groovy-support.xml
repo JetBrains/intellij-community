@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="org.jetbrains.idea.gradle.dsl">
+    <parserFactory implementation="com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslConverterFactory"/>
+  </extensions>
+</idea-plugin>

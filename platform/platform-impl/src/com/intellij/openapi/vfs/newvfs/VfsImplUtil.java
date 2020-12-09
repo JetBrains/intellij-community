@@ -173,7 +173,7 @@ public final class VfsImplUtil {
    * </code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
-    RefreshQueue.getInstance().processSingleEvent(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
+    RefreshQueue.getInstance().processSingleEvent(false, new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
@@ -299,18 +299,23 @@ public final class VfsImplUtil {
    * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events: see {@link VirtualFileSystem#isCaseSensitive()}).
    * Otherwise, return null.
    */
-  public static VFileEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile parent, @NotNull String childName) {
-    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN && FileSystemUtil.isCaseToggleable(childName)) {
-      FileAttributes.CaseSensitivity parentCaseSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
-      if (parentCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
-        if (parent.getFileSystem().isCaseSensitive() != (parentCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
-          // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
-          return new VFilePropertyChangeEvent(null, parent, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
-                                              FileAttributes.CaseSensitivity.UNKNOWN, parentCaseSensitivity, true);
-        }
-        else {
-          PersistentFSImpl.executeChangeCaseSensitivity(parent, parentCaseSensitivity);
-        }
+  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent, @NotNull String childName) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
+      return null;
+    }
+    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
+    return generateCaseSensitivityChangedEvent(parent, sensitivity);
+  }
+
+  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir, @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
+    if (actualCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
+      if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
+        // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
+        return new VFilePropertyChangeEvent(null, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                            FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity, true);
+      }
+      else {
+        PersistentFSImpl.executeChangeCaseSensitivity(dir, actualCaseSensitivity);
       }
     }
     return null;
@@ -347,17 +352,23 @@ public final class VfsImplUtil {
   }
 
   /**
-   * check whether {@code event} (in LocalFileSystem) affects some jars and if so, generate appropriate additional JarFileSystem-events and corresponding after-event-actions.
-   * For example, "delete/change/move '/tmp/x.jar'" event should generate "delete jar:///tmp/x.jar!/" events.
+   * <p>Checks whether the {@code event} (in {@link LocalFileSystem}) affects some archives and if so,
+   * generates appropriate additional {@link JarFileSystem}-events and corresponding after-event-actions.</p>
+   * <p>For example, {@link VFileDeleteEvent}/{@link VFileMoveEvent}/{@link VFilePropertyChangeEvent VFilePropertyChangeEvent(PROP_NAME)}('file://tmp/x.jar')
+   * should generate {@link VFileDeleteEvent}('jar:///tmp/x.jar!/').</p>
+   * And vice versa, when refresh found change inside jar archive, generate {@link LocalFileSystem}-level events
+   * for the corresponding .jar file change.
+   * <p>For example, {@link VFileDeleteEvent}/{@link VFileMoveEvent}/{@link VFilePropertyChangeEvent VFilePropertyChangeEvent(PROP_NAME)}('jar:///x.jar!/')
+   * should generate {@link VFileDeleteEvent}('file://x.jar').</p>
+   * (The latter might happen when someone explicitly called {@code fileInsideJar.refresh()} without refreshing jar file in local file system).
    */
-  @NotNull
-  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event,
-                                                                @NotNull List<? super Runnable> outApplyActions) {
+  public static List<VFileEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||
           event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {
       return Collections.emptyList();
     }
+
     String path;
     if (event instanceof VFilePropertyChangeEvent) {
       path = ((VFilePropertyChangeEvent)event).getOldPath();
@@ -373,34 +384,50 @@ public final class VfsImplUtil {
     if (file == null) {
       return Collections.emptyList();
     }
+    VirtualFileSystem entryFileSystem = file.getFileSystem();
+    VirtualFile local = null;
+    if (entryFileSystem instanceof ArchiveFileSystem) {
+      local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
+      path = local == null ? ((ArchiveFileSystem)entryFileSystem).extractLocalPath(path) : local.getPath();
+    }
     Collection<String> jarPaths = ourDominatorsMap.get(path);
     if (jarPaths == null) {
       jarPaths = Collections.singletonList(path);
     }
-    List<VFileDeleteEvent> events = new ArrayList<>(jarPaths.size());
+    List<VFileEvent> events = new ArrayList<>(jarPaths.size());
     for (String jarPath : jarPaths) {
       Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.get(jarPath);
       if (handlerPair == null) {
         continue;
       }
-      ArchiveFileSystem fileSystem = handlerPair.first;
-      NewVirtualFile root = ManagingFS.getInstance().findRoot(fileSystem.composeRootPath(jarPath), fileSystem);
-      if (root != null) {
-        VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root, event.isFromRefresh());
-        Runnable runnable = () -> {
-          Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
-          if (pair != null) {
-            pair.second.dispose();
-            forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
-              Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-              if (handlers != null && handlers.remove(jarPath) && handlers.isEmpty()) {
-                ourDominatorsMap.remove(containingDirectoryPath);
-              }
-            });
-          }
-        };
-        events.add(jarDeleteEvent);
-        outApplyActions.add(runnable);
+      if (entryFileSystem instanceof LocalFileSystem) {
+        ArchiveFileSystem fileSystem = handlerPair.first;
+        NewVirtualFile root = ManagingFS.getInstance().findRoot(fileSystem.composeRootPath(jarPath), fileSystem);
+        if (root != null) {
+          VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root, event.isFromRefresh());
+          Runnable runnable = () -> {
+            Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
+            if (pair != null) {
+              pair.second.dispose();
+              forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
+                Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+                if (handlers != null && handlers.remove(jarPath) && handlers.isEmpty()) {
+                  ourDominatorsMap.remove(containingDirectoryPath);
+                }
+              });
+            }
+          };
+          events.add(jarDeleteEvent);
+          outApplyActions.add(runnable);
+        }
+      }
+      else if (local != null) {
+        // for "delete jar://x.jar!/" generate "delete x.jar", but
+        // for "delete jar://x.jar!/web.xml" generate "changed x.jar"
+        VFileEvent localJarDeleteEvent = file.getParent() == null ?
+           new VFileDeleteEvent(event.getRequestor(), local, event.isFromRefresh()) :
+           new VFileContentChangeEvent(event.getRequestor(), local, local.getModificationStamp(), local.getModificationStamp(), event.isFromRefresh());
+        events.add(localJarDeleteEvent);
       }
     }
     return events;

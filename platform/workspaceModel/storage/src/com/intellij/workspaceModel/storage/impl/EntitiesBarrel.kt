@@ -1,12 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
-import com.intellij.workspaceModel.storage.assert
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
@@ -33,9 +31,21 @@ internal class MutableEntitiesBarrel private constructor(
     (getMutableEntityFamily(clazz) as MutableEntityFamily<T>).add(newEntity)
   }
 
+  fun book(clazz: Int): EntityId {
+    val arrayId = getMutableEntityFamily(clazz).book()
+    return EntityId(arrayId, clazz)
+  }
+
   fun <T : WorkspaceEntity> cloneAndAdd(newEntity: WorkspaceEntityData<T>, clazz: Int): WorkspaceEntityData<T> {
     val cloned = newEntity.clone()
     (getMutableEntityFamily(clazz) as MutableEntityFamily<T>).add(cloned)
+    return cloned
+  }
+
+  fun <T : WorkspaceEntity> cloneAndAddAt(newEntity: WorkspaceEntityData<T>, entityId: EntityId): WorkspaceEntityData<T> {
+    val cloned = newEntity.clone()
+    cloned.id = entityId.arrayId
+    (getMutableEntityFamily(entityId.clazz) as MutableEntityFamily<T>).insertAtId(cloned)
     return cloned
   }
 
@@ -102,7 +112,7 @@ internal sealed class EntitiesBarrel {
       family?.assertConsistency { entityData ->
         // Assert correctness of the class
         val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
-        LOG.assert(clazz == immutableClass) {
+        assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
             | - EntityFamily class:   $clazz
             | - entityData class:     $immutableClass
@@ -112,8 +122,8 @@ internal sealed class EntitiesBarrel {
         // Assert unique of persistent id
         if (hasPersistentId) {
           val persistentId = entityData.persistentId(WorkspaceEntityStorageImpl.EMPTY)
-          LOG.assert(persistentId != null) { "Persistent id expected for $clazz" }
-          LOG.assert(persistentId !in persistentIds) { "Duplicated persistent ids: $persistentId" }
+          assert(persistentId != null) { "Persistent id expected for $clazz" }
+          assert(persistentId !in persistentIds) { "Duplicated persistent ids: $persistentId" }
           persistentIds.add(persistentId!!)
         }
 
@@ -122,9 +132,5 @@ internal sealed class EntitiesBarrel {
         }
       }
     }
-  }
-
-  companion object {
-    private val LOG = logger<EntitiesBarrel>()
   }
 }

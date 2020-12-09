@@ -47,6 +47,8 @@
     T_LAND = '&&'
     T_LOR = '||'
     T_NOT = '!'
+    T_NOT_IN = '!in'
+    T_NOT_INSTANCEOF = '!instanceof'
     T_BNOT = '~'
     T_COMPARE = '<=>'
     T_REGEX_FIND = '=~'
@@ -278,9 +280,9 @@ private annotation_value ::= annotation | annotation_array_value | expression
 {
   name = 'annotation attribute initializer'
 }
-annotation_array_value ::= '[' annotation_array_item* ']' { pin = 1 }
-private annotation_array_item ::= <<separated_item annotation_array_item_end annotation_value annotation_array_item_start>>
-private annotation_array_item_end ::= ',' | &']' | end_of_file
+annotation_array_value ::= '[' annotation_array_item* (mb_nl ']') { pin = 1 }
+private annotation_array_item ::= mb_nl <<separated_item annotation_array_item_end annotation_value annotation_array_item_start>>
+private annotation_array_item_end ::= mb_nl (',' | &']' | end_of_file)
 private annotation_array_item_start ::= '@' | expression_start
 // endregion
 
@@ -468,7 +470,7 @@ fake parameter_list ::= { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.
 method_parameter_list ::= <<paren_list parse_parameter>> { elementType = parameter_list }
 private parse_parameter ::= <<parseTailLeftFlat parameter_start parameter>>
 private parameter_start ::= parameter_start_modifiers | parameter_start_no_modifiers
-private parameter_start_modifiers ::= non_empty_modifier_list parameter_start_after_modifiers { pin = 1 }
+private parameter_start_modifiers ::= non_empty_modifier_list mb_nl parameter_start_after_modifiers { pin = 1 }
 private parameter_start_after_modifiers ::= parameter_type_element_silent? ellipsis?
 private parameter_start_no_modifiers ::= empty_modifier_list parameter_start_after_no_modifiers
 private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | variable_lookahead
@@ -644,22 +646,19 @@ tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple mb
   elementType = variable_declaration
   pin = tuple_var_declaration_tuple
 }
-private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (',' tuple_var_declaration_item)* ')'
+private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (mb_nl ',' tuple_var_declaration_item)* mb_nl ')'
 {
   consumeTokenMethod = 'consumeTokenFast'
   pin = 2
-  pin('tuple_var_declaration_tuple_2_0') = 1
+  pin('tuple_var_declaration_tuple_2_0') = 2
 }
 
-private tuple_var_declaration_item ::= type_element tuple_variable | tuple_variable
-{
-  elementType = variable
-}
+private tuple_var_declaration_item ::= mb_nl (type_element tuple_variable | tuple_variable)
 tuple_variable ::= weak_keyword | IDENTIFIER
 {
   elementType = variable
 }
-private tuple_initializer ::= '=' mb_nl expression
+private tuple_initializer ::= '=' mb_nl expression_or_application
 {
   pin = 1
 }
@@ -742,8 +741,8 @@ default_label ::= 'default' ':' { elementType = case_label pin = 1 }
 try_statement ::= 'try' try_resource_list? mb_nl lazy_block (mb_nl catch_clause)* [mb_nl finally_clause] { pin = 1 }
 
 try_resource_list ::= '(' try_resource_list_item+ ')' { pin = 1 }
-private try_resource_list_item ::= local_variable_declaration try_resource_list_separator { pin = 1 }
-private try_resource_list_separator ::= &')' | separators | <<newLine>>
+private try_resource_list_item ::= mb_nl local_variable_declaration try_resource_list_separator { pin = 2 }
+private try_resource_list_separator ::= &')' | separators
 
 catch_clause ::= 'catch' '(' parse_catch_parameter ')' (mb_nl lazy_block) { pin = 1 }
 private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
@@ -756,10 +755,12 @@ finally_clause ::= 'finally' (mb_nl lazy_block)
   pin = 1
 }
 
-while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl while_body) { pin('.*') = 1 }
+while_statement ::= 'while' after_while { pin = 1 }
+private after_while ::= while_header mb_nl while_body { pin = 1 }
+private while_header ::= '(' mb_nl expression mb_nl ')' { pin = 1 }
 private while_body ::= followed_by_semi | branch
 
-do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
+do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression (mb_nl ')') { pin = 1 }
 
 private type_element_followed_by_identifier ::= type_element variable_lookahead
 private mb_type_element ::= type_element_followed_by_identifier?
@@ -771,7 +772,7 @@ private for_clause ::= for_in_clause | traditional_for_clause
 for_in_clause ::= for_in_parameter (':' | 'in') expression { consumeTokenMethod = 'consumeTokenFast' }
 for_in_parameter ::= modifier_list mb_type_element (weak_keyword | IDENTIFIER) | clear_variants_and_fail { elementType = parameter }
 
-traditional_for_clause ::= empty for_clause_initialization? ';' expression? ';' mb_nl for_clause_update? { pin = 1 }
+traditional_for_clause ::= empty for_clause_initialization? mb_nl ';' mb_nl expression? mb_nl ';' mb_nl for_clause_update? { pin = 1 }
 private for_clause_initialization ::= for_variable_declaration | expression | clear_variants_and_fail
 private for_clause_update ::= expression_list
 
@@ -787,7 +788,7 @@ expression_list ::= expression (',' expression)*
 // FIXME get rid of this weird logic
 private for_body ::= &<<extendedStatement>> | followed_by_semi | statement { name = 'loop body' }
 
-synchronized_statement ::= 'synchronized' '(' expression ')' mb_nl lazy_block
+synchronized_statement ::= 'synchronized' '(' expression mb_nl ')' (mb_nl lazy_block)
 {
   pin = 2
 }
@@ -930,12 +931,12 @@ string_injection ::= '$' string_injection_body
 private string_injection_body ::= qualified_reference_expression | unqualified_reference_expression | lazy_closure | clear_variants <<unexpected "identifier.or.block.expected">>
 
 parenthesized_expression ::= p_parenthesized_expression_inner
-private p_parenthesized_expression_inner ::= '(' expression ')' { pin = 1}
+private p_parenthesized_expression_inner ::= '(' <<enableNlBeforeAnonymousBody expression>> ')' { pin = 1}
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
 new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition { elementType = new_expression }
-anonymous_type_definition ::= <<annotated code_reference>> call_argument_list class_body
+anonymous_type_definition ::= <<annotated code_reference>> call_argument_list <<nlBeforeAnonymousBody mb_nl>> class_body
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
@@ -960,7 +961,7 @@ private optional_expression ::= non_empty_annotation_list? '[' expression? ']' {
 
 private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
-method_call_expression ::= expression (<<isParseNlBeforeClosure>> call_tail_with_nl_before_closure | call_tail)
+method_call_expression ::= expression <<callTail call_tail_with_nl_before_closure call_tail>>
 private call_tail ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+
 private call_tail_with_nl_before_closure ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+
 
@@ -1027,7 +1028,7 @@ list_or_map ::= empty_list | empty_map | non_empty_list_or_map
 
 private empty_map ::= '[' mb_nl fast_colon mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
 private empty_list ::= '[' mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
-private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argument_list_inner ']'
+private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argument_list_inner (mb_nl ']')
 {
   pin = 2
 }
@@ -1067,7 +1068,7 @@ private cast_operand ::= !empty_parens <<castOperandCheck>> priority1_4
 private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
 index_expression ::= expression index_expression_argument_list
 safe_index_expression ::= expression fast_question index_expression_argument_list not_colon { elementType = index_expression }
-index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
+index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner (mb_nl ']')
 {
   pin = 2
   elementType = argument_list
@@ -1101,9 +1102,9 @@ range_expression ::= expression mb_nl ('..' | '..<') mb_nl <<disableNlBeforeClos
 private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
 relational_expression ::= expression mb_nl relational_operator mb_nl <<disableNlBeforeClosure>> expression
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
-in_expression ::= expression mb_nl mb_not ('in') mb_nl <<disableNlBeforeClosure>> expression
+in_expression ::= expression mb_nl ('in' | '!in') mb_nl <<disableNlBeforeClosure>> expression
 instanceof_expression ::= expression mb_nl instanceof_expression_tail
-private instanceof_expression_tail ::= mb_not ('instanceof') mb_nl (type_element | expect_type) { pin = 2 }
+private instanceof_expression_tail ::= ('instanceof' | '!instanceof') mb_nl (type_element | expect_type) { pin = 1 }
 as_expression ::= expression mb_nl ('as') mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
@@ -1150,7 +1151,7 @@ tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expres
 // region Applications
 expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
 private expression_or_application_inner ::= <<enableNlBeforeClosure expression>> application*
-private application ::= no_nl <<parseApplication application_ref application_expression application_call application_index>>
+private application ::= <<parseApplication application_ref application_expression application_call application_index>>
 {
   extends = expression
 }
@@ -1166,7 +1167,7 @@ left application_index ::= mb_question index_expression_argument_list
 private expression_or_application_except_zero_params_closure ::= <<isParameterizedClosure>> expression_or_application
                                                                 | !double_block_statement expression_or_application !<<isAfterClosure>>
 
-private double_block_statement::= block_statement nl+ block_statement
+private double_block_statement::= block_statement nls block_statement
 // endregion
 
 
@@ -1180,7 +1181,7 @@ call_argument_list ::= !<<isParameterizedLambda>> (empty_parens | non_empty_argu
   elementType = argument_list
 }
 
-private non_empty_argument_list::= '(' <<notApplicationArguments paren_argument_list_inner>> ')' {
+private non_empty_argument_list::= '(' <<notApplicationArguments paren_argument_list_inner>> (mb_nl ')') {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
@@ -1193,9 +1194,9 @@ private bracket_argument_list_item ::= <<argument_list_item ']'>>
 
 private meta argument_list_item ::= <<argument_list_item_head <<brace>>>> <<argument_list_item_end <<brace>>>> { pin = 1 }
 private meta argument_list_item_head ::= <<argument_list_item_head0 <<brace>> <<argument_list_item_recovery <<brace>>>>>>
-private meta argument_list_item_head0 ::= !(end_of_file | <<brace>>) parse_argument { pin = 1 recoverWhile = '<<recovery>>' }
-private meta argument_list_item_end ::= ',' | &<<brace>>
-private meta argument_list_item_recovery ::= !(<<brace>> | ',' | '}' | qualified_reference_expression_identifiers | expression_start | argument_label)
+private meta argument_list_item_head0 ::= mb_nl !(end_of_file | <<brace>> | '}') parse_argument { pin = 2 recoverWhile = '<<recovery>>' }
+private meta argument_list_item_end ::= <<mb_nl_group (',' | &<<brace>>)>>
+private meta argument_list_item_recovery ::= !(nl | ',' | <<brace>> | '}' | qualified_reference_expression_identifiers | expression_start | argument_label)
 
 application_argument_list ::= <<applicationArguments application_arguments>>
 private application_arguments ::= argument (',' mb_nl argument)*
@@ -1216,7 +1217,7 @@ left map_argument ::= ':' expression
 }
 spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
 named_argument ::= argument_label named_argument_tail
-private named_argument_tail ::= ':' expression
+private named_argument_tail ::= ':' (mb_nl expression)
 {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
@@ -1305,15 +1306,15 @@ private mb_initializer ::= [mb_nl ('=') mb_nl expression_or_application]
 
 
 // region Other
-private mb_nl ::= nl?
+private mb_nl ::= nl*
+private nls ::= nl+
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 // FIXME this rule allows error reporting in position before the new line
-private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
+private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nls <<something>>)>>
 private empty ::= ()
-private empty_parens ::= '('(')') { consumeTokenMethod = 'consumeTokenFast' }
+private empty_parens ::= '(' mb_nl (')') { consumeTokenMethod = 'consumeTokenFast' }
 
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
-private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
 
 private not_colon ::= !fast_colon
 
@@ -1334,11 +1335,11 @@ private meta a_b_a_p ::= <<a>> (<<b>> <<a>>)* { pin('.*') = 1 }
 private meta comma_list ::= <<a_b_a <<item>> fast_comma>>
 private meta a_b_a ::= <<a>> (<<b>> <<a>>)* { pin = 1 }
 
-private meta paren_list ::= empty_parens | '(' <<paren_list_inner <<item>>>> ')' { pin('paren_list_1') = 1 }
+private meta paren_list ::= empty_parens | '(' <<paren_list_inner <<item>>>> (mb_nl ')') { pin('paren_list_1') = 1 }
 private meta paren_list_inner ::= <<paren_list_item <<item>>>> <<paren_list_tail <<item>>>>*
-private meta paren_list_item ::= empty <<item>> { pin = 1 recoverWhile = paren_list_item_recovery }
-private meta paren_list_tail ::= ',' <<paren_list_item <<item>>>> { pin = 1 }
-private paren_list_item_recovery ::= !(',' | ')' | '}')
+private meta paren_list_item ::= mb_nl empty <<item>> { pin = 2 recoverWhile = paren_list_item_recovery }
+private meta paren_list_tail ::= mb_nl ',' <<paren_list_item <<item>>>> { pin = 2 }
+private paren_list_item_recovery ::= !(',' | ')' | '}' | nl)
 // endregion
 
 //annotation nodes will be added to the root node of <<item>>
@@ -1367,6 +1368,5 @@ private external clear_variants ::= clearVariants
 private external clear_error ::= clearError
 private external fail ::= noMatch
 private external end_of_file ::= eof
-private external no_nl ::= noNewLine
 private external mark_left ::= markLeft
 // endregion

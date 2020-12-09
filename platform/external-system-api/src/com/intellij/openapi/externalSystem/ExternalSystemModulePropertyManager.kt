@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
 
@@ -21,11 +22,17 @@ abstract class ExternalSystemModulePropertyManager {
 
   abstract fun swapStore()
   abstract fun unlinkExternalOptions()
-  abstract fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?)
+  fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) =
+    setExternalOptions(id, moduleData, projectData, null)
+
+  // diff from modelsProvider will be used for storing values. Next `get...` call won't give you these external options
+  abstract fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?,
+                                  modelsProvider: IdeModifiableModelsProvider?)
   abstract fun setExternalId(id: ProjectSystemId)
   abstract fun setLinkedProjectPath(path: String?)
   abstract fun setRootProjectPath(path: String?)
-  abstract fun setExternalModuleType(type: String?)
+  fun setExternalModuleType(type: String?) = setExternalModuleType(type, null)
+  abstract fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider?)
 
   companion object {
     @JvmStatic

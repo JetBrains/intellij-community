@@ -45,6 +45,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,10 +98,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @NotNull
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
-    PsiElement[] elements = new PsiElement[myFilesToMove.size()];
-    final PsiFile[] classes = PsiUtilCore.toPsiFileArray(getPsiFiles());
-    System.arraycopy(classes, 0, elements, 0, classes.length);
-    return new MoveMultipleElementsViewDescriptor(elements, getTargetName());
+    return new MoveMultipleElementsViewDescriptor(PsiUtilCore.toPsiFileArray(getPsiFiles()), getTargetName());
   }
 
   private Set<PsiFile> getPsiFiles() {
@@ -176,7 +174,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
         }
         final RefactoringElementListener listener = getTransaction().getElementListener(file);
         final PsiDirectory moveDestination = myFilesToMove.get(virtualFile).getTargetDirectory();
-  
+
         for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
           boolean processed = helper.move(file, moveDestination, oldToNewElementsMapping, movedFiles, listener);
           if (processed) {
@@ -197,8 +195,12 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       }
 
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
+      List<UsageInfo> postProcessUsages = new SmartList<>(usages);
+      myNestedDirsToMove.entrySet().stream().filter(entry -> entry.getValue().getTargetDirectory() != null)
+        .map(entry -> new MoveDirectoryUsageInfo(entry.getKey(), entry.getValue().getTargetDirectory()))
+        .forEach(postProcessUsages::add);
       for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-        helper.postProcessUsages(usages, dir -> getResultDirectory(dir).findOrCreateTargetDirectory());
+        helper.postProcessUsages(postProcessUsages.toArray(UsageInfo.EMPTY_ARRAY), dir -> getResultDirectory(dir).findOrCreateTargetDirectory());
       }
       for (PsiDirectory directory : myDirectories) {
         if (!isUsedInTarget(directory)) {

@@ -84,7 +84,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     myExceptionsModel.setTypeInfos(myMethod.getMethod());
 
     final JBTable table = new JBTable(myExceptionsModel);
-    table.setStriped(true);
+    table.setShowGrid(false);
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
@@ -241,7 +241,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
         }
 
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", myMethod.getMethod().getResolveScope());
+        PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, myMethod.getMethod().getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return GroovyRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }

@@ -124,7 +124,6 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
       return;
     }
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
-    //noinspection HardCodedStringLiteral
     JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(causes)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setAccessibleName(root.toString())
@@ -161,7 +160,6 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     PsiNavigationSupport.getInstance().createNavigatable(file.getProject(), targetFile.getVirtualFile(), range.getStartOffset())
       .navigate(true);
     HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
-    //noinspection HardCodedStringLiteral
     hintManager.showInformationHint(editor, StringUtil.escapeXmlEntities(StringUtil.capitalize(item.toString())));
   }
 }

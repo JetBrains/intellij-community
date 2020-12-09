@@ -22,6 +22,7 @@ internal abstract class StatisticsServiceBaseTest : HeavyPlatformTestCase() {
 
     ThreadTracker.longRunningThreadCreated(longRunningThreadDisposable, "Okio Watchdog")
     ThreadTracker.longRunningThreadCreated(longRunningThreadDisposable, "testcontainers-ryuk")
+    ThreadTracker.longRunningThreadCreated(longRunningThreadDisposable, "docker-java-stream")
 
     container = ApacheContainer(tmpLocalRoot)
     container.start()

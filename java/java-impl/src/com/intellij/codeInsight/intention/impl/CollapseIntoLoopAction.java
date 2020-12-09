@@ -274,7 +274,12 @@ public class CollapseIntoLoopAction implements IntentionAction {
     }
 
     private static boolean isAllowedStatement(PsiStatement st) {
-      return st != null && !ControlFlowUtils.statementContainsNakedBreak(st) && !ControlFlowUtils.statementContainsNakedContinue(st);
+      if (st == null) return false;
+      if (st instanceof PsiDeclarationStatement) return false;
+      PsiElement parent = st.getParent();
+      if (!(parent instanceof PsiCodeBlock)) return false;
+      if (parent.getParent() instanceof PsiSwitchBlock) return false;
+      return !ControlFlowUtils.statementContainsNakedBreak(st) && !ControlFlowUtils.statementContainsNakedContinue(st);
     }
   }
 }

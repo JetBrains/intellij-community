@@ -10,7 +10,6 @@ asyncio.staggered  # Added in Python 3.8
 asyncio.threads  # Added in Python 3.9
 asyncio.trsock  # Added in Python 3.8
 builtins.dict.get
-builtins.reversed
 builtins.str.maketrans
 cmath.log
 collections.AsyncGenerator.ag_await
@@ -24,12 +23,14 @@ collections.abc.AsyncGenerator.ag_frame
 collections.abc.AsyncGenerator.ag_running
 contextvars.Context.__init__
 contextvars.Context.get
+contextvars.ContextVar.get
 copy.PyStringMap
 ctypes.CDLL.__init__
 dataclasses.Field.__init__
 dataclasses.field
 email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
+fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 hmac.HMAC.__init__
 http.client.HTTPSConnection.__init__
 http.server.SimpleHTTPRequestHandler.__init__
@@ -68,3 +69,14 @@ webbrowser.Opera.raise_opts
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
 xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
 xml.parsers.expat.XMLParserType.ExternalEntityParserCreate
+# These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
+enum.IntFlag.__new__
+pstats.SortKey.__new__
+re.RegexFlag.__new__
+socket.AddressInfo.__new__
+socket.MsgFlag.__new__
+ssl.Options.__new__
+ssl.TLSVersion.__new__
+ssl.VerifyFlags.__new__
+ssl.VerifyMode.__new__
+tkinter.EventType.__new__

@@ -95,7 +95,7 @@ public abstract class BaseDebuggerReader extends BaseOutputReader {
 
       if (!text.endsWith("\n")) {
         myTextBuilder.append(lines[lines.length - 1]);
-        lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+        lines = Arrays.copyOf(lines, lines.length - 1);
       }
 
       for (String line : lines) {

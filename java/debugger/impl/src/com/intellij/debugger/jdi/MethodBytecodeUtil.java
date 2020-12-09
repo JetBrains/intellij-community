@@ -1,13 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
-import com.intellij.Patches;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -45,27 +43,12 @@ public final class MethodBytecodeUtil {
     }
   }
 
-  public static byte[] getConstantPool(ReferenceType type) {
-    if (Patches.JDK_BUG_ID_6822627) {
-      try {
-        return type.constantPool();
-      }
-      catch (NullPointerException e) { // workaround for JDK bug 6822627
-        ReflectionUtil.resetField(type, "constantPoolInfoGotten");
-        return type.constantPool();
-      }
-    }
-    else {
-      return type.constantPool();
-    }
-  }
-
   private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor, boolean withLineNumbers) {
     ReferenceType type = method.declaringType();
 
     BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     try (DataOutputStream dos = new DataOutputStream(bytes)) {
-      writeClassHeader(dos, type.constantPoolCount(), getConstantPool(type));
+      writeClassHeader(dos, type.constantPoolCount(), type.constantPool());
     }
     catch (IOException e) { throw new RuntimeException(e); }
     ClassReader reader = new ClassReader(bytes.getInternalBuffer(), 0, bytes.size());
@@ -219,55 +202,45 @@ public final class MethodBytecodeUtil {
 
   @Nullable
   public static Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByNameProvider classesByName) {
-    Ref<Method> methodRef = Ref.create();
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
       if (applicableMethods.size() == 1) {
-        visit(applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
-          @Override
-          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            ReferenceType cls = ContainerUtil.getFirstItem(classesByName.get(owner));
-            if (cls != null) {
-              Method method = DebuggerUtils.findMethod(cls, name, desc);
-              if (method != null) {
-                methodRef.setIfNull(method);
-              }
-            }
-          }
-        }, false);
+        return getFirstCalledMethod(applicableMethods.get(0), classesByName);
       }
     }
-    return methodRef.get();
+    return null;
   }
 
   @Nullable
   public static Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
+    return method.isBridge() ? getFirstCalledMethod(method, classesByName) : null;
+  }
+
+  private static Method getFirstCalledMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
     Ref<Method> methodRef = Ref.create();
-    if (method.isBridge()) {
-      visit(method, new MethodVisitor(Opcodes.API_VERSION) {
-        @Override
-        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-          if ("java/lang/AbstractMethodError".equals(owner)) {
-            return;
-          }
-          ReferenceType declaringType = method.declaringType();
-          ReferenceType cls;
-          owner = owner.replace("/", ".");
-          if (declaringType.name().equals(owner)) {
-            cls = declaringType;
-          }
-          else {
-            cls = ContainerUtil.getFirstItem(classesByName.get(owner));
-          }
-          if (cls != null) {
-            Method method = DebuggerUtils.findMethod(cls, name, desc);
-            if (method != null) {
-              methodRef.setIfNull(method);
-            }
+    visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+      @Override
+      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+        if ("java/lang/AbstractMethodError".equals(owner)) {
+          return;
+        }
+        ReferenceType declaringType = method.declaringType();
+        ReferenceType cls;
+        owner = Type.getObjectType(owner).getClassName();
+        if (declaringType.name().equals(owner)) {
+          cls = declaringType;
+        }
+        else {
+          cls = ContainerUtil.getFirstItem(classesByName.get(owner));
+        }
+        if (cls != null) {
+          Method method = DebuggerUtils.findMethod(cls, name, desc);
+          if (method != null) {
+            methodRef.setIfNull(method);
           }
         }
-      }, false);
-    }
+      }
+    }, false);
     return methodRef.get();
   }
 

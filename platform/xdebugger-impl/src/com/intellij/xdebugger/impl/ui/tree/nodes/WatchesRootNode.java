@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.ArrayUtil;
@@ -89,15 +89,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     return ContainerUtil.concat(myChildren, children);
   }
 
-  /**
-   * @deprecated use {@link #getWatchChildren()} instead
-   */
-  @Deprecated
-  @NotNull
-  public List<? extends WatchNode> getAllChildren() {
-    return getWatchChildren();
-  }
-
   @NotNull
   public List<? extends WatchNode> getWatchChildren() {
     return myChildren;
@@ -111,17 +102,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
 
   public void computeWatches() {
     myChildren.forEach(WatchNodeImpl::computePresentationIfNeeded);
-  }
-
-  /**
-   * @deprecated Use {@link #addWatchExpression(XStackFrame, XExpression, int, boolean)}
-   */
-  @Deprecated
-  public void addWatchExpression(@Nullable XDebuggerEvaluator evaluator,
-                                 @NotNull XExpression expression,
-                                 int index,
-                                 boolean navigateToWatchNode) {
-    addWatchExpression((XStackFrame)null, expression, index, navigateToWatchNode);
   }
 
   public void addWatchExpression(@Nullable XStackFrame stackFrame,
@@ -144,11 +124,16 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   }
 
   private void fireNodeInserted(int index) {
-    myTree.getTreeModel().nodesWereInserted(this, new int[]{index});
+    myTree.getTreeModel().nodesWereInserted(this, new int[]{index + headerNodesCount()});
   }
 
   public int removeChildNode(XDebuggerTreeNode node) {
-    return removeChildNode(myChildren, node);
+    int index = myChildren.indexOf(node);
+    if (index != -1) {
+      myChildren.remove(node);
+      fireNodesRemoved(new int[]{index + headerNodesCount()}, new TreeNode[]{node});
+    }
+    return index;
   }
 
   public void removeChildren(Collection<? extends XDebuggerTreeNode> nodes) {
@@ -193,7 +178,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       int targetIndex = selectedIndex == - 1 ? myChildren.size() : selectedIndex + 1;
       messageNode = new WatchNodeImpl(myTree, this, XExpressionImpl.EMPTY_EXPRESSION, (XStackFrame)null);
       myChildren.add(targetIndex, messageNode);
-      fireNodeInserted(targetIndex + headerNodesCount());
+      fireNodeInserted(targetIndex);
       getTree().setSelectionRows(ArrayUtilRt.EMPTY_INT_ARRAY);
     }
     else {

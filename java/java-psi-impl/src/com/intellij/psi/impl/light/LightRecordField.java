@@ -109,7 +109,13 @@ public class LightRecordField extends LightField implements LightRecordMember {
 
   @Override
   public @NotNull SearchScope getUseScope() {
-    return new LocalSearchScope(Objects.requireNonNull(getContainingClass()));
+    PsiClass aClass = Objects.requireNonNull(getContainingClass());
+    PsiClass containingClass = aClass.getContainingClass();
+    while (containingClass != null) {
+      aClass = containingClass;
+      containingClass = containingClass.getContainingClass();
+    }
+    return new LocalSearchScope(aClass);
   }
 
   private static boolean hasApplicableAnnotationTarget(PsiAnnotation annotation) {

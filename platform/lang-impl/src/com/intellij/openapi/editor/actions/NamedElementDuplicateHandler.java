@@ -37,11 +37,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class NamedElementDuplicateHandler extends EditorWriteActionHandler {
+public class NamedElementDuplicateHandler extends EditorWriteActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginal;
 
   public NamedElementDuplicateHandler(EditorActionHandler original) {
-    super(true);
     myOriginal = original;
   }
 
@@ -51,7 +50,7 @@ public class NamedElementDuplicateHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     Project project = editor.getProject();
     if (project != null && !editor.getSelectionModel().hasSelection()) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());

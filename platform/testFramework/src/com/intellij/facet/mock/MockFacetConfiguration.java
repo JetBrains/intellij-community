@@ -22,6 +22,13 @@ public class MockFacetConfiguration implements FacetConfiguration {
   private String myData = "";
   private MockFacetEditorTab myEditor;
 
+  public MockFacetConfiguration(String data) {
+    myData = data;
+  }
+
+  public MockFacetConfiguration() {
+  }
+
   @Override
   public FacetEditorTab[] createEditorTabs(final FacetEditorContext editorContext, final FacetValidatorsManager validatorsManager) {
     myEditor = new MockFacetEditorTab(this);

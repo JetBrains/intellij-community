@@ -107,7 +107,9 @@ public class RunConfigurationNode extends ExternalSystemNode {
                                            ExternalSystemActionsCollector.ActionId.ExecuteExternalSystemRunConfigurationAction,
                                            place, false, null);
     ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
-    RunManager.getInstance(mySettings.getConfiguration().getProject()).setSelectedConfiguration(mySettings);
+    RunManager runManager = RunManager.getInstance(mySettings.getConfiguration().getProject());
+    runManager.addConfiguration(mySettings);
+    runManager.setSelectedConfiguration(mySettings);
   }
 
   @Nullable

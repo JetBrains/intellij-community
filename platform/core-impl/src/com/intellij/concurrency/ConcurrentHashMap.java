@@ -9,8 +9,8 @@ package com.intellij.concurrency;
 
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.ThreadLocalRandom;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ObjectStreamField;
@@ -230,7 +230,7 @@ import java.util.stream.Stream;
  * @param <V> the type of mapped values
  */
 final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
-  implements ConcurrentMap<K,V>, TObjectHashingStrategy<K> {
+  implements ConcurrentMap<K,V>, HashingStrategy<K> {
 
     /*
      * Overview:
@@ -578,7 +578,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         new ObjectStreamField("segmentMask", Integer.TYPE),
         new ObjectStreamField("segmentShift", Integer.TYPE),
     };
-  private final TObjectHashingStrategy<K> hashingStrategy;
+  private final HashingStrategy<K> hashingStrategy;
 
   /* ---------------- Nodes -------------- */
 
@@ -594,24 +594,24 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         final int hash;
         final K key;
         volatile V val;
-      @NotNull final TObjectHashingStrategy<K> hashingStrategy;
+      @NotNull final HashingStrategy<K> hashingStrategy;
       volatile Node<K,V> next;
 
-        Node(int hash, K key, V val, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+        Node(int hash, K key, V val, @NotNull HashingStrategy<K> hashingStrategy) {
             this.hash = hash;
             this.key = key;
             this.val = val;
           this.hashingStrategy = hashingStrategy;
         }
 
-        Node(int hash, K key, V val, Node<K,V> next, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+        Node(int hash, K key, V val, Node<K,V> next, @NotNull HashingStrategy<K> hashingStrategy) {
             this(hash, key, val, hashingStrategy);
             this.next = next;
         }
 
         public final K getKey()     { return key; }
         public final V getValue()   { return val; }
-        public final int hashCode() { return hashingStrategy.computeHashCode(key) ^ val.hashCode(); }
+        public final int hashCode() { return hashingStrategy.hashCode(key) ^ val.hashCode(); }
         public final String toString() {
             return Helpers.mapEntryToString(key, val);
         }
@@ -888,9 +888,9 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         this(initialCapacity, loadFactor,concurrencyLevel, THIS);
     }
 
-  private static final TObjectHashingStrategy THIS = new TObjectHashingStrategy() {
+  private static final HashingStrategy THIS = new HashingStrategy() {
     @Override
-    public int computeHashCode(Object object) {
+    public int hashCode(Object object) {
       throw new IncorrectOperationException();
     }
 
@@ -899,7 +899,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
       throw new IncorrectOperationException();
     }
   };
-  ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull HashingStrategy<K> hashingStrategy) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
     }
@@ -914,7 +914,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     this.hashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
   }
 
-  ConcurrentHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentHashMap(@NotNull HashingStrategy<K> hashingStrategy) {
     this(DEFAULT_CAPACITY, LOAD_FACTOR, NCPU, hashingStrategy);
   }
     // Original (since JDK1.2) Map methods
@@ -1032,7 +1032,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             if (tab == null || (n = tab.length) == 0)
                 tab = initTable();
             else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
-                if (casTabAt(tab, i, null, new Node<K,V>(hash, key, value,hashingStrategy)))
+                if (casTabAt(tab, i, null, new Node<K,V>(hash, key, value, hashingStrategy)))
                     break;                   // no lock when adding to empty bin
             }
             else if ((fh = f.hash) == MOVED)
@@ -2083,8 +2083,8 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
     static final class ForwardingNode<K,V> extends Node<K,V> {
         final Node<K,V>[] nextTable;
-        ForwardingNode(Node<K,V>[] tab, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-            super(MOVED, null, null,hashingStrategy);
+        ForwardingNode(Node<K,V>[] tab, @NotNull HashingStrategy<K> hashingStrategy) {
+            super(MOVED, null, null, hashingStrategy);
             this.nextTable = tab;
         }
 
@@ -2119,8 +2119,8 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * A place-holder node used in computeIfAbsent and compute.
      */
     static final class ReservationNode<K,V> extends Node<K,V> {
-        ReservationNode(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
-            super(RESERVED, null, null,hashingStrategy);
+        ReservationNode(@NotNull HashingStrategy<K> hashingStrategy) {
+            super(RESERVED, null, null, hashingStrategy);
         }
 
         Node<K,V> find(int h, Object k) {
@@ -2579,8 +2579,8 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         boolean red;
 
         TreeNode(int hash, K key, V val, Node<K,V> next,
-                 TreeNode<K,V> parent, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-            super(hash, key, val, next,hashingStrategy);
+                 TreeNode<K,V> parent, @NotNull HashingStrategy<K> hashingStrategy) {
+            super(hash, key, val, next, hashingStrategy);
             this.parent = parent;
         }
 
@@ -2661,8 +2661,8 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         /**
          * Creates bin with initial set of nodes headed by b.
          */
-        TreeBin(TreeNode<K,V> b, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-            super(TREEBIN, null, null,hashingStrategy);
+        TreeBin(TreeNode<K,V> b, @NotNull HashingStrategy<K> hashingStrategy) {
+            super(TREEBIN, null, null, hashingStrategy);
             this.first = b;
             TreeNode<K,V> r = null;
             for (TreeNode<K,V> x = b, next; x != null; x = next) {
@@ -6221,7 +6221,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     }
 
   @Override
-  public int computeHashCode(final K object) {
+  public int hashCode(final K object) {
     return object == null ? 0 : object.hashCode();
   }
 
@@ -6231,14 +6231,14 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
   }
 
   private int hash(K key) {
-    return spread(hashingStrategy.computeHashCode(key));
+    return spread(hashingStrategy.hashCode(key));
   }
 
   private boolean isEqual(@NotNull K key1, K key2) {
     return isEqual(key1, key2, hashingStrategy);
   }
 
-  private static <K> boolean isEqual(@NotNull K key1, K key2, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  private static <K> boolean isEqual(@NotNull K key1, K key2, @NotNull HashingStrategy<K> hashingStrategy) {
     return key1 == key2 || key2 != null && hashingStrategy.equals(key1, key2);
   }
 }

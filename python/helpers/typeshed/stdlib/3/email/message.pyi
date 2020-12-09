@@ -1,5 +1,3 @@
-# Stubs for email.message (Python 3.4)
-
 from email.charset import Charset
 from email.contentmanager import ContentManager
 from email.errors import MessageDefect

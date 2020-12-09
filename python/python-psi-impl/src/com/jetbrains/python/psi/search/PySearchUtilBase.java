@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.search;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -110,11 +111,11 @@ public class PySearchUtilBase {
 
   @Nullable
   public static VirtualFile findLibDir(Sdk sdk) {
-    return findLibDir(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    return findLibDir(ReadAction.compute(() -> sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
   }
 
   public static VirtualFile findVirtualEnvLibDir(Sdk sdk) {
-    VirtualFile[] classVFiles = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    VirtualFile[] classVFiles = ReadAction.compute(() -> sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
     String homePath = sdk.getHomePath();
     if (homePath != null) {
       File root = PythonSdkUtil.getVirtualEnvRoot(homePath);

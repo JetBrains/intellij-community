@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -45,10 +46,14 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
+import static java.awt.FlowLayout.CENTER;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.META_DOWN_MASK;
 
 public final class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
+  public static final int RIGHT_PANEL_WEST_OFFSET = 13;
+  private static final float MAX_LEFT_PANEL_PROP = 0.9F;
+  private static final float DEFAULT_PROP = 0.33F;
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -56,9 +61,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   private final MyTextComponentWrapper myReplaceFieldWrapper;
   private JTextComponent myReplaceTextComponent;
-
-  private final JPanel myLeftPanel;
-  private final JPanel myRightPanel;
 
   private final DefaultActionGroup mySearchFieldActions;
   private final ActionToolbarImpl mySearchActionsToolbar;
@@ -75,13 +77,18 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   private final Project myProject;
   private final JComponent myTargetComponent;
+  @Nullable private OnePixelSplitter mySplitter;
 
   private final Runnable myCloseAction;
   private final Runnable myReplaceAction;
 
   private final DataProvider myDataProviderDelegate;
 
+  private final boolean myMultilineEnabled;
+  private final boolean myUseSearchField;
   private boolean myMultilineMode;
+  private final boolean myAddSearchResultsToGlobalSearch;
+
   @NotNull private @NlsContexts.Label String myStatusText = "";
   @NotNull private Color myStatusColor = UIUtil.getLabelForeground();
   private DefaultActionGroup myTouchbarActions;
@@ -104,7 +111,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  @Nullable Runnable closeAction,
                                  @Nullable DataProvider dataProvider,
                                  boolean showOnlySearchPanel,
-                                 boolean maximizeLeftPanelOnResize) {
+                                 boolean maximizeLeftPanelOnResize,
+                                 boolean multilineEnabled,
+                                 boolean addSearchResultsToGlobalSearch,
+                                 boolean useSearchField) {
     myProject = project;
     myTargetComponent = targetComponent;
     mySearchToolbarModifiedFlagGetter = searchToolbar1ModifiedFlagGetter;
@@ -112,6 +122,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceFieldActions = replaceFieldActions;
     myReplaceAction = replaceAction;
     myCloseAction = closeAction;
+    myMultilineEnabled = multilineEnabled;
+    myAddSearchResultsToGlobalSearch = addSearchResultsToGlobalSearch;
+    myUseSearchField = useSearchField;
+
 
     for (AnAction child : searchToolbar2Actions.getChildren(null)) {
       if (child instanceof Embeddable) {
@@ -150,18 +164,18 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     };
     myReplaceFieldWrapper.setBorder(JBUI.Borders.emptyTop(1));
 
-    myLeftPanel = new JPanel(new GridBagLayout());
-    myLeftPanel.setBackground(JBColor.border());
+    JPanel leftPanel = new JPanel(new GridBagLayout());
+    leftPanel.setBackground(JBColor.border());
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = 1;
     constraints.weighty = 1;
-    myLeftPanel.add(mySearchFieldWrapper, constraints);
+    leftPanel.add(mySearchFieldWrapper, constraints);
     constraints.gridy++;
-    myLeftPanel.add(myReplaceFieldWrapper, constraints);
-    myLeftPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 0, 1));
+    leftPanel.add(myReplaceFieldWrapper, constraints);
+    leftPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 0, 1));
 
     searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(null));
     replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(null));
@@ -178,63 +192,76 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceToolbarWrapper.add(replaceToolbarWrapper1, BorderLayout.WEST);
     myReplaceToolbarWrapper.setBorder(JBUI.Borders.emptyTop(3));
 
-    JLabel closeLabel = new JLabel(null, AllIcons.Actions.Close, SwingConstants.RIGHT);
-    closeLabel.setBorder(JBUI.Borders.empty(2));
-    closeLabel.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(final MouseEvent e) {
-        close();
-      }
-    });
-    closeLabel.setToolTipText(FindBundle.message("tooltip.close.search.bar.escape"));
-    searchPair.add(new Wrapper(closeLabel), BorderLayout.EAST);
-
-    myRightPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
-    myRightPanel.add(searchPair);
-    myRightPanel.add(myReplaceToolbarWrapper);
+    if (closeAction != null) {
+      JLabel closeLabel = new JLabel(null, AllIcons.Actions.Close, SwingConstants.RIGHT);
+      closeLabel.setBorder(JBUI.Borders.empty(2));
+      closeLabel.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(final MouseEvent e) {
+          close();
+        }
+      });
+      closeLabel.setToolTipText(FindBundle.message("tooltip.close.search.bar.escape"));
+      searchPair.add(new Wrapper(closeLabel), BorderLayout.EAST);
+    }
+    JPanel rightPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+    rightPanel.add(searchPair);
+    rightPanel.add(myReplaceToolbarWrapper);
+    float initialProportion = maximizeLeftPanelOnResize? MAX_LEFT_PANEL_PROP : DEFAULT_PROP;
 
     if (showOnlySearchPanel) {
-      add(myLeftPanel, BorderLayout.CENTER);
-    } else {
-      OnePixelSplitter splitter = new OnePixelSplitter(false, .33F);
-      myRightPanel.setBorder(JBUI.Borders.emptyLeft(6));
-      splitter.setFirstComponent(myLeftPanel);
-      splitter.setSecondComponent(myRightPanel);
-      splitter.setHonorComponentsMinimumSize(true);
-      splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-      splitter.setHonorComponentsPreferredSize(true);
-      if(maximizeLeftPanelOnResize) {
-        splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
-        splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.SIMPLE_RATIO);
-      }else{
-        splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
-      }
-      splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
-      splitter.setOpaque(false);
-      splitter.getDivider().setOpaque(false);
-      add(splitter, BorderLayout.CENTER);
+      add(leftPanel, BorderLayout.CENTER);
     }
+    else {
+      mySplitter = new OnePixelSplitter(false, initialProportion);
+      mySplitter.setFirstComponent(leftPanel);
+      mySplitter.setSecondComponent(rightPanel);
+      mySplitter.setOpaque(false);
+      mySplitter.getDivider().setOpaque(false);
+      add(mySplitter, BorderLayout.CENTER);
 
+      if (maximizeLeftPanelOnResize) {
+        rightPanel.setLayout(new FlowLayout(CENTER, 0, 0));
+        rightPanel.setBorder(JBUI.Borders.emptyLeft(RIGHT_PANEL_WEST_OFFSET));
+        rightPanel.setMinimumSize(new Dimension(mySearchActionsToolbar.getActions().size()
+                                                * ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + RIGHT_PANEL_WEST_OFFSET, 0));
+        mySearchActionsToolbar.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            var minWidth = 0;
+            for(var component: rightPanel.getComponents()){
+              minWidth += component.getPreferredSize().width;
+            }
+            rightPanel.setMinimumSize(new Dimension(minWidth, 0));
+            mySplitter.updateUI();
+          }
+        });
+        mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
+        mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+        mySplitter.setResizeEnabled(false);
+        mySplitter.setHonorComponentsMinimumSize(true);
+        mySplitter.setHonorComponentsPreferredSize(false);
+      }
+      else {
+        rightPanel.setBorder(JBUI.Borders.emptyLeft(6));
+        mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+        mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+        mySplitter.setHonorComponentsMinimumSize(true);
+        mySplitter.setHonorComponentsPreferredSize(true);
+      }
+
+      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+
+    }
 
     update("", "", false, false);
 
     // it's assigned after all action updates so that actions don't get access to uninitialized components
     myDataProviderDelegate = dataProvider;
     // A workaround to suppress editor-specific TabAction
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-        if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocus();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-        if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocusBackward();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this);
+    new TransferFocusAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
+    new TransferFocusBackwardAction()
+      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this);
   }
 
   public void resetUndoRedoActions() {
@@ -440,7 +467,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     mySearchActionsToolbar.updateActionsImmediately();
     myReplaceActionsToolbar.updateActionsImmediately();
     JComponent textComponent = mySearchFieldWrapper.getTargetComponent();
-    if (textComponent instanceof SearchTextArea) ((SearchTextArea)textComponent).updateExtraActions();
+    if (textComponent instanceof SearchTextArea) {
+      ((SearchTextArea)textComponent).updateExtraActions();
+      ((SearchTextArea)textComponent).setMultilineEnabled(myMultilineEnabled);
+    }
     textComponent = myReplaceFieldWrapper.getTargetComponent();
     if (textComponent instanceof SearchTextArea) ((SearchTextArea)textComponent).updateExtraActions();
   }
@@ -450,7 +480,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     if (text.length() > 0) {
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
       if (textField == mySearchTextComponent) {
-        findInProjectSettings.addStringToFind(text);
+        if (myAddSearchResultsToGlobalSearch) {
+          findInProjectSettings.addStringToFind(text);
+        }
         if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
           ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
         }
@@ -469,42 +501,73 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     if (oldComponent != null) return false;
     final MyTextComponentWrapper wrapper = search ? mySearchFieldWrapper : myReplaceFieldWrapper;
 
-    final JBTextArea textComponent = new JBTextArea();
-    textComponent.setRows(isMultiline() ? 2 : 1);
-    textComponent.setColumns(12);
-    if (search) {
-      textComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.search.accessible.name"));
+    @NotNull JTextComponent innerTextComponent;
+    @NotNull JComponent outerComponent;
+
+    if (myUseSearchField) {
+      outerComponent = new SearchTextField(true, this.toString());
+      innerTextComponent = ((SearchTextField)outerComponent).getTextEditor();
+      innerTextComponent.setBorder(BorderFactory.createEmptyBorder());
     }
     else {
-      textComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.replace.accessible.name"));
+      innerTextComponent = new JBTextArea() {
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+          Dimension defaultSize = super.getPreferredScrollableViewportSize();
+          if (mySplitter != null &&
+              mySplitter.getSecondComponent() != null &&
+              Registry.is("ide.find.expand.search.field.on.typing", true)) {
+            Dimension preferredSize = getPreferredSize();
+            int spaceForLeftPanel =
+              mySplitter.getWidth() - mySplitter.getSecondComponent().getPreferredSize().width - mySplitter.getDividerWidth();
+            int allSearchTextAreaIcons = JBUI.scale(180);
+            int w = spaceForLeftPanel - allSearchTextAreaIcons;
+            return new Dimension(Math.min(Math.max(defaultSize.width, preferredSize.width), w), defaultSize.height);
+          }
+          return defaultSize;
+        }
+      };
+      ((JBTextArea)innerTextComponent).setRows(isMultiline() ? 2 : 1);
+      ((JBTextArea)innerTextComponent).setColumns(12);
+      outerComponent = new SearchTextArea(((JBTextArea)innerTextComponent), search);
+      if (search) {
+        myExtraSearchButtons.clear();
+        myExtraSearchButtons
+          .addAll(((SearchTextArea)outerComponent).setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY)));
+        ((SearchTextArea)outerComponent).setMultilineEnabled(myMultilineEnabled);
+      }
+      else {
+        myExtraReplaceButtons.clear();
+        myExtraReplaceButtons
+          .addAll(((SearchTextArea)outerComponent).setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY)));
+      }
     }
-    SearchTextArea textArea = new SearchTextArea(textComponent, search);
+
+    UIUtil.addUndoRedoActions(innerTextComponent);
+    wrapper.setContent(outerComponent);
+
     if (search) {
-      myExtraSearchButtons.clear();
-      myExtraSearchButtons.addAll(textArea.setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY)));
-    } else {
-      myExtraReplaceButtons.clear();
-      myExtraReplaceButtons.addAll(textArea.setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY)));
+      innerTextComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.search.accessible.name"));
+    }
+    else {
+      innerTextComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.replace.accessible.name"));
     }
     // Display empty text only when focused
-    textComponent.putClientProperty(
+    innerTextComponent.putClientProperty(
       "StatusVisibleFunction", (BooleanFunction<JTextComponent>)(c -> c.getText().isEmpty() && c.isFocusOwner()));
 
-    wrapper.setContent(textArea);
-
-    UIUtil.addUndoRedoActions(textComponent);
-
-    textComponent.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE);
-    textComponent.setBackground(UIUtil.getTextFieldBackground());
-    textComponent.addFocusListener(new FocusListener() {
+    innerTextComponent.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE);
+    innerTextComponent.setBackground(UIUtil.getTextFieldBackground());
+    JComponent finalTextComponent = innerTextComponent;
+    innerTextComponent.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(final FocusEvent e) {
-        textComponent.repaint();
+        finalTextComponent.repaint();
       }
 
       @Override
       public void focusLost(final FocusEvent e) {
-        textComponent.repaint();
+        finalTextComponent.repaint();
       }
     });
     new CloseAction() {
@@ -512,7 +575,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       public void actionPerformed(@NotNull AnActionEvent e) {
         close();
       }
-    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE), textArea);
+    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE), outerComponent);
     return true;
   }
 
@@ -634,7 +697,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     private boolean myShowOnlySearchPanel = false;
     private boolean myMaximizeLeftPanelOnResize = false;
-
+    private boolean myMultilineEnabled = true;
+    private boolean myAddSearchResultsToGlobalSearch = true;
+    private boolean myUseSearchField = false;
 
     private Builder(@Nullable Project project, @NotNull JComponent component) {
       myProject = project;
@@ -736,7 +801,28 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                         myCloseAction,
                                         myDataProvider,
                                         myShowOnlySearchPanel,
-                                        myMaximizeLeftPanelOnResize);
+                                        myMaximizeLeftPanelOnResize,
+                                        myMultilineEnabled,
+                                        myAddSearchResultsToGlobalSearch,
+                                        myUseSearchField);
+    }
+
+    @NotNull
+    public Builder withMultilineEnabled(boolean b) {
+      myMultilineEnabled = b;
+      return this;
+    }
+
+    @NotNull
+    public Builder withAddSearchResultsToGlobalSearch(boolean b) {
+      myAddSearchResultsToGlobalSearch = b;
+      return this;
+    }
+
+    @NotNull
+    public Builder withUseSearchField(boolean b) {
+      myUseSearchField = b;
+      return this;
     }
   }
 
@@ -756,6 +842,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         return ((SearchTextArea)wrapped).getTextArea();
       }
       throw new AssertionError();
+    }
+  }
+
+  private class TransferFocusAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+      if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocus();
+    }
+  }
+
+  private class TransferFocusBackwardAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+      if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocusBackward();
     }
   }
 }

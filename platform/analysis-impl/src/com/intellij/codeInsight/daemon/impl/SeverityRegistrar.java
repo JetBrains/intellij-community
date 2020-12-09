@@ -249,14 +249,14 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return null;
   }
 
-  Icon getRendererIconByIndex(int i) {
+  Icon getRendererIconByIndex(int i, boolean defaultIcon) {
     HighlightSeverity severity = getSeverityByIndex(i);
     HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
     if (level != null) {
-      return level.getIcon();
+      return defaultIcon ? level.getIcon() : level.getOutlineIcon();
     }
 
-    return HighlightDisplayLevel.createIconByMask(myRendererColors.get(severity.getName()));
+    return severity != null ? HighlightDisplayLevel.createIconByMask(myRendererColors.get(severity.getName())) : null;
   }
 
   public boolean isSeverityValid(@NotNull String severityName) {

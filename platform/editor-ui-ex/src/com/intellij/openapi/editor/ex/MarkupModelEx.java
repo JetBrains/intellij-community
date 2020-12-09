@@ -31,7 +31,7 @@ public interface MarkupModelEx extends MarkupModel {
   @Nullable
   RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes);
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged);
+  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleOrColorChanged);
 
   void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter);
 

@@ -53,6 +53,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
@@ -381,21 +382,21 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     nonCodeFiles.remove(null);
     dynamicUsagesCodeFiles.remove(null);
 
-    String codeReferencesText = descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size());
-    presentation.setCodeUsagesString(codeReferencesText);
-    final String commentReferencesText = descriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size());
-    if (commentReferencesText != null) {
-      presentation.setNonCodeUsagesString(commentReferencesText);
-    }
-    presentation.setDynamicUsagesString("Dynamic " + StringUtil.decapitalize(descriptor.getCodeReferencesText(dynamicUsagesCount, dynamicUsagesCodeFiles.size())));
-    String generatedCodeString;
-    if (codeReferencesText.contains("in code")) {
-      generatedCodeString = StringUtil.replace(codeReferencesText, "in code", "in generated code");
-    }
-    else {
-      generatedCodeString = codeReferencesText + " in generated code";
-    }
-    presentation.setUsagesInGeneratedCodeString(generatedCodeString);
+    presentation.setCodeUsagesString(UsageViewBundle.message(
+      "usage.view.results.node.prefix",
+      UsageViewBundle.message("usage.view.results.node.code"),
+      descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size())
+    ));
+    presentation.setNonCodeUsagesString(UsageViewBundle.message(
+      "usage.view.results.node.prefix",
+      UsageViewBundle.message("usage.view.results.node.non.code"),
+      descriptor.getCodeReferencesText(nonCodeUsageCount, nonCodeFiles.size())
+    ));
+    presentation.setDynamicUsagesString(UsageViewBundle.message(
+      "usage.view.results.node.prefix",
+      UsageViewBundle.message("usage.view.results.node.dynamic"),
+      descriptor.getCodeReferencesText(dynamicUsagesCount, dynamicUsagesCodeFiles.size())
+    ));
     return presentation;
   }
 

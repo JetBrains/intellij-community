@@ -21,6 +21,7 @@ import com.intellij.usages.ConfigurableUsageTarget
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewImpl
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 internal class SearchTarget2UsageTarget<O>(
@@ -66,7 +67,7 @@ internal class SearchTarget2UsageTarget<O>(
 
   override fun getShortcut(): KeyboardShortcut? = UsageViewImpl.getShowUsagesWithSettingsShortcut()
 
-  override fun getLongDescriptiveName(): String {
+  override fun getLongDescriptiveName(): @Nls String {
     val target = myPointer.dereference() ?: return UsageViewBundle.message("node.invalid")
     @Suppress("UNCHECKED_CAST") val usageHandler = target.usageHandler as UsageHandler<O>
     return UsageViewBundle.message(

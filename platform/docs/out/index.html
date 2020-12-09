@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IntelliJ Platform Activity Diagrams</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+</head>
+<body>
+<script>
+  function applyItem(item) {
+    document.getElementById("svgElement").data = `${item.value}.svg`
+    const title = `${item.label} — IntelliJ Platform Activity Diagrams`
+    document.title = title
+    const id = item.value
+    history.pushState(null, title, `#${id}`)
+    localStorage.setItem("selectedDiagram", id)
+  }
+
+  function diagramChanged(event) {
+    applyItem(event.target.options[event.target.selectedIndex])
+  }
+</script>
+<section class="section">
+  <div class="select is-pulled-right">
+    <label>
+      <select id="diagramSelector" onchange="diagramChanged(event)">
+        <option value="getting-service">Getting Service</option>
+        <option value="projectClose-dispose-flow">Close Project Flow</option>
+        <option value="icon-loading-stat">Icon Loading Stats</option>
+      </select>
+    </label>
+  </div>
+  <!--suppress CheckTagEmptyBody -->
+  <object data="getting-service.svg" type="image/svg+xml" id="svgElement"></object>
+</section>
+
+<script>
+  (function () {
+    const selectedId = localStorage.getItem("selectedDiagram")
+    if (selectedId == null) {
+      applyItem(document.getElementById("diagramSelector").options[0])
+    }
+    else {
+      applyItem(Array.from(document.getElementById("diagramSelector").options).find(it => it.value === selectedId))
+    }
+  })()
+</script>
+</body>
+</html>

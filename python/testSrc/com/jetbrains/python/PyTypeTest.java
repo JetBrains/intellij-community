@@ -3945,6 +3945,18 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-44470
+  public void testInferringAndMatchingCls() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("Subclass",
+                   "class Subclass(dict):\n" +
+                   "    def __new__(cls, *args, **kwargs):\n" +
+                   "        expr = super().__new__(cls, *args, **kwargs)\n" +
+                   "        return expr")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

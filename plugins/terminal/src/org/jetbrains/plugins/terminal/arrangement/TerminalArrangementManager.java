@@ -21,8 +21,10 @@ import org.jetbrains.plugins.terminal.TerminalView;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "TerminalArrangementManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)

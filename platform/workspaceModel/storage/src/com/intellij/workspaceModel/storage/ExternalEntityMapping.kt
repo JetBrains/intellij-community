@@ -8,7 +8,6 @@ package com.intellij.workspaceModel.storage
 interface ExternalEntityMapping<T> {
   fun getEntities(data: T): List<WorkspaceEntity>
   fun getDataByEntity(entity: WorkspaceEntity): T?
-  fun getAllEntities(): List<WorkspaceEntity>
   fun forEach(action: (key: WorkspaceEntity, value: T) -> Unit)
 }
 

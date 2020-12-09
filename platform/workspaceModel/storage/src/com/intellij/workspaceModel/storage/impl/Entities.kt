@@ -18,7 +18,7 @@ import kotlin.reflect.full.memberProperties
  *   - The entity should inherit [WorkspaceEntityBase]
  *   - Properties (not references to other entities) should be listed in a primary constructor as val's
  *   - If the entity has PersistentId, the entity should extend [WorkspaceEntityWithPersistentId]
- *   - If the entity has references to other entities, they should be implement using property delegation objects listed in [references] package.
+ *   - If the entity has references to other entities, they should be implement using property delegation objects listed in [com.intellij.workspaceModel.storage.impl.references] package.
  *       E.g. [OneToMany] or [ManyToOne.NotNull]
  *
  *   Example:
@@ -48,7 +48,7 @@ import kotlin.reflect.full.memberProperties
  *   - If the entity contains soft references to other entities (persistent id to other entities), entity data should extend SoftLinkable
  *        interface and implement the required methods. Check out the [FacetEntityData] implementation, but keep in mind the this might
  *        be more complicated like in [ModuleEntityData].
- *   - Entity data should implement the methods from [WorkspaceEntityData]: [createEntity]. This methods should return an instance of
+ *   - Entity data should implement [WorkspaceEntityData.createEntity] method. This method should return an instance of
  *        [WorkspaceEntity]. This instance should be passed to [addMetaData] after creation!
  *        E.g.:
  *
@@ -165,24 +165,6 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
   }
 
   override fun toString(): String = clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString()
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as EntityId
-
-    if (arrayId != other.arrayId) return false
-    if (clazz != other.clazz) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = arrayId
-    result = 31 * result + clazz.hashCode()
-    return result
-  }
 }
 
 interface SoftLinkable {
@@ -194,13 +176,13 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  internal fun createPid(): EntityId = EntityId(id, ClassConversion.entityDataToEntity(this.javaClass).toClassId())
+  internal fun createEntityId(): EntityId = EntityId(id, ClassConversion.entityDataToEntity(this.javaClass).toClassId())
 
   abstract fun createEntity(snapshot: WorkspaceEntityStorage): E
 
   fun addMetaData(res: E, snapshot: WorkspaceEntityStorage) {
     (res as WorkspaceEntityBase).entitySource = entitySource
-    (res as WorkspaceEntityBase).id = createPid()
+    (res as WorkspaceEntityBase).id = createEntityId()
     (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
   }
 
@@ -210,7 +192,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     res as ModifiableWorkspaceEntityBase
     res.original = this
     res.diff = diff
-    res.id = createPid()
+    res.id = createEntityId()
     res.entitySource = this.entitySource
     return res
   }
@@ -222,6 +204,17 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     if (this::class != other::class) return false
 
     return ReflectionUtil.collectFields(this.javaClass).filterNot { it.name == WorkspaceEntityData<*>::id.name }
+      .onEach { it.isAccessible = true }
+      .all { it.get(this) == it.get(other) }
+  }
+
+  fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    return ReflectionUtil.collectFields(this.javaClass)
+      .filterNot { it.name == WorkspaceEntityData<*>::id.name }
+      .filterNot { it.name == WorkspaceEntityData<*>::entitySource.name }
       .onEach { it.isAccessible = true }
       .all { it.get(this) == it.get(other) }
   }

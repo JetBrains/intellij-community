@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 
+import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_NOT_RESTORED;
+
 /**
  * Saves and restores uncommitted local changes - it is used before and after the update process.
  * Respects changelists.
@@ -39,6 +41,7 @@ public abstract class GitChangesSaver {
 
   /**
    * Returns an instance of the proper GitChangesSaver depending on the given save changes policy.
+   *
    * @return {@link GitStashChangesSaver} or {@link GitShelveChangesSaver}.
    */
   @NotNull
@@ -67,6 +70,7 @@ public abstract class GitChangesSaver {
 
   /**
    * Saves local changes in stash or in shelf.
+   *
    * @param rootsToSave Save changes only from these roots.
    */
   public void saveLocalChanges(@Nullable Collection<? extends VirtualFile> rootsToSave) throws VcsException {
@@ -80,7 +84,7 @@ public abstract class GitChangesSaver {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        "git.local.changes.not.restored", GitBundle.message("restore.notification.failed.title"),
+        LOCAL_CHANGES_NOT_RESTORED, GitBundle.message("restore.notification.failed.title"),
         getSaveMethod().selectBundleMessage(
           GitBundle.message("restore.notification.failed.stash.message"),
           GitBundle.message("restore.notification.failed.shelf.message")
@@ -96,6 +100,7 @@ public abstract class GitChangesSaver {
 
   /**
    * Saves local changes - specific for chosen save strategy.
+   *
    * @param rootsToSave local changes should be saved on these roots.
    */
   protected abstract void save(Collection<? extends VirtualFile> rootsToSave) throws VcsException;
@@ -137,7 +142,8 @@ public abstract class GitChangesSaver {
   }
 
   protected final class ShowSavedChangesNotificationListener implements NotificationListener {
-    @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
         showSavedChanges();
       }

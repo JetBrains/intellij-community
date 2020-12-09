@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
@@ -139,8 +140,10 @@ public abstract class FindManager {
    * @param documentText source text in which the string was found (matters for regex searches)
    * @return the string to replace the specified found string.
    */
-  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                            int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException;
+  public abstract @NlsSafe String getStringToReplace(
+    @NotNull String foundString, @NotNull FindModel model,
+    int startOffset, @NotNull CharSequence documentText
+  ) throws MalformedReplacementStringException;
 
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are

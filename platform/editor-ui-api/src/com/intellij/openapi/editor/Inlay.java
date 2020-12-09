@@ -55,8 +55,8 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    * For block elements this value impacts their visibility on the boundary offsets of collapsed fold region. If the value is {@code true},
    * the inlay will be visible at the trailing boundary, and if the value is {@code false} - on the leading boundary.
    * <p>
-   * The value is determined at element's creation (see {@link InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)
-   * or {@link InlayModel#addBlockElement(int, boolean, boolean, EditorCustomElementRenderer)}}.
+   * The value is determined at element's creation (see {@link InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)}
+   * or {@link InlayModel#addBlockElement(int, boolean, boolean, int, EditorCustomElementRenderer)}}.
    */
   boolean isRelatedToPrecedingText();
 

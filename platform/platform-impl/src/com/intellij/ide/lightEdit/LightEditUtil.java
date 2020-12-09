@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.EmptyCompletionNotifier;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,21 +14,21 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,7 @@ public final class LightEditUtil {
 
   private final static Logger LOG = Logger.getInstance(LightEditUtil.class);
 
-  private static boolean ourForceOpenInExistingProjectFlag;
+  private static final ThreadLocal<LightEditCommandLineOptions> ourCommandLineOptions = new ThreadLocal<>();
 
   private LightEditUtil() {
   }
@@ -57,16 +58,13 @@ public final class LightEditUtil {
   public static Project openFile(@NotNull Path path) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
-      Project project = LightEditService.getInstance().openFile(virtualFile, false);
-      if (project != null) {
-        LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
-        return project;
-      }
+      Project project = LightEditService.getInstance().openFile(virtualFile);
+      LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+      return project;
     }
     else {
       return handleNonExisting(path);
     }
-    return null;
   }
 
   private static @Nullable Project handleNonExisting(@NotNull Path path) {
@@ -95,9 +93,21 @@ public final class LightEditUtil {
     return null;
   }
 
-  public static boolean isOpenInExistingProject() {
-    return ourForceOpenInExistingProjectFlag &&
-           ProjectManager.getInstance().getOpenProjects().length > 0;
+  /**
+   * @param file file opened in the editor
+   * @return target path of non-existent file that was opened in IDE
+   */
+  public static @Nullable Path getPreferredSavePathForNonExistentFile(@NotNull VirtualFile file) {
+    if (file instanceof LightVirtualFile) {
+      LightEditorInfo editorInfo = ContainerUtil.getFirstItem(LightEditService.getInstance().getEditorManager().getEditors(file));
+      return editorInfo != null ? editorInfo.getPreferredSavePath() : null;
+    }
+    return null;
+  }
+
+  public static boolean isForceOpenInLightEditMode() {
+    LightEditCommandLineOptions options = getCommandLineOptions();
+    return options != null && options.myLightEditMode;
   }
 
   @Nullable
@@ -184,12 +194,8 @@ public final class LightEditUtil {
   }
 
   @Nullable
-  public static EditorWithProviderComposite findEditorComposite(@NotNull VirtualFile virtualFile) {
-    return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(virtualFile);
-  }
-
-  public static void setForceOpenInExistingProject(boolean openInExistingProject) {
-    ourForceOpenInExistingProjectFlag = openInExistingProject;
+  public static EditorWithProviderComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+    return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(fileEditor);
   }
 
   @Nullable
@@ -218,5 +224,47 @@ public final class LightEditUtil {
   @NotNull
   static Project requireProject() {
     return requireLightEditProject(LightEditService.getInstance().getProject());
+  }
+
+  public static <T> @NotNull T computeWithCommandLineOptions(boolean shouldWait,
+                                                             boolean lightEditMode,
+                                                             @NotNull Computable<T> computable) {
+    ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait, lightEditMode));
+    try {
+      return computable.compute();
+    }
+    finally {
+      ourCommandLineOptions.set(null);
+    }
+  }
+
+  public static void useCommandLineOptions(boolean shouldWait,
+                                           boolean lightEditMode,
+                                           @NotNull Disposable disposable) {
+    ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait, lightEditMode));
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ourCommandLineOptions.set(null);
+      }
+    });
+  }
+
+  static @Nullable LightEditCommandLineOptions getCommandLineOptions() {
+    return ourCommandLineOptions.get();
+  }
+
+  static final class LightEditCommandLineOptions {
+    private final boolean myShouldWait;
+    private final boolean myLightEditMode;
+
+    LightEditCommandLineOptions(boolean shouldWait, boolean lightEditMode) {
+      myShouldWait = shouldWait;
+      myLightEditMode = lightEditMode;
+    }
+
+    public boolean shouldWait() {
+      return myShouldWait;
+    }
   }
 }

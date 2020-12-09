@@ -10,8 +10,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.SHELF
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -30,11 +28,8 @@ import kotlin.properties.Delegates.observable
 private val isCommitToolWindowRegistryValue
   get() = Registry.get("vcs.commit.tool.window")
 
-// TODO allow specifying preferred tool window for ChangesViewContentEP
-private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF || it == "Staging Area" }
-
-internal val Project.isCommitToolWindow: Boolean
-  get() = ChangesViewContentManager.getInstanceImpl(this)?.isCommitToolWindow == true
+internal val Project.isCommitToolWindowShown: Boolean
+  get() = ChangesViewContentManager.isCommitToolWindowShown(this)
 
 internal fun ContentManager.selectFirstContent() {
   val firstContent = getContent(0)
@@ -44,25 +39,20 @@ internal fun ContentManager.selectFirstContent() {
 private val LOG = logger<ChangesViewContentManager>()
 
 class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
-  private val toolWindows = mutableSetOf<ToolWindow>()
   private val addedContents = mutableListOf<Content>()
 
+  private val toolWindows = mutableSetOf<ToolWindow>()
   private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
 
-  private fun getToolWindowIdFor(contentName: String): String {
-    return if (isCommitToolWindow && COMMIT_TOOL_WINDOW_CONTENT_FILTER(contentName)) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
+  private fun Content.isInCommitToolWindow() = IS_IN_COMMIT_TOOLWINDOW_KEY.get(this) == true
+
+  private fun Content.resolveContentManager(): ContentManager? {
+    val toolWindowId = if (isInCommitToolWindow() && isCommitToolWindowShown) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
+    val toolWindow = toolWindows.find { it.id == toolWindowId }
+    return toolWindow?.contentManager
   }
 
-  private fun Content.resolveToolWindowId() = getToolWindowIdFor(tabName)
-
-  private fun Content.resolveToolWindow(): ToolWindow? {
-    val toolWindowId = resolveToolWindowId()
-    return toolWindows.find { it.id == toolWindowId }
-  }
-
-  private fun Content.resolveContentManager() = resolveToolWindow()?.contentManager
-
-  var isCommitToolWindow: Boolean
+  private var isCommitToolWindowShown: Boolean
     by observable(isCommitToolWindowRegistryValue.asBoolean() && isNonModalInSettings()) { _, oldValue, newValue ->
       if (oldValue == newValue) return@observable
 
@@ -77,7 +67,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   fun updateToolWindowMapping() {
-    isCommitToolWindow = CommitWorkflowManager.getInstance(project).isNonModal() && isCommitToolWindowRegistryValue.asBoolean()
+    isCommitToolWindowShown = CommitWorkflowManager.getInstance(project).isNonModal() && isCommitToolWindowRegistryValue.asBoolean()
   }
 
   private fun remapContents() {
@@ -148,8 +138,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   override fun <T : Any> getActiveComponent(aClass: Class<T>): T? =
     contentManagers.mapNotNull { tryCast(it.selectedContent?.component, aClass) }.firstOrNull()
 
-  fun isContentSelected(contentName: String): Boolean =
-    contentManagers.any { it.selectedContent?.tabName == contentName }
+  fun isContentSelected(tabName: String): Boolean =
+    contentManagers.any { it.selectedContent?.tabName == tabName }
 
   override fun selectContent(tabName: String) {
     selectContent(tabName, false)
@@ -163,7 +153,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   override fun findContents(predicate: Predicate<Content>): List<Content> {
     val allContents = contentManagers.flatMap { it.contents.asList() } + addedContents
-    return allContents.filter { predicate.test(it) }.toList()
+    return allContents.filter { predicate.test(it) }
   }
 
   private inner class ContentProvidersListener : ContentManagerListener {
@@ -206,10 +196,13 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   companion object {
     const val TOOLWINDOW_ID = ToolWindowId.VCS
-    internal const val COMMIT_TOOLWINDOW_ID = "Commit" // NON-NLS
+    internal const val COMMIT_TOOLWINDOW_ID = ToolWindowId.COMMIT
 
     @JvmField
-    val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
+    internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
+
+    @JvmField
+    val IS_IN_COMMIT_TOOLWINDOW_KEY = Key.create<Boolean>("IS_IN_COMMIT_TOOLWINDOW_KEY")
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<ChangesViewContentI>()
@@ -218,30 +211,38 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       getInstance(project) as? ChangesViewContentManager
 
     @JvmStatic
-    fun getToolWindowIdFor(project: Project, contentName: String): String? =
-      getInstanceImpl(project)?.getToolWindowIdFor(contentName)
+    fun isCommitToolWindowShown(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindowShown == true
 
     @JvmStatic
-    fun getToolWindowFor(project: Project, contentName: String): ToolWindow? =
-      ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, contentName))
+    fun getToolWindowIdFor(project: Project, tabName: String): String {
+      val manager = getInstanceImpl(project) ?: return TOOLWINDOW_ID
+      val toolWindow = manager.toolWindows.find { it.contentManager.contents.any { content -> content.tabName == tabName } }
+      if (toolWindow != null) return toolWindow.id
+
+      val extension = ChangesViewContentEP.EP_NAME.getExtensions(project).find { it.tabName == tabName }
+      if (extension != null) return getToolWindowId(project, extension)
+
+      return TOOLWINDOW_ID
+    }
+
+    @JvmStatic
+    internal fun getToolWindowId(project: Project, contentEp: ChangesViewContentEP): String {
+      if (contentEp.isInCommitToolWindow && isCommitToolWindowShown(project)) return COMMIT_TOOLWINDOW_ID
+      return TOOLWINDOW_ID
+    }
+
+    @JvmStatic
+    fun getToolWindowFor(project: Project, tabName: String): ToolWindow? =
+      ToolWindowManager.getInstance(project).getToolWindow(getToolWindowIdFor(project, tabName))
 
     @JvmField
     val ORDER_WEIGHT_KEY = Key.create<Int>("ChangesView.ContentOrderWeight")
 
-    @NonNls
-    const val LOCAL_CHANGES = "Local Changes"
-
-    @NonNls
-    const val REPOSITORY = "Repository"
-
-    @NonNls
-    const val INCOMING = "Incoming"
-
-    @NonNls
-    const val SHELF = "Shelf"
-
-    @NonNls
-    const val BRANCHES = "Branches"
+    const val LOCAL_CHANGES: @NonNls String = "Local Changes"
+    const val REPOSITORY: @NonNls String = "Repository"
+    const val INCOMING: @NonNls String = "Incoming"
+    const val SHELF: @NonNls String = "Shelf"
+    const val BRANCHES: @NonNls String = "Branches"
   }
 }
 

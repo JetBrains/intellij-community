@@ -2,18 +2,19 @@
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.google.gson.GsonBuilder
-import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
 
+import java.nio.file.Files
+import java.nio.file.Path
 /**
  * Generates product-info.json file containing meta-information about product installation.
  */
 @CompileStatic
-class ProductInfoGenerator {
+final class ProductInfoGenerator {
   public static final String FILE_NAME = "product-info.json"
 
   private final BuildContext context
@@ -22,7 +23,7 @@ class ProductInfoGenerator {
     this.context = context
   }
 
-  void generateProductJson(@NotNull String targetDirectory,
+  void generateProductJson(@NotNull Path targetDirectory,
                            @NotNull String relativePathToBin,
                            @Nullable String startupWmClass,
                            @NotNull String launcherPath,
@@ -39,7 +40,7 @@ class ProductInfoGenerator {
     )])
   }
 
-  void generateMultiPlatformProductJson(@NotNull String targetDirectory, @NotNull String relativePathToBin, @NotNull List<ProductInfoLaunchData> launch) {
+  void generateMultiPlatformProductJson(@NotNull Path targetDirectory, @NotNull String relativePathToBin, @NotNull List<ProductInfoLaunchData> launch) {
     def json = new ProductInfoData(
       name: context.applicationInfo.productName,
       version: context.applicationInfo.fullVersion,
@@ -48,12 +49,12 @@ class ProductInfoGenerator {
       productCode: context.applicationInfo.productCode,
       dataDirectoryName: context.systemSelector,
       svgIconPath: context.applicationInfo.svgRelativePath != null ? "$relativePathToBin/${context.productProperties.baseFileName}.svg" : null,
-      launch: launch
+      launch: launch,
+      customProperties: context.productProperties.generateCustomPropertiesForProductInfo()
     )
-    def file = new File(targetDirectory, FILE_NAME)
-    FileUtil.createParentDirs(file)
-
-    file.withWriter {
+    Path file = targetDirectory.resolve(FILE_NAME)
+    Files.createDirectories(targetDirectory)
+    Files.newBufferedWriter(file).withCloseable {
       new GsonBuilder().setPrettyPrinting().create().toJson(json, it)
     }
   }

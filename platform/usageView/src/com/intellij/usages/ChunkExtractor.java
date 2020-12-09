@@ -30,7 +30,6 @@ import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +45,8 @@ import java.util.Map;
 public final class ChunkExtractor {
   private static final Logger LOG = Logger.getInstance(ChunkExtractor.class);
   static final int MAX_LINE_LENGTH_TO_SHOW = 200;
-  static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 1;
-  static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 1;
+  static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 40;
+  static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 100;
 
   private final EditorColorsScheme myColorsScheme;
 
@@ -286,7 +285,7 @@ public final class ChunkExtractor {
     TextAttributes attrs = bold
                            ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
                            : originalAttrs;
-    result.add(new TextChunk(attrs, StringFactory.createShared(CharArrayUtil.fromSequence(chars, start, end)), usageType));
+    result.add(new TextChunk(attrs, new String(CharArrayUtil.fromSequence(chars, start, end)), usageType));
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {

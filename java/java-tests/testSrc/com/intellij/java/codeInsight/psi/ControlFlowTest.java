@@ -10,6 +10,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
@@ -74,7 +75,7 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     configureFromFileText("a.java", text);
     final PsiCodeBlock body = ((PsiJavaFile)getFile()).getClasses()[0].getMethods()[0].getBody();
     ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, new LocalsControlFlowPolicy(body), false);
-    IntArrayList exitPoints = new IntArrayList();
+    IntList exitPoints = new IntArrayList();
     ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize() -1 , exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
     assertEquals(1, exitPoints.size());
   }

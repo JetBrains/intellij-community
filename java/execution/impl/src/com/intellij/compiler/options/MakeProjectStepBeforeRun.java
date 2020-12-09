@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakeProjectStepBeforeRun.MakeProjectBeforeRunTask> {
+public class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakeProjectStepBeforeRun.MakeProjectBeforeRunTask>
+  implements DumbAware {
   public static final Key<MakeProjectBeforeRunTask> ID = Key.create("MakeProject");
 
   private final Project myProject;

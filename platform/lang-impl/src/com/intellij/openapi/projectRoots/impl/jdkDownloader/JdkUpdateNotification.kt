@@ -19,9 +19,9 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.systemIndependentPath
-import org.jetbrains.annotations.Nls
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -115,9 +115,9 @@ class JdkUpdateNotification(val jdk: Sdk,
 
   fun isTerminated() = lock.withLock { myIsTerminated }
 
-  private fun updateJdkAction(@Nls message: String) =InstallUpdateNotification(message)
+  private fun updateJdkAction(@NotificationContent message: String) = InstallUpdateNotification(message)
 
-  inner class InstallUpdateNotification(message: String) : NotificationAction(message) {
+  inner class InstallUpdateNotification(@NotificationContent message: String) : NotificationAction(message) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       lock.withLock {
         if (myIsUpdateRunning) return
@@ -145,7 +145,7 @@ class JdkUpdateNotification(val jdk: Sdk,
     val message = ProjectBundle.message("notification.text.jdk.update.found",
                                         jdk.name,
                                         newItem.fullPresentationText,
-                                        oldItem.fullPresentationText)
+                                        oldItem.versionPresentationText)
 
     NotificationGroupManager.getInstance().getNotificationGroup("JDK Update")
       .createNotification(title, message, NotificationType.INFORMATION)

@@ -16,8 +16,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.revers
 /**
  * @author ven
  */
-public class DFAEngine<E> {
-
+public final class DFAEngine<E> {
   private final Instruction[] myFlow;
   private final DfaInstance<? super E> myDfa;
   private final Semilattice<E> mySemilattice;

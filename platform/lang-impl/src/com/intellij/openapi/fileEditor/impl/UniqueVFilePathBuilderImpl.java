@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -25,21 +25,18 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author yole
  */
-public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
+final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   @NotNull
   @Override
   public String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile file, @NotNull GlobalSearchScope scope) {
@@ -139,7 +136,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
                                                                      @NotNull GlobalSearchScope scope) {
     boolean useIndex = !skipNonOpenedFiles && !LightEdit.owns(project);
     Collection<VirtualFile> filesWithSameName = useIndex ? getFilesByNameFromIndex(fileName, project, scope) : Collections.emptySet();
-    THashSet<VirtualFile> setOfFilesWithTheSameName = new THashSet<>(filesWithSameName);
+    Set<VirtualFile> setOfFilesWithTheSameName = new HashSet<>(filesWithSameName);
     // add open files out of project scope
     for (VirtualFile openFile : FileEditorManager.getInstance(project).getOpenFiles()) {
       if (getName(openFile).equals(fileName)) {
@@ -173,18 +170,15 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
 
   @NotNull
   private static Collection<VirtualFile> getFilesByNameFromIndex(@NotNull String fileName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    if (!DumbService.isDumb(project)) {
-      // get data as is
-      Collection<VirtualFile> rawDataFromIndex = disableIndexUpToDateCheckInEdt(() -> FilenameIndex.getVirtualFilesByName(project, fileName, scope));
-      // filter only suitable files, we can miss some files but it's ok for presentation reasons
-      return ContainerUtil.filter(rawDataFromIndex, f -> fileName.equals(getName(f)));
+    ThrowableComputable<Collection<VirtualFile>, RuntimeException> query =
+      () -> FilenameIndex.getVirtualFilesByName(project, fileName, scope);
+    if (DumbService.isDumb(project)) {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(query);
     }
-    else {
-      Ref<Collection<VirtualFile>> filesFromIndex = Ref.create();
-      FileBasedIndex.getInstance().ignoreDumbMode(() -> filesFromIndex.set(FilenameIndex.getVirtualFilesByName(project, fileName, scope)),
-                                                  DumbModeAccessType.RELIABLE_DATA_ONLY);
-      return filesFromIndex.get();
-    }
+    // get data as is
+    Collection<VirtualFile> rawDataFromIndex = disableIndexUpToDateCheckInEdt(query);
+    // filter only suitable files, we can miss some files but it's ok for presentation reasons
+    return ContainerUtil.filter(rawDataFromIndex, f -> fileName.equals(getName(f)));
   }
 
   private static <T,E extends Throwable> T disableIndexUpToDateCheckInEdt(@NotNull ThrowableComputable<T, E> computable) throws E {

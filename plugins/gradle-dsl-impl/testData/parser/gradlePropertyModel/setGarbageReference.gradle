@@ -1,0 +1,4 @@
+ext {
+  prop1 = 'Then I heard one of the four living creatures say'
+  prop2 = prop1
+}

@@ -28,6 +28,17 @@ public final class ComparingUtils {
     }
   }
 
+  public static boolean isModified(JTextField textField, int defaultValue, int value) {
+    try {
+      String text = textField.getText().trim();
+      int fieldValue = text.isEmpty() ? defaultValue : Integer.parseInt(text);
+      return fieldValue != value;
+    }
+    catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
   public static boolean isModified(RawCommandLineEditor editor, String value) {
     return !editor.getText().equals(value);
   }

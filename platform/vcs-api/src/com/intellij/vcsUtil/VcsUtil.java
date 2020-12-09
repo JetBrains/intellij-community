@@ -394,7 +394,7 @@ public class VcsUtil {
   }
 
   public static <T> T computeWithModalProgress(@Nullable Project project,
-                                               @NotNull @Nls String title,
+                                               @NotNull @NlsContexts.DialogTitle String title,
                                                boolean canBeCancelled,
                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends VcsException> computable)
     throws VcsException {

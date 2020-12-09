@@ -7,7 +7,6 @@ import com.intellij.ide.FileIconProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -21,14 +20,13 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class VcsLogFileType : FileType {
+class VcsLogFileType private constructor() : FileType {
   override fun getName(): String = "VcsLog"
   override fun getDescription(): String = VcsLogBundle.message("vcs.log.file.type.description")
   override fun getDefaultExtension(): String = ""
   override fun getIcon(): Icon? = AllIcons.Vcs.Branch
   override fun isBinary(): Boolean = true
   override fun isReadOnly(): Boolean = true
-  override fun getCharset(file: VirtualFile, content: ByteArray): String? = null
 
   companion object {
     val INSTANCE = VcsLogFileType()
@@ -69,9 +67,7 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   override fun disposeEditor(editor: FileEditor) {
-    if (editor.file?.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != true) {
-      editor.disposeLogUis()
-    }
+    editor.disposeLogUis()
 
     super.disposeEditor(editor)
   }

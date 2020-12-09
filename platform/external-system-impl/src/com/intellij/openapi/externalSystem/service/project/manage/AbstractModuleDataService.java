@@ -42,8 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -103,7 +101,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         }
         String productionModuleId = node.getData().getProductionModuleId();
         modelsProvider.setTestModuleProperties(module, productionModuleId);
-        setModuleOptions(module, node);
+        setModuleOptions(module, node, modelsProvider);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
 
@@ -187,14 +185,14 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       .filter(module -> !ExternalSystemApiUtil.isExternalSystemAwareModule(projectSystemId, module))
       .forEach(module -> {
         ExternalSystemModulePropertyManager.getInstance(module)
-          .setExternalOptions(projectSystemId, moduleData, node.getData(ProjectKeys.PROJECT));
+          .setExternalOptions(projectSystemId, moduleData, node.getData(ProjectKeys.PROJECT), modelsProvider);
       });
 
   }
 
   private static boolean isModulePointsSameRoot(ModuleData moduleData, Module ideModule) {
     for (VirtualFile root: ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-      if (PathUtil.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
+      if (VfsUtilCore.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
         return true;
       }
     }
@@ -367,7 +365,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       @Override
       protected JComponent createCenterPanel() {
         orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName()));
+        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName())); //NON-NLS
         orphanModulesList.setBorder(JBUI.Borders.empty(5));
 
         JScrollPane myModulesScrollPane =
@@ -419,11 +417,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     ExternalSystemModulePropertyManager.getInstance(module).unlinkExternalOptions();
   }
 
-  protected void setModuleOptions(Module module, DataNode<E> moduleDataNode) {
+  protected void setModuleOptions(Module module, DataNode<E> moduleDataNode, IdeModifiableModelsProvider modelsProvider) {
     ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
     ExternalSystemModulePropertyManager.getInstance(module)
-      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT));
+      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT), modelsProvider);
   }
 
   @Override
@@ -491,24 +489,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
 
     if (LOG.isDebugEnabled()) {
-      final boolean changed = !ArrayUtil.equals(orderEntries, newOrder, Comparator.naturalOrder());
+      boolean changed = !Arrays.equals(orderEntries, newOrder);
       LOG.debug(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);
-  }
-
-  private static int findNewPlace(OrderEntry[] newOrder, int newIndex) {
-    int idx = newIndex;
-    while (idx < 0 || (idx < newOrder.length && newOrder[idx] != null)) {
-      idx++;
-    }
-    if (idx >= newOrder.length) {
-      idx = newIndex - 1;
-      while (idx >= 0 && (idx >= newOrder.length || newOrder[idx] != null)) {
-        idx--;
-      }
-    }
-    return idx;
   }
 
   private void importModuleSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {

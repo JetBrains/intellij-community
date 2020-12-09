@@ -47,6 +47,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
@@ -65,6 +66,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -365,14 +367,13 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkTemplateTextContains(ideaPlugin.getDescription(), "most HTML tags may be used", holder);
 
     checkMaxLength(ideaPlugin.getChangeNotes(), 65535, holder);
-    checkHasRealText(ideaPlugin.getChangeNotes(), 40, holder);
     checkTemplateTextContains(ideaPlugin.getChangeNotes(), "Add change notes here", holder);
     checkTemplateTextContains(ideaPlugin.getChangeNotes(), "most HTML tags may be used", holder);
 
     if (!ideaPlugin.hasRealPluginId()) return;
 
     MultiMap<String, Dependency> dependencies = MultiMap.create();
-    ideaPlugin.getDependencies().forEach(dependency -> {
+    ideaPlugin.getDepends().forEach(dependency -> {
       if (DomUtil.hasXml(dependency.getConfigFile())) {
         dependencies.putValue(dependency.getConfigFile().getStringValue(), dependency);
       }
@@ -628,17 +629,47 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateUnresolvedExtension(Extensions.UnresolvedExtension unresolvedExtension, DomElementAnnotationHolder holder) {
-    final Extensions extensions = DomUtil.getParentOfType(unresolvedExtension, Extensions.class, true);
+    final Module module = unresolvedExtension.getModule();
+    if (module == null) return;
+
+    final Extensions extensions = unresolvedExtension.getParentOfType(Extensions.class, true);
     assert extensions != null;
-
     String qualifiedExtensionId = extensions.getEpPrefix() + unresolvedExtension.getXmlElementName();
-    String message = new HtmlBuilder()
-      .append(DevKitBundle.message("error.cannot.resolve.extension.point", qualifiedExtensionId))
-      .nbsp()
-      .append(HtmlChunk.link(DEPENDENCIES_DOC_URL, DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
-      .wrapWith(HtmlChunk.html()).toString();
 
-    holder.createProblem(unresolvedExtension, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, message, null);
+    final ExtensionPoint extensionPoint = ExtensionPointIndex.findExtensionPoint(module, qualifiedExtensionId);
+    if (extensionPoint == null) {
+      String message = new HtmlBuilder()
+        .append(DevKitBundle.message("error.cannot.resolve.extension.point", qualifiedExtensionId))
+        .nbsp()
+        .append(HtmlChunk.link(DEPENDENCIES_DOC_URL, DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
+        .wrapWith(HtmlChunk.html()).toString();
+
+      holder.createProblem(unresolvedExtension, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, message, null);
+      return;
+    }
+
+
+    final IdeaPlugin ideaPlugin = extensionPoint.getParentOfType(IdeaPlugin.class, true);
+    assert ideaPlugin != null;
+    String dependencyId = ideaPlugin.getPluginId();
+
+    final LocalQuickFix addDependsFix = new LocalQuickFix() {
+      @Override
+      public @IntentionFamilyName @NotNull String getFamilyName() {
+        return DevKitBundle.message("error.cannot.resolve.extension.point.missing.dependency.fix.family.name");
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        final IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
+        assert ideaPlugin != null;
+        final Dependency dependency = ideaPlugin.addDependency();
+        dependency.setStringValue(dependencyId);
+      }
+    };
+    holder.createProblem(unresolvedExtension,
+                         DevKitBundle.message("error.cannot.resolve.extension.point.missing.dependency", qualifiedExtensionId),
+                         addDependsFix);
   }
 
   private static void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
@@ -699,23 +730,49 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     return false;
   }
 
+  /**
+   * Hardcoded known deprecated EPs with corresponding replacement or empty String if no replacement EP.
+   */
+  private static final Map<String, String> ADDITIONAL_DEPRECATED_EP = ContainerUtil.<String, String>immutableMapBuilder()
+    .put("com.intellij.definitionsSearch", "com.intellij.definitionsScopedSearch")
+    .put("com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData")
+    .put("com.intellij.exportable", "")
+    .build();
+
   private static void annotateExtension(Extension extension,
                                         DomElementAnnotationHolder holder,
                                         ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
+    final Module module = extension.getModule();
 
     final PsiClass extensionPointClass = extensionPoint.getEffectiveClass();
+    final String effectiveQualifiedName = extensionPoint.getEffectiveQualifiedName();
     if (extensionPointClass != null && extensionPointClass.isDeprecated()) {
       highlightDeprecated(
-        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", extensionPoint.getEffectiveQualifiedName()),
+        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", effectiveQualifiedName),
         holder, false, false);
     }
     else if (extensionPointClass != null && extensionPointClass.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
       highlightExperimental(extension, holder);
     }
 
-    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(extensionPoint.getEffectiveQualifiedName()) && extension.exists()) {
+    final String knownReplacementEp = ADDITIONAL_DEPRECATED_EP.get(effectiveQualifiedName);
+    if (knownReplacementEp != null && module != null) {
+      if (StringUtil.isEmpty(knownReplacementEp)) {
+        highlightDeprecated(
+          extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", effectiveQualifiedName),
+          holder, false, false);
+      }
+      else if (ExtensionPointIndex.findExtensionPoint(module, knownReplacementEp) != null) {
+        highlightDeprecated(
+          extension,
+          DevKitBundle.message("inspections.plugin.xml.deprecated.ep.use.replacement", effectiveQualifiedName, knownReplacementEp),
+          holder, false, false);
+      }
+    }
+
+    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName) && extension.exists()) {
       String implementation = extension.getXmlTag().getAttributeValue("implementation");
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
@@ -728,7 +785,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, holder);
           }
           else {
-            Module module = plugin.getModule();
             boolean inPlatformCode = module != null && module.getName().startsWith("intellij.platform.");
             if (!inPlatformCode) {
               highlightRedundant(extension,
@@ -783,7 +839,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       }
     }
 
-    Module module = extension.getModule();
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       componentModuleRegistrationChecker.checkProperXmlFileForExtension(extension);
     }

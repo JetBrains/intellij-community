@@ -51,11 +51,6 @@ class OrderEnumeratorTest {
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
   }
 
-  @After
-  fun tearDown() {
-    JarFileSystemImpl.cleanupForNextTest() // WTF, won't let delete jar otherwise
-  }
-
   @Test
   fun testLibrary() {
     ModuleRootModificationUtil.addDependency(module, library)

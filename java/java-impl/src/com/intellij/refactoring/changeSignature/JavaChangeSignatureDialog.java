@@ -195,7 +195,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myExceptionsModel.setTypeInfos(getMethod());
 
     final JBTable table = new JBTable(myExceptionsModel);
-    table.setStriped(true);
+    table.setShowGrid(false);
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
@@ -646,7 +646,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         }
 
         PsiClassType throwable = JavaPsiFacade.getElementFactory(myProject)
-          .createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
+          .createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, type.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return JavaRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }

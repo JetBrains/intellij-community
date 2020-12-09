@@ -1,6 +1,7 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
-import circlet.code.api.CodeReviewWithCount
+import circlet.code.api.CodeReviewListItem
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.CompositeShortcutSet
@@ -25,9 +26,9 @@ import javax.swing.JComponent
 import javax.swing.ListSelectionModel
 
 internal class SpaceReviewsList(
-  listModel: CollectionListModel<CodeReviewWithCount>,
+  listModel: CollectionListModel<CodeReviewListItem>,
   lifetime: Lifetime
-) : JBList<CodeReviewWithCount>(listModel),
+) : JBList<CodeReviewListItem>(listModel),
     DataProvider {
 
   private val openButtonViewModel = OpenReviewButtonViewModel()
@@ -63,7 +64,7 @@ internal class SpaceReviewsList(
   }
 
   override fun getData(dataId: String): Any? = when {
-    SpaceReviewListDataKeys.SELECTED_REVIEW.`is`(dataId) -> selectedValue
+    SpaceReviewDataKeys.SELECTED_REVIEW.`is`(dataId) -> selectedValue
     else -> null
   }
 
@@ -75,8 +76,10 @@ internal class SpaceReviewsList(
 private class SpaceOpenCodeReviewDetailsAction : DumbAwareAction(SpaceBundle.messagePointer("action.open.review.details.text")) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val data = e.getData(SpaceReviewListDataKeys.SELECTED_REVIEW) ?: return
-    e.getData(SpaceReviewDataKeys.SELECTED_REVIEW_VM)?.selectedReview?.value = data
-    openReviewInEditor(project, data)
+    val data = e.getData(SpaceReviewDataKeys.SELECTED_REVIEW) ?: return
+    val selectedReviewVm = e.getData(SpaceReviewDataKeys.SELECTED_REVIEW_VM) ?: return
+    selectedReviewVm.selectedReview.value = data
+
+    openReviewInEditor(project, selectedReviewVm.workspace, selectedReviewVm.projectInfo, data)
   }
 }

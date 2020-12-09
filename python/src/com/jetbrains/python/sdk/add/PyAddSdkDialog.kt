@@ -242,7 +242,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private fun createAnacondaPanel(project: Project?, module: Module?): PyAddSdkPanel {
     val newCondaEnvPanel = when {
-      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, module, existingSdks, null, context)
+      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, module, existingSdks, null)
       else -> null
     }
     val panels = listOf(newCondaEnvPanel,
@@ -356,7 +356,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     }
 
     /**
-     * Fixes the problem when [PyAddDockerSdkProvider.createView] for Docker
+     * Fixes the problem when `PyAddDockerSdkProvider.createView` for Docker
      * and Docker Compose types throws [NoClassDefFoundError] exception when
      * `org.jetbrains.plugins.remote-run` plugin is disabled.
      */

@@ -1,0 +1,7 @@
+android {
+  productFlavors {
+    flavor {
+      applicationId 'abc.xyz'
+    }
+  }
+}

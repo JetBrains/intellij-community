@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.refactoring;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -13,7 +13,7 @@ public class PropertiesRefactoringSettings implements PersistentStateComponent<P
   public boolean RENAME_SEARCH_IN_COMMENTS = false;
 
   public static PropertiesRefactoringSettings getInstance() {
-    return ServiceManager.getService(PropertiesRefactoringSettings.class);
+    return ApplicationManager.getApplication().getService(PropertiesRefactoringSettings.class);
   }
 
   @Override

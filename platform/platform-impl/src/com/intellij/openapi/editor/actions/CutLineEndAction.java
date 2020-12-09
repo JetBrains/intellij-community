@@ -17,7 +17,7 @@ public class CutLineEndAction extends TextComponentEditorAction {
 
   private static final class Handler extends EditorWriteActionHandler {
     private Handler() {
-      super(false);
+      super();
     }
 
     @Override

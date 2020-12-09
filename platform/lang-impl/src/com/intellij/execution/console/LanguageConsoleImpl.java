@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -8,22 +9,26 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -32,6 +37,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,6 +48,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.DocumentUtil;
@@ -56,7 +64,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * @author Gregory.Shrago
@@ -127,7 +137,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleExecutionEditor.getComponent());
     myPanel.add(myScrollBar);
-    myPanel.setBackground(myConsoleExecutionEditor.getEditor().getBackgroundColor());
+    myPanel.setBackground(new JBColor(() -> myConsoleExecutionEditor.getEditor().getBackgroundColor()));
     DataManager.registerDataProvider(myPanel, this);
   }
 
@@ -247,8 +257,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @Override
-  @NotNull
-  public String getTitle() {
+  public @NlsContexts.TabTitle @NotNull String getTitle() {
     return myHelper.title;
   }
 
@@ -347,32 +356,35 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
   }
 
-  //private static void duplicateHighlighters(@NotNull MarkupModel to, @NotNull MarkupModel from, int offset, @NotNull TextRange textRange) {
-  //  for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
-  //    if (!rangeHighlighter.isValid()) {
-  //      continue;
-  //    }
-  //    Object tooltip = rangeHighlighter.getErrorStripeTooltip();
-  //    HighlightInfo highlightInfo = tooltip instanceof HighlightInfo? (HighlightInfo)tooltip : null;
-  //    if (highlightInfo != null) {
-  //      if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) {
-  //        continue;
-  //      }
-  //      if (highlightInfo.type.getAttributesKey() == EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES) {
-  //        continue;
-  //      }
-  //    }
-  //    int localOffset = textRange.getStartOffset();
-  //    int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
-  //    int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;
-  //    if (start > end) {
-  //      continue;
-  //    }
-  //    RangeHighlighter h = to.addRangeHighlighter(start + offset, end + offset, rangeHighlighter.getLayer(),
-  //                                                rangeHighlighter.getTextAttributes(), rangeHighlighter.getTargetArea());
-  //    ((RangeHighlighterEx)h).setAfterEndOfLine(((RangeHighlighterEx)rangeHighlighter).isAfterEndOfLine());
-  //  }
-  //}
+    public static void duplicateHighlighters(@NotNull MarkupModel to, @NotNull MarkupModel from, int offset, @NotNull TextRange textRange, @Nullable String... disableAttributes) {
+    for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
+      if (!rangeHighlighter.isValid()) {
+        continue;
+      }
+      Object tooltip = rangeHighlighter.getErrorStripeTooltip();
+      HighlightInfo highlightInfo = tooltip instanceof HighlightInfo? (HighlightInfo)tooltip : null;
+      if (highlightInfo != null) {
+        if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) {
+          continue;
+        }
+          if (highlightInfo.type.getAttributesKey() == EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES) {
+              continue;
+          }
+
+        if(Arrays.stream(disableAttributes).filter(Objects::nonNull).anyMatch(x -> x.equals(highlightInfo.type .getAttributesKey().getExternalName())))
+            continue;
+      }
+      int localOffset = textRange.getStartOffset();
+      int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
+      int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;
+      if (start > end) {
+        continue;
+      }
+      RangeHighlighter h = to.addRangeHighlighter(start + offset, end + offset, rangeHighlighter.getLayer(),
+                                                  rangeHighlighter.getTextAttributes(null), rangeHighlighter.getTargetArea());
+      ((RangeHighlighterEx)h).setAfterEndOfLine(((RangeHighlighterEx)rangeHighlighter).isAfterEndOfLine());
+    }
+  }
 
   @Override
   public void dispose() {
@@ -437,6 +449,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   private void addPromptToHistoryImpl(@NotNull String prompt) {
+    flushDeferredText();
     DocumentEx document = getHistoryViewer().getDocument();
     RangeHighlighter highlighter =
       this.getHistoryViewer().getMarkupModel().addRangeHighlighter(null, document.getTextLength(), document.getTextLength(), 0,
@@ -448,7 +461,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   public static class Helper {
     public final Project project;
     public final VirtualFile virtualFile;
-    String title;
+    @NlsSafe String title;
     PsiFile file;
 
     public Helper(@NotNull Project project, @NotNull VirtualFile virtualFile) {

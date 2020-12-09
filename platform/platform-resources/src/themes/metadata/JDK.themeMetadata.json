@@ -403,7 +403,7 @@
     },
     {
       "key": "DragAndDrop.areaBackground",
-      "description": "Drag and drop area on the Welcome screen"
+      "description": "Drag and drop area background"
     },
     {
       "key": "DragAndDrop.areaBorderColor"

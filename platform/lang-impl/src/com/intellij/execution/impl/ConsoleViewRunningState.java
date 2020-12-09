@@ -6,8 +6,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ObjectUtils;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +91,7 @@ public class ConsoleViewRunningState extends ConsoleState {
 
   @Override
   public boolean isCommandLine(@NotNull String line) {
-    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler)myProcessHandler).getCommandLine());
+    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler<?>)myProcessHandler).getCommandLine());
   }
 
   @Override
@@ -116,12 +116,11 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   private char getEnterKeyCode() {
-    if (SystemInfo.isWindows &&
-        myProcessHandler instanceof OSProcessHandler &&
-        ((OSProcessHandler)myProcessHandler).getProcess() instanceof PtyProcess) {
-      // pty4j expects \r as Enter key code
-      // https://github.com/JetBrains/pty4j/blob/0.9.4/test/com/pty4j/PtyTest.java#L54
-      return Ascii.CR;
+    if (myProcessHandler instanceof BaseProcessHandler<?>) {
+      PtyProcess process = ObjectUtils.tryCast(((BaseProcessHandler<?>)myProcessHandler).getProcess(), PtyProcess.class);
+      if (process != null) {
+        return (char)process.getEnterKeyCode();
+      }
     }
     return Ascii.LF;
   }

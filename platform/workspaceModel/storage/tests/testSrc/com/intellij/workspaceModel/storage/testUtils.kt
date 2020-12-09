@@ -4,7 +4,9 @@ package com.intellij.workspaceModel.storage
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap
 import com.intellij.workspaceModel.storage.impl.containers.copy
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.ByteArrayInputStream
@@ -27,7 +29,7 @@ object SerializationRoundTripChecker {
   fun verifyPSerializationRoundTrip(storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
     storage as WorkspaceEntityStorageImpl
 
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager, true)
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
 
     val stream = ByteArrayOutputStream()
     serializer.serializeCache(stream, storage)
@@ -65,8 +67,8 @@ object SerializationRoundTripChecker {
     assertMapsEqual(expected.refs.oneToManyContainer, actual.refs.oneToManyContainer)
     assertMapsEqual(expected.refs.abstractOneToOneContainer, actual.refs.abstractOneToOneContainer)
     assertMapsEqual(expected.refs.oneToAbstractManyContainer, actual.refs.oneToAbstractManyContainer)
-    assertMapsEqual(expected.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo, actual.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo)
-    assertMapsEqual(expected.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo, actual.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo)
+    assertMapsEqual(expected.indexes.virtualFileIndex.entityId2VirtualFileUrl, actual.indexes.virtualFileIndex.entityId2VirtualFileUrl)
+    assertMapsEqual(expected.indexes.virtualFileIndex.vfu2EntityId, actual.indexes.virtualFileIndex.vfu2EntityId)
     // Just checking that all properties have been asserted
     assertEquals(4, RefsTable::class.memberProperties.size)
 
@@ -134,6 +136,26 @@ object SerializationRoundTripChecker {
   }
 
   private fun <A, B> assertBiMap(expected: BidirectionalMap<A, B>, actual: BidirectionalMap<A, B>) {
+    val local = expected.copy()
+    for (key in actual.keys) {
+      val value = actual.getValue(key)
+      val expectedValue = local.remove(key)
+
+      if (expectedValue == null) {
+        Assert.fail(String.format("Expected to find '%s' -> '%s' mapping but it doesn't exist", key, value))
+      }
+
+      if (expectedValue != value) {
+        Assert.fail(
+          String.format("Expected to find '%s' value for the key '%s' but got '%s'", expectedValue, key, value))
+      }
+    }
+    if (local.isNotEmpty()) {
+      Assert.fail("No mappings found for the following keys: " + local.keys)
+    }
+  }
+
+  private fun <A, B> assertBiMap(expected: BidirectionalSetMap<A, B>, actual: BidirectionalSetMap<A, B>) {
     val local = expected.copy()
     for (key in actual.keys) {
       val value = actual.getValue(key)

@@ -8,11 +8,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.*;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
-  protected final Project myProject;
-
   private final JComponent myMainPanel;
   private final List<Configurable> myConfigurables = new ArrayList<>();
   private final Action myHelpAction = new MyHelpAction();
@@ -32,7 +30,6 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   public UpdateOrStatusOptionsDialog(Project project, @NlsContexts.DialogTitle String title, Map<Configurable, AbstractVcs> envToConfMap) {
     super(project);
     setTitle(title);
-    myProject = project;
     if (envToConfMap.size() == 1) {
       myMainPanel = new JPanel(new BorderLayout());
       addComponent(envToConfMap.keySet().iterator().next(), BorderLayout.CENTER);

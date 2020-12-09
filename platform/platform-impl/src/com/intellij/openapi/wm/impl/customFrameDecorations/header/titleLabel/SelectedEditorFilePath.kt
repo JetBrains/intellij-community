@@ -1,6 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.HelpTooltip
@@ -41,7 +40,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import kotlin.math.min
 
-open class SelectedEditorFilePath {
+internal open class SelectedEditorFilePath {
   var onBoundsChanged: (() -> Unit)? = null
   private val classKey = "ide.borderless.tab.caption.in.title"
   private val projectTitle = ProjectTitlePane()
@@ -83,15 +82,13 @@ open class SelectedEditorFilePath {
 
     override fun paintComponent(g: Graphics) {
       val fm = getFontMetrics(font)
-
       g as Graphics2D
-
       UISettings.setupAntialiasing(g)
-
       g.drawString(titleString, 0, fm.ascent)
     }
   }
 
+  @Suppress("SpellCheckingInspection")
   private var pane = object : JPanel(MigLayout("ins 0, novisualpadding, gap 0", "[]push")) {
     override fun addNotify() {
       super.addNotify()
@@ -132,7 +129,9 @@ open class SelectedEditorFilePath {
   private var disposable: Disposable? = null
   var project: Project? = null
     set(value) {
-      if (field == value) return
+      if (field == value) {
+        return
+      }
       field = value
 
       installListeners()
@@ -158,64 +157,62 @@ open class SelectedEditorFilePath {
   private var simpleExtensions: List<TitleInfoProvider>? = null
 
   protected open fun installListeners() {
-    project ?: return
+    val project = project ?: return
 
     if (disposable != null) {
       unInstallListeners()
     }
 
-    project?.let { it ->
-      val disp = Disposable {
-        disposable = null
-        HelpTooltip.dispose(label)
-      }
-
-      Disposer.register(it, disp)
-      disposable = disp
-
-      it.messageBus.connect(disp).subscribe(UISettingsListener.TOPIC,
-                                            UISettingsListener {
-                                              updateProjectPath()
-                                            })
-      Registry.get(classKey).addListener(registryListener, disp)
-
-      simpleExtensions = getProviders(it)
-      simplePaths = simpleExtensions?.map { ex ->
-        val partTitle = DefaultPartTitle(ex.borderlessPrefix, ex.borderlessSuffix)
-        ex.addUpdateListener(disp) {
-          partTitle.active = it.isActive
-          partTitle.longText = it.value
-
-          update()
-        }
-        partTitle
-      }
-
-      val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
-      simplePaths?.let { sp -> shrinkingPaths.addAll(sp) }
-      components = shrinkingPaths
-      updateTitlePaths()
-
-      it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-          updatePathLater()
-        }
-
-        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          updatePathLater()
-        }
-
-        override fun selectionChanged(event: FileEditorManagerEvent) {
-          updatePathLater()
-        }
-      })
-
-      it.messageBus.connect(disp).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-        override fun after(events: List<VFileEvent>) {
-          updatePathLater()
-        }
-      })
+    val disp = Disposable {
+      disposable = null
+      HelpTooltip.dispose(label)
     }
+
+    Disposer.register(project, disp)
+    disposable = disp
+
+    val busConnection = project.messageBus.connect(disp)
+    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      updateProjectPath()
+    })
+    Registry.get(classKey).addListener(registryListener, disp)
+
+    simpleExtensions = getProviders()
+    simplePaths = simpleExtensions?.map { titleInfoProvider ->
+      val partTitle = DefaultPartTitle(titleInfoProvider.borderlessPrefix, titleInfoProvider.borderlessSuffix)
+      titleInfoProvider.addUpdateListener(project) {
+        partTitle.active = it.isActive(project)
+        partTitle.longText = it.getValue(project)
+
+        update()
+      }
+      partTitle
+    }
+
+    val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
+    simplePaths?.let { shrinkingPaths.addAll(it) }
+    components = shrinkingPaths
+    updateTitlePaths()
+
+    busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+        updatePathLater()
+      }
+
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        updatePathLater()
+      }
+
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        updatePathLater()
+      }
+    })
+
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        updatePathLater()
+      }
+    })
 
     updateProject()
     updatePath()
@@ -295,7 +292,7 @@ open class SelectedEditorFilePath {
 
     isClipped = true
 
-    val shrinkedSimplePaths = simplePaths?.let { shrinkSimplePaths(it, width - (projectTitle.longWidth + classTitle.longWidth)) }
+    val shrankSimplePaths = simplePaths?.let { shrinkSimplePaths(it, width - (projectTitle.longWidth + classTitle.longWidth)) }
 
     val pathPatterns = listOf(
       Pattern(projectTitle.longWidth + classTitle.shortWidth) {
@@ -310,7 +307,7 @@ open class SelectedEditorFilePath {
         projectTitle.getShort()
       })
 
-    titleString = shrinkedSimplePaths?.let {
+    titleString = shrankSimplePaths?.let {
       projectTitle.getLong() +
       classTitle.getLong() + it
     } ?: pathPatterns.firstOrNull { it.preferredWidth < width }?.let { it.createTitle() } ?: ""

@@ -33,6 +33,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testYieldIncomplete0() { doParserTest("yield "); }
   public void testYieldIncomplete1() { doParserTest("yield x"); }
   public void testYieldCall() { doParserTest("foo.yield();"); }
+  public void testYieldDecrement() { doParserTest("yield ++yield;"); }
   public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }

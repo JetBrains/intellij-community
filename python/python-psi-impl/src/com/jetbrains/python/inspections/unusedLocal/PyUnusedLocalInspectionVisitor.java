@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.unusedLocal;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.*;
@@ -35,9 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
-public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
+public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final boolean myIgnoreTupleUnpacking;
   private final boolean myIgnoreLambdaParameters;
   private final boolean myIgnoreRangeIterationVariables;
@@ -193,7 +190,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       final String functionName = function.getName();
 
       final LanguageLevel level = LanguageLevel.forElement(function);
-      final ImmutableMap<String, PyNames.BuiltinDescription> builtinMethods =
+      final Map<String, PyNames.BuiltinDescription> builtinMethods =
         function.getContainingClass() != null ? PyNames.getBuiltinMethods(level) : PyNames.getModuleBuiltinMethods(level);
 
       return !PyNames.INIT.equals(functionName) && builtinMethods.containsKey(functionName);
@@ -229,7 +226,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         else {
           startInstruction = i;
         }
-        analyzeReadsInScope(name, owner, instructions, startInstruction, as(element, PyReferenceExpression.class));
+        analyzeReadsInScope(name, owner, instructions, startInstruction, PyUtil.as(element, PyReferenceExpression.class));
       }
     }
   }

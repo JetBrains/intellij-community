@@ -181,6 +181,8 @@ public class XmlTagBlock extends AbstractXmlBlock{
       else {
         return createXmlTextBlocks(result, child, wrap, alignment);
       }
+    } else if (type == XmlElementType.HTML_RAW_TEXT) {
+      return createXmlTextBlocks(result, child, wrap, alignment);
     }
     else if (type == XmlElementType.XML_COMMENT) {
       if (buildInjectedPsiBlocks(result, child, wrap, alignment, indent)) return child;
@@ -331,24 +333,24 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return myIndent;
   }
 
-  private ASTNode createXmlTextBlocks(final List<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
+  private ASTNode createXmlTextBlocks(final List<Block> list, final @NotNull ASTNode textNode, final Wrap wrap, final Alignment alignment) {
     ASTNode child = textNode.getFirstChildNode();
     return createXmlTextBlocks(list, textNode, child, wrap, alignment);
   }
 
   private ASTNode createXmlTextBlocks(final List<Block> list, final ASTNode textNode, ASTNode child,
                                       final Wrap wrap,
-                                      final Alignment alignment
-  ) {
+                                      final Alignment alignment) {
     while (child != null) {
-      if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         final Indent indent = getChildrenIndent();
-        child = processChild(list,child,  wrap, alignment, indent);
-        if (child == null) return child;
+        child = processChild(list, child, wrap, alignment, indent);
+        if (child == null) return null;
         if (child.getTreeParent() != textNode) {
           if (child.getTreeParent() != myNode) {
             return createXmlTextBlocks(list, child.getTreeParent(), child.getTreeNext(), wrap, alignment);
-          } else {
+          }
+          else {
             return child;
           }
         }

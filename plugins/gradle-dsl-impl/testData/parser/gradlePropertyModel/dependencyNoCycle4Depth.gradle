@@ -1,0 +1,6 @@
+ext {
+  prop1 = "Value"
+  prop2 = "${prop1}"
+  prop3 = "${prop2}"
+  prop4 = "${prop3}"
+}

@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.problems
 import com.intellij.pom.Navigatable
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
 
 
 internal class ProblemCollector {
@@ -61,9 +60,7 @@ internal class ProblemCollector {
                               containingFile: PsiFile,
                               scope: GlobalSearchScope): Set<Problem>? {
       val usageExtractor: (PsiFile, Int) -> PsiElement? = { file, index -> extractUsage(file, index, memberType) }
-      val collector = MemberUsageCollector(memberName, containingFile, usageExtractor)
-      PsiSearchHelper.getInstance(containingFile.project).processAllFilesWithWord(memberName, scope, collector, true)
-      val usages = collector.collectedUsages ?: return null
+      val usages = MemberUsageCollector.collect(memberName, containingFile, scope, usageExtractor) ?: return null
       return usages.flatMapTo(mutableSetOf()) { ProblemSearcher.getProblems(it, containingFile, memberType) }
     }
 

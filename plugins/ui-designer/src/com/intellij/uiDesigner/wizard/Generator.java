@@ -676,16 +676,13 @@ public final class Generator {
           }
 
           final PsiExpressionList argumentList = callExpression.getArgumentList();
-          if (argumentList == null) {
-            continue;
-          }
 
           final PsiExpression[] expressions = argumentList.getExpressions();
-          if (expressions == null || expressions.length != 1) {
+          if (expressions.length != 1) {
             continue;
           }
 
-          if (!(expressions[0]instanceof PsiMethodCallExpression)) {
+          if (!(expressions[0] instanceof PsiMethodCallExpression)) {
             continue;
           }
 

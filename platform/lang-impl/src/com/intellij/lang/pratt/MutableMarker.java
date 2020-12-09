@@ -33,7 +33,7 @@ public class MutableMarker {
     myPath = path;
     myStartMarker = (PsiBuilder.Marker)builder.getLatestDoneMarker();
     myInitialPathLength = path.size();
-    myResultType = myStartMarker instanceof LighterASTNode? ((LighterASTNode)myStartMarker).getTokenType() : null;
+    myResultType = myStartMarker != null ? ((LighterASTNode)myStartMarker).getTokenType() : null;
     myMode = myResultType != null ? Mode.COMMITTED : Mode.READY;
   }
 

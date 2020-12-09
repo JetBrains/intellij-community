@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -99,12 +100,12 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Nullable
   @Override
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-    return remoteConnectionCreator == null ? null : remoteConnectionCreator.createRemoteConnection(environment);
+    return remoteConnectionCreator == null ? super.createRemoteConnection(environment) : remoteConnectionCreator.createRemoteConnection(environment);
   }
 
   @Override
   public boolean isPollConnection() {
-    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
+    return remoteConnectionCreator != null ? remoteConnectionCreator.isPollConnection() : super.isPollConnection();
   }
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
@@ -134,8 +135,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       searchForTestsTask.setIncompleteIndexUsageCallback(() -> viewer.setIncompleteIndexUsed());
     }
 
-    EmptyProgressIndicator targetIndicator = new EmptyProgressIndicator();
-    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, targetIndicator);
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
@@ -187,7 +187,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
-    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);
@@ -273,14 +272,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
     configureClasspath(javaParameters);
     javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
+    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
     for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
       patcher.patchJavaParameters(project, module, javaParameters);
     }
 
-    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
-    }
+    JavaRunConfigurationExtensionManager.getInstance()
+      .updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
@@ -289,8 +288,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (ConsoleBuffer.useCycleBuffer()) {
       javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
     }
-
-    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
     return javaParameters;
   }
@@ -395,7 +392,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
     RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
-    final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
+    final String jreHome = getTargetEnvironmentRequest() == null && getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
     Module module = configurationModule.getModule();
     if (configureByModule(module)) {
@@ -608,23 +605,25 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 
-      String workingDirectory = getConfiguration().getWorkingDirectory();
+      T configuration = getConfiguration();
+      String workingDirectory = configuration.getWorkingDirectory();
       //when only classpath should be changed, e.g. for starting tests in IDEA's project when some modules can never appear on the same classpath,
       //like plugin and corresponding IDE register the same components twice
       boolean toChangeWorkingDirectory = toChangeWorkingDirectory(workingDirectory);
 
       try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, StandardCharsets.UTF_8)) {
+        Project project = configuration.getProject();
+        String jreHome = configuration.isAlternativeJrePathEnabled() ? configuration.getAlternativeJrePath() : null;
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
-          wWriter.println(toChangeWorkingDirectory ? PathMacroUtil.getModuleDir(module.getModuleFilePath()) : workingDirectory);
+          wWriter.println(toChangeWorkingDirectory ? ProgramParametersUtil.getWorkingDir(configuration, project, module)
+                                                   : workingDirectory);
           wWriter.println(module.getName());
 
           if (classpath == null) {
             final JavaParameters parameters = new JavaParameters();
             try {
-              JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                                 getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
-                                                   .getAlternativeJrePath() : null);
+              JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
               if (JavaSdkUtil.isJdkAtLeast(parameters.getJdk(), JavaSdkVersion.JDK_1_9)) {
                 configureModulePath(parameters, module);
               }

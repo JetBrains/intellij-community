@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
@@ -40,4 +41,13 @@ fun createNameForChangeList(project: Project, commitMessage: String): String {
     .trim()
     .replace("[ ]{2,}".toRegex(), " ")
   return UniqueNameGenerator.generateUniqueName(proposedName, "", "", "-", "", { changeListManager.findChangeList(it) == null })
+}
+
+fun onChangeListAvailabilityChanged(project: Project, disposable: Disposable, executeNow: Boolean, callback: Runnable) {
+  project.messageBus.connect(disposable).subscribe(ChangeListListener.TOPIC, object : ChangeListListener {
+    override fun changeListAvailabilityChanged() {
+      callback.run()
+    }
+  })
+  if (executeNow) callback.run()
 }

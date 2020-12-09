@@ -3,7 +3,6 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +49,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   private void initProjectSettings(@NotNull Project project) {
     synchronized (myStateLock) {
       if (!myIsLoaded) {
-        LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
+        LegacyCodeStyleSettingsManager legacySettingsManager = project.getService(LegacyCodeStyleSettingsManager.class);
         if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
           loadState(legacySettingsManager.getState());
           if (!project.isDefault() &&

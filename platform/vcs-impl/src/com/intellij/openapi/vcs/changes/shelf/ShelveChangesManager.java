@@ -79,6 +79,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_FAILED;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_SUCCESSFUL;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
@@ -917,7 +919,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
       @Override
       public void onSuccess() {
-        VcsNotifier.getInstance(myProject).notifySuccess("vcs.shelve.successful", "",
+        VcsNotifier.getInstance(myProject).notifySuccess(SHELVE_SUCCESSFUL, "",
                                                          VcsBundle.message("shelve.successful.message"));
         if (result.size() == 1 && isShelfContentActive()) {
           ShelvedChangesViewManager.getInstance(myProject).startEditing(result.get(0));
@@ -997,7 +999,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
     if (!failedChangeLists.isEmpty()) {
       VcsNotifier.getInstance(myProject).notifyError(
-        "vcs.shelve.failed",
+        SHELVE_FAILED,
         VcsBundle.message("shelve.failed.title"),
         VcsBundle.message("shelve.failed.message", failedChangeLists.size(), StringUtil.join(failedChangeLists, ",")));
     }

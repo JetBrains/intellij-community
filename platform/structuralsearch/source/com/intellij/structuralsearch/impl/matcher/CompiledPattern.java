@@ -15,11 +15,11 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public abstract class CompiledPattern {
   public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
-  private final Map<Object, MatchingHandler> handlers = new THashMap<>();
+  private final Map<Object, MatchingHandler> handlers = new HashMap<>();
   private final MultiMap<String, PsiElement> variableNodes = new MultiMap<>();
   private SearchScope scope;
   private NodeIterator nodes;

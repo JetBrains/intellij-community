@@ -69,7 +69,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   public static final Key<Boolean> FORCED_NO_SHADOW = Key.create("BALLOON_FORCED_NO_SHADOW");
 
   private static final JBValue DIALOG_ARC = new JBValue.Float(6);
-  public static final JBValue ARC = new JBValue.Float(3);
+  public static final JBValue ARC = new JBValue.UIInteger("ToolTip.arc", 4);
   private static final JBValue DIALOG_TOPBOTTOM_POINTER_WIDTH = new JBValue.Float(24);
   public static final JBValue DIALOG_POINTER_WIDTH = new JBValue.Float(17);
   private static final JBValue TOPBOTTOM_POINTER_WIDTH = new JBValue.Float(14);
@@ -108,6 +108,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   private ActionProvider myActionProvider;
   private List<ActionButton> myActionButtons;
+  private boolean invalidateShadow;
 
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     @Override
@@ -827,7 +828,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     RelativePoint newPosition = tracker.recalculateLocation(this);
 
     if (newPosition != null) {
-      myTargetPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutShift);
+      Point newPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutShift);
+      invalidateShadow = !Objects.equals(myTargetPoint, newPoint);
+      myTargetPoint = newPoint;
       myPosition.updateBounds(this);
     }
   }
@@ -1949,8 +1952,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     void _setBounds(@NotNull Rectangle bounds) {
       Rectangle currentBounds = getBounds();
-      if (!currentBounds.equals(bounds)) {
+      if (!currentBounds.equals(bounds) || invalidateShadow) {
         invalidateShadowImage();
+        invalidateShadow = false;
       }
 
       setBounds(bounds);

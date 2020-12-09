@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.plugins.pipelines.services
 
 import com.intellij.build.DefaultBuildDescriptor
@@ -7,17 +8,15 @@ import com.intellij.build.events.impl.FinishBuildEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.build.events.impl.StartBuildEventImpl
 import com.intellij.build.events.impl.SuccessResultImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.plugins.pipelines.viewmodel.LogData
-import com.intellij.space.utils.application
 import runtime.reactive.ObservableList
 
 fun publishBuildLog(project: Project, data: LogData) {
-
-  if (!application.isUnitTestMode && !application.isHeadlessEnvironment) {
-
+  if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
     val descriptor = DefaultBuildDescriptor(data.buildId, SpaceBundle.message("build.log.title"), project.basePath!!,
                                             System.currentTimeMillis())
 

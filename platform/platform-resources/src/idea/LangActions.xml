@@ -13,9 +13,12 @@
 
     <group id="RunContextGroup" popup="false">
       <!-- A dynamic group filled with executor actions -->
-      <group id="RunContextGroupInner"/>
+      <group id="RunContextGroupInner">
+        <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
+          <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+        </group>
+      </group>
       <separator/>
-      <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
     </group>
     <group id="RunContextPopupGroup" popup="false">
       <reference ref="RunContextGroup"/>
@@ -71,7 +74,9 @@
       <action id="EmacsStyleIndent" class="com.intellij.codeInsight.editorActions.EmacsStyleIndentAction"/>
       <action id="EditorCodeBlockStart" class="com.intellij.codeInsight.editorActions.CodeBlockStartAction"/>
       <action id="EditorCodeBlockEnd" class="com.intellij.codeInsight.editorActions.CodeBlockEndAction"/>
-      <action id="EditorMatchBrace" class="com.intellij.codeInsight.editorActions.MatchBraceAction"/>
+      <action id="EditorMatchBrace" class="com.intellij.codeInsight.editorActions.MatchBraceAction">
+        <add-to-group group-id="NavigateInFileGroup" anchor="after" relative-to-action="MethodUp"/>
+      </action>
       <action id="EditorCodeBlockStartWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockStartWithSelectionAction"/>
       <action id="EditorCodeBlockEndWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockEndWithSelectionAction"/>
       <action id="EditorCompleteStatement" class="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction"/>
@@ -105,18 +110,18 @@
 
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
-      <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="CopyReferencePopupGroup" anchor="after" relative-to-action="CopyExternalReferenceGroup"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="Copy.Paste.Special" anchor="first"/>
     </action>
 
     <action id="CopyAsRichText" class="com.intellij.openapi.editor.richcopy.CopyAsRichTextAction">
-      <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
     </action>
 
     <action id="CopyAsPlainText" class="com.intellij.openapi.editor.richcopy.CopyAsPlainTextAction">
-      <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="Copy.Paste.Special" anchor="after" relative-to-action="CopyReference"/>
     </action>
 
@@ -204,7 +209,7 @@
     </action>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
-      <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBarWidgetsGroup" anchor="after"/>
+      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
       <override-text place="NavBar"/>
     </action>
 
@@ -439,7 +444,7 @@
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
 
-      <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
+      <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction"/>
     </group>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
     <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.ScratchFileActions$LanguageAction">
@@ -451,7 +456,7 @@
     </group>
 
 
-    <group id="NewGroup" popup="true">
+    <group id="NewGroup" popup="true" searchable="false">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
@@ -459,10 +464,14 @@
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
-    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"/>
+    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" searchable="false"/>
     <reference ref="AssociateWithFileType"/>
 
-    <group id="RevealGroup">
+    <reference id="OpenInRightSplit">
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </reference>
+
+    <group id="RevealGroup" popup="true">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
 
@@ -478,7 +487,6 @@
     </group>
 
     <group id="ToolbarRunGroup">
-      <separator/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
@@ -493,21 +501,36 @@
       <separator/>
       <reference id="NavBarToolBarOthers"/>
       <separator/>
-      <reference ref="RunAnything"/>
       <reference ref="SearchEverywhere"/>
+      <reference ref="SettingsEntryPoint"/>
     </group>
 
-    <action id="RunDebugControlAction" class="com.intellij.execution.newToolbar.RunDebugControlAction"/>
 
-    <group id="NewToolbarRunDebug">
-      <action class="com.intellij.execution.newToolbar.RunDebugLabelAction"/>
-      <action class="com.intellij.execution.newToolbar.RunDebugBarAction"/>
+    <group id="NewToolbarActions">
+      <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
+        <reference id="Back"/>
+        <reference id="Forward"/>
+        <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
+        <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
+      </group>
+      <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
+      </group>
+      <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
+        <action id="StateWidgetAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetAction"/>
+      </group>
     </group>
 
-    <group id="RunDebugActionsBarGroup" popup="false">
-      <reference ref="RunConfiguration"/>
-      <group id="RunDebugConfigRunnerActions"/>
-      <reference ref="Stop"/>
+    <group id="StateWidgetPillActionGroup">
+      <action id="StateWidgetActiveProcessesPillAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetActiveProcessesPillAction"/>
+      <action id="StateWidgetPillBarAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetPillBarAction"/>
+    </group>
+
+    <group id="StateWidgetBarGroup" popup="false">
+      <action id="StateWidgetRunConfigurationsAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetRunConfigurationsAction"/>
+      <group id="StateWidgetAdditionalActions"/>
+      <group id="StateWidgetProcessesActionGroup"/>
+      <action id="StateWidgetStop" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetStopAction" icon="AllIcons.Actions.Suspend"/>
+      <group id="StateWidgetMoreActionGroup" icon="AllIcons.Actions.More" popup="true"/>
     </group>
 
     <group id="Bookmarks">
@@ -701,6 +724,8 @@
       <action id="ProjectView.CompactDirectories"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
       <separator/>
+      <action id="ProjectView.OpenInPreviewTab"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
       <action id="ProjectView.AutoscrollToSource"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollToSource"
               icon="AllIcons.General.AutoscrollToSource"/>
@@ -719,6 +744,8 @@
       <action id="ScopeView.EditScopes"
               class="com.intellij.ide.scopeView.EditScopesAction"
               icon="AllIcons.Ide.LocalScope"/>
+      <action id="ProjectView.FileNesting"
+              class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
     </group>
 
     <group id="StructureViewPopupMenu">
@@ -748,7 +775,7 @@
 
     <group id="EditorLangPopupMenu">
       <separator/>
-      <group id="EditorPopupMenu.GoTo" popup="true" class="com.intellij.ide.actions.EditorPopupNoSelectionGroup">
+      <group id="EditorPopupMenu.GoTo" popup="true">
         <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
         <reference ref="GotoImplementation"/>
@@ -770,7 +797,7 @@
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CompareClipboardWithSelection" anchor="before"/>
     </group>
 
-    <group id="EditorTabPopupMenuEx">
+    <group id="EditorTabPopupMenuEx" searchable="false">
       <separator/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="AddToFavorites"/>
@@ -794,6 +821,7 @@
       <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Refresh" use-shortcut-of="Rerun"/>
       <separator/>
       <reference ref="EditSource"/>
+      <reference ref="OpenInRightSplit"/>
       <reference ref="TreeNodeExclusion"/>
       <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
       <separator/>
@@ -907,7 +935,9 @@
       <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction" icon="AllIcons.Debugger.AddToWatch"/>
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
-      <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
+      <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
+        <override-text place="XDebuggerTreeInlayPopup"/>
+      </action>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
       <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
@@ -1225,6 +1255,7 @@
       <action id="RunDashboard.HideConfiguration" class="com.intellij.execution.dashboard.actions.HideConfigurationAction"/>
       <action id="RunDashboard.RestoreHiddenConfigurations" class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"/>
       <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"/>
+      <action id="RunDashboard.OpenRunningConfigInNewTab" class="com.intellij.execution.dashboard.actions.OpenRunningConfigInNewTabAction"/>
       <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction" icon="AllIcons.Actions.Cancel"/>
       <action id="RunDashboard.RestoreConfiguration" class="com.intellij.execution.dashboard.actions.RestoreConfigurationAction" icon="AllIcons.Actions.Rollback"/>
@@ -1374,6 +1405,9 @@
     <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <action id="DumpFormattingModel" class="com.intellij.internal.DumpFormattingModelAction" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
     <group id="TodoMainGroup">
       <add-to-group group-id="Other.KeymapGroup"/>
       <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" icon="AllIcons.Actions.GroupBy"
@@ -1391,5 +1425,19 @@
             icon="AllIcons.General.Locate">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
     </action>
+
+    <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+
+    <action class="com.intellij.ide.hierarchy.actions.ActivateHierarchyToolWindowAction" id="ActivateHierarchyToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+
+    <action class="com.intellij.codeInspection.ui.actions.ActivateInspectionResultsToolWindowAction" id="ActivateInspectionResultsToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+
+    <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
   </actions>
 </idea-plugin>

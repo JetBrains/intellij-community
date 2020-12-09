@@ -14,12 +14,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -45,7 +45,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   public String getText() {
     PsiType type = getReturnType();
     PsiElement startElement = getStartElement();
-    String typeName = startElement == null ? "?" : UsageViewUtil.getType(startElement);
+    String typeName = startElement == null ? "?" : JavaElementKind.fromElement(startElement).lessDescriptive().subject();
     return QuickFixBundle.message("fix.variable.type.text",
                                   typeName,
                                   myName,

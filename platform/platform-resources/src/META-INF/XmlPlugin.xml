@@ -64,7 +64,6 @@
 
     <extensionPoint name="html.scriptContentProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <!--suppress DeprecatedClassUsageInspection -->
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlScriptContentProvider"/>
     </extensionPoint>
 
@@ -75,7 +74,7 @@
     </extensionPoint>
 
     <extensionPoint name="html.embeddedContentSupport"
-                    interface="com.intellij.lexer.HtmlEmbeddedContentSupport"
+                    interface="com.intellij.html.embedding.HtmlEmbeddedContentSupport"
                     dynamic="true"/>
 
     <extensionPoint name="html.attributeValueProvider"
@@ -340,6 +339,7 @@
     <liveTemplateContext implementation="com.intellij.codeInsight.template.XslTextContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlContextType"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlTextContextType"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlElementContextType"/>
 
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlErrorQuickFixProvider"/>
 
@@ -478,6 +478,7 @@
 
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlScriptLanguageInjector"/>
+    <html.scriptContentProvider language="HTML" implementationClass="com.intellij.psi.impl.source.html.TemplateHtmlScriptContentProvider"/>
 
     <gotoRelatedProvider implementation="com.intellij.navigation.HtmlGotoRelatedProvider"/>
     <xml.relatedToHtmlFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>
@@ -601,5 +602,8 @@
                                  anyReferenceClass="true"
                                  targetClass="com.intellij.model.Symbol"
                                  implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
+
+    <spellchecker.support language="HTML" implementationClass="com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy"/>
+    <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>
   </extensions>
 </idea-plugin>

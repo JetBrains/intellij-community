@@ -84,12 +84,6 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
 
     updateStat(service.getSchemaProvider(rootSchema), service.resolveSchemaFile(rootSchema));
-    doCompletion(parameters, result, rootSchema);
-  }
-
-  public static void doCompletion(@NotNull final CompletionParameters parameters,
-                                  @NotNull final CompletionResultSet result,
-                                  @NotNull final JsonSchemaObject rootSchema) {
     doCompletion(parameters, result, rootSchema, true);
   }
 
@@ -99,8 +93,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                   boolean stop) {
     final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
                                           parameters.getPosition();
-    new Worker(rootSchema, parameters.getPosition(), completionPosition, result).work();
-    if (stop) {
+    Worker worker = new Worker(rootSchema, parameters.getPosition(), completionPosition, result);
+    worker.work();
+    // stop further completion only if current contributor has at least one new completion variant
+    if (stop && !worker.myVariants.isEmpty()) {
       result.stopHere();
     }
   }

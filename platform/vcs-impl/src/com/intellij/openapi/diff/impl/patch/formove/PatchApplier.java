@@ -42,6 +42,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.*;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
@@ -195,7 +196,7 @@ public final class PatchApplier {
           });
         }
         finally {
-          VcsFileListenerContextHelper.getInstance(project).clearContext();
+          trigger.cleanup();
           LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.after.patch.label.text"));
         }
       });
@@ -247,13 +248,13 @@ public final class PatchApplier {
       try {
         labelToRevert.revert(project, project.getBaseDir());
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning("vcs.patch.apply.aborted",
+          .notifyImportantWarning(PATCH_APPLY_ABORTED,
                                   VcsBundle.message("patch.apply.aborted.title"),
                                   VcsBundle.message("patch.apply.aborted.message"));
       }
       catch (LocalHistoryException e) {
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning("vcs.patch.apply.rollback.failed",
+          .notifyImportantWarning(PATCH_APPLY_ROLLBACK_FAILED,
                                   VcsBundle.message("patch.apply.rollback.failed.title"),
                                   VcsBundle.message("patch.apply.rollback.failed.message"));
       }
@@ -415,13 +416,13 @@ public final class PatchApplier {
   private static void showApplyStatus(@NotNull Project project, final ApplyPatchStatus status) {
     VcsNotifier vcsNotifier = VcsNotifier.getInstance(project);
     if (status == ApplyPatchStatus.ALREADY_APPLIED) {
-      vcsNotifier.notifyMinorInfo("vcs.patch.apply.already.applied", VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.already.applied"));
+      vcsNotifier.notifyMinorInfo(PATCH_ALREADY_APPLIED, VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.already.applied"));
     }
     else if (status == ApplyPatchStatus.PARTIAL) {
-      vcsNotifier.notifyMinorInfo("vcs.patch.apply.partially.applied", VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.partially.applied"));
+      vcsNotifier.notifyMinorInfo(PATCH_PARTIALLY_APPLIED, VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.partially.applied"));
     }
     else if (status == ApplyPatchStatus.SUCCESS) {
-      vcsNotifier.notifySuccess("vcs.patch.apply.success.applied", "",
+      vcsNotifier.notifySuccess(PATCH_APPLY_SUCCESS, "",
                                 VcsBundle.message("patch.apply.success.applied.text"));
     }
   }

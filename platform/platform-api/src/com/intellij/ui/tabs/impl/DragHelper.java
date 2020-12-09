@@ -13,6 +13,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.util.Axis;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
-final class DragHelper extends MouseDragHelper {
+public class DragHelper extends MouseDragHelper {
   private final JBTabsImpl myTabs;
   private TabInfo myDragSource;
   private Rectangle myDragOriginalRec;
@@ -33,7 +34,7 @@ final class DragHelper extends MouseDragHelper {
   private TabInfo myDragOutSource;
   private Reference<TabLabel> myPressedTabLabel;
 
-  DragHelper(@NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
+  protected DragHelper(@NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
     super(parentDisposable, tabs);
 
     myTabs = tabs;
@@ -226,6 +227,17 @@ final class DragHelper extends MouseDragHelper {
   @Override
   protected boolean canStartDragging(@NotNull JComponent dragComponent, @NotNull Point dragComponentPoint) {
     return findLabel(dragComponentPoint) != null;
+  }
+
+  @Override
+  protected boolean canFinishDragging(@NotNull JComponent component, @NotNull RelativePoint point) {
+    Component realDropTarget = UIUtil.getDeepestComponentAt(point.getOriginalComponent(), point.getOriginalPoint().x, point.getOriginalPoint().y);
+    if (realDropTarget == null) realDropTarget = SwingUtilities.getDeepestComponentAt(point.getOriginalComponent(), point.getOriginalPoint().x, point.getOriginalPoint().y);
+    if (myTabs.getVisibleInfos().isEmpty() && realDropTarget != null ) {
+      JBTabsImpl tabs = UIUtil.getParentOfType(JBTabsImpl.class, realDropTarget);
+      if (tabs == null || !tabs.isEditorTabs()) return false;
+    }
+    return !myTabs.contains(point.getPoint(myTabs)) || !myTabs.getVisibleInfos().isEmpty();
   }
 
   @Override

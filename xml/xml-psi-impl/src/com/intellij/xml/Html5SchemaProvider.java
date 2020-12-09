@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.io.URLUtil;
@@ -16,9 +15,9 @@ import java.net.URL;
  */
 public abstract class Html5SchemaProvider {
   private static final Logger LOG = Logger.getInstance(Html5SchemaProvider.class);
-  private static final NotNullLazyValue<String> HTML5_SCHEMA_LOCATION = AtomicNotNullLazyValue.createValue(() -> loadLocation(getInstance().getHtmlSchemaLocation(), "HTML5_SCHEMA"));
-  private static final NotNullLazyValue<String> XHTML5_SCHEMA_LOCATION = AtomicNotNullLazyValue.createValue(() -> loadLocation(getInstance().getXhtmlSchemaLocation(), "XHTML5_SCHEMA"));
-  private static final NotNullLazyValue<String> CHARS_DTD_LOCATION = AtomicNotNullLazyValue.createValue(() -> loadLocation(getInstance().getCharsLocation(), "CHARS_DTD"));
+  private static final NotNullLazyValue<String> HTML5_SCHEMA_LOCATION = NotNullLazyValue.atomicLazy(() -> loadLocation(getInstance().getHtmlSchemaLocation(), "HTML5_SCHEMA"));
+  private static final NotNullLazyValue<String> XHTML5_SCHEMA_LOCATION = NotNullLazyValue.atomicLazy(() -> loadLocation(getInstance().getXhtmlSchemaLocation(), "XHTML5_SCHEMA"));
+  private static final NotNullLazyValue<String> CHARS_DTD_LOCATION = NotNullLazyValue.atomicLazy(() -> loadLocation(getInstance().getCharsLocation(), "CHARS_DTD"));
 
   private static String loadLocation(URL url, String id) {
     String location = VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(
@@ -39,8 +38,9 @@ public abstract class Html5SchemaProvider {
     return CHARS_DTD_LOCATION.getValue();
   }
 
+  @NotNull
   private static Html5SchemaProvider getInstance() {
-    return ServiceManager.getService(Html5SchemaProvider.class);
+    return ApplicationManager.getApplication().getService(Html5SchemaProvider.class);
   }
 
   @NotNull

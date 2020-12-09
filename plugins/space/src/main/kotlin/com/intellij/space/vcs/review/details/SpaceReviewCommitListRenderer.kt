@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import com.intellij.ui.SimpleColoredComponent
@@ -42,12 +43,12 @@ class SpaceCommitRenderer : ListCellRenderer<ReviewCommitListItem> {
         if (value.inCurrentProject) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
         else SimpleTextAttributes.GRAYED_ATTRIBUTES
 
-      repositorySeparator.append(value.repositoryInReview.name, attr)
+      repositorySeparator.append(value.repositoryInReview.name, attr) // NON-NLS
       panel.addToTop(repositorySeparator)
     }
 
     messageComponent.clear()
-    messageComponent.append(value.commitWithGraph.commit.message,
+    messageComponent.append(value.commitWithGraph.commit.message, // NON-NLS
                             SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getListForeground(isSelected, true)))
     SpeedSearchUtil.applySpeedSearchHighlighting(list, messageComponent, true, isSelected)
 

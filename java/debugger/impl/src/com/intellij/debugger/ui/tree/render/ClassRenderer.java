@@ -276,7 +276,7 @@ public class ClassRenderer extends NodeRendererImpl{
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, new ClassRenderer()));
+    DefaultJDOMExternalizer.write(this, element, new DifferenceFilter<>(this, new ClassRenderer()));
   }
 
   @Override

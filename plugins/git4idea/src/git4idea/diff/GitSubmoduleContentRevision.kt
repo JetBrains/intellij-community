@@ -1,13 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.diff
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.vcsUtil.VcsUtil
-import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitSubmodule
@@ -28,22 +25,7 @@ abstract class GitSubmoduleContentRevision(val submodule: GitRepository,
                           revisionNumber: VcsRevisionNumber) : GitSubmoduleContentRevision(submodule, revisionNumber) {
 
     override fun getContent(): String? {
-      val filePath = getFilePath(submodule.root)
-      val lsTree = GitIndexUtil.listTree(parentRepo, listOf(filePath), revisionNumber)
-      if (lsTree.size != 1) {
-        LOG.warn("Unexpected output of ls-tree command for submodule [$filePath] at [$revisionNumber]: $lsTree")
-        return null
-      }
-      val tree = lsTree[0]
-      if (tree !is GitIndexUtil.StagedSubrepo) {
-        LOG.warn("Unexpected type of ls-tree for submodule [$filePath] at [$revisionNumber]: $tree")
-        return null
-      }
-      if (tree.path != filePath) {
-        LOG.warn("Submodule path [${submodule.root.path}] doesn't match the ls-tree output path [${tree.path.path}]")
-        return null
-      }
-      return tree.blobHash
+      return GitIndexUtil.loadSubmoduleHashAt(submodule, parentRepo, revisionNumber)?.asString()
     }
   }
 
@@ -55,16 +37,14 @@ abstract class GitSubmoduleContentRevision(val submodule: GitRepository,
   }
 
   companion object {
-    private val LOG = logger<GitSubmoduleContentRevision>()
-
     @JvmStatic
     fun createRevision(submodule: GitSubmodule, revisionNumber: VcsRevisionNumber): ContentRevision {
-      return GitSubmoduleContentRevision.Committed(submodule.parent, submodule.repository, revisionNumber)
+      return Committed(submodule.parent, submodule.repository, revisionNumber)
     }
 
     @JvmStatic
     fun createCurrentRevision(submodule: GitRepository): ContentRevision {
-      return GitSubmoduleContentRevision.Current(submodule, VcsRevisionNumber.NULL)
+      return Current(submodule, VcsRevisionNumber.NULL)
     }
   }
 }

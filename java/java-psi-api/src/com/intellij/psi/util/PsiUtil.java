@@ -1367,16 +1367,18 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiElement addModuleStatement(@NotNull PsiJavaModule module, @NotNull String text) {
     PsiJavaParserFacade facade = JavaPsiFacade.getInstance(module.getProject()).getParserFacade();
     PsiStatement statement = facade.createModuleStatementFromText(text, null);
+    return addModuleStatement(module, statement);
+  }
 
-    PsiElement anchor = SyntaxTraverser.psiTraverser().children(module).filter(statement.getClass()).last();
+  public static PsiElement addModuleStatement(@NotNull PsiJavaModule module, @NotNull PsiStatement moduleStatement) {
+    PsiElement anchor = SyntaxTraverser.psiTraverser().children(module).filter(moduleStatement.getClass()).last();
     if (anchor == null) {
       anchor = SyntaxTraverser.psiTraverser().children(module).filter(e -> isJavaToken(e, JavaTokenType.LBRACE)).first();
     }
     if (anchor == null) {
       throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));
     }
-
-    return module.addAfter(statement, anchor);
+    return module.addAfter(moduleStatement, anchor);
   }
 
   public static boolean isArrayClass(@Nullable PsiElement psiClass) {

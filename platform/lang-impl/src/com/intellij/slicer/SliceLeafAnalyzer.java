@@ -14,13 +14,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.SingletonSet;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -149,10 +149,10 @@ public final class SliceLeafAnalyzer {
   }
 
   public Map<SliceNode, Collection<PsiElement>> createMap() {
-    return ConcurrentFactoryMap.create(k -> {
-      return ConcurrentCollectionFactory.createConcurrentSet(new TObjectHashingStrategy<PsiElement>() {
+    Function<SliceNode, Collection<PsiElement>> function = k -> {
+      return ConcurrentCollectionFactory.createConcurrentSet(new HashingStrategy<>() {
         @Override
-        public int computeHashCode(PsiElement object) {
+        public int hashCode(PsiElement object) {
           return myLeafEquality.hashCode(object);
         }
 
@@ -161,12 +161,11 @@ public final class SliceLeafAnalyzer {
           return myLeafEquality.equals(o1, o2);
         }
       });
-    }, () -> {
-      return ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
-    });
+    };
+    return ConcurrentFactoryMap.create(function, ConcurrentCollectionFactory::createConcurrentIdentityMap);
   }
 
-  public static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
+  public static final class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
     private final AbstractTreeStructure myTreeStructure;
     // use tree structure because it's setting 'parent' fields in the process
 
@@ -213,7 +212,7 @@ public final class SliceLeafAnalyzer {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     AtomicInteger depth = new AtomicInteger();
     boolean printToLog = LOG.isTraceEnabled();
-    WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
+    WalkingState<SliceNode> walkingState = new WalkingState<>(guide) {
       @Override
       public void elementStarted(@NotNull SliceNode element) {
         depth.incrementAndGet();
@@ -240,7 +239,7 @@ public final class SliceLeafAnalyzer {
             if (children.isEmpty() && sliceUsage != null && sliceUsage.canBeLeaf()) {
               PsiElement value = sliceUsage.getElement();
               if (value != null) {
-                node(element, map).addAll(SingletonSet.withCustomStrategy(value, myLeafEquality));
+                node(element, map).addAll(new ObjectOpenCustomHashSet<>(new PsiElement[]{value}, myLeafEquality));
               }
             }
           });

@@ -16,6 +16,5 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" scope="TEST" />
     <orderEntry type="library" name="ion" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
   </component>
 </module>

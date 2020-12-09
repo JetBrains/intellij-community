@@ -26,6 +26,7 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.ui.StatusText;
@@ -172,7 +173,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
     if (stub == null) {
       LightVirtualFile file = new LightVirtualFile("stub", rootElement.getLanguage(), textToParse);
-      final FileContentImpl fc;
+      final FileContent fc;
       try {
         fc = FileContentImpl.createByFile(file, project);
         fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);

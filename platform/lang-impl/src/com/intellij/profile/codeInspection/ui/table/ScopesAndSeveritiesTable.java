@@ -21,6 +21,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTr
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,6 +75,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
                                                      int row,
                                                      int column) {
         Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        component.setForeground(RenderingUtil.getForeground(table, isSelected));
+        component.setBackground(RenderingUtil.getBackground(table, isSelected));
         if (value instanceof String) {
           NamedScope namedScope = NamedScopesHolder.getScope(tableSettings.myProject, (String)value);
           if (namedScope != null) {
@@ -111,7 +114,6 @@ public class ScopesAndSeveritiesTable extends JBTable {
     });
     setRowSelectionInterval(0, 0);
 
-    setStriped(true);
     setShowGrid(false);
 
     ((MyTableModel)getModel()).setTable(this);
@@ -367,6 +369,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           .map(state -> state.getScope(myProject))
           .filter(Objects::nonNull)
           .map(NamedScope::getScopeId)
+          .distinct()
           .sorted(myScopeComparator)
           .toArray(String[]::new);
     }
@@ -444,6 +447,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           refreshAggregatedScopes();
           for (int i = 0; i < getRowCount(); i++) {
             if (getScopeName(i).equals(scopeName)) {
+              fireTableRowsInserted(i, i);
               myTable.clearSelection();
               myTable.setRowSelectionInterval(i, i);
             }

@@ -3,6 +3,9 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -47,35 +50,22 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   public void testLocalRecords() {
     doTest();
   }
+  public void testReassignToRecordComponentsDisabled() {
+    myFixture.addClass("package java.lang; public abstract class Record {" +
+                       "public abstract boolean equals(Object obj);" +
+                       "public abstract int hashCode();" +
+                       "public abstract String toString();" +
+                       "}");
+    myFixture.configureByText("A.java", "record Point(int x) {" +
+                                        "    public Point {\n" +
+                                        "        int x<caret>1 = 0\n" +
+                                        "    }" + 
+                                        "}");
 
-  public void testRenameOnRecordComponent() {
-    doTestRename();
-  }
-
-  public void testRenameOnRecordCanonicalConstructor() {
-    doTestRename();
-  }
-
-  public void testRenameOnCompactConstructorReference() {
-    doTestRename();
-  }
-
-  public void testRenameOnExplicitGetter() {
-    doTestRename();
-  }
-
-  public void testRenameWithCanonicalConstructor() {
-    doTestRename();
-  }
-
-  public void testRenameGetterOverloadPresent() {
-    doTestRename();
-  }
-
-  private void doTestRename() {
-    doTest();
-    myFixture.renameElementAtCaret("baz");
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiDeclarationStatement.class);
+    assertNotNull(decl);
+    ReassignVariableUtil.registerDeclaration(getEditor(), decl, getTestRootDisposable());
+    ReassignVariableUtil.reassign(getEditor());
   }
 
   private void doTest() {

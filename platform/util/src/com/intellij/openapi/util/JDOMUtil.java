@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -47,7 +48,8 @@ public final class JDOMUtil {
   private static volatile XMLInputFactory XML_INPUT_FACTORY;
 
   // do not use AtomicNotNullLazyValue to reduce class loading
-  private static XMLInputFactory getXmlInputFactory() {
+  @ApiStatus.Internal
+  public static XMLInputFactory getXmlInputFactory() {
     XMLInputFactory factory = XML_INPUT_FACTORY;
     if (factory != null) {
       return factory;
@@ -74,7 +76,8 @@ public final class JDOMUtil {
         }
       }
 
-      if (!SystemInfo.isIbmJvm) {
+      // avoid loading of SystemInfo class
+      if (Strings.indexOfIgnoreCase(System.getProperty("java.vm.vendor", ""), "IBM", 0) < 0) {
         try {
           factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
         }

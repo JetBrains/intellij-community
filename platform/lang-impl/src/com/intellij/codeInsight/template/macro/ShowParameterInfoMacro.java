@@ -13,16 +13,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class ShowParameterInfoMacro extends Macro {
   private static final String NAME = "showParameterInfo";
-  private static final String NAME_WITH_PARS = NAME + "()";
 
   @Override
   public String getName() {
     return NAME;
-  }
-
-  @Override
-  public String getPresentableName() {
-    return NAME_WITH_PARS;
   }
 
   @Nullable

@@ -151,16 +151,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   private void updateRunModuleMode() {
     boolean mode = (getModuleNameText() + ":").equals(myTargetComboBox.getText());
-    checkTargetComboConsistency(mode);
     setModuleModeInternal(mode);
-  }
-
-  private void checkTargetComboConsistency(boolean mode) {
-    String item = myTargetComboBox.getText();
-    assert item != null;
-    if (mode && !StringUtil.toLowerCase(item).contains("module")) {
-      throw new IllegalArgumentException("This option should refer to a module");
-    }
   }
 
   private void emulateTerminalEnabled(boolean flag) {
@@ -288,8 +279,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   @Override
   public void setModuleMode(boolean moduleMode) {
     setTargetComboBoxValue(moduleMode ? getModuleNameText() : getScriptPathText());
-    updateRunModuleMode();
-    checkTargetComboConsistency(moduleMode);
+    setModuleModeInternal(moduleMode);
   }
 
   private void setModuleModeInternal(boolean moduleMode) {

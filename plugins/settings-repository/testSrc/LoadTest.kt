@@ -2,11 +2,8 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.TestScheme
-import com.intellij.configurationStore.TestSchemeProcessor
 import com.intellij.configurationStore.save
-import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.configurationStore.serialize
-import com.intellij.testFramework.ProjectRule
 import com.intellij.util.toByteArray
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -16,22 +13,9 @@ import org.jetbrains.settingsRepository.SyncType
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
-import org.junit.ClassRule
 import org.junit.Test
 
-private const val dirName = "keymaps"
-
-class LoadTest : IcsTestCase() {
-  companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule(runPostStartUpActivities = false)
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun createSchemeManager(dirPath: String): SchemeManagerImpl<TestScheme, TestScheme> {
-    return icsManager.schemeManagerFactory.value.create(dirPath, TestSchemeProcessor(), streamProvider = provider) as SchemeManagerImpl<TestScheme, TestScheme>
-  }
+class LoadTest : LoadTestBase() {
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
@@ -40,13 +24,14 @@ class LoadTest : IcsTestCase() {
     val schemeManager = createSchemeManager(dirName)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+    val actualLocalScheme = schemeManager.findSchemeByName("local")!!
 
     schemeManager.save()
 
     val dirPath = (icsManager.repositoryManager as GitRepositoryManager).repository.workTree.toPath().resolve(dirName)
     assertThat(dirPath).isDirectory()
 
-    schemeManager.removeScheme(localScheme)
+    schemeManager.removeScheme(actualLocalScheme)
     schemeManager.save()
 
     assertThat(dirPath).doesNotExist()

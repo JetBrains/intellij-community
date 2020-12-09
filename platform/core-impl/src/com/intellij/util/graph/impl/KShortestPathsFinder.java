@@ -8,6 +8,7 @@ import com.intellij.util.containers.FList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.InboundSemiGraph;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public final class KShortestPathsFinder<Node> {
     myNonTreeEdges = new MultiMap<>();
     mySortedNodes = new ArrayList<>();
     myNextNodes = new HashMap<>();
-    Object2IntOpenHashMap<Node> distances = new Object2IntOpenHashMap<>();
+    Object2IntMap<Node> distances = new Object2IntOpenHashMap<>();
     Deque<Node> nodes = new ArrayDeque<>();
     nodes.addLast(myFinish);
     distances.put(myFinish, 0);
@@ -87,7 +88,6 @@ public final class KShortestPathsFinder<Node> {
           root = heapNode;
         }
       }
-      LOG.assertTrue(root != null);
       heapNodes.remove(root);
       myOutRoots.put(node, root);
       if (!heapNodes.isEmpty()) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenDisablePanelCheckbox;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
@@ -47,6 +48,9 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
     myUseProjectSettings.setEnabled(localTarget);
     if (!localTarget) {
       myUseProjectSettings.setSelected(false);
+      myUseProjectSettings.setToolTipText(MavenConfigurableBundle.message("maven.settings.on.targets.runner.use.project.settings.tooltip"));
+    } else {
+      myUseProjectSettings.setToolTipText(MavenConfigurableBundle.message("maven.settings.runner.use.project.settings.tooltip"));
     }
 
     if (myUseProjectSettings.isSelected()) {

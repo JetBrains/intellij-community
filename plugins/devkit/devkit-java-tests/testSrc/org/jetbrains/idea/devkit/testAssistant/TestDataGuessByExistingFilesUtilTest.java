@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +20,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @TestDataPath("$CONTENT_ROOT/testData/guessByExistingFiles")
 public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
@@ -40,7 +41,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibrary("junit3", JavaSdkUtil.getJunit3JarPath());
+    moduleBuilder.addLibrary("junit4", JavaSdkUtil.getJunit4JarPath());
   }
 
 
@@ -117,7 +118,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
       TestDataGuessByExistingFilesUtil.getTestName(testMethod.getName()), null, testMethod.getContainingClass());
     assertSize(2, result);
     assertTrue(result.get(0).exists() && result.get(1).exists());
-    assertEquals(ContainerUtil.set("before.java", "after.java"), ContainerUtil.map2Set(result, TestDataFile::getName));
+    assertEquals(Set.of("before.java", "after.java"), ContainerUtil.map2Set(result, TestDataFile::getName));
   }
 
   public void testGuessTestDataByRelatedByDirName() {
@@ -126,7 +127,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     List<TestDataFile> result = TestDataGuessByExistingFilesUtil.guessTestDataName(testMethod);
     assertSize(2, result);
     assertTrue(!result.get(0).exists() && !result.get(1).exists());
-    assertEquals(ContainerUtil.set("before.java", "after.java"), ContainerUtil.map2Set(result, TestDataFile::getName));
+    assertEquals(Set.of("before.java", "after.java"), ContainerUtil.map2Set(result, TestDataFile::getName));
     String parentName1 = PathUtil.getFileName(PathUtil.getParentPath(result.get(0).getPath()));
     String parentName2 = PathUtil.getFileName(PathUtil.getParentPath(result.get(1).getPath()));
 

@@ -112,7 +112,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "}", "String", 
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>String</td></tr>" +
-           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value (one of):</td><td>&quot;bar&quot;, &quot;foo&quot;</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>&quot;bar&quot; or &quot;foo&quot;</td></tr>" +
            "</table>");
   }
   

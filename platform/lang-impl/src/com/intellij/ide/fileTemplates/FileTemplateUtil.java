@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
 import com.intellij.model.ModelBranch;
+import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -217,7 +218,7 @@ public final class FileTemplateUtil {
       else {
         project = null;
       }
-      VelocityTemplateContext.withContext(project, ()->VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
+      VelocityTemplateContext.withContext(project, () -> VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
     }
     catch (final VelocityException e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -319,7 +320,7 @@ public final class FileTemplateUtil {
       propsMap.put(dummyRef, "");
     }
 
-    handler.prepareProperties(propsMap, fileName, template);
+    handler.prepareProperties(propsMap, fileName, template, project);
     handler.prepareProperties(propsMap);
 
     Map<String, Object> props_ = propsMap;
@@ -334,15 +335,16 @@ public final class FileTemplateUtil {
     }
 
     return WriteCommandAction
-        .writeCommandAction(project)
-        .withName(handler.commandName(template))
-        .compute(()->handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
+      .writeCommandAction(project)
+      .withName(handler.commandName(template))
+      .compute(() -> handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
   }
 
   @Nullable
-  private static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+  public static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+    VirtualFile dirVfile = directory.getVirtualFile();
     VirtualFile baseDir = directory.getProject().getBaseDir();
-    return baseDir != null ? VfsUtilCore.getRelativePath(directory.getVirtualFile(), baseDir) : null;
+    return baseDir != null ? VfsUtilCore.getRelativePath(dirVfile, ModelBranchUtil.obtainCopyFromTheSameBranch(dirVfile, baseDir)) : null;
   }
 
   @NotNull
@@ -387,10 +389,12 @@ public final class FileTemplateUtil {
     return getFileType(fileTemplate).getIcon();
   }
 
-  public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p) {
+  public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p){
     for (Enumeration<?> e = p.propertyNames(); e.hasMoreElements(); ) {
       String s = (String)e.nextElement();
-      props.putIfAbsent(s, p.getProperty(s));
+
+      //noinspection UseOfPropertiesAsHashtable
+      props.putIfAbsent(s, p.get(s)); // DO NOT CALL getProperty() cause it returns STRING | NULL
     }
   }
 

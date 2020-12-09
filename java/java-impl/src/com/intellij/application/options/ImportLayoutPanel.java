@@ -15,13 +15,13 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -29,7 +29,6 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,24 +99,13 @@ public abstract class ImportLayoutPanel extends JPanel {
 
     add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
 
-    JPanel importLayoutPanel = ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
-      .addExtraAction(new DumbAwareActionButton(JavaBundle.messagePointer("button.add.package"), IconUtil.getAddPackageIcon()) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          addPackageToImportLayouts();
-        }
+    ActionGroup addGroup = new DefaultActionGroup(new AddPackageAction(), new AddBlankLineAction());
+    addGroup.getTemplatePresentation().setIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown));
+    addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
+    addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
 
-        @Override
-        public ShortcutSet getShortcut() {
-          return CommonShortcuts.getNewForDialogs();
-        }
-      })
-      .addExtraAction(new DumbAwareActionButton(JavaBundle.messagePointer("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          addBlankLine();
-        }
-      })
+    JPanel importLayoutPanel = ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
+      .addExtraAction(new AnActionButton.GroupPopupWrapper(addGroup))
       .setRemoveAction(button -> removeEntryFromImportLayouts())
       .setMoveUpAction(button -> moveRowUp())
       .setMoveDownAction(button -> moveRowDown())
@@ -126,8 +114,7 @@ public abstract class ImportLayoutPanel extends JPanel {
         PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
         return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
       })
-      .setButtonComparator(JavaBundle.message("button.add.package"),
-                           JavaBundle.message("button.add.blank"),
+      .setButtonComparator(JavaBundle.message("button.add"),
                            IdeBundle.message("action.remove"),
                            JavaBundle.message("import.layout.panel.up.button"),
                            JavaBundle.message("import.layout.panel.down.button"))
@@ -135,6 +122,28 @@ public abstract class ImportLayoutPanel extends JPanel {
 
 
     add(importLayoutPanel, BorderLayout.CENTER);
+  }
+
+  private class AddPackageAction extends DumbAwareAction {
+    private AddPackageAction() {
+      super(JavaBundle.messagePointer("button.add.package"), AllIcons.Nodes.Package);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      addPackageToImportLayouts();
+    }
+  }
+
+  private class AddBlankLineAction extends DumbAwareAction {
+    private AddBlankLineAction() {
+      super(JavaBundle.messagePointer("button.add.blank"), AllIcons.Actions.SearchNewLine);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      addBlankLine();
+    }
   }
 
 
@@ -307,6 +316,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
     // Create the table
     final JBTable result = new JBTable(dataModel);
+    result.setShowGrid(false);
     result.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     resizeColumns(packageTable, result, panel.areStaticImportsEnabled());
 

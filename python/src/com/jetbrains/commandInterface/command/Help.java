@@ -15,6 +15,7 @@
  */
 package com.jetbrains.commandInterface.command;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,14 +26,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Help {
   @NotNull
-  private final String myHelpString;
+  private final @NlsSafe String myHelpString;
   @Nullable
-  private final String myExternalHelpUrl;
+  private final @NlsSafe String myExternalHelpUrl;
 
   /**
    * @param helpString help text (no external url provided)
    */
-  public Help(@NotNull final String helpString) {
+  public Help(@NotNull @NlsSafe String helpString) {
     this(helpString, null);
   }
 
@@ -40,7 +41,7 @@ public final class Help {
    * @param helpString      help text
    * @param externalHelpUrl external help url (if any)
    */
-  public Help(@NotNull final String helpString, @Nullable final String externalHelpUrl) {
+  public Help(@NotNull @NlsSafe String helpString, @Nullable @NlsSafe String externalHelpUrl) {
     myHelpString = helpString;
     myExternalHelpUrl = externalHelpUrl;
   }
@@ -49,7 +50,7 @@ public final class Help {
    * @return help text
    */
   @NotNull
-  public String getHelpString() {
+  public @NlsSafe String getHelpString() {
     return myHelpString;
   }
 
@@ -57,7 +58,7 @@ public final class Help {
    * @return external help url (if any)
    */
   @Nullable
-  public String getExternalHelpUrl() {
+  public @NlsSafe String getExternalHelpUrl() {
     return myExternalHelpUrl;
   }
 }

@@ -2,7 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,7 @@ import java.util.List;
 
 public abstract class RecentProjectsManager {
   public static RecentProjectsManager getInstance() {
-    return ServiceManager.getService(RecentProjectsManager.class);
+    return ApplicationManager.getApplication().getService(RecentProjectsManager.class);
   }
 
   public abstract @Nullable @SystemIndependent String getLastProjectCreationLocation();

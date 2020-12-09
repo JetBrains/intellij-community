@@ -1,0 +1,4 @@
+ext {
+  prop = [key: true]
+  prop1 = prop.key
+}

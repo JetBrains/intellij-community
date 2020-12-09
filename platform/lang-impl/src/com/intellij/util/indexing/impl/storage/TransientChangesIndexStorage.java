@@ -35,7 +35,7 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
     void memoryStorageCleared();
   }
 
-  public TransientChangesIndexStorage(@NotNull IndexStorage<Key, Value> backend, @NotNull ID<?, ?> indexId) {
+  public TransientChangesIndexStorage(@NotNull IndexStorage<Key, Value> backend, @NotNull ID<Key, Value> indexId) {
     myBackendStorage = (VfsAwareIndexStorage<Key, Value>)backend;
     myIndexId = indexId;
   }

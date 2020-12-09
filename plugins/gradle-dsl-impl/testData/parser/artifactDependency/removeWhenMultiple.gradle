@@ -1,0 +1,4 @@
+dependencies {
+  compile 'com.google.code.guice:guice:1.0', [group: 'com.google.code.guice', name: 'guava', version: '1.0'],
+          'com.google.guava:guava:18.0', [group: 'org.example', name: 'something', version: '1.0']
+}

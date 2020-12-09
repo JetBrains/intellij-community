@@ -4,6 +4,7 @@ package com.intellij.concurrency;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,8 +27,10 @@ import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class JobLauncherImpl extends JobLauncher {
+public final class JobLauncherImpl extends JobLauncher {
   static final int CORES_FORK_THRESHOLD = 1;
+  private static final Logger LOG = Logger.getInstance(JobLauncher.class);
+  private final boolean logAllExceptions = System.getProperty("idea.job.launcher.log.all.exceptions", "false").equals("true");
 
   @Override
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull final List<? extends T> things,
@@ -168,7 +171,7 @@ public class JobLauncherImpl extends JobLauncher {
     private final Consumer<? super Future<?>> myOnDoneCallback;
     private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
     private volatile Status myStatus;
-    private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<Void>() {
+    private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<>() {
       @Override
       public Void getRawResult() {
         return null;
@@ -293,6 +296,9 @@ public class JobLauncherImpl extends JobLauncher {
                 }
               }
               catch (RuntimeException|Error e) {
+                if (logAllExceptions) {
+                  LOG.info("Failed to process " + element + ". Add too failed query.", e);
+                }
                 failedToProcess.add(element);
                 throw e;
               }

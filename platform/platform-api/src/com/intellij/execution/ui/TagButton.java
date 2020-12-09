@@ -3,23 +3,27 @@ package com.intellij.execution.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.function.Consumer;
 
 public class TagButton extends JBLayeredPane implements Disposable {
   protected final JButton myButton;
   private final InplaceButton myCloseButton;
 
-  public TagButton(@NlsContexts.Button String text, Runnable action) {
+  public TagButton(@Nls String text, Consumer<AnActionEvent> action) {
     myButton = new JButton(text) {
       @Override
       protected void paintComponent(Graphics g) {
@@ -33,17 +37,21 @@ public class TagButton extends JBLayeredPane implements Disposable {
       @Override
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_BACK_SPACE == e.getKeyCode() || KeyEvent.VK_DELETE == e.getKeyCode()) {
-          remove(action);
+          remove(action, AnActionEvent.createFromInputEvent(e, "", null, DataContext.EMPTY_CONTEXT));
         }
       }
     });
     add(myButton, JLayeredPane.DEFAULT_LAYER);
     myCloseButton = new InplaceButton(new IconButton(OptionsBundle.message("tag.button.tooltip"), AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey),
-                                      a -> remove(action));
+                                      a -> remove(action, null));
     myCloseButton.setOpaque(false);
     add(myCloseButton, JLayeredPane.POPUP_LAYER);
 
     layoutButtons();
+  }
+
+  public void setToolTip(@Nls String toolTip) {
+    myButton.setToolTipText(toolTip);
   }
 
   protected void layoutButtons() {
@@ -60,15 +68,16 @@ public class TagButton extends JBLayeredPane implements Disposable {
     myCloseButton.setBounds(new Rectangle(p, iconSize));
   }
 
-  protected void updateButton(@NlsContexts.Button String text, Icon icon) {
+  protected void updateButton(@NlsContexts.Button String text, Icon icon, boolean isEnabled) {
     myButton.setText(text);
     myButton.setIcon(icon);
+    myButton.setEnabled(isEnabled);
     layoutButtons();
   }
 
-  private void remove(Runnable action) {
+  private void remove(Consumer<AnActionEvent> action, AnActionEvent e) {
     setVisible(false);
-    action.run();
+    action.accept(e);
   }
 
   private static Color getBackgroundColor() {

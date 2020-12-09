@@ -154,7 +154,7 @@ final class BuildSession implements Runnable, CanceledStatus {
               kind, text, compilerMessage.getSourcePath(),
               compilerMessage.getProblemBeginOffset(), compilerMessage.getProblemEndOffset(),
               compilerMessage.getProblemLocationOffset(), compilerMessage.getLine(), compilerMessage.getColumn(),
-              -1.0f);
+              -1.0f, compilerMessage.getModuleNames());
           }
           else if (buildMessage instanceof CustomBuilderMessage) {
             CustomBuilderMessage builderMessage = (CustomBuilderMessage)buildMessage;
@@ -168,8 +168,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             }
             //noinspection HardCodedStringLiteral
             response = worthReporting && REPORT_BUILD_STATISTICS ?
-                       CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.JPS_INFO, message.getMessageText(), null, -1, -1, -1, -1, -1, -1.0f):
-                       null;
+              CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.JPS_INFO, message.getMessageText(), null, -1, -1, -1, -1, -1, -1.0f, Collections.emptyList()) : null;
           }
           else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {
             float done = -1.0f;
@@ -550,7 +549,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (error instanceof CannotLoadJpsModelException) {
         String text = JpsBuildBundle.message("build.message.failed.to.load.project.configuration.0", StringUtil.decapitalize(error.getMessage()));
         String path = ((CannotLoadJpsModelException)error).getFile().getAbsolutePath();
-        lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.ERROR, text, path, -1, -1, -1, -1, -1, -1.0f));
+        lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.ERROR, text, path, -1, -1, -1, -1, -1, -1.0f, Collections.emptyList()));
       }
       else if (error != null) {
         Throwable cause = error.getCause();

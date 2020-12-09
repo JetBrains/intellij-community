@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 
 abstract class BaseBusConnection implements MessageBusImpl.MessageHandlerHolder {
   protected MessageBusImpl bus;
-  protected final AtomicReference<Object[]> subscriptions = new AtomicReference<>(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
+  protected final AtomicReference</*(@NotNull Topic<L>, @NotNull L) pairs*/Object[]> subscriptions = new AtomicReference<>(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
 
   BaseBusConnection(@NotNull MessageBusImpl bus) {
     this.bus = bus;
@@ -29,8 +29,7 @@ abstract class BaseBusConnection implements MessageBusImpl.MessageHandlerHolder 
       }
       else {
         int size = list.length;
-        newList = new Object[size + 2];
-        System.arraycopy(list, 0, newList, 0, size);
+        newList = Arrays.copyOf(list, size + 2);
         newList[size] = topic;
         newList[size + 1] = handler;
       }
@@ -40,17 +39,18 @@ abstract class BaseBusConnection implements MessageBusImpl.MessageHandlerHolder 
   }
 
   @Override
-  public final void collectHandlers(@NotNull Topic<?> topic, @NotNull List<Object> result) {
+  public final <L> void collectHandlers(@NotNull Topic<L> topic, @NotNull List<? super L> result) {
     Object[] list = subscriptions.get();
     for (int i = 0, n = list.length; i < n; i += 2) {
       if (list[i] == topic) {
-        result.add(list[i + 1]);
+        //noinspection unchecked
+        result.add((L)list[i + 1]);
       }
     }
   }
 
   @Override
-  public final void disconnectIfNeeded(@NotNull Predicate<Class<?>> predicate) {
+  public final void disconnectIfNeeded(@NotNull Predicate<? super Class<?>> predicate) {
     while (true) {
       Object[] list = subscriptions.get();
       List<Object> newList = null;

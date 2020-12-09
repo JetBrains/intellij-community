@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.impl.compiled.TypeAnnotationContainer;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.util.BitUtil.isSet;
@@ -123,11 +123,13 @@ public class TypeInfo {
     byte arrayCount = 0;
     boolean isEllipsis = false;
 
+    boolean hasAnnotation = false;
+    LighterASTNode typeElement = null;
+
     if (element.getTokenType() == JavaElementType.ENUM_CONSTANT) {
-      text = ((PsiClassStub)parentStub).getName();
+      text = ((PsiClassStub<?>)parentStub).getName();
     }
     else {
-      LighterASTNode typeElement = null;
 
       for (final LighterASTNode child : tree.getChildren(element)) {
         IElementType type = child.getTokenType();
@@ -164,14 +166,40 @@ public class TypeInfo {
             arrayCount++;
             isEllipsis = true;
           }
+          else if (tokenType == JavaElementType.ANNOTATION) {
+            hasAnnotation = true;
+          }
         }
-        typeElement = nested;
+        text = LightTreeUtil.toFilteredString(tree, nested, null);
+      } else {
+        text = LightTreeUtil.toFilteredString(tree, typeElement, null);
       }
-
-      text = LightTreeUtil.toFilteredString(tree, typeElement, null);
     }
 
-    return new TypeInfo(text, arrayCount, isEllipsis);
+    TypeInfo info = new TypeInfo(text, arrayCount, isEllipsis);
+    if (hasAnnotation) {
+      // TODO: support bounds, generics and enclosing types
+      TypeAnnotationContainer.Collector collector = new TypeAnnotationContainer.Collector(info);
+      int nestingLevel = arrayCount;
+      for (LighterASTNode child : tree.getChildren(typeElement)) {
+        IElementType tokenType = child.getTokenType();
+        if (tokenType == JavaElementType.TYPE) {
+          nestingLevel = 0;
+        }
+        else if (tokenType == JavaTokenType.LBRACKET) {
+          nestingLevel++;
+        }
+        else if (tokenType == JavaElementType.ANNOTATION) {
+          String anno = LightTreeUtil.toFilteredString(tree, child, null);
+          byte[] typePath = new byte[nestingLevel];
+          Arrays.fill(typePath, TypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+          collector.add(typePath, anno);
+        }
+      }
+      
+      collector.install();
+    }
+    return info;
   }
 
   @NotNull

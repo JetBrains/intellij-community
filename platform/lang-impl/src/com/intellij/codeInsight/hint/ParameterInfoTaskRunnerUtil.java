@@ -36,18 +36,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-final class ParameterInfoTaskRunnerUtil {
+public final class ParameterInfoTaskRunnerUtil {
 
   public static final int DEFAULT_PROGRESS_POPUP_DELAY_MS = 1000;
 
   /**
    * @param progressTitle null means no loading panel should be shown
    */
-  static <T> void runTask(Project project,
-                          NonBlockingReadAction<T> nonBlockingReadAction,
-                          Consumer<? super T> continuationConsumer,
-                          @Nullable @NlsContexts.ProgressTitle String progressTitle,
-                          Editor editor) {
+  public static <T> void runTask(Project project,
+                                 NonBlockingReadAction<T> nonBlockingReadAction,
+                                 Consumer<? super T> continuationConsumer,
+                                 @Nullable @NlsContexts.ProgressTitle String progressTitle,
+                                 Editor editor) {
     AtomicReference<CancellablePromise<?>> cancellablePromiseRef = new AtomicReference<>();
     Consumer<Boolean> stopAction =
       startProgressAndCreateStopAction(editor.getProject(), progressTitle, cancellablePromiseRef, editor);

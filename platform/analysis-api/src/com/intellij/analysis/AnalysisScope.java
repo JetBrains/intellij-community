@@ -160,7 +160,7 @@ public class AnalysisScope {
       public void visitFile(@NotNull PsiFile file) {
         if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null && !isFilteredOut(virtualFile) && shouldHighlightFile(file)) {
+          if (virtualFile != null && !isFilteredOut(virtualFile)) {
             addTo.add(virtualFile);
           }
         }

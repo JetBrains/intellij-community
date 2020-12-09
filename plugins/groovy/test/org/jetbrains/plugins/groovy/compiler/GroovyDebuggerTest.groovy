@@ -27,7 +27,7 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
  */
 @CompileStatic
 class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMethods {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")
+  private static final Logger LOG = Logger.getInstance(GroovyDebuggerTest.class)
 
   @Override
   Logger getLogger() { LOG }

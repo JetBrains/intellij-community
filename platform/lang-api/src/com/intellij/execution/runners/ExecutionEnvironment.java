@@ -2,10 +2,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -13,7 +10,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -30,10 +26,10 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @NotNull private final Project myProject;
 
-  @NotNull private RunProfile myRunProfile;
+  @NotNull private final RunProfile myRunProfile;
   @NotNull private final Executor myExecutor;
 
-  @NotNull private ExecutionTarget myTarget;
+  @NotNull private final ExecutionTarget myTarget;
   private TargetEnvironmentFactory myTargetEnvironmentFactory;
   private volatile TargetEnvironment myPrepareRemoteEnvironment;
 
@@ -56,6 +52,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     myRunnerAndConfigurationSettings = null;
     myExecutor = null;
     myRunner = null;
+    myRunProfile = null;
+    myTarget = null;
   }
 
   public ExecutionEnvironment(@NotNull Executor executor,
@@ -110,7 +108,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
         Experiments.getInstance().isFeatureEnabled("run.targets")) {
       String targetName = ((TargetEnvironmentAwareRunProfile)myRunProfile).getDefaultTargetName();
       if (targetName != null) {
-        TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+        TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance(myProject).getTargets().findByName(targetName);
         if (config != null) {
           return config.createEnvironmentFactory(myProject);
         }
@@ -120,29 +118,38 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   }
 
   @ApiStatus.Experimental
-  public @NotNull TargetEnvironment getPreparedTargetEnvironment(@NotNull RunProfileState runProfileState, @NotNull ProgressIndicator progressIndicator)
+  public @NotNull TargetEnvironment getPreparedTargetEnvironment(@NotNull RunProfileState runProfileState,
+                                                                 TargetEnvironmentAwareRunProfileState.@NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException {
     if (myPrepareRemoteEnvironment != null) {
       // In a correct implementation that uses the new API this condition is always true.
       return myPrepareRemoteEnvironment;
     }
     // Warning: this method executes in EDT!
-    return prepareTargetEnvironment(runProfileState, progressIndicator);
+    return prepareTargetEnvironment(runProfileState, targetProgressIndicator);
   }
 
   @ApiStatus.Experimental
-  public @NotNull TargetEnvironment prepareTargetEnvironment(@NotNull RunProfileState runProfileState, @NotNull ProgressIndicator progressIndicator)
+  public @NotNull TargetEnvironment prepareTargetEnvironment(@NotNull RunProfileState runProfileState,
+                                                             TargetEnvironmentAwareRunProfileState.@NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException {
-    TargetEnvironmentFactory factory = getTargetEnvironmentFactory();
+    TargetEnvironmentFactory factory = null;
+    if (runProfileState instanceof TargetEnvironmentAwareRunProfileState &&
+        myRunProfile instanceof TargetEnvironmentAwareRunProfile && ((TargetEnvironmentAwareRunProfile) myRunProfile).getDefaultTargetName() == null) {
+      factory = ((TargetEnvironmentAwareRunProfileState) runProfileState).createCustomTargetEnvironmentFactory();
+    }
+    if (factory == null) {
+      factory = getTargetEnvironmentFactory();
+    }
     TargetEnvironmentRequest request = factory.createRequest();
     if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
       ((TargetEnvironmentAwareRunProfileState)runProfileState)
-        .prepareTargetEnvironmentRequest(request, factory.getTargetConfiguration(), progressIndicator);
+        .prepareTargetEnvironmentRequest(request, factory.getTargetConfiguration(), targetProgressIndicator);
     }
-    myPrepareRemoteEnvironment = factory.prepareRemoteEnvironment(request, progressIndicator);
+    myPrepareRemoteEnvironment = factory.prepareRemoteEnvironment(request, targetProgressIndicator);
     if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
       ((TargetEnvironmentAwareRunProfileState)runProfileState)
-        .handleCreatedTargetEnvironment(myPrepareRemoteEnvironment, progressIndicator);
+        .handleCreatedTargetEnvironment(myPrepareRemoteEnvironment, targetProgressIndicator);
     }
     return myPrepareRemoteEnvironment;
   }
@@ -245,13 +252,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     if (myRunnerAndConfigurationSettings != null) {
       return myRunnerAndConfigurationSettings.getName();
     }
-    else if (myRunProfile != null) {
-      return myRunProfile.getName();
-    }
-    else if (myContentToReuse != null) {
-      return myContentToReuse.getDisplayName();
-    }
-    return super.toString();
+    return myRunProfile.getName();
   }
 
   void setDataContext(@NotNull DataContext dataContext) {

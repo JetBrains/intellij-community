@@ -36,9 +36,10 @@ public final class GitPatchWriter {
     return String.format(INDEX_SHA1_HEADER, beforeHash, afterHash);
   }
 
-  public static void writeGitHeader(@NotNull Writer writer, @Nullable Path basePath, @NotNull FilePatch filePatch)
+  public static void writeGitHeader(@NotNull Writer writer,
+                                    @Nullable Path basePath,
+                                    @NotNull FilePatch filePatch, @NotNull @NonNls String lineSeparator)
     throws IOException {
-    @NonNls String lineSeparator = "\n"; //use it for git headers&binary content, otherwise git won't parse&apply it properly
     writer.write(String.format(GIT_DIFF_HEADER,
                                UnifiedDiffWriter.A_PREFIX + filePatch.getBeforeName(),
                                UnifiedDiffWriter.B_PREFIX + filePatch.getAfterName()));

@@ -21,6 +21,10 @@ internal fun getExistingLogIds(project: Project): Set<String> {
   return FileEditorManager.getInstance(project).allEditors.flatMapTo(mutableSetOf(), ::getLogIds)
 }
 
+internal fun <T : VcsLogUiEx> findVcsLogUi(editors: Array<FileEditor>, clazz: Class<T>): T? {
+  return editors.asSequence().mapNotNull { VcsLogContentUtil.getLogUi(it.component) }.filterIsInstance(clazz).firstOrNull()
+}
+
 internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
   val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
   val file = fileEditorManager.allEditors.first { getLogIds(it).contains(ui.id) }?.file

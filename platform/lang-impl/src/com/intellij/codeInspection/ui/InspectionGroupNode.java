@@ -2,12 +2,13 @@
 
 package com.intellij.codeInspection.ui;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class InspectionGroupNode extends InspectionTreeNode {
-  private final String myGroup;
+  private final @Nls String myGroup;
 
-  InspectionGroupNode(@NotNull String group, @NotNull InspectionTreeNode parent) {
+  InspectionGroupNode(@NotNull @Nls String group, @NotNull InspectionTreeNode parent) {
     super(parent);
     myGroup = group;
   }

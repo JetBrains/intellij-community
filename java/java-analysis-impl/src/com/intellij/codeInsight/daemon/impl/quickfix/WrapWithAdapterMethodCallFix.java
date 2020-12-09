@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -168,8 +169,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE)),
     new Wrapper("java.util.Collections.singletonList({0})",
                 inType -> true,
-                outType -> outType instanceof PsiClassType &&
-                           ((PsiClassType)outType).rawType().equalsToText(CommonClassNames.JAVA_UTIL_LIST)),
+                outType -> PsiTypesUtil.classNameEquals(outType, CommonClassNames.JAVA_UTIL_LIST)),
     new Wrapper("java.util.Arrays.stream({0})",
                 inType -> inType instanceof PsiArrayType,
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM))

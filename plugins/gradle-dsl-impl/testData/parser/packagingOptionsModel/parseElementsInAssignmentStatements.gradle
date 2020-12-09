@@ -1,0 +1,10 @@
+android {
+  packagingOptions {
+    excludes = ['exclude1', 'exclude2']
+    exclude 'exclude3'
+    merges = ['merge1', 'merge2']
+    merge 'merge3'
+    pickFirsts = ['pickFirst1', 'pickFirst2']
+    pickFirst 'pickFirst3'
+  }
+}

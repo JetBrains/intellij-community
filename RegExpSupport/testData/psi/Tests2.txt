@@ -11,5 +11,5 @@ REGEXP_FILE
               PsiElement(CHARACTER)('b')
             RegExpCharImpl: <c>
               PsiElement(CHARACTER)('c')
-        PsiErrorElement:Unclosed group
+        PsiErrorElement:')' expected
           <empty list>

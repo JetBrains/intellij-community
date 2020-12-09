@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -27,19 +26,18 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author ven
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class GenericInlineHandler {
-
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);
 
   public static boolean invoke(final PsiElement element, @Nullable Editor editor, final InlineHandler languageSpecific) {
@@ -109,7 +107,7 @@ public final class GenericInlineHandler {
           ((ApplicationImpl)ApplicationManager.getApplication())
             .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
         } else {
-          perform.consume(new EmptyProgressIndicator());
+          perform.accept(new EmptyProgressIndicator());
         }
       });
     return true;

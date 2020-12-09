@@ -88,7 +88,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
     if (ScreenReader.isActive()) {
       myBrowseButton.setFocusable(true);
-      myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
+      myBrowseButton.getAccessibleContext().setAccessibleName(UIBundle.message("component.with.browse.button.accessible.name"));
     }
     new LazyDisposable(this);
   }

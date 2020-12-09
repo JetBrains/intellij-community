@@ -31,12 +31,6 @@ import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.Notifica
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION;
 
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
-  /**
-   * @deprecated Use {@link #getCommandName()} instead
-   */
-  @Deprecated
-  public static final String COMMAND_NAME = "Optimize Imports";
-
   private final List<NotificationInfo> myOptimizerNotifications = new SmartList<>();
 
   public OptimizeImportsProcessor(@NotNull Project project) {
@@ -51,7 +45,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(project, directory, includeSubdirs, getProgressText(), getCommandName(), false);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
+  public OptimizeImportsProcessor(@NotNull Project project,
+                                  @NotNull PsiDirectory directory,
+                                  boolean includeSubdirs,
+                                  boolean processOnlyVcsChangedFiles) {
     super(project, directory, includeSubdirs, getProgressText(), getCommandName(), processOnlyVcsChangedFiles);
   }
 
@@ -63,7 +60,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     this(project, files, getCommandName(), postRunnable);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull @NlsContexts.Command String commandName, Runnable postRunnable) {
+  public OptimizeImportsProcessor(@NotNull Project project,
+                                  PsiFile @NotNull [] files,
+                                  @NotNull @NlsContexts.Command String commandName,
+                                  Runnable postRunnable) {
     super(project, files, getProgressText(), commandName, postRunnable, false);
   }
 

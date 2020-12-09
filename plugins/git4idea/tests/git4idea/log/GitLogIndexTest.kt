@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogStorage
@@ -61,7 +62,9 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
     indexAll()
 
-    val expectedMetadata = logProvider.readMetadata(repo.root, listOf(commitHash)).first()
+    val collector = CollectConsumer<VcsCommitMetadata>()
+    logProvider.readMetadata(repo.root, listOf(commitHash), collector)
+    val expectedMetadata = collector.result.first()
     val actualMetadata = IndexedDetails(dataGetter, storage, getCommitIndex(commitHash), 0L)
 
     TestCase.assertEquals(expectedMetadata.presentation(), actualMetadata.presentation())
@@ -86,9 +89,34 @@ class GitLogIndexTest : GitSingleRepoTest() {
     TestCase.assertEquals(expected, actual)
   }
 
-  fun `test text filter with multiple patterns`() {
-    val keyword1 = "keyword1"
-    val keyword2 = "keyword2"
+  fun `test regexp text filter`() {
+    val expected = mutableSetOf<Int>()
+    val pattern = "[A-Z]+\\-\\d+"
+
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    append(file, "more content")
+    expected.add(getCommitIndex(repo.addCommit("message with ABC-18")))
+
+    append(file, "and some more content")
+    expected.add(getCommitIndex(repo.addCommit("message with CDE-239")))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    append(file, "and even more content")
+    expected.add(getCommitIndex(repo.addCommit("message with XYZ-42")))
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(pattern, isRegexpAllowed = true)))
+
+    TestCase.assertEquals(expected, actual)
+  }
+
+  private fun `test text filter with multiple patterns`(keyword1: String, keyword2: String) {
     val expected = mutableSetOf<Int>()
 
     val file = "file.txt"
@@ -108,7 +136,19 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPatternsList(listOf(keyword1, keyword2))))
 
-    TestCase.assertEquals(expected.sorted(), actual.sorted())
+    assertEquals(expected.sorted(), actual.sorted())
+  }
+
+  fun `test text filter with multiple patterns`() {
+    `test text filter with multiple patterns`("keyword1", "keyword2")
+  }
+
+  fun `test text filter with short and long patterns`() {
+    `test text filter with multiple patterns`("k1", "keyword2")
+  }
+
+  fun `test text filter with short patterns`() {
+    `test text filter with multiple patterns`("k1", "k2")
   }
 
   fun `test author filter`() {

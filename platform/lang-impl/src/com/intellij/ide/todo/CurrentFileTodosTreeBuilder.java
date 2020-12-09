@@ -19,11 +19,10 @@ package com.intellij.ide.todo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Vladimir Kondratyev
@@ -40,14 +39,12 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   @Override
-  void rebuildCache(){
-    Set<VirtualFile> files = new HashSet<>();
+  void collectFiles(Processor<? super VirtualFile> collector) {
     CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTodoTreeStructure();
     PsiFile psiFile=treeStructure.getFile();
     if(treeStructure.accept(psiFile)){
-      files.add(psiFile.getVirtualFile());
+      collector.process(psiFile.getVirtualFile());
     }
-    super.rebuildCache(files);
   }
 
   /**
@@ -57,6 +54,5 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
     CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTodoTreeStructure();
     treeStructure.setFile(file);
     rebuildCache();
-    updateTree();
   }
 }

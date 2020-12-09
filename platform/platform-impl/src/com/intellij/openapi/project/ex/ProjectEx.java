@@ -3,7 +3,6 @@ package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,21 +10,6 @@ import org.jetbrains.annotations.TestOnly;
 
 public interface ProjectEx extends Project {
   String NAME_FILE = ".name";
-
-  /**
-   * Consider using only and only if {@link com.intellij.configurationStore.SettingsSavingComponent} is not possible to use.
-   */
-  @ApiStatus.Internal
-  interface ProjectSaved {
-    @Topic.ProjectLevel
-    Topic<ProjectSaved> TOPIC = new Topic<>("SaveProjectTopic", ProjectSaved.class, Topic.BroadcastDirection.NONE);
-
-    /**
-     * Not called in EDT.
-     */
-    default void duringSave(@NotNull Project project) {
-    }
-  }
 
   void setProjectName(@NotNull String name);
 

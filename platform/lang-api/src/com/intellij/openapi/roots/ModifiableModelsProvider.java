@@ -2,7 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -19,7 +19,7 @@ public interface ModifiableModelsProvider {
     }
 
     public static ModifiableModelsProvider getInstance() {
-      return ServiceManager.getService(ModifiableModelsProvider.class);
+      return ApplicationManager.getApplication().getService(ModifiableModelsProvider.class);
     }
   }
 

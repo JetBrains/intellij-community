@@ -89,38 +89,38 @@ Groovy script
       Reference expression
         Generalized list
           PsiElement([)('[')
-          PsiWhiteSpace('\n    ')
+          PsiElement(new line)('\n    ')
           Literal
             PsiElement(single quoted string)(''Guillaume'')
           PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
+          PsiElement(new line)('\n    ')
           Literal
             PsiElement(single quoted string)(''April, 1st'')
           PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
+          PsiElement(new line)('\n    ')
           Literal
             PsiElement(single quoted string)(''$ dollar sign'')
           PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
+          PsiElement(new line)('\n    ')
           Literal
             PsiElement(single quoted string)(''$ escaped dollar sign'')
           PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
+          PsiElement(new line)('\n    ')
           Literal
             PsiElement(single quoted string)(''\\ backslash'')
           PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
+          PsiElement(new line)('\n    ')
           Literal
             PsiElement(single quoted string)(''/ forward slash'')
           PsiElement(,)(',')
-          PsiWhiteSpace('\n')
+          PsiElement(new line)('\n')
           Literal
             PsiElement(single quoted string)(''$/ escaped forward slash'')
           PsiElement(,)(',')
-          PsiWhiteSpace('\n')
+          PsiElement(new line)('\n')
           Literal
             PsiElement(single quoted string)(''/$ escaped dollar slashy string delimiter'')
-          PsiWhiteSpace('\n\n')
+          PsiElement(new line)('\n\n')
           PsiElement(])(']')
         PsiElement(.)('.')
         PsiElement(identifier)('each')

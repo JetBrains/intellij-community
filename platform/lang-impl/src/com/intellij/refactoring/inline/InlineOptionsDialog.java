@@ -106,18 +106,24 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
         if (writable) {
           final boolean inlineThis = isInlineThis();
           myRbInlineThisOnly.setSelected(inlineThis);
-          if (myKeepTheDeclaration != null) myKeepTheDeclaration.setSelected(false);
-          myRbInlineAll.setSelected(!inlineThis);
+          if (myKeepTheDeclaration != null) myKeepTheDeclaration.setSelected(!inlineThis && isKeepTheDeclarationByDefault());
+          myRbInlineAll.setSelected(!inlineThis && !isKeepTheDeclarationByDefault());
         }
         else {
           myRbInlineAll.setSelected(false);
+          if (myKeepTheDeclaration != null) {
+            myKeepTheDeclaration.setSelected(false);
+          }
           myRbInlineThisOnly.setSelected(true);
         }
       }
     }
     else {
-      myRbInlineAll.setSelected(true);
-      if (myKeepTheDeclaration != null) myKeepTheDeclaration.setSelected(false);
+      boolean keepTheDeclarationByDefault = isKeepTheDeclarationByDefault();
+      myRbInlineAll.setSelected(!keepTheDeclarationByDefault);
+      if (myKeepTheDeclaration != null) {
+        myKeepTheDeclaration.setSelected(keepTheDeclarationByDefault);
+      }
       myRbInlineThisOnly.setSelected(false);
     }
 
@@ -149,6 +155,9 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   protected abstract String getInlineAllText();
   @RadioButton
   protected String getKeepTheDeclarationText() {return null;}
+  protected boolean isKeepTheDeclarationByDefault() {
+    return false;
+  }
   @RadioButton
   protected abstract String getInlineThisText();
   protected abstract boolean isInlineThis();

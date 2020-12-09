@@ -11,9 +11,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class GoogleAppEngineIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, GoogleAppEngineIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, GoogleAppEngineIcons.class.getClassLoader(), cacheKey, flags);
   }
-
-  /** 16x16 */ public static final @NotNull Icon AppEngine = load("/icons/appEngine.svg", 4216010133572228879L);
+  /** 16x16 */ public static final @NotNull Icon AppEngine = load("icons/appEngine.svg", 7368279653757801528L, 0);
 }

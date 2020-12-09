@@ -5,24 +5,26 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.editor.VcsLogFile
+import com.intellij.vcs.log.util.runWhenVcsAndLogIsReady
+import java.awt.BorderLayout
 import javax.swing.JComponent
 
-internal class GitCompareBranchesFile(sessionId: String, private val compareBranchesUi: GitCompareBranchesUi) :
-  VcsLogFile(compareBranchesUi.getEditorTabName()), VirtualFilePathWrapper {
-  private val pathId = GitCompareBranchesFilesManager.createPath(sessionId, compareBranchesUi)
+internal class GitCompareBranchesFile(project: Project,
+                                      name: String,
+                                      path: GitCompareBranchesVirtualFileSystem.ComplexPath,
+                                      private val compareBranchesUiFactory: () -> GitCompareBranchesUi) :
+  VcsLogFile(name), VirtualFilePathWrapper {
+  private val pathId = GitCompareBranchesFilesManager.createPath(project, path.sessionId, path.ranges, path.roots)
   private val fileSystemInstance = GitCompareBranchesVirtualFileSystem.getInstance()
 
   override fun createMainComponent(project: Project): JComponent {
-    val logManager = VcsProjectLog.getInstance(project).logManager
-    if (logManager == null) {
-      return JBPanelWithEmptyText().withEmptyText(VcsLogBundle.message("vcs.log.is.not.available"))
+    val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
+    runWhenVcsAndLogIsReady(project) { logManger ->
+      val component = compareBranchesUiFactory().create(logManger)
+      panel.add(component, BorderLayout.CENTER)
     }
-
-    val component = compareBranchesUi.create(logManager)
-    logManager.scheduleInitialization()
-    return component
+    return panel
   }
 
   override fun getFileSystem(): GitCompareBranchesVirtualFileSystem = fileSystemInstance

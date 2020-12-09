@@ -4,7 +4,7 @@ public class UnnecessaryConstructor {
   }
 }
 class A {
-  <error descr="Illegal type: 'void'">void</error> () {}
+  <error descr="Identifier expected">void</error> () {}
 }
 
 enum En {

@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -58,12 +57,6 @@ public class Key<T> {
     return holder == null ? null : holder.getUserData(this);
   }
 
-  @Contract("null -> null")
-  public T get(@Nullable Map<Key, ?> holder) {
-    //noinspection unchecked
-    return holder == null ? null : (T)holder.get(this);
-  }
-
   @Contract("_, !null -> !null")
   public T get(@Nullable UserDataHolder holder, T defaultValue) {
     T t = get(holder);
@@ -85,12 +78,6 @@ public class Key<T> {
   public void set(@Nullable UserDataHolder holder, @Nullable T value) {
     if (holder != null) {
       holder.putUserData(this, value);
-    }
-  }
-
-  public void set(@Nullable Map<Key, Object> holder, T value) {
-    if (holder != null) {
-      holder.put(this, value);
     }
   }
 

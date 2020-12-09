@@ -176,7 +176,8 @@ class FileDownloaderImpl implements FileDownloader {
 
       @Override
       public void onSuccess() {
-        result.complete(findVirtualFiles(localFiles.get()));
+        List<Pair<File, DownloadableFileDescription>> files = localFiles.get();
+        result.complete(files != null ? findVirtualFiles(files) : null);
       }
 
       @Override
@@ -303,7 +304,7 @@ class FileDownloaderImpl implements FileDownloader {
   }
 
   @NotNull
-  private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(List<Pair<File, DownloadableFileDescription>> ioFiles) {
+  private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(@NotNull List<Pair<File, DownloadableFileDescription>> ioFiles) {
     List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<>();
     for (final Pair<File, DownloadableFileDescription> pair : ioFiles) {
       final File ioFile = pair.getFirst();

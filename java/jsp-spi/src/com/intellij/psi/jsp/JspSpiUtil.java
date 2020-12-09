@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.jsp;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,6 +130,16 @@ public abstract class JspSpiUtil {
     final List<URL> urls = new ArrayList<>();
     processClassPathItems(virtualFile, module, file -> addUrl(urls, file), includeModuleOutput);
     return urls;
+  }
+
+  public static List<Path> buildFiles(@Nullable VirtualFile virtualFile, @Nullable Module module, boolean includeModuleOutput) {
+    List<Path> result = new ArrayList<>();
+    processClassPathItems(virtualFile, module, file -> {
+      if (file != null && file.isValid()) {
+        result.add(file.toNioPath());
+      }
+    }, includeModuleOutput);
+    return result;
   }
 
   public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<? super VirtualFile> consumer) {

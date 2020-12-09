@@ -6,6 +6,7 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.UnknownBeforeRunTaskProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
@@ -13,6 +14,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
@@ -34,22 +37,22 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public final class BeforeRunComponent extends JPanel implements DnDTarget {
-  private List<TaskButton> myTags;
+public final class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
+  private final List<TaskButton> myTags = new ArrayList<>();
   private final InplaceButton myAddButton;
   private final JPanel myAddPanel;
   private final LinkLabel<Object> myAddLabel;
   private final JLabel myDropFirst = new JLabel(AllIcons.General.DropPlace);
 
   Runnable myChangeListener;
-  private BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> myTagListener;
   private RunConfiguration myConfiguration;
 
   public BeforeRunComponent(@NotNull Disposable parentDisposable) {
     super(new WrapLayout(FlowLayout.LEADING, 0, FragmentedSettingsBuilder.TAG_VGAP));
+    Disposer.register(parentDisposable, this);
     add(Box.createVerticalStrut(30));
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -65,16 +68,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     myAddPanel.add(myAddButton);
     myAddLabel = new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
     myAddLabel.setBorder(border);
-    DnDManager.getInstance().registerTarget(this, this, parentDisposable);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        if (myTags != null) {
-          myTags.forEach(Disposer::dispose);
-          myTags = null;
-        }
-      }
-    });
+    DnDManager.getInstance().registerTarget(this, this, this);
   }
 
   private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
@@ -82,15 +76,11 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
                                 provider -> provider.createTask(myConfiguration) != null);
   }
 
-  private void createTags() {
-    myTags = new ArrayList<>();
-    for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : getProviders()) {
-      myTags.add(new TaskButton(provider, () -> {
-        myChangeListener.run();
-        updateAddLabel();
-        myTagListener.accept(provider.getId(), false);
-      }));
-    }
+  private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
+    return new TaskButton(provider, (e) -> {
+      myChangeListener.run();
+      updateAddLabel();
+    });
   }
 
   private void updateAddLabel() {
@@ -100,16 +90,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
   public void showPopup() {
     DefaultActionGroup group = new DefaultActionGroup();
     for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : getProviders()) {
-      TaskButton tag = ContainerUtil.find(myTags, t -> t.myProvider.getId() == provider.getId());
-      if (tag.isVisible()) {
-        continue;
-      }
-      group.add(new AnAction(tag.myProvider.getName(), null, tag.myProvider.getIcon()) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          createTask(e, tag);
-        }
-      });
+      group.add(new TagAction(provider));
     }
     ListPopup
       popup = JBPopupFactory
@@ -120,27 +101,27 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
   }
 
   public void addOrRemove(Key<? extends BeforeRunTask<?>> providerId, boolean add) {
-    if (myTags == null) return;
     TaskButton taskButton = ContainerUtil.find(myTags, button -> button.myProvider.getId() == providerId);
     if (add) {
-      if (!taskButton.isVisible()) {
-        createTask(null, taskButton);
+      if (taskButton == null) {
+        createTask(null, ContainerUtil.find(getProviders(), provider -> providerId == provider.getId()));
       }
     }
-    else {
-      taskButton.setVisible(false);
+    else if (taskButton != null) {
+      myTags.remove(taskButton);
     }
   }
 
-  private void createTask(@Nullable AnActionEvent e, TaskButton tag) {
-    BeforeRunTask<?> task = tag.myProvider.createTask(myConfiguration);
+  private void createTask(@Nullable AnActionEvent e, BeforeRunTaskProvider<BeforeRunTask<?>> myProvider) {
+    BeforeRunTask<?> task = myProvider.createTask(myConfiguration);
     if (task == null) return;
+    TaskButton tag = createTag(myProvider);
     if (e == null) {
       addTask(tag, task);
       return;
     }
-    tag.myProvider.configureTask(e.getDataContext(), myConfiguration, task).onSuccess(changed -> {
-      if (!tag.myProvider.canExecuteTask(myConfiguration, task)) {
+    myProvider.configureTask(e.getDataContext(), myConfiguration, task).onSuccess(changed -> {
+      if (!myProvider.canExecuteTask(myConfiguration, task)) {
         return;
       }
       addTask(tag, task);
@@ -154,22 +135,24 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     myTags.add(tag);
     buildPanel();
     myChangeListener.run();
-    myTagListener.accept(tag.myProvider.getId(), true);
   }
 
   public void reset(@NotNull RunnerAndConfigurationSettingsImpl s) {
     myConfiguration = s.getConfiguration();
-    if (myTags == null) {
-      createTags();
+    for (TaskButton tag : myTags) {
+      remove(tag);
     }
+    myTags.clear();
     List<BeforeRunTask<?>> tasks = s.getManager().getBeforeRunTasks(s.getConfiguration());
     for (BeforeRunTask<?> task : tasks) {
-      TaskButton button = ContainerUtil.find(myTags, tag -> tag.myProvider.getId() == task.getProviderId());
-      if (button != null) {
-        button.setTask(task);
-        myTags.remove(button);
-        myTags.add(button);
+      BeforeRunTaskProvider taskProvider =
+        ContainerUtil.find(getProviders(), provider -> task.getProviderId() == provider.getId());
+      if (taskProvider == null) {
+        taskProvider = new UnknownBeforeRunTaskProvider(task.getProviderId().toString());
       }
+      TaskButton tag = createTag(taskProvider);
+      tag.setTask(task);
+      myTags.add(tag);
     }
     buildPanel();
   }
@@ -178,12 +161,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     remove(myAddPanel);
     remove(myAddLabel);
     for (TaskButton tag : myTags) {
-      remove(tag);
-    }
-    for (TaskButton tag : myTags) {
-      if (tag.isVisible()) {
-        add(tag);
-      }
+      add(tag);
     }
     add(myAddPanel);
     add(myAddLabel);
@@ -200,6 +178,10 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
       .filter(button -> button.myTask != null && button.isVisible())
       .map(button -> button.myTask)
       .collect(Collectors.toList());
+  }
+
+  public <T extends BeforeRunTask<?>> boolean hasEnabledTask(Key<T> providerId) {
+    return ContainerUtil.or(getEnabledTasks(), task -> task.getProviderId() == providerId);
   }
 
   @Override
@@ -267,27 +249,28 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     return true;
   }
 
-  public void setTagListener(BiConsumer<Key<? extends BeforeRunTask<?>>, Boolean> tagListener) {
-    myTagListener = tagListener;
-  }
+  @Override
+  public void dispose() {}
 
   private final class TaskButton extends TagButton implements DnDSource {
     private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
     private final JLabel myDropPlace = new JLabel(AllIcons.General.DropPlace);
     private BeforeRunTask<?> myTask;
 
-    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, @NotNull Runnable action) {
+    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<AnActionEvent> action) {
       super(provider.getName(), action);
+      Disposer.register(BeforeRunComponent.this, this);
       add(myDropPlace, JLayeredPane.DRAG_LAYER);
       myProvider = provider;
-      setVisible(false);
       myDropPlace.setVisible(false);
       myButton.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2) {
-            myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, myTask)
-              .onSuccess(aBoolean -> setTask(myTask));
+            if (!DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider)) {
+              myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, myTask)
+                .onSuccess(aBoolean -> setTask(myTask));
+            }
           }
         }
       });
@@ -311,7 +294,8 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
       myTask = task;
       setVisible(task != null);
       if (task != null) {
-        updateButton(myProvider.getDescription(task), myProvider.getTaskIcon(task));
+        updateButton(myProvider.getDescription(task), myProvider.getTaskIcon(task),
+                     !DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
       }
     }
 
@@ -332,6 +316,25 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     @Override
     public String toString() {
       return myProvider.getName();
+    }
+  }
+
+  private class TagAction extends AnAction implements PossiblyDumbAware {
+    private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
+
+    private TagAction(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
+      super(provider.getName(), null, provider.getIcon());
+      myProvider = provider;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      createTask(e, myProvider);
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return DumbService.isDumbAware(myProvider);
     }
   }
 }

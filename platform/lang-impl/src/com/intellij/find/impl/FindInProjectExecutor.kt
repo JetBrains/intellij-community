@@ -1,7 +1,8 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl
 
 import com.intellij.find.FindModel
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -14,7 +15,7 @@ open class FindInProjectExecutor {
 
     companion object {
         fun getInstance(): FindInProjectExecutor {
-            return ServiceManager.getService(FindInProjectExecutor::class.java)
+            return ApplicationManager.getApplication().getService(FindInProjectExecutor::class.java)
         }
     }
 

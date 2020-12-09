@@ -146,6 +146,8 @@
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.CategoryTransformationSupport"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.BaseScriptTransformationSupport"/>
+    <astTransformationSupport id="autoFinalSupport" order="before defaultSupport"
+                              implementation="org.jetbrains.plugins.groovy.transformations.impl.AutoFinalTransformationSupport"/>
     <astTransformationSupport id="defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultTransformationSupport"/>
     <renameHelper implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultRenameHelper"/>
@@ -390,6 +392,7 @@
                                             implementationClass="org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper"/>
     <codeInsight.typeInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyExpressionTypeProvider"/>
     <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyParameterTypeHintsInlayProvider"/>
+    <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyImplicitNullArgumentHintProvider"/>
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
@@ -1072,6 +1075,11 @@
                      groupKey="inspection.confusing"
                      enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyGStringKeyInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.implicit.null.argument"
+                     level="WEAK WARNING"
+                     groupKey="inspection.confusing"
+                     enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyImplicitNullArgumentCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.duplicate.switch.branch"
                      groupKey="inspection.validity"
                      enabledByDefault="true"

@@ -44,7 +44,7 @@ public class NavBarModel {
   private boolean updated = false;
   private boolean isFixedComponent = false;
 
-  public NavBarModel(final Project project) {
+  public NavBarModel(@NotNull Project project) {
     this(project, project.getMessageBus().syncPublisher(NavBarModelListener.NAV_BAR), NavBarModelBuilder.getInstance());
   }
 
@@ -85,7 +85,7 @@ public class NavBarModel {
     return index;
   }
 
-  protected void updateModel(DataContext dataContext) {
+  public void updateModel(DataContext dataContext) {
     if (LaterInvocator.isInModalContext() || (updated && !isFixedComponent)) return;
 
     if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;

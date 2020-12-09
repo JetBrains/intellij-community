@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.GitUtil.mention;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -133,7 +134,8 @@ public final class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    if (!fetchAndNotify(myRepositories)) {
+    Collection<GitRepository> repositoriesToFetch = myUpdateConfig != null ? trackedBranches.keySet() : myRepositories;
+    if (!fetchAndNotify(repositoriesToFetch)) {
       return GitUpdateResult.NOT_READY;
     }
 
@@ -159,7 +161,7 @@ public final class GitUpdateProcess {
     catch (VcsException e) {
       LOG.info(e);
       VcsNotifier.getInstance(myProject)
-        .notifyError("git.update.error", GitBundle.message("notification.title.update.failed"),
+        .notifyError(UPDATE_ERROR, GitBundle.message("notification.title.update.failed"),
                      e.getMessage(),
                      Collections.singleton(e)
         );
@@ -238,7 +240,7 @@ public final class GitUpdateProcess {
           String rootName = (currentlyUpdatedRoot == null) ? "" : getShortRepositoryName(currentlyUpdatedRoot);
           LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
           VcsNotifier.getInstance(myProject)
-                                     .notifyError("git.update.error", GitBundle.message("notification.title.error.updating.root", rootName),
+                                     .notifyError(UPDATE_ERROR, GitBundle.message("notification.title.error.updating.root", rootName),
                                GitBundle.message("notification.content.updating.root.failed.with.error", rootName,
                                                  e.getLocalizedMessage()));
         }
@@ -408,7 +410,7 @@ public final class GitUpdateProcess {
   private void notifyNoTrackedBranchError(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
     VcsNotifier.getInstance(repository.getProject())
       .notifyError(
-        "git.update.no.tracked.branch.error", GitBundle.message("update.notification.update.error"),
+        UPDATE_NO_TRACKED_BRANCH, GitBundle.message("update.notification.update.error"),
         getNoTrackedBranchError(repository, currentBranch.getName()),
         NotificationAction.createSimple(
           GitBundle.message("update.notification.choose.upstream.branch"),
@@ -433,7 +435,7 @@ public final class GitUpdateProcess {
 
   private static void notifyDetachedHeadError(@NotNull GitRepository repository) {
     VcsNotifier.getInstance(repository.getProject())
-      .notifyError("git.update.detached.head.error", GitBundle.message("notification.title.can.t.update.no.current.branch"),
+      .notifyError(UPDATE_DETACHED_HEAD_ERROR, GitBundle.message("notification.title.can.t.update.no.current.branch"),
                          getDetachedHeadErrorNotificationContent(repository));
   }
 

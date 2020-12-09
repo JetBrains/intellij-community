@@ -6,7 +6,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,7 +30,7 @@ public final class VcsTestUtil {
       return WriteCommandAction.writeCommandAction(project).compute(() -> {
         VirtualFile file = parent.createChildData(parent, name);
         if (content != null) {
-          file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
+          file.setBinaryContent(content.getBytes(StandardCharsets.UTF_8));
         }
         return file;
       });

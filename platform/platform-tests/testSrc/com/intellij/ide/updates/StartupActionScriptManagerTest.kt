@@ -4,7 +4,7 @@ package com.intellij.ide.updates
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
@@ -21,8 +21,10 @@ import java.io.ObjectOutputStream
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
-  @Rule @JvmField val tempDir = TempDirectory()
+class StartupActionScriptManagerTest {
+  @Rule
+  @JvmField
+  val tempDir = TempDirectory()
 
   private lateinit var scriptFile: Path
 
@@ -37,16 +39,18 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
 
   @Test fun `reading and writing empty file`() {
     StartupActionScriptManager.addActionCommands(listOf())
-    assertTrue(scriptFile.exists())
+    assertThat(scriptFile).isRegularFile
     StartupActionScriptManager.executeActionScript()
-    assertFalse(scriptFile.exists())
+    assertThat(scriptFile).exists()
   }
 
   @Test fun `reading empty file in old format`() {
-    ObjectOutputStream(scriptFile.outputStream()).use { it.writeObject(ArrayList<StartupActionScriptManager.ActionCommand>()) }
-    assertTrue(scriptFile.exists())
+    ObjectOutputStream(scriptFile.outputStream()).use {
+      it.writeObject(ArrayList<StartupActionScriptManager.ActionCommand>())
+    }
+    assertThat(scriptFile).isRegularFile
     StartupActionScriptManager.executeActionScript()
-    assertFalse(scriptFile.exists())
+    assertThat(scriptFile).exists()
   }
 
   @Test fun `executing "copy" command`() {

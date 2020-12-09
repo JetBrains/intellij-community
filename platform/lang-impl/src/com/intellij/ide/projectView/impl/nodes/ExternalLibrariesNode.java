@@ -1,14 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -125,5 +119,10 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   protected void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.external.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
+  }
+
+  @Override
+  public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+    return NodeSortOrder.LIBRARY_ROOT;
   }
 }

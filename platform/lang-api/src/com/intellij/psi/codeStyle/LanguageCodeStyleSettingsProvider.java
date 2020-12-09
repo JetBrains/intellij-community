@@ -6,7 +6,6 @@ import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePr
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
-import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -120,16 +119,19 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   /**
-   * @deprecated use PredefinedCodeStyle extension point instead
+   * @deprecated use {@link PredefinedCodeStyle} extension point instead
    */
   @Deprecated
   public PredefinedCodeStyle @NotNull [] getPredefinedCodeStyles() {
     return PredefinedCodeStyle.EMPTY_ARRAY;
   }
 
+  /**
+   * @deprecated use {@link #getPriority()}
+   */
+  @Deprecated
   public DisplayPriority getDisplayPriority() {
-    List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
-    return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
+    return getPriority();
   }
 
   /**
@@ -238,13 +240,6 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
       if (curr != null) return curr;
     }
     return null;
-  }
-
-  @SuppressWarnings("unused")
-  public static DisplayPriority getDisplayPriority(Language language) {
-    LanguageCodeStyleSettingsProvider langProvider = forLanguage(language);
-    if (langProvider == null) return DisplayPriority.LANGUAGE_SETTINGS;
-    return langProvider.getDisplayPriority();
   }
 
   @Nullable

@@ -32,10 +32,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -240,8 +237,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return fileElement;
   }
 
-  @Nullable
-  Ref<JPanel> restoreEditors() {
+  @Nullable Ref<JPanel> restoreEditors() {
     Element element = mySplittersElement;
     if (element == null) {
       return null;
@@ -419,6 +415,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
+  void updateFileStyle(@NotNull VirtualFile file) {
+    Collection<EditorWindow> windows = findWindows(file);
+    for (EditorWindow window : windows) {
+      EditorWithProviderComposite composite = window.findFileComposite(file);
+      int index = window.findEditorIndex(composite);
+      LOG.assertTrue(index != -1);
+      window.setStyleAt(index, composite != null && composite.isPreview() ? SimpleTextAttributes.STYLE_ITALIC : -1);
+    }
+  }
+
   public void trimToSize() {
     for (EditorWindow window : myWindows) {
       window.trimToSize(window.getSelectedFile(), true);
@@ -457,20 +463,22 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
     Project project = myManager.getProject();
     IdeFrameEx frame = getFrame(project);
-    if (frame != null) {
-      String fileTitle = null;
-      Path ioFile = null;
-      VirtualFile file = getCurrentFile();
-      if (file != null) {
-        try {
-          ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
-        }
-        catch (InvalidPathException ignored) {
-        }
-        fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
-      }
-      frame.setFileTitle(fileTitle, ioFile);
+    if (frame == null) {
+      return;
     }
+
+    String fileTitle = null;
+    Path ioFile = null;
+    VirtualFile file = getCurrentFile();
+    if (file != null) {
+      try {
+        ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
+      }
+      catch (InvalidPathException ignored) {
+      }
+      fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
+    }
+    frame.setFileTitle(fileTitle, ioFile);
   }
 
   protected @Nullable IdeFrameEx getFrame(@NotNull Project project) {
@@ -573,7 +581,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     for (EditorWindow window : windows) {
       LOG.assertTrue(window.getSelectedEditor() != null);
       window.closeFile(file, false, moveFocus);
-      if (window.getTabCount() == 0 && nextFile != null && isProjectOpen) {
+      if (window.getTabCount() == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         EditorWithProviderComposite newComposite = myManager.newEditorComposite(nextFile);
         window.setEditor(newComposite, moveFocus); // newComposite can be null
       }
@@ -613,7 +621,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       if (myCurrentWindow != null) {
         EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
         if (selectedEditor != null) {
-          return IdeFocusTraversalPolicy.getPreferredFocusedComponent(selectedEditor.getFocusComponent(), this);
+          JComponent focusComponent = selectedEditor.getFocusComponent();
+          if (focusComponent != null) {
+            return IdeFocusTraversalPolicy.getPreferredFocusedComponent(focusComponent, this);
+          }
         }
       }
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(EditorsSplitters.this, this);
@@ -940,8 +951,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             .withReopeningEditorsOnStartup();
           try {
             virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
-            Document document =
-              ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+            Document document = ReadAction.compute(() -> {
+              return virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+            });
 
             boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
 
@@ -1086,6 +1098,29 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return editor.getPreferredFocusedComponent();
     }
     return null;
+  }
+
+  @Nullable
+  public EditorWindow openInRightSplit(@NotNull VirtualFile file) {
+    EditorWindow window = getCurrentWindow();
+
+    if (window == null) {
+      return null;
+    }
+    Container parent = window.myPanel.getParent();
+    if (parent instanceof Splitter) {
+      JComponent component = ((Splitter)parent).getSecondComponent();
+      if (component != window.myPanel) {
+        //reuse
+        EditorWindow rightSplitWindow = findWindowWith(component);
+        if (rightSplitWindow != null) {
+          myManager.openFileWithProviders(file, true, rightSplitWindow);
+          return rightSplitWindow;
+        }
+      }
+    }
+
+    return window.split(SwingConstants.VERTICAL, true, file, true);
   }
 
   public static boolean focusDefaultComponentInSplittersIfPresent(@NotNull Project project) {

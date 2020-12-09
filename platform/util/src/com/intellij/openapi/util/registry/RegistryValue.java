@@ -220,7 +220,15 @@ public class RegistryValue {
     }
 
     if (!myRegistry.isLoaded()) {
-      LOG.warn("The registry key '" + key + "' accessed, but not loaded yet");
+      String message = "Attempt to load key '" + key + "' for not yet loaded registry";
+      // use Disposer.isDebugMode as "we are in internal mode or inside test" flag
+      if (Disposer.isDebugMode()) {
+        LOG.warn(message + ". Use system properties instead of registry values to configure behaviour at early startup stages.",
+                 new Throwable());
+      }
+      else {
+        LOG.warn(message);
+      }
     }
 
     String bundleValue = Registry.getInstance().getBundleValue(key, mustExistInBundle);

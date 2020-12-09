@@ -179,15 +179,23 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
     @NotNull
     @Override
-    public String upload(@NotNull String relativePath, @NotNull ProgressIndicator progressIndicator) throws IOException {
+    public String resolveTargetPath(@NotNull String relativePath) throws IOException {
       if (myReal) {
         File targetFile = myTargetRoot.resolve(relativePath).toFile().getCanonicalFile();
-        FileUtil.copyFileOrDir(myLocalRoot.resolve(relativePath).toFile().getCanonicalFile(), targetFile);
         return targetFile.toString();
       }
       else {
         // myLocalRoot used there intentionally, because it could contain a relative path that some test expects to get.
         return FileUtil.toCanonicalPath(FileUtil.join(myLocalRoot.toString(), relativePath)).replace('/', File.separatorChar);
+      }
+    }
+
+    @Override
+    public void upload(@NotNull String relativePath,
+                       @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator) throws IOException {
+      if (myReal) {
+        File targetFile = myTargetRoot.resolve(relativePath).toFile().getCanonicalFile();
+        FileUtil.copyFileOrDir(myLocalRoot.resolve(relativePath).toFile().getCanonicalFile(), targetFile);
       }
     }
 

@@ -276,16 +276,16 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testRedefinedNewConstructorCall() {
     Map<String, PsiElement> marks = loadTest(2);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: A, a, b", new String[]{"a, "}, new String[]{"cls: A, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: A, a, b", new String[]{"b"}, new String[]{"cls: A, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"a, "}, new String[]{"cls: Type[A], "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"b"}, new String[]{"cls: Type[A], "});
   }
 
   public void testRedefinedNewDirectCall() {
     Map<String, PsiElement> marks = loadTest(3);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: A, a, b", new String[]{"cls: A, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: A, a, b", new String[]{"a, "});
-    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("cls: A, a, b", new String[]{"b"});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"cls: Type[A], "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"a, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("cls: Type[A], a, b", new String[]{"b"});
   }
 
   public void testIgnoreNewInOldStyleClass() {
@@ -629,9 +629,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
-  // PY-22249
+  // PY-22249, PY-45473
   public void testInitializingCollectionsNamedTuple() {
-    final Map<String, PsiElement> test = loadTest(2);
+    final Map<String, PsiElement> test = loadTest(3);
 
     for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
       final List<String> texts = Collections.singletonList("bar, baz");
@@ -641,13 +641,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
   }
 
+  // PY-33140
   public void testInitializingTypingNamedTuple() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        final Map<String, PsiElement> test = loadTest(7);
+        final Map<String, PsiElement> test = loadTest(8);
 
-        for (int offset : StreamEx.of(1, 2, 3, 4).map(number -> test.get("<arg" + number + ">").getTextOffset())) {
+        for (int offset : StreamEx.of(1, 2, 3, 4, 8).map(number -> test.get("<arg" + number + ">").getTextOffset())) {
           final List<String> texts = Collections.singletonList("bar: int, baz: str");
           final List<String[]> highlighted = Collections.singletonList(new String[]{"bar: int, "});
 

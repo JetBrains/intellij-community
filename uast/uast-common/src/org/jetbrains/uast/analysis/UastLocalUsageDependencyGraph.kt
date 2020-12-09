@@ -357,7 +357,7 @@ private class VisitorWithVariablesTracking(
   }
 
   companion object {
-    val maxBuildDepth = Registry.intValue("reactor.default.recursion.depth.limit", 30)
+    val maxBuildDepth = Registry.intValue("uast.usage.graph.default.recursion.depth.limit", 30)
 
     object BuildOverflowException : RuntimeException("graph building is overflowed", null, false, false)
   }

@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.IProperty;
@@ -200,7 +201,8 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
       if (delegee instanceof JLabel) {
         final JLabel label = (JLabel)delegee;
-        label.setText(textWithMnemonic.myText);
+        @NlsSafe String text = textWithMnemonic.myText;
+        label.setText(text);
         if(textWithMnemonic.myMnemonicIndex != -1){
           label.setDisplayedMnemonic(textWithMnemonic.getMnemonicChar());
           label.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
@@ -211,7 +213,8 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
       }
       else if (delegee instanceof AbstractButton) {
         final AbstractButton button = (AbstractButton)delegee;
-        button.setText(textWithMnemonic.myText);
+        @NlsSafe String text = textWithMnemonic.myText;
+        button.setText(text);
         if(textWithMnemonic.myMnemonicIndex != -1){
           button.setMnemonic(textWithMnemonic.getMnemonicChar());
           button.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);

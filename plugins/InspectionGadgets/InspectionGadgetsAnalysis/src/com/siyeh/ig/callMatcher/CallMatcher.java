@@ -4,6 +4,7 @@ package com.siyeh.ig.callMatcher;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -284,8 +285,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     private static boolean parameterTypeMatches(String type, PsiParameter parameter) {
       if (type == null) return true;
       PsiType psiType = parameter.getType();
-      return psiType.equalsToText(type) ||
-             psiType instanceof PsiClassType && ((PsiClassType)psiType).rawType().equalsToText(type);
+      return psiType.equalsToText(type) || PsiTypesUtil.classNameEquals(psiType, type);
     }
 
     @Contract(pure = true)
@@ -293,7 +293,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
       if (methodRef == null) return false;
       String name = methodRef.getReferenceName();
-      if (!myNames.contains(name)) return false;
+      if (name == null || !myNames.contains(name)) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
       if (!methodMatches(method)) return false;
       PsiParameterList parameterList = method.getParameterList();
@@ -305,7 +305,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     public boolean test(PsiMethodCallExpression call) {
       if (call == null) return false;
       String name = call.getMethodExpression().getReferenceName();
-      if (!myNames.contains(name)) return false;
+      if (name == null || !myNames.contains(name)) return false;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (myParameters != null && myParameters.length > 0) {
         if (args.length < myParameters.length - 1) return false;
@@ -342,7 +342,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     public boolean uCallMatches(@Nullable UCallExpression call) {
       if (call == null) return false;
       String name = call.getMethodName();
-      if (!myNames.contains(name)) return false;
+      if (name == null || !myNames.contains(name)) return false;
       return methodMatches(call.resolve());
     }
 

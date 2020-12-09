@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
@@ -22,6 +23,7 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
+import icons.VcsCodeReviewIcons
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.GithubIssueState
@@ -48,11 +50,12 @@ object GithubUIUtil {
   fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
     if (isDraft) GithubIcons.PullRequestDraft
     else when (state) {
-      GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+      GHPullRequestState.CLOSED -> VcsCodeReviewIcons.PullRequestClosed
       GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-      GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+      GHPullRequestState.OPEN -> VcsCodeReviewIcons.PullRequestOpen
     }
 
+  @NlsSafe
   fun getPullRequestStateText(state: GHPullRequestState, isDraft: Boolean): String =
     if (isDraft) GithubBundle.message("pull.request.state.draft")
     else when (state) {
@@ -67,6 +70,7 @@ object GithubUIUtil {
       GithubIssueState.closed -> GithubIcons.IssueClosed
     }
 
+  @NlsSafe
   fun getIssueStateText(state: GithubIssueState): String =
     when (state) {
       GithubIssueState.open -> GithubBundle.message("issue.state.open")
@@ -239,6 +243,8 @@ object GithubUIUtil {
       .showUnderneathOf(parentComponent)
     return result
   }
+
+  fun getPRTimelineWidth() = (getFontEM(JLabel()) * 42).toInt()
 
   data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
 

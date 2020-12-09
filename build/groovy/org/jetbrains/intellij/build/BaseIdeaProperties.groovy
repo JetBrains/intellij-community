@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
 import java.util.function.Consumer
@@ -8,6 +10,7 @@ import java.util.function.Consumer
 /**
  * Base class for all editions of IntelliJ IDEA
  */
+@CompileStatic
 abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   public static final List<String> JAVA_IDE_API_MODULES = [
     "intellij.xml.dom",
@@ -29,6 +32,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.properties",
     "intellij.properties.resource.bundle.editor",
     "intellij.terminal",
+    "intellij.emojipicker",
     "intellij.textmate",
     "intellij.editorconfig",
     "intellij.settingsRepository",
@@ -38,7 +42,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.repository.search",
     "intellij.maven.model",
     "intellij.maven",
+    "intellij.externalSystem.dependencyUpdater",
     "intellij.gradle",
+    "intellij.gradle.dependencyUpdater",
+    "intellij.gradle.dsl.impl",
+    "intellij.gradle.dsl.kotlin.impl",
     "intellij.gradle.java",
     "intellij.gradle.java.maven",
     "intellij.vcs.git",
@@ -71,14 +79,18 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.filePrediction",
     "intellij.markdown",
     "intellij.webp",
-    "intellij.grazie"
+    "intellij.grazie",
+    "intellij.featuresTrainer",
+    "intellij.space",
   ]
+
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "11",
     "lib/idea_rt.jar"                                           : "1.6",
     "lib/forms_rt.jar"                                          : "1.6",
     "lib/annotations.jar"                                       : "1.6",
-    "lib/util.jar"                                              : "1.8",
+    // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
+    "lib/util.jar!/com/intellij/serialization/"                  : "1.8",
     "lib/external-system-rt.jar"                                : "1.6",
     "lib/jshell-frontend.jar"                                   : "9",
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
@@ -103,7 +115,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
-    "plugins/android/lib/layoutlib-jre11-27.0.0.0.jar"          : "9",
+    "plugins/android/lib/jb-layoutlib-jdk11-27.1.0.0.jar"       : "9",
     "plugins/android/lib/android-rt.jar"                        : "1.8",
   ]
 
@@ -151,18 +163,25 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
+
+    isAntRequired = true
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
       fileset(dir: "$context.paths.communityHome/java/jdkAnnotations")
     }
-    context.ant.copy(todir: "$targetDirectory/lib/ant") {
-      fileset(dir: "$context.paths.communityHome/lib/ant") {
-        exclude(name: "**/src/**")
+
+    if (isAntRequired) {
+      context.ant.copy(todir: "$targetDirectory/lib/ant") {
+        fileset(dir: "$context.paths.communityHome/lib/ant") {
+          exclude(name: "**/src/**")
+        }
       }
     }
+
     context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
       fileset(dir: "$context.paths.kotlinHome")
     }

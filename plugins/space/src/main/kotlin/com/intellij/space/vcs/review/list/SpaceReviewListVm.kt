@@ -1,9 +1,10 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
 import circlet.client.api.ProjectKey
 import circlet.client.api.TD_MemberProfile
+import circlet.code.api.CodeReviewListItem
 import circlet.code.api.CodeReviewStateFilter
-import circlet.code.api.CodeReviewWithCount
 import circlet.code.api.ReviewSorting
 import circlet.platform.api.ADate
 import circlet.platform.client.XPagedListOnFlux
@@ -26,7 +27,7 @@ interface SpaceReviewsListVm : Lifetimed {
 
   val isLoading: MutableProperty<Boolean>
 
-  val reviews: Property<XPagedListOnFlux<CodeReviewWithCount>>
+  val reviews: Property<XPagedListOnFlux<CodeReviewListItem>>
 
   fun refresh()
 }

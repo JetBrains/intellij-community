@@ -21,7 +21,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Reference expression
             PsiElement(identifier)('resource1')
-      PsiWhiteSpace('\n     ')
+      PsiElement(new line)('\n     ')
       Variable definitions
         Modifiers
           <empty list>

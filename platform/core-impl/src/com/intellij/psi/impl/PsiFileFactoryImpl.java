@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
@@ -10,7 +6,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -88,11 +83,10 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                     long modificationStamp,
                                     final boolean eventSystemEnabled,
                                     boolean markAsCopy) {
-    final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
-    if(fileType instanceof LanguageFileType){
-      final Language language =
-          LanguageSubstitutors.getInstance().substituteLanguage(((LanguageFileType)fileType).getLanguage(), virtualFile, myManager.getProject());
-      final PsiFile file = trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
+    LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
+    Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), virtualFile, fileType);
+    if (language != null) {
+      PsiFile file = trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
       if (file != null) return file;
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =

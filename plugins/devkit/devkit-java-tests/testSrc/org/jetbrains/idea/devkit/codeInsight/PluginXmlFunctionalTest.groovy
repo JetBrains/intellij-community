@@ -133,6 +133,12 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
             <extensionPoint name="custom"/>
         </extensionPoints>
     """)
+    addPluginXml("notInDependencies", """
+        <id>com.intellij.notincluded</id>
+        <extensionPoints>
+            <extensionPoint name="notInDependencies"/>
+        </extensionPoints>
+    """)
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}")
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}")
@@ -447,8 +453,11 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testPluginWithXInclude() {
+    myFixture.copyFileToProject("pluginWithXInclude.xml", "META-INF/pluginWithXInclude.xml")
+    myFixture.copyFileToProject("pluginWithXInclude-extensionPoints.xml", "META-INF/pluginWithXInclude-extensionPoints.xml")
+    myFixture.copyFileToProject("pluginWithXInclude-extensionPointsWithModule.xml", "META-INF/pluginWithXInclude-extensionPointsWithModule.xml")
     myFixture.enableInspections(new XmlPathReferenceInspection())
-    doHighlightingTest("pluginWithXInclude.xml", "pluginWithXInclude-extensionPoints.xml", "pluginWithXInclude-extensionPointsWithModule.xml")
+    doHighlightingTest("META-INF/pluginWithXInclude.xml")
   }
 
   void testPluginXmlInIdeaProjectWithoutVendor() {

@@ -51,6 +51,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       browser = new LocalChangesBrowser.AllChanges(project);
     }
     browser.setIncludedChanges(changes);
+    browser.getViewer().resetTreeState(); // set initial selection by included changes
 
     showRollbackDialog(project, browser);
   }

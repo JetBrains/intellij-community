@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated
 public abstract class FileTypeFactory {
-  public static final ExtensionPointName<FileTypeFactory> FILE_TYPE_FACTORY_EP = ExtensionPointName.create("com.intellij.fileTypeFactory");
+  public static final ExtensionPointName<FileTypeFactory> FILE_TYPE_FACTORY_EP = new ExtensionPointName<>("com.intellij.fileTypeFactory");
 
   public abstract void createFileTypes(@NotNull FileTypeConsumer consumer);
 }

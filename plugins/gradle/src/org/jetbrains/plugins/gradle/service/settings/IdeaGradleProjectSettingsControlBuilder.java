@@ -982,7 +982,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   private class DelayedBalloonInfo implements Runnable {
     private final MessageType myMessageType;
-    private final String myText;
+    private final @Nls String myText;
     private final long myTriggerTime;
 
     DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull LocationSettingType settingType, long delayMillis) {

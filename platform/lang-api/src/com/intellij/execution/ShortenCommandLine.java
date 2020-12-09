@@ -30,7 +30,7 @@ public enum ShortenCommandLine {
   ARGS_FILE("shorten.command.line.method.argfile", "java @argfile className [args]") {
     @Override
     public boolean isApplicable(String jreRoot) {
-      return jreRoot != null && JdkUtil.isModularRuntime(jreRoot);
+      return jreRoot == null || JdkUtil.isModularRuntime(jreRoot);
     }
   };
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 
@@ -23,7 +24,7 @@ import com.intellij.openapi.editor.VisualPosition;
  */
 public class SelectionStartColumnMacro extends EditorMacro {
   public SelectionStartColumnMacro() {
-    super("SelectionStartColumn", "Selected text start column number");
+    super("SelectionStartColumn", ExecutionBundle.message("ide.macro.selected.text.start.column.number"));
   }
 
   @Override

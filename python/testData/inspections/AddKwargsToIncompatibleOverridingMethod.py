@@ -4,5 +4,5 @@ class Base:
     
     
 class Sub(Base):
-    def m<warning descr="Signature of method 'Sub.m()' does not match signature of base method in class 'Base'">(<caret>self)</warning>:
+    def m<warning descr="Signature of method 'Sub.m()' does not match signature of the base method in class 'Base'">(<caret>self)</warning>:
         pass

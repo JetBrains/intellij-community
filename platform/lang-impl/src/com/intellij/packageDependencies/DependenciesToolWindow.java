@@ -30,9 +30,6 @@ public class DependenciesToolWindow {
     myProject = project;
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      if (toolWindowManager == null) {
-        return;
-      }
 
       ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
                                                                    true,

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -152,7 +153,7 @@ public abstract class InspectionRVContentProvider {
           }
           catch (AbstractMethodError e) {
             //for plugin compatibility
-            localQuickFixWrapper.setText("Name is not available");
+            localQuickFixWrapper.setText(LangBundle.message("action.name.not.available.text"));
           }
           fixAndOccurrences = new FixAndOccurrences(localQuickFixWrapper);
           result.put(familyName, fixAndOccurrences);
@@ -172,7 +173,7 @@ public abstract class InspectionRVContentProvider {
       .map(fixAndOccurrence -> {
         LocalQuickFixWrapper fix = fixAndOccurrence.fix;
         int occurrences = fixAndOccurrence.occurrences;
-        fix.setText(fix.getText() + " (" + occurrences + " problem" + (occurrences == 1 ? "" : "s") + ")");
+        fix.setText(LangBundle.message("action.fix.n.problems.text", fix.getText(), occurrences));
         return fix;
       })
       .toArray(QuickFixAction[]::new);
@@ -312,7 +313,7 @@ public abstract class InspectionRVContentProvider {
               }
               catch (AbstractMethodError e) {
                 //for plugin compatibility
-                quickFixAction.setText("Name is not available");
+                quickFixAction.setText(LangBundle.message("action.name.not.available.text"));
               }
               break;
             }

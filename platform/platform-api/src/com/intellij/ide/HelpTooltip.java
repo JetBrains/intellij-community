@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -35,6 +36,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,10 +100,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  */
 
 public class HelpTooltip {
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", new JBColor(0xf7f7f7, 0x474a4c));
-  private static final Color SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
-  private static final Color BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
 
   private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
@@ -233,6 +232,20 @@ public class HelpTooltip {
   }
 
   /**
+   * Enables link in the tooltip below description and sets BrowserUtil.browse action for it.
+   * It's then painted with a small arrow button.
+   *
+   * @param linkLabel text to show in the link.
+   * @param url URL to browse.
+   * @return {@code this}
+   */
+  public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, URL url) {
+    link = new LinkLabel<>(linkLabel, AllIcons.Ide.External_link_arrow, (__, ___) -> BrowserUtil.browse(url));
+    link.setHorizontalTextPosition(SwingConstants.LEFT);
+    return this;
+  }
+
+  /**
    * Toggles whether to hide tooltip automatically on timeout. For default behaviour just don't call this method.
    *
    * @param neverHide {@code true} don't hide, {@code false} otherwise.
@@ -304,7 +317,7 @@ public class HelpTooltip {
     myPopupBuilder = JBPopupFactory.getInstance().
         createComponentPopupBuilder(tipPanel, null).
         setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
-        setBorderColor(BORDER_COLOR).setShowShadow(true);
+        setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor()).setShowShadow(true);
   }
 
   protected void initPopupBuilder(@NotNull HelpTooltip instance) {
@@ -336,7 +349,7 @@ public class HelpTooltip {
   protected final JPanel createTipPanel() {
     JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(VGAP.get()));
-    tipPanel.setBackground(BACKGROUND_COLOR);
+    tipPanel.setBackground(UIUtil.getToolTipBackground());
 
     boolean hasTitle = StringUtil.isNotEmpty(title);
     boolean hasDescription = StringUtil.isNotEmpty(description);
@@ -354,7 +367,7 @@ public class HelpTooltip {
     if (!hasTitle && StringUtil.isNotEmpty(shortcut)) {
       JLabel shortcutLabel = new JLabel(shortcut);
       shortcutLabel.setFont(deriveDescriptionFont(shortcutLabel.getFont(), false));
-      shortcutLabel.setForeground(SHORTCUT_COLOR);
+      shortcutLabel.setForeground(JBUI.CurrentTheme.Tooltip.shortcutForeground());
 
       tipPanel.add(shortcutLabel, VerticalLayout.TOP);
     }
@@ -478,7 +491,9 @@ public class HelpTooltip {
   }
 
   protected void hidePopup(boolean force) {
+    initialShowScheduled = false;
     popupAlarm.cancelAllRequests();
+    
     if (myPopup != null && myPopup.isVisible() && (!isOverPopup || force)) {
       myPopup.cancel();
       myPopup = null;
@@ -505,7 +520,8 @@ public class HelpTooltip {
   public static @NotNull String getShortcutAsHtml(@Nullable String shortcut) {
     return StringUtil.isEmpty(shortcut)
            ? ""
-           : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut);
+           : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.shortcutForeground()),
+                           shortcut);
   }
 
   private static class BoundWidthLabel extends JLabel {

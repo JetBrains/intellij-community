@@ -3,6 +3,7 @@ package org.intellij.lang.regexp.inspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiLiteralValue;
@@ -69,9 +70,11 @@ class ShredManager {
   }
 
   private int calculateElementOffset(@NotNull String text) {
-    String cutText = text.substring(0, myPsiElement.getTextOffset());
+    int offset = myPsiElement.getTextOffset();
+    if (offset > text.length()) return -1;
+    String cutText = text.substring(0, offset);
     String cutTextWithoutBogusWords = cutText.replaceAll(PSI_EXPR_MASK, "").replaceAll(PSI_CONDITIONAL_EXPR_MASK, "");
-    return myPsiElement.getTextOffset() - (cutText.length() - cutTextWithoutBogusWords.length());
+    return offset - (cutText.length() - cutTextWithoutBogusWords.length());
   }
 
   @Nullable
@@ -97,20 +100,20 @@ class ShredManager {
 
     @Override
     public boolean hasNext() {
-      return myShredIndex != -1 && extractShredText(myShreds.get(myShredIndex)) != null;
+      return myShredIndex != -1 && findFirstNonEmptyShredIndex() != -1;
     }
 
     @Override
     @NotNull
     public ShredInfo next() {
-      if (myShredIndex == -1) throw new IllegalStateException("Iterator doesn't contain any elements");
+      if (myShredIndex == -1) throw new IllegalStateException("Iterator doesn't contain any shreds");
+      myShredIndex = findFirstNonEmptyShredIndex();
+      if (myShredIndex == -1) throw new IllegalStateException("Iterator doesn't contain non-empty shreds");
 
       if (myShredText == null) {
         myShredText = extractShredText(myShreds.get(myShredIndex));
-        if (myShredText == null) throw new IllegalStateException("Iterator#hasNext() must be called before Iterator#next()");
-        if (myShredText.length() > 0) {
-          mySymbolIndex = 0;
-        }
+        if (StringUtil.isEmpty(myShredText)) throw new IllegalStateException("Current shred text is empty");
+        mySymbolIndex = 0;
       }
       int shredIndex = myShredIndex;
       char shredSymbol = myShredText.charAt(mySymbolIndex);
@@ -120,14 +123,21 @@ class ShredManager {
       return new ShredInfo(shredIndex, shredSymbol, symbolIndex, shred.getHost());
     }
 
+    private int findFirstNonEmptyShredIndex() {
+      for (int shredIndex = myShredIndex; shredIndex < myShreds.size(); shredIndex++) {
+        String shredText = extractShredText(myShreds.get(shredIndex));
+        if (!StringUtil.isEmpty(shredText)) return shredIndex;
+      }
+      return -1;
+    }
+
     private void updateIndexes() {
       if (mySymbolIndex < myShredText.length() - 1) {
         mySymbolIndex++;
       }
       else if (myShredIndex < myShreds.size() - 1) {
-        mySymbolIndex = 0;
         myShredIndex++;
-        myShredText = extractShredText(myShreds.get(myShredIndex));
+        myShredText = null;
       }
       else {
         myShredIndex = -1;

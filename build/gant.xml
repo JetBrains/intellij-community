@@ -76,6 +76,6 @@
       <classpath refid="gant.classpath"/>
     </taskdef>
 
-    <gant file="${gant.script}" target="${gant.target}"/>
+    <gant file="${gant.script}" target="${gant.target}" inheritAll="true"/>
   </target>
 </project>

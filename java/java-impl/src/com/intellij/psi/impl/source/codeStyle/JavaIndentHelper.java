@@ -53,7 +53,7 @@ public class JavaIndentHelper extends IndentHelperImpl {
       }
 
       if (includeNonSpace) {
-        return getIndentInner(file, prev, includeNonSpace, recursionLevel + 1) + getIndent(file, text, includeNonSpace);
+        return getIndentInner(file, prev, true, recursionLevel + 1) + getIndent(file, text, true);
       }
 
       if (element.getElementType() == JavaElementType.CODE_BLOCK) {
@@ -64,12 +64,12 @@ public class JavaIndentHelper extends IndentHelperImpl {
         if (parent.getElementType() != JavaElementType.CODE_BLOCK) {
           //Q: use some "anchor" part of parent for some elements?
           // e.g. for method it could be declaration start, not doc-comment
-          return getIndentInner(file, parent, includeNonSpace, recursionLevel + 1);
+          return getIndentInner(file, parent, false, recursionLevel + 1);
         }
       }
       else {
         if (element.getElementType() == JavaTokenType.LBRACE) {
-          return getIndentInner(file, element.getTreeParent(), includeNonSpace, recursionLevel + 1);
+          return getIndentInner(file, element.getTreeParent(), false, recursionLevel + 1);
         }
       }
       //Q: any other cases?
@@ -83,14 +83,14 @@ public class JavaIndentHelper extends IndentHelperImpl {
       }
 
       if (parent == null) {
-        return getIndent(file, text, includeNonSpace);
+        return getIndent(file, text, false);
       }
       else {
         if (prev.getTreeParent().getElementType() == JavaElementType.LABELED_STATEMENT) {
           return getIndentInner(file, prev, true, recursionLevel + 1) + getIndent(file, text, true);
         }
         else
-          return getIndentInner(file, prev, includeNonSpace, recursionLevel + 1);
+          return getIndentInner(file, prev, false, recursionLevel + 1);
       }
     }
     else {

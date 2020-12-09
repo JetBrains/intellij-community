@@ -37,11 +37,11 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   protected boolean setupConfigurationFromContext(@NotNull T configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
-    final Location contextLocation = context.getLocation();
+    final Location<?> contextLocation = context.getLocation();
     if (contextLocation == null) {
       return false;
     }
-    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    final Location<?> location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) {
       return false;
     }
@@ -60,11 +60,11 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     PsiMethod method = PsiMethodUtil.findMainInClass(aClass);
     if (method != null && PsiTreeUtil.isAncestor(method, element, false)) {
       sourceElement.set(method);
-      setupConfiguration(configuration, aClass, context);
-      return true;
+    }
+    else {
+      sourceElement.set(aClass);
     }
 
-    sourceElement.set(aClass);
     setupConfiguration(configuration, aClass, context);
     return true;
   }

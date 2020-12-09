@@ -4,9 +4,9 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.components.State;
@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.VirtualFilePattern;
@@ -34,7 +33,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -46,8 +47,7 @@ import java.util.Objects;
 
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
-public class MessageBundleReferenceContributor extends PsiReferenceContributor {
-
+public final class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String ACTION = "action.";
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
@@ -203,34 +203,35 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
       CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
       if (myIsAction) {
         IdeaPluginRegistrationIndex.processAction(project, myId, scope, processor);
-
-        // action.ActionId.<override-text@place>.text
-        if (processor.getResults().isEmpty()) {
-          String place = StringUtil.substringAfterLast(myId, ".");
-          if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
-
-          String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
-
-          IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
-
-          boolean foundOverrideText = false;
-          for (ActionOrGroup result : processor.getResults()) {
-            Action action = (Action)result;
-            for (OverrideText overrideText : action.getOverrideTexts()) {
-              if (place.equals(overrideText.getPlace().getStringValue())) {
-                foundOverrideText = true;
-                break;
-              }
-            }
-          }
-
-          if (!foundOverrideText) {
-            return ResolveResult.EMPTY_ARRAY;
-          }
-        }
       }
       else {
         IdeaPluginRegistrationIndex.processGroup(project, myId, scope, processor);
+      }
+
+      // action|group.ActionId.<override-text@place>.text
+      if (processor.getResults().isEmpty()) {
+        String place = StringUtil.substringAfterLast(myId, ".");
+        if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
+
+        String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
+
+        if (myIsAction) {
+          IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
+        }
+        else {
+          IdeaPluginRegistrationIndex.processGroup(project, idWithoutPlaceSuffix, scope, processor);
+        }
+
+        for (ActionOrGroup result : processor.getResults()) {
+          for (OverrideText overrideText : result.getOverrideTexts()) {
+            if (place.equals(overrideText.getPlace().getStringValue())) {
+              final DomTarget overrideTarget = DomTarget.getTarget(overrideText, overrideText.getPlace());
+              assert overrideTarget != null;
+              return PsiElementResolveResult.createResults(PomService.convertToPsi(overrideTarget));
+            }
+          }
+        }
+        return ResolveResult.EMPTY_ARRAY;
       }
 
       final List<PsiElement> psiElements =
@@ -251,13 +252,8 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return ToolWindowEP.class.getName();
-    }
-
-    @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return extension.getId();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.toolWindow";
     }
 
     @Override
@@ -347,13 +343,13 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  public static class ImplicitUsageProvider extends ImplicitPropertyUsageProvider {
+  public static class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
 
     @NonNls private static final String ICON_TOOLTIP_PREFIX = "icon.";
     @NonNls private static final String ICON_TOOLTIP_SUFFIX = ".tooltip";
 
     @Override
-    protected boolean isUsed(@NotNull Property property) {
+    public boolean isUsed(@NotNull Property property) {
       PsiFile file = property.getContainingFile();
       String fileName = file.getName();
       if (!fileName.endsWith(BUNDLE_PROPERTIES)) return false;

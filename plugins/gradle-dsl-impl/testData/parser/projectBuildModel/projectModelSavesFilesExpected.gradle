@@ -1,0 +1,10 @@
+android {
+  defaultConfig {
+    externalNativeBuild {
+      cmake {
+        cppFlags ""
+        arguments '-DCMAKE_MAKE_PROGRAM=////'
+      }
+    }
+  }
+}

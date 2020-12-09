@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.KeyEvent;
 
 public class ShowParameterInfoAction extends BaseCodeInsightAction implements DumbAware {
-  private boolean myRequestFocus = false;
+  private boolean myRequestFocus;
 
   public ShowParameterInfoAction() {
     setEnabledInModalContext(true);
@@ -54,7 +54,7 @@ public class ShowParameterInfoAction extends BaseCodeInsightAction implements Du
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     final Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    return ShowParameterInfoHandler.getHandlers(project, language, file.getViewProvider().getBaseLanguage()) != null;
+    return ShowParameterInfoHandler.getHandlers(project, language, file.getViewProvider().getBaseLanguage()).length != 0;
   }
 
   @Override

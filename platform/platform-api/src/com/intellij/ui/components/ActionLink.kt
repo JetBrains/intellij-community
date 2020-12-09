@@ -3,6 +3,7 @@ package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
 import com.intellij.ui.scale.JBUIScale
+import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.Action
@@ -21,10 +22,10 @@ open class ActionLink() : JButton() {
     this.action = action
   }
 
-  constructor(text: String, perform: (ActionEvent) -> Unit) : this(text, ActionListener { perform(it) })
+  constructor(@Nls text: String, perform: (ActionEvent) -> Unit) : this(text, ActionListener { perform(it) })
 
   @JvmOverloads
-  constructor(text: String, listener: ActionListener? = null) : this() {
+  constructor(@Nls text: String, listener: ActionListener? = null) : this() {
     this.text = text
     listener?.let { addActionListener(it) }
   }

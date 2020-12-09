@@ -61,7 +61,7 @@ PATHS_SELECTOR="__system_selector__"
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory command -v will be used to run the IDE.
-# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr, .../jre64, $JDK_HOME, $JAVA_HOME, "java" in $PATH.
+# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr[-x86], $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
@@ -213,8 +213,8 @@ IFS="$(printf '\n\t')"
 "$JAVA_BIN" \
   -classpath "$CLASSPATH" \
   ${VM_OPTIONS} \
-  "-XX:ErrorFile=$HOME/java_error_in___product_uc___%p.log" \
-  "-XX:HeapDumpPath=$HOME/java_error_in___product_uc__.hprof" \
+  "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
+  "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
   "-Didea.vendor.name=${PRODUCT_VENDOR}" \
   "-Didea.paths.selector=${PATHS_SELECTOR}" \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \

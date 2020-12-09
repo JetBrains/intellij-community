@@ -3,18 +3,21 @@ package com.intellij.psi.augment;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class PsiAugmentProvider {
   private static final Logger LOG = Logger.getInstance(PsiAugmentProvider.class);
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
+  private static final @NotNull NotNullLazyValue<ExtensionPoint<PsiAugmentProvider>> EP = NotNullLazyValue.lazy(() -> EP_NAME.getPoint());
   @SuppressWarnings("rawtypes")
   private /* non-static */ final Key<CachedValue<Map<Class, List>>> myCacheKey = Key.create(getClass().getName());
 
@@ -60,6 +64,18 @@ public abstract class PsiAugmentProvider {
       return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
     });
     return (List<Psi>)cache.get(type);
+  }
+
+  /**
+   * An extension which enables one to inject extension methods with name {@code nameHint} in class {@code aClass} in context `{@code context}`
+   * @param aClass    where extension methods would be injected
+   * @param nameHint  name of the method which is requested.
+   *                  Implementations are supposed to use this parameter as no additional name check would be performed
+   * @param context   context where extension methods should be applicable
+   */
+  @ApiStatus.Experimental
+  protected List<PsiExtensionMethod> getExtensionMethods(@NotNull PsiClass aClass, @NotNull String nameHint, @NotNull PsiElement context) {
+    return Collections.emptyList();
   }
 
   /**
@@ -137,6 +153,29 @@ public abstract class PsiAugmentProvider {
     return result;
   }
 
+  @ApiStatus.Experimental
+  @NotNull
+  public static List<PsiExtensionMethod> collectExtensionMethods(PsiClass aClass, @NotNull String nameHint, PsiElement context) {
+    List<PsiExtensionMethod> extensionMethods = new SmartList<>();
+    forEach(aClass.getProject(), provider -> {
+      List<PsiExtensionMethod> methods = provider.getExtensionMethods(aClass, nameHint, context);
+      for (PsiExtensionMethod method : methods) {
+        try {
+          PsiUtilCore.ensureValid(method);
+          extensionMethods.add(method);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(PluginException.createByClass(e, provider.getClass()));
+        }
+      }
+      return true;
+    });
+    return extensionMethods;
+  }
+
   @Nullable
   public static PsiType getInferredType(@NotNull PsiTypeElement typeElement) {
     Ref<PsiType> result = Ref.create();
@@ -194,7 +233,7 @@ public abstract class PsiAugmentProvider {
 
   private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
     boolean dumb = DumbService.isDumb(project);
-    for (PsiAugmentProvider provider : EP_NAME.getExtensionList()) {
+    for (PsiAugmentProvider provider : EP.getValue().getExtensionList()) {
       if (!dumb || DumbService.isDumbAware(provider)) {
         try {
           boolean goOn = processor.process(provider);

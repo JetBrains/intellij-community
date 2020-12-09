@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
+import java.util.function.Predicate;
 
-/**
- * @author peter
-*/
-public class DifferenceFilter<T> implements DefaultJDOMExternalizer.JDOMFilter {
+@SuppressWarnings("deprecation")
+public class DifferenceFilter<T> implements Predicate<Field>, DefaultJDOMExternalizer.JDOMFilter {
   private final T myThisSettings;
   private final T myParentSettings;
 
@@ -32,7 +17,7 @@ public class DifferenceFilter<T> implements DefaultJDOMExternalizer.JDOMFilter {
   }
 
   @Override
-  public boolean isAccept(@NotNull Field field) {
+  public boolean test(@NotNull Field field) {
     try {
       Object thisValue = field.get(myThisSettings);
       Object parentValue = field.get(myParentSettings);
@@ -41,5 +26,10 @@ public class DifferenceFilter<T> implements DefaultJDOMExternalizer.JDOMFilter {
     catch (Throwable e) {
       return true;
     }
+  }
+
+  @Override
+  public boolean isAccept(@NotNull Field field) {
+    return test(field);
   }
 }

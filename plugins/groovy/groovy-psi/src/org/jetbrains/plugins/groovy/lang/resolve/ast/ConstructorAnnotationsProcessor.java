@@ -7,6 +7,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -51,22 +52,42 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       return;
     }
 
-    final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(context, tupleConstructor, immutable, canonical);
-    context.addMethod(fieldsConstructor);
+    String originInfo;
+    if (immutable) {
+      originInfo = "created by @Immutable";
+    }
+    else if (canonical) {
+      originInfo = "created by @Canonical";
+    }
+    else if (tupleConstructor != null) {
+      originInfo = "created by @TupleConstructor";
+    }
+    else {
+      originInfo = "created by @MapConstructor";
+    }
 
-    List<GrLightMethodBuilder> mapConstructors = generateMapConstructor(typeDefinition);
+    if (canonical || immutable || tupleConstructor != null) {
+      final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(context, tupleConstructor, immutable, canonical, originInfo);
+      context.addMethod(fieldsConstructor);
+    }
+
+    List<GrLightMethodBuilder> mapConstructors = generateMapConstructor(typeDefinition, originInfo, context);
     for (GrLightMethodBuilder mapConstructor : mapConstructors) {
       context.addMethod(mapConstructor);
     }
   }
 
-  private static @NotNull List<GrLightMethodBuilder> generateMapConstructor(@NotNull GrTypeDefinition typeDefinition) {
+  private static @NotNull List<GrLightMethodBuilder> generateMapConstructor(@NotNull GrTypeDefinition typeDefinition,
+                                                                            String originInfo,
+                                                                            @NotNull TransformationContext context) {
     if (GroovyConfigUtils.isAtLeastGroovy25(typeDefinition)) {
       PsiAnnotation mapConstructorAnno = typeDefinition.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR);
       if (mapConstructorAnno == null) {
         return Collections.emptyList();
       }
       GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition);
+      checkContainingClass(context, mapConstructor);
+      mapConstructor.setOriginInfo(originInfo);
       Visibility visibility = getVisibility(mapConstructorAnno, mapConstructor, Visibility.PUBLIC);
       mapConstructor.addModifier(visibility.toString());
       var specialParamHandling = GrAnnotationUtil.inferBooleanAttribute(mapConstructorAnno, "specialNamedArgHandling");
@@ -80,7 +101,10 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       mapConstructor.addParameter("args", parameterRepresentation);
       var noArg = GrAnnotationUtil.inferBooleanAttribute(mapConstructorAnno, "noArg");
       if (Boolean.TRUE.equals(noArg)) {
-        return List.of(mapConstructor, new GrLightMethodBuilder(typeDefinition));
+        var noArgConstructor = new GrLightMethodBuilder(typeDefinition);
+        checkContainingClass(context, noArgConstructor);
+        noArgConstructor.setOriginInfo(originInfo);
+        return List.of(mapConstructor, noArgConstructor);
       }
       else {
         return List.of(mapConstructor);
@@ -88,7 +112,9 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     }
     else {
       final GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition);
+      checkContainingClass(context, mapConstructor);
       mapConstructor.addParameter("args", CommonClassNames.JAVA_UTIL_HASH_MAP);
+      mapConstructor.setOriginInfo(originInfo);
       return List.of(mapConstructor);
     }
   }
@@ -114,7 +140,8 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
   private static GrLightMethodBuilder generateFieldConstructor(@NotNull TransformationContext context,
                                                                @Nullable PsiAnnotation tupleConstructor,
                                                                boolean immutable,
-                                                               boolean canonical) {
+                                                               boolean canonical,
+                                                               @NotNull String originInfo) {
     final GrTypeDefinition typeDefinition = context.getCodeClass();
     final GrLightMethodBuilder fieldsConstructor = new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName());
     fieldsConstructor.setConstructor(true);
@@ -124,7 +151,8 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     if (canonical) {
       var modifierList = typeDefinition.getModifierList();
       if (modifierList != null) {
-        tupleConstructor = new GrLightAnnotation(modifierList, typeDefinition, GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR, Map.of());
+        tupleConstructor =
+          new GrLightAnnotation(modifierList, typeDefinition, GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR, Map.of());
       }
     }
     if (immutable) {
@@ -139,6 +167,9 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
       fieldsConstructor.addModifier(visibility.toString());
       AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor);
+
+      checkContainingClass(context, fieldsConstructor);
+
       for (PsiNamedElement element : cache.getAffectedMembers()) {
         GrLightParameter parameter;
         if (element instanceof PsiField) {
@@ -157,15 +188,31 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
         }
       }
     }
-    if (immutable) {
-      fieldsConstructor.setOriginInfo("created by @Immutable");
-    }
-    else if (canonical) {
-      fieldsConstructor.setOriginInfo("created by @Canonical");
-    }
-    else if (tupleConstructor != null) {
-      fieldsConstructor.setOriginInfo("created by @TupleConstructor");
-    }
+    fieldsConstructor.setOriginInfo(originInfo);
     return fieldsConstructor;
+  }
+
+  private static void checkContainingClass(@NotNull TransformationContext context,@NotNull GrLightMethodBuilder constructor) {
+    GrTypeDefinition codeClass = context.getCodeClass();
+    var modifierList = codeClass.getModifierList();
+    if (modifierList == null || context.hasModifierProperty(modifierList, PsiModifier.STATIC)) {
+      return;
+    }
+    PsiClass containingClass = codeClass.getContainingClass();
+    if (containingClass == null) {
+      return;
+    }
+    var factory = GroovyPsiElementFactory.getInstance(context.getProject());
+    PsiClassType classType = factory.createType(containingClass);
+    var justTypeParameter = new EnclosingClassParameter("_containingClass", classType, containingClass);
+    constructor.addParameter(justTypeParameter);
+  }
+
+  static public class EnclosingClassParameter extends GrLightParameter {
+    public EnclosingClassParameter(@NlsSafe @NotNull String name,
+                                   @Nullable PsiType type,
+                                   @NotNull PsiElement scope) {
+      super(name, type, scope);
+    }
   }
 }

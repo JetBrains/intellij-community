@@ -5,7 +5,6 @@ import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.text.StringFactory;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
@@ -179,6 +178,6 @@ public final class CompressionUtil {
       int c = DataInputOutputUtil.readINT(dest);
       chars[i] = (char)c;
     }
-    return StringFactory.createShared(chars);
+    return new String(chars);
   }
 }

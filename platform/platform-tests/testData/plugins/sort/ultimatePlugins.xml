@@ -915,12 +915,6 @@
     <depends optional="true">-com-jetbrains-php-</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.javaee.appServers.view/META-INF/plugin.xml">
-    <id>-com-intellij-javaee-view-</id>
-    <name>Application Servers View</name>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>-com-intellij-javaee-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.xslt.debugger/META-INF/plugin.xml">
     <id>-XSLT-Debugger-</id>
     <name>XSLT Debugger</name>

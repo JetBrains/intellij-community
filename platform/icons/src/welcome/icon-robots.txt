@@ -1,4 +1,1 @@
-deprecated: createDesktopEntry.png; to be removed in IDEA 2021.1
-deprecated: register.png; to be removed in IDEA 2021.1
-deprecated: fromVcs.svg; to be removed in IDEA 2021.1
 deprecated: createNewProject.svg; to be removed in IDEA 2021.1

@@ -19,7 +19,10 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
@@ -45,13 +48,13 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentF
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainAssociatedComponentBackground;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
-public class ProjectsTabFactory implements WelcomeTabFactory {
-
+final class ProjectsTabFactory implements WelcomeTabFactory {
   static final int PRIMARY_BUTTONS_NUM = 3;
 
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
-    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title")) {
+    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title"),
+                                                           WelcomeScreenEventCollector.TabType.TabNavProject) {
 
       @Override
       protected JComponent buildComponent() {
@@ -68,7 +71,7 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
           projectsPanel.setBorder(JBUI.Borders.emptyTop(10));
 
           JPanel northPanel =
-            JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(JBColor.border(), JBUI.insetsBottom(1)) {
+            JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(WelcomeScreenUIManager.getSeparatorColor(), JBUI.insetsBottom(1)) {
               @Override
               public Insets getBorderInsets(Component c) {
                 return JBUI.insetsBottom(12);
@@ -88,7 +91,8 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
           .enableAsNativeTarget()
           .setTargetChecker(target)
           .setDropHandler(target)
-          .setDisposableParent(parentDisposable).install();
+          .setDisposableParent(parentDisposable)
+          .install();
         return mainPanel;
       }
 
@@ -107,6 +111,14 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
             projectsList.setModel(model);
 
             projectSearch.addDocumentListener(new DocumentAdapter() {
+              @Override
+              public void insertUpdate(@NotNull DocumentEvent e) {
+                if (StringUtil.length(projectSearch.getText()) == 1) {
+                  WelcomeScreenEventCollector.logProjectSearchUsed();
+                }
+                super.insertUpdate(e);
+              }
+
               @Override
               protected void textChanged(@NotNull DocumentEvent e) {
                 speedSearch.updatePattern(projectSearch.getText());
@@ -144,11 +156,11 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
       @NotNull
       private ActionToolbar createActionsToolbar() {
         Couple<DefaultActionGroup> mainAndMore =
-          splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
+          splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE),
                               action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
                               PRIMARY_BUTTONS_NUM);
         DefaultActionGroup toolbarActionGroup = new DefaultActionGroup(
-          ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), ToolbarTextButtonWrapper::wrapAsTextButton));
+          ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), action -> createButtonWrapper(action)));
         ActionGroup moreActionGroup = mainAndMore.getSecond();
 
         Presentation moreActionPresentation = moreActionGroup.getTemplatePresentation();
@@ -173,6 +185,16 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
         return toolbar;
       }
 
+      @NotNull
+      private ToolbarTextButtonWrapper createButtonWrapper(@NotNull AnAction action) {
+        if (action instanceof ActionGroup) {
+          List<AnAction> actions =
+            ContainerUtil.map(((ActionGroup)action).getChildren(null), a -> ActionGroupPanelWrapper.wrapGroups(a, parentDisposable));
+          return ToolbarTextButtonWrapper.wrapAsOptionButton(actions);
+        }
+        return ToolbarTextButtonWrapper.wrapAsTextButton(action);
+      }
+
       private JPanel createNotificationsPanel(@NotNull Disposable parentDisposable) {
         JPanel notificationsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
         notificationsPanel.setBorder(JBUI.Borders.emptyTop(10));
@@ -184,20 +206,21 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
     };
   }
 
-  @NotNull
-  private static DnDNativeTarget createDropFileTarget() {
+  private static @NotNull DnDNativeTarget createDropFileTarget() {
     return new DnDNativeTarget() {
       @Override
-      public boolean update(DnDEvent event) {
-        if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) return false;
+      public boolean update(@NotNull DnDEvent event) {
+        if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
+          return false;
+        }
         event.setDropPossible(true);
         return false;
       }
 
       @Override
-      public void drop(DnDEvent event) {
+      public void drop(@NotNull DnDEvent event) {
         List<File> files = FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject());
-        if (!ContainerUtil.isEmpty(files)) {
+        if (!files.isEmpty()) {
           ProjectUtil.tryOpenFileList(null, files, "WelcomeFrame");
         }
       }

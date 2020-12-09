@@ -74,6 +74,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final Stripe rightStripe;
   private final Stripe bottomStripe;
   private final Stripe topStripe;
+  private final Stripe newStripe;
 
   private final List<Stripe> stripes = new ArrayList<>(4);
 
@@ -122,6 +123,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     stripes.add(bottomStripe);
     rightStripe = new Stripe(SwingConstants.RIGHT);
     stripes.add(rightStripe);
+    newStripe = new IdeLeftToolbar();
 
     updateToolStripesVisibility(uiSettings);
 
@@ -133,6 +135,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     add(leftStripe, JLayeredPane.POPUP_LAYER);
     add(bottomStripe, JLayeredPane.POPUP_LAYER);
     add(rightStripe, JLayeredPane.POPUP_LAYER);
+    add(newStripe, JLayeredPane.POPUP_LAYER);
     add(layeredPane, JLayeredPane.DEFAULT_LAYER);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
@@ -158,7 +161,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       bottomStripe.setBounds(0, 0, 0, 0);
       leftStripe.setBounds(0, 0, 0, 0);
       rightStripe.setBounds(0, 0, 0, 0);
-      layeredPane.setBounds(0, 0, getWidth(), getHeight());
+      if (Registry.is("ide.new.stripes.ui")) {
+        newStripe.setBounds(0, 0, newStripe.getPreferredSize().width, size.height);
+        layeredPane.setBounds(newStripe.getPreferredSize().width, 0, getWidth() - newStripe.getPreferredSize().width, getHeight());
+      } else {
+        layeredPane.setBounds(0, 0, getWidth(), getHeight());
+      }
     }
     else {
       Dimension topSize = topStripe.getPreferredSize();
@@ -273,21 +281,22 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, float weight) {
+    Dimension size = getSize();
     if (ToolWindowAnchor.TOP == anchor) {
       verticalSplitter.setFirstComponent(component);
-      verticalSplitter.setFirstSize((int)(layeredPane.getHeight() * weight));
+      verticalSplitter.setFirstSize((int)(size.getHeight() * weight));
     }
     else if (ToolWindowAnchor.LEFT == anchor) {
       horizontalSplitter.setFirstComponent(component);
-      horizontalSplitter.setFirstSize((int)(layeredPane.getWidth() * weight));
+      horizontalSplitter.setFirstSize((int)(size.getWidth() * weight));
     }
     else if (ToolWindowAnchor.BOTTOM == anchor) {
       verticalSplitter.setLastComponent(component);
-      verticalSplitter.setLastSize((int)(layeredPane.getHeight() * weight));
+      verticalSplitter.setLastSize((int)(size.getHeight() * weight));
     }
     else if (ToolWindowAnchor.RIGHT == anchor) {
       horizontalSplitter.setLastComponent(component);
-      horizontalSplitter.setLastSize((int)(layeredPane.getWidth() * weight));
+      horizontalSplitter.setLastSize((int)(size.getWidth() * weight));
     }
     else {
       LOG.error("unknown anchor: " + anchor);
@@ -321,7 +330,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     boolean oldVisible = leftStripe.isVisible();
 
     boolean showButtons = !uiSettings.getHideToolStripes() && !uiSettings.getPresentationMode();
-    boolean visible = showButtons || state.isStripesOverlaid();
+    boolean visible = (showButtons || state.isStripesOverlaid()) && !Registry.is("ide.new.stripes.ui");
     leftStripe.setVisible(visible);
     rightStripe.setVisible(visible);
     topStripe.setVisible(visible);
@@ -539,6 +548,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     state = new ToolWindowPaneState();
 
     revalidate();
+  }
+
+  public void onStripeButtonAdded(@NotNull StripeButton button) {
+    if (button.toolWindow.isAvailable() && button.toolWindow.getIcon() != null && Registry.is("ide.new.stripes.ui")) {
+      newStripe.addButton(button, (o1, o2) -> 0);
+    }
   }
 
   @FunctionalInterface

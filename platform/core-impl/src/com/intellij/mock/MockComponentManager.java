@@ -3,26 +3,29 @@ package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusOwner;
 import com.intellij.util.messages.impl.MessageBusFactoryImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager, MessageBusOwner {
   private final MessageBus myMessageBus = MessageBusFactoryImpl.createRootBus(this);
@@ -30,7 +33,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final ExtensionsAreaImpl myExtensionArea;
 
   private final Map<Class<?>, Object> myComponents = new HashMap<>();
-  private final Set<Object> myDisposableComponents = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
   private boolean myDisposed;
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
@@ -57,6 +60,24 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Override
   public ExtensionsAreaImpl getExtensionArea() {
     return myExtensionArea;
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+    ExceptionUtilRt.rethrowUnchecked(error);
+    return new RuntimeException(error);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
+    return new RuntimeException(message);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                               @NotNull PluginId pluginId,
+                                               @Nullable Map<String, String> attachments) {
+    return new RuntimeException(message);
   }
 
   protected void registerComponentInDisposer(@Nullable Object o) {
@@ -137,5 +158,11 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Override
   public @NotNull Object createListener(@NotNull ListenerDescriptor descriptor) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+    //noinspection unchecked
+    return (Class<T>)Class.forName(className);
   }
 }

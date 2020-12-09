@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,10 +13,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ArrayListSet;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PathKt;
@@ -72,7 +73,7 @@ public final class MavenProjectsTree {
   private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new HashMap<>();
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new HashMap<>();
 
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
   private final Project myProject;
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
@@ -713,7 +714,7 @@ public final class MavenProjectsTree {
     if (isManagedFile(path)) return true;
 
     for (MavenProject each : getProjects()) {
-      if (PathUtil.pathEqualsTo(each.getFile(), path)) return true;
+      if (VfsUtilCore.pathEqualsTo(each.getFile(), path)) return true;
       if (each.getModulePaths().contains(path)) return true;
     }
     return false;
@@ -900,7 +901,7 @@ public final class MavenProjectsTree {
     return Collections.unmodifiableList(customNonFilteredExtensions);
   }
 
-  public int getFilterConfigCrc(ProjectFileIndex fileIndex) {
+  public int getFilterConfigCrc(@NotNull ProjectFileIndex fileIndex) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     readLock();
@@ -1273,8 +1274,16 @@ public final class MavenProjectsTree {
     myStructureReadLock.unlock();
   }
 
+  /**
+   * @deprecated use #addListener(Listener, Disposable)
+   */
+  @Deprecated
   public void addListener(Listener l) {
     myListeners.add(l);
+  }
+
+  public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
+    myListeners.add(l, disposable);
   }
 
   void fireProfilesChanged() {

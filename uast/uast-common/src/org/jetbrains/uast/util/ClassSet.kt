@@ -10,6 +10,12 @@ interface ClassSet<out T> {
   operator fun contains(element: Class<out @UnsafeVariance T>): Boolean
 }
 
+fun <T> T?.isInstanceOf(classSet: ClassSet<T>): Boolean =
+  this?.let { classSet.contains(it.javaClass) } ?: false
+
+fun <T> ClassSet<T>.hasClassOf(instance: T?): Boolean =
+  instance?.let { contains(it.javaClass) } ?: false
+
 private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : ClassSet<T> {
 
   private val isSimple = initialClasses.size <= SIMPLE_CLASS_SET_LIMIT
@@ -32,6 +38,10 @@ private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : Cla
     else
       internalMapping[element]
       ?: initialClasses.any { it.isAssignableFrom(element) }.also { internalMapping[element] = it }
+
+  override fun toString(): String {
+    return "ClassSetImpl(${initialClasses.contentToString()})"
+  }
 }
 
 fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> =

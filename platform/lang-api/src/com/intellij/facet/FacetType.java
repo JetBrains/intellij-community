@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.facet;
 
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
@@ -29,7 +28,7 @@ import javax.swing.*;
  * </pre>
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> implements PluginAware {
-  public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType");
+  public static final ExtensionPointName<FacetType> EP_NAME = new ExtensionPointName<>("com.intellij.facetType");
 
   private final @NotNull FacetTypeId<F> myId;
   private final @NotNull String myStringId;
@@ -38,7 +37,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
   private final @Nullable FacetTypeId myUnderlyingFacetType;
   private PluginDescriptor myPluginDescriptor;
 
-  public static <T extends FacetType> T findInstance(Class<T> aClass) {
+  public static <T extends FacetType<?, ?>> T findInstance(Class<T> aClass) {
     return EP_NAME.findExtension(aClass);
   }
 

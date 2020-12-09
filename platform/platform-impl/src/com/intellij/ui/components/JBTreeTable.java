@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
@@ -315,6 +316,9 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
       myTreeTableHeader.setColumnModel(new TreeColumnModel());
       myTreeTableHeader.setReorderingAllowed(false);
       myTreeTableHeader.setResizingAllowed(false);
+
+      // do not paint hover for table row separately from tree
+      TableHoverListener.DEFAULT.removeFrom(this);
     }
 
     @Override
@@ -322,13 +326,6 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
       super.setRowHeight(rowHeight);
       if (myTree != null && myTree.getRowHeight() < rowHeight) {
         myTree.setRowHeight(getRowHeight());
-      }
-    }
-
-    @Override
-    public void repaint(long tm, int x, int y, int width, int height) {
-      if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
-        super.repaint(tm, x, y, width, height);
       }
     }
 

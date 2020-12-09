@@ -2,30 +2,27 @@
 package com.intellij.completion.ml.sorting
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
+import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.tracker.LookupTracker
 import com.intellij.completion.ml.tracker.setupCompletionContext
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.internal.ml.FloatFeature
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
-import com.intellij.util.castSafelyTo
-import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
-import java.beans.PropertyChangeListener
 
 class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
-  private var arrowChecker = ArrowPresenceChecker()
+  private val arrowChecker = ArrowPresenceChecker()
   override fun setUp() {
     super.setUp()
     val settings = CompletionMLRankingSettings.getInstance()
@@ -39,10 +36,14 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     RankingSupport.enableInTests(testRootDisposable)
     ApplicationManager.getApplication().replaceService(ExperimentStatus::class.java, TestArrowsExperimentStatus(), testRootDisposable)
     Disposer.register(testRootDisposable, Disposable { settingsStateBefore.restore(CompletionMLRankingSettings.getInstance()) })
-    LookupManager.getInstance(project)
-      .addPropertyChangeListener(
-        PropertyChangeListener { evt -> evt.newValue?.castSafelyTo<LookupImpl>()?.addPresentationCustomizer(arrowChecker) },
-        testRootDisposable)
+    project.messageBus.connect(testRootDisposable).subscribe(
+      LookupManagerListener.TOPIC,
+      PositionDiffArrowInitializer()
+    )
+    project.messageBus.connect(testRootDisposable).subscribe(
+      LookupManagerListener.TOPIC,
+      arrowChecker
+    )
     ExperimentModelProvider.registerProvider(TestInverseRankingModelProvider(), testRootDisposable)
   }
 
@@ -68,14 +69,17 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     override fun isDisabled(): Boolean = false
   }
 
-  private class ArrowPresenceChecker : LookupCellRenderer.ItemPresentationCustomizer {
+  private class ArrowPresenceChecker : LookupTracker() {
     var invokedCount: Int = 0
     private var arrowsFound: Boolean = false
-    override fun customizePresentation(item: LookupElement, presentation: LookupElementPresentation): LookupElementPresentation {
-      invokedCount += 1
-      arrowsFound = arrowsFound || presentation.icon is PositionDiffArrowInitializer.ArrowDecoratedIcon
 
-      return presentation
+    override fun lookupCreated(lookup: LookupImpl, storage: MutableLookupStorage) {
+      lookup.addPresentationCustomizer { _, presentation ->
+        invokedCount += 1
+        arrowsFound = arrowsFound || presentation.icon is PositionDiffArrowInitializer.ArrowDecoratedIcon
+
+        presentation
+      }
     }
 
     fun assertArrowsAvailable() {

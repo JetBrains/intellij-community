@@ -1,13 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.application.options.emmet.EmmetOptions
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+
 /**
  * @author peter
  */
@@ -82,9 +83,7 @@ class XmlLiveTemplateTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
   private HtmlCodeStyleSettings getHtmlSettings(){
-    return CodeStyleSettingsManager.getInstance(getProject())
-      .getCurrentSettings()
-      .getCustomSettings(HtmlCodeStyleSettings.class)
+    return CodeStyle.getSettings(getProject()).getCustomSettings(HtmlCodeStyleSettings.class)
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {

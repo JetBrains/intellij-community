@@ -9,19 +9,24 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
-
-  private val projectEntities: WorkspaceEntityStorageBuilder
-
   private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && WorkspaceModelImpl.cacheEnabled) || forceEnableCaching
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
+
+  /** specifies ID of a entity which changes should be printed to the log */
+  private val entityToTrace = System.getProperty("idea.workspace.model.track.facet.id")?.let {
+    val (moduleName, facetTypeId, facetName) = it.split('/')
+    FacetId(facetName, facetTypeId, ModuleId(moduleName))
+  }
 
   @Volatile
   var loadedFromCache = false
@@ -34,42 +39,55 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     //  Like in ProjectLifecycleListener or something
 
     log.debug { "Loading workspace model" }
+
     val initialContent = WorkspaceModelInitialTestContent.pop()
-    when {
-      initialContent != null -> projectEntities = WorkspaceEntityStorageBuilder.from(initialContent)
+    val projectEntities = when {
+      initialContent != null -> initialContent
       cache != null -> {
         val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
         val previousStorage: WorkspaceEntityStorage?
         val loadingCacheTime = measureTimeMillis {
           previousStorage = cache.loadCache()
         }
-        projectEntities = if (previousStorage != null) {
+        val storage = if (previousStorage != null) {
           log.info("Load workspace model from cache in $loadingCacheTime ms")
           loadedFromCache = true
-          WorkspaceEntityStorageBuilder.from(previousStorage)
+          printInfoAboutTracedEntity(previousStorage, "cache")
+          previousStorage
         }
         else WorkspaceEntityStorageBuilder.create()
         activity.end()
+        storage
       }
-      else -> projectEntities = WorkspaceEntityStorageBuilder.create()
+      else -> WorkspaceEntityStorageBuilder.create()
     }
 
-    entityStorage = VersionedEntityStorageImpl(projectEntities.toStorage())
+    entityStorage = VersionedEntityStorageImpl((projectEntities as? WorkspaceEntityStorageBuilder)?.toStorage() ?: projectEntities)
+    if (entityToTrace != null) {
+      WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), EntityTracingListener(entityToTrace))
+    }
+  }
+
+  internal fun printInfoAboutTracedEntity(storage: WorkspaceEntityStorage, storageDescription: String) {
+    if (entityToTrace != null) {
+      log.info("Traced entity from $storageDescription: ${storage.resolve(entityToTrace)?.configurationXmlTag}")
+    }
   }
 
   override fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    val before = projectEntities.toStorage()
-    val result = updater(projectEntities)
-    val changes = projectEntities.collectChanges(before)
-    projectEntities.resetChanges()
-    entityStorage.replace(projectEntities.toStorage(), changes, this::onBeforeChanged, this::onChanged)
+    val before = entityStorage.current
+    val builder = WorkspaceEntityStorageBuilder.from(before)
+    val result = updater(builder)
+    val changes = builder.collectChanges(before)
+    entityStorage.replace(builder.toStorage(), changes, this::onBeforeChanged, this::onChanged)
     return result
   }
 
   override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R {
-    val result = updater(projectEntities)
-    entityStorage.replaceSilently(projectEntities.toStorage())
+    val builder = WorkspaceEntityStorageBuilder.from(entityStorage.current)
+    val result = updater(builder)
+    entityStorage.replaceSilently(builder.toStorage())
     return result
   }
 
@@ -93,5 +111,30 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
 
     var forceEnableCaching = false
     val cacheEnabled = Registry.`is`(ENABLED_CACHE_KEY)
+  }
+}
+
+private class EntityTracingListener(private val entityId: FacetId) : WorkspaceModelChangeListener {
+  override fun changed(event: VersionedStorageChange) {
+    event.getAllChanges().forEach {
+      when (it) {
+        is EntityChange.Added -> printInfo("added", it.entity)
+        is EntityChange.Removed -> printInfo("removed", it.entity)
+        is EntityChange.Replaced -> {
+          printInfo("replaced from", it.oldEntity)
+          printInfo("replaced to", it.newEntity)
+        }
+      }
+    }
+  }
+
+  private fun printInfo(action: String, entity: WorkspaceEntity) {
+    if ((entity as? FacetEntity)?.persistentId() == entityId) {
+      LOG.info("$action: ${entity.configurationXmlTag}", Throwable())
+    }
+  }
+
+  companion object {
+    private val LOG = logger<EntityTracingListener>()
   }
 }

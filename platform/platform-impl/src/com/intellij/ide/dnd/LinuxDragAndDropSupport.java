@@ -3,6 +3,7 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.ide.dnd.FileCopyPasteUtil.createDataFlavor;
@@ -31,8 +34,7 @@ public final class LinuxDragAndDropSupport {
 
   private LinuxDragAndDropSupport() { }
 
-  @Nullable
-  public static List<File> getFiles(@NotNull final Transferable transferable) throws IOException, UnsupportedFlavorException {
+  public static @Nullable List<Path> getFiles(@NotNull Transferable transferable) throws IOException, UnsupportedFlavorException {
     if (transferable.isDataFlavorSupported(uriListFlavor)) {
       final Object transferData = transferable.getTransferData(uriListFlavor);
       return getFiles(transferData.toString());
@@ -46,29 +48,27 @@ public final class LinuxDragAndDropSupport {
     return null;
   }
 
-  @NotNull
-  private static List<File> getFiles(@Nullable final String transferData) {
-    final List<File> fileList = new ArrayList<>();
+  private static @NotNull List<Path> getFiles(@Nullable String transferData) {
+    if (transferData == null) {
+      return Collections.emptyList();
+    }
 
-    if (transferData != null) {
-      final String[] uriList = StringUtil.convertLineSeparators(transferData).split("\n");
-      for (String uriString : uriList) {
-        if (StringUtil.isEmptyOrSpaces(uriString) || uriString.startsWith("#") || !uriString.startsWith("file:/")) {
-          continue;
-        }
-        try {
-          final URI uri = new URI(uriString);
-          fileList.add(new File(uri));
-        }
-        catch (final URISyntaxException ignore) { }
+    List<Path> fileList = new ArrayList<>();
+    for (String uriString : StringUtil.convertLineSeparators(transferData).split("\n")) {
+      if (Strings.isEmptyOrSpaces(uriString) || uriString.startsWith("#") || !uriString.startsWith("file:/")) {
+        continue;
       }
+      try {
+        URI uri = new URI(uriString);
+        fileList.add(new File(uri).toPath());
+      }
+      catch (URISyntaxException ignore) { }
     }
 
     return fileList;
   }
 
-  @NotNull
-  public static String toUriList(@NotNull final List<? extends File> files) {
+  public static @NotNull String toUriList(@NotNull final List<? extends File> files) {
     return StringUtil.join(files, file -> file.toURI().toString(), "\n");
   }
 

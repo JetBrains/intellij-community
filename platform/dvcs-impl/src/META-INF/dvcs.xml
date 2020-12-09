@@ -24,7 +24,7 @@
       <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
       <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
-      <add-to-group group-id="VcsNavBarToolbarActionsLight" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
     </action>
     <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
 

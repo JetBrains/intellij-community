@@ -8,6 +8,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditServiceImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -39,6 +41,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -164,7 +167,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
       Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
       //noinspection deprecation
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project);
       activity.end();
 
       ProjectLoadHelper.registerComponents(project);
@@ -202,6 +205,12 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     LOG.assertTrue(!bus.isDisposed());
     LOG.assertTrue(myDefaultProject.isCached());
     return myDefaultProject;
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public void disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
+    myDefaultProject.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests();
   }
 
   @Override
@@ -276,7 +285,12 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   // return true if successful
   @Override
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
-    for (Project project : getOpenProjects()) {
+    Project[] projects = getOpenProjects();
+    Project lightEditProject = ((LightEditServiceImpl)LightEditService.getInstance()).getProjectAndClearIfCreated();
+    if (lightEditProject != null) {
+      projects = ArrayUtil.append(projects, lightEditProject);
+    }
+    for (Project project : projects) {
       if (!closeProject(project, /* isSaveProject = */ true, /* dispose = */ true, checkCanClose)) {
         return false;
       }
@@ -587,8 +601,19 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     }
   }
 
+  private Runnable myGetAllExcludedUrlsCallback;
+  @TestOnly
+  public void testOnlyGetExcludedUrlsCallback(@NotNull Disposable parentDisposable, @NotNull Runnable callback) {
+    if (myGetAllExcludedUrlsCallback != null) {
+      throw new IllegalStateException("This method is not reentrant. Expected null but got " + myGetAllExcludedUrlsCallback);
+    }
+    myGetAllExcludedUrlsCallback = callback;
+    Disposer.register(parentDisposable, () -> myGetAllExcludedUrlsCallback = null);
+  }
   @Override
   public @NotNull List<String> getAllExcludedUrls() {
+    Runnable callback = myGetAllExcludedUrlsCallback;
+    if (callback != null) callback.run();
     return myExcludeRootsCache.getExcludedUrls();
   }
 }

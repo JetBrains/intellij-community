@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ import java.util.function.Function;
 
 import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 
-public class GroovyPsiManager implements Disposable {
+public final class GroovyPsiManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(GroovyPsiManager.class);
 
   private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
@@ -50,9 +51,9 @@ public class GroovyPsiManager implements Disposable {
 
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<>();
 
-  private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
-  private final ConcurrentMap<GrExpression, PsiType> topLevelTypes = ContainerUtil.createConcurrentWeakMap();
-  private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.createConcurrentWeakMap();
+  private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = CollectionFactory.createConcurrentWeakMap();
+  private final ConcurrentMap<GrExpression, PsiType> topLevelTypes = CollectionFactory.createConcurrentWeakMap();
+  private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = CollectionFactory.createConcurrentWeakMap();
 
   private static final RecursionGuard<PsiElement> ourGuard = RecursionManager.createGuard("groovyPsiManager");
 

@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockEx, IndentInheritingBlock, BlockWithParent {
-
-  protected final ASTNode myNode;
   private final CodeStyleSettings mySettings;
   private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
   private final XmlFormattingPolicy myXmlFormattingPolicy;
@@ -38,7 +36,6 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
                                   XmlFormattingPolicy xmlFormattingPolicy,
                                   @Nullable Indent indent) {
     super(node, wrap, alignment);
-    myNode = node;
     mySettings = settings;
     myBuilder = builder;
     myXmlFormattingPolicy = xmlFormattingPolicy;

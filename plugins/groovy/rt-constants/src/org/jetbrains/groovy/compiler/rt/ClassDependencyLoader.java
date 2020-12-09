@@ -12,8 +12,6 @@ public class ClassDependencyLoader {
   private final Set<Class<?>> myVisited = new HashSet<Class<?>>();
 
   /**
-   * @param aClass
-   * @return aClass
    * @throws ClassNotFoundException when any of the classes can't be loaded, that's referenced in aClass' fields, methods etc. recursively
    */
   public Class loadDependencies(Class aClass) throws ClassNotFoundException {

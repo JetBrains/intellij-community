@@ -6,12 +6,16 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.joinLines.JoinedLinesSpacingCalculator;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +24,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Consumer;
 
+import static java.lang.Math.max;
+
 /**
- * Utility class for miscellaneous code style settings retrieving methods.
+ * Utility class for miscellaneous code style-related methods.
  */
-@SuppressWarnings("unused") // Contains API methods which may be used externally
 public final class CodeStyle {
 
   private CodeStyle() {
@@ -70,7 +75,8 @@ public final class CodeStyle {
    * A shorter way to get language-specific settings it to use one of the methods {@link #getLanguageSettings(PsiFile)}
    * or {@link #getLanguageSettings(PsiFile, Language)}.
    *
-   * @param file The file to get code style settings for.
+   * @param file The file to get code style settings for. The method may substitute it with an associated PSI,
+   *             see {@link #getSettingsPsi(PsiFile)}
    * @return The current root code style settings associated with the file or default settings if the file is invalid.
    */
   @NotNull
@@ -86,26 +92,48 @@ public final class CodeStyle {
       return result;
     }
 
-    if (!file.isPhysical()) {
-      PsiFile originalFile = file.getUserData(PsiFileFactory.ORIGINAL_FILE);
-      if (originalFile != null && originalFile.isPhysical()) {
-        return getSettings(originalFile);
-      }
+    PsiFile settingsFile = getSettingsPsi(file);
+    if (settingsFile == null) {
       return getSettings(project);
     }
-    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(settingsFile);
     return cachedSettings != null ? cachedSettings : getSettings(project);
   }
 
 
+  /**
+   * Finds a PSI file to be used to retrieve code style settings. May use {@link PsiFileFactory#ORIGINAL_FILE} if the
+   * given file doesn't match conditions needed to get the settings, e.g., if it's not associated with a virtual file
+   * in the local file system.
+   *
+   * @param file The initial file.
+   * @return The PSI file or {@code null} if neither the initial file nor any other associated file can be used for settings.
+   */
+  @Nullable
+  public static PsiFile getSettingsPsi(@NotNull PsiFile file) {
+    if (hasLocalVirtualFile(file)) return file;
+    PsiFile originalFile = file.getUserData(PsiFileFactory.ORIGINAL_FILE);
+    if (originalFile != null) {
+      return getSettingsPsi(originalFile);
+    }
+    return null;
+  }
+
+
+  private static boolean hasLocalVirtualFile(@NotNull PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    return virtualFile != null && virtualFile.isInLocalFileSystem();
+  }
+
+  public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull Document document) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    return file != null ? getSettings(file) : getSettings(project);
+  }
+
   public static CodeStyleSettings getSettings(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file != null) {
-        return getSettings(file);
-      }
-      return getSettings(project);
+      return getSettings(project, editor.getDocument());
     }
     return getDefaultSettings();
   }
@@ -271,6 +299,7 @@ public final class CodeStyle {
    * @param tempSettings  The temporary code style settings.
    * @param runnable      The runnable to execute with the temporary settings.
    */
+  @TestOnly
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
@@ -299,6 +328,7 @@ public final class CodeStyle {
    * @param baseSettings         The base settings to be cloned and used in consumer.
    * @param tempSettingsConsumer The consumer to execute with the base settings copy.
    */
+  @TestOnly
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings baseSettings,
                                              @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
@@ -398,12 +428,89 @@ public final class CodeStyle {
   }
 
   /**
+   * Calculates the indent that should be used for the line at specified offset in the specified
+   * editor. If there is a suitable {@code LineIndentProvider} for the language, it will be used to calculate the indent. Otherwise, if
+   * {@code allowDocCommit} flag is true, the method will use formatter on committed document.
+   *
+   * @param editor   The editor for which the indent must be returned.
+   * @param language Context language
+   * @param offset   The caret offset in the editor.
+   * @param allowDocCommit Allow calculation using committed document.
+   *                       <p>
+   *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
+   * @return the indent string (containing of tabs and/or white spaces), or null if it
+   *         was not possible to calculate the indent.
+   */
+  public static String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    Project project = editor.getProject();
+    if (project == null) return null;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    String indent = lineIndentProvider != null ? lineIndentProvider.getLineIndent(project, editor, language, offset) : null;
+    if (indent == LineIndentProvider.DO_NOT_ADJUST) {
+      return allowDocCommit ? null : indent;
+    }
+    return indent != null ? indent : allowDocCommit ? getLineIndent(project, editor.getDocument(), offset) : null;
+  }
+
+  @Nullable
+  private static String getLineIndent(@Nullable Project project, @NotNull final Document document, int offset) {
+    if (project == null) return null;
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    return CodeStyleManager.getInstance(project).getLineIndent(document, offset);
+  }
+
+  /**
+   * Calculates the spacing (in columns) for joined lines at given offset after join lines or smart backspace actions.
+   * If there is a suitable {@code LineIndentProvider} for the language,
+   * it will be used to calculate the spacing. Otherwise, if
+   * {@code allowDocCommit} flag is true, the method will use formatter on committed document.
+   *
+   * @param editor   The editor for which the spacing must be returned.
+   * @param language Context language
+   * @param offset   Offset in the editor after the indent in the second joining line.
+   * @param allowDocCommit Allow calculation using committed document.
+   *                       <p>
+   *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
+   * @return non-negative spacing between end- and start-line tokens after the join.
+   */
+  public static int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    Project project = editor.getProject();
+    if (project == null) return 0;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    int space = lineIndentProvider instanceof JoinedLinesSpacingCalculator
+                ? ((JoinedLinesSpacingCalculator)lineIndentProvider).getJoinedLinesSpacing(project, editor, language, offset)
+                : -1;
+    if (space < 0 && allowDocCommit) {
+      final Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file == null) return 0;
+      return max(0, CodeStyleManager.getInstance(project).getSpacing(file, offset));
+    }
+    return max(0, space);
+  }
+
+  /**
    * Create a clean instance of {@code CodeStyleSettings} for testing purposes.
    * @return Test code style settings.
    */
   @TestOnly
   public static CodeStyleSettings createTestSettings() {
     return CodeStyleSettingsManager.createTestSettings(null);
+  }
+
+  @NotNull
+  public static CodeStyleSettingsFacade getFacade(@NotNull PsiFile file) {
+    return new DefaultCodeStyleSettingsFacade(getSettings(file), file.getFileType());
+  }
+
+  @NotNull
+  public static CodeStyleSettingsFacade getFacade(@NotNull Project project, @NotNull Document document, @NotNull FileType fileType) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile != null) {
+      return new DefaultCodeStyleSettingsFacade(getSettings(psiFile), fileType);
+    }
+    return new DefaultCodeStyleSettingsFacade(getSettings(project), fileType);
   }
 
 }

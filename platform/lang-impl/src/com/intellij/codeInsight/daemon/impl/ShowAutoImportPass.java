@@ -4,12 +4,13 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -36,7 +37,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -136,10 +137,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   public static boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
     PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(psiFile);
     if (templateFile == null) return false;
-    boolean isJsp = templateFile.getFileType().getName().equals("JSP") || templateFile.getFileType().getName().equals("JSPX");
-    return isJsp ?
-           CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
-           CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(), importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
   }
 
   @NotNull
@@ -205,14 +203,38 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     DaemonProgressIndicator progress = new DaemonProgressIndicator();
     AtomicReference<List<HighlightInfo>> infos = new AtomicReference<>(Collections.emptyList());
     ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() ->
-      ProgressManager.getInstance().executeProcessUnderProgress(() ->
-        infos.set(DaemonCodeAnalyzerEx.getInstanceEx(project).runMainPasses(file, document, progress)), progress));
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> infos.set(runGeneralHighlightingPass(file)), progress));
 
     List<HintAction> result = new ArrayList<>(infos.get().size());
     for (HighlightInfo info : infos.get()) {
       for (HintAction action : extractHints(info)) {
         if (action.isAvailable(project, null, file)) {
           result.add(action);
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<HighlightInfo> runGeneralHighlightingPass(@NotNull PsiFile file) {
+    Project project = file.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return Collections.emptyList();
+    ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
+    GlobalInspectionContextBase.assertUnderDaemonProgress();
+
+    TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
+    List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
+    List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
+
+    List<HighlightInfo> result = new ArrayList<>();
+    for (TextEditorHighlightingPass pass : gpasses) {
+      pass.doCollectInformation(progress);
+      List<HighlightInfo> infos = pass.getInfos();
+      for (HighlightInfo info : infos) {
+        if (info != null && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
+          result.add(info);
         }
       }
     }

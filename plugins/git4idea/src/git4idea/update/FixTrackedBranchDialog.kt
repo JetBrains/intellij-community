@@ -4,10 +4,14 @@ package git4idea.update
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
@@ -15,6 +19,7 @@ import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import git4idea.GitNotificationIdsHolder.Companion.FIX_TRACKED_NOT_ON_BRANCH
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchPair
 import git4idea.config.GitVcsSettings
@@ -32,6 +37,8 @@ import java.awt.event.KeyEvent
 import javax.swing.*
 
 internal class FixTrackedBranchDialog(private val project: Project) : DialogWrapper(project) {
+
+  private val vcsNotifier = project.service<VcsNotifier>()
 
   private val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
 
@@ -63,38 +70,33 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
 
   override fun getPreferredFocusedComponent() = branchField
 
-  override fun doValidateAll() = validateUpdateConfig()
-
   fun shouldSetAsTrackedBranch() = setAsTrackedBranchField.isSelected
 
   private fun collectUpdateConfig(): MutableMap<GitRepository, GitBranchPair> {
     val map = mutableMapOf<GitRepository, GitBranchPair>()
 
-    repositories.forEach { repository ->
-      val localBranch = repository.currentBranch
-      check(localBranch != null) { "VCS root is not on branch: ${repository.root}" }
+    val reposNotOnBranch = repositories.filter { it.currentBranch == null }.joinToString { DvcsUtil.getShortRepositoryName(it) }
+    if (reposNotOnBranch.isNotEmpty()) {
+      val message = HtmlBuilder()
+        .append(GitBundle.message("tracked.branch.fix.dialog.not.on.branch.message"))
+        .append(HtmlChunk.br())
+        .append(reposNotOnBranch)
+        .toString()
+      vcsNotifier.notifyImportantWarning(FIX_TRACKED_NOT_ON_BRANCH,
+                                         GitBundle.message("tracked.branch.fix.dialog.not.on.branch.title"), message)
+    }
 
-      val trackedBranch = localBranch.findTrackedBranch(repository) ?: getBranchMatchingLocal(repository)
-      if (trackedBranch != null) {
-        map[repository] = GitBranchPair(localBranch, trackedBranch)
+    for (repository in repositories) {
+      val localBranch = repository.currentBranch
+      if (localBranch != null) {
+        val trackedBranch = localBranch.findTrackedBranch(repository) ?: getBranchMatchingLocal(repository)
+        if (trackedBranch != null) {
+          map[repository] = GitBranchPair(localBranch, trackedBranch)
+        }
       }
     }
 
     return map
-  }
-
-  private fun validateUpdateConfig(): MutableList<ValidationInfo> {
-    val validationResult = mutableListOf<ValidationInfo>()
-
-    for (repository in repositories) {
-      if (!updateConfig.keys.contains(repository)) {
-        validationResult += ValidationInfo(GitBundle.message("tracked.branch.fix.dialog.no.tracked.branch"), branchField)
-        repositoryField.item = repository
-        break
-      }
-    }
-
-    return validationResult
   }
 
   private fun getSelectedRepository() = repositoryField.item
@@ -126,7 +128,10 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
     }
     else {
       val localBranch = repository.currentBranch
-      check(localBranch != null) { "VCS root is not on branch: ${repository.root}" }
+      if (localBranch == null) {
+        LOG.warn("VCS root is not on branch: ${repository.root}")
+        return
+      }
 
       updateConfig[repository] = GitBranchPair(localBranch, trackedBranch)
     }
@@ -247,5 +252,9 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
 
   private fun updateBranchField() {
     branchField.text = getBranchMatchingLocal(getSelectedRepository())?.nameForRemoteOperations ?: ""
+  }
+
+  companion object {
+    private val LOG = logger<FixTrackedBranchDialog>()
   }
 }

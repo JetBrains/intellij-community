@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vfs.CharsetToolkit.UTF8_CHARSET
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.vcsUtil.VcsFileUtil
@@ -21,6 +20,7 @@ import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils.addTextConvParameters
+import java.nio.charset.StandardCharsets
 
 
 private val LOG = logger<GitRevisionContentPreLoader>()
@@ -56,11 +56,11 @@ class GitRevisionContentPreLoader(val project: Project) {
     h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(
       // we need to pass '<hash> <path>', otherwise --filters parameter doesn't work
       hashesAndPaths.map { "${it.hash} ${it.relativePath}" },
-      UTF8_CHARSET))
+      StandardCharsets.UTF_8))
 
     val output: ByteArray
     try {
-      output = h.run() 
+      output = h.run()
     }
     catch (e: Exception) {
       LOG.error("Couldn't get git cat-file for $hashesAndPaths", e)
@@ -127,7 +127,7 @@ class GitRevisionContentPreLoader(val project: Project) {
         return null
       }
 
-      val content   = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
+      val content = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
       result[path] = content
       currentPosition = endIndex
     }

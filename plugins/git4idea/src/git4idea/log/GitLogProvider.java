@@ -58,7 +58,7 @@ import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
-  public static final TObjectHashingStrategy<VcsRef> DONT_CONSIDER_SHA = new TObjectHashingStrategy<VcsRef>() {
+  public static final TObjectHashingStrategy<VcsRef> DONT_CONSIDER_SHA = new TObjectHashingStrategy<>() {
     @Override
     public int computeHashCode(@NotNull VcsRef ref) {
       return 31 * ref.getName().hashCode() + ref.getType().hashCode();
@@ -157,7 +157,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     StopWatch sw = StopWatch.start("validating data in " + root.getName());
     final Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
-    PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<Hash>() {
+    PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<>() {
       @Override
       public int getColorOfBranch(@NotNull Hash headCommit) {
         return 0;
@@ -340,11 +340,10 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     return !repository.getInfo().isShallow();
   }
 
-  @NotNull
   @Override
-  public List<? extends VcsCommitMetadata> readMetadata(@NotNull final VirtualFile root, @NotNull List<String> hashes)
+  public void readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
-    return GitLogUtil.collectMetadata(myProject, myVcs, root, hashes);
+    GitLogUtil.collectMetadata(myProject, myVcs, root, hashes, consumer);
   }
 
   @NotNull

@@ -49,7 +49,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="14"/>
+                      stubVersion="15"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -71,6 +71,7 @@
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointClassIndex"/>
 
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
@@ -98,11 +99,6 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"
                      key="inspection.plugin.xml.validity.display.name"/>
-    <localInspection language="XML" shortName="PluginXmlCapitalization" applyToDialects="false"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlCapitalizationInspection"
-                     key="inspection.plugin.xml.capitalization.display.name"/>
     <localInspection language="XML" applyToDialects="false"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"
@@ -113,6 +109,11 @@
                      groupPathKey="inspections.group.path"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
+    <localInspection language="JVM" shortName="StatisticsCollectorNotRegistered"
+                     groupPathKey="inspections.group.path"
+                     key="inspections.statistics.collector.not.registered.name" groupKey="inspections.group.code" enabledByDefault="false"
+                     level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection"
+                     isInternal="true"/>
     <localInspection language="UAST" shortName="InspectionDescriptionNotFoundInspection"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
@@ -162,6 +163,11 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.FileEqualsUsageInspection"
                      key="inspection.file.equals.usage.display.name"/>
+    <localInspection language="UAST" shortName="MissingAccessibleContext"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.MissingAccessibleContextInspection"
+                     key="inspection.missing.accessible.context.display.name"/>
     <localInspection language="JAVA" shortName="UnsafeVfsRecursion"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
@@ -270,6 +276,11 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LeakableMapKeyInspection"/>
+    <localInspection language="UAST"
+                     key="inspections.unresolved.plugin.config.reference"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -279,6 +290,7 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemeEPPathReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.NotificationGroupIdReferenceContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
@@ -359,14 +371,11 @@
     <psi.fileReferenceHelper
         order="first"
         implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
+    <daemon.externalAnnotatorsFilter
+      implementation="org.jetbrains.idea.devkit.inspections.PluginXmlExternalAnnotatorsFilter"/>
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
-    <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
-
-    <!--cached value profiler-->
-    <fileType extensions="cvp" name="CVP"
-              implementationClass="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileType" fieldName="INSTANCE"/>
-    <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
+    <console.folding order="first" implementation="org.jetbrains.idea.devkit.FailedTestDebugLogConsoleFolding"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
 
@@ -389,6 +398,12 @@
     <notificationGroup id="Update from Sources" displayType="BALLOON"/>
     <notificationGroup id="testdata" displayType="BALLOON"/>
     <notificationGroup id="Migrate DevKit plugin to Gradle" displayType="STICKY_BALLOON" bundle="messages.DevKitBundle" key="convert.devkit.to.gradle.notification"/>
+
+    <!-- Threading Model Helper -->
+    <buildProcess.parametersProvider implementation="org.jetbrains.idea.devkit.threadingModelHelper.TMHBuildProcessParametersProvider"/>
+    <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="false"
+                 description="Generate assertions for @RequiresEdt and similar annotations.
+                 The assertions are added by instrumenting class files during compilation."/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
@@ -418,9 +433,6 @@
     <group id="DevkitNewActions" icon="AllIcons.Nodes.Plugin" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
       <action class="org.jetbrains.idea.devkit.actions.NewActionAction" id="NewAction"/>
       <separator/>
-      <action id="NewApplicationService" class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
-      <action id="NewProjectService" class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
-      <action id="NewModuleService" class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
       <action id="DevKit.NewMessageBundle" class="org.jetbrains.idea.devkit.actions.NewMessageBundleAction"/>
       <separator/>
       <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>

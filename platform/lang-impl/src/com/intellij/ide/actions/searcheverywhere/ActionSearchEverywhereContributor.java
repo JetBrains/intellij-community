@@ -20,6 +20,7 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Processor;
@@ -65,8 +66,8 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   @Override
   public String getAdvertisement() {
     ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
-    String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
-    return "Press " + altEnter + " to assign a shortcut";
+    @NlsSafe String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
+    return IdeBundle.message("press.0.to.assign.a.shortcut", altEnter);
   }
 
   @NlsContexts.Checkbox
@@ -233,6 +234,11 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
         initEvent.getProject(),
         initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
+    }
+
+    @Override
+    public @NotNull SearchEverywhereTabDescriptor getTab() {
+      return SearchEverywhereTabDescriptor.IDE;
     }
   }
 }

@@ -11,6 +11,8 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager;
+import com.intellij.execution.stateExecutionWidget.StateWidgetProcess;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
@@ -24,6 +26,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +43,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
-  public static final String RDC_GROUP = "RunDebugConfigRunnerActions";
+  public static final String RUN_CONTEXT_GROUP_MORE = "RunContextGroupMore";
+  public static final String STATE_WIDGET_GROUP = "StateWidgetProcessesActionGroup";
 
   private final Set<String> myContextActionIdSet = new HashSet<>();
   private final Map<String, AnAction> myIdToAction = new HashMap<>();
@@ -94,33 +99,62 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
-    registerAction(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
-    registerAction(actionManager, executor.getContextActionId(), runContextAction, RUN_CONTEXT_GROUP, myContextActionIdToAction);
-    if(executor.isRDCAction()) {
-      registerAction(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RDC_GROUP,
-                     myRunDebugIdToAction);
+    registerActionInGroup(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
+
+    AnAction action = registerAction(actionManager, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
+    if (isExecutorInMainGroup(executor)) {
+      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP)).add(action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE), actionManager);
     }
+    else {
+      ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE)).add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
+    }
+
+    List<StateWidgetProcess> processes = StateWidgetProcess.getProcesses();
+    processes.forEach(it -> {
+      if (it.getExecutorId().equals(executor.getId()) && !(executor instanceof ExecutorGroup)) {
+        ExecutorAction wrappedAction = new StateWidget(executor, it);
+        registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
+                              myRunDebugIdToAction);
+      }
+    });
 
     myContextActionIdSet.add(executor.getContextActionId());
   }
 
-  private static void registerAction(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
+  private static boolean isExecutorInMainGroup(@NotNull Executor executor) {
+    return !Registry.is("executor.actions.submenu") || executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG);
+  }
+
+  private static void registerActionInGroup(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
+    AnAction action = registerAction(actionManager, actionId, anAction, map);
+    ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
+  }
+
+  @NotNull
+  private static AnAction registerAction(@NotNull ActionManager actionManager,
+                                         @NotNull String actionId,
+                                         @NotNull AnAction anAction,
+                                         @NotNull Map<String, AnAction> map) {
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       actionManager.registerAction(actionId, anAction);
       map.put(actionId, anAction);
       action = anAction;
     }
-
-    ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
+    return action;
   }
 
   synchronized void deinitExecutor(@NotNull Executor executor) {
     myContextActionIdSet.remove(executor.getContextActionId());
 
     unregisterAction(executor.getId(), RUNNERS_GROUP, myIdToAction);
-    unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionIdToAction);
-    unregisterAction(executor.getContextActionId(), RDC_GROUP, myRunDebugIdToAction);
+    if (isExecutorInMainGroup(executor)) {
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionIdToAction);
+    }
+    else {
+      unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
+    }
+    unregisterAction(StateWidgetProcess.generateActionID(executor.getId()), STATE_WIDGET_GROUP, myRunDebugIdToAction);
   }
 
   private static void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
@@ -130,11 +164,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return;
     }
 
-    group.remove(actionManager.getAction(actionId), actionManager);
     AnAction action = map.get(actionId);
     if (action != null) {
+      group.remove(action, actionManager);
       actionManager.unregisterAction(actionId);
       map.remove(actionId);
+    }
+    else {
+      action = ActionManager.getInstance().getAction(actionId);
+      if (action != null) {
+        group.remove(action, actionManager);
+      }
     }
   }
 
@@ -161,8 +201,36 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  private static final class ExecutorAction extends AnAction implements DumbAware, UpdateInBackground {
-    private final Executor myExecutor;
+  private static final class StateWidget extends ExecutorAction {
+    final StateWidgetProcess myProcess;
+
+    @Override
+    public boolean displayTextInToolbar() {
+      return true;
+    }
+
+    private StateWidget(@NotNull Executor executor, @NotNull StateWidgetProcess process) {
+      super(executor);
+      myProcess = process;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project != null) {
+        if (StateWidgetManager.getInstance(project).getActiveCount() == 0) {
+          e.getPresentation().setEnabledAndVisible(true);
+          super.update(e);
+          e.getPresentation().setText(myExecutor.getActionName());
+          return;
+        }
+      }
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
+
+  private static class ExecutorAction extends AnAction implements DumbAware, UpdateInBackground {
+    protected final Executor myExecutor;
 
     private ExecutorAction(@NotNull Executor executor) {
       super(executor.getStartActionText(), executor.getDescription(), IconLoader.createLazy(() -> executor.getIcon()));
@@ -170,27 +238,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     private boolean canRun(@NotNull Project project, @NotNull List<SettingsAndEffectiveTarget> pairs) {
-      if (pairs.isEmpty()) {
-        return false;
-      }
-
-      for (SettingsAndEffectiveTarget pair : pairs) {
-        RunConfiguration configuration = pair.getConfiguration();
-        if (configuration instanceof CompoundRunConfiguration) {
-          if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets())) {
-            return false;
-          }
-          continue;
-        }
-
-        ProgramRunner<?> runner = ProgramRunner.getRunner(myExecutor.getId(), configuration);
-        if (runner == null
-            || !ExecutionTargetManager.canRun(configuration, pair.getTarget())
-            || ExecutionManager.getInstance(project).isStarting(myExecutor.getId(), runner.getRunnerId())) {
-          return false;
-        }
-      }
-      return true;
+      return RunnerHelper.canRun(project, pairs, myExecutor);
     }
 
     @Override
@@ -284,20 +332,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     private void run(@NotNull Project project, @Nullable RunConfiguration configuration, @Nullable RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
-      if (configuration instanceof CompoundRunConfiguration) {
-        RunManager runManager = RunManager.getInstance(project);
-        for (SettingsAndEffectiveTarget settingsAndEffectiveTarget : ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets()) {
-          RunConfiguration subConfiguration = settingsAndEffectiveTarget.getConfiguration();
-          run(project, subConfiguration, runManager.findSettings(subConfiguration), dataContext);
-        }
-      }
-      else {
-        ExecutionEnvironmentBuilder builder = settings == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, settings);
-        if (builder == null) {
-          return;
-        }
-        ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(dataContext).build());
-      }
+      RunnerHelper.run(project, configuration, settings, dataContext, myExecutor);
     }
 
     @Override
@@ -344,6 +379,54 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
       e.getPresentation().setEnabledAndVisible(myExecutorGroup.isApplicable(project));
+    }
+  }
+
+  public static final class RunnerHelper {
+    public static void run(@NotNull Project project,
+                            @Nullable RunConfiguration configuration,
+                            @Nullable RunnerAndConfigurationSettings settings,
+                            @NotNull DataContext dataContext,
+                            @NotNull Executor executor) {
+      if (configuration instanceof CompoundRunConfiguration) {
+        RunManager runManager = RunManager.getInstance(project);
+        for (SettingsAndEffectiveTarget settingsAndEffectiveTarget : ((CompoundRunConfiguration)configuration)
+          .getConfigurationsWithEffectiveRunTargets()) {
+          RunConfiguration subConfiguration = settingsAndEffectiveTarget.getConfiguration();
+          run(project, subConfiguration, runManager.findSettings(subConfiguration), dataContext, executor);
+        }
+      }
+      else {
+        ExecutionEnvironmentBuilder builder = settings == null ? null : ExecutionEnvironmentBuilder.createOrNull(executor, settings);
+        if (builder == null) {
+          return;
+        }
+        ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(dataContext).build());
+      }
+    }
+
+    public static boolean canRun(@NotNull Project project, @NotNull List<SettingsAndEffectiveTarget> pairs, @NotNull Executor executor) {
+      if (pairs.isEmpty()) {
+        return false;
+      }
+
+      for (SettingsAndEffectiveTarget pair : pairs) {
+        RunConfiguration configuration = pair.getConfiguration();
+        if (configuration instanceof CompoundRunConfiguration) {
+          if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets(), executor)) {
+            return false;
+          }
+          continue;
+        }
+
+        ProgramRunner<?> runner = ProgramRunner.getRunner(executor.getId(), configuration);
+        if (runner == null
+            || !ExecutionTargetManager.canRun(configuration, pair.getTarget())
+            || ExecutionManager.getInstance(project).isStarting(executor.getId(), runner.getRunnerId())) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 }

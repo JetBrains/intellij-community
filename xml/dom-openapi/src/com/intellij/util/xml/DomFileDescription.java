@@ -120,7 +120,7 @@ public class DomFileDescription<T> {
   /**
    * @return some version. Override and change (e.g. {@code super.getVersion()+1}) when after some changes some files stopped being
    * described by this description or vice versa, so that the
-   * {@link DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
+   * {@link DomService#getDomFileCandidates(Class, com.intellij.psi.search.GlobalSearchScope)}
    * index is rebuilt correctly.
    * @deprecated use "domVersion" attribute of {@code com.intellij.dom.fileMetaData} extension instead
    */

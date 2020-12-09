@@ -35,15 +35,15 @@ class YieldStatements {
       }
       case 11 -> { yield <error descr="Expression type should not be 'void'">m(0)</error>; }
       case 12 -> {
-        switch (i) { default: <error descr="Break outside of enclosing switch expression">break out;</error>; }
+        switch (i) { default: <error descr="Break out of switch expression is not allowed">break out;</error>; }
       }
       default -> throw new RuntimeException();
     });
 
     out: while (true) {
       System.out.println(switch (i) {
-        case 0: <error descr="Break outside of enclosing switch expression">break;</error>
-        default: <error descr="Break outside of enclosing switch expression">break out;</error>
+        case 0: <error descr="Break out of switch expression is not allowed">break;</error>
+        default: <error descr="Break out of switch expression is not allowed">break out;</error>
       });
     }
   }

@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Pair;
@@ -180,29 +179,26 @@ class FileTemplatesLoader implements Disposable {
     FileTemplateLoadResult result = new FileTemplateLoadResult(new MultiMap<>());
     Set<URL> processedUrls = new HashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
-    IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
-    for (PluginDescriptor plugin : plugins) {
-      if (plugin instanceof IdeaPluginDescriptorImpl && plugin.isEnabled()) {
-        final ClassLoader loader = plugin.getPluginClassLoader();
-        if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getUrls().isEmpty() ||
-            !processedLoaders.add(loader)) {
-          continue; // test or development mode, when IDEA_CORE's loader contains all the classpath
-        }
-        try {
-          final Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
-          if (systemResources.hasMoreElements()) {
-            while (systemResources.hasMoreElements()) {
-              final URL url = systemResources.nextElement();
-              if (!processedUrls.add(url)) {
-                continue;
-              }
-              loadDefaultsFromRoot(url, prefixes, result);
+    for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {
+      final ClassLoader loader = plugin.getPluginClassLoader();
+      if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getFiles().isEmpty() ||
+          !processedLoaders.add(loader)) {
+        continue; // test or development mode, when IDEA_CORE's loader contains all the classpath
+      }
+      try {
+        final Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
+        if (systemResources.hasMoreElements()) {
+          while (systemResources.hasMoreElements()) {
+            final URL url = systemResources.nextElement();
+            if (!processedUrls.add(url)) {
+              continue;
             }
+            loadDefaultsFromRoot(url, prefixes, result);
           }
         }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
     return result;
@@ -277,13 +273,13 @@ class FileTemplatesLoader implements Disposable {
     }
 
     descName = MessageFormat.format("{0}.{1}_{2}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension, locale.getLanguage());
-    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
+    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + "/" + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }
 
     descName = templateName + "." + templateExtension + DESCRIPTION_EXTENSION_SUFFIX;
-    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
+    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + "/" + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }

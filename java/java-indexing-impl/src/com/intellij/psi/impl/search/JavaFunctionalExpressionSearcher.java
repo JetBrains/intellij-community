@@ -258,7 +258,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       if (psi == null) {
         StubTextInconsistencyException.checkStubTextConsistency(file);
         throw new RuntimeExceptionWithAttachments(
-          "No functional expression at " + entry + ", file will be indexed",
+          "No functional expression at " + entry + ", file will be reindexed",
           new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
       }
       return psi;
@@ -275,7 +275,14 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   private static PsiFile createMemberCopyFromText(@NotNull PsiMember member, @NotNull TextRange memberRange) {
     PsiFile file = member.getContainingFile();
-    String contextText = memberRange.subSequence(file.getViewProvider().getContents()).toString();
+    CharSequence contents = file.getViewProvider().getContents();
+    if (memberRange.getEndOffset() > contents.length()) {
+      StubTextInconsistencyException.checkStubTextConsistency(file);
+      throw new RuntimeExceptionWithAttachments(
+        "Range from the index " + memberRange + " exceeds the actual file length " + contents.length() + ", file will be reindexed",
+        new Attachment(file.getVirtualFile().getPath(), contents.toString()));
+    }
+    String contextText = memberRange.subSequence(contents).toString();
     Project project = file.getProject();
     return member instanceof PsiEnumConstant
            ? PsiElementFactory.getInstance(project).createEnumConstantFromText(contextText, member).getContainingFile()

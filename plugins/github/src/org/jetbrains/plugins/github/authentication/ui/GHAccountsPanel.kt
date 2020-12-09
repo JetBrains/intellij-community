@@ -234,9 +234,6 @@ internal class GHAccountsPanel(
     private val loadingError = JLabel()
     private val reloginLink = LinkLabel<Any?>(GithubBundle.message("login.action"), null)
 
-    /**
-     * UPDATE [createLinkActivationListener] IF YOU CHANGE LAYOUT
-     */
     init {
       layout = FlowLayout(FlowLayout.LEFT, 0, 0)
       border = JBUI.Borders.empty(5, 8)

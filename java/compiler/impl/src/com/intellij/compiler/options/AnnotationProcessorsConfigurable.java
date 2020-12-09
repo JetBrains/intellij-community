@@ -99,7 +99,9 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
       config.setModuleProcessorProfiles(myMainPanel.getModuleProfiles());
     }
     finally {
-      BuildManager.getInstance().clearState(myProject);
+      if (!myProject.isDefault()) {
+        BuildManager.getInstance().clearState(myProject);
+      }
     }
   }
 

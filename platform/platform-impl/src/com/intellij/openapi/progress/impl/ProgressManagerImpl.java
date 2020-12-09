@@ -53,7 +53,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread()
-                             ? p -> { ((PingProgress)progress).interact(); return true; } 
+                             ? p -> { ((PingProgress)progress).interact(); return true; }
                              : null;
     if (hook != null) {
       addCheckCanceledHook(hook);
@@ -113,7 +113,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     }
     finally {
       if (indicator instanceof ProgressWindow) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
           .onTaskRunnableCreated(task, indicator, continuation);
       }
     }
@@ -152,7 +152,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       super.finishTask(task, canceled, error);
     }
     finally {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
         .onTaskFinished(task, canceled, error);
     }
   }

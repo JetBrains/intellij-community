@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.share
 
 import circlet.client.api.PR_Project
@@ -13,7 +14,7 @@ class SpaceProjectListComboRenderer : ColoredListCellRenderer<PR_Project>() {
                                      selected: Boolean,
                                      hasFocus: Boolean) {
     project ?: return
-    append(project.name)
+    append(project.name) // NON-NLS
     append("  ")
     append(SpaceBundle.message("project.list.project.key.description", project.key.key), SimpleTextAttributes.GRAY_SMALL_ATTRIBUTES)
   }

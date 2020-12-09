@@ -37,6 +37,11 @@ final class RemovedMappingTracker {
     boolean isApproved() {
       return myApproved;
     }
+
+    @Override
+    public String toString() {
+      return "Removed mapping '" + myFileNameMatcher + "' -> " + myFileTypeName;
+    }
   }
 
   private final Map<FileNameMatcher, RemovedMapping> myRemovedMappings = new HashMap<>();
@@ -84,7 +89,9 @@ final class RemovedMappingTracker {
   }
 
   void save(@NotNull Element element) {
-    for (RemovedMapping mapping : myRemovedMappings.values()) {
+    List<RemovedMapping> removedMappings = new ArrayList<>(myRemovedMappings.values());
+    removedMappings.sort(Comparator.comparing((RemovedMapping mapping) -> mapping.getFileNameMatcher().getPresentableString()).thenComparing(RemovedMapping::getFileTypeName));
+    for (RemovedMapping mapping : removedMappings) {
       Element content = writeRemovedMapping(mapping.myFileTypeName, mapping.myFileNameMatcher, true, mapping.myApproved);
       if (content != null) {
         element.addContent(content);
@@ -92,7 +99,7 @@ final class RemovedMappingTracker {
     }
   }
 
-  void saveRemovedMappingsForFileType(@NotNull Element map, @NotNull String fileTypeName, @NotNull Set<? extends FileNameMatcher> associations, boolean specifyTypeName) {
+  void saveRemovedMappingsForFileType(@NotNull Element map, @NotNull String fileTypeName, @NotNull Collection<? extends FileNameMatcher> associations, boolean specifyTypeName) {
     for (FileNameMatcher matcher : associations) {
       Element content = writeRemovedMapping(fileTypeName, matcher, specifyTypeName, isApproved(matcher));
       if (content != null) {
@@ -115,7 +122,8 @@ final class RemovedMappingTracker {
     return new ArrayList<>(myRemovedMappings.values());
   }
 
-  @NotNull List<FileNameMatcher> getMappingsForFileType(@NotNull String fileTypeName) {
+  @NotNull
+  List<FileNameMatcher> getMappingsForFileType(@NotNull String fileTypeName) {
     return myRemovedMappings.values().stream()
       .filter(mapping -> mapping.myFileTypeName.equals(fileTypeName))
       .map(mapping -> mapping.myFileNameMatcher)

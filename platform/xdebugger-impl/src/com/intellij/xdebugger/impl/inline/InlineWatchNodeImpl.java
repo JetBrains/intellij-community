@@ -70,7 +70,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
   @Nullable
   @Override
   public XDebuggerTreeNodeHyperlink getLink() {
-    return new XDebuggerTreeNodeHyperlink(" " + myWatch.getPosition().getFile().getName() + ":" + myWatch.getPosition().getLine()) {
+    return new XDebuggerTreeNodeHyperlink(" " + myWatch.getPosition().getFile().getName() + ":" + (myWatch.getPosition().getLine() + 1)) {
       @Override
       public boolean alwaysOnScreen() {
         return true;
@@ -109,20 +109,15 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     @Override
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       if (myStackFrame != null) {
-        if (myTree.isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
-         if (sessionIsInOtherFileThanNode()) {
-           node.setPresentation(AllIcons.Debugger.Db_watch, EMPTY_PRESENTATION, false);
-           return;
-         }
-
-          XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
-          if (evaluator != null) {
-            evaluator.evaluate(myExpression, new MyEvaluationCallback(node, place), myStackFrame.getSourcePosition());
-            return;
-          }
+        if (sessionIsInOtherFileThanNode()) {
+          node.setPresentation(AllIcons.Debugger.Db_watch, EMPTY_PRESENTATION, false);
+          return;
         }
-        else {
-          return; // do not set anything if view is not visible, otherwise the code in computePresentationIfNeeded() will not work
+
+        XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
+        if (evaluator != null) {
+          evaluator.evaluate(myExpression, new MyEvaluationCallback(node, place), myStackFrame.getSourcePosition());
+          return;
         }
       }
 

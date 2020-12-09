@@ -7,7 +7,6 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -82,10 +81,6 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.Pyth
     public void readExternal(Element element) throws InvalidDataException {
       String sdkName = element.getAttributeValue(SDK_NAME);
       mySdk = StringUtil.isEmpty(sdkName) ? null : ProjectJdkTable.getInstance().findJdk(sdkName, PythonSdkType.getInstance().getName());
-
-      if (mySdk != null) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkAdded(mySdk);
-      }
     }
 
     @Override

@@ -200,6 +200,10 @@ public class CreateFromTemplatePanel {
     for (Pair<String, JTextField> pair : myAttributes) {
       result.setProperty(pair.first, pair.second.getText());
     }
+    String fileName = getFileName();
+    if (fileName != null) {
+      result.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
+    }
     return result;
   }
 

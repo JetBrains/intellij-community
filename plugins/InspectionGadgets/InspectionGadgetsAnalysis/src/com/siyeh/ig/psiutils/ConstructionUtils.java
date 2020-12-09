@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -15,7 +16,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class ConstructionUtils {
+public final class ConstructionUtils {
   private static final Set<String> GUAVA_UTILITY_CLASSES =
     ContainerUtil.set("com.google.common.collect.Maps", "com.google.common.collect.Lists", "com.google.common.collect.Sets");
   private static final CallMatcher ENUM_SET_NONE_OF =
@@ -110,12 +111,9 @@ public class ConstructionUtils {
       if (name == null || !name.startsWith("java.util.")) return false;
       for (PsiParameter parameter : ctor.getParameterList().getParameters()) {
         PsiType type = parameter.getType();
-        if (type instanceof PsiClassType) {
-          PsiClassType rawType = ((PsiClassType)type).rawType();
-          if(rawType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION) ||
-             rawType.equalsToText(CommonClassNames.JAVA_UTIL_MAP)) {
-            return true;
-          }
+        if (PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+            PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_UTIL_MAP)) {
+          return true;
         }
       }
     }
@@ -135,12 +133,9 @@ public class ConstructionUtils {
           if (type instanceof PsiEllipsisType) {
             return true;
           }
-          if (type instanceof PsiClassType) {
-            PsiClassType rawType = ((PsiClassType)type).rawType();
-            if(rawType.equalsToText(CommonClassNames.JAVA_LANG_ITERABLE) ||
-               rawType.equalsToText(CommonClassNames.JAVA_UTIL_ITERATOR)) {
-              return true;
-            }
+          if (PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_LANG_ITERABLE) ||
+              PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+            return true;
           }
         }
       }
@@ -184,7 +179,7 @@ public class ConstructionUtils {
           if (aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
             if (GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
-              return Stream.of(method.getParameterList().getParameters()).allMatch(p -> p.getType() instanceof PsiPrimitiveType);
+              return ContainerUtil.and(method.getParameterList().getParameters(), p -> p.getType() instanceof PsiPrimitiveType);
             }
           }
         }
@@ -245,7 +240,7 @@ public class ConstructionUtils {
     if (aClass == null) return false;
     String name = aClass.getQualifiedName();
     return name != null && name.startsWith("java.util.") &&
-           Stream.of(aClass.getConstructors()).anyMatch(ConstructionUtils::isCollectionConstructor);
+           ContainerUtil.or(aClass.getConstructors(), ConstructionUtils::isCollectionConstructor);
   }
 
   @Contract("null -> false")

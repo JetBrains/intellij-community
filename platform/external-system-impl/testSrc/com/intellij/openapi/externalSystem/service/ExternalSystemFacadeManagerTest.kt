@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -49,7 +49,7 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
   fun `test remote resolve project info`() {
     ExtensionTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, listOf(SimpleTestExternalSystemManager(project)), testRootDisposable)
 
-    val facadeManager: ExternalSystemFacadeManager = ServiceManager.getService(ExternalSystemFacadeManager::class.java)
+    val facadeManager: ExternalSystemFacadeManager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager::class.java)
     TestCase.assertNotNull(facadeManager)
     val facade = facadeManager.getFacade(project, "fake/path", TEST_EXTERNAL_SYSTEM_ID)
     try {
@@ -83,7 +83,7 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
                                     listOf(testExternalSystemManager, fakeExternalSystemManager),
                                     testRootDisposable)
 
-    val facadeManager: ExternalSystemFacadeManager = ServiceManager.getService(ExternalSystemFacadeManager::class.java)
+    val facadeManager: ExternalSystemFacadeManager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager::class.java)
     TestCase.assertNotNull(facadeManager)
     val facade = facadeManager.getFacade(project, "fake/path", TEST_EXTERNAL_SYSTEM_ID)
     try {

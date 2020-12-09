@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -138,10 +140,27 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void click() {
-    performAction(new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false));
+    performAction(makeClickMouseEvent());
+  }
+
+  /**
+   * @param checkIsShowing If true, prevent action to be performed if the button is not showed.
+   */
+  @TestOnly
+  public void click(boolean checkIsShowing) {
+    performAction(makeClickMouseEvent(), checkIsShowing);
+  }
+
+  @NotNull
+  private MouseEvent makeClickMouseEvent() {
+    return new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
   }
 
   private void performAction(MouseEvent e) {
+    performAction(e, true);
+  }
+
+  private void performAction(MouseEvent e, boolean checkIsShowing) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
       return;
@@ -152,7 +171,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       final DataContext dataContext = event.getDataContext();
       manager.fireBeforeActionPerformed(myAction, dataContext, event);
       Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      if (component != null && !component.isShowing()) {
+      if (component != null && checkIsShowing && !component.isShowing()) {
         return;
       }
       actionPerformed(event);
@@ -193,12 +212,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected void showGroupInPopup(AnActionEvent e, ActionGroup actionGroup) {
-    ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false,
+    PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false,
                                                             false, true, false,
                                                             null, -1, null,
                                                             ActionPlaces.getActionGroupPopupPlace(e.getPlace()),
                                                             createPresentationFactory(), false);
 
+    popup.setShowSubmenuOnHover(true);
     popup.showUnderneathOf(e.getInputEvent().getComponent());
   }
 
@@ -223,7 +243,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private MenuItemPresentationFactory createPresentationFactory() {
     return new MenuItemPresentationFactory() {
       @Override
-      protected void processPresentation(Presentation presentation) {
+      protected void processPresentation(@NotNull Presentation presentation) {
         super.processPresentation(presentation);
         if (myNoIconsInPopup) {
           presentation.setIcon(null);
@@ -272,7 +292,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @Override
-  public void setToolTipText(String toolTipText) {
+  public void setToolTipText(@NlsContexts.Tooltip String toolTipText) {
     if (!Registry.is("ide.helptooltip.enabled")) {
       while (StringUtil.endsWithChar(toolTipText, '.')) {
         toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
@@ -506,7 +526,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @Override
-  public AnAction getAction() {
+  public @NotNull AnAction getAction() {
     return myAction;
   }
 

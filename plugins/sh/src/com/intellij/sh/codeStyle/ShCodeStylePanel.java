@@ -50,6 +50,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
   private JCheckBox myRedirectFollowedBySpace;
   private JCheckBox myKeepColumnAlignmentPadding;
   private JCheckBox myMinifyProgram;
+  private JCheckBox myUnixLineSeparator;
 
   @SuppressWarnings("unused")
   private ActionLink myShfmtDownloadLink;
@@ -76,6 +77,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myRedirectFollowedBySpace.setText(ShBundle.message("sh.code.style.redirect.operators.will.be.followed.by.a.space"));
     myKeepColumnAlignmentPadding.setText(ShBundle.message("sh.code.style.keep.column.alignment.padding"));
     myMinifyProgram.setText(ShBundle.message("sh.code.style.minify.program.to.reduce.its.size"));
+    myUnixLineSeparator.setText(ShBundle.message("sh.code.style.unix.line.separator"));
 
     addPanelToWatch(myPanel);
   }
@@ -130,6 +132,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     shSettings.REDIRECT_FOLLOWED_BY_SPACE = myRedirectFollowedBySpace.isSelected();
     shSettings.KEEP_COLUMN_ALIGNMENT_PADDING = myKeepColumnAlignmentPadding.isSelected();
     shSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
+    shSettings.USE_UNIX_LINE_SEPARATOR = myUnixLineSeparator.isSelected();
     ShSettings.setShfmtPath(myShfmtPathSelector.getText());
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
     myErrorLabel.setVisible(false);
@@ -145,6 +148,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
         || isFieldModified(myRedirectFollowedBySpace, shSettings.REDIRECT_FOLLOWED_BY_SPACE)
         || isFieldModified(myKeepColumnAlignmentPadding, shSettings.KEEP_COLUMN_ALIGNMENT_PADDING)
         || isFieldModified(myMinifyProgram, shSettings.MINIFY_PROGRAM)
+        || isFieldModified(myUnixLineSeparator, shSettings.USE_UNIX_LINE_SEPARATOR)
         || isFieldModified(myTabCharacter, indentOptions.USE_TAB_CHARACTER)
         || isFieldModified(myIndentField, indentOptions.INDENT_SIZE)
         || isFieldModified(myTabField, indentOptions.TAB_SIZE)
@@ -170,6 +174,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myRedirectFollowedBySpace.setSelected(shSettings.REDIRECT_FOLLOWED_BY_SPACE);
     myKeepColumnAlignmentPadding.setSelected(shSettings.KEEP_COLUMN_ALIGNMENT_PADDING);
     myMinifyProgram.setSelected(shSettings.MINIFY_PROGRAM);
+    myUnixLineSeparator.setSelected(shSettings.USE_UNIX_LINE_SEPARATOR);
     myShfmtPathSelector.setText(ShSettings.getShfmtPath());
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(ShSettings.getShfmtPath()));
     myErrorLabel.setVisible(false);

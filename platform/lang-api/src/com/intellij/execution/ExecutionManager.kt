@@ -19,7 +19,8 @@ import org.jetbrains.concurrency.resolvedPromise
 abstract class ExecutionManager {
   companion object {
     @JvmField
-    val EXECUTION_TOPIC = Topic.create("configuration executed", ExecutionListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+    @Topic.ProjectLevel
+    val EXECUTION_TOPIC = Topic("configuration executed", ExecutionListener::class.java, Topic.BroadcastDirection.TO_PARENT)
 
     @JvmStatic
     fun getInstance(project: Project): ExecutionManager {
@@ -62,6 +63,16 @@ abstract class ExecutionManager {
   fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, executor: ThrowableConvertor<RunProfileState, RunContentDescriptor?, ExecutionException>) {
     startRunProfile(environment) {
       resolvedPromise(executor.convert(state))
+    }
+  }
+
+  @ApiStatus.Internal
+  @Throws(ExecutionException::class)
+  fun startRunProfileWithPromise(environment: ExecutionEnvironment,
+                                 state: RunProfileState,
+                                 executor: ThrowableConvertor<RunProfileState, Promise<RunContentDescriptor?>, ExecutionException>) {
+    startRunProfile(environment) {
+      executor.convert(state)
     }
   }
 

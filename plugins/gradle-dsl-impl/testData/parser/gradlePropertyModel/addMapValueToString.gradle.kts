@@ -1,0 +1,1 @@
+val prop1 by extra("hello")

@@ -14,10 +14,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,16 +194,7 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
     providers.addAll(CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
     providers.addAll(LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
 
-    providers.sort((p1, p2) -> {
-      if (!p1.getPriority().equals(p2.getPriority())) {
-        return p1.getPriority().compareTo(p2.getPriority());
-      }
-      String name1 = p1.getConfigurableDisplayName();
-      if (name1 == null) name1 = "";
-      String name2 = p2.getConfigurableDisplayName();
-      if (name2 == null) name2 = "";
-      return name1.compareToIgnoreCase(name2);
-    });
+    providers.sort((p1, p2) -> DisplayPrioritySortable.compare(p1, p2, p->p.getConfigurableDisplayName()));
 
     for (final CodeStyleSettingsProvider provider : providers) {
       if (provider.getGroup() != null) {

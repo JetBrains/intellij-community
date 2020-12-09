@@ -17,6 +17,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,14 +26,13 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
 
-public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep implements LinkListener<String> {
-  private static final String MAIN = "main";
-  private static final String CUSTOMIZE = "customize";
+public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep {
+  private static final @NonNls String MAIN = "main";
+  private static final @NonNls String CUSTOMIZE = "customize";
   private static final int COLS = 3;
   private static final TextProvider CUSTOMIZE_TEXT_PROVIDER = new TextProvider() {
     @Override
@@ -39,8 +40,8 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
       return IdeBundle.message("link.label.wizard.step.plugin.customize");
     }
   };
-  private static final String SWITCH_COMMAND = "Switch";
-  private static final String CUSTOMIZE_COMMAND = "Customize";
+  private static final @NonNls String SWITCH_COMMAND = "Switch";
+  private static final @NonNls String CUSTOMIZE_COMMAND = "Customize";
   private final JBCardLayout myCardLayout;
   private final IdSetPanel myCustomizePanel;
   private final PluginGroups myPluginGroups;
@@ -111,9 +112,9 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
       JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, SMALL_GAP, SMALL_GAP / 2));
       buttonsPanel.setOpaque(false);
       if (pluginGroups.getSets(groupId).size() != 1) {
-        buttonsPanel.add(createLink(CUSTOMIZE_COMMAND + ":" + groupId, CUSTOMIZE_TEXT_PROVIDER));
+        buttonsPanel.add(createLink(new LinkDescription(CUSTOMIZE_COMMAND, g), CUSTOMIZE_TEXT_PROVIDER));
       }
-      buttonsPanel.add(createLink(SWITCH_COMMAND + ":" + groupId, getGroupSwitchTextProvider(groupId)));
+      buttonsPanel.add(createLink(new LinkDescription(SWITCH_COMMAND, g), getGroupSwitchTextProvider(groupId)));
       groupPanel.add(buttonsPanel, gbc);
       gridPanel.add(groupPanel);
     }
@@ -142,34 +143,6 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
     return scrollPane;
   }
 
-  @Override
-  public void linkSelected(LinkLabel<String> linkLabel, String command) {
-    if (command == null || !command.contains(":")) return;
-    int semicolonPosition = command.indexOf(":");
-    String group = command.substring(semicolonPosition + 1);
-    command = command.substring(0, semicolonPosition);
-
-    if (SWITCH_COMMAND.equals(command)) {
-      boolean enabled = isGroupEnabled(group);
-      CustomizeIDEWizardInteractions.INSTANCE.record(enabled ? CustomizeIDEWizardInteractionType.BundledPluginGroupDisabled : CustomizeIDEWizardInteractionType.BundledPluginGroupEnabled,
-                                                     null, group);
-      List<IdSet> sets = myPluginGroups.getSets(group);
-      for (IdSet idSet : sets) {
-        for (PluginId id : idSet.getIds()) {
-          myPluginGroups.setPluginEnabledWithDependencies(id, !enabled);
-        }
-      }
-      repaint();
-      return;
-    }
-    if (CUSTOMIZE_COMMAND.equals(command)) {
-      CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.BundledPluginGroupCustomized, null, group);
-      myCustomizePanel.update(group);
-      myCardLayout.show(this, CUSTOMIZE);
-      setButtonsVisible(false);
-    }
-  }
-
   private void setButtonsVisible(boolean visible) {
     DialogWrapper window = DialogWrapper.findInstance(this);
     if (window instanceof CustomizeIDEWizardDialog) {
@@ -178,8 +151,36 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   }
 
   @NotNull
-  private LinkLabel<String> createLink(String command, final TextProvider provider) {
-    return new LinkLabel<String>("", null, this, command) {
+  private LinkLabel<LinkDescription> createLink(LinkDescription command, final TextProvider provider) {
+    LinkListener<LinkDescription> listener = new LinkListener<>() {
+      @Override
+      public void linkSelected(LinkLabel<LinkDescription> aSource, @NonNls LinkDescription description) {
+        String groupId = description.groupId;
+        if (SWITCH_COMMAND.equals(description.command)) {
+          boolean enabled = isGroupEnabled(description.groupId);
+          CustomizeIDEWizardInteractions.INSTANCE.record(enabled
+                                                         ? CustomizeIDEWizardInteractionType.BundledPluginGroupDisabled
+                                                         : CustomizeIDEWizardInteractionType.BundledPluginGroupEnabled,
+                                                         null, groupId);
+          List<IdSet> sets = myPluginGroups.getSets(groupId);
+          for (IdSet idSet : sets) {
+            for (PluginId id : idSet.getIds()) {
+              myPluginGroups.setPluginEnabledWithDependencies(id, !enabled);
+            }
+          }
+          repaint();
+          return;
+        }
+        if (CUSTOMIZE_COMMAND.equals(description.command)) {
+          CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.BundledPluginGroupCustomized, null, groupId);
+          myCustomizePanel.update(description.groupId, description.groupName);
+          myCardLayout.show(CustomizePluginsStepPanel.this, CUSTOMIZE);
+          setButtonsVisible(false);
+        }
+      }
+    };
+
+    return new LinkLabel<>("", null, listener, command) {
       @Override
       public String getText() {
         return provider.getText();
@@ -224,11 +225,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
 
   @Override
   public boolean beforeOkAction() {
-    try {
-      DisabledPluginsState.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
-    }
-    catch (IOException ignored) {
-    }
+    DisabledPluginsState.trySaveDisabledPlugins(myPluginGroups.getDisabledPluginIds());
     return true;
   }
 
@@ -272,12 +269,12 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
       CustomizePluginsStepPanel.this.repaint();
     }
 
-    void update(String group) {
-      myGroup = group;
-      HtmlBuilder titleHtml = new HtmlBuilder().append(body().child(tag("h2").attr("style", "text-align:left;").addText(group)));
+    void update(@NonNls String groupId, @Nls String groupName) {
+      myGroup = groupId;
+      Element titleHtml = text(groupName).bold().wrapWith(html());
       myTitleLabel.setText(titleHtml.toString());
       myContentPanel.removeAll();
-      List<IdSet> idSets = myPluginGroups.getSets(group);
+      List<IdSet> idSets = myPluginGroups.getSets(groupId);
       for (final IdSet set : idSets) {
         final JCheckBox checkBox = new JCheckBox(set.getTitle(), myPluginGroups.isIdSetAllEnabled(set));
         checkBox.setModel(new JToggleButton.ToggleButtonModel() {
@@ -295,6 +292,18 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
         });
         myContentPanel.add(checkBox);
       }
+    }
+  }
+
+  private static class LinkDescription {
+    final @NonNls @NotNull String command;
+    final @NonNls @NotNull String groupId;
+    final @Nls @NotNull String groupName;
+
+    private LinkDescription(@NonNls @NotNull String command, @NotNull PluginGroups.Group group) {
+      this.command = command;
+      groupId = group.getId();
+      groupName = group.getName();
     }
   }
 

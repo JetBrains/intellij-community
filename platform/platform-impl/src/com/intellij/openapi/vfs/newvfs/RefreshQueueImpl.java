@@ -15,9 +15,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(IdeBundle.message("file.synchronize.progress"));
   private int myBusyThreads;
-  private final Long2ObjectOpenHashMap<RefreshSessionImpl> mySessions = new Long2ObjectOpenHashMap<>();
+  private final Long2ObjectMap<RefreshSessionImpl> mySessions = new Long2ObjectOpenHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
 
   public void execute(@NotNull RefreshSessionImpl session) {
@@ -166,12 +168,15 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @Override
-  public void processSingleEvent(@NotNull VFileEvent event) {
-    new RefreshSessionImpl(Collections.singletonList(event)).launch();
+  public void processSingleEvent(boolean async, @NotNull VFileEvent event) {
+    new RefreshSessionImpl(async, Collections.singletonList(event)).launch();
   }
 
   public static boolean isRefreshInProgress() {
     RefreshQueueImpl refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
+    if (!((BoundedTaskExecutor)refreshQueue.myQueue).isEmpty()) {
+      return true;
+    }
     synchronized (refreshQueue.mySessions) {
       return !refreshQueue.mySessions.isEmpty();
     }

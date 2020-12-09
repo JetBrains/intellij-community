@@ -36,75 +36,58 @@ private class SyncAction(private val syncType: SyncType,
                          private val project: Project?,
                          private val dialogManager: DialogManager) : AbstractAction(
   icsMessage(syncType.messageKey)) {
-  private fun saveRemoteRepositoryUrl(): ValidationInfo? {
-    val url = urlTextField.text.nullize(true)
-    validateUrl(url, project)?.let {
-      return createError(it)
-    }
-
-    val repositoryManager = icsManager.repositoryManager
-    repositoryManager.createRepositoryIfNeeded()
-    repositoryManager.setUpstream(url, null)
-    return null
-  }
-
-  private fun createError(@NlsContexts.DialogMessage message: String) = ValidationInfo(message, urlTextField)
 
   override fun actionPerformed(event: ActionEvent) {
     dialogManager.performAction {
       runBlocking {
-        doSync()
-      }
+        val url = urlTextField.text.nullize(true)
+        validateUrl(url, project)
+        ?: doSync(icsManager, project, syncType, url!!)
+      }?.let { listOf(ValidationInfo(it, urlTextField)) }
+    }
+  }
+}
+
+suspend fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType, url: String): String? {
+  IcsActionsLogger.logSettingsSync(project, syncType)
+  val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
+  var upstreamSet = false
+  try {
+    val repositoryManager = icsManager.repositoryManager
+    repositoryManager.createRepositoryIfNeeded()
+    repositoryManager.setUpstream(url, null)
+    icsManager.isRepositoryActive = repositoryManager.isRepositoryExists()
+
+    upstreamSet = true
+
+    if (isRepositoryWillBeCreated) {
+      icsManager.setApplicationLevelStreamProvider()
+    }
+
+    if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
+      ApplicationManager.getApplication().saveSettings()
+      icsManager.sync(syncType, project) { copyLocalConfig() }
+    }
+    else {
+      icsManager.sync(syncType, project, null)
+    }
+  }
+  catch (e: Throwable) {
+    if (isRepositoryWillBeCreated) {
+      // remove created repository
+      icsManager.repositoryManager.deleteRepository()
+    }
+
+    LOG.warn(e)
+
+    if (!upstreamSet || e is NoRemoteRepositoryException) {
+      return e.message?.let { icsMessage("set.upstream.failed.message", it) } ?: icsMessage("set.upstream.failed.message.without.details")
+    }
+    else {
+      return e.message ?: IcsBundle.message("sync.internal.error")
     }
   }
 
-  private suspend fun doSync(): List<ValidationInfo>? {
-    val icsManager = icsManager
-    IcsActionsLogger.logSettingsSync(project, syncType)
-    val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
-    var upstreamSet = false
-    try {
-      saveRemoteRepositoryUrl()?.let {
-        if (isRepositoryWillBeCreated) {
-          // remove created repository
-          icsManager.repositoryManager.deleteRepository()
-        }
-        return listOf(it)
-      }
-
-      upstreamSet = true
-
-      if (isRepositoryWillBeCreated) {
-        icsManager.setApplicationLevelStreamProvider()
-      }
-
-      if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
-        ApplicationManager.getApplication().saveSettings()
-        icsManager.sync(syncType, project) { copyLocalConfig() }
-      }
-      else {
-        icsManager.sync(syncType, project, null)
-      }
-    }
-    catch (e: Throwable) {
-      if (isRepositoryWillBeCreated) {
-        // remove created repository
-        icsManager.repositoryManager.deleteRepository()
-      }
-
-      LOG.warn(e)
-
-      if (!upstreamSet || e is NoRemoteRepositoryException) {
-        val message = e.message?.let { icsMessage("set.upstream.failed.message", it) } ?:
-                      icsMessage("set.upstream.failed.message.without.details")
-        return listOf(createError(message))
-      }
-      else {
-        return listOf(createError(e.message ?: IcsBundle.message("sync.internal.error")))
-      }
-    }
-
-    NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
-    return emptyList()
-  }
+  NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
+  return null
 }

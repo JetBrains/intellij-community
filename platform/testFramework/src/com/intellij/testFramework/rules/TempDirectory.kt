@@ -6,7 +6,9 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.io.zipFile
@@ -40,7 +42,7 @@ class TempDirectory : ExternalResource() {
   val rootPath: Path
     get() = root.toPath()
 
-  private val virtualFileRoot: VirtualFile
+  val virtualFileRoot: VirtualFile
     get() {
       if (myVirtualFileRoot == null) {
         myVirtualFileRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root)
@@ -51,7 +53,7 @@ class TempDirectory : ExternalResource() {
     }
 
   override fun apply(base: Statement, description: Description): Statement {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName, false), true)
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName.take(30), true), true)
     return super.apply(base, description)
   }
 
@@ -62,17 +64,12 @@ class TempDirectory : ExternalResource() {
     myVirtualFileRoot = null
     myRoot = null
     myName = null
+    JarFileSystemImpl.cleanupForNextTest()
 
-    try {
-      if (vfsDir != null) {
-        VfsTestUtil.deleteFile(vfsDir)
-      }
-    }
-    finally {
-      if (path != null) {
-        FileUtil.delete(path)
-      }
-    }
+    RunAll(
+      { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
+      { if (path != null) FileUtil.delete(path) }
+    ).run()
   }
 
   /**

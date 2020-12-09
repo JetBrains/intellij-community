@@ -72,7 +72,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
       final LibraryTable.ModifiableModel tableModifiableModel = getTableModifiableModel();
       if (tableModifiableModel != null && !(tableModifiableModel instanceof ModuleLibraryTableBase)) {
         if (newName == null) {
-          Messages.showErrorDialog(JavaUiBundle.message("library.name.not.specified.error", newName), JavaUiBundle.message("library.name.not.specified.title"));
+          Messages.showErrorDialog(JavaUiBundle.message("library.name.not.specified.error"), JavaUiBundle.message("library.name.not.specified.title"));
           return false;
         }
         if (LibraryEditingUtil.libraryAlreadyExists(tableModifiableModel, newName)) {

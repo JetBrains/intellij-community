@@ -66,7 +66,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
     if (descriptions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(targetFile)) return;
 
-    final AbstractPerformFixesTask fixesTask = CleanupInspectionUtil.getInstance().applyFixes(project, "Apply Fixes", descriptions, myQuickfix.getClass(), myQuickfix.startInWriteAction());
+    final AbstractPerformFixesTask fixesTask = CleanupInspectionUtil.getInstance().applyFixes(project, LangBundle.message("apply.fixes"), descriptions, myQuickfix.getClass(), myQuickfix.startInWriteAction());
 
     if (!fixesTask.isApplicableFixFound()) {
       HintManager.getInstance().showErrorHint(editor,

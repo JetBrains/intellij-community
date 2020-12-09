@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -14,7 +13,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import org.jetbrains.annotations.NotNull;
@@ -56,42 +54,38 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll()
-      .append(() -> {
+    new RunAll(
+      () -> {
         if (myCodeStyleSettingsTracker != null) {
           myCodeStyleSettingsTracker.checkForSettingsDamage();
         }
-      })
-      .append(() -> {
-        StartMarkAction.checkCleared(project);
-        InplaceRefactoring.checkCleared();
-      })
-      .append(() -> {
+      },
+      () -> {
         if (project != null) {
           TestApplicationManagerKt.waitForProjectLeakingThreads(project);
         }
-      })
-      .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
-      .append(() -> {
+      },
+      () -> super.tearDown(), // call all disposables' dispose() while the project is still open
+      () -> {
         myProject = null;
         myModule = null;
         if (project != null) {
           TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
-      })
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
-      .append(() -> {
+      },
+      () -> LightPlatformTestCase.checkEditorsReleased(),
+      () -> {
         SdkLeakTracker oldSdks = myOldSdks;
         if (oldSdks != null) {
           oldSdks.checkForJdkTableLeaks();
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         Application app = ApplicationManager.getApplication();
         if (app != null) {
           ManagingFS managingFS = app.getServiceIfCreated(ManagingFS.class);
@@ -99,9 +93,9 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
             ((PersistentFS)managingFS).clearIdCache();
           }
         }
-      })
-      .append(() -> HeavyPlatformTestCase.cleanupApplicationCaches(project))
-      .run();
+      },
+      () -> HeavyPlatformTestCase.cleanupApplicationCaches(project)
+    ).run();
   }
 
   @Override

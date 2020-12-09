@@ -319,7 +319,7 @@ internal class FilteringBranchesTree(project: Project,
     }
     searchModel.updateStructure()
     if (initial) {
-      treeState.applyStateToTreeOrExpandAll()
+      treeState.applyStateToTreeOrTryToExpandAll()
     }
     else {
       treeState.applyStateToTree()
@@ -386,6 +386,7 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
 }
 
 @State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
+@Service(Service.Level.PROJECT)
 internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
   private lateinit var branchesTree: FilteringBranchesTree
   private lateinit var treeState: TreeState
@@ -419,7 +420,16 @@ internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
     }
   }
 
-  fun applyStateToTreeOrExpandAll() = applyStateToTree { TreeUtil.expandAll(branchesTree.tree) }
+  fun applyStateToTreeOrTryToExpandAll() = applyStateToTree {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    val tree = branchesTree.tree
+    if (TreeUtil.hasManyNodes(tree, 30000)) {
+      TreeUtil.collapseAll(tree, 1)
+    }
+    else {
+      TreeUtil.expandAll(tree)
+    }
+  }
 
   fun setTree(tree: FilteringBranchesTree) {
     branchesTree = tree

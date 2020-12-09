@@ -23,10 +23,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -566,6 +563,16 @@ public final class AnnotationsHighlightUtil {
     return null;
   }
 
+  static HighlightInfo checkInvalidAnnotationOnRecordComponent(@NotNull PsiAnnotation annotation) {
+    if (!Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_SAFE_VARARGS)) return null;
+    PsiAnnotationOwner owner = annotation.getOwner();
+    if (!(owner instanceof PsiModifierList)) return null;
+    PsiElement parent = ((PsiModifierList)owner).getParent();
+    if (!(parent instanceof PsiRecordComponent)) return null;
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation)
+      .descriptionAndTooltip(JavaErrorBundle.message("safevararg.annotation.cannot.be.applied.for.record.component")).create();
+  }
+
   static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       final PsiAnnotationOwner owner = annotation.getOwner();
@@ -767,8 +774,7 @@ public final class AnnotationsHighlightUtil {
     @Override
     public Boolean visitClassType(@NotNull PsiClassType classType) {
       if (classType.getParameters().length > 0) {
-        PsiClassType rawType = classType.rawType();
-        return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);
+        return PsiTypesUtil.classNameEquals(classType, CommonClassNames.JAVA_LANG_CLASS);
       }
 
       PsiClass aClass = classType.resolve();

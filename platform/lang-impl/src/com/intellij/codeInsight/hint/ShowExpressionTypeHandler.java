@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.lang.Language;
@@ -167,7 +168,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     void showHint(@HintText String informationHint) {
       JComponent label = HintUtil.createInformationLabel(informationHint);
       setInstance(this);
-      AccessibleContextUtil.setName(label, "Expression type hint");
+      AccessibleContextUtil.setName(label, CodeInsightBundle.message("accessible.name.expression.type.hint"));
       HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
       LightweightHint hint = new LightweightHint(label);
       hint.addHintListener(e -> ApplicationManager.getApplication().invokeLater(() -> setInstance(null)));

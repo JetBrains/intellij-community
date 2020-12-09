@@ -11,10 +11,13 @@ import java.util.Map;
 public class EventLogExternalSendSettings {
   private final Map<String, String> myEndpoints;
   private final Map<EventLogBuildType, EventLogSendConfiguration> myConfigurations;
+  private final Map<String, String> myOptions;
 
   public EventLogExternalSendSettings(@NotNull Map<String, String> endpoints,
+                                      @NotNull Map<String, String> options,
                                       @NotNull Map<EventLogBuildType, EventLogSendConfiguration> configurations) {
     myEndpoints = endpoints;
+    myOptions = options;
     myConfigurations = configurations;
   }
 
@@ -30,5 +33,10 @@ public class EventLogExternalSendSettings {
   @Nullable
   public String getEndpoint(@NotNull String name) {
     return myEndpoints.get(name);
+  }
+
+  @Nullable
+  public String getOption(@NotNull String name) {
+    return myOptions.get(name);
   }
 }

@@ -3,18 +3,20 @@ package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.AppUIExecutor;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "HierarchyBrowserManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class HierarchyBrowserManager implements PersistentStateComponent<HierarchyBrowserManager.State> {
-  public static class State {
+  public static final class State {
     public boolean IS_AUTOSCROLL_TO_SOURCE;
     public boolean SORT_ALPHABETICALLY;
     public boolean HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED;
@@ -23,15 +25,17 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
   }
 
   private State myState = new State();
-  private final ContentManager myContentManager;
+  private ContentManager myContentManager;
 
-  public HierarchyBrowserManager(final Project project) {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT, project, true);
+  public HierarchyBrowserManager(@NotNull Project project) {
+    AppUIExecutor.onUiThread().expireWith(project).submit(() -> {
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(
+        RegisterToolWindowTask.closable(ToolWindowId.HIERARCHY, UIBundle.messagePointer("tool.window.name.hierarchy"),
+                                        AllIcons.Toolwindows.ToolWindowHierarchy, ToolWindowAnchor.RIGHT));
 
-    myContentManager = toolWindow.getContentManager();
-    toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowHierarchy);
-    ContentManagerWatcher.watchContentManager(toolWindow, myContentManager);
+      myContentManager = toolWindow.getContentManager();
+      ContentManagerWatcher.watchContentManager(toolWindow, myContentManager);
+    });
   }
 
   public final ContentManager getContentManager() {
@@ -49,7 +53,7 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
   }
 
   public static HierarchyBrowserManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, HierarchyBrowserManager.class);
+    return project.getService(HierarchyBrowserManager.class);
   }
 
   public static State getSettings(@NotNull Project project) {

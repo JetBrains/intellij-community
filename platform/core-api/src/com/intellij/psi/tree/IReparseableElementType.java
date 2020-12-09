@@ -1,13 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +36,14 @@ public class IReparseableElementType extends ILazyParseableElementType implement
    * Checks if the specified character sequence can be parsed as a valid content of the
    * chameleon node.
    *
-   * @param buffer  the content to parse.
+   * @param buffer       the content to parse.
    * @param fileLanguage language of the file
-   * @param project the project containing the content.
+   * @param project      the project containing the content.
    * @return true if the content is valid, false if not
+   * @deprecated use {@link #isReparseable(ASTNode, CharSequence, Language, Project)} instead
    */
-
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated
   public boolean isParsable(@NotNull CharSequence buffer,
                             @NotNull Language fileLanguage,
                             @NotNull Project project) {

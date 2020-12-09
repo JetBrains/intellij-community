@@ -116,9 +116,9 @@ public final class TabInfo implements Queryable, PlaceProvider {
   private SimpleTextAttributes getDefaultAttributes() {
     SimpleTextAttributes attributes = myDefaultAttributes;
     if (attributes == null) {
-      myDefaultAttributes = attributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
-                                                     myDefaultForeground, myDefaultWaveColor);
-
+      int style = myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN;
+      style =  myDefaultWaveColor == null ? style : style | SimpleTextAttributes.STYLE_WAVED;
+      myDefaultAttributes = attributes = new SimpleTextAttributes(style, myDefaultForeground, myDefaultWaveColor);
     }
     return attributes;
   }

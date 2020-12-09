@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.Patches.JDK_BUG_ID_8147994;
 import static java.awt.event.MouseEvent.*;
 
 /**
@@ -363,7 +362,7 @@ public final class IdeMouseEventDispatcher {
   private static boolean isHorizontalScrolling(Component c, MouseEvent e) {
     if ( c != null
          && e instanceof MouseWheelEvent
-         && (JDK_BUG_ID_8147994 || isDiagramViewComponent(c.getParent()))) {
+         && isDiagramViewComponent(c.getParent())) {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL

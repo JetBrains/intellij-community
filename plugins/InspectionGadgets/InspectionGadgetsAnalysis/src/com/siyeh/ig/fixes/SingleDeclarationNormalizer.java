@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -23,7 +23,7 @@ import java.util.Set;
  *
  * Note that the normalizer is tested only with chain of local variables and fields.
  */
-class SingleDeclarationNormalizer {
+final class SingleDeclarationNormalizer {
   private final List<PsiVariable> myVariables;
 
   SingleDeclarationNormalizer(@NotNull List<PsiVariable> variables) {
@@ -84,7 +84,7 @@ class SingleDeclarationNormalizer {
 
   @NotNull
   private static Map<Integer, Set<String>> getFieldAnnotations(@NotNull PsiElement startElement) {
-    Map<Integer, Set<String>> result = new SmartHashMap<>();
+    Int2ObjectOpenHashMap<Set<String>> result = new Int2ObjectOpenHashMap<>();
     int dimensionCounter = 0;
     PsiElement nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(startElement);
     while (nextSibling != null) {

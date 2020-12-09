@@ -25,7 +25,7 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
 
   @Override
   protected void setUpProject() {
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(getTestDataPath()));
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(getTestDataPath()), getTestRootDisposable());
   }
 
   public void testSimple() {

@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.javaFX.refactoring.migration;
 
 import com.intellij.refactoring.migration.PredefinedMigrationProvider;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import java.net.URL;
 
@@ -14,5 +16,10 @@ public class JavaFx9Migration implements PredefinedMigrationProvider {
   @Override
   public URL getMigrationMap() {
     return JavaFx9Migration.class.getResource("JavaFx8__9.xml");
+  }
+
+  @Override
+  public @Nls String getDescription() {
+    return JavaFXBundle.message("javafx.migration.description");
   }
 }

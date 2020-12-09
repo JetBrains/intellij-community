@@ -19,6 +19,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.containers.map2Array
+import org.jetbrains.annotations.Contract
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 import org.jetbrains.uast.util.emptyClassSet
@@ -115,6 +116,7 @@ fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementW
  * to the given UAST element type.
  */
 @Suppress("UNCHECKED_CAST")
+@Contract("null, _ -> null")
 fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { UastFacade.convertElementWithParent(this, cls) as T? }
 
 @Suppress("UNCHECKED_CAST")
@@ -143,12 +145,23 @@ fun <T : UElement> PsiFile.findUElementAt(offset: Int, cls: Class<out T>): T? {
  */
 @JvmOverloads
 fun <T : UElement> PsiElement?.getUastParentOfType(cls: Class<out T>, strict: Boolean = false): T? = this?.run {
-  val startingElement = if (strict) this.parent else this
-  val parentSequence = generateSequence(startingElement, PsiElement::getParent)
-  val firstUElement = parentSequence.mapNotNull { it.toUElement() }.firstOrNull() ?: return null
+  val firstUElement = getFirstUElement(this, strict) ?: return null
 
   @Suppress("UNCHECKED_CAST")
   return firstUElement.withContainingElements.firstOrNull { cls.isInstance(it) } as T?
+}
+
+/**
+ * Finds an UAST element of any given type among the parents of the given PSI element.
+ */
+@JvmOverloads
+fun PsiElement?.getUastParentOfTypes(classes: Array<Class<out UElement>>, strict: Boolean = false): UElement? = this?.run {
+  val firstUElement = getFirstUElement(this, strict) ?: return null
+
+  @Suppress("UNCHECKED_CAST")
+  return firstUElement.withContainingElements.firstOrNull { uElement ->
+    classes.any { cls -> cls.isInstance(uElement) }
+  }
 }
 
 inline fun <reified T : UElement> PsiElement?.getUastParentOfType(strict: Boolean = false): T? = getUastParentOfType(T::class.java, strict)
@@ -173,3 +186,9 @@ fun getPossiblePsiSourceTypes(language: Language, vararg uastTypes: Class<out UE
  */
 inline fun <reified U : UElement> getPossiblePsiSourceTypesFor(language: Language): ClassSet<PsiElement> =
   UastLanguagePlugin.byLanguage(language)?.getPossiblePsiSourceTypes(U::class.java) ?: emptyClassSet()
+
+private fun getFirstUElement(psiElement: PsiElement, strict: Boolean = false): UElement? {
+  val startingElement = if (strict) psiElement.parent else psiElement
+  val parentSequence = generateSequence(startingElement, PsiElement::getParent)
+  return parentSequence.mapNotNull { it.toUElement() }.firstOrNull()
+}

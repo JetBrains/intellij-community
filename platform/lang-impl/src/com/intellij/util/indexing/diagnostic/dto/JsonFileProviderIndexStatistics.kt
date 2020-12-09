@@ -8,28 +8,9 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 data class JsonFileProviderIndexStatistics(
   val providerName: String,
   val totalNumberOfFiles: Int,
+  val totalNumberOfFilesFullyIndexedByExtensions: Int,
   val totalIndexingTime: JsonDuration,
-  val numberOfTooLargeForIndexingFiles: PositiveInt,
-  val tooLargeForIndexingFiles: List<JsonTooLargeForIndexingFile>?,
-  val statsPerFileType: List<JsonStatsPerFileType>,
-  val statsPerIndexer: List<JsonStatsPerIndexer>,
-  val fastIndexers: List<String /* Index ID */>,
+  val numberOfTooLargeForIndexingFiles: Int,
   // Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
   val indexedFiles: List<PortableFilePath>?
-) {
-
-  data class JsonStatsPerFileType(
-    val fileType: String,
-    val numberOfFiles: Int,
-    val totalFilesSize: JsonFileSize,
-    val partOfTotalIndexingTime: JsonPercentages,
-    val partOfTotalContentLoadingTime: JsonPercentages
-  )
-
-  data class JsonStatsPerIndexer(
-    val indexId: String,
-    val numberOfFiles: Int,
-    val numberOfFilesIndexedByExtensions: Int,
-    val partOfTotalIndexingTime: JsonPercentages
-  )
-}
+)

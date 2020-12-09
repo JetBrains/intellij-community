@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -45,7 +46,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
 
   private static final TokenSet VALID_TYPE_ANNOTATION_ELEMENTS = TokenSet.create(PyElementTypes.REFERENCE_EXPRESSION,
                                                                                  PyElementTypes.SUBSCRIPTION_EXPRESSION,
-                                                                                 PyElementTypes.TUPLE_EXPRESSION, 
+                                                                                 PyElementTypes.TUPLE_EXPRESSION,
                                                                                  // List of types is allowed only inside Callable[...]
                                                                                  PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                                  PyElementTypes.STRING_LITERAL_EXPRESSION,
@@ -64,10 +65,18 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
       return null;
     }
     final PyExpression value = target.findAssignedValue();
-    if (value == null || !looksLikeTypeHint(value, forStubCreation)) {
+
+    // Plain reference expressions are handled by PyTargetExpressionStub.getInitializer()
+    // when initializer type is ReferenceExpression. We don't want to override these stubs,
+    // so as not to break existing resolve functionality (see PyTargetExpression.getAssignedQName()).
+    if (value == null || forStubCreation && value instanceof PyReferenceExpression) {
       return null;
     }
-    return value;
+
+    if (isExplicitTypeAlias(target) || looksLikeTypeHint(value)) {
+      return value;
+    }
+    return null;
   }
 
   private static boolean looksLikeTypeAliasTarget(@NotNull PyTargetExpression target) {
@@ -86,7 +95,22 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
     return targets.length == 1 && targets[0] == target;
   }
 
-  private static boolean looksLikeTypeHint(@NotNull PyExpression expression, boolean forStubCreation) {
+  private static boolean isExplicitTypeAlias(@NotNull PyTargetExpression target) {
+    String typeHintText = "";
+    PyAnnotation annotation = target.getAnnotation();
+    if (annotation != null) {
+      PyExpression value = annotation.getValue();
+      if (value != null) {
+        typeHintText = value.getText();
+      }
+    }
+    else {
+      typeHintText = StringUtil.notNullize(target.getTypeCommentAnnotation());
+    }
+    return typeHintText.equals("TypeAlias") || typeHintText.endsWith(".TypeAlias");
+  }
+
+  private static boolean looksLikeTypeHint(@NotNull PyExpression expression) {
     final PyCallExpression call = as(expression, PyCallExpression.class);
     if (call != null) {
       final PyReferenceExpression callee = as(call.getCallee(), PyReferenceExpression.class);
@@ -102,13 +126,10 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
       return TYPE_ANNOTATION_LIKE.matcher(content).matches();
     }
 
-    // Plain reference expressions are handled by PyTargetExpressionStub.getInitializer() 
-    // when initializer type is ReferenceExpression. We don't want to override these stubs,
-    // so as not to break existing resolve functionality (see PyTargetExpression.getAssignedQName()).
-    if ((!forStubCreation && expression instanceof PyReferenceExpression) || expression instanceof PySubscriptionExpression) {
+    if (expression instanceof PyReferenceExpression || expression instanceof PySubscriptionExpression) {
       return isSyntacticallyValidAnnotation(expression);
     }
-    
+
     return false;
   }
 

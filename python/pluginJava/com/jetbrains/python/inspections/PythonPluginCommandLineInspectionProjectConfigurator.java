@@ -2,9 +2,9 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.facet.FacetManager;
 import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 public class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
@@ -80,7 +79,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
           ProjectJdkTable.getInstance().addJdk(sdk);
         });
 
-        PythonSdkUpdater.update(sdk, null, null, null);
+        PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, null);
       }
       else {
         logger.reportMessage(1, "ERROR: Can't find Python interpreter");

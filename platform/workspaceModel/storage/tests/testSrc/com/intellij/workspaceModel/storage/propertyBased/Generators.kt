@@ -21,7 +21,7 @@ internal class EntityIdGenerator(private val storage: WorkspaceEntityStorageBuil
     if (filtered.none()) return null
     val nonNullIds = filtered.toList()
     val id = t.generate(Generator.integers(0, nonNullIds.lastIndex))
-    return nonNullIds[id].createPid()
+    return nonNullIds[id].createEntityId()
   }
 
   companion object {
@@ -36,7 +36,7 @@ internal class EntityIdOfFamilyGenerator(private val storage: WorkspaceEntitySto
     val existingEntities = entityFamily.entities.filterNotNull()
     if (existingEntities.isEmpty()) return null
     val randomId = t.generate(Generator.integers(0, existingEntities.lastIndex))
-    return existingEntities[randomId].createPid()
+    return existingEntities[randomId].createEntityId()
   }
 
   companion object {

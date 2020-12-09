@@ -116,7 +116,7 @@ public class BasicsTest extends IntegrationTestCase {
 
   public void testIsUnderControl() {
     VirtualFile f1 = createChildData(myRoot, "file.txt");
-    VirtualFile f2 = createChildData(myRoot, "file.hprof");
+    VirtualFile f2 = createChildData(myRoot, "file." + FileListeningTest.IGNORED_EXTENSION);
 
     assertTrue(LocalHistory.getInstance().isUnderControl(f1));
     assertFalse(LocalHistory.getInstance().isUnderControl(f2));

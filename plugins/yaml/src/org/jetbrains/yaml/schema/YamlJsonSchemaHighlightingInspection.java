@@ -13,6 +13,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceChecker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 import javax.swing.*;
@@ -42,7 +43,8 @@ public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspecti
         if (!roots.contains(element)) return;
         final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, object);
         if (walker == null) return;
-        new JsonSchemaComplianceChecker(object, holder, walker, session, options, "Schema validation: ").annotate(element);
+        String prefix = YAMLBundle.message("inspections.schema.validation.prefix") + " ";
+        new JsonSchemaComplianceChecker(object, holder, walker, session, options,prefix).annotate(element);
       }
     };
   }

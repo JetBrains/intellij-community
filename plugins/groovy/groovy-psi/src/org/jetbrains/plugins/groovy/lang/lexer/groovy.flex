@@ -31,16 +31,13 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
   @Override
   protected int[] getDivisionStates() {
-    return new int[] {YYINITIAL, IN_INJECTION, IN_PARENS_BRACKETS, IN_BRACES};
+    return new int[] {YYINITIAL, IN_INJECTION};
   }
 %}
 
-// nls as whitespace
-%state IN_PARENS_BRACKETS
-// nls as nl but return to previous state instead of YYINITIAL
-%state IN_BRACES
-// nls as nl but return to previous IN_xxx_STRING state
+// return to previous IN_xxx_STRING state
 %state IN_INJECTION
+%state IN_INJECTION_BRACES
 
 %xstate DIVISION_EXPECTED
 
@@ -54,11 +51,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 %xstate IN_GSTRING_DOT
 %xstate IN_GSTRING_DOT_IDENT
 
-// Not to separate NewLine sequence by comments
-%xstate NLS_AFTER_COMMENT
 // Special hacks for IDEA formatter
 %xstate NLS_AFTER_LBRACE
-%xstate NLS_AFTER_NLS
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// NewLines and spaces /////////////////////////////////////////////////////////////////////////////////////////
@@ -117,6 +111,7 @@ mNUM_BIG_DECIMAL = {mNUM_DEC} (
 mLETTER = [:letter:] | "_"
 mIDENT = ({mLETTER}|\$) ({mLETTER} | {mDIGIT} | \$)*
 mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
+NOT_IDENT_PART=[^_[:letter:]0-9$]
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// String & regexprs ///////////////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +129,7 @@ mDOUBLE_QUOTED_LITERAL = \" {mDOUBLE_QUOTED_CONTENT}* \"
 mTRIPLE_DOUBLE_QUOTED_CONTENT = {mDOUBLE_QUOTED_CONTENT} | {mSTRING_NL} | \"(\")?[^\"\\$]
 mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 %%
-<YYINITIAL, IN_PARENS_BRACKETS, IN_BRACES, IN_INJECTION, IN_GSTRING_DOLLAR> {
+<YYINITIAL, IN_INJECTION, IN_GSTRING_DOLLAR> {
   "package"       { return storeToken(KW_PACKAGE); }
   "strictfp"      { return storeToken(KW_STRICTFP); }
   "import"        { return storeToken(KW_IMPORT); }
@@ -193,34 +188,11 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "final"         { return storeToken(KW_FINAL); }
 }
 
-<NLS_AFTER_COMMENT> {
-  {mSL_COMMENT}                             { return SL_COMMENT; }
-  {mML_COMMENT}                             { return ML_COMMENT; }
-  {mDOC_COMMENT}                            { return GROOVY_DOC_COMMENT; }
-
-  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
-
-  [^] {
-    yypushback(1);
-    yyendstate(NLS_AFTER_COMMENT);
-  }
-}
-
 <NLS_AFTER_LBRACE> {
   ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
   [^] {
     yypushback(1);
     yyendstate(NLS_AFTER_LBRACE);
-  }
-}
-
-<NLS_AFTER_NLS>{
-  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
-
-  [^] {
-    yypushback(1);
-    yyendstate(NLS_AFTER_NLS);
-    yybeginstate(NLS_AFTER_COMMENT);
   }
 }
 
@@ -345,57 +317,31 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Parentheses and braces ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-<YYINITIAL, IN_BRACES, IN_INJECTION> {
-  {mNLS} { yybeginstate(NLS_AFTER_NLS); return storeToken(NL); }
-}
-
-<IN_PARENS_BRACKETS> {
-  {mNLS} { yybeginstate(NLS_AFTER_NLS); return TokenType.WHITE_SPACE; }
-}
-
-<YYINITIAL, IN_PARENS_BRACKETS, IN_BRACES, IN_INJECTION> {
-  "("    { yybeginstate(IN_PARENS_BRACKETS); return storeToken(T_LPAREN); }
-  "["    { yybeginstate(IN_PARENS_BRACKETS); return storeToken(T_LBRACK); }
-}
-
-<IN_PARENS_BRACKETS, IN_BRACES, IN_INJECTION> {
-  "{"    { yybeginstate(IN_BRACES, NLS_AFTER_LBRACE); return storeToken(T_LBRACE); }
-}
-<YYINITIAL> {
-  "{"    { yybeginstate(NLS_AFTER_LBRACE); return storeToken(T_LBRACE); }
-}
-
-<YYINITIAL, IN_BRACES, IN_INJECTION> {
-  ")"    { return storeToken(T_RPAREN); }
-  "]"    { return storeToken(T_RBRACK); }
-}
-<IN_PARENS_BRACKETS> {
-  ")"    { yyendstate(IN_PARENS_BRACKETS); return storeToken(T_RPAREN); }
-  "]"    { yyendstate(IN_PARENS_BRACKETS); return storeToken(T_RBRACK); }
-}
+"("      { return storeToken(T_LPAREN); }
+")"      { return storeToken(T_RPAREN); }
+"["      { return storeToken(T_LBRACK); }
+"]"      { return storeToken(T_RBRACK); }
 
 <YYINITIAL> {
+  "{"    { yybeginstate(NLS_AFTER_LBRACE); return storeToken(T_LBRACE); } // stay in YYINITIAL state
   "}"    { return storeToken(T_RBRACE); }
 }
-<IN_PARENS_BRACKETS> {
-  "}"    {
-    while (yystate() == IN_PARENS_BRACKETS) {
-      yyendstate(IN_PARENS_BRACKETS);
-    }
-    return storeToken(T_RBRACE);
-  }
-}
-<IN_BRACES> {
-  "}"    { yyendstate(IN_BRACES); return storeToken(T_RBRACE); }
-}
+
 <IN_INJECTION> {
-  "}"    { yyendstate(IN_INJECTION, IN_GSTRING_DOLLAR); return storeToken(T_RBRACE); }
+  "{"    { yybeginstate(NLS_AFTER_LBRACE, IN_INJECTION_BRACES); return storeToken(T_LBRACE); }
+  "}"    { yyendstate(IN_INJECTION, IN_GSTRING_DOLLAR); return storeToken(T_RBRACE); } // injection end, back to IN_xxx_STRING state
+}
+
+<IN_INJECTION_BRACES> {
+  "{"    { yybeginstate(NLS_AFTER_LBRACE, IN_INJECTION_BRACES); return storeToken(T_LBRACE); }
+  "}"    { yyendstate(IN_INJECTION_BRACES); return storeToken(T_RBRACE); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// White spaces ////////// //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
+{mNLS}                                    { return storeToken(NL); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////Comments //////////////////////////////////////////////////////////////////////////////////////
@@ -488,6 +434,8 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "==="                                     { return storeToken(T_ID); }
 "=="                                      { return storeToken(T_EQ); }
 "!"                                       { return storeToken(T_NOT); }
+"!in"/{NOT_IDENT_PART}                    { return storeToken(T_NOT_IN); }
+"!instanceof"/{NOT_IDENT_PART}            { return storeToken(T_NOT_INSTANCEOF); }
 "~"                                       { return storeToken(T_BNOT); }
 "!=="                                     { return storeToken(T_NID); }
 "!="                                      { return storeToken(T_NEQ); }

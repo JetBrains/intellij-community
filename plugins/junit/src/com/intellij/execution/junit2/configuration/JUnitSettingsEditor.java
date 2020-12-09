@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit2.configuration;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.application.JavaSettingsEditorBase;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -8,6 +9,9 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +41,13 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     SettingsEditorFragment<JUnitConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
     fragments.add(createShortenClasspath(classpathCombo, jrePath, false));
+    if (FilenameIndex.getFilesByName(mySettings.getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(mySettings.getProject())).length > 0) {
+      fragments.add(SettingsEditorFragment.createTag("test.use.module.path",
+                                                     ExecutionBundle.message("do.not.use.module.path.tag"),
+                                                     ExecutionBundle.message("group.java.options"),
+                                                           configuration -> !configuration.isUseModulePath(),
+                                                     (configuration, value) -> configuration.setUseModulePath(!value)));
+    }
 
     ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), classpathCombo);
     JUnitTestKindFragment testKind = new JUnitTestKindFragment(getProject(), moduleSelector);
@@ -45,15 +56,16 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     String group = JUnitBundle.message("test.group");
     VariantTagFragment<JUnitConfiguration, TestSearchScope> scopeFragment =
       VariantTagFragment.createFragment("testScope", JUnitBundle.message("search.scope.name"), group,
-                                        () -> new TestSearchScope[] { TestSearchScope.WHOLE_PROJECT, TestSearchScope.SINGLE_MODULE, TestSearchScope.MODULE_WITH_DEPENDENCIES},
+                                        () -> new TestSearchScope[]{TestSearchScope.WHOLE_PROJECT, TestSearchScope.SINGLE_MODULE,
+                                          TestSearchScope.MODULE_WITH_DEPENDENCIES},
                                         configuration -> configuration.getTestSearchScope(),
                                         (configuration, scope) -> configuration.setSearchScope(scope),
                                         configuration -> configuration.getTestSearchScope() != TestSearchScope.WHOLE_PROJECT);
     scopeFragment.setVariantNameProvider(scope -> scope == TestSearchScope.WHOLE_PROJECT
                                                   ? JUnitBundle.message("search.scope.project")
                                                   : scope == TestSearchScope.SINGLE_MODULE
-                                                    ? JUnitBundle.message("search.scope.module.deps")
-                                                    : JUnitBundle.message("search.scope.module"));
+                                                    ? JUnitBundle.message("search.scope.module")
+                                                    : JUnitBundle.message("search.scope.module.deps"));
     fragments.add(scopeFragment);
 
     VariantTagFragment<JUnitConfiguration, String> repeat =
@@ -95,6 +107,14 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     fragments.add(forkMode);
 
     testKind.addSettingsEditorListener(
-      editor -> forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(testKind.getTestKind(), forkMode.getSelectedVariant())));
+      editor -> {
+        int selectedType = testKind.getTestKind();
+        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant()));
+        scopeFragment.setRemovable(selectedType == JUnitConfigurationModel.PATTERN ||
+                                   selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE ||
+                                   selectedType == JUnitConfigurationModel.TAGS ||
+                                   selectedType == JUnitConfigurationModel.CATEGORY);
+      });
+    fragments.add(new TargetPathFragment<>());
   }
 }

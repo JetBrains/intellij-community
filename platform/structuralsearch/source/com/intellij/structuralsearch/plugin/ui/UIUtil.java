@@ -4,9 +4,6 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeTooltip;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,9 +20,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,21 +28,13 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * @author Maxim.Mossienko
@@ -158,61 +144,6 @@ public final class UIUtil {
       return false;
     }
     return constraint.isPartOfSearchResults();
-  }
-
-  @NotNull
-  public static JComponent createCompleteMatchInfo(@NotNull Supplier<? extends Configuration> configurationProducer) {
-    return installCompleteMatchInfo(new JLabel(AllIcons.Actions.ListFiles), configurationProducer, null);
-  }
-
-  @NotNull
-  public static JComponent installCompleteMatchInfo(@NotNull JLabel completeMatchInfo,
-                                                    @NotNull Supplier<? extends Configuration> configurationProducer,
-                                                    @Nullable Consumer<? super String> linkConsumer) {
-    completeMatchInfo.putClientProperty(IdeTooltip.TOOLTIP_DISMISS_DELAY_KEY, 20000);
-    completeMatchInfo.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseEntered(MouseEvent ignore) {
-        if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
-          return;
-        }
-        final Configuration configuration = configurationProducer.get();
-        if (configuration == null) {
-          return;
-        }
-        final MatchOptions matchOptions = configuration.getMatchOptions();
-        if (matchOptions.getSearchPattern().isEmpty()) {
-          return;
-        }
-        final MatchVariableConstraint constraint = getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, configuration);
-        if (isTarget(Configuration.CONTEXT_VAR_NAME, matchOptions)) {
-          constraint.setPartOfSearchResults(true);
-        }
-        String filterText = StringUtil.escapeXmlEntities(
-          SSRBundle.message("complete.match.variable.tooltip.message",
-                            SubstitutionShortInfoHandler.getShortParamString(constraint, linkConsumer == null)));
-        if (linkConsumer != null && !Configuration.CONTEXT_VAR_NAME.equals(configuration.getCurrentVariableName())) {
-          filterText = SubstitutionShortInfoHandler.appendLinkText(filterText, Configuration.CONTEXT_VAR_NAME);
-        }
-        final HyperlinkListener listener = e -> {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && linkConsumer != null) {
-            linkConsumer.accept(Configuration.CONTEXT_VAR_NAME);
-            IdeTooltipManager.getInstance().hideCurrentNow(true);
-          }
-        };
-        final IdeTooltip tooltip = new TooltipWithClickableLinks(completeMatchInfo, filterText, listener);
-        final Rectangle bounds = completeMatchInfo.getBounds();
-        tooltip.setHint(true)
-          .setExplicitClose(true)
-          .setPreferredPosition(Balloon.Position.below)
-          .setPoint(new Point(bounds.x + (bounds.width / 2) , bounds.y + bounds.height));
-        IdeTooltipManager.getInstance().show(tooltip, true);
-        if (linkConsumer == null) {
-          configuration.setCurrentVariableName(Configuration.CONTEXT_VAR_NAME);
-        }
-      }
-    });
-    return completeMatchInfo;
   }
 
   @NotNull

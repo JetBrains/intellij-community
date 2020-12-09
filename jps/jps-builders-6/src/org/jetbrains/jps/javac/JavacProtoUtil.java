@@ -6,7 +6,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -25,13 +27,13 @@ public final class JavacProtoUtil {
     return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.SHUTDOWN).build();
   }
 
-  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options,
-                                                                          Collection<? extends File> files,
-                                                                          Collection<? extends File> classpath,
-                                                                          Collection<? extends File> platformCp,
+  public static JavacRemoteProto.Message.Request createCompilationRequest(Iterable<String> options,
+                                                                          Iterable<? extends File> files,
+                                                                          Iterable<? extends File> classpath,
+                                                                          Iterable<? extends File> platformCp,
                                                                           ModulePath modulePath,
-                                                                          Collection<? extends File> upgradeModulePath,
-                                                                          Collection<? extends File> sourcePath,
+                                                                          Iterable<? extends File> upgradeModulePath,
+                                                                          Iterable<? extends File> sourcePath,
                                                                           Map<File, Set<File>> outs) {
     final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);
@@ -76,6 +78,8 @@ public final class JavacProtoUtil {
 
     msgBuilder.setKind(convertKind(fileObject.getKind()));
     msgBuilder.setFilePath(FileUtilRt.toSystemIndependentName(fileObject.getFile().getPath()));
+    msgBuilder.setIsGenerated(fileObject.isGenerated());
+
     final BinaryContent content = fileObject.getContent();
     if (content != null) {
       msgBuilder.setContent(ByteString.copyFrom(content.getBuffer(), content.getOffset(), content.getLength()));
@@ -92,9 +96,8 @@ public final class JavacProtoUtil {
     if (relativePath != null) {
       msgBuilder.setRelativePath(relativePath);
     }
-    final URI srcUri = fileObject.getSourceUri();
-    if (srcUri != null) {
-      msgBuilder.setSourceUri(srcUri.toString());
+    for (URI uri : fileObject.getSourceUris()) {
+      msgBuilder.addSourceUri(uri.toString());
     }
     final JavaFileManager.Location location = fileObject.getLocation();
     if (location != null) {
@@ -109,6 +112,7 @@ public final class JavacProtoUtil {
   public static JavacRemoteProto.Message.Response createCustomDataResponse(String pluginId, String dataName, byte[] data) {
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
       .setKind(JavacRemoteProto.Message.Response.OutputObject.Kind.OTHER)
+      .setIsGenerated(false)
       .setFilePath(pluginId)
       .setClassName(dataName)
       .setContent(ByteString.copyFrom(data))
@@ -121,7 +125,7 @@ public final class JavacProtoUtil {
 
   public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
-      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
+      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setIsGenerated(false).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
 
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.SRC_FILE_LOADED).setOutputObject(outObjMsg);

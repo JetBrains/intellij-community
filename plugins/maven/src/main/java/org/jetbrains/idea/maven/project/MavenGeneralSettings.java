@@ -35,6 +35,8 @@ public class MavenGeneralSettings implements Cloneable {
 
   private boolean alwaysUpdateSnapshots = false;
 
+  private boolean showDialogWithAdvancedSettings = false;
+
   private String threads;
 
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
@@ -299,6 +301,15 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
+  public boolean isShowDialogWithAdvancedSettings() {
+    return showDialogWithAdvancedSettings;
+  }
+
+  public void setShowDialogWithAdvancedSettings(boolean showDialogWithAdvancedSettings) {
+    this.showDialogWithAdvancedSettings = showDialogWithAdvancedSettings;
+    changed();
+  }
+
   public boolean isNonRecursive() {
     return nonRecursive;
   }
@@ -328,6 +339,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (outputLevel != that.outputLevel) return false;
     if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
     if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
+    if (showDialogWithAdvancedSettings != that.showDialogWithAdvancedSettings) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
     if (workOffline != that.workOffline) return false;

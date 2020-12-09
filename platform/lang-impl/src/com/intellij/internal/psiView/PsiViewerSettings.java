@@ -1,21 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-@State(
-  name = "PsiViewerSettings",
-  storages = @Storage("other.xml")
-)
-public class PsiViewerSettings implements PersistentStateComponent<PsiViewerSettings> {
+@State(name = "PsiViewerSettings", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
+@Service
+public final class PsiViewerSettings implements PersistentStateComponent<PsiViewerSettings> {
   public boolean showWhiteSpaces = true;
   public boolean showTreeNodes = true;
   public String type = "JAVA file";
@@ -26,7 +22,7 @@ public class PsiViewerSettings implements PersistentStateComponent<PsiViewerSett
   public int lastSelectedTabIndex = 0;
 
   public static PsiViewerSettings getSettings() {
-    return ServiceManager.getService(PsiViewerSettings.class);
+    return ApplicationManager.getApplication().getService(PsiViewerSettings.class);
   }
 
   @Override

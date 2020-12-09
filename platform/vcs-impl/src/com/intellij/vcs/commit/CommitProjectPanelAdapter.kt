@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.ModalityState
@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 import javax.swing.JComponent
 
-internal open class CommitProjectPanelAdapter(private val handler: AbstractCommitWorkflowHandler<*, *>) : CheckinProjectPanel {
+open class CommitProjectPanelAdapter(private val handler: AbstractCommitWorkflowHandler<*, *>) : CheckinProjectPanel {
   private val workflow get() = handler.workflow
   private val ui get() = handler.ui
   private val vcsManager get() = ProjectLevelVcsManager.getInstance(workflow.project)

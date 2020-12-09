@@ -20,6 +20,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
-public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
+public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
 
   private final @NotNull Producer<SdkListModel> myGetModel;
@@ -170,25 +171,16 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
             Icon icon = sdkType.getIcon();
             if (icon == null) icon = AllIcons.General.Add;
             setIcon(icon);
-            append(ProjectBundle.message("sdk.configure.add.sdkType.subAction", sdkType.getPresentableName()));
             break;
           case DOWNLOAD:
             setIcon(template.getIcon());
-            append(ProjectBundle.message("sdk.configure.download.subAction", sdkType.getPresentableName()));
             break;
         }
+        append(item.action.getListSubItemText());
       }
       else {
-        switch (item.role) {
-          case ADD:
-            setIcon(template.getIcon());
-            append(ProjectBundle.message("sdk.configure.add.sdkType.action", sdkType.getPresentableName()));
-            break;
-          case DOWNLOAD:
-            setIcon(template.getIcon());
-            append(ProjectBundle.message("sdk.configure.download.action", sdkType.getPresentableName()));
-            break;
-        }
+        setIcon(template.getIcon());
+        append(item.action.getListItemText());
       }
     }
     else if (value instanceof GroupItem) {
@@ -255,7 +247,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
   }
 
   static private class AccessibleSdkListPresenter extends AccessibleContextDelegate {
-    private String myAccessibleString = null;
+    private @Nls String myAccessibleString = null;
 
     AccessibleSdkListPresenter(AccessibleContext context) {
       super(context);

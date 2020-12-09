@@ -63,7 +63,6 @@ public final class CreateClassToBindFix extends QuickFix{
             final PackageWrapper packageWrapper = new PackageWrapper(PsiManager.getInstance(project), packageName);
             try {
               psiDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);
-              LOG.assertTrue(psiDirectory != null);
             }
             catch (final IncorrectOperationException e) {
               ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(

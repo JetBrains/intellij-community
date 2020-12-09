@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.lang.ASTNode;
@@ -11,6 +11,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.*;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class CachedValuesManagerImpl extends CachedValuesManager {
   private static final Object NULL = new Object();
-  private ConcurrentMap<UserDataHolder, Object> myCacheHolders = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  private ConcurrentMap<UserDataHolder, Object> myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
   private Set<Key<?>> myKeys = ContainerUtil.newConcurrentSet();
 
   private final Project myProject;
@@ -62,7 +63,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
                               @NotNull CachedValueProvider<T> provider,
                               boolean trackValue) {
     CachedValue<T> value = dataHolder.getUserData(key);
-    if (value instanceof CachedValueBase && ((CachedValueBase)value).isFromMyProject(myProject)) {
+    if (value instanceof CachedValueBase && ((CachedValueBase<?>)value).isFromMyProject(myProject)) {
       Getter<T> data = value.getUpToDateOrNull();
       if (data != null) {
         return data.get();
@@ -111,7 +112,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
     CachedValueLeakChecker.checkProvider(provider, key, dh);
     CachedValue<T> value = createCachedValue(provider, trackValue);
-    assert ((CachedValueBase)value).isFromMyProject(myProject);
+    assert ((CachedValueBase<?>)value).isFromMyProject(myProject);
     return value;
   }
 
@@ -123,7 +124,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
       }
     }
     CachedValueStabilityChecker.cleanupFieldCache();
-    myCacheHolders = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+    myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
     myKeys = ContainerUtil.newConcurrentSet();
   }
 }

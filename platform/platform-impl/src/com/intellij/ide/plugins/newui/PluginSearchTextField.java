@@ -63,4 +63,8 @@ public class PluginSearchTextField extends SearchTextField {
       mySkipDocumentEvents = false;
     }
   }
+
+  void disposeUIResources() {
+    hidePopup();
+  }
 }

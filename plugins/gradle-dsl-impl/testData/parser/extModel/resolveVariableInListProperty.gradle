@@ -1,0 +1,4 @@
+ext.TEST_STRING = "test"
+android.defaultConfig {
+  proguardFiles 'proguard-android.txt', "$TEST_STRING"
+}

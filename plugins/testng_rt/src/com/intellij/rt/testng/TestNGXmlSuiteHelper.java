@@ -1,10 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.testng;
 
-import org.testng.xml.XmlClass;
-import org.testng.xml.XmlInclude;
-import org.testng.xml.XmlSuite;
-import org.testng.xml.XmlTest;
+import org.testng.xml.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class TestNGXmlSuiteHelper {
+public final class TestNGXmlSuiteHelper {
   public interface Logger {
     Logger DEAF = new Logger() {
       @Override
@@ -23,12 +20,13 @@ public class TestNGXmlSuiteHelper {
 
     void log(Throwable e);
   }
-  
-  public static File writeSuite(Map<String, Map<String, List<String>>> map, 
-                                Map<String, String> testParams, 
+
+  public static File writeSuite(Map<String, Map<String, List<String>>> map,
+                                Map<String, String> testParams,
                                 String name,
                                 String rootPath,
-                                Logger logger) {
+                                Logger logger,
+                                boolean requireHttp) {
     File xmlFile;
     final XmlSuite xmlSuite = new XmlSuite();
     xmlSuite.setParameters(testParams);
@@ -60,7 +58,14 @@ public class TestNGXmlSuiteHelper {
     }
     xmlTest.setXmlClasses(xmlClasses);
     xmlFile = new File(rootPath, "temp-testng-customsuite.xml");
-    final String toXml = xmlSuite.toXml();
+    String toXml = xmlSuite.toXml();
+    if (requireHttp) {
+      String target = "https://testng.org/" + Parser.TESTNG_DTD;
+      int dtdIdx = toXml.indexOf(target);
+      if (dtdIdx > 0) {
+        toXml = toXml.substring(0, dtdIdx) + Parser.TESTNG_DTD_URL + toXml.substring(dtdIdx + target.length());
+      }
+    }
     writeToFile(logger, xmlFile, toXml);
     return xmlFile;
   }

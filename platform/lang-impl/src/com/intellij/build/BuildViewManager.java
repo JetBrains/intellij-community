@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public class BuildViewManager extends AbstractViewManager {
+
   public BuildViewManager(Project project) {
     super(project);
   }
@@ -23,6 +24,7 @@ public class BuildViewManager extends AbstractViewManager {
   public String getViewName() {
     return LangBundle.message("tab.title.build.output");
   }
+
 
   @ApiStatus.Experimental
   public static BuildProgress<BuildProgressDescriptor> createBuildProgress(@NotNull Project project) {

@@ -40,13 +40,9 @@ public class HungryBackspaceAction extends TextComponentEditorAction {
     super(new Handler());
   }
   
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(@NotNull Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       final Document document = editor.getDocument();
       final int caretOffset = editor.getCaretModel().getOffset();
       if (caretOffset < 1) {

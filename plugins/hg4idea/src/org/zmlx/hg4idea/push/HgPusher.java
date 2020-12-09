@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
+
 public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
 
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
@@ -86,13 +88,13 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
       String successDescription = HgBundle.message("action.hg4idea.push.success.msg",
                                                    commitsNum,
                                                    repo.getPresentableName());
-      VcsNotifier.getInstance(project).notifySuccess("hg.pushed.successfully", successTitle, successDescription);
+      VcsNotifier.getInstance(project).notifySuccess(PUSH_SUCCESS, successTitle, successDescription);
     }
     else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
-      VcsNotifier.getInstance(project).notifySuccess("hg.nothing.to.push", "", HgBundle.message("action.hg4idea.push.nothing"));
+      VcsNotifier.getInstance(project).notifySuccess(NOTHING_TO_PUSH, "", HgBundle.message("action.hg4idea.push.nothing"));
     }
     else {
-      new HgCommandResultNotifier(project).notifyError("hg.push.error",
+      new HgCommandResultNotifier(project).notifyError(PUSH_ERROR,
                                                        result,
                                                        HgBundle.message("action.hg4idea.push.error"),
                                                        HgBundle.message("action.hg4idea.push.error.msg", repo.getPresentableName()));

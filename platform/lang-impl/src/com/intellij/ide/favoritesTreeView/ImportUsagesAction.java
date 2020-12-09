@@ -4,6 +4,7 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -15,9 +16,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@SuppressWarnings("ComponentNotRegistered")
 public class ImportUsagesAction extends AnAction {
   public ImportUsagesAction() {
-    super("To Favorites", "To Favorites", AllIcons.Toolwindows.ToolWindowFavorites);
+    super(ActionsBundle.message("import.Usages.text"), null, AllIcons.Toolwindows.ToolWindowFavorites);
   }
 
   @Override

@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
@@ -20,6 +16,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -30,11 +27,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class AbstractStorage implements Disposable, Forceable {
   protected static final Logger LOG = Logger.getInstance(Storage.class);
 
@@ -45,6 +40,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   protected final Object myLock = new Object();
   private final ReadWriteLock myScalableLock = new ReentrantReadWriteLock();
   private final boolean myUseScalableLock;
@@ -82,14 +78,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     catch (IOException ignore) {
     }
     return deletedRecordsFile && deletedDataFile;
-  }
-
-  /**
-   * @deprecated please use scalable lock
-   */
-  @Deprecated
-  protected AbstractStorage(@NotNull Path storageFilePath) throws IOException {
-    this(storageFilePath, PagePool.SHARED, false);
   }
 
   protected AbstractStorage(@NotNull Path storageFilePath, boolean useScalableLock) throws IOException {
@@ -224,9 +212,8 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     });
   }
 
-  private void createOrTruncateFile(@NotNull Path path) throws IOException {
-    Files.newByteChannel(path, EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE))
-      .close();
+  private static void createOrTruncateFile(@NotNull Path path) throws IOException {
+    Files.newByteChannel(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE).close();
   }
 
   public int getVersion() {

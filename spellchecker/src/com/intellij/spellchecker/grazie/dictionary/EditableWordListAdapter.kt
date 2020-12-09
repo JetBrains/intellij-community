@@ -3,17 +3,17 @@ package com.intellij.spellchecker.grazie.dictionary
 
 import com.intellij.grazie.speller.lists.TraversableWordList
 import com.intellij.spellchecker.dictionary.Dictionary
-import gnu.trove.THashMap
+import com.intellij.util.containers.CollectionFactory
 
 internal abstract class EditableWordListAdapter {
-  protected val dictionaries = THashMap<String, Dictionary>()
+  protected val dictionaries: MutableMap<String, Dictionary> = CollectionFactory.createSmallMemoryFootprintMap()
   protected val traversable = EditableAggregatedWordList()
 
   val names: Set<String>
     get() = traversable.keys + dictionaries.keys
 
   fun addDictionary(dictionary: Dictionary) {
-    dictionaries[dictionary.name] = dictionary
+    dictionaries.put(dictionary.name, dictionary)
   }
 
   fun addList(name: String, list: TraversableWordList) {

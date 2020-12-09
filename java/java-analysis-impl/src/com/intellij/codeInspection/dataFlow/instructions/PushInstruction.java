@@ -16,15 +16,16 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PushInstruction extends ExpressionPushingInstruction<PsiExpression> {
+/**
+ * An instruction that pushes given value to the stack
+ */
+public class PushInstruction extends EvalInstruction {
   private final @NotNull DfaValue myValue;
   private final boolean myReferenceWrite;
 
@@ -33,7 +34,7 @@ public class PushInstruction extends ExpressionPushingInstruction<PsiExpression>
   }
 
   public PushInstruction(@NotNull DfaValue value, PsiExpression place, final boolean isReferenceWrite) {
-    super(place);
+    super(place, 0);
     myValue = value;
     myReferenceWrite = isReferenceWrite;
   }
@@ -48,8 +49,8 @@ public class PushInstruction extends ExpressionPushingInstruction<PsiExpression>
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitPush(this, runner, stateBefore, myValue);
+  public @NotNull DfaValue eval(@NotNull DfaValueFactory factory, @NotNull DfaMemoryState state, @NotNull DfaValue @NotNull ... arguments) {
+    return myValue;
   }
 
   public String toString() {

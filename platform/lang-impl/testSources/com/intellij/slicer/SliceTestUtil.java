@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CommonProcessors;
-import gnu.trove.THashMap;
 
 import java.util.*;
 
@@ -59,7 +58,7 @@ public final class SliceTestUtil {
   }
 
   public static Map<String, RangeMarker> extractSliceOffsetsFromDocuments(final List<? extends Document> documents) {
-    Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<>();
+    Map<String, RangeMarker> sliceUsageName2Offset = new HashMap<>();
 
     extract(documents, sliceUsageName2Offset, "");
 

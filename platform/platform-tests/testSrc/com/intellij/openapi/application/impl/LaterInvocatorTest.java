@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -192,10 +193,10 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
           public String toString() {
             return "ass2";
           }
-        }, ModalityState.NON_MODAL, true);
-        LaterInvocator.invokeLater(ENTER_MODAL, ModalityState.NON_MODAL, true);
+        }, ModalityState.NON_MODAL);
+        LaterInvocator.invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
 
-        LaterInvocator.invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL, true);
+        LaterInvocator.invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
 
         //some weird things like MyFireIdleRequest may still sneak in
         //java.util.List<Object> dump = LaterInvocator.dumpQueue();
@@ -443,7 +444,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(myWindow2);
       ModalityState window2State = ModalityState.current();
       LaterInvocator.leaveModal(myWindow2);
-      LaterInvocator.invokeLater(new MyRunnable("1"), window2State, true);
+      LaterInvocator.invokeLater(new MyRunnable("1"), window2State);
 
       LaterInvocator.enterModal(myWindow1);
       flushSwingQueue();
@@ -453,7 +454,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       flushSwingQueue();
       checkOrder(1);
 
-      LaterInvocator.invokeLater(new MyRunnable("2"), window2State, true);
+      LaterInvocator.invokeLater(new MyRunnable("2"), window2State);
       flushSwingQueue();
       checkOrder(2);
     });
@@ -518,7 +519,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testModalityStateCurrentAllowedOnlyFromEDT() throws Exception {
-    LoggedErrorProcessor.getInstance().disableStderrDumping(getTestRootDisposable());
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     Future<ModalityState> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ModalityState.current());
     try {
       future.get(1000, TimeUnit.MILLISECONDS);

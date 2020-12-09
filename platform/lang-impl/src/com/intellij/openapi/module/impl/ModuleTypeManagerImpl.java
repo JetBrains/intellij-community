@@ -52,15 +52,15 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public ModuleType<?>[] getRegisteredTypes() {
+  public @NotNull List<ModuleType<?>> getRegisteredTypes() {
     List<ModuleType<?>> result = new ArrayList<>(myModuleTypes.keySet());
-    for (ModuleTypeEP moduleTypeEP : EP_NAME.getExtensionList()) {
-      ModuleType<?> moduleType = moduleTypeEP.getModuleType();
+    EP_NAME.forEachExtensionSafe(ep -> {
+      ModuleType<?> moduleType = ep.getModuleType();
       if (!myModuleTypes.containsKey(moduleType)) {
         result.add(moduleType);
       }
-    }
-    return result.toArray(new ModuleType[0]);
+    });
+    return result;
   }
 
   @Override

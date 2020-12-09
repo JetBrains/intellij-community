@@ -8,6 +8,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -397,8 +398,7 @@ public final class GdkMethodUtil {
       selfType = substitutor.substitute(selfType);
     }
 
-    if (selfType instanceof PsiClassType &&
-        ((PsiClassType)selfType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
+    if (PsiTypesUtil.classNameEquals(selfType, CommonClassNames.JAVA_LANG_CLASS) &&
         place instanceof GrReferenceExpression &&
         ((GrReferenceExpression)place).resolve() instanceof PsiClass) {   // ClassType.categoryMethod()  where categoryMethod(Class<> cl, ...)
       return TypesUtil.isAssignableByMethodCallConversion(selfType, TypesUtil.createJavaLangClassType(qualifierType, method), method);

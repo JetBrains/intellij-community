@@ -24,19 +24,23 @@ import java.awt.Window
 
 internal class MacMessageManagerProviderImpl : MacMessages.MacMessageManagerProvider {
   override fun getMessageManager(): MacMessages {
-    if (SystemInfo.isJetBrainsJvm) {
-      if (SystemInfo.isMacOSBigSur) {
-        if (Registry.`is`("ide.mac.bigsur.alerts.enabled", true)) {
-          return service<NativeMacMessageManager>()
-        }
-        return service<JBMacMessages>()
-      }
-      if (!Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true)) {
+    return getLocalMacMessages()
+  }
+}
+
+fun getLocalMacMessages(): MacMessages {
+  if (SystemInfo.isJetBrainsJvm) {
+    if (SystemInfo.isMacOSBigSur) {
+      if (Registry.`is`("ide.mac.bigsur.alerts.enabled", true)) {
         return service<NativeMacMessageManager>()
       }
+      return service<JBMacMessages>()
     }
-    return service<JBMacMessages>()
+    if (!Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true)) {
+      return service<NativeMacMessageManager>()
+    }
   }
+  return service<JBMacMessages>()
 }
 
 private class MessageInfo(val title: String,
@@ -46,7 +50,7 @@ private class MessageInfo(val title: String,
                           window: Window?,
                           val defaultOptionIndex: Int,
                           val doNotAskDialogOption: DoNotAskOption?) {
-  val message = StringUtil.stripHtml(message ?: "", true).replace("%", "%%")
+  val message = StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message ?: "", "\n")).replace("%", "%%").replace("&nbsp;", " ")
   val window = window ?: JBMacMessages.getForemostWindow()
   val nativeWindow: ID = MacUtil.findWindowFromJavaWindow(this.window)
 }
@@ -193,11 +197,20 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alert, "setAlertStyle:", /*NSCriticalAlertStyle*/2)
       }
 
+      var enableEscape = true
+
       for (button in info.buttons) {
-        Foundation.invoke(alert, "addButtonWithTitle:", Foundation.nsString(UIUtil.removeMnemonic(button)))
+        val nsButton = Foundation.invoke(alert, "addButtonWithTitle:", Foundation.nsString(UIUtil.removeMnemonic(button)))
+        // don't equals with nls "button.cancel"
+        if (button == "Cancel") {
+          Foundation.invoke(nsButton, "setKeyEquivalent:", Foundation.nsString("\u001b"))
+          enableEscape = false
+        }
       }
 
-      enableEscapeToCloseTheMessage(alert)
+      if (enableEscape) {
+        enableEscapeToCloseTheMessage(alert)
+      }
 
       if (info.doNotAskDialogOption != null && info.doNotAskDialogOption.canBeHidden()) {
         Foundation.invoke(alert, "setShowsSuppressionButton:", 1)

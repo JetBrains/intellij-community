@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
@@ -464,6 +465,9 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
       if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
+      if (QuickActionProvider.KEY.is(dataId)) {
+        return myStructureView instanceof QuickActionProvider ? myStructureView : null;
+      }
       return null;
     }
   }

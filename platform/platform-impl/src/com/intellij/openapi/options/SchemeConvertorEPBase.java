@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
@@ -47,7 +47,7 @@ public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
   public @NotNull String getLocalizedName() {
     if (nameBundle != null && nameKey != null) {
       ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(nameBundle, getPluginDescriptor().getPluginClassLoader());
-      return AbstractBundle.message(resourceBundle, nameKey);
+      return BundleBase.messageOrDefault(resourceBundle, nameKey, null);
     }
     else if (name == null) {
       LOG.error("Either a pair ('nameBundle', 'nameKey') or 'name' attribute must be specified.");

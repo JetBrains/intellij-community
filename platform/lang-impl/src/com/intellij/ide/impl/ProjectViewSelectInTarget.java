@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +123,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     return canBeSelectedInProjectView(myProject, vFile);
   }
 
-  public String getSubIdPresentableName(String subId) {
+  public @Nls String getSubIdPresentableName(String subId) {
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
     return pane.getPresentableSubIdName(subId);
   }

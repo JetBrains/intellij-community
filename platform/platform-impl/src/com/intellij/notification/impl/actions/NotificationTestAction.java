@@ -181,7 +181,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
     }
   }
 
-  private static class NotificationInfo implements NotificationListener {
+  private static final class NotificationInfo implements NotificationListener {
     private String myIcon;
     private String myTitle;
     private String mySubtitle;

@@ -37,11 +37,11 @@ class DecompressorTest {
     testNoTraversal(Decompressor.Zip(zip), dir, dir.resolve("bad.txt"))
   }
 
-  @Test fun noInternalTraversalInCommonsZip() {
+  @Test fun noInternalTraversalInExtZip() {
     val zip = tempDir.newFile("test.zip")
     ZipOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/../bad.txt") }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    testNoTraversal(Decompressor.Zip(zip).withUnixPermissionsAndSymlinks(), dir, dir.resolve("bad.txt"))
+    testNoTraversal(Decompressor.Zip(zip).withZipExtensions(), dir, dir.resolve("bad.txt"))
   }
 
   @Test fun noExternalTraversalInZip() {
@@ -51,11 +51,11 @@ class DecompressorTest {
     testNoTraversal(Decompressor.Zip(zip), dir, dir.parent.resolve("evil.txt"))
   }
 
-  @Test fun noExternalTraversalInCommons() {
+  @Test fun noExternalTraversalInExtZip() {
     val zip = tempDir.newFile("test.zip")
     ZipOutputStream(FileOutputStream(zip)).use { writeEntry(it, "../evil.txt") }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    testNoTraversal(Decompressor.Zip(zip).withUnixPermissionsAndSymlinks(), dir, dir.parent.resolve("evil.txt"))
+    testNoTraversal(Decompressor.Zip(zip).withZipExtensions(), dir, dir.parent.resolve("evil.txt"))
   }
 
   @Test fun noAbsolutePathsInZip() {
@@ -66,11 +66,11 @@ class DecompressorTest {
     assertThat(dir.resolve("root.txt")).exists()
   }
 
-  @Test fun noAbsolutePathsInCommonsZip() {
+  @Test fun noAbsolutePathsInExtZip() {
     val zip = tempDir.newFile("test.zip")
     ZipOutputStream(FileOutputStream(zip)).use { writeEntry(it, "/root.txt") }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().extract(dir)
+    Decompressor.Zip(zip).withZipExtensions().extract(dir)
     assertThat(dir.resolve("root.txt")).exists()
   }
 
@@ -121,11 +121,11 @@ class DecompressorTest {
   }
 
   @Test(expected = ZipException::class)
-  fun failsOnCorruptedCommonsZip() {
+  fun failsOnCorruptedExtZip() {
     val zip = tempDir.newFile("test.zip")
     zip.writeText("whatever")
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().extract(dir)
+    Decompressor.Zip(zip).withZipExtensions().extract(dir)
   }
 
   @Test fun tarFileModes() {
@@ -138,13 +138,20 @@ class DecompressorTest {
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
     Decompressor.Tar(tar).extract(dir)
-    assertThat(dir.resolve("dir/r")).exists().isNot(Writable).let { if (SystemInfo.isUnix) it.isNot(Executable) }
-    assertThat(dir.resolve("dir/rw")).exists().`is`(Writable).let { if (SystemInfo.isUnix) it.isNot(Executable) }
-    assertThat(dir.resolve("dir/rx")).exists().isNot(Writable).`is`(Executable)
-    assertThat(dir.resolve("dir/rwx")).exists().`is`(Writable).`is`(Executable)
+    if (SystemInfo.isWindows) {
+      arrayOf("r", "rw", "rx", "rwx").forEach {
+        assertThat(dir.resolve("dir/${it}")).exists().`is`(Writable)
+      }
+    }
+    else {
+      assertThat(dir.resolve("dir/r")).exists().isNot(Writable).isNot(Executable)
+      assertThat(dir.resolve("dir/rw")).exists().`is`(Writable).isNot(Executable)
+      assertThat(dir.resolve("dir/rx")).exists().isNot(Writable).`is`(Executable)
+      assertThat(dir.resolve("dir/rwx")).exists().`is`(Writable).`is`(Executable)
+    }
   }
 
-  @Test fun zipFileModes() {
+  @Test fun zipUnixFileModes() {
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use {
       writeEntry(it, "dir/r", mode = 0b100_000_000)
@@ -153,11 +160,34 @@ class DecompressorTest {
       writeEntry(it, "dir/rwx", mode = 0b111_000_000)
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().extract(dir)
-    assertThat(dir.resolve("dir/r")).exists().isNot(Writable).let { if (SystemInfo.isUnix) it.isNot(Executable) }
-    assertThat(dir.resolve("dir/rw")).exists().`is`(Writable).let { if (SystemInfo.isUnix) it.isNot(Executable) }
-    assertThat(dir.resolve("dir/rx")).exists().isNot(Writable).`is`(Executable)
-    assertThat(dir.resolve("dir/rwx")).exists().`is`(Writable).`is`(Executable)
+    Decompressor.Zip(zip).withZipExtensions().extract(dir)
+    if (SystemInfo.isWindows) {
+      arrayOf("r", "rw", "rx", "rwx").forEach {
+        assertThat(dir.resolve("dir/${it}")).exists().`is`(Writable).isNot(Hidden)
+      }
+    }
+    else {
+      assertThat(dir.resolve("dir/r")).exists().isReadable().isNot(Writable).isNot(Executable)
+      assertThat(dir.resolve("dir/rw")).exists().isReadable().`is`(Writable).isNot(Executable)
+      assertThat(dir.resolve("dir/rx")).exists().isReadable().isNot(Writable).`is`(Executable)
+      assertThat(dir.resolve("dir/rwx")).exists().isReadable().`is`(Writable).`is`(Executable)
+    }
+  }
+
+  @Test fun zipDosFileModes() {
+    val zip = tempDir.newFile("test.zip")
+    ZipArchiveOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "dir/ro", readOnly = true)
+      writeEntry(it, "dir/rw")
+      writeEntry(it, "dir/h", hidden = true)
+    }
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    Decompressor.Zip(zip).withZipExtensions().extract(dir)
+    assertThat(dir.resolve("dir/ro")).exists().isNot(Writable)
+    assertThat(dir.resolve("dir/rw")).exists().`is`(Writable)
+    if (SystemInfo.isWindows) {
+      assertThat(dir.resolve("dir/h")).exists().`is`(Hidden)
+    }
   }
 
   @Test fun filtering() {
@@ -181,7 +211,7 @@ class DecompressorTest {
       writeEntry(it, "links/ok", link = "../f")
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Tar(tar).withSymlinks().extract(dir)
+    Decompressor.Tar(tar).extract(dir)
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
   }
 
@@ -194,7 +224,7 @@ class DecompressorTest {
       writeEntry(it, "links/ok", link = "../f")
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().extract(dir)
+    Decompressor.Zip(zip).withZipExtensions().extract(dir)
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
   }
 
@@ -218,7 +248,7 @@ class DecompressorTest {
       writeEntry(it, "a/b/c.txt")
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().removePrefixPath("a/b").extract(dir)
+    Decompressor.Zip(zip).removePrefixPath("a/b").extract(dir)
 
     assertThat(dir.resolve("c.txt")).isRegularFile()
     assertThat(dir.resolve("a")).doesNotExist()
@@ -308,7 +338,7 @@ class DecompressorTest {
       writeEntry(it, "././././././//a/b/h")
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().removePrefixPath("./a/b").extract(dir)
+    Decompressor.Zip(zip).removePrefixPath("./a/b").extract(dir)
 
     assertThat(dir.resolve("f")).isRegularFile()
     assertThat(dir.resolve("g")).isRegularFile()
@@ -339,7 +369,7 @@ class DecompressorTest {
       writeEntry(it, "a/b/links/ok", link = "../f")
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().removePrefixPath("a/b").extract(dir)
+    Decompressor.Zip(zip).withZipExtensions().removePrefixPath("a/b").extract(dir)
 
     assertThat(dir.resolve("f")).isRegularFile()
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
@@ -357,11 +387,37 @@ class DecompressorTest {
     assertThat(dir.resolve("missed")).doesNotExist()
   }
 
+  @Test fun fileOverwrite() {
+    val zip = tempDir.newFile("test.zip")
+    ZipOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/file.txt") }
+    val dir = tempDir.newDirectory("unpacked")
+    val file = tempDir.newFile("unpacked/a/file.txt", byteArrayOf(0))
+    Decompressor.Zip(zip).extract(dir)
+    assertThat(file).hasBinaryContent(TestContent)
+  }
+
+  @Test fun symlinkOverwrite() {
+    assumeNioSymLinkCreationIsSupported()
+
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "a/file")
+      writeEntry(it, "a/link", link = "file")
+    }
+    val dir = tempDir.newDirectory("unpacked")
+    val link = tempDir.rootPath.resolve("unpacked/a/link")
+    val target = tempDir.newFile("unpacked/a/target", byteArrayOf(0)).toPath()
+    Files.createSymbolicLink(link, target)
+    Decompressor.Tar(tar).extract(dir)
+    assertThat(link).isSymbolicLink().hasBinaryContent(TestContent)
+  }
+
+  //<editor-fold desc="Helpers.">
   private fun writeEntry(zip: ZipOutputStream, name: String) {
     val entry = ZipEntry(name)
     entry.time = System.currentTimeMillis()
     zip.putNextEntry(entry)
-    zip.write('-'.toInt())
+    zip.write(TestContent)
     zip.closeEntry()
   }
 
@@ -376,29 +432,34 @@ class DecompressorTest {
     else {
       val entry = TarArchiveEntry(name)
       entry.modTime = Date()
-      entry.size = 1
+      entry.size = TestContent.size.toLong()
       if (mode != 0) entry.mode = mode
       tar.putArchiveEntry(entry)
-      tar.write('-'.toInt())
+      tar.write(TestContent)
     }
     tar.closeArchiveEntry()
   }
 
-  private fun writeEntry(zip: ZipArchiveOutputStream, name: String, mode: Int = 0, link: String? = null) {
+  private fun writeEntry(zip: ZipArchiveOutputStream, name: String, mode: Int = 0, readOnly: Boolean = false, hidden: Boolean = false, link: String? = null) {
     val entry = ZipArchiveEntry(name)
     entry.lastModifiedTime = FileTime.from(Instant.now())
-
     if (link != null) {
-      entry.lastModifiedTime = FileTime.from(Instant.now())
       entry.unixMode = UnixStat.LINK_FLAG
       zip.putArchiveEntry(entry)
-      zip.write(link.toByteArray(Charsets.UTF_8))
+      zip.write(link.toByteArray())
     }
     else {
-      entry.size = 1
-      if (mode != 0) entry.unixMode = mode
+      when {
+        mode != 0 -> entry.unixMode = mode
+        readOnly || hidden -> {
+          var dosAttributes = entry.externalAttributes
+          if (readOnly) dosAttributes = dosAttributes or 0b01
+          if (hidden) dosAttributes = dosAttributes or 0b10
+          entry.externalAttributes = dosAttributes
+        }
+      }
       zip.putArchiveEntry(entry)
-      zip.write('-'.toInt())
+      zip.write(TestContent)
     }
     zip.closeArchiveEntry()
   }
@@ -415,7 +476,10 @@ class DecompressorTest {
   }
 
   companion object {
+    private val TestContent = "...".toByteArray()
     private val Writable = Condition<Path>(Predicate { Files.isWritable(it) }, "writable")
     private val Executable = Condition<Path>(Predicate { Files.isExecutable(it) }, "executable")
+    private val Hidden = Condition<Path>(Predicate { Files.isHidden(it) }, "hidden")
   }
+  //</editor-fold>
 }

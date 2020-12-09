@@ -250,9 +250,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    @Nullable
     @Override
-    public AnAction createDisableAction(@NotNull Project project) {
+    public @NotNull AnAction createDisableAction(@NotNull Project project) {
       return DumbAwareAction.create(
         ApplicationBundle.message("code.style.indent.detector.disable"),
         e -> {

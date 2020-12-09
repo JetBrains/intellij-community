@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -37,7 +37,7 @@ public class JavaNextParameterHandler extends EditorActionHandler {
     if (project != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file instanceof PsiJavaFile) {
-        PsiElement exprList = ParameterInfoController.findArgumentList(file, offset, -1);
+        PsiElement exprList = ParameterInfoControllerBase.findArgumentList(file, offset, -1);
         if (exprList instanceof PsiExpressionList) {
           CharSequence text = editor.getDocument().getImmutableCharSequence();
           int next = CharArrayUtil.shiftForward(text, offset, " \t");
@@ -51,7 +51,7 @@ public class JavaNextParameterHandler extends EditorActionHandler {
               .charAt(prev) : 0;
             if (prevChar == ',' || prevChar == '(') {
               int listOffset = exprList.getTextRange().getStartOffset();
-              ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, listOffset);
+              ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, listOffset);
               if (controller != null) {
                 Object[] objects = controller.getObjects();
                 Object highlighted = controller.getHighlighted();

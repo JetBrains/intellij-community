@@ -26,6 +26,9 @@ import javax.swing.*;
 public class ArchiveFileType implements FileType {
   public static final ArchiveFileType INSTANCE = new ArchiveFileType();
 
+  protected ArchiveFileType() {
+  }
+
   @Override
   @NotNull
   public String getName() {
@@ -52,15 +55,5 @@ public class ArchiveFileType implements FileType {
   @Override
   public boolean isBinary() {
     return true;
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
   }
 }

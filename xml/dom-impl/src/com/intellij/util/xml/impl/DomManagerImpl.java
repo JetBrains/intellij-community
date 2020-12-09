@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -61,7 +62,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public final class DomManagerImpl extends DomManager {
+public final class DomManagerImpl extends DomManager implements Disposable {
   private static final Key<Object> MOCK = Key.create("MockElement");
 
   static final Key<WeakReference<DomFileElementImpl<?>>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
@@ -106,7 +107,7 @@ public final class DomManagerImpl extends DomManager {
       public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
         return aspect instanceof TreeAspect;
       }
-    }, project);
+    }, this);
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
@@ -135,8 +136,18 @@ public final class DomManagerImpl extends DomManager {
         }
         return event instanceof VFileMoveEvent || event instanceof VFileDeleteEvent;
       }
-    }, myProject);
+    }, this);
+
+    project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        DomUtil.clearCaches();
+      }
+    });
   }
+
+  @Override
+  public void dispose() { }
 
   public long getPsiModificationCount() {
     return PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
@@ -187,7 +198,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   public final ConverterManager getConverterManager() {
-    return ServiceManager.getService(ConverterManager.class);
+    return ApplicationManager.getApplication().getService(ConverterManager.class);
   }
 
   @Override

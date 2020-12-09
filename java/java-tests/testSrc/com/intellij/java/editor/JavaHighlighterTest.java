@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
 
@@ -162,6 +163,30 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
       myDocument.insertString(myDocument.getText().lastIndexOf("second"), " ");
     });
     CheckHighlighterConsistency.performCheck(editor);
+  }
+
+  public void testUnicodeEscapeSequence() {
+    String prefix = "class A {\n" +
+                    "  String s = \"\"\"\n";
+    initDocument(prefix +
+                 "\\uuuuu005c\\\"\"\";\n" +
+                 "}");
+    HighlighterIterator iterator = myHighlighter.createIterator(prefix.length());
+    assertEquals(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, iterator.getTokenType());
+    iterator.advance();
+    assertEquals(JavaTokenType.TEXT_BLOCK_LITERAL, iterator.getTokenType());
+  }
+
+  public void testUnicodeBackslashEscapesUnicodeSequence() {
+    String prefix = "class A {\n" +
+               "  String s = \"\"\"\n";
+    initDocument(prefix +
+                 "\\u005c\\u0040\"\"\";\n" +
+                 "}");
+    HighlighterIterator iterator = myHighlighter.createIterator(prefix.length());
+    assertEquals(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, iterator.getTokenType());
+    iterator.advance();
+    assertEquals(JavaTokenType.TEXT_BLOCK_LITERAL, iterator.getTokenType());
   }
 
   private Editor initDocument(String text) {

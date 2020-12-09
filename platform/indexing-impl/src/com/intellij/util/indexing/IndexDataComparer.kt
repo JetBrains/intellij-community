@@ -38,7 +38,7 @@ object IndexDataComparer {
     return true
   }
 
-  private fun <V> areValuesTheSame(
+  fun <V> areValuesTheSame(
     extension: FileBasedIndexExtension<*, *>,
     expectedValue: V?,
     actualValue: V?
@@ -64,7 +64,10 @@ object IndexDataComparer {
   }
 
   fun areStubTreesTheSame(expectedTree: SerializedStubTree, actualTree: SerializedStubTree): Boolean {
-    if (!areStubsTheSame(expectedTree.stub, actualTree.stub)) {
+    // extract variables to simplify exception processing
+    val expectedStub = expectedTree.stub
+    val actualStub = actualTree.stub
+    if (!areStubsTheSame(expectedStub, actualStub)) {
       return false
     }
     return expectedTree.stubIndicesValueMap == actualTree.stubIndicesValueMap

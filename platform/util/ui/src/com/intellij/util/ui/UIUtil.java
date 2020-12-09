@@ -10,12 +10,12 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -193,22 +193,20 @@ public final class UIUtil {
     return 500;
   }
 
-  private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
-    @Override
-    protected @NotNull Boolean compute() {
-      if (!SystemInfo.isXWindow) {
-        return false;
-      }
-      try {
-        final Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass("sun.awt.X11GraphicsEnvironment");
-        final Method method = clazz.getMethod("isXRenderAvailable");
-        return (Boolean)method.invoke(null);
-      }
-      catch (Throwable e) {
-        return false;
-      }
+  private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
+    if (!SystemInfo.isXWindow) {
+      return false;
     }
-  };
+
+    try {
+      Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass("sun.awt.X11GraphicsEnvironment");
+      Method method = clazz.getMethod("isXRenderAvailable");
+      return (Boolean)method.invoke(null);
+    }
+    catch (Throwable e) {
+      return false;
+    }
+  });
 
   private static final String[] STANDARD_FONT_SIZES =
     {"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
@@ -458,7 +456,7 @@ public final class UIUtil {
   }
 
   public static boolean isRetina(@NotNull Graphics2D graphics) {
-    return SystemInfo.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
+    return SystemInfoRt.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
   //public static boolean isMacRetina(Graphics2D g) {
@@ -528,7 +526,7 @@ public final class UIUtil {
    * @return {@code true} if the property of the specified component is set to {@code true}
    */
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
-    return Boolean.TRUE.equals(getClientProperty(component, key));
+    return Boolean.TRUE.equals(component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null);
   }
 
   /**
@@ -877,18 +875,8 @@ public final class UIUtil {
     return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {
-    if (s.indexOf('&') != -1) {
-      s = StringUtil.replace(s, "&", "");
-    }
-    if (s.indexOf('_') != -1) {
-      s = StringUtil.replace(s, "_", "");
-    }
-    if (s.indexOf(MNEMONIC) != -1) {
-      s = StringUtil.replace(s, String.valueOf(MNEMONIC), "");
-    }
-    return s;
+    return TextWithMnemonic.parse(s).getText();
   }
 
   public static int getDisplayMnemonicIndex(@NotNull String s) {
@@ -1661,18 +1649,6 @@ public final class UIUtil {
   }
 
   /**
-   * @see #createImage(GraphicsConfiguration, double, double, int, RoundingMode)
-   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
-   */
-  public static @NotNull BufferedImage createImage(ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
-    if (StartupUiUtil.isJreHiDPI(ctx)) {
-      return RetinaImage.create(ctx, width, height, type, rm);
-    }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(rm.round(width), rm.round(height), type);
-  }
-
-  /**
    * @deprecated Use {@link ImageUtil#createImage(Graphics, int, int, int)}
    */
   @Deprecated
@@ -1681,17 +1657,9 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link ImageUtil#createImage(Graphics, double, double, int, RoundingMode)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull RoundingMode rm) {
-    return ImageUtil.createImage(g, width, height, type, rm);
-  }
-
-  /**
    * Creates a HiDPI-aware BufferedImage in the component scale.
    *
-   * @param comp the component associated with the target graphics device
+   * @param component the component associated with the target graphics device
    * @param width the width in user coordinate space
    * @param height the height in user coordinate space
    * @param type the type of the image
@@ -1699,10 +1667,8 @@ public final class UIUtil {
    * @return a HiDPI-aware BufferedImage in the component scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  public static @NotNull BufferedImage createImage(Component comp, int width, int height, int type) {
-    return comp != null ?
-           ImageUtil.createImage(comp.getGraphicsConfiguration(), width, height, type) :
-           ImageUtil.createImage(width, height, type);
+  public static @NotNull BufferedImage createImage(@Nullable Component component, int width, int height, int type) {
+    return ImageUtil.createImage(component == null ? null : component.getGraphicsConfiguration(), width, height, type);
   }
 
   /**
@@ -1954,7 +1920,7 @@ public final class UIUtil {
   /**
    * @param component to check whether it can be focused or not
    * @return {@code true} if component is not {@code null} and can be focused
-   * @see Component#isRequestFocusAccepted(boolean, boolean, sun.awt.CausedFocusEvent.Cause)
+   * @see Component#isRequestFocusAccepted(boolean, boolean, FocusEvent.Cause)
    */
   public static boolean isFocusable(@Nullable Component component) {
     return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
@@ -2812,7 +2778,7 @@ public final class UIUtil {
   }
 
   public static void setAutoRequestFocus(@NotNull Window window, boolean value) {
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       window.setAutoRequestFocus(value);
     }
   }
@@ -3103,8 +3069,9 @@ public final class UIUtil {
 
   public static void setCursor(@NotNull Component component, Cursor cursor) {
     // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
-    if(component.isCursorSet() && component.getCursor() == cursor) return;
-    component.setCursor(cursor);
+    if (!component.isCursorSet() || component.getCursor() != cursor) {
+      component.setCursor(cursor);
+    }
   }
 
   public static boolean haveCommonOwner(Component c1, Component c2) {
@@ -3178,6 +3145,20 @@ public final class UIUtil {
     private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionInactiveBackground", BACKGROUND);
   }
 
+  private static final class FocusedHover {
+    private static final Color BACKGROUND = new JBColor(0xEDF5FC, 0x464A4D);
+    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.hoverBackground", BACKGROUND);
+    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.hoverBackground", BACKGROUND);
+    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.hoverBackground", BACKGROUND);
+  }
+
+  private static final class UnfocusedHover {
+    private static final Color BACKGROUND = new JBColor(0xF5F5F5, 0x464A4D);
+    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.hoverInactiveBackground", BACKGROUND);
+    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.hoverInactiveBackground", BACKGROUND);
+    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.hoverInactiveBackground", BACKGROUND);
+  }
+
 
   // List
 
@@ -3235,6 +3216,11 @@ public final class UIUtil {
     return getListSelectionBackground(false);
   }
 
+  @ApiStatus.Experimental
+  public static @NotNull Color getListHoverBackground(boolean focused) {
+    return focused ? FocusedHover.LIST_BACKGROUND : UnfocusedHover.LIST_BACKGROUND;
+  }
+
   // foreground
 
   public static @NotNull Color getListForeground() {
@@ -3266,7 +3252,6 @@ public final class UIUtil {
   public static @NotNull Color getListSelectionForeground() {
     return getListSelectionForeground(true);
   }
-
 
   // Tree
 
@@ -3303,6 +3288,11 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull Color getTreeUnfocusedSelectionBackground() {
     return getTreeSelectionBackground(false);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull Color getTreeHoverBackground(boolean focused) {
+    return focused ? FocusedHover.TREE_BACKGROUND : UnfocusedHover.TREE_BACKGROUND;
   }
 
   // foreground
@@ -3362,6 +3352,11 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull Color getTableUnfocusedSelectionBackground() {
     return getTableSelectionBackground(false);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull Color getTableHoverBackground(boolean focused) {
+    return focused ? FocusedHover.TABLE_BACKGROUND : UnfocusedHover.TABLE_BACKGROUND;
   }
 
   // foreground

@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -76,7 +77,7 @@ public final class NewRunConfigurationPopup {
   @NotNull
   public static JBPopup createAddPopup(@NotNull Project project,
                                        @NotNull final List<? extends ConfigurationType> typesToShow,
-                                       @NotNull final String defaultText,
+                                       @NotNull @Nls final String defaultText,
                                        @NotNull final Consumer<? super ConfigurationFactory> creator,
                                        @Nullable final ConfigurationType selectedConfigurationType,
                                        @Nullable final Runnable finalStep, boolean showTitle) {
@@ -164,7 +165,8 @@ public final class NewRunConfigurationPopup {
         values.clear();
         values.addAll(RunConfigurable.Companion.configurationTypeSorted(project,
                                                                         false,
-                                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()));
+                                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(),
+                                                                        true));
 
         getListModel().updateOriginalList();
         super.onSpeedSearchPatternChanged();
@@ -235,6 +237,11 @@ public final class NewRunConfigurationPopup {
         if (!(userData instanceof NodeDescriptor)) return false;
         if (getStructure().getChildElements(userData).length > 0) return false;
         userData = ((NodeDescriptor<?>)userData).getElement();
+        if (!project.isDefault() &&
+            DumbService.getInstance(project).isDumb() &&
+            !NewRunConfigurationTreePopupFactory.isEditableInDumbMode(userData)) {
+          return false;
+        }
         return isAutoSelectionPassed.get() || userData == selectedConfigurationType;
       }
 

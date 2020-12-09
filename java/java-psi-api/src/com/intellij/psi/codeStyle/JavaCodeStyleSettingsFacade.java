@@ -17,26 +17,61 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 
 /**
- * @author yole
+ * @deprecated Use {@link JavaFileCodeStyleFacade} for per-file code-style-settings. Note: project settings
+ * may not be applicable to a particular file.
  */
+@Deprecated
 public abstract class JavaCodeStyleSettingsFacade {
+  /**
+   * @deprecated Use {@link JavaFileCodeStyleFacade#getNamesCountToUseImportOnDemand()}
+   */
+  @Deprecated
   public abstract int getNamesCountToUseImportOnDemand();
 
+  /**
+   * @deprecated Use {@link JavaFileCodeStyleFacade#isToImportOnDemand(String)}
+   */
+  @Deprecated
   public abstract boolean isToImportInDemand(String qualifiedName);
-  
+
+  /**
+   * @deprecated Use {@link JavaFileCodeStyleFacade#useFQClassNames()}
+   */
+  @Deprecated
   public abstract boolean useFQClassNames();
 
+  /**
+   * @deprecated Use {@link JavaFileCodeStyleFacade#isJavaDocLeadingAsterisksEnabled()}
+   */
+  @Deprecated
   public abstract boolean isJavaDocLeadingAsterisksEnabled();
 
+  /**
+   * @deprecated Use {@link JavaFileCodeStyleFacade#getIndentSize()}
+   */
+  @Deprecated
   public abstract int getIndentSize();
 
+  /**
+   * @deprecated Use {@link JavaFileCodeStyleFacade#isGenerateFinalParameters()}
+   */
+  @Deprecated
   public abstract boolean isGenerateFinalParameters();
 
+  /**
+   * @deprecated Use {@link JavaFileCodeStyleFacade#isGenerateFinalLocals()}
+   */
+  @Deprecated
   public abstract boolean isGenerateFinalLocals();
 
 
+  /**
+   * @deprecated Use {@link JavaFileCodeStyleFacade#forContext(PsiFile)} instead.
+   */
+  @Deprecated
   public static JavaCodeStyleSettingsFacade getInstance(Project project) {
     return ServiceManager.getService(project, JavaCodeStyleSettingsFacade.class);
   }

@@ -66,10 +66,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   private static final Logger PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance");
   private static final NotificationGroup BP_NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Breakpoint hit");
 
-  /** @deprecated Use {@link XDebuggerManagerImpl#NOTIFICATION_GROUP} */
-  @Deprecated
-  public static final NotificationGroup NOTIFICATION_GROUP = XDebuggerManagerImpl.NOTIFICATION_GROUP;
-
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<>();
   private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new HashSet<>());

@@ -26,10 +26,10 @@ import java.awt.event.KeyEvent;
  * Usually shown in View|Tool-windows sub-menu.
  * Dynamically registered in Settings|Keymap for each newly-registered tool window.
  */
-public final class ActivateToolWindowAction extends DumbAwareAction {
+public class ActivateToolWindowAction extends DumbAwareAction {
   private final String myToolWindowId;
 
-  private ActivateToolWindowAction(@NotNull String toolWindowId) {
+  protected ActivateToolWindowAction(@NotNull String toolWindowId) {
     myToolWindowId = toolWindowId;
   }
 
@@ -66,13 +66,17 @@ public final class ActivateToolWindowAction extends DumbAwareAction {
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId);
     if (toolWindow == null) {
-      presentation.setEnabledAndVisible(false);
+      presentation.setEnabledAndVisible(hasEmptyState());
     }
     else {
       presentation.setVisible(true);
-      presentation.setEnabled(toolWindow.isAvailable());
+      presentation.setEnabled(toolWindow.isAvailable() || hasEmptyState());
       updatePresentation(presentation, toolWindow);
     }
+  }
+
+  protected boolean hasEmptyState() {
+    return false;
   }
 
   private void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
@@ -109,11 +113,23 @@ public final class ActivateToolWindowAction extends DumbAwareAction {
       source = ToolWindowEventSource.ActivateActionOther;
     }
     if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
-      windowManager.activateToolWindow(myToolWindowId, null, true, source);
+      ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);
+      if (toolWindow != null) {
+        if (hasEmptyState() && !toolWindow.isAvailable()) {
+          toolWindow.setAvailable(true);
+        }
+        windowManager.activateToolWindow(myToolWindowId, null, true, source);
+      }
+      else if (hasEmptyState()) {
+        createEmptyState(project);
+      }
     }
     else {
       windowManager.hideToolWindow(myToolWindowId, false, true, source);
     }
+  }
+
+  protected void createEmptyState(Project project) {
   }
 
   /**

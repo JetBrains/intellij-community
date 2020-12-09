@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.util.ArrayUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,8 +10,7 @@ public class LoggedErrorProcessor {
 
   private static LoggedErrorProcessor ourInstance = DEFAULT;
 
-  @NotNull
-  public static LoggedErrorProcessor getInstance() {
+  public static @NotNull LoggedErrorProcessor getInstance() {
     return ourInstance;
   }
 
@@ -30,7 +27,7 @@ public class LoggedErrorProcessor {
   }
 
   public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
-    if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && ArrayUtil.isEmpty(details)) {
+    if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && (details == null || details.length == 0)) {
       throw (TestLoggerAssertionError)t;
     }
 
@@ -40,10 +37,6 @@ public class LoggedErrorProcessor {
     DefaultLogger.dumpExceptionsToStderr(message, t, details);
 
     throw new TestLoggerAssertionError(message, t);
-  }
-
-  public void disableStderrDumping(@NotNull Disposable parentDisposable) {
-    DefaultLogger.disableStderrDumping(parentDisposable);
   }
 
   static final class TestLoggerAssertionError extends AssertionError {

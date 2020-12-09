@@ -82,6 +82,10 @@ public final class LibraryCompositionSettings implements Disposable {
     return result;
   }
 
+  FrameworkLibraryVersionFilter getVersionFilter() {
+    return myVersionFilter;
+  }
+
   private static String getDefaultDownloadPath(@NotNull String baseDirectoryPath) {
     return baseDirectoryPath.isEmpty() ? "lib" : baseDirectoryPath + "/lib";
   }

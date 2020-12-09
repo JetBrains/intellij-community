@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -332,17 +334,20 @@ public abstract class XDebuggerEditorBase implements Expandable {
     return myDebuggerEditorsProvider;
   }
 
-  public Project getProject() {
+  public final Project getProject() {
     return myProject;
   }
 
   protected Document createDocument(final XExpression text) {
+    if (myProject.isDefault()) {
+      return new DocumentImpl(text.getExpression());
+    }
     XDebuggerEditorsProvider provider = getEditorsProvider();
     if (myContext != null && provider instanceof XDebuggerEditorsProviderBase) {
-      return ((XDebuggerEditorsProviderBase)provider).createDocument(getProject(), text, myContext, myMode);
+      return ((XDebuggerEditorsProviderBase)provider).createDocument(myProject, text, myContext, myMode);
     }
     else {
-      return provider.createDocument(getProject(), text, mySourcePosition, myMode);
+      return provider.createDocument(myProject, text, mySourcePosition, myMode);
     }
   }
 
@@ -557,7 +562,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       Icon dropdownIcon = AllIcons.General.Dropdown;
       int width = dropdownIcon.getIconWidth();
       dropdownIcon = IconUtil.cropIcon(dropdownIcon, new Rectangle(width / 2, 0, width - width / 2, dropdownIcon.getIconHeight()));
-      LayeredIcon icon = JBUI.scale(new LayeredIcon(1));
+      LayeredIcon icon = JBUIScale.scaleIcon(new LayeredIcon(1));
       icon.setIcon(dropdownIcon, 0, 0, -5);
       setIcon(icon);
       setDisabledIcon(IconLoader.getDisabledIcon(icon));

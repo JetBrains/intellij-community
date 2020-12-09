@@ -44,10 +44,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -139,7 +136,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @NotNull
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
-  @Nullable private Int2ObjectOpenHashMap<List<GutterMark>> myLineToGutterRenderers;
+  @Nullable private Int2ObjectMap<List<GutterMark>> myLineToGutterRenderers;
   private boolean myLineToGutterRenderersCacheForLogicalLines;
   private boolean myHasInlaysWithGutterIcons;
   private int myStartIconAreaWidth = START_ICON_AREA_WIDTH.get();
@@ -149,7 +146,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @NotNull private List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   private int myTextAnnotationGuttersSize;
   private int myTextAnnotationExtraSize;
-  final IntArrayList myTextAnnotationGutterSizes = new IntArrayList();
+  final IntList myTextAnnotationGutterSizes = new IntArrayList();
   final ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
   private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
@@ -159,7 +156,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myShowDefaultGutterPopup = true;
   private boolean myCanCloseAnnotations = true;
   @Nullable private ActionGroup myCustomGutterPopupGroup;
-  private final Int2ObjectOpenHashMap<Color> myTextFgColors = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<Color> myTextFgColors = new Int2ObjectOpenHashMap<>();
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
   private boolean myRightFreePaintersAreaShown;
@@ -1733,7 +1730,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Point point = pointInfo.iconCenterPosition;
     Balloon.Position relativePosition = pointInfo.renderersInLine > 1 && pointInfo.rendererPosition == 0 ? Balloon.Position.below
                                                                                                          : Balloon.Position.atRight;
-    AtomicReference<String> tooltip = new AtomicReference<>();
+    AtomicReference<@NlsContexts.Tooltip String> tooltip = new AtomicReference<>();
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(), IdeBundle.message("progress.title.constructing.tooltip")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -1747,7 +1744,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }, myBackgroundIndicator);
   }
 
-  void showToolTip(@Nullable String toolTip, @NotNull Point location, @NotNull Balloon.Position relativePosition) {
+  void showToolTip(@Nullable @NlsContexts.Tooltip String toolTip, @NotNull Point location, @NotNull Balloon.Position relativePosition) {
     myCalculatingInBackground = null;
     TooltipController controller = TooltipController.getInstance();
     if (toolTip == null || toolTip.isEmpty() || myEditor.isDisposed()) {

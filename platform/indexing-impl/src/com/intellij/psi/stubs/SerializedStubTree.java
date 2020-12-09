@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -25,7 +21,6 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class SerializedStubTree {
-
   // serialized tree
   final byte[] myTreeBytes;
   final int myTreeByteLength;
@@ -236,7 +231,7 @@ public final class SerializedStubTree {
     }
 
     @Override
-    public ObjectStubSerializer getStubType() {
+    public ObjectStubSerializer<?, ?> getStubType() {
       return null;
     }
 

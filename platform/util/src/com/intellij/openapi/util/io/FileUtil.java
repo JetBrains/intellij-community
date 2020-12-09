@@ -14,7 +14,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.FilePathHashingStrategy;
-import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.*;
@@ -80,12 +79,12 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
-  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
+  public static @NlsSafe String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator);
   }
 
   @Nullable
-  public static String getRelativePath(@NotNull String basePath,
+  public static @NlsSafe String getRelativePath(@NotNull String basePath,
                                        @NotNull String filePath,
                                        final char separator,
                                        final boolean caseSensitive) {
@@ -225,7 +224,7 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static String loadTextAndClose(@NotNull Reader reader) throws IOException {
     try {
-      return StringFactory.createShared(adaptiveLoadText(reader));
+      return new String(adaptiveLoadText(reader));
     }
     finally {
       reader.close();
@@ -1074,6 +1073,9 @@ public class FileUtil extends FileUtilRt {
 
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
     writeToFile(file, text, false);
+  }
+  public static void writeToFile(@NotNull File file, @NotNull String text, @NotNull Charset charset) throws IOException {
+    writeToFile(file, text.getBytes(charset));
   }
   public static void writeToFile(@NotNull File file, @NotNull String text, boolean append) throws IOException {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);

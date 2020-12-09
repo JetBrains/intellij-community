@@ -25,6 +25,8 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -224,6 +226,13 @@ abstract class Cell : BaseBuilder {
             fontColor: UIUtil.FontColor? = null,
             bold: Boolean = false): CellBuilder<JLabel> {
     val label = Label(text, style, fontColor, bold)
+    return component(label)
+  }
+
+  fun label(@Label text: String,
+            font: JBFont,
+            fontColor: UIUtil.FontColor? = null): CellBuilder<JLabel> {
+    val label = Label(text, fontColor = fontColor, font = font)
     return component(label)
   }
 
@@ -462,6 +471,18 @@ abstract class Cell : BaseBuilder {
 
   fun textFieldWithBrowseButton(
     property: GraphProperty<String>,
+    emptyTextProperty: GraphProperty<String>,
+    @DialogTitle browseDialogTitle: String? = null,
+    project: Project? = null,
+    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+  ): CellBuilder<TextFieldWithBrowseButton> {
+    return textFieldWithBrowseButton(property, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
+      .applyToComponent { emptyText.bind(emptyTextProperty) }
+  }
+
+  fun textFieldWithBrowseButton(
+    property: GraphProperty<String>,
     @DialogTitle browseDialogTitle: String? = null,
     project: Project? = null,
     fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
@@ -611,6 +632,19 @@ private fun <T> ComboBox<T>.bind(property: GraphProperty<T>) {
         property.set(it.item as T)
       }
     }
+  }
+}
+
+private val TextFieldWithBrowseButton.emptyText
+  get() = (textField as JBTextField).emptyText
+
+private fun StatusText.bind(property: GraphProperty<String>) {
+  text = property.get()
+  property.afterChange {
+    text = it
+  }
+  property.afterReset {
+    text = property.get()
   }
 }
 

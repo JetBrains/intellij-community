@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -68,4 +69,23 @@ public interface PyTypeProvider {
    */
   @NotNull
   Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context);
+
+  /**
+   * <p>
+   * If callee type is a class type, it is replaced in code insight for {@code call}
+   * with {@code __init__}/{@code __new__} or {@code __call__} depending on whether it is a definition or an instance.
+   * </p>
+   * <p>
+   * If the {@code type} is provided, and it is desirable to stay with the provided {@code type}, please wrap it into {@link Ref}.
+   * </p>
+   * <p>
+   * If code insight should be suppressed for the {@code call}, return {@code null} wrapped into the {@link Ref}.
+   * </p>
+   * <p>
+   * Return {@code null} otherwise.
+   * </p>
+   */
+  @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
+                                                                   @NotNull PyCallExpression call,
+                                                                   @NotNull TypeEvalContext context);
 }

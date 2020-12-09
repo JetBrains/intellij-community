@@ -169,6 +169,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testDeclaration$var10() throws Throwable { doTest() }
 
+  void testDeclaration$multilineTuple() { doTest() }
+
   void testFor$for1() throws Throwable { doTest() }
 
   void testFor$for11() throws Throwable { doTest() }
@@ -221,6 +223,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$tupleDeclarationSingleVariable() { doTest() }
 
+  void testFor$multilineClause() { doTest() }
+  
   void testIfstmt$if1() throws Throwable { doTest() }
 
   void testIfstmt$if2() throws Throwable { doTest() }
@@ -402,6 +406,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testTry_catch$tryResourcesSeparators() { doTest() }
 
   void testTry_catch$tryResourcesTyped() { doTest() }
+
+  void testTry_catch$tryResourcesMultiline() { doTest() }
 
   void testTuples$doubleParens() throws Throwable { doTest() }
 

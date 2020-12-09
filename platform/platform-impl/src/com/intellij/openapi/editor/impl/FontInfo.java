@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import sun.font.CompositeGlyphMapper;
@@ -15,31 +16,16 @@ import java.awt.font.TextAttribute;
 import java.util.Collections;
 
 public final class FontInfo {
-  private static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
+  public static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
+
   private static final Font DUMMY_FONT = new Font(null);
 
   private final Font myFont;
   private final int mySize;
   @JdkConstants.FontStyle private final int myStyle;
-  private final IntOpenHashSet mySafeCharacters = new IntOpenHashSet();
+  private final IntSet mySafeCharacters = new IntOpenHashSet();
   private final FontRenderContext myContext;
   private FontMetrics myFontMetrics = null;
-
-  /**
-   * @deprecated Use {@link #FontInfo(String, int, int, boolean, FontRenderContext)} instead.
-   */
-  @Deprecated
-  public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
-    this(familyName, size, style, false, null);
-  }
-
-  /**
-   * @deprecated Use {@link #FontInfo(String, int, int, boolean, FontRenderContext)} instead.
-   */
-  @Deprecated
-  public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures) {
-    this(familyName, size, style, useLigatures, null);
-  }
 
   /**
    * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.

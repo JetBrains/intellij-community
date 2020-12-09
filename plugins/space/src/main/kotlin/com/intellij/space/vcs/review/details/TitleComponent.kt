@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.identifier
@@ -31,7 +32,7 @@ import javax.swing.KeyStroke
 
 internal class TitleComponent(private val client: KCircletClient,
                               override val lifetime: Lifetime,
-                              private val detailsVm: CrDetailsVm<CodeReviewRecord>) : Lifetimed {
+                              private val detailsVm: SpaceReviewDetailsVm<CodeReviewRecord>) : Lifetimed {
   private val titleLabel = HtmlEditorPane().apply {
     font = font.deriveFont((font.size * 1.2).toFloat())
   }

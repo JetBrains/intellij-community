@@ -961,7 +961,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "        pass\n" +
                          "\n" +
                          "def foo(cb: Callback[int]):\n" +
-                         "    cb(<weak_warning descr=\"Expected type 'int' (matched generic type '_T'), got 'str' instead\">\"42\"</weak_warning>)")
+                         "    cb(<warning descr=\"Expected type 'int' (matched generic type '_T'), got 'str' instead\">\"42\"</warning>)")
     );
   }
 
@@ -1116,7 +1116,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
         "d: MyMapping[str, str] = undefined1\n" +
         "d.get(undefined2)\n" +
         "d.get(\"str\")\n" +
-        "d.get(<weak_warning descr=\"Expected type 'str' (matched generic type '_KT'), got 'int' instead\">1</weak_warning>)"
+        "d.get(<warning descr=\"Expected type 'str' (matched generic type '_KT'), got 'int' instead\">1</warning>)"
       )
     );
   }
@@ -1234,7 +1234,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "def accepts_anything(x: str) -> None:\n" +
                          "    pass\n" +
                          "\n" +
-                         "func(<weak_warning descr=\"Expected type '(Any) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead\">accepts_anything</weak_warning>)\n")
+                         "func(<warning descr=\"Expected type '(Any) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead\">accepts_anything</warning>)\n")
     );
   }
 
@@ -1252,7 +1252,21 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "def accepts_anything(x: str) -> None:\n" +
                          "    pass\n" +
                          "\n" +
-                         "func(42, <weak_warning descr=\"Expected type '(int) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead\">accepts_anything</weak_warning>)")
+                         "func(42, <warning descr=\"Expected type '(int) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead\">accepts_anything</warning>)")
     );
+  }
+
+  public void testCallByClass() {
+    doTest();
+  }
+
+  // PY-41806
+  public void testClassDefinitionAgainstProtocolDunderCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-41806
+  public void testClassInstanceAgainstProtocolDunderCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 }

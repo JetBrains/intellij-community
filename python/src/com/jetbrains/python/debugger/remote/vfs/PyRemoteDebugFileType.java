@@ -11,6 +11,9 @@ import javax.swing.*;
 public class PyRemoteDebugFileType implements FileType {
   public static final PyRemoteDebugFileType INSTANCE = new PyRemoteDebugFileType();
 
+  private PyRemoteDebugFileType() {
+  }
+
   @NotNull
   @Override
   public String getName() {
@@ -42,10 +45,5 @@ public class PyRemoteDebugFileType implements FileType {
   @Override
   public boolean isReadOnly() {
     return true;
-  }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return null;
   }
 }

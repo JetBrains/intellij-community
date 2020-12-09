@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -37,11 +38,10 @@ class FileLoggerTest : HeavyPlatformTestCase() {
       `when`(getUniqueFile()).thenReturn(logFile)
     }
 
-    CompletionTrackerInitializer.isEnabledInTests = true
+    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer(project))
   }
 
   override fun tearDown() {
-    CompletionTrackerInitializer.isEnabledInTests = false
     try {
       dir.deleteRecursively()
     }
@@ -83,7 +83,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
     val watchService = FileSystems.getDefault().newWatchService()
     val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY)
 
-    logger.completionStarted(lookup, true, 2, System.currentTimeMillis())
+    logger.completionStarted(lookup, 0, true, 2, System.currentTimeMillis())
 
     logger.completionCancelled(true, emptyMap(), System.currentTimeMillis())
     loggerProvider.dispose()

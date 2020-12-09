@@ -7,6 +7,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.auth.PluginAuthService;
+import com.intellij.ide.plugins.auth.PluginAuthSubscriber;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
@@ -75,7 +77,7 @@ import java.util.function.Supplier;
  * @author Alexander Lobas
  */
 public class PluginManagerConfigurable
-  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
+  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider, PluginAuthSubscriber {
 
   private static final Logger LOG = Logger.getInstance(PluginManagerConfigurable.class);
 
@@ -130,7 +132,7 @@ public class PluginManagerConfigurable
   private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
 
-  private Collection<IdeaPluginDescriptor> myInitUpdates;
+  private String myLaterSearchQuery;
 
   public PluginManagerConfigurable(@Nullable Project project) {
     myPluginModel = new MyPluginModel(project);
@@ -138,6 +140,7 @@ public class PluginManagerConfigurable
 
   public PluginManagerConfigurable() {
     this((Project)null);
+    PluginAuthService.INSTANCE.subscribe(this);
   }
 
   /**
@@ -159,17 +162,14 @@ public class PluginManagerConfigurable
     return IdeBundle.message("title.plugins");
   }
 
-  @NotNull
   @Override
-  public Component getCenterComponent(@NotNull TopComponentController controller) {
+  public @NotNull JComponent getCenterComponent(@NotNull TopComponentController controller) {
     myPluginModel.setTopController(controller);
     return myTabHeaderComponent;
   }
 
-  @NotNull
-  public JComponent getTopComponent() {
-    myPluginModel.setTopController(TopComponentController.EMPTY);
-    return myTabHeaderComponent;
+  public @NotNull JComponent getTopComponent() {
+    return getCenterComponent(TopComponentController.EMPTY);
   }
 
   @Nullable
@@ -189,9 +189,9 @@ public class PluginManagerConfigurable
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.marketplace"), null);
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myCountIcon);
 
-    Consumer<Integer> callback = countValue -> {
+    myPluginUpdatesService = PluginUpdatesService.connectWithCounter(countValue -> {
       int count = countValue == null ? 0 : countValue;
-      String text = String.valueOf(count);
+      String text = Integer.toString(count);
       boolean visible = count > 0;
 
       myUpdateAll.setEnabled(true);
@@ -202,14 +202,8 @@ public class PluginManagerConfigurable
 
       myCountIcon.setText(text);
       myTabHeaderComponent.update();
-    };
-    if (myInitUpdates != null) {
-      callback.accept(myInitUpdates.size());
-    }
-    myPluginUpdatesService = PluginUpdatesService.connectConfigurable(callback);
+    });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
-
-    boolean selectInstalledTab = !ContainerUtil.isEmpty(myInitUpdates);
 
     createMarketplaceTab();
     createInstalledTab();
@@ -231,12 +225,16 @@ public class PluginManagerConfigurable
 
     myTabHeaderComponent.setListener();
 
-    int selectionTab = selectInstalledTab ? INSTALLED_TAB : getStoredSelectionTab();
+    int selectionTab = getStoredSelectionTab();
     myTabHeaderComponent.setSelection(selectionTab);
     myCardPanel.select(selectionTab, true);
 
-    if (selectInstalledTab) {
-      myInstalledTab.setSearchQuery("/outdated");
+    if (myLaterSearchQuery != null) {
+      Runnable search = enableSearch(myLaterSearchQuery);
+      if (search != null) {
+        ApplicationManager.getApplication().invokeLater(search, ModalityState.any());
+      }
+      myLaterSearchQuery = null;
     }
 
     return myCardPanel;
@@ -266,8 +264,12 @@ public class PluginManagerConfigurable
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
-
     return actions;
+  }
+
+  @Override
+  public void pluginAuthCallback() {
+    ApplicationManager.getApplication().invokeLater(this::resetPanelsWithoutClearCache, ModalityState.any());
   }
 
   private static void showRightBottomPopup(@NotNull Component component, @NotNull @Nls String title, @NotNull ActionGroup group) {
@@ -321,8 +323,13 @@ public class PluginManagerConfigurable
   private void resetPanels() {
     CustomPluginRepositoryService.getInstance().clearCache();
 
+    resetPanelsWithoutClearCache();
+  }
+
+  void resetPanelsWithoutClearCache(){
     myTagsSorted = null;
     myVendorsSorted = null;
+
 
     myPluginUpdatesService.recalculateUpdates();
 
@@ -875,10 +882,9 @@ public class PluginManagerConfigurable
             group.rightAction = new LinkLabel<>(
               "",
               null,
-              (__, ___) -> UIUtilsKt.changeEnableDisable(
-                myPluginModel,
+              (__, ___) -> myPluginModel.changeEnableDisable(
                 Set.copyOf(group.descriptors),
-                group.rightAction.getText().startsWith("Enable")
+                PluginEnableDisableAction.globally(group.rightAction.getText().startsWith("Enable"))
               )
             );
             group.titleWithEnabled(myPluginModel);
@@ -897,7 +903,7 @@ public class PluginManagerConfigurable
             myPluginModel.addEnabledGroup(group);
           }
 
-          myPluginUpdatesService.connectInstalled(updates -> {
+          myPluginUpdatesService.calculateUpdates(updates -> {
             if (ContainerUtil.isEmpty(updates)) {
               clearUpdates(myInstalledPanel);
               clearUpdates(myInstalledSearchPanel.getPanel());
@@ -911,10 +917,6 @@ public class PluginManagerConfigurable
         }
         finally {
           PluginLogo.endBatchMode();
-        }
-
-        if (myInitUpdates != null) {
-          applyUpdates(myInstalledPanel, myInitUpdates);
         }
 
         return createScrollPane(myInstalledPanel, true);
@@ -1144,8 +1146,7 @@ public class PluginManagerConfigurable
                 });
               }
 
-              Collection<IdeaPluginDescriptor> updates = myInitUpdates == null ? PluginUpdatesService.getUpdates() : myInitUpdates;
-              myInitUpdates = null;
+              Collection<IdeaPluginDescriptor> updates = PluginUpdatesService.getUpdates();
               if (!ContainerUtil.isEmpty(updates)) {
                 myPostFillGroupCallback = () -> {
                   applyUpdates(myPanel, updates);
@@ -1161,6 +1162,10 @@ public class PluginManagerConfigurable
     };
 
     myPluginModel.setCancelInstallCallback(descriptor -> {
+      if (myInstalledSearchPanel == null) {
+        return;
+      }
+
       PluginsGroup group = myInstalledSearchPanel.getGroup();
 
       if (group.ui != null && group.ui.findComponent(descriptor) != null) {
@@ -1208,7 +1213,8 @@ public class PluginManagerConfigurable
       public void performCopy(@NotNull DataContext dataContext) {
         StringBuilder result = new StringBuilder();
         for (ListPluginComponent pluginComponent : component.getSelection()) {
-          result.append(pluginComponent.myPlugin.getName()).append(" (").append(pluginComponent.myPlugin.getVersion()).append(")\n");
+          IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
+          result.append(descriptor.getName()).append(" (").append(descriptor.getVersion()).append(")\n");
         }
         CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
       }
@@ -1288,7 +1294,7 @@ public class PluginManagerConfigurable
   }
 
   @Nullable
-  public static synchronized String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized @NlsSafe String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
     String downloads = null;
     if (plugin instanceof PluginNode) {
       downloads = ((PluginNode)plugin).getDownloads();
@@ -1314,7 +1320,7 @@ public class PluginManagerConfigurable
   }
 
   @Nullable
-  public static synchronized String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized @NlsSafe String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
     long date = 0;
     if (plugin instanceof PluginNode) {
       date = ((PluginNode)plugin).getDate();
@@ -1323,7 +1329,7 @@ public class PluginManagerConfigurable
   }
 
   @Nullable
-  public static String getRating(@NotNull IdeaPluginDescriptor plugin) {
+  public static @NlsSafe String getRating(@NotNull IdeaPluginDescriptor plugin) {
     String rating = null;
     if (plugin instanceof PluginNode) {
       rating = ((PluginNode)plugin).getRating();
@@ -1341,7 +1347,7 @@ public class PluginManagerConfigurable
   }
 
   @Nullable
-  public static synchronized String getSize(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized @NlsSafe String getSize(@NotNull IdeaPluginDescriptor plugin) {
     String size = null;
     if (plugin instanceof PluginNode) {
       size = ((PluginNode)plugin).getSize();
@@ -1357,7 +1363,7 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  public static String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
+  public static @NlsSafe String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
     return StringUtil.defaultIfEmpty(oldPlugin.getVersion(), "unknown") +
            " " + UIUtil.rightArrow() + " " +
            StringUtil.defaultIfEmpty(newPlugin.getVersion(), "unknown");
@@ -1405,12 +1411,6 @@ public class PluginManagerConfigurable
   public static void showPluginConfigurable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
-  }
-
-  public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<IdeaPluginDescriptor> updates) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
-    configurable.setInitUpdates(updates);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
   }
 
   private enum SortBySearchOption {
@@ -1571,7 +1571,7 @@ public class PluginManagerConfigurable
       }
       else {
         for (ListPluginComponent component : group.ui.plugins) {
-          IdeaPluginDescriptor plugin = component.myPlugin;
+          IdeaPluginDescriptor plugin = component.getPluginDescriptor();
           if (myPluginModel.isEnabled(plugin) != myEnable) {
             descriptors.add(plugin);
           }
@@ -1579,10 +1579,9 @@ public class PluginManagerConfigurable
       }
 
       if (!descriptors.isEmpty()) {
-        UIUtilsKt.changeEnableDisable(
-          myPluginModel,
+        myPluginModel.changeEnableDisable(
           descriptors,
-          myEnable
+          PluginEnableDisableAction.globally(myEnable)
         );
       }
     }
@@ -1661,11 +1660,13 @@ public class PluginManagerConfigurable
     InstalledPluginsState.getInstance().runShutdownCallback();
 
     InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
+
+    PluginAuthService.INSTANCE.unsubscribe(this);
   }
 
   @Override
   public void cancel() {
-    myPluginModel.removePluginsOnCancel(myCardPanel);
+    myPluginModel.cancel(myCardPanel);
   }
 
   @Override
@@ -1685,16 +1686,12 @@ public class PluginManagerConfigurable
 
   @Override
   public void reset() {
-    myPluginModel.removePluginsOnCancel(myCardPanel);
+    myPluginModel.clear(myCardPanel);
   }
 
   @NotNull
   public MyPluginModel getPluginModel() {
     return myPluginModel;
-  }
-
-  public void setInitUpdates(@NotNull Collection<IdeaPluginDescriptor> initUpdates) {
-    myInitUpdates = initUpdates;
   }
 
   public void select(IdeaPluginDescriptor @NotNull ... descriptors) {
@@ -1726,6 +1723,10 @@ public class PluginManagerConfigurable
   @Nullable
   @Override
   public Runnable enableSearch(String option) {
+    if (myTabHeaderComponent == null) {
+      myLaterSearchQuery = option;
+      return null;
+    }
     if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
     }

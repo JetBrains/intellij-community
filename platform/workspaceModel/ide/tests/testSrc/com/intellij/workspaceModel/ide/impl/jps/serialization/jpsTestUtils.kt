@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.components.PathMacroMap
+import com.intellij.openapi.components.impl.ModulePathMacroManager
+import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
@@ -11,7 +13,11 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import junit.framework.AssertionFailedError
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -56,80 +62,15 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
 }
 
 internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
-  val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
+  val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache", virtualFileManager)
   return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
                                               TestErrorReporter, virtualFileManager)
 }
 
 internal fun JpsProjectSerializersImpl.saveAllEntities(storage: WorkspaceEntityStorage, projectDir: File) {
-  val writer = JpsFileContentWriterImpl()
+  val writer = JpsFileContentWriterImpl(projectDir)
   saveAllEntities(storage, writer)
-  writer.writeFiles(projectDir)
-}
-
-internal fun JpsFileContentWriterImpl.writeFiles(baseProjectDir: File) {
-  urlToComponents.forEach { (url, newComponents) ->
-    val components = HashMap(newComponents)
-    val file = JpsPathUtil.urlToFile(url)
-
-    val isModuleFile = FileUtil.extensionEquals(file.absolutePath, "iml")
-                       || file.parentFile.name == "modules" && file.parentFile.parentFile.name != ".idea"
-    val replaceMacroMap = if (isModuleFile)
-      CachingJpsFileContentReader.ModulePathMacroManagerBridge(PathMacros.getInstance(), JpsPathUtil.urlToOsPath(url)).replacePathMap
-    else
-      CachingJpsFileContentReader.ProjectPathMacroManagerBridge(baseProjectDir.systemIndependentPath).replacePathMap
-
-
-    val newRootElement = when {
-      isModuleFile -> Element("module")
-      FileUtil.filesEqual(File(baseProjectDir, ".idea"), file.parentFile.parentFile) -> null
-      else -> Element("project")
-    }
-
-    fun isEmptyComponentTag(componentTag: Element) = componentTag.contentSize == 0 && componentTag.attributes.all { it.name == "name" }
-
-    val rootElement: Element?
-    if (newRootElement != null) {
-      if (file.exists()) {
-        val oldElement = JDOMUtil.load(file)
-        oldElement.getChildren("component")
-          .filterNot { it.getAttributeValue("name") in components }
-          .map { it.clone() }
-          .associateByTo(components) { it.getAttributeValue("name") }
-      }
-      components.entries.sortedBy { it.key }.forEach { (name, element) ->
-        if (element != null && !isEmptyComponentTag(element)) {
-          if (name == "DeprecatedModuleOptionManager") {
-            element.getChildren("option").forEach {
-              newRootElement.setAttribute(it.getAttributeValue("key")!!, it.getAttributeValue("value")!!)
-            }
-          }
-          else {
-            newRootElement.addContent(element)
-          }
-        }
-      }
-      if (!JDOMUtil.isEmpty(newRootElement)) {
-        newRootElement.setAttribute("version", "4")
-        rootElement = newRootElement
-      }
-      else {
-        rootElement = null
-      }
-    }
-    else {
-      val singleComponent = components.values.single()
-      rootElement = if (singleComponent != null && !isEmptyComponentTag(singleComponent)) singleComponent else null
-    }
-    if (rootElement != null) {
-      replaceMacroMap.substitute(rootElement, true, true)
-      FileUtil.createParentDirs(file)
-      JDOMUtil.write(rootElement, file)
-    }
-    else {
-      FileUtil.delete(file)
-    }
-  }
+  writer.writeFiles()
 }
 
 internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToIgnore: Set<String>, componentsToIgnore: List<String>) {
@@ -221,19 +162,87 @@ internal fun File.asConfigLocation(virtualFileManager: VirtualFileUrlManager): J
 
 internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
   if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
-    return JpsProjectConfigLocation.FileBased(file.toVirtualFileUrl(virtualFileManager))
+    val iprFile = file.toVirtualFileUrl(virtualFileManager)
+    return JpsProjectConfigLocation.FileBased(iprFile, virtualFileManager.getParentVirtualUrl(iprFile)!!)
   }
   else {
     return JpsProjectConfigLocation.DirectoryBased(file.toVirtualFileUrl(virtualFileManager))
   }
 }
 
-internal class JpsFileContentWriterImpl : JpsFileContentWriter {
+internal class JpsFileContentWriterImpl(private val baseProjectDir: File) : JpsFileContentWriter {
   val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
 
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
   }
+
+  override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
+    return if (isModuleFile(JpsPathUtil.urlToFile(fileUrl)))
+      ModulePathMacroManager.createInstance { JpsPathUtil.urlToOsPath(fileUrl) }.replacePathMap
+    else
+      ProjectPathMacroManager.createInstance({ baseProjectDir.systemIndependentPath }, null).replacePathMap
+  }
+
+  internal fun writeFiles() {
+    urlToComponents.forEach { (url, newComponents) ->
+      val components = HashMap(newComponents)
+      val file = JpsPathUtil.urlToFile(url)
+      val replaceMacroMap = getReplacePathMacroMap(url)
+      val newRootElement = when {
+        isModuleFile(file) -> Element("module")
+        FileUtil.filesEqual(File(baseProjectDir, ".idea"), file.parentFile.parentFile) -> null
+        else -> Element("project")
+      }
+
+      fun isEmptyComponentTag(componentTag: Element) = componentTag.contentSize == 0 && componentTag.attributes.all { it.name == "name" }
+
+      val rootElement: Element?
+      if (newRootElement != null) {
+        if (file.exists()) {
+          val oldElement = JDOMUtil.load(file)
+          oldElement.getChildren("component")
+            .filterNot { it.getAttributeValue("name") in components }
+            .map { it.clone() }
+            .associateByTo(components) { it.getAttributeValue("name") }
+        }
+        components.entries.sortedBy { it.key }.forEach { (name, element) ->
+          if (element != null && !isEmptyComponentTag(element)) {
+            if (name == "DeprecatedModuleOptionManager") {
+              element.getChildren("option").forEach {
+                newRootElement.setAttribute(it.getAttributeValue("key")!!, it.getAttributeValue("value")!!)
+              }
+            }
+            else {
+              newRootElement.addContent(element)
+            }
+          }
+        }
+        if (!JDOMUtil.isEmpty(newRootElement)) {
+          newRootElement.setAttribute("version", "4")
+          rootElement = newRootElement
+        }
+        else {
+          rootElement = null
+        }
+      }
+      else {
+        val singleComponent = components.values.single()
+        rootElement = if (singleComponent != null && !isEmptyComponentTag(singleComponent)) singleComponent else null
+      }
+      if (rootElement != null) {
+        replaceMacroMap.substitute(rootElement, true, true)
+        FileUtil.createParentDirs(file)
+        JDOMUtil.write(rootElement, file)
+      }
+      else {
+        FileUtil.delete(file)
+      }
+    }
+  }
+
+  private fun isModuleFile(file: File) = (FileUtil.extensionEquals(file.absolutePath, "iml")
+                                          || file.parentFile.name == "modules" && file.parentFile.parentFile.name != ".idea")
 }
 
 internal object TestErrorReporter : ErrorReporter {

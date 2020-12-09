@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"))
-public class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
+public final class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
   // default standard browser ID must be constant across all IDE versions on all machines for all users
@@ -70,7 +70,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   }
 
   public static WebBrowserManager getInstance() {
-    return ServiceManager.getService(WebBrowserManager.class);
+    return ApplicationManager.getApplication().getService(WebBrowserManager.class);
   }
 
   public static boolean isYandexBrowser(@NotNull WebBrowser browser) {

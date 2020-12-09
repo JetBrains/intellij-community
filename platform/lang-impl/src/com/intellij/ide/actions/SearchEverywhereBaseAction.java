@@ -33,7 +33,7 @@ public abstract class SearchEverywhereBaseAction extends AnAction {
     return true;
   }
 
-  protected void showInSearchEverywherePopup(@NotNull String searchProviderID,
+  protected void showInSearchEverywherePopup(@NotNull String tabID,
                                              @NotNull AnActionEvent event,
                                              boolean useEditorSelection,
                                              boolean sendStatistics) {
@@ -42,14 +42,14 @@ public abstract class SearchEverywhereBaseAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
 
     if (seManager.isShown()) {
-      if (searchProviderID.equals(seManager.getSelectedContributorID())) {
+      if (tabID.equals(seManager.getSelectedTabID())) {
         seManager.toggleEverywhereFilter();
       }
       else {
-        seManager.setSelectedContributor(searchProviderID);
+        seManager.setSelectedTabID(tabID);
         if (sendStatistics) {
           FeatureUsageData data = SearchEverywhereUsageTriggerCollector
-            .createData(searchProviderID)
+            .createData(tabID)
             .addInputEvent(event);
           SearchEverywhereUsageTriggerCollector.trigger(project, SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
         }
@@ -58,11 +58,11 @@ public abstract class SearchEverywhereBaseAction extends AnAction {
     }
 
     if (sendStatistics) {
-      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID).addInputEvent(event);
+      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(tabID).addInputEvent(event);
       SearchEverywhereUsageTriggerCollector.trigger(project, SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, data);
     }
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     String searchText = StringUtil.nullize(getInitialText(useEditorSelection, event).first);
-    seManager.show(searchProviderID, searchText, event);
+    seManager.show(tabID, searchText, event);
   }
 }

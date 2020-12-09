@@ -33,6 +33,11 @@ public class JUnitConfigurationType implements ConfigurationType {
       public @NotNull String getId() {
         return "JUnit";
       }
+
+      @Override
+      public boolean isEditableInDumbMode() {
+        return true;
+      }
     };
   }
 

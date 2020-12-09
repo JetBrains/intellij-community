@@ -11,7 +11,6 @@ import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -32,8 +31,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.TestCaseLoader.*;
 
@@ -45,7 +47,7 @@ public class TestAll implements Test {
 
   private static final String MAX_FAILURE_TEST_COUNT_FLAG = "idea.max.failure.test.count";
 
-  private static final int MAX_FAILURE_TEST_COUNT = Integer.parseInt(ObjectUtils.chooseNotNull(
+  private static final int MAX_FAILURE_TEST_COUNT = Integer.parseInt(Objects.requireNonNullElse(
     System.getProperty(MAX_FAILURE_TEST_COUNT_FLAG),
     "150"
   ));
@@ -104,7 +106,7 @@ public class TestAll implements Test {
     this(rootPackage, getClassRoots());
   }
 
-  public TestAll(String rootPackage, List<? extends File> classesRoots) throws ClassNotFoundException {
+  public TestAll(String rootPackage, List<Path> classesRoots) throws ClassNotFoundException {
     String classFilterName = "tests/testGroups.properties";
     myTestCaseLoader = new TestCaseLoader(classFilterName);
     if (shouldAddFirstAndLastTests()) {
@@ -120,19 +122,19 @@ public class TestAll implements Test {
     return outClassLoadingProblems;
   }
 
-  public static List<File> getClassRoots() {
+  public static List<Path> getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
-      return ContainerUtil.map(testRoots.split(";"), File::new);
+      return ContainerUtil.map(testRoots.split(";"), Paths::get);
     }
-    List<File> roots = ExternalClasspathClassLoader.getRoots();
+    List<Path> roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
-      List<File> excludeRoots = ExternalClasspathClassLoader.getExcludeRoots();
+      List<Path> excludeRoots = ExternalClasspathClassLoader.getExcludeRoots();
       if (excludeRoots != null) {
         System.out.println("Skipping tests from " + excludeRoots.size() + " roots");
         roots = new ArrayList<>(roots);
-        roots.removeAll(FileCollectionFactory.createCanonicalFileSet(excludeRoots));
+        roots.removeAll(FileCollectionFactory.createCanonicalPathSet(excludeRoots));
       }
 
       System.out.println("Collecting tests from roots specified by classpath.file property: " + roots);
@@ -141,18 +143,19 @@ public class TestAll implements Test {
     else {
       ClassLoader loader = TestAll.class.getClassLoader();
       if (loader instanceof URLClassLoader) {
-        return getClassRoots(((URLClassLoader)loader).getURLs());
+        return ContainerUtil.map(getClassRoots(((URLClassLoader)loader).getURLs()), url -> Paths.get(url.toUri()));
       }
       if (loader instanceof UrlClassLoader) {
-        List<URL> urls = ((UrlClassLoader)loader).getBaseUrls();
-        return getClassRoots(urls.toArray(new URL[0]));
+        List<Path> urls = ((UrlClassLoader)loader).getBaseUrls();
+        System.out.println("Collecting tests from " + urls);
+        return urls;
       }
-      return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), File::new);
+      return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), Paths::get);
     }
   }
 
-  private static List<File> getClassRoots(URL[] urls) {
-    final List<File> classLoaderRoots = ContainerUtil.map(urls, url -> new File(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url))));
+  private static List<Path> getClassRoots(URL[] urls) {
+    List<Path> classLoaderRoots = ContainerUtil.map(urls, url -> Paths.get(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url))));
     System.out.println("Collecting tests from " + classLoaderRoots);
     return classLoaderRoots;
   }
@@ -386,7 +389,7 @@ public class TestAll implements Test {
       }
       catch (Exception e) {
         System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
-                           " and ignored tests won't be properly reported: " + e.toString());
+                           " and ignored tests won't be properly reported: " + e);
         ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
       }
     }

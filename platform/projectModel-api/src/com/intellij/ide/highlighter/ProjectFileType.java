@@ -2,12 +2,14 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectModel.ProjectModelBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public final class ProjectFileType implements InternalFileType {
@@ -47,12 +49,7 @@ public final class ProjectFileType implements InternalFileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return true;
-  }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return StandardCharsets.UTF_8.name();
+  public @NotNull CharsetHint getCharsetHint() {
+    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 }

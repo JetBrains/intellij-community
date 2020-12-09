@@ -56,8 +56,12 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
   var reuseNotModifiedTabs by property(false)
+  @get:OptionTag("OPEN_TABS_IN_MAIN_WINDOW")
+  var openTabsInMainWindow by property(false)
+  @get:OptionTag("OPEN_IN_PREVIEW_TAB_IF_POSSIBLE")
+  var openInPreviewTabIfPossible by property(false)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS")
-  var showToolWindowsNumbers by property(true)
+  var showToolWindowsNumbers by property(false)
 
   @get:OptionTag("HIDE_TOOL_STRIPES")
   var hideToolStripes by property(false)
@@ -92,6 +96,8 @@ class UISettingsState : BaseState() {
   var scrollTabLayoutInEditor by property(true)
   @get:OptionTag("HIDE_TABS_IF_NEED")
   var hideTabsIfNeeded by property(true)
+  @get:OptionTag("SHOW_PINNED_TABS_IN_A_SEPARATE_ROW")
+  var showPinnedTabsInASeparateRow by property(false)
   @get:OptionTag("SHOW_CLOSE_BUTTON")
   var showCloseButton by property(true)
   @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT")

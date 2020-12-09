@@ -27,9 +27,9 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
   private var packages: List<PyPackage>? = null
 
   init {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk) {
+    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, this, Runnable {
       PythonSdkType.getInstance().setupSdkPaths(sdk)
-    }
+    })
   }
 
   override fun installManagement() {}

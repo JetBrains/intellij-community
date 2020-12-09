@@ -6,7 +6,10 @@ import com.intellij.execution.impl.DefaultJavaProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.runners.RunContentBuilder
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.concurrency.Promise
 
 internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
   override fun getRunnerId() = ID
@@ -27,8 +30,13 @@ internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
     return descriptor
   }
 
+  override fun doExecuteAsync(state: TargetEnvironmentAwareRunProfileState, env: ExecutionEnvironment): Promise<RunContentDescriptor?> {
+    return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute delegate run configuration async") { doExecute(state, env) }
+  }
+
   companion object {
     private const val ID = "MAVEN_DELEGATE_BUILD_RUNNER"
+    private val LOG = logger<DelegateBuildRunner>()
 
     @JvmStatic
     fun getDelegateRunner(): ProgramRunner<*>? = ProgramRunner.findRunnerById(ID)

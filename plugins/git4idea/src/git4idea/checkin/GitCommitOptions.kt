@@ -2,7 +2,6 @@
 package git4idea.checkin
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
@@ -55,6 +54,8 @@ internal var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(
 private val HierarchyEvent.isShowingChanged get() = (changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L
 private val HierarchyEvent.isParentChanged get() = (changeFlags and HierarchyEvent.PARENT_CHANGED.toLong()) != 0L
 
+private val CheckinProjectPanel.commitAuthorTracker: CommitAuthorTracker? get() = commitWorkflowHandler as? CommitAuthorTracker
+
 class GitCommitOptionsUi(
   private val commitPanel: CheckinProjectPanel,
   private val commitContext: CommitContext,
@@ -62,7 +63,7 @@ class GitCommitOptionsUi(
 ) : RefreshableOnComponent,
     CheckinChangeListSpecificComponent,
     AmendCommitModeListener,
-    ChangeListListener,
+    CommitAuthorListener,
     Disposable {
 
   private val project get() = commitPanel.project
@@ -71,8 +72,6 @@ class GitCommitOptionsUi(
   val amendHandler: AmendCommitHandler get() = commitPanel.commitWorkflowHandler.amendCommitHandler
 
   private var authorDate: Date? = null
-  private var currentChangeList: LocalChangeList? = null
-  private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
   private val panel = JPanel(GridBagLayout())
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
@@ -136,7 +135,7 @@ class GitCommitOptionsUi(
 
   override fun restoreState() {
     if (commitPanel.isNonModalCommit) {
-      changeListManager.addChangeListListener(this, this)
+      commitPanel.commitAuthorTracker?.addCommitAuthorListener(this, this)
 
       panel.addHierarchyListener { e ->
         if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
@@ -176,7 +175,6 @@ class GitCommitOptionsUi(
     updateRenamesCheckboxState()
     clearAuthorWarning()
 
-    currentChangeList = changeList
     setAuthor(changeList?.author)
     authorDate = changeList?.authorDate
   }
@@ -194,24 +192,13 @@ class GitCommitOptionsUi(
   }
 
   private fun updateCurrentCommitAuthor() {
-    if (!commitPanel.isNonModalCommit) return
-    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
-    val newAuthor = getAuthor()
-
-    if (newAuthor != changeList.author) {
-      changeListManager.editChangeListData(changeList.name, ChangeListData.of(newAuthor, authorDate))
-    }
+    commitPanel.commitAuthorTracker?.commitAuthor = getAuthor()
   }
 
-  override fun changeListDataChanged(list: ChangeList) =
-    runInEdt {
-      val changeList = list as? LocalChangeList ?: return@runInEdt
-      if (changeList.id != currentChangeList?.id) return@runInEdt
-
-      if (getAuthor() != changeList.author) {
-        setAuthor(changeList.author)
-      }
-    }
+  override fun commitAuthorChanged() {
+    val newAuthor = commitPanel.commitAuthorTracker?.commitAuthor
+    if (getAuthor() != newAuthor) setAuthor(newAuthor)
+  }
 
   private fun updateRenamesCheckboxState() {
     val providers = collectActiveMovementProviders(project)
@@ -250,6 +237,7 @@ class GitCommitOptionsUi(
     val repositoryManager = getRepositoryManager(project)
     val affectedRoots = commitPanel.roots.filter { repositoryManager.getRepositoryForRootQuick(it) != null }
 
-    return affectedRoots.map { userRegistry.getUser(it) }.all { it != null && isSamePerson(author, it) }
+    return affectedRoots.isNotEmpty() &&
+           affectedRoots.map { userRegistry.getUser(it) }.all { it != null && isSamePerson(author, it) }
   }
 }

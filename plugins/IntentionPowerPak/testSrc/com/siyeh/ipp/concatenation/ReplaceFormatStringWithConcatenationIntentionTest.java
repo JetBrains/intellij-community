@@ -48,12 +48,14 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
   public void testMultipleWithNothingInBetween() {
     doTest("class X {" +
            "  String m(String tempDataFolderPath, String fileName) {" +
+           "    //noinspection UnnecessaryCallToStringValueOf\n" +
            "    return String.format(\"%s/f%s%s\", /*_Replace 'String.format()' with concatenation*/tempDataFolderPath, Double.toString(Math.random()), fileName);" +
            "  }" +
            "}",
 
            "class X {" +
            "  String m(String tempDataFolderPath, String fileName) {" +
+           "    //noinspection UnnecessaryCallToStringValueOf\n" +
            "    return tempDataFolderPath + \"/f\" + Double.toString(Math.random()) + fileName;" +
            "  }" +
            "}");
@@ -62,6 +64,7 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
   public void testPercentAtTheEnd() {
     doTestIntentionNotAvailable("class X {" +
            "  String x() {" +
+           "    //noinspection ResultOfMethodCallIgnored\n" +
            "    String.format(/*_Replace 'String.format()' with concatenation*/\"nope%\", 1);" +
            "  }" +
            "}");
@@ -93,6 +96,18 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "    return \"foo\" + \".\";" +
            "  }" +
            "}");
+  }
+
+  public void testPsiStructure() {
+    doTest("/** @noinspection ClassInitializerMayBeStatic*/" +
+           "class PsiStructure{{" +
+           "  String s = \"TEST_DATA_PATH\" + /*_Replace 'String.format()' with concatenation*/String.format(\"templates/MyTemplate.%s.html\", 1);" +
+           "}}",
+
+           "/** @noinspection ClassInitializerMayBeStatic*/" +
+           "class PsiStructure{{" +
+           "  String s = \"TEST_DATA_PATH\" + \"templates/MyTemplate.\" + 1 + \".html\";" +
+           "}}");
   }
 
   public void testConditional() {

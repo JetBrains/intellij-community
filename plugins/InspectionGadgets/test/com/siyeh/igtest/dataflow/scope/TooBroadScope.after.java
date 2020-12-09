@@ -30,8 +30,8 @@ public class TooBroadScope
     }
 
     private String getBaseFontInfo() {
-        final var sm = System.getSecurityManager();
         final StringBuilder sb = new StringBuilder();
+        final var sm = System.getSecurityManager();
         sb.append(sm.getSecurityContext());
         sb.append(',');
         sb.append(sm.getClass());
@@ -98,8 +98,8 @@ public class TooBroadScope
     }
 
     private int foo() {
-        final boolean bar = new java.util.Random().nextBoolean();
         final int flim;
+        final boolean bar = new java.util.Random().nextBoolean();
         if(bar) {
             flim = 42;
         } else {

@@ -378,15 +378,23 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
     }
   }
 
+  createOrLoadProject(file, useDefaultProjectSettings, projectCreator == null, loadComponentState, task)
+}
+
+private suspend fun createOrLoadProject(projectPath: Path,
+                                        useDefaultProjectSettings: Boolean,
+                                        isNewProject: Boolean,
+                                        loadComponentState: Boolean,
+                                        task: suspend (Project) -> Unit) {
   var options = createTestOpenProjectOptions().copy(
     useDefaultProjectAsTemplate = useDefaultProjectSettings,
-    isNewProject = projectCreator == null
+    isNewProject = isNewProject
   )
   if (loadComponentState) {
     options = options.copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
   }
 
-  val project = ProjectManagerEx.getInstanceEx().openProject(file, options)!!
+  val project = ProjectManagerEx.getInstanceEx().openProject(projectPath, options)!!
   project.use {
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
@@ -397,6 +405,10 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
       task(project)
     }
   }
+}
+
+suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
+  createOrLoadProject(projectPath, false, false, true, task)
 }
 
 /**

@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -41,9 +42,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +91,7 @@ public final class PyPackageUtil {
     for (VirtualFile root : PyUtil.getSourceRoots(module)) {
       final VirtualFile child = root.findChild("setup.py");
       if (child != null) {
-        final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(child);
+        final PsiFile file = ReadAction.compute(() -> PsiManager.getInstance(module.getProject()).findFile(child));
         if (file instanceof PyFile) {
           return (PyFile)file;
         }
@@ -356,6 +357,11 @@ public final class PyPackageUtil {
     final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
+      if (PythonSdkUtil.isDisposed(sdk)) {
+        packagesRef.set(Collections.emptyList());
+        return;
+      }
+
       indicator.setIndeterminate(true);
       try {
         final PyPackageManager manager = PyPackageManager.getInstance(sdk);
@@ -502,19 +508,34 @@ public final class PyPackageUtil {
   }
 
   /**
+   * @deprecated Use {@link #runOnChangeUnderInterpreterPaths(Sdk, Disposable, Runnable)} passing a package manager as
+   * the parent disposable.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated
+  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
+    Application app = ApplicationManager.getApplication();
+    Disposable parentDisposable = sdk instanceof Disposable ? (Disposable)sdk : app;
+    runOnChangeUnderInterpreterPaths(sdk, parentDisposable, runnable);
+  }
+
+  /**
    * Execute the given executable on a pooled thread whenever there is a VFS event happening under some of the roots of the SDK.
    *
-   * @param sdk      SDK those roots need to be watched
-   * @param runnable executable that's going to be executed
+   * @param sdk              SDK those roots need to be watched
+   * @param parentDisposable disposable for the registered event listeners
+   * @param runnable         executable that's going to be executed
    */
-  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
+  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk,
+                                                      @NotNull Disposable parentDisposable,
+                                                      @NotNull Runnable runnable) {
     final Application app = ApplicationManager.getApplication();
-    final Disposable disposable = sdk instanceof Disposable ? (Disposable)sdk : app;
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
       @Override
       public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
         final Set<VirtualFile> roots = getPackagingAwareSdkRoots(sdk);
+        if (roots.isEmpty()) return null;
         allEvents:
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent || event instanceof VFilePropertyChangeEvent) continue;
@@ -538,13 +559,13 @@ public final class PyPackageUtil {
         // No continuation in write action is needed
         return null;
       }
-    }, disposable);
+    }, parentDisposable);
   }
 
   @NotNull
   private static Set<VirtualFile> getPackagingAwareSdkRoots(@NotNull Sdk sdk) {
     final Set<VirtualFile> result = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-    final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
+    final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     final VirtualFile skeletonsRoot = LocalFileSystem.getInstance().findFileByPath(skeletonsPath);
     result.removeIf(vf -> vf.equals(skeletonsRoot) ||
                           vf.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory()) ||

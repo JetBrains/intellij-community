@@ -86,6 +86,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNotEqualsDoesntImplyNotNullity() { doTest(); }
   public void testEqualsEnumConstant() { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
+  public void testEphemeralDefaultCaseVisited() { doTest(); }
+  public void testEphemeralInIfChain() { doTest(); }
   public void testIncompleteSwitchEnum() { doTest(); }
   public void testEnumConstantNotNull() { doTest(); }
   public void testCheckEnumConstantConstructor() { doTest(); }
@@ -677,6 +679,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testProtobufNotNullGetters() { doTest(); }
   public void testAIOOBETransfer() { doTest(); }
   public void testBoxingShortByte() { doTest(); }
+  public void testUnboxingWithConversionCalls() { doTest(); }
   public void testNullableAliasing() { doTest(); }
   public void testReapplyTypeArguments() { doTest(); }
+  public void testDoubleArrayDiff() { doTest(); }
+  public void testInferenceInPrivateOrLocalClass() { doTest(); }
+  public void testArraysCopyOf() { doTest(); }
+  public void testArrayNegativeSize() { doTest(); }
+  public void testPresizedList() { doTest(); }
 }

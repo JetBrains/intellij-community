@@ -4,20 +4,14 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.DefaultPicoContainer;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   private @Nullable Element myExtensionElement;
@@ -29,14 +23,15 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                       @NotNull PluginDescriptor pluginDescriptor,
                       @Nullable String orderId,
                       @NotNull LoadingOrder order,
-                      @Nullable Element extensionElement) {
-    super(implementationClassName, pluginDescriptor, orderId, order);
+                      @Nullable Element extensionElement,
+                      @NotNull ImplementationClassResolver implementationClassResolver) {
+    super(implementationClassName, pluginDescriptor, orderId, order, implementationClassResolver);
 
     myExtensionElement = extensionElement;
   }
 
   @Override
-  synchronized boolean isInstanceCreated() {
+  final synchronized boolean isInstanceCreated() {
     return extensionInstance != null;
   }
 
@@ -45,9 +40,6 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     @SuppressWarnings("unchecked")
     T instance = (T)extensionInstance;
     if (instance != null) {
-      // todo add assert that createInstance was already called
-      // problem is that ExtensionPointImpl clears cache on runtime modification and so adapter instance need to be recreated
-      // it will be addressed later, for now better to reduce scope of changes
       return instance;
     }
 
@@ -60,13 +52,28 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
 
       if (initializing) {
-        componentManager.logError(new IllegalStateException("Cyclic extension initialization: " + this), getPluginDescriptor().getPluginId());
+        throw componentManager.createError("Cyclic extension initialization: " + this, pluginDescriptor.getPluginId());
       }
 
       try {
         initializing = true;
 
-        instance = super.createInstance(componentManager);
+        Class<T> aClass;
+        try {
+          //noinspection unchecked
+          aClass = (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          throw componentManager.createError(e, pluginDescriptor.getPluginId());
+        }
+
+        instance = instantiateClass(aClass, componentManager);
+        if (instance instanceof PluginAware) {
+          ((PluginAware)instance).setPluginDescriptor(pluginDescriptor);
+        }
 
         Element element = myExtensionElement;
         if (element != null) {
@@ -83,37 +90,8 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return instance;
   }
 
-  boolean isLoadedFromAnyElement(@NotNull List<? extends Element> candidateElements, @NotNull Map<String, String> defaultAttributes) {
-    SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
-    if (myExtensionElement == null && extensionInstance == null) {
-      // dummy extension with no data; unload based on PluginDescriptor check in calling method
-      return true;
-    }
-
-    Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance, filter);
-    Map<String, String> serializedData = getSerializedDataMap(serializedElement);
-
-    for (Element candidateElement : candidateElements) {
-      Map<String, String> candidateData = getSerializedDataMap(candidateElement);
-      candidateData.entrySet().removeIf(entry -> Objects.equals(defaultAttributes.get(entry.getKey()), entry.getValue()));
-      if (serializedData.equals(candidateData)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  static Map<String, String> getSerializedDataMap(Element serializedElement) {
-    Map<String, String> data = new HashMap<>();
-    for (Attribute attribute : serializedElement.getAttributes()) {
-      if (!attribute.getName().equals("id") && !attribute.getName().equals("order")) {
-        data.put(attribute.getName(), attribute.getValue());
-      }
-    }
-    for (Element child : serializedElement.getChildren()) {
-      data.put(child.getName(), child.getText());
-    }
-    return data;
+  protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
+    return componentManager.instantiateClass(aClass, pluginDescriptor.getPluginId());
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
@@ -121,8 +99,9 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                                       @NotNull PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
                                       @NotNull LoadingOrder order,
-                                      @Nullable Element extensionElement) {
-      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
+                                      @Nullable Element extensionElement,
+                                      @NotNull ImplementationClassResolver implementationClassResolver) {
+      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement, implementationClassResolver);
     }
 
     @Override
@@ -143,8 +122,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
           String message = "Cannot create extension without pico container (class=" + aClass.getName() + ")," +
                            " please remove extra constructor parameters";
-          PluginDescriptor pluginDescriptor = getPluginDescriptor();
-          if (pluginDescriptor.isBundled() && !isKnownBadPlugin(pluginDescriptor)) {
+          if (pluginDescriptor.isBundled()) {
             ExtensionPointImpl.LOG.error(message, e);
           }
           else {
@@ -152,13 +130,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
           }
         }
       }
-      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, getPluginDescriptor().getPluginId());
-    }
-
-    private static boolean isKnownBadPlugin(@NotNull PluginDescriptor pluginDescriptor) {
-      String id = pluginDescriptor.getPluginId().getIdString();
-      //noinspection SpellCheckingInspection
-      return id.equals("Lombook Plugin");
+      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());
     }
   }
 }

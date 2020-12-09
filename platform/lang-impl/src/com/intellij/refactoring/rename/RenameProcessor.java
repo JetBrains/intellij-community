@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.model.BranchableSyntheticPsiElement;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -401,7 +402,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     List<UsageInfo> branchedUsages =
       branch == null ? Arrays.asList(usages)
-                     : ContainerUtil.mapNotNull(usages, info -> shouldSkip(info) ? null : ((MoveRenameUsageInfo)info).branched(branch));
+                     : ContainerUtil.mapNotNull(usages, info -> shouldSkip(info) ? null : ((MoveRenameUsageInfo)info).obtainBranchCopy(branch));
     MultiMap<PsiElement, UsageInfo> classified = classifyUsages(elementsToChange.values(), branchedUsages);
 
     NonCodeUsageInfo[] nonCodeUsages =
@@ -474,6 +475,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     for (Map.Entry<RefactoringElementListener, Collection<SmartPsiElementPointer<PsiElement>>> entry : renameEvents.entrySet()) {
       for (SmartPsiElementPointer<PsiElement> pointer : entry.getValue()) {
         PsiElement element = pointer.getElement();
+        if (element instanceof BranchableSyntheticPsiElement) {
+          continue;
+        }
         if (branch != null && element != null) {
           element = branch.findOriginalPsi(element);
         }

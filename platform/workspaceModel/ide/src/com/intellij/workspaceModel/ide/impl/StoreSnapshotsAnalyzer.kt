@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.SimpleEntityTypesResolver
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.toBuilder
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import java.io.File
 
 /**
@@ -20,7 +20,7 @@ fun main1() {
   val resFile = dir.resolve("Res_Store")
   val filterPattern = "111"
 
-  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
 
   val leftStore = serializer.deserializeCache(leftFile.inputStream())!!
   val rightStore = serializer.deserializeCache(rightFile.inputStream())!!
@@ -48,7 +48,7 @@ fun main() {
   val converterFile = dir.resolve("ClassToIntConverter")
   val resFile = dir.resolve("Res_Store")
 
-  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
 
   serializer.deserializeClassToIntConverter(converterFile.inputStream())
 

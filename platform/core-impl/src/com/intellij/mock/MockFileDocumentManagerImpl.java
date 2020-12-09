@@ -20,7 +20,8 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private final Function<? super CharSequence, ? extends Document> myFactory;
   @Nullable private final Key<Document> myCachedDocumentKey;
 
-  public MockFileDocumentManagerImpl(Function<? super CharSequence, ? extends Document> factory, @Nullable Key<Document> cachedDocumentKey) {
+  public MockFileDocumentManagerImpl(@Nullable Key<Document> cachedDocumentKey,
+                                     @NotNull Function<? super CharSequence, ? extends Document> factory) {
     myFactory = factory;
     myCachedDocumentKey = cachedDocumentKey;
   }

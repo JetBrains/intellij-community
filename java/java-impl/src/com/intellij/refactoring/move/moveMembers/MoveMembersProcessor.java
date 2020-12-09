@@ -177,7 +177,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     PsiClass targetCopy = branch.obtainPsiCopy(targetClass);
     Set<PsiMember> membersToMove = new LinkedHashSet<>(ContainerUtil.map(myMembersToMove, branch::obtainPsiCopy));
-    List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> (MoveMembersUsageInfo)((MoveMembersUsageInfo)u).branched(branch));
+    List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> (MoveMembersUsageInfo)((MoveMembersUsageInfo)u).obtainBranchCopy(branch));
 
     Map<PsiMember, SmartPsiElementPointer<PsiMember>> movedMembers = performMove(targetCopy, membersToMove, usages);
 

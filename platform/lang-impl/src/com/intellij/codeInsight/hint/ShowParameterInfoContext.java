@@ -124,9 +124,10 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
       final Document document = editor.getDocument();
       if (document.getTextLength() < elementStart) return;
 
-      ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, elementStart);
+      ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, elementStart);
       if (controller == null) {
-        new ParameterInfoController(project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
+        ParameterInfoControllerBase.createParameterInfoController(
+          project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
       }
       else {
         controller.setDescriptors(descriptors);

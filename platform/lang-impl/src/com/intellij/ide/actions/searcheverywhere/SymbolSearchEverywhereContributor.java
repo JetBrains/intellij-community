@@ -10,8 +10,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -52,10 +55,15 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     return model;
   }
 
+  @Override
+  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
+    return new SearchEverywhereCommandInfo("s", IdeBundle.message("search.everywhere.filter.symbols.description"), this);
+  }
+
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(includeNonProjectItemsText(), myFilter, onChanged);
+    return doGetActions(includeNonProjectItemsText(), myFilter, new LangFilterCollector(), onChanged);
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Object> {

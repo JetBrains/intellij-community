@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
@@ -25,27 +25,25 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public String toString() {
-    return SelectInManager.getScope();
+    return IdeBundle.message("select.in.scope");
   }
 
   @Override
   public boolean canSelect(PsiFileSystemItem fileSystemItem) {
-    if (!(fileSystemItem instanceof PsiFile)) return false;
     VirtualFile file = PsiUtilCore.getVirtualFile(fileSystemItem);
     if (file == null || !file.isValid()) return false;
     file = BackedVirtualFile.getOriginFileIfBacked(file);
     AreaInstance area = ProjectFileNode.findArea(file, myProject);
     if (area == null) return false;
-    return getContainingFilter((PsiFile)fileSystemItem) != null;
+    return getContainingFilter(file) != null;
   }
 
-  @Nullable
-  private NamedScopeFilter getContainingFilter(@Nullable PsiFile file) {
+  private @Nullable NamedScopeFilter getContainingFilter(@Nullable VirtualFile file) {
     if (file == null) return null;
     ScopeViewPane pane = getScopeViewPane();
     if (pane == null) return null;
     for (NamedScopeFilter filter : pane.getFilters()) {
-      if (filter.accept(file.getVirtualFile())) return filter;
+      if (filter.accept(file)) return filter;
     }
     return null;
   }
@@ -53,7 +51,8 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   @Override
   public void select(PsiElement element, boolean requestFocus) {
     if (getSubId() == null) {
-      NamedScopeFilter filter = getContainingFilter(element.getContainingFile());
+      PsiFile file = element.getContainingFile();
+      NamedScopeFilter filter = getContainingFilter(file == null ? null : file.getVirtualFile());
       if (filter == null) return;
       setSubId(filter.toString());
     }

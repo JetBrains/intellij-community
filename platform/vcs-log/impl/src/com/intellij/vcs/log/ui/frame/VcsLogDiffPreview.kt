@@ -154,5 +154,9 @@ private fun openPreviewInEditor(project: Project, diffPreviewProvider: DiffPrevi
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true) }, false)
   }
-  EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(diffPreviewProvider), false, escapeHandler)
+
+  val editors = EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(diffPreviewProvider), false)
+  for (editor in editors) {
+    EditorTabPreview.registerEscapeHandler(editor, escapeHandler)
+  }
 }

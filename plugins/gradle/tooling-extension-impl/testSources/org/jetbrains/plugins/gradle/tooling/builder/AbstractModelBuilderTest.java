@@ -65,11 +65,9 @@ import static org.junit.Assume.assumeThat;
 public abstract class AbstractModelBuilderTest {
 
   /**
-   * !When adding new versions here cnahge also list in Idea_Tests_BuildToolsTests in Intellij Teamcity configuration
+   * !When adding new versions here change also list in Idea_Tests_BuildToolsTests in Intellij Teamcity configuration
    */
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
-    // Support for builds using Gradle older than 2.6 was deprecated and will be removed in Gradle 5.0.
-    {"2.6"}, /*{"2.7"}, {"2.8"}, {"2.9"}, {"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
     {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
     {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"}, {"4.4"}, {"4.5.1"}, {"4.6"}, {"4.7"}, {"4.8"}, {"4.9"},*/ {"4.10.3"},
     {"5.0"}, /*{"5.1"}, {"5.2"}, {"5.3.1"}, {"5.4.1"}, {"5.5.1"},*/ {"5.6.2"},
@@ -144,7 +142,7 @@ public abstract class AbstractModelBuilderTest {
 
     try {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported, false);
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
                                                                                         ContainerUtil.<Class<?>>set(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);

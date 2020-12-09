@@ -15,6 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -500,6 +501,7 @@ public final class FormatterUtil {
     return FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName());
   }
 
+  @Nls
   public static String getReformatBeforeCommitCommandName() {
     return CodeStyleBundle.message("process.reformat.code.before.commit");
   }

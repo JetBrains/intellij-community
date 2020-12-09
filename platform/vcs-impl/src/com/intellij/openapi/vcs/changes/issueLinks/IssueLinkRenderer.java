@@ -23,6 +23,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -44,16 +45,18 @@ public class IssueLinkRenderer {
     return appendTextWithLinks(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public List<String> appendTextWithLinks(@Nls String text, final SimpleTextAttributes baseStyle) {
+  public List<String> appendTextWithLinks(@Nls String text, @NotNull SimpleTextAttributes baseStyle) {
     return appendTextWithLinks(text, baseStyle, s -> append(s, baseStyle));
   }
 
-  public List<String> appendTextWithLinks(@Nls String text, final SimpleTextAttributes baseStyle, final Consumer<? super String> consumer) {
+  public List<String> appendTextWithLinks(@Nls String text,
+                                          @NotNull SimpleTextAttributes baseStyle,
+                                          @NotNull Consumer<? super @Nls String> consumer) {
     final List<String> pieces = new ArrayList<>();
     final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
     int pos = 0;
     final SimpleTextAttributes linkAttributes = getLinkAttributes(baseStyle);
-    for(IssueNavigationConfiguration.LinkMatch match: list) {
+    for (IssueNavigationConfiguration.LinkMatch match : list) {
       final TextRange textRange = match.getRange();
       if (textRange.getStartOffset() > pos) {
         final String piece = text.substring(pos, textRange.getStartOffset());
@@ -81,7 +84,7 @@ public class IssueLinkRenderer {
     myColoredComponent.append(piece, baseStyle, new SimpleColoredComponent.BrowserLauncherTag(match.getTargetUrl()));
   }
 
-  private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {
+  private static SimpleTextAttributes getLinkAttributes(@NotNull SimpleTextAttributes baseStyle) {
     Color color = baseStyle.getFgColor();
     int alpha = color != null ? color.getAlpha() : 255;
     Color linkColor = JBUI.CurrentTheme.Link.linkColor();

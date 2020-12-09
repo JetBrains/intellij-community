@@ -271,7 +271,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     return lib;
   }
 
-  static String getJunitClsUrl(final boolean version4) {
+  public static String getJunitClsUrl(final boolean version4) {
     String url = version4 ? JavaSdkUtil.getJunit4JarPath() : JavaSdkUtil.getJunit3JarPath();
     final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(url));
     if (localFile != null) {

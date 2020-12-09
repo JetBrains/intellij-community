@@ -21,8 +21,8 @@ import com.intellij.util.ui.UIUtil.rightArrow
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchStateProvider
 import com.intellij.vcs.branch.LinkedBranchData
-import com.intellij.vcs.commit.CommitWorkflowUi
 import com.intellij.vcsUtil.VcsUtil.getFilePath
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Dimension
 import java.beans.PropertyChangeListener
@@ -32,12 +32,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.properties.Delegates.observable
 
-class CurrentBranchComponent(
-  val project: Project,
-  private val tree: ChangesTree,
-  private val commitWorkflowUi: CommitWorkflowUi
-) : JBLabel() {
-
+class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposable {
   private val changeEventDispatcher = EventDispatcher.create(ChangeListener::class.java)
 
   private var branches: Set<BranchData> by observable(setOf()) { _, oldValue, newValue ->
@@ -56,6 +51,12 @@ class CurrentBranchComponent(
       return groupingSupport.isAvailable(REPOSITORY_GROUPING) && groupingSupport[REPOSITORY_GROUPING]
     }
 
+  val project: Project get() = tree.project
+
+  var pathsProvider: () -> Iterable<FilePath> by observable({ emptyList() }) { _, _, _ ->
+    refresh()
+  }
+
   init {
     isVisible = false
     icon = AllIcons.Vcs.Branch
@@ -67,9 +68,7 @@ class CurrentBranchComponent(
       }
     }
     tree.addPropertyChangeListener(treeChangeListener)
-    Disposer.register(commitWorkflowUi, Disposable { tree.removePropertyChangeListener(treeChangeListener) })
-
-    refresh()
+    Disposer.register(this, Disposable { tree.removePropertyChangeListener(treeChangeListener) })
   }
 
   fun addChangeListener(block: () -> Unit, parent: Disposable) =
@@ -77,21 +76,17 @@ class CurrentBranchComponent(
 
   override fun getPreferredSize(): Dimension? = if (isVisible) super.getPreferredSize() else emptySize()
 
+  override fun dispose() = Unit
+
   private fun refresh() {
     val needShowBranch = !isGroupedByRepository
 
     branches =
-      if (needShowBranch) getBranches(commitWorkflowUi.getDisplayedChanges(), commitWorkflowUi.getDisplayedUnversionedFiles())
+      if (needShowBranch) pathsProvider().mapNotNull { getCurrentBranch(project, it) }.toSet()
       else emptySet()
   }
 
-  private fun getBranches(changes: Iterable<Change>, unversioned: Iterable<FilePath>): Set<BranchData> {
-    val fromChanges = changes.mapNotNull { getCurrentBranch(project, it) }.toSet()
-    val fromUnversioned = unversioned.mapNotNull { getCurrentBranch(project, it) }.toSet()
-
-    return fromChanges + fromUnversioned
-  }
-
+  @Nls
   private fun getText(branches: Collection<BranchData>): String {
     val distinct = branches.distinctBy { it.branchName }
     return when (distinct.size) {
@@ -101,6 +96,7 @@ class CurrentBranchComponent(
     }
   }
 
+  @Nls
   private fun getTooltip(branches: Collection<BranchData>): String? {
     val distinct = branches.distinctBy { it.branchName to (it as? LinkedBranchData)?.linkedBranchName }
     return when (distinct.size) {
@@ -110,6 +106,7 @@ class CurrentBranchComponent(
     }
   }
 
+  @Nls
   private fun getMultiTooltip(branch: BranchData): String {
     val linkedBranchPart = if (branch is LinkedBranchData && branch.branchName != null) {
       branch.linkedBranchName?.let { " ${rightArrow()} $it" } ?: VcsBundle.message("changes.no.tracking.branch.suffix")
@@ -145,9 +142,11 @@ class CurrentBranchComponent(
     fun getCurrentBranch(project: Project, path: FilePath) =
       getProviders(project).asSequence().mapNotNull { it.getCurrentBranch(path) }.firstOrNull()
 
+    @Nls
     fun getPresentableText(branch: BranchData) = if (branch is LinkedBranchData) branch.branchName ?: "!"
     else branch.branchName.orEmpty()
 
+    @Nls
     fun getSingleTooltip(branch: BranchData) = if (branch is LinkedBranchData && branch.branchName != null)
       branch.linkedBranchName?.let { "${branch.branchName} ${rightArrow()} $it" } ?: VcsBundle.message("changes.no.tracking.branch")
     else null

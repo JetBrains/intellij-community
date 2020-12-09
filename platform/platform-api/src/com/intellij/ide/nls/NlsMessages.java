@@ -10,6 +10,7 @@ import com.ibm.icu.text.MeasureFormat;
 import com.ibm.icu.util.Measure;
 import com.ibm.icu.util.MeasureUnit;
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.Contract;
@@ -33,7 +34,8 @@ public class NlsMessages {
 
   /**
    * @param list list of items
-   * @return localized string representation of all items in the list semantically joined via 'AND'
+   * @return localized string representation of all items in the list with conjunction formatting.
+   * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, and Z" in English locale.
    */
   public static @NotNull @Nls String formatAndList(Collection<?> list) {
     return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE).format(list);
@@ -41,21 +43,42 @@ public class NlsMessages {
 
   /**
    * @param list list of items
-   * @return localized string representation of all items in the list semantically joined via 'OR'
+   * @return localized narrow string representation of all items in the list with conjunction formatting. 
+   * In narrow representation the conjunction could be omitted.
+   * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, Z" in English locale.
+   */
+  public static @NotNull @Nls String formatNarrowAndList(Collection<?> list) {
+    return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.NARROW).format(list);
+  }
+
+  /**
+   * @param list list of items
+   * @return localized narrow string representation of all items in the list with disjunction formatting.
+   * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, or Z" in English locale.
    */
   public static @NotNull @Nls String formatOrList(Collection<?> list) {
     return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE).format(list);
   }
 
   /**
-   * @return a collector that collects a stream into the localized string that joins the stream elements into the and-list
+   * @return a collector that collects a stream into the localized string that joins the stream elements using conjunction formatting.
+   * E.g. Stream.of("X", "Y", "Z").collect(joiningAnd()) will produce "X, Y, and Z" in English locale.
    */
   public static <T> @NotNull Collector<T, ?, @Nls String> joiningAnd() {
     return Collectors.collectingAndThen(Collectors.toList(), NlsMessages::formatAndList);
   }
 
   /**
-   * @return a collector that collects a stream into the localized string that joins the stream elements into the or-list
+   * @return a collector that collects a stream into the localized string that joins the stream elements using narrow conjunction formatting.
+   * E.g. Stream.of("X", "Y", "Z").collect(joiningNarrowAnd()) will produce "X, Y, Z" in English locale.
+   */
+  public static <T> @NotNull Collector<T, ?, @Nls String> joiningNarrowAnd() {
+    return Collectors.collectingAndThen(Collectors.toList(), NlsMessages::formatNarrowAndList);
+  }
+
+  /**
+   * @return a collector that collects a stream into the localized string that joins the stream elements using disjunction formatting.
+   * E.g. Stream.of("X", "Y", "Z").collect(joiningAnd()) will produce "X, Y, and Z" in English locale.
    */
   public static <T> @NotNull Collector<T, ?, @Nls String> joiningOr() {
     return Collectors.collectingAndThen(Collectors.toList(), NlsMessages::formatOrList);
@@ -63,11 +86,20 @@ public class NlsMessages {
   
   /**
    * Formats duration given in milliseconds as a sum of time units with at most two units
-   * (example: {@code formatDuration(123456) = "2 m 3 s"}).
+   * (example: {@code formatDuration(123456) = "2 m, 3 s"}).
    */
   @Contract(pure = true)
   public static @NotNull @Nls String formatDurationApproximate(long duration) {
-    return formatDuration(duration, 2);
+    return formatDuration(duration, 2, false);
+  }
+  
+  /**
+   * Formats duration given in milliseconds as a sum of time units with at most two units
+   * (example: {@code formatDuration(123456) = "2 m 3 s"}).
+   */
+  @Contract(pure = true)
+  public static @NotNull @Nls String formatDurationApproximateNarrow(long duration) {
+    return formatDuration(duration, 2, true);
   }
 
   /** 
@@ -76,11 +108,11 @@ public class NlsMessages {
    */
   @Contract(pure = true)
   public static @NotNull @Nls String formatDuration(long duration) {
-    return formatDuration(duration, Integer.MAX_VALUE);
+    return formatDuration(duration, Integer.MAX_VALUE, false);
   }
 
   @Contract(pure = true)
-  private static @NotNull @Nls String formatDuration(long duration, int maxFragments) {
+  private static @NotNull @Nls String formatDuration(long duration, int maxFragments, boolean narrow) {
     TLongArrayList unitValues = new TLongArrayList();
     TIntArrayList unitIndices = new TIntArrayList();
 
@@ -108,13 +140,22 @@ public class NlsMessages {
         for (int unit = lastUnitIndex - 1; unit > 0; unit--) {
           increment *= TIME_MULTIPLIERS[unit];
         }
-        return formatDuration(duration + increment, maxFragments);
+        return formatDuration(duration + increment, maxFragments, narrow);
       }
     }
 
+    int finalCount = Math.min(unitValues.size(), maxFragments);
+    if (narrow) {
+      List<String> fragments = new ArrayList<>();
+      LocalizedNumberFormatter formatter = NumberFormatter.withLocale(DynamicBundle.getLocale()).unitWidth(NumberFormatter.UnitWidth.SHORT);
+      for (i = 0; i < finalCount; i++) {
+        fragments.add(formatter.unit(TIME_UNITS[unitIndices.get(i)]).format(unitValues.get(i)).toString().replace(' ', '\u2009'));
+      }
+      return StringUtil.join(fragments, " ");
+    }
     MeasureFormat format = MeasureFormat.getInstance(DynamicBundle.getLocale(), MeasureFormat.FormatWidth.SHORT);
-    Measure[] measures = new Measure[Math.min(unitValues.size(), maxFragments)];
-    for (i = 0; i < measures.length; i++) {
+    Measure[] measures = new Measure[finalCount];
+    for (i = 0; i < finalCount; i++) {
       measures[i] = new Measure(unitValues.get(i), TIME_UNITS[unitIndices.get(i)]);
     }
     return format.formatMeasures(measures);

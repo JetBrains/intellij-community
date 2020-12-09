@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder.createCommentComponen
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
@@ -33,6 +34,7 @@ import com.intellij.ui.ToolbarDecorator.createDecorator
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
@@ -333,6 +335,8 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
 
   override fun createComponent(): JComponent {
     val table = JBTable(this)
+    table.setShowGrid(false)
+    TableHoverListener.DEFAULT.removeFrom(table)
     table.emptyText.text = message("settings.file.colors.no.colors.specified")
 
     table.emptyText.appendSecondaryText(message("settings.file.colors.add.colors.link"), LINK_PLAIN_ATTRIBUTES) {
@@ -439,10 +443,11 @@ private class TableScopeRenderer(val manager: FileColorManagerImpl) : DefaultTab
   override fun getTableCellRendererComponent(table: JTable?, value: Any?,
                                              selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
     val component = super.getTableCellRendererComponent(table, value, selected, focused, row, column)
-    val namedScope = value?.toString()?.let { findScope(it, manager.project) }
+    @NlsSafe val name = value?.toString()
+    val namedScope = name?.let { findScope(it, manager.project) }
     toolTipText = if (namedScope == null) message("settings.file.colors.scope.unknown") else null
     icon = if (namedScope == null) AllIcons.General.Error else null
-    text = if (namedScope != null) namedScope.presentableName else value?.toString()
+    text = if (namedScope != null) namedScope.presentableName else name
     return component
   }
 }

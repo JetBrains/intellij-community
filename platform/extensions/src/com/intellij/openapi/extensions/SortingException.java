@@ -4,15 +4,13 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexander Kireyev
- */
 public final class SortingException extends RuntimeException {
   private final LoadingOrder.Orderable[] myConflictingElements;
 
   SortingException(String message, LoadingOrder.Orderable @NotNull ... conflictingElements) {
-    super(message + ": " + StringUtil.join(conflictingElements,
-                                           item -> item.getOrderId() + "(" + item.getOrder() + ")", "; "));
+    super(message + ": " + StringUtil.join(conflictingElements, item -> {
+      return item.getOrderId() + "(" + item.getOrder() + ")";
+    }, "; "));
     myConflictingElements = conflictingElements;
   }
 

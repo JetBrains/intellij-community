@@ -12,6 +12,7 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 
 val Project.modules get() = ModuleManager.getInstance(this).modules
@@ -28,11 +29,13 @@ fun FeatureUsageData.addPythonSpecificInfo(module: Module) =
  */
 fun FeatureUsageData.addPythonSpecificInfo(sdk: Sdk) = addLanguage(PythonLanguage.INSTANCE)
   .addData("python_version", sdk.version)
+  .addData("python_implementation", sdk.pythonImplementation)
   .addData("executionType", sdk.executionType)
   .addData("interpreterType", sdk.interpreterType)
 
 
-private val Sdk.version get() = PythonSdkType.getLanguageLevelForSdk(this).version.toString()
+private val Sdk.version get() = PythonSdkType.getLanguageLevelForSdk(this).toPythonVersion()
+private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
 private val Sdk.executionType get(): String = (sdkAdditionalData as? PyRemoteSdkAdditionalDataBase)?.executionType ?: "local"
 private val Sdk.interpreterType
   get() = when {

@@ -270,7 +270,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
   @ApiStatus.Internal
   public static class Updater extends Task.Backgroundable {
 
-    private final Project myProject;
     private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
     protected UpdatedFiles myUpdatedFiles;
     private final FilePath[] myRoots;
@@ -296,7 +295,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
                    final ActionInfo actionInfo,
                    final @NlsContexts.ProgressTitle String actionName) {
       super(project, actionName, true, VcsConfiguration.getInstance(project).getUpdateOption());
-      myProject = project;
       myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
       myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
       myRoots = roots;

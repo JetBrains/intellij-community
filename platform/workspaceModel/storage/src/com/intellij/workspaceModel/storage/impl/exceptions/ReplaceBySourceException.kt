@@ -2,5 +2,3 @@
 package com.intellij.workspaceModel.storage.impl.exceptions
 
 class ReplaceBySourceException(message: String) : RuntimeException(message)
-
-internal fun rbsFailed(message: String): Nothing = throw ReplaceBySourceException(message)

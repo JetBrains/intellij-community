@@ -14,6 +14,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.injected.editor.DocumentWindow;
@@ -36,8 +37,11 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.HintText;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -96,7 +100,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Semaphore myFreezeSemaphore = new Semaphore(1);
   private final Semaphore myFinishSemaphore = new Semaphore(1);
   @NotNull private final OffsetMap myOffsetMap;
-  private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.newConcurrentSet();
+  private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions =
+    ContainerUtil.newConcurrentSet();
   private final LookupListener myLookupListener = new LookupListener() {
     @Override
     public void lookupCanceled(@NotNull final LookupEvent event) {
@@ -219,13 +224,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (CompletionContributor contributor :
         CompletionContributor.forLanguageHonorDumbness(initContext.getPositionLanguage(), initContext.getProject())) {
         ProgressManager.checkCanceled();
         contributor.duringCompletion(initContext);
       }
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
     if (document instanceof DocumentWindow) {
       myHostOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     }
@@ -234,7 +239,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void addDefaultAdvertisements(CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
-      addAdvertisement(CodeInsightBundle.message("completion.incomplete.during.indexing"), AllIcons.General.Warning);
+      addAdvertisement(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AllIcons.General.Warning);
       return;
     }
 
@@ -303,7 +308,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (myLookup.isAvailableToUser()) {
       return;
     }
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
         if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 
@@ -313,7 +318,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           addAdvertisement(s, null);
         }
       }
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
   }
 
   private boolean isOutdated() {
@@ -447,9 +452,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void addItemToLookup(CompletionResult item) {
     Ref<Boolean> stopRef = new Ref<>(Boolean.FALSE);
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       stopRef.set(!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher()));
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
 
     if (stopRef.get()) {
       return;
@@ -482,7 +487,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void closeAndFinish(boolean hideLookup) {
     if (!myLookup.isLookupDisposed()) {
       Lookup lookup = LookupManager.getActiveLookup(myEditor);
-      if (lookup != myLookup) {
+      if (lookup != null && lookup != myLookup) {
         LOG.error("lookup changed: " + lookup + "; " + this);
       }
     }
@@ -795,7 +800,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @HintText
   private String getNoSuggestionsMessage(CompletionParameters parameters) {
-    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return CompletionContributor.forParameters(parameters)
         .stream()
         .map(c -> c.handleEmptyLookup(parameters, getEditor()))
@@ -850,12 +855,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher, CompletionParameters parameters) {
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       duringCompletion(initContext, parameters);
       ProgressManager.checkCanceled();
 
       CompletionService.getCompletionService().performCompletion(parameters, weigher);
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
     ProgressManager.checkCanceled();
 
     weigher.waitFor();

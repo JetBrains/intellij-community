@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -24,7 +25,7 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   }
 
   public String toString() {
-    return LOCAL_CHANGES;
+    return VcsBundle.message("local.changes.tab");
   }
 
   @Override

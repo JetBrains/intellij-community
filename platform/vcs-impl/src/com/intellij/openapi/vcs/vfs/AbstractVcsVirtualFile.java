@@ -87,7 +87,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return getPresentableName(myName);
   }
 
@@ -120,7 +120,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     return VfsUtilCore.byteStreamSkippingBOM(contentsToByteArray(), this);
   }
 

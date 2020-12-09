@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.references;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.ResolveResult;
@@ -23,18 +24,21 @@ public class PyTargetReference extends PyReferenceImpl {
 
   @Override
   public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    final ResolveResult[] results = super.multiResolve(incompleteCode);
-    boolean shadowed = false;
-    for (ResolveResult result : results) {
-      final PsiElement element = result.getElement();
-      if (element != null && (element.getContainingFile() != myElement.getContainingFile() ||
-                              element instanceof PyFunction || element instanceof PyClass)) {
-        shadowed = true;
-        break;
+    if (myElement instanceof StubBasedPsiElementBase && ((StubBasedPsiElementBase<?>)myElement).getStub() == null ||
+        myContext.getTypeEvalContext().maySwitchToAST(myElement)) {
+      final ResolveResult[] results = super.multiResolve(incompleteCode);
+      boolean shadowed = false;
+      for (ResolveResult result : results) {
+        final PsiElement element = result.getElement();
+        if (element != null && (element.getContainingFile() != myElement.getContainingFile() ||
+                                element instanceof PyFunction || element instanceof PyClass)) {
+          shadowed = true;
+          break;
+        }
       }
-    }
-    if (results.length > 0 && !shadowed) {
-      return results;
+      if (results.length > 0 && !shadowed) {
+        return results;
+      }
     }
     // resolve to self if no other target found
     return new ResolveResult[] { new PsiElementResolveResult(myElement) };

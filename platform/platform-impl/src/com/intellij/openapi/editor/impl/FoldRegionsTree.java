@@ -24,7 +24,7 @@ abstract class FoldRegionsTree {
   private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
-  static final Hash.Strategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new Hash.Strategy<FoldRegion>() {
+  static final Hash.Strategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new Hash.Strategy<>() {
     @Override
     public int hashCode(@Nullable FoldRegion o) {
       return o == null ? 0 : o.getStartOffset() * 31 + o.getEndOffset();
@@ -63,11 +63,14 @@ abstract class FoldRegionsTree {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
 
     SweepProcessor.Generator<FoldRegionImpl> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
-    SweepProcessor.sweep(generator, new SweepProcessor<FoldRegionImpl>() {
+    SweepProcessor.sweep(generator, new SweepProcessor<>() {
       FoldRegionImpl lastCollapsedRegion;
 
       @Override
-      public boolean process(int offset, @NotNull FoldRegionImpl region, boolean atStart, @NotNull Collection<? extends FoldRegionImpl> overlapping) {
+      public boolean process(int offset,
+                             @NotNull FoldRegionImpl region,
+                             boolean atStart,
+                             @NotNull Collection<? extends FoldRegionImpl> overlapping) {
         if (atStart) {
           if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset()) {
             if (!region.isExpanded()) {
@@ -82,8 +85,12 @@ abstract class FoldRegionsTree {
 
       private void hideContainedRegions(FoldRegion region) {
         for (int i = visible.size() - 1; i >= 0; i--) {
-          if (region.getStartOffset() == visible.get(i).getStartOffset()) visible.remove(i);
-          else break;
+          if (region.getStartOffset() == visible.get(i).getStartOffset()) {
+            visible.remove(i);
+          }
+          else {
+            break;
+          }
         }
       }
     });
@@ -241,6 +248,14 @@ abstract class FoldRegionsTree {
     List<FoldRegion> regions = new ArrayList<>();
     myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, new CommonProcessors.CollectProcessor<>(regions));
     return toFoldArray(regions);
+  }
+
+
+  List<FoldRegion> fetchOverlapping(int startOffset, int endOffset) {
+    if (!isFoldingEnabled()) return Collections.emptyList();
+    List<FoldRegion> regions = new ArrayList<>();
+    myMarkerTree.processOverlappingWith(startOffset, endOffset, new CommonProcessors.CollectProcessor<>(regions));
+    return regions;
   }
 
   private void forEach(@NotNull Consumer<? super FoldRegion> consumer) {

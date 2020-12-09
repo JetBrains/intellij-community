@@ -2,6 +2,8 @@
 package com.intellij.testFramework.fixtures
 
 import com.intellij.build.*
+import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
@@ -16,11 +18,11 @@ import junit.framework.TestCase.assertEquals
 import javax.swing.tree.DefaultMutableTreeNode
 
 class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
-
+  @Suppress("ObjectLiteralToLambda")
   private val fixtureDisposable: Disposable = object : Disposable {
-    override fun dispose() {
-    }
+    override fun dispose() { }
   }
+
   private lateinit var syncViewManager: TestSyncViewManager
   private lateinit var buildViewManager: TestBuildViewManager
 
@@ -36,11 +38,11 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   }
 
   @Throws(Exception::class)
-  override fun tearDown() = RunAll()
-    .append(ThrowableRunnable { if (::syncViewManager.isInitialized) syncViewManager.waitForPendingBuilds() })
-    .append(ThrowableRunnable { if (::buildViewManager.isInitialized) buildViewManager.waitForPendingBuilds() })
-    .append(ThrowableRunnable { Disposer.dispose(fixtureDisposable) })
-    .run()
+  override fun tearDown() = RunAll(
+    ThrowableRunnable { if (::syncViewManager.isInitialized) syncViewManager.waitForPendingBuilds() },
+    ThrowableRunnable { if (::buildViewManager.isInitialized) buildViewManager.waitForPendingBuilds() },
+    ThrowableRunnable { Disposer.dispose(fixtureDisposable) }
+  ).run()
 
   fun assertSyncViewTreeEquals(executionTreeText: String) {
     assertExecutionTree(syncViewManager, executionTreeText, false)
@@ -59,11 +61,11 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   }
 
   fun assertSyncViewSelectedNode(nodeText: String, consoleText: String) {
-    assertExecutionTreeNode(syncViewManager, nodeText, { assertEquals(consoleText, it) }, true)
+    assertExecutionTreeNode(syncViewManager, nodeText, { assertEquals(consoleText, it) }, null, true)
   }
 
   fun assertSyncViewSelectedNode(nodeText: String, assertSelected: Boolean, consoleTextChecker: (String?) -> Unit) {
-    assertExecutionTreeNode(syncViewManager, nodeText, consoleTextChecker, assertSelected)
+    assertExecutionTreeNode(syncViewManager, nodeText, consoleTextChecker, null, assertSelected)
   }
 
   fun getSyncViewRerunActions(): List<AnAction> {
@@ -77,11 +79,15 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   }
 
   fun assertBuildViewSelectedNode(nodeText: String, consoleText: String, assertSelected: Boolean = true) {
-    assertExecutionTreeNode(buildViewManager, nodeText, { assertEquals(consoleText, it) }, assertSelected)
+    assertExecutionTreeNode(buildViewManager, nodeText, { assertEquals(consoleText, it) }, null, assertSelected)
   }
 
   fun assertBuildViewSelectedNode(nodeText: String, assertSelected: Boolean, consoleTextChecker: (String?) -> Unit) {
-    assertExecutionTreeNode(buildViewManager, nodeText, consoleTextChecker, assertSelected)
+    assertExecutionTreeNode(buildViewManager, nodeText, consoleTextChecker, null, assertSelected)
+  }
+
+  fun assertBuildViewSelectedNodeConsole(nodeText: String, assertSelected: Boolean, consoleChecker: ((ExecutionConsole?) -> Unit)?) {
+    assertExecutionTreeNode(buildViewManager, nodeText, null, consoleChecker, assertSelected)
   }
 
   private fun assertExecutionTree(viewManager: TestViewManager, expected: String, ignoreTasksOrder: Boolean) {
@@ -94,13 +100,14 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   private fun assertExecutionTreeNode(
     viewManager: TestViewManager,
     nodeText: String,
-    consoleTextChecker: (String?) -> Unit,
+    consoleTextChecker: ((String?) -> Unit)?,
+    consoleChecker: ((ExecutionConsole?) -> Unit)?,
     assertSelected: Boolean
   ) {
     viewManager.waitForPendingBuilds()
     val recentBuild = viewManager.getRecentBuild()
     val buildView = viewManager.getBuildsMap()[recentBuild]
-    assertExecutionTreeNode(buildView!!, nodeText, consoleTextChecker, assertSelected)
+    assertExecutionTreeNode(buildView!!, nodeText, consoleTextChecker, consoleChecker, assertSelected)
   }
 
   companion object {
@@ -129,7 +136,8 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     fun assertExecutionTreeNode(
       buildView: BuildView,
       nodeText: String,
-      consoleTextChecker: (String?) -> Unit,
+      consoleTextChecker: ((String?) -> Unit)?,
+      consoleChecker: ((ExecutionConsole?) -> Unit)?,
       assertSelected: Boolean
     ) {
       val eventView = buildView.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
@@ -159,8 +167,9 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
       if (node != selectedPathComponent) {
         assertEquals(node.toString(), selectedPathComponent.toString())
       }
-      val selectedNodeConsoleText = runInEdtAndGet { eventView.selectedNodeConsoleText }
-      consoleTextChecker.invoke(selectedNodeConsoleText)
+      val selectedNodeConsole = runInEdtAndGet { eventView.selectedNodeConsole }
+      consoleTextChecker?.invoke((selectedNodeConsole as? ConsoleViewImpl)?.text)
+      consoleChecker?.invoke(selectedNodeConsole)
     }
 
     private fun buildTasksNodesAsList(treeStringPresentation: String): List<String> {

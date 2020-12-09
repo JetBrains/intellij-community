@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
@@ -18,9 +19,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -68,16 +72,21 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     return model;
   }
 
+  @Override
+  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
+    return new SearchEverywhereCommandInfo("f", IdeBundle.message("search.everywhere.filter.files.description"), this);
+  }
+
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(includeNonProjectItemsText(), myFilter, onChanged);
+    return doGetActions(includeNonProjectItemsText(), myFilter, new FileTypeFilterCollector(), onChanged);
   }
 
   @NotNull
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
-    return new SERenderer() {
+    return new SearchEverywherePsiRenderer() {
       @NotNull
       @Override
       protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {

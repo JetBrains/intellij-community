@@ -26,14 +26,11 @@ To create an EditorConfig file in a directory, right-click this directory and se
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Standard support -->
-    <applicationService serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
     <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" order="first"/>
-    <applicationService serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>
     <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
     <projectService serviceImplementation="org.editorconfig.configmanagement.editor.EditorConfigPreviewManager"/>
@@ -42,8 +39,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
     <editorNotificationProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorNotificationProvider"/>
 
     <!-- Language support -->
-    <fileType name="EditorConfig" 
-              language="EditorConfig" 
+    <fileType name="EditorConfig"
+              language="EditorConfig"
               implementationClass="org.editorconfig.language.filetype.EditorConfigFileType"
               fieldName="INSTANCE"
               fileNames=".editorconfig"/>
@@ -92,7 +89,7 @@ To create an EditorConfig file in a directory, right-click this directory and se
         implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
 
     <editorFactoryListener implementation="org.editorconfig.configmanagement.EditorSettingsManager"/>
-    <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.ConfigEncodingManager"/>
+    <fileEncodingProvider implementation="org.editorconfig.configmanagement.ConfigEncodingManager"/>
     <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.LineEndingsManager"/>
 
     <utf8BomOptionProvider implementation="org.editorconfig.configmanagement.EditorConfigUtf8BomOptionProvider"/>

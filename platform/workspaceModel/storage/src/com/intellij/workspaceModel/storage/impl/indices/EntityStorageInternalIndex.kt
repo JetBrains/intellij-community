@@ -2,18 +2,18 @@
 package com.intellij.workspaceModel.storage.impl.indices
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap
 import com.intellij.workspaceModel.storage.impl.containers.copy
 import org.jetbrains.annotations.TestOnly
 
 open class EntityStorageInternalIndex<T> private constructor(
-  internal open val index: BidirectionalMap<EntityId, T>,
+  internal open val index: BidirectionalSetMap<EntityId, T>,
   protected val oneToOneAssociation: Boolean
 ) {
-  constructor(oneToOneAssociation: Boolean) : this(BidirectionalMap<EntityId, T>(), oneToOneAssociation)
+  constructor(oneToOneAssociation: Boolean) : this(BidirectionalSetMap<EntityId, T>(), oneToOneAssociation)
 
-  internal fun getIdsByEntry(entry: T): List<EntityId>? = index.getKeysByValue(entry)
+  internal fun getIdsByEntry(entry: T): List<EntityId>? = index.getKeysByValue(entry)?.toList()
 
   internal fun getEntryById(id: EntityId): T? = index[id]
 
@@ -23,7 +23,7 @@ open class EntityStorageInternalIndex<T> private constructor(
 
   class MutableEntityStorageInternalIndex<T> private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: BidirectionalMap<EntityId, T>,
+    override var index: BidirectionalSetMap<EntityId, T>,
     oneToOneAssociation: Boolean
   ) : EntityStorageInternalIndex<T>(index, oneToOneAssociation) {
 

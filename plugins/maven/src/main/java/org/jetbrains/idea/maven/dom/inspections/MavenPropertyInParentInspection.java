@@ -63,7 +63,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
 
 
       if (model != null) {
-        MavenDistribution distribution = MavenServerManager.getInstance().getConnector(file.getProject()).getMavenDistribution();
+        MavenDistribution distribution = MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
         boolean maven35 = distribution == null || StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
         List<ProblemDescriptor> problems = new ArrayList<>(3);
 

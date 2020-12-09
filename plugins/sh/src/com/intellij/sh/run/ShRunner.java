@@ -12,7 +12,8 @@ public abstract class ShRunner {
     myProject = project;
   }
 
-  public abstract void run(@NotNull String command, @NotNull String workingDirectory, @NotNull @NlsContexts.TabTitle String title);
+  public abstract void run(@NotNull String command, @NotNull String workingDirectory, @NotNull @NlsContexts.TabTitle String title,
+                           boolean activateToolWindow);
 
   public abstract boolean isAvailable(@NotNull Project project);
 }

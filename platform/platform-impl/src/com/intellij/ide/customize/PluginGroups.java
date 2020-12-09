@@ -6,7 +6,6 @@ import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -15,7 +14,6 @@ import icons.PlatformImplIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -84,7 +82,7 @@ public class PluginGroups {
       myTree.add(new Group(entry.getKey(), entry.getKey(), entry.getValue().getFirst(), null, entry.getValue().getSecond()));
     }
     worker.execute();
-    DisabledPluginsState.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
+    myDisabledPluginIds.addAll(DisabledPluginsState.loadDisabledPlugins());
     initCloudPlugins();
   }
 
@@ -262,6 +260,7 @@ public class PluginGroups {
         "Remote Access:com.jetbrains.plugins.webDeployment,org.jetbrains.plugins.remote-run",
         "Task Management:com.intellij.tasks,com.intellij.tasks.timeTracking",
         "org.jetbrains.plugins.terminal",
+        "org.jetbrains.plugins.emojipicker",
         "com.intellij.diagram",
         "org.jetbrains.plugins.yaml",
         "XSLT and XPath:XPathView,XSLT-Debugger"
@@ -351,7 +350,7 @@ public class PluginGroups {
       if (CORE.equals(group)) continue;
 
       List<IdSet> idSets = new ArrayList<>();
-      StringBuilder description = new StringBuilder();
+      @Nls StringBuilder description = new StringBuilder();
       for (String idDescription : g.getPluginIdDescription()) {
         IdSet idSet = new IdSet(this, idDescription);
         String idSetTitle = idSet.getTitle();
@@ -515,7 +514,7 @@ public class PluginGroups {
   }
 
   public static final class Group {
-    private final String myId;
+    private final @NonNls String myId;
     private final @Nls String myName;
     private final Icon myIcon;
     private final @Nls String myDescription;
@@ -530,7 +529,7 @@ public class PluginGroups {
       this(name, name, icon, description, pluginIdDescription);
 
     }
-    public Group(@NotNull String id,
+    public Group(@NonNls @NotNull String id,
                  @Nls @NotNull String name,
                  @Nullable Icon icon,
                  @Nullable @Nls String description,
@@ -542,7 +541,7 @@ public class PluginGroups {
       myPluginIdDescription = pluginIdDescription;
     }
 
-    public String getId() {
+    public @NonNls String getId() {
       return myId;
     }
 

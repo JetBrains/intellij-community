@@ -375,6 +375,9 @@ public final class X11UiUtil {
    */
   public static void activate(@NotNull Window window) {
     if (X11 == null) return;
+    if (FocusManagerImpl.FOCUS_REQUESTS_LOG.isDebugEnabled()) {
+      FocusManagerImpl.FOCUS_REQUESTS_LOG.debug("_NET_ACTIVE_WINDOW", new Throwable());
+    }
     X11.sendClientMessage(window, "activate", X11.NET_ACTIVE_WINDOW);
   }
 

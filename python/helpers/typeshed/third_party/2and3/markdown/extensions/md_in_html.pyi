@@ -1,0 +1,13 @@
+from typing import Any, Optional
+
+from markdown.blockprocessors import BlockProcessor
+from markdown.extensions import Extension
+
+class MarkdownInHtmlProcessor(BlockProcessor):
+    def test(self, parent, block): ...
+    def run(self, parent, blocks, tail: Optional[Any] = ..., nest: bool = ...) -> None: ...
+
+class MarkdownInHtmlExtension(Extension):
+    def extendMarkdown(self, md) -> None: ...
+
+def makeExtension(**kwargs): ...

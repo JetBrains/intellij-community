@@ -34,6 +34,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -275,19 +276,22 @@ public class RunConfigurationStorageUi {
       return;
     }
 
-    // 3. If the project is not under VCS, keep using .idea/runConfigurations
-    RunConfigurationVcsSupport vcsSupport = myProject.getService(RunConfigurationVcsSupport.class);
-    if (!vcsSupport.hasActiveVcss(myProject)) {
-      myRCStorageType = RCStorageType.DotIdeaFolder;
-      myFolderPathIfStoredInArbitraryFile = null;
-      return;
-    }
+    // Rider prefers project_base_dir/.run/ folder to .idea/runConfigurations/
+    if (!PlatformUtils.isRider()) {
+      // 3. If the project is not under VCS, keep using .idea/runConfigurations
+      RunConfigurationVcsSupport vcsSupport = myProject.getService(RunConfigurationVcsSupport.class);
+      if (!vcsSupport.hasActiveVcss(myProject)) {
+        myRCStorageType = RCStorageType.DotIdeaFolder;
+        myFolderPathIfStoredInArbitraryFile = null;
+        return;
+      }
 
-    // 4. If .idea/runConfigurations is not excluded from VCS (e.g. not in .gitignore), then use it
-    if (!isDotIdeaStorageVcsIgnored(vcsSupport)) {
-      myRCStorageType = RCStorageType.DotIdeaFolder;
-      myFolderPathIfStoredInArbitraryFile = null;
-      return;
+      // 4. If .idea/runConfigurations is not excluded from VCS (e.g. not in .gitignore), then use it
+      if (!isDotIdeaStorageVcsIgnored(vcsSupport)) {
+        myRCStorageType = RCStorageType.DotIdeaFolder;
+        myFolderPathIfStoredInArbitraryFile = null;
+        return;
+      }
     }
 
     // notNullize is to make inspections happy. Paths can't be null for non-default project

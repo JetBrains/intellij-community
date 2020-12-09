@@ -26,7 +26,7 @@ public class PyiFileType extends PythonFileType {
   @NotNull
   public static final PythonFileType INSTANCE = new PyiFileType();
 
-  protected PyiFileType() {
+  private PyiFileType() {
     super(new PyiLanguageDialect());
   }
 

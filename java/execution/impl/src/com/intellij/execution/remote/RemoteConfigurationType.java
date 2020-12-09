@@ -49,4 +49,9 @@ public final class RemoteConfigurationType extends SimpleConfigurationType {
   public static RemoteConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(RemoteConfigurationType.class);
   }
+
+  @Override
+  public boolean isEditableInDumbMode() {
+    return true;
+  }
 }

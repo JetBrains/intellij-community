@@ -149,4 +149,22 @@ class GitRewordTest : GitSingleRepoTest() {
     assertTrue("Message reworded incorrectly. Expected:\n[$newMessage] Actual:\n[$actualMessage]",
                StringUtil.equalsIgnoreWhitespaces(newMessage, actualMessage))
   }
+
+
+  // IDEA-254399
+  fun `test reword via rebase with spaces at the beginning`() {
+    val commit = file("a").create("initial").addCommit("  \t    Wrong message").details()
+    file("b").create().addCommit("One more commit")
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, commit, newMessage).execute()
+
+    repo.assertLatestHistory(
+      "One more commit",
+      newMessage
+    )
+  }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.palette;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.componentTree.TreeTransfer;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.ide.dnd.DnDAction;
@@ -85,7 +86,7 @@ public class PaletteItemsComponent extends JBList {
           String deprecatedMessage = "";
           if (deprecated) {
             deprecatedMessage =
-              String.format("<b>This item is deprecated in version \"%1$s\".<br>", myDesigner.getVersionLabel(deprecatedIn));
+              DesignerBundle.message("palette.item.deprecated.message", String.format("%1$s", myDesigner.getVersionLabel(deprecatedIn)));
             String hint = item.getDeprecatedHint();
             if (!StringUtil.isEmpty(hint)) {
               deprecatedMessage += hint;
@@ -93,14 +94,8 @@ public class PaletteItemsComponent extends JBList {
             deprecatedMessage += "</b><br><br>";
           }
 
-          tooltip = "<html><body><center><b>" +
-                    StringUtil.escapeXmlEntities(title) +
-                    "</b>" +
-                    version +
-                    "</center><p style='width: 300px'>" +
-                    deprecatedMessage +
-                    tooltip +
-                    "</p></body></html>";
+          tooltip = DesignerBundle
+            .message("palette.item.deprecated.tooltip", StringUtil.escapeXmlEntities(title), version, deprecatedMessage, tooltip);
         }
         setToolTipText(tooltip);
       }

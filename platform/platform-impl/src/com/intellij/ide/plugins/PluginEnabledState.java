@@ -8,25 +8,25 @@ import org.jetbrains.annotations.PropertyKey;
 
 public enum PluginEnabledState {
 
-  ENABLED_FOR_PROJECT(
-    "plugins.configurable.enabled.for.current.project",
-    true,
-    true
-  ),
   ENABLED(
     "plugins.configurable.enabled.for.all.projects",
     true,
     false
   ),
-  DISABLED_FOR_PROJECT(
-    "plugins.configurable.disabled.for.current.project",
-    false,
+  ENABLED_FOR_PROJECT(
+    "plugins.configurable.enabled.for.current.project",
+    true,
     true
   ),
   DISABLED(
     "plugins.configurable.disabled.for.all.projects",
     false,
     false
+  ),
+  DISABLED_FOR_PROJECT(
+    "plugins.configurable.disabled.for.current.project",
+    false,
+    true
   );
 
   private final @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String myPropertyKey;
@@ -49,8 +49,16 @@ public enum PluginEnabledState {
     return myEnabled;
   }
 
+  public boolean isDisabled() {
+    return !myEnabled;
+  }
+
   public boolean isPerProject() {
     return myPerProject;
+  }
+
+  public @NotNull PluginEnabledState getInverted() {
+    return getState(!myEnabled, isPerProject());
   }
 
   public static @NotNull PluginEnabledState getState(boolean enabled,

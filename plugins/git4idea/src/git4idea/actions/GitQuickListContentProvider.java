@@ -4,6 +4,7 @@ package git4idea.actions;
 import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,5 +29,25 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
     add("ChangesView.AddUnversioned", manager, actions);
     add("Git.ResolveConflicts", manager, actions);
     return actions;
+  }
+
+  @Override
+  protected void customizeActions(@NotNull ActionManager manager, @NotNull List<AnAction> actions) {
+    String showStageActionName = "Git.Show.Stage";
+    String stageAllActionName = "Git.Stage.Add.Tracked";
+    addAfter(showStageActionName, IdeActions.ACTION_CHECKIN_PROJECT, manager, actions);
+    addAfter(stageAllActionName, showStageActionName, manager, actions);
+    super.customizeActions(manager, actions);
+  }
+
+  protected static void addAfter(String actionName, String anchorActionName, ActionManager manager, List<? super AnAction> actions) {
+    AnAction action = manager.getAction(actionName);
+    assert action != null : "Can not find action " + actionName;
+
+    AnAction anchorAction = manager.getAction(anchorActionName);
+    assert anchorAction != null : "Can not find action " + anchorActionName;
+
+    int index = actions.indexOf(anchorAction);
+    actions.add(index >= 0 ? index + 1 : actions.size(), action);
   }
 }

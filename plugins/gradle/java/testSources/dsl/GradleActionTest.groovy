@@ -18,7 +18,6 @@ class GradleActionTest extends GradleHighlightingBaseTest {
     return [[BASE_GRADLE_VERSION].toArray()]
   }
 
-
   @Override
   protected List<String> getParentCalls() {
     return []
@@ -27,11 +26,10 @@ class GradleActionTest extends GradleHighlightingBaseTest {
   @Test
   void test() {
     importProject("apply plugin:'java'")
-    new RunAll().append {
-      'domain collection forEach'()
-    }.append {
-      'nested version block'
-    } run()
+    new RunAll(
+      { 'domain collection forEach'() },
+      { 'nested version block'() }
+    ).run()
   }
 
   void 'domain collection forEach'() {
@@ -41,7 +39,6 @@ class GradleActionTest extends GradleHighlightingBaseTest {
       closureDelegateTest(GRADLE_API_TASKS_JAVADOC_JAVADOC, 1)
     }
   }
-
 
   void 'nested version block'() {
     doTest('dependencies {' +

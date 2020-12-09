@@ -24,7 +24,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.Location;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
@@ -88,9 +87,8 @@ public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
       return false;
     }
 
-    @Nullable
     @Override
-    public Range<Integer> getCallingExpressionLines() {
+    public @NotNull Range<Integer> getCallingExpressionLines() {
       return myLines;
     }
   }

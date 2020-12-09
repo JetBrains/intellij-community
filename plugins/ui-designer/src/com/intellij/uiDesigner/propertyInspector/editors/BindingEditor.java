@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -145,7 +146,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
   }
 
   @Override
-  public JComponent getComponent(final RadComponent component, final String value, final InplaceContext inplaceContext){
+  public JComponent getComponent(final RadComponent component, final @NlsSafe String value, final InplaceContext inplaceContext){
     final String[] fieldNames = getFieldNames(component, value);
     myCbx.setModel(new DefaultComboBoxModel(fieldNames));
     myCbx.setSelectedItem(value);

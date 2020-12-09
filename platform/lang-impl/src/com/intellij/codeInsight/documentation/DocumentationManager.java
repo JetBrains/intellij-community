@@ -5,7 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
@@ -498,7 +498,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                  PsiElement original,
                                  boolean requestFocus,
                                  @Nullable Runnable closeCallback,
-                                 @Nullable String documentation,
+                                 @Nullable @Nls String documentation,
                                  boolean useStoredPopupSize,
                                  boolean onAutoUpdate) {
     if (!element.isValid()) {
@@ -700,7 +700,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                    @NotNull PopupUpdateProcessor updateProcessor,
                                    PsiElement originalElement,
                                    @Nullable Runnable closeCallback,
-                                   @Nullable String documentation,
+                                   @Nullable @Nls String documentation,
                                    boolean useStoredPopupSize,
                                    boolean onAutoUpdate) {
     if (!myProject.isOpen()) return;
@@ -841,7 +841,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Nullable
   private PsiElement findTargetElementFromContext(@NotNull Editor editor, @Nullable PsiFile file, @Nullable PsiElement originalElement) {
-    PsiElement list = ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
+    PsiElement list = ParameterInfoControllerBase.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
     PsiElement expressionList = null;
     if (list != null) {
       LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
@@ -883,7 +883,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return findTargetElementUnsafe(editor, offset, file, contextElement);
     }
     catch (IndexNotReadyException ex) {
-      LOG.warn("Index not ready");
       LOG.debug(ex);
       return null;
     }
@@ -961,6 +960,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   public @NlsSafe String generateDocumentation(@NotNull PsiElement element, @Nullable PsiElement originalElement, boolean onHover) {
     return new MyCollector(myProject, element, originalElement, null, onHover, false).getDocumentation();
+  }
+
+  @NotNull
+  public Pair<@NlsSafe String, @Nullable DocumentationProvider> getDocumentationAndProvider(@NotNull PsiElement element,
+                                                                                            @Nullable PsiElement originalElement,
+                                                                                            boolean onHover) {
+    MyCollector collector = new MyCollector(myProject, element, originalElement, null, onHover, false);
+    return Pair.create(collector.getDocumentation(), collector.provider);
   }
 
   @Nullable
@@ -1049,7 +1056,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         return;
       }
 
-      DocToolWindowManager toolWindowManager = DocToolWindowManager.LANGUAGE_MANAGER.forLanguage(element.getLanguage());
+      Language elementLanguage = ReadAction.compute(() -> element.getLanguage());
+      DocToolWindowManager toolWindowManager = DocToolWindowManager.LANGUAGE_MANAGER.forLanguage(elementLanguage);
       if (toolWindowManager != null) {
         if (collector.onAutoUpdate && !toolWindowManager.isAutoUpdateAvailable()) {
           callback.setDone();
@@ -1087,7 +1095,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       LOG.debug("Documentation fetched successfully:\n", text);
 
       String finalText = text;
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(modality, () -> {
         if (!element.isValid()) {
           LOG.debug("Element for which documentation was requested is not valid");
           callback.setDone();
@@ -1107,7 +1115,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           component.clearHistory();
         }
         callback.setDone();
-      }, modality);
+        getProject().getMessageBus().syncPublisher(DocumentationComponentListener.TOPIC).componentDataChanged();
+      });
     }, 10);
     return callback;
   }
@@ -1620,9 +1629,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @NotNull
   private static String getVcsStatus(Project project, VirtualFile file) {
     FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
-    return status != FileStatus.NOT_CHANGED ?
-           "<p><span class='grayed'>VCS Status:</span> <span color='" + ColorUtil.toHex(status.getColor()) + "'>" + status.getText() + "</span>" :
-           "";
+    Color color = status.getColor();
+    String colorAttr = color == null ? "" : "color='" + ColorUtil.toHex(color) + "'";
+    if (status == FileStatus.NOT_CHANGED || status == FileStatus.SUPPRESSED) return "";
+    return "<p><span class='grayed'>VCS Status:</span> <span" + colorAttr + ">" + status.getText() + "</span>";
   }
 
   private Optional<QuickSearchComponent> findQuickSearchComponent() {

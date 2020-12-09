@@ -8,6 +8,7 @@ from typing import (
     IO,
     Any,
     BinaryIO,
+    Callable,
     Dict,
     Iterable,
     Iterator,
@@ -90,6 +91,8 @@ responses: Dict[int, str]
 
 class HTTPMessage(email.message.Message): ...
 
+def parse_headers(fp: io.BufferedIOBase, _class: Callable[[], email.message.Message] = ...) -> HTTPMessage: ...
+
 class HTTPResponse(io.BufferedIOBase, BinaryIO):
     msg: HTTPMessage
     headers: HTTPMessage
@@ -156,18 +159,15 @@ class HTTPConnection:
             timeout: Optional[float] = ...,
             source_address: Optional[Tuple[str, int]] = ...,
         ) -> None: ...
-    if sys.version_info >= (3, 6):
-        def request(
-            self,
-            method: str,
-            url: str,
-            body: Optional[_DataType] = ...,
-            headers: Mapping[str, str] = ...,
-            *,
-            encode_chunked: bool = ...,
-        ) -> None: ...
-    else:
-        def request(self, method: str, url: str, body: Optional[_DataType] = ..., headers: Mapping[str, str] = ...) -> None: ...
+    def request(
+        self,
+        method: str,
+        url: str,
+        body: Optional[_DataType] = ...,
+        headers: Mapping[str, str] = ...,
+        *,
+        encode_chunked: bool = ...,
+    ) -> None: ...
     def getresponse(self) -> HTTPResponse: ...
     def set_debuglevel(self, level: int) -> None: ...
     def set_tunnel(self, host: str, port: Optional[int] = ..., headers: Optional[Mapping[str, str]] = ...) -> None: ...
@@ -175,10 +175,7 @@ class HTTPConnection:
     def close(self) -> None: ...
     def putrequest(self, method: str, url: str, skip_host: bool = ..., skip_accept_encoding: bool = ...) -> None: ...
     def putheader(self, header: str, *argument: str) -> None: ...
-    if sys.version_info >= (3, 6):
-        def endheaders(self, message_body: Optional[_DataType] = ..., *, encode_chunked: bool = ...) -> None: ...
-    else:
-        def endheaders(self, message_body: Optional[_DataType] = ...) -> None: ...
+    def endheaders(self, message_body: Optional[_DataType] = ..., *, encode_chunked: bool = ...) -> None: ...
     def send(self, data: _DataType) -> None: ...
 
 class HTTPSConnection(HTTPConnection):

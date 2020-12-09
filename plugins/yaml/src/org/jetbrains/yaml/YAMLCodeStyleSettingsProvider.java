@@ -12,6 +12,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
+/**
+ * @deprecated This logic is moved to YAMLLanguageCodeStyleSettingsProvider.
+ * This class is still needed for compatibility for Raml plugin.
+ */
+@Deprecated(forRemoval = true)
 public class YAMLCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   @Override

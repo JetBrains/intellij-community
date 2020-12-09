@@ -3,14 +3,12 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
@@ -39,16 +37,26 @@ public abstract class BuilderAnnotationContributor implements AstTransformationS
   }
 
   public static PsiField[] getFields(@NotNull TransformationContext context, boolean includeSuper) {
-    return filterFields(includeSuper ? context.getAllFields(false) : context.getFields());
+    return filterFields(includeSuper ? context.getAllFields(false) : context.getFields(), context);
   }
 
-  public static PsiField[] getFields(@NotNull GrTypeDefinition clazz, boolean includeSuper) {
-    return filterFields(includeSuper ? asList(GrClassImplUtil.getAllFields(clazz, false)) : asList(clazz.getFields()));
+  public static PsiField[] getFields(@NotNull GrTypeDefinition clazz,
+                                     boolean includeSuper,
+                                     @NotNull TransformationContext context) {
+    return filterFields(includeSuper ? asList(GrClassImplUtil.getAllFields(clazz, false)) : asList(clazz.getFields()), context);
   }
 
-  private static PsiField[] filterFields(Collection<? extends PsiField> collectedFields) {
+  private static PsiField[] filterFields(Collection<? extends PsiField> collectedFields,
+                                         @NotNull TransformationContext context) {
     return collectedFields.stream()
-      .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
+      .filter(field -> {
+        PsiModifierList modifierList = field.getModifierList();
+        if (modifierList instanceof GrModifierList) {
+          return !context.hasModifierProperty((GrModifierList)modifierList, PsiModifier.STATIC);
+        } else {
+          return true;
+        }
+      })
       .filter(field -> {
         PsiClass aClass = field.getContainingClass();
         if (aClass == null || aClass.getQualifiedName() == null) {

@@ -66,8 +66,10 @@ import java.util.function.Function;
   additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC
 )
 public final class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
+  public static final ExtensionPointName<AdditionalTextAttributesEP> ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME = new ExtensionPointName<>("com.intellij.additionalTextAttributes");
+
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
-  private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledColorScheme");
+  private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
 
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
@@ -247,8 +249,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
-      BUNDLED_EP_NAME.forEachExtensionSafe(ep -> {
-        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
+      BUNDLED_EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
+        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", null, pluginDescriptor);
       });
     }
   }
@@ -263,7 +265,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         UITheme theme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
         String path = theme.getEditorScheme();
         if (path != null) {
-          mySchemeManager.loadBundledScheme(path, theme);
+          mySchemeManager.loadBundledScheme(path, theme, null);
         }
       }
     }
@@ -328,7 +330,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void handleThemeAdded(@NotNull UITheme theme) {
     String editorScheme = theme.getEditorScheme();
     if (editorScheme != null) {
-      getSchemeManager().loadBundledScheme(editorScheme, theme);
+      getSchemeManager().loadBundledScheme(editorScheme, theme, null);
       initEditableBundledSchemesCopies();
     }
   }
@@ -380,7 +382,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @NotNull
   private static MultiMap<String, AdditionalTextAttributesEP> collectAdditionalTextAttributesEPs() {
     MultiMap<String, AdditionalTextAttributesEP> schemeNameToAttributesFile = MultiMap.create();
-    AdditionalTextAttributesEP.EP_NAME.forEachExtensionSafe(attributesEP -> {
+    ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.forEachExtensionSafe(attributesEP -> {
       schemeNameToAttributesFile.putValue(attributesEP.scheme, attributesEP);
     });
     return schemeNameToAttributesFile;

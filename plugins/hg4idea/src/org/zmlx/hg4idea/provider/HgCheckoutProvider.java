@@ -25,6 +25,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.CLONE_ERROR;
+
 public class HgCheckoutProvider implements CheckoutProvider {
 
   @Override
@@ -67,7 +69,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
       @Override
       public void onSuccess() {
         if (cloneResult.get() == null || HgErrorUtil.hasErrorsInCommandExecution(cloneResult.get())) {
-          new HgCommandResultNotifier(project).notifyError("hg.clone.error",
+          new HgCommandResultNotifier(project).notifyError(CLONE_ERROR,
                                                            cloneResult.get(),
                                                            HgBundle.message("hg4idea.clone.error"),
                                                            HgBundle.message("hg4idea.clone.repo.error.msg", sourceRepositoryURL));

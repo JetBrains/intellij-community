@@ -141,10 +141,10 @@ public final class PathEnvironmentVariableUtil {
       if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
         List<String> executableFileExtensions = getWindowsExecutableFileExtensions();
 
-        String[] baseNames = ContainerUtil.map2Array(executableFileExtensions, String.class, s -> exePath+s);
+        String[] baseNames = ContainerUtil.map2Array(executableFileExtensions, String.class, s -> exePath + s);
         List<File> exeFiles = findExeFilesInPath(true, null, getPathVariableValue(), baseNames);
         File foundFile = ContainerUtil.getFirstItem(exeFiles);
-        if(foundFile != null){
+        if (foundFile != null) {
           return foundFile.getAbsolutePath();
         }
       }
@@ -158,5 +158,18 @@ public final class PathEnvironmentVariableUtil {
   @Nullable
   public static String getPathVariableValue() {
     return EnvironmentUtil.getValue(PATH);
+  }
+
+  @Nullable
+  public static File findExecutableInPathOnAnyOS(@NotNull @NonNls String fileBaseName) {
+    if (SystemInfo.isWindows) {
+      String[] fileNames = ContainerUtil.map2Array(getWindowsExecutableFileExtensions(), String.class,
+                                                   (String extension) -> fileBaseName + extension);
+      List<File> exeFiles = findExeFilesInPath(true, null, getPathVariableValue(), fileNames);
+      return ContainerUtil.getFirstItem(exeFiles);
+    }
+    else {
+      return findInPath(fileBaseName);
+    }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -24,14 +25,15 @@ public class ConfigurationCellRenderer extends SimpleListCellRenderer<Configurat
                         boolean hasFocus) {
     final MatchOptions matchOptions = value.getMatchOptions();
     setIcon(matchOptions.getFileType().getIcon());
+    final @NlsSafe String text;
     if (value instanceof ReplaceConfiguration) {
-      setText(shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 49, 0, true)
-              + " ⇒ "
-              + shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
+      text = shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 49, 0, true) + " ⇒ " +
+             shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true);
     }
     else {
-      setText(shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 100, 0, true));
+      text = shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 100, 0, true);
     }
+    setText(text);
     setEnabled(list.isEnabled());
   }
 }

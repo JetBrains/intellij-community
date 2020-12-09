@@ -11,7 +11,8 @@ import com.intellij.util.indexing.FileIndexingState;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -20,34 +21,38 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-class CompositeBinaryBuilderMap {
+final class CompositeBinaryBuilderMap {
   private static final Logger LOG = Logger.getInstance(CompositeBinaryBuilderMap.class);
   private static final FileAttribute VERSION_STAMP = new FileAttribute("stubIndex.cumulativeBinaryBuilder", 1, true);
 
-  private final TObjectIntHashMap<FileType> myCumulativeVersionMap;
+  private final Object2IntMap<FileType> myCumulativeVersionMap;
 
   CompositeBinaryBuilderMap() throws IOException {
     try (PersistentStringEnumerator cumulativeVersionEnumerator = new PersistentStringEnumerator(registeredCompositeBinaryBuilderFiles())) {
-      myCumulativeVersionMap = new TObjectIntHashMap<>();
+      myCumulativeVersionMap = new Object2IntOpenHashMap<>();
 
       for (Map.Entry<FileType, BinaryFileStubBuilder> entry : BinaryFileStubBuilders.INSTANCE.getAllRegisteredExtensions().entrySet()) {
         FileType fileType = entry.getKey();
         BinaryFileStubBuilder builder = entry.getValue();
-
-        if (builder instanceof BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?>) {
-          StringBuilder cumulativeVersion = new StringBuilder();
-          cumulativeVersion.append(fileType.getName()).append("->").append(builder.getClass().getName()).append(':').append(builder.getStubVersion());
-          @SuppressWarnings({"unchecked", "rawtypes"}) BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object> compositeBuilder =
-            (BinaryFileStubBuilder.CompositeBinaryFileStubBuilder)builder;
-          compositeBuilder.getAllSubBuilders().forEach(b -> cumulativeVersion.append(';').append(compositeBuilder.getSubBuilderVersion(b)));
-
-          int enumeratedId = cumulativeVersionEnumerator.enumerate(cumulativeVersion.toString());
-          LOG.debug("composite binary stub builder for " + fileType + " registered:  " +
-                    "id = " + enumeratedId + ", " +
-                    "value" + cumulativeVersion.toString());
-          myCumulativeVersionMap.put(fileType, enumeratedId);
+        if (!(builder instanceof BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?>)) {
+          continue;
         }
+
+        StringBuilder cumulativeVersion = new StringBuilder();
+        cumulativeVersion.append(fileType.getName()).append("->").append(builder.getClass().getName()).append(':').append(builder.getStubVersion());
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object> compositeBuilder =
+          (BinaryFileStubBuilder.CompositeBinaryFileStubBuilder)builder;
+        cumulativeVersion.append(";");
+        cumulativeVersion.append(compositeBuilder.getAllSubBuilders().map(b -> compositeBuilder.getSubBuilderVersion(b)).sorted().collect(Collectors.joining(";")));
+
+        int enumeratedId = cumulativeVersionEnumerator.enumerate(cumulativeVersion.toString());
+        LOG.debug("composite binary stub builder for " + fileType + " registered:  " +
+                  "id = " + enumeratedId + ", " +
+                  "value" + cumulativeVersion.toString());
+        myCumulativeVersionMap.put(fileType, enumeratedId);
       }
     }
   }
@@ -79,18 +84,21 @@ class CompositeBinaryBuilderMap {
         indexedVersion = DataInputOutputUtil.readINT(stream);
       }
     }
-    if (indexedVersion == 0) return FileIndexingState.NOT_INDEXED;
+
+    if (indexedVersion == 0) {
+      return FileIndexingState.NOT_INDEXED;
+    }
+
     int actualVersion = getBuilderCumulativeVersion(file);
     return actualVersion == indexedVersion ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
   }
 
   private int getBuilderCumulativeVersion(@NotNull VirtualFile file) {
     FileType type = ProgressManager.getInstance().computeInNonCancelableSection(() -> file.getFileType());
-    return myCumulativeVersionMap.get(type);
+    return myCumulativeVersionMap.getInt(type);
   }
 
-  @NotNull
-  private static Path registeredCompositeBinaryBuilderFiles() {
+  private static @NotNull Path registeredCompositeBinaryBuilderFiles() {
     return new File(IndexInfrastructure.getIndexRootDir(StubUpdatingIndex.INDEX_ID), ".binary_builders").toPath();
   }
 }

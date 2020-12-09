@@ -13,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public final class SystemProperties {
   private SystemProperties() { }
 
-  @NotNull
-  public static String getUserHome() {
+  public static @NotNull String getUserHome() {
     return System.getProperty("user.home");
   }
 
@@ -55,25 +54,19 @@ public final class SystemProperties {
    * Returns the value of given property as integer, or {@code defaultValue} if the property is not specified or malformed.
    */
   public static int getIntProperty(@NotNull final String key, final int defaultValue) {
-    final String value = System.getProperty(key);
+    String value = System.getProperty(key);
     if (value != null) {
-      try {
-        return Integer.parseInt(value);
-      }
+      try { return Integer.parseInt(value); }
       catch (NumberFormatException ignored) { }
     }
-
     return defaultValue;
   }
 
   public static float getFloatProperty(@NotNull String key, float defaultValue) {
     String value = System.getProperty(key);
     if (value != null) {
-      try {
-        return Float.parseFloat(value);
-      }
-      catch (NumberFormatException ignored) {
-      }
+      try { return Float.parseFloat(value); }
+      catch (NumberFormatException ignored) { }
     }
     return defaultValue;
   }
@@ -83,7 +76,7 @@ public final class SystemProperties {
    */
   public static boolean getBooleanProperty(@NotNull String key, boolean defaultValue) {
     String value = System.getProperty(key);
-    return value == null ? defaultValue : Boolean.parseBoolean(value);
+    return value != null ? Boolean.parseBoolean(value) : defaultValue;
   }
 
   public static boolean is(String key) {

@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Svetlana.Zemlyanskaya
  */
 public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdArrangementRuleAliasToken> {
-  private static final Namer<StdArrangementRuleAliasToken> NAMER = new Namer<StdArrangementRuleAliasToken>() {
+  private static final Namer<StdArrangementRuleAliasToken> NAMER = new Namer<>() {
     @Override
     public String getName(StdArrangementRuleAliasToken token) {
       return token.getName();
@@ -44,7 +44,7 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
     }
   };
   private static final Factory<StdArrangementRuleAliasToken> FACTORY = () -> new StdArrangementRuleAliasToken("");
-  private static final Cloner<StdArrangementRuleAliasToken> CLONER = new Cloner<StdArrangementRuleAliasToken>() {
+  private static final Cloner<StdArrangementRuleAliasToken> CLONER = new Cloner<>() {
     @Override
     public StdArrangementRuleAliasToken cloneOf(StdArrangementRuleAliasToken original) {
       return copyOf(original);

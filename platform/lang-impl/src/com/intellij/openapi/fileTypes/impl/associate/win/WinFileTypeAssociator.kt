@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
@@ -32,7 +32,7 @@ class WinFileTypeAssociator : com.intellij.openapi.fileTypes.impl.associate.Syst
    */
   @Throws(OSFileAssociationException::class)
   override fun associateFileTypes(fileTypes: List<FileType>) {
-    val extensions: List<Extension> = fileTypes.map { FileTypeManager.getInstance().getAssociations(it) }.flatten()
+    val extensions: List<Extension> = fileTypes.map { OSAssociateFileTypesUtil.getMatchers(it) }.flatten()
       .filterIsInstance(ExtensionFileNameMatcher::class.java)
       .map { Extension(it.extension) }
     runCmdCommandWithSudo(createCmdScriptText(extensions)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
@@ -10,11 +10,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.types.Path
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.TestingOptions
-import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -49,6 +45,10 @@ class TestingTasksImpl extends TestingTasks {
     checkOptions()
 
     def compilationTasks = CompilationTasks.create(context)
+    def projectArtifacts = options.beforeRunProjectArtifacts?.split(";")?.toList()
+    if (projectArtifacts) {
+      compilationTasks.buildProjectArtifacts(projectArtifacts)
+    }
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
       def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
       JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
@@ -185,7 +185,7 @@ class TestingTasksImpl extends TestingTasks {
           "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
-          "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
+          // "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
           "test.discovery.excluded.roots"           : excludeRoots.collect { FileUtilRt.toSystemDependentName(it) }.join(";"),
         ] as Map<String, String>)
     }
@@ -219,7 +219,7 @@ class TestingTasksImpl extends TestingTasks {
             'teamcity-build-type-id'           : System.getProperty('teamcity.buildType.id'),
             'teamcity-build-configuration-name': System.getenv('TEAMCITY_BUILDCONF_NAME'),
             'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
-            'branch'                           : System.getProperty('intellij.platform.vcs.branch') ?: 'master',
+            'branch'                           : System.getProperty('teamcity.build.branch') ?: 'master',
             'project'                          : System.getProperty('intellij.test.discovery.project') ?: 'intellij',
             'checkout-root-prefix'             : System.getProperty("intellij.build.test.discovery.checkout.root.prefix"),
           ])
@@ -348,7 +348,7 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.addAll([
         "-Xmx750m",
         "-Xms750m",
-        "-Dsun.io.useCanonPrefixCache=false"
+        "-Dsun.io.useCanonCaches=false"
       ])
     }
 
@@ -397,7 +397,7 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
     else if (options.debugEnabled) {
-      String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"},address=localhost:$options.debugPort"
+      String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"},address=$options.debugHost:$options.debugPort"
       jvmArgs.add(debuggerParameter)
     }
 
@@ -427,7 +427,10 @@ class TestingTasksImpl extends TestingTasks {
     List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
 
     String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : ""
-    context.ant.junit(fork: true, showoutput: isShowAntJunitOutput(), logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath, printsummary: (underTeamCity ? "off" : "on")) {
+    context.ant.junit(fork: true, showoutput: isShowAntJunitOutput(), logfailedtests: false,
+                      tempdir: junitTemp, jvm: jvmExecutablePath,
+                      printsummary: (underTeamCity ? "off" : "on"),
+                      haltOnFailure: (options.failFast ? "yes" : "no")) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {
@@ -529,7 +532,7 @@ class TestingTasksImpl extends TestingTasks {
   void setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 'setupBundledMaven')
+      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupBundledMaven')
     }
   }
 

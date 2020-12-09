@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -105,7 +106,7 @@ public final class GroovyValidationUtil {
     }
   }
 
-  private static void addConflict(final String varName, final PsiNamedElement element, final MultiMap<PsiElement, String> conflicts) {
+  private static void addConflict(@NlsSafe String varName, PsiNamedElement element, MultiMap<PsiElement, String> conflicts) {
     if (element instanceof GrParameter) {
       conflicts.putValue(element, GroovyRefactoringBundle.message("variable.conflicts.with.parameter.0", CommonRefactoringUtil.htmlEmphasize(varName)));
     } else if (element instanceof GrField) {

@@ -28,7 +28,7 @@ import java.util.Set;
  * @deprecated Use {@link FoldingDescriptor} instead.
  */
 @Deprecated
-public class NamedFoldingDescriptor extends FoldingDescriptor {
+public final class NamedFoldingDescriptor extends FoldingDescriptor {
   /**
    * @deprecated Use {@link FoldingDescriptor#FoldingDescriptor(PsiElement, int, int, FoldingGroup, String)} instead.
    */

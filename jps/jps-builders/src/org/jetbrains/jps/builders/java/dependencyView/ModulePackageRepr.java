@@ -99,7 +99,7 @@ public class ModulePackageRepr extends Proto {
     final StringBuilder sb = new StringBuilder();
     sb.append("Module package: ").append(context.getValue(name));
     final Set<Integer> moduleNames = myModuleNames;
-    if (moduleNames != null && !moduleNames.isEmpty()) {
+    if (!moduleNames.isEmpty()) {
       final List<String> names = new ArrayList<>();
       for (Integer moduleName : moduleNames) {
         names.add(context.getValue(moduleName));

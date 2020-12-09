@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -18,7 +19,10 @@ public class WelcomeScreenDefaultCustomization implements WelcomeScreenCustomiza
 
   @Override
   public @Nullable Component createQuickAccessComponent(@NotNull Disposable parentDisposable) {
-    AnAction action = createShowPopupAction(IdeActions.GROUP_WELCOME_SCREEN_HELP);
-    return WelcomeScreenComponentFactory.wrapActionLink(new ActionLink(IdeBundle.message("action.help"), null, action));
+    AnAction action = createShowPopupAction(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS);
+    ActionLink link = new ActionLink("", AllIcons.General.Gear, action);
+    link.setHoveringIcon(AllIcons.General.GearHover);
+    link.setToolTipText(ActionsBundle.groupText(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS));
+    return WelcomeScreenComponentFactory.wrapActionLink(link);
   }
 }

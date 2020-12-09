@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,7 +47,7 @@ public class MVStoreTest {
   @Rule
   public final InMemoryFsRule fsRule = new InMemoryFsRule();
 
-  private static final Thread.UncaughtExceptionHandler exceptionHandler = (t, e) -> {
+  private static final BiConsumer<Throwable, MVStore> exceptionHandler = (e, store) -> {
     throw new AssertionError(e);
   };
 
@@ -352,7 +353,7 @@ public class MVStoreTest {
     Path file = tempDir.newPath();
     AtomicReference<Throwable> exRef = new AtomicReference<>();
     MVStore s = new MVStore.Builder().
-      backgroundExceptionHandler((t, e) -> exRef.set(e))
+      backgroundExceptionHandler((e, store) -> exRef.set(e))
       .autoCommitDelay(10)
       .open(file);
     MVMap<Integer, String> m = s.openMap("data", IntDataType.INSTANCE, StringDataType.INSTANCE);

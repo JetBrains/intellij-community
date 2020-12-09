@@ -16,14 +16,14 @@
 package org.intellij.lang.regexp.psi;
 
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RegExpGroup extends RegExpAtom, PsiNamedElement {
 
   boolean isCapturing();
 
-  @Nullable
-  RegExpPattern getPattern();
+  @NotNull RegExpPattern getPattern();
 
   /** @deprecated use #getType() */
   @Deprecated

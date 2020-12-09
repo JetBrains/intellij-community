@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.share
 
 import circlet.client.api.RepoDetails
@@ -25,8 +26,11 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.actions.SpaceActionUtils
-import com.intellij.space.components.space
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.notification.SpaceNotificationIdsHolder.Companion.GIT_REPO_INIT_ERROR
+import com.intellij.space.notification.SpaceNotificationIdsHolder.Companion.PROJECT_SHARED_SUCCESSFULLY
+import com.intellij.space.notification.SpaceNotificationIdsHolder.Companion.SHARING_NOT_FINISHED
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.vcs.SpaceHttpPasswordState
@@ -49,7 +53,6 @@ import libraries.coroutines.extra.launch
 import libraries.klogging.KLogger
 import libraries.klogging.logger
 import runtime.Ui
-import java.util.*
 
 class SpaceShareProjectAction : DumbAwareAction() {
   private val log: KLogger = logger<SpaceShareProjectAction>()
@@ -140,9 +143,9 @@ class SpaceShareProjectAction : DumbAwareAction() {
         }
 
         VcsNotifier.getInstance(project).notifySuccess(
-          "space.project.shared.successfully",
+          PROJECT_SHARED_SUCCESSFULLY,
           SpaceBundle.message("share.project.success.notification.title"),
-          formatLink(url, repoInfo.name),
+          formatLink(url, repoInfo.name), // NON-NLS
           NotificationListener.URL_OPENING_LISTENER
         )
       }
@@ -150,6 +153,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
   }
 
   private suspend fun checkAndSetGitHttpPassword(): SpaceHttpPasswordState {
+    val space = SpaceWorkspaceComponent.getInstance()
     val client = space.workspace.value?.client ?: return SpaceHttpPasswordState.NotSet
     val me = space.workspace.value?.me?.value ?: return SpaceHttpPasswordState.NotSet
     val td = client.td
@@ -185,8 +189,8 @@ class SpaceShareProjectAction : DumbAwareAction() {
     indicator.text = SpaceBundle.message("share.project.action.progress.title.initializing.repository.title")
     val result = Git.getInstance().init(project, root)
     if (!result.success()) {
-      VcsNotifier.getInstance(project).notifyError("space.git.repo.init.error",
-                                                   GitBundle.getString("initializing.title"),
+      VcsNotifier.getInstance(project).notifyError(GIT_REPO_INIT_ERROR,
+                                                   GitBundle.message("initializing.title"),
                                                    result.errorOutputAsHtmlString)
       log.info { "Failed to create empty git repo: " + result.errorOutputAsJoinedString }
       return false
@@ -263,8 +267,8 @@ class SpaceShareProjectAction : DumbAwareAction() {
     }
     catch (e: VcsException) {
       log.warn(e)
-      val repositoryLink = formatLink(url, "'$name'")
-      notifyError(project, wrapInHtmlLines(
+      val repositoryLink = formatLink(url, "'$name'") // NON-NLS
+      notifyError(project, wrapInHtmlLines( // NON-NLS
         SpaceBundle.message("share.project.error.notification.initial.commit.failed.message", repositoryLink),
         *e.messages
       ))
@@ -306,14 +310,14 @@ class SpaceShareProjectAction : DumbAwareAction() {
     indicator.text = SpaceBundle.message("share.project.action.progress.title.pushing.title")
 
     val currentBranch = repository.currentBranch
-    val repositoryLink = formatLink(url, "'$name'")
+    val repositoryLink = formatLink(url, "'$name'") // NON-NLS
     if (currentBranch == null) {
       notifyError(project, SpaceBundle.message("share.project.error.notification.no.current.branch.message", repositoryLink))
       return false
     }
     val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
     if (!result.success()) {
-      notifyError(project, wrapInHtmlLines(
+      notifyError(project, wrapInHtmlLines( // NON-NLS
         SpaceBundle.message("share.project.error.notification.push.failed.message", repositoryLink),
         result.errorOutputAsHtmlString
       ))
@@ -324,7 +328,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
 
   private fun notifyError(project: Project, @NotificationContent message: String) {
     VcsNotifier.getInstance(project).notifyError(
-      "space.sharing.not.finished",
+      SHARING_NOT_FINISHED,
       SpaceBundle.message("share.project.error.notification.title"),
       message,
       NotificationListener.URL_OPENING_LISTENER

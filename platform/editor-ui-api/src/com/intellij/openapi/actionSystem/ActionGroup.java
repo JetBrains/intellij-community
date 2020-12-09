@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.ReflectionUtil;
@@ -26,6 +26,7 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  */
 public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
+  private boolean mySearchable = true;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
     @Override
@@ -119,6 +120,14 @@ public abstract class ActionGroup extends AnAction {
     firePropertyChange(PROP_POPUP, oldPopup, myPopup);
   }
 
+  public boolean isSearchable() {
+    return mySearchable;
+  }
+
+  public void setSearchable(boolean searchable) {
+    mySearchable = searchable;
+  }
+
   public final void addPropertyChangeListener(@NotNull PropertyChangeListener l){
     myChangeSupport.addPropertyChangeListener(l);
   }
@@ -178,11 +187,10 @@ public abstract class ActionGroup extends AnAction {
     boolean dumbAware = super.isDumbAware();
     if (dumbAware) {
       myDumbAware = Boolean.TRUE;
-    } else {
-      if (myDumbAware == null) {
-        Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
-        myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
-      }
+    }
+    else {
+      Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
+      myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
     }
 
     return myDumbAware;

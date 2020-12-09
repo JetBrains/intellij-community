@@ -15,10 +15,12 @@ import com.intellij.ui.FontComboBox;
 import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,12 +88,14 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     c.gridx = 1;
     fontPanel.add(myPrimaryCombo, c);
 
-    c.gridx = 2;
+    c.gridx = 1;
+    c.gridy ++;
     c.insets = getInsets(0, BASE_INSET);
+    myOnlyMonospacedCheckBox.setFont(JBUI.Fonts.smallFont());
     fontPanel.add(myOnlyMonospacedCheckBox, c);
 
     c.gridx = 0;
-    c.gridy = 1;
+    c.gridy ++;
     c.insets = baseInsets;
     mySizeLabel = new JLabel(ApplicationBundle.message("editbox.font.size"));
     mySizeLabel.setLabelFor(myEditorFontSizeField);
@@ -101,26 +105,16 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     fontPanel.add(myEditorFontSizeField, c);
 
     c.gridx = 0;
-    c.gridy = 2;
+    c.gridy ++;
     myLineSpacingLabel = new JLabel(ApplicationBundle.message("editbox.line.spacing"));
     myLineSpacingLabel.setLabelFor(myLineSpacingField);
     fontPanel.add(myLineSpacingLabel, c);
     c.gridx = 1;
     fontPanel.add(myLineSpacingField,c);
 
-    c.gridy = 3;
+    c.gridy ++;
     c.gridx = 0;
     c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, 0);
-    mySecondaryFontLabel = new JLabel(ApplicationBundle.message("secondary.font"));
-    mySecondaryFontLabel.setLabelFor(mySecondaryCombo);
-    fontPanel.add(mySecondaryFontLabel, c);
-    c.gridx = 1;
-    fontPanel.add(mySecondaryCombo, c);
-    c.gridx = 2;
-    c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, BASE_INSET);
-    JLabel fallbackLabel = new JLabel(ApplicationBundle.message("label.fallback.fonts.list.description"));
-    fallbackLabel.setEnabled(false);
-    fontPanel.add(fallbackLabel, c);
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
     myEnableLigaturesCheckbox.setBorder(null);
@@ -135,7 +129,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     warningIcon.setVisible(!areLigaturesAllowed());
     panel.add(warningIcon);
     c.gridx = 0;
-    c.gridy = 4;
+    c.gridy ++;
     c.gridwidth = 2;
     c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, 0);
     c.insets.bottom = BASE_INSET;
@@ -231,6 +225,20 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       }
     });
     return fontPanel;
+  }
+
+  protected void createSecondaryFontComboAndLabel(@NotNull JPanel target, @NotNull GridBagConstraints c) {
+    mySecondaryFontLabel = new JLabel(ApplicationBundle.message("secondary.font"));
+    mySecondaryFontLabel.setLabelFor(mySecondaryCombo);
+    target.add(mySecondaryFontLabel, c);
+    c.gridx = 1;
+    target.add(mySecondaryCombo, c);
+    c.gridy ++;
+    c.insets = getInsets(0, BASE_INSET);
+    JBLabel fallbackLabel = new JBLabel(ApplicationBundle.message("label.fallback.fonts.list.description"));
+    fallbackLabel.setFont(JBUI.Fonts.smallFont());
+    fallbackLabel.setForeground(UIUtil.getContextHelpForeground());
+    target.add(fallbackLabel, c);
   }
 
   private static Insets getInsets(int extraTopSpacing, int extraLeftSpacing) {

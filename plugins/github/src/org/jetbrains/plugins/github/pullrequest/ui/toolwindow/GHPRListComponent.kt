@@ -18,6 +18,7 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
@@ -110,7 +111,9 @@ internal object GHPRListComponent {
 
     ListEmptyTextController(listLoader, searchQueryHolder, list.emptyText, disposable)
 
-    val search = GHPRSearchPanel.create(project, searchStringModel).apply {
+    val searchCompletionProvider = GHPRSearchCompletionProvider(project, dataContext.repositoryDataService)
+    val pullRequestUiSettings = GithubPullRequestsProjectUISettings.getInstance(project)
+    val search = GHPRSearchPanel.create(project, searchStringModel, searchCompletionProvider, pullRequestUiSettings).apply {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
 

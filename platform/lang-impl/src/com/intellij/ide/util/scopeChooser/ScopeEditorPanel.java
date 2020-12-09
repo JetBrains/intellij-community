@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -24,17 +24,18 @@ import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -52,8 +53,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class ScopeEditorPanel {
-
+public final class ScopeEditorPanel {
   private JPanel myButtonsPanel;
   private RawCommandLineEditor myPatternField;
   private JPanel myTreeToolbar;
@@ -64,11 +64,11 @@ public class ScopeEditorPanel {
   private JPanel myLegendPanel;
 
   private final Project myProject;
-  private final TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor<?> myTreeExpansionMonitor;
   private final Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
-  private String myErrorMessage;
+  private @Nls String myErrorMessage;
   private Future<?> myUpdateAlarm = CompletableFuture.completedFuture(null);
 
   private JLabel myCaretPositionLabel;
@@ -145,17 +145,14 @@ public class ScopeEditorPanel {
 
     initTree(myPackageTree);
     new UiNotifyConnector(myPanel, new Activatable() {
-      @Override
-      public void showNotify() {
-      }
 
       @Override
       public void hideNotify() {
         cancelCurrentProgress();
       }
     });
-    myPartiallyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
-    myRecursivelyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
+    myPartiallyIncluded.setIcon(JBUIScale.scaleIcon(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
+    myRecursivelyIncluded.setIcon(JBUIScale.scaleIcon(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
   }
 
   private void updateCaretPositionText() {
@@ -310,7 +307,10 @@ public class ScopeEditorPanel {
   }
 
   @Nullable
-  static PackageSet processComplementaryScope(@NotNull PackageSet current, PackageSet added, boolean checkComplementSet, boolean[] append) {
+  private static PackageSet processComplementaryScope(@NotNull PackageSet current,
+                                                      PackageSet added,
+                                                      boolean checkComplementSet,
+                                                      boolean[] append) {
     final String text = added.getText();
     if (current instanceof ComplementPackageSet &&
         Comparing.strEqual(((ComplementPackageSet)current).getComplementarySet().getText(), text)) {
@@ -455,7 +455,7 @@ public class ScopeEditorPanel {
       }
     });
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(), ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions());
   }
 
   private ActionGroup createTreePopupActions() {

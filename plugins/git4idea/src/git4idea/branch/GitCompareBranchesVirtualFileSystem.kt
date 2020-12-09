@@ -20,14 +20,14 @@ internal class GitCompareBranchesVirtualFileSystem : ComplexPathVirtualFileSyste
 ) {
   override fun getProtocol(): String = PROTOCOL
 
-  override fun findFile(project: Project, path: ComplexPath): VirtualFile? {
-    return GitCompareBranchesFilesManager.getInstance(project).findFile(path)
+  override fun findOrCreateFile(project: Project, path: ComplexPath): VirtualFile? {
+    return GitCompareBranchesFilesManager.getInstance(project).findOrCreateFile(path)
   }
 
   data class ComplexPath(override val sessionId: String,
                          override val projectHash: String,
                          val ranges: List<VcsLogRangeFilter.RefRange>,
-                         val root: Collection<VirtualFile>?) : ComplexPathVirtualFileSystem.ComplexPath
+                         val roots: Collection<VirtualFile>?) : ComplexPathVirtualFileSystem.ComplexPath
 
   companion object {
     private const val PROTOCOL = "git-compare-branches"

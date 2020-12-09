@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.awt.*;
@@ -230,7 +229,7 @@ public abstract class AbstractListBuilder implements Disposable {
       return nodes.get(0);
     }
     else {
-      return performDeepSearch(nodes.toArray(), element, new THashSet<>());
+      return performDeepSearch(nodes.toArray(), element, new HashSet<>());
     }
   }
 

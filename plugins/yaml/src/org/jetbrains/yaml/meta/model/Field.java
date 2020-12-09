@@ -51,7 +51,13 @@ public class Field {
   }
 
   public Field(@NonNls @NotNull String name, @NotNull YamlMetaType mainType) {
-    this(name, () -> mainType);
+    myName = name;
+    myMainType = mainType;
+    if(myMainType instanceof YamlArrayType) {
+      myMainType = ((YamlArrayType)myMainType).getElementType();
+      myIsMany = !(myMainType instanceof YamlArrayType);
+    }
+    myMetaTypeSupplier = null;
   }
 
   /**
@@ -165,7 +171,7 @@ public class Field {
     if (myOverriddenDefaultRelation != null) {
       return myOverriddenDefaultRelation;
     }
-    if (myIsMany) {
+    if (myIsMany || getMainType() instanceof YamlArrayType) {
       return Relation.SEQUENCE_ITEM;
     }
     return getMainType() instanceof YamlScalarType ? Relation.SCALAR_VALUE : Relation.OBJECT_CONTENTS;
@@ -252,11 +258,16 @@ public class Field {
   private YamlMetaType getMainType() {
     if(myMainType != null)
       return myMainType;
-    
+
+    assert myMetaTypeSupplier != null;
+
     synchronized (myMetaTypeSupplier) {
       if(myMainType == null) {
         try {
-          myMainType = myMetaTypeSupplier.getMainType();
+          YamlMetaType mainType = myMetaTypeSupplier.getMainType();
+          assert !(myMainType instanceof YamlArrayType) : "Type supplier must not provide array types";
+
+          myMainType = mainType;
         }
         catch (Exception e) {
           throw new RuntimeException("Supplier failed to return a metatype for field: " + this, e);

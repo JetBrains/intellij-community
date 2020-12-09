@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.elements.annotation
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -23,5 +24,9 @@ abstract class SetAnnotationAttributesFix : GroovyFix() {
       } ?: continue
       annotation.setDeclaredAttributeValue(attrName, psiAttributeValue)
     }
+  }
+
+  final override fun getFamilyName(): String {
+    return GroovyBundle.message("intention.family.name.add.attributes.to.annotation")
   }
 }

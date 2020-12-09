@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.openapi.util.NlsContexts.HintText;
@@ -14,7 +14,7 @@ import javax.swing.event.HyperlinkListener;
 
 public abstract class HintManager {
   public static HintManager getInstance() {
-    return ServiceManager.getService(HintManager.class);
+    return ApplicationManager.getApplication().getService(HintManager.class);
   }
 
   // Constants for 'constraint' parameter of showErrorHint()
@@ -46,6 +46,7 @@ public abstract class HintManager {
   public @interface HideFlags {}
 
   public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, @HideFlags int flags, int timeout);
+  public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, @HideFlags int flags, int timeout, @Nullable Runnable onHintHidden);
 
   public abstract void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text);
   public abstract void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, @PositionFlags short position);

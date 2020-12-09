@@ -2,5 +2,3 @@
 package com.intellij.workspaceModel.storage.impl.exceptions
 
 class AddDiffException(message: String) : RuntimeException(message)
-
-internal fun adFailed(message: String): Nothing = throw AddDiffException(message)

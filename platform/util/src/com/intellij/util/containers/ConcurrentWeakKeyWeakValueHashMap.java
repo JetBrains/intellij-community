@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.util.containers;
 
 import com.intellij.util.ObjectUtils;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -15,11 +13,11 @@ import java.lang.ref.WeakReference;
  * Null values are NOT allowed
  * Use {@link ContainerUtil#createConcurrentWeakKeyWeakValueMap()} to create this
  */
-class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValueHashMap<K,V> {
+final class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValueHashMap<K,V> {
   ConcurrentWeakKeyWeakValueHashMap(int initialCapacity,
                                     float loadFactor,
                                     int concurrencyLevel,
-                                    @NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
+                                    @NotNull final HashingStrategy<? super K> hashingStrategy) {
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 

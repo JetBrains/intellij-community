@@ -50,9 +50,7 @@ public interface CachedValueProvider<T> {
         }
       }
 
-      if (CachedValueProfiler.canProfile()) {
-        CachedValueProfiler.getInstance().createInfo(this);
-      }
+      CachedValueProfiler.onResultCreated(this, null);
     }
 
     public T getValue() {

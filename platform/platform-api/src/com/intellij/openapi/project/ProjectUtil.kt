@@ -24,12 +24,13 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
+import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.trimMiddle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.TestOnly
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -94,6 +95,9 @@ fun guessCurrentProject(component: JComponent?): Project {
          ?: ProjectManager.getInstance().defaultProject
 }
 
+fun currentOrDefaultProject(project: Project?): Project =
+  project ?: ProjectManager.getInstance().defaultProject
+
 inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
   val model = ModuleManager.getInstance(this).modifiableModel
   val result = model.task()
@@ -152,9 +156,8 @@ fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparat
  * This is a variant of [getProjectCacheFileName] which can be used in tests before [Project] instance is created
  * @param projectPath value of [Project.getPresentableUrl]
  */
-@TestOnly
-fun getProjectCacheFileName(projectPath: String): String {
-  return getProjectCacheFileName(projectPath, PathUtil.getFileName(projectPath), false, ".", "")
+fun getProjectCacheFileName(projectPath: Path): String {
+  return getProjectCacheFileName(projectPath.systemIndependentPath, projectPath.fileName.toString(), false, ".", "")
 }
 
 private fun getProjectCacheFileName(presentableUrl: String?,
@@ -187,6 +190,38 @@ fun doGetProjectFileName(presentableUrl: String?,
 fun Project.getProjectCachePath(@NonNls cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
   return appSystemDir.resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
 }
+
+/**
+ * Returns path to a directory which can be used to store project-specific caches. Caches for different projects are stored under different
+ * directories, [dataDirName] is used to provide different directories for different kinds of caches in the same project.
+ *
+ * The function is similar to [getProjectCachePath], but all paths returned by this function for the same project are located under the same directory,
+ * and if a new project is created with the same name and location as some previously deleted project, it won't reuse its caches.
+ */
+@ApiStatus.Experimental
+fun Project.getProjectDataPath(@NonNls dataDirName: String): Path {
+  return getProjectDataPathRoot(this).resolve(dataDirName)
+}
+
+private val projectsDataDir: Path
+  get() = appSystemDir.resolve("projects")
+
+/**
+ * Asynchronously deletes caches directories obtained via [getProjectDataPath] for all projects.
+ */
+@ApiStatus.Experimental
+fun clearCachesForAllProjects(@NonNls dataDirName: String) {
+  projectsDataDir.directoryStreamIfExists { dirs ->
+    val filesToDelete = dirs.asSequence().map { it.resolve(dataDirName) }.filter { it.exists() }.map { it.toFile() }.toList()
+    FileUtil.asyncDelete(filesToDelete)
+  }
+}
+
+@ApiStatus.Internal
+fun getProjectDataPathRoot(project: Project): Path = projectsDataDir.resolve(project.getProjectCacheFileName())
+
+@ApiStatus.Internal
+fun getProjectDataPathRoot(projectPath: Path): Path = projectsDataDir.resolve(getProjectCacheFileName(projectPath))
 
 fun Project.getExternalConfigurationDir(): Path {
   return getProjectCachePath("external_build_system")

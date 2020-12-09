@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -11,6 +10,7 @@ import java.io.Serializable;
  * A text range defined by start and end (exclusive) offset.
  *
  * @see ProperTextRange
+ * @see com.intellij.util.text.TextRangeUtil
  */
 public class TextRange implements Segment, Serializable {
   private static final long serialVersionUID = -670091356599757430L;
@@ -185,7 +185,6 @@ public class TextRange implements Segment, Serializable {
     return Math.max(myStartOffset, startOffset) < Math.min(myEndOffset, endOffset);
   }
 
-  @Nullable
   public TextRange intersection(@NotNull TextRange range) {
     int newStart = Math.max(myStartOffset, range.getStartOffset());
     int newEnd = Math.min(myEndOffset, range.getEndOffset());
@@ -224,7 +223,7 @@ public class TextRange implements Segment, Serializable {
     }
   }
 
-  private static boolean isProperRange(int startOffset, int endOffset) {
+  public static boolean isProperRange(int startOffset, int endOffset) {
     return startOffset <= endOffset && startOffset >= 0;
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -25,8 +26,10 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
 import java.beans.PropertyChangeListener;
@@ -296,7 +299,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       return specialFilter == StripTrailingSpacesFilter.NOT_ALLOWED;
     }
 
-    Int2IntOpenHashMap caretPositions = null;
+    Int2IntMap caretPositions = null;
     if (caretOffsets != null) {
       caretPositions = new Int2IntOpenHashMap(caretOffsets.length);
       for (int caretOffset : caretOffsets) {
@@ -391,7 +394,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean isWritable() {
-    return !myIsReadOnly;
+    if (myIsReadOnly) return false;
+
+    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensions()) {
+      if (!guard.isWritable(this).isSuccess()) return false;
+    }
+
+    return true;
   }
 
   private RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
@@ -530,7 +539,6 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     assertWriteAccess();
     assertValidSeparators(s);
 
-    if (!isWritable()) throw new ReadOnlyModificationException(this);
     if (s.length() == 0) return;
 
     RangeMarker marker = getRangeGuard(offset, offset);
@@ -556,7 +564,6 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
-    if (!isWritable()) throw new ReadOnlyModificationException(this);
     if (startOffset == endOffset) return;
 
     RangeMarker marker = getRangeGuard(startOffset, endOffset);
@@ -598,11 +605,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     assertWriteAccess();
     assertValidSeparators(s);
 
-    if (!isWritable()) {
-      throw new ReadOnlyModificationException(this);
-    }
-
-    if (moveOffset != startOffset && (startOffset != endOffset && s.length() != 0)) {
+    if (moveOffset != startOffset && startOffset != endOffset && s.length() != 0) {
       throw new IllegalArgumentException(
         "moveOffset != startOffset for a modification which is neither an insert nor deletion." +
         " startOffset: " + startOffset + "; endOffset: " + endOffset + ";" + "; moveOffset: " + moveOffset + ";");
@@ -683,6 +686,20 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
         }
       }
     }
+
+    if (myIsReadOnly) {
+      throw new ReadOnlyModificationException(this, CoreBundle.message("attempt.to.modify.read.only.document.error.message"));
+    }
+
+    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensions()) {
+      DocumentWriteAccessGuard.Result result = guard.isWritable(this);
+      if (!result.isSuccess()) {
+        throw new ReadOnlyModificationException(
+          this, String.format("%s: guardClass=%s, failureReason=%s",
+                              CoreBundle.message("attempt.to.modify.read.only.document.error.message"),
+                              guard.getClass().getName(), result.getFailureReason()));
+      }
+    }
   }
 
   private void assertValidSeparators(@NotNull CharSequence s) {
@@ -723,7 +740,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   private void throwGuardedFragment(@NotNull RangeMarker guard, int offset, @NotNull CharSequence oldString, @NotNull CharSequence newString) {
     if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
-      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false);
+      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false, offset, oldString.length(),
+                                                  offset);
       throw new ReadOnlyFragmentModificationException(event, guard);
     }
   }
@@ -755,7 +773,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   void clearLineModificationFlagsExcept(int @NotNull [] caretLines) {
-    IntArrayList modifiedLines = new IntArrayList(caretLines.length);
+    IntList modifiedLines = new IntArrayList(caretLines.length);
     LineSet lineSet = getLineSet();
     for (int line : caretLines) {
       if (line >= 0 && line < lineSet.getLineCount() && lineSet.isModified(line)) {
@@ -1039,7 +1057,6 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     myReadOnlyListeners.remove(listener);
   }
 
-
   @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
@@ -1150,7 +1167,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
-    TextRangeInterval interval = new TextRangeInterval(start, end);
+    TextRange interval = new ProperTextRange(start, end);
     MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
       .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
     try {

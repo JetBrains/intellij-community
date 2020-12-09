@@ -134,7 +134,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     builder.setRenderer(new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == null) return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value == null) return super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
         if (value instanceof AdditionalAction) {
           return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }

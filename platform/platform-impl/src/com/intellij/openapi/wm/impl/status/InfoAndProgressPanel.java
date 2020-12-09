@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
@@ -27,7 +26,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.AnimatedIcon;
@@ -61,30 +59,27 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
   private final InlineProgressPanel myInlinePanel = new InlineProgressPanel();
-  private final NotNullLazyValue<AsyncProcessIcon> myProgressIcon = new NotNullLazyValue<AsyncProcessIcon>() {
-    @Override
-    protected @NotNull AsyncProcessIcon compute() {
-      AsyncProcessIcon icon = new AsyncProcessIcon("Background process");
-      icon.setOpaque(false);
+  private final NotNullLazyValue<AsyncProcessIcon> myProgressIcon = NotNullLazyValue.lazy(() -> {
+    AsyncProcessIcon icon = new AsyncProcessIcon("Background process");
+    icon.setOpaque(false);
 
-      icon.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-          handle(e);
-        }
+    icon.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        handle(e);
+      }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          handle(e);
-        }
-      });
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        handle(e);
+      }
+    });
 
-      icon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      icon.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
-      icon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
-      return icon;
-    }
-  };
+    icon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    icon.setBorder(WidgetBorder.INSTANCE);
+    icon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
+    return icon;
+  });
 
   private final List<ProgressIndicatorEx> myOriginals = new ArrayList<>();
   private final List<TaskInfo> myInfos = new ArrayList<>();
@@ -651,7 +646,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
         else {
           suspender.suspendProcess(null);
         }
-        UIEventLogger.logUIEvent(suspender.isSuspended() ? UIEventId.ProgressPaused : UIEventId.ProgressResumed);
+        (suspender.isSuspended() ? UIEventLogger.ProgressPaused : UIEventLogger.ProgressResumed).log();
       };
     }
 
@@ -779,10 +774,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  private class InlineProgressPanel extends NonOpaquePanel {
+  private final class InlineProgressPanel extends NonOpaquePanel {
     private MyInlineProgressIndicator myIndicator;
     private AsyncProcessIcon myProcessIconComponent;
-    private final LinkLabel<?> myMultiProcessLink = new LinkLabel<Object>("", null, (__, ___) -> triggerPopupShowing(), null, null) {
+    private final LinkLabel<?> myMultiProcessLink = new LinkLabel<>("", null, (__, ___) -> triggerPopupShowing(), null, null) {
       @Override
       public void updateUI() {
         super.updateUI();

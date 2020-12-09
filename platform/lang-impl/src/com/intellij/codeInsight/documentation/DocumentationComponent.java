@@ -337,6 +337,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     actions.add(forward);
     actions.add(edit);
 
+    for (DocumentationActionProvider provider: DocumentationActionProvider.EP_NAME.getExtensions()) {
+      provider.additionalActions(this).forEach(actions::add);
+    }
+
     try {
       String backKey = ScreenReader.isActive() ? "alt LEFT" : "LEFT";
       CustomShortcutSet backShortcutSet = new CustomShortcutSet(KeyboardShortcut.fromString(backKey),
@@ -377,7 +381,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(actions);
     toolbarActions.addAction(new ShowAsToolwindowAction()).setAsSecondary(true);
-    toolbarActions.addAction(new ToggleShowDocsOnHoverAction()).setAsSecondary(true);
+    toolbarActions.addAction(new ToggleShowDocsOnHoverAction(myManager, true)).setAsSecondary(true);
     toolbarActions.addAction(new MyShowSettingsAction(true)).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
@@ -438,7 +442,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DefaultActionGroup gearActions = new MyGearActionGroup();
     ShowAsToolwindowAction showAsToolwindowAction = new ShowAsToolwindowAction();
     gearActions.add(showAsToolwindowAction);
-    gearActions.add(new ToggleShowDocsOnHoverAction());
+    gearActions.add(new ToggleShowDocsOnHoverAction(myManager, false));
     gearActions.add(new MyShowSettingsAction(false));
     gearActions.add(new ShowToolbarAction());
     gearActions.add(new RestoreDefaultSizeAction());
@@ -836,7 +840,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   @Override
   public int getPreferredWidth() {
     int minWidth = JBUIScale.scale(300);
-    int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : MAX_DEFAULT.width;
+    int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : JBUIScale.scale(MAX_DEFAULT.width);
 
     int width = definitionPreferredWidth();
     if (width < 0) { // no definition found

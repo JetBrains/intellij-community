@@ -11,11 +11,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -40,9 +42,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static com.intellij.ui.TableUtil.stopEditing;
 import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
+import static com.intellij.ui.render.RenderingUtil.isHoverPaintingDisabled;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
@@ -55,6 +60,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private boolean myEnableAntialiasing;
 
   private int myVisibleRowCount = 4;
+  private int myAdditionalRowsCount = 0;
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
@@ -110,6 +116,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
+    TableHoverListener.DEFAULT.addTo(this);
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
@@ -190,6 +197,27 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     int oldValue = myVisibleRowCount;
     myVisibleRowCount = Math.max(0, visibleRowCount);
     firePropertyChange("visibleRowCount", oldValue, visibleRowCount);
+  }
+
+  public int getAdditionalRowsCount() {
+    return myAdditionalRowsCount;
+  }
+
+  public void setAdditionalRowsCount(int additionalRowsCount) {
+    int oldValue = myAdditionalRowsCount;
+    myAdditionalRowsCount = additionalRowsCount;
+    firePropertyChange("additionalRowsCount", oldValue, additionalRowsCount);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    if (myAdditionalRowsCount == 0) return size;
+    int additionalHeight = myAdditionalRowsCount * getRowHeight();
+    Container parent = getParent();
+    int visibleAreaHeight = parent instanceof JViewport ? parent.getSize().height : 0;
+    if (visibleAreaHeight > 0) additionalHeight = Math.min(visibleAreaHeight - rowHeight, additionalHeight);
+    return new Dimension(size.width, size.height + additionalHeight);
   }
 
   @Override
@@ -558,10 +586,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setStriped(boolean striped) {
     myStriped = striped;
     if (striped) {
-      getColumnModel().setColumnMargin(0);
-      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
       setShowGrid(false);
     }
+  }
+
+  @Override
+  public void setShowVerticalLines(boolean showVerticalLines) {
+    if (!showVerticalLines) {
+      getColumnModel().setColumnMargin(0);
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+    }
+    super.setShowVerticalLines(showVerticalLines);
   }
 
   @Override
@@ -644,15 +679,25 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
-    if (isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
-      final Color bg = row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
-      final JComponent c = (JComponent)result;
-      final boolean cellSelected = isCellSelected(row, column);
-      if (!cellSelected) {
-        c.setOpaque(true);
-        c.setBackground(bg);
-        for (Component child : c.getComponents()) {
-          child.setBackground(bg);
+    if (result instanceof JComponent && !isCellSelected(row, column)) {
+      JComponent component = (JComponent)result;
+      if (isStriped()) {
+        if (isTableDecorationSupported()) {
+          setRendererBackground(component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
+        }
+      }
+      else {
+        Color hovered = isHoverPaintingDisabled(this) ? null : getHoveredRowBackground();
+        if (hovered != null) {
+          if (row == TableHoverListener.getHoveredRow(this)) {
+            setRendererBackground(component, hovered);
+          }
+          else {
+            forEachComponent(component, child -> {
+              // reset hovered background only if it was not cleared properly
+              if (hovered == child.getBackground()) child.setBackground(getBackground());
+            });
+          }
         }
       }
     }
@@ -665,6 +710,27 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       ((JCheckBox)renderer).getModel().setRollover(rollOverCell != null && rollOverCell.at(row, column));
     }
     return result;
+  }
+
+  /**
+   * This method is intended to override default hovered background.
+   *
+   * @return a background color for hovered row, or {@code null} to ignore
+   */
+  protected @Nullable Color getHoveredRowBackground() {
+    return UIUtil.getTableHoverBackground(true);
+  }
+
+  private static void setRendererBackground(@NotNull JComponent container, Color background) {
+    container.setOpaque(true);
+    forEachComponent(container, child -> child.setBackground(background));
+  }
+
+  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<Component> consumer) {
+    consumer.accept(container);
+    for (Component component : container.getComponents()) {
+      consumer.accept(component);
+    }
   }
 
   @Override
@@ -1382,6 +1448,50 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         ((AbstractTableModel)getModel()).fireTableCellUpdated(rollOverCell.row, rollOverCell.column);
       }
       rollOverCell = null;
+    }
+  }
+  public static boolean setupCheckboxShortcut(@NotNull JTable table, int columnIndex) {
+    if (columnIndex >=0 && columnIndex < table.getColumnCount()) {
+      return SpaceKeyListener.install(table, columnIndex);
+    }
+    return false;
+  }
+
+  private static class SpaceKeyListener extends KeyAdapter {
+    private final JTable myTable;
+    private final int myColumnIndex;
+
+    static boolean install(@NotNull JTable table, int columnIndex) {
+      for (KeyListener listener : table.getKeyListeners()) {
+        if (listener instanceof SpaceKeyListener) return false;
+      }
+      table.addKeyListener(new SpaceKeyListener(table, columnIndex));
+      return true;
+    }
+
+    private SpaceKeyListener(@NotNull JTable table, int columnIndex) {
+      myTable = table;
+      myColumnIndex = columnIndex;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+      int[] rows = myTable.getSelectedRows();
+      if (rows.length == 0 || e.getKeyCode() != KeyEvent.VK_SPACE || myTable.isEditing() || e.getModifiersEx() != 0) return;
+
+      SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myTable);
+      if (supply != null && supply.isPopupActive()) return;
+
+      for (int row : rows) {
+        if (myTable.editCellAt(row, myColumnIndex)) {
+          TableCellEditor editor = myTable.getCellEditor();
+          if (editor instanceof DefaultCellEditor) {
+            ObjectUtils.consumeIfCast(((DefaultCellEditor)editor).getComponent(), JCheckBox.class, box -> box.setSelected(!box.isSelected()));
+          }
+          stopEditing(myTable);
+          e.consume();
+        }
+      }
     }
   }
 }

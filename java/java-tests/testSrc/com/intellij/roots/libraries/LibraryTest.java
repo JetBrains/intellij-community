@@ -239,6 +239,10 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
+
+    ModuleRootModificationUtil.updateModel(getModule(), m -> m.removeOrderEntry(m.findLibraryOrderEntry(library)));
+    aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
+    assertNull(aClass);
   }
 
   public void testRootsMustRebuildAfterDeleteAndRestoreJar() throws IOException {

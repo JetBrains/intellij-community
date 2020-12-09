@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename.impl
 
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -20,7 +21,6 @@ internal class FileUpdates(
   private val filesToRemove: List<VirtualFile>,
   private val documentModifications: List<Pair<RangeMarker, CharSequence>>
 ) {
-
   fun doUpdate() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
@@ -63,7 +63,7 @@ internal class FileUpdates(
     }
 
     for ((path: Path, content: CharSequence) in filesToAdd) {
-      path.write(content, Charsets.UTF_8)
+      path.write(content)
     }
   }
 
@@ -99,6 +99,7 @@ internal class FileUpdates(
   }
 
   companion object {
+    internal val LOG: Logger = Logger.getInstance(FileUpdates::class.java)
 
     fun merge(left: FileUpdates?, right: FileUpdates?): FileUpdates? {
       return when {

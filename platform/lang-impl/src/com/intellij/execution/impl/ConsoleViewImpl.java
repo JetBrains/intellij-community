@@ -19,6 +19,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -124,7 +126,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private final Project myProject;
 
-  private boolean myOutputPaused;
+  private boolean myOutputPaused; // guarded by LOCK
 
   private EditorEx myEditor;
 
@@ -140,6 +142,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @NotNull
   private final InputFilter myInputMessageFilter;
+  private volatile List<Filter> myPredefinedFilters = Collections.emptyList();
 
   public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
     this(project, GlobalSearchScope.allScope(project), viewer, true);
@@ -222,6 +225,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     });
+    if (myUsePredefinedMessageFilter) {
+      updatePredefinedFilters();
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          updatePredefinedFilters();
+        }
+
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          updatePredefinedFilters();
+        }
+      });
+    }
+  }
+
+  private void updatePredefinedFilters() {
+    myPredefinedFilters = ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope);
   }
 
   private static synchronized void initTypedHandler() {
@@ -328,7 +350,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public void setOutputPaused(boolean value) {
-    myOutputPaused = value;
+    synchronized (LOCK) {
+      myOutputPaused = value;
+    }
     if (!value) {
       requestFlushImmediately();
     }
@@ -336,7 +360,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public boolean isOutputPaused() {
-    return myOutputPaused;
+    synchronized (LOCK) {
+      return myOutputPaused;
+    }
   }
 
   private boolean keepSlashR = true;
@@ -394,12 +420,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @NotNull
   protected CompositeFilter createCompositeFilter() {
-    List<Filter> predefinedFilters = myUsePredefinedMessageFilter ?
-                                       ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope) :
-                                       Collections.emptyList();
-    CompositeFilter compositeFilter = new CompositeFilter(myProject, predefinedFilters);
+    CompositeFilter compositeFilter = new CompositeFilter(myProject, myCustomFilters);
     compositeFilter.setForceUseAllFilters(true);
-    myCustomFilters.forEach(compositeFilter::addFilter);
+    myPredefinedFilters.forEach(compositeFilter::addFilter);
     return compositeFilter;
   }
 
@@ -559,13 +582,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   protected void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
     text = StringUtil.convertLineSeparators(text, keepSlashR);
+    boolean hasEditor = myEditor != null;
     synchronized (LOCK) {
       myDeferredBuffer.print(text, contentType, info);
 
       if (contentType == ConsoleViewContentType.USER_INPUT) {
         requestFlushImmediately();
       }
-      else if (myEditor != null) {
+      else if (hasEditor) {
         boolean shouldFlushNow = myDeferredBuffer.length() >= myDeferredBuffer.getCycleBufferSize();
         addFlushRequest(shouldFlushNow ? 0 : DEFAULT_FLUSH_DELAY, FLUSH);
       }
@@ -624,10 +648,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    */
   @Override
   public int getContentSize() {
+    int length;
     synchronized (LOCK) {
-      return (myEditor == null ? 0 : myEditor.getDocument().getTextLength())
-             + myDeferredBuffer.length();
+      length = myDeferredBuffer.length();
     }
+    return (myEditor == null  || CLEAR.hasRequested() ? 0 : myEditor.getDocument().getTextLength()) + length;
   }
 
   @Override
@@ -748,9 +773,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (StringUtil.containsChar(token.getText(), BACKSPACE) || backspacesFromNextToken > 0) {
         StringBuilder tokenTextBuilder = new StringBuilder(token.getText().length() + backspacesFromNextToken);
         tokenTextBuilder.append(token.getText());
-        for (int j = 0; j < backspacesFromNextToken; j++) {
-          tokenTextBuilder.append(BACKSPACE);
-        }
+        StringUtil.repeatSymbol(tokenTextBuilder, BACKSPACE, backspacesFromNextToken);
         normalizeBackspaceCharacters(tokenTextBuilder);
         backspacesFromNextToken = getBackspacePrefixLength(tokenTextBuilder);
         String newText = tokenTextBuilder.substring(backspacesFromNextToken);
@@ -766,11 +789,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private static int getBackspacePrefixLength(@NotNull CharSequence text) {
-    int prefix = 0;
-    while (prefix < text.length() && text.charAt(prefix) == BACKSPACE) {
-      prefix++;
-    }
-    return prefix;
+    return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
   // convert all "a\bc" sequences to "c", not crossing the line boundaries in the process
@@ -812,9 +831,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     text.setLength(newLength);
   }
 
-  private void createTokenRangeHighlighter(@NotNull ConsoleViewContentType contentType,
-                                           int startOffset,
-                                           int endOffset) {
+  private void createTokenRangeHighlighter(@NotNull ConsoleViewContentType contentType, int startOffset, int endOffset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
     int layer = HighlighterLayer.SYNTAX + 1; // make custom filters able to draw their text attributes over the default ones
@@ -1265,7 +1282,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       typeOffset = end;
     }
     else {
-      typeOffset = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
+      typeOffset = editor.getCaretModel().getOffset();
     }
     insertUserText(typeOffset, textToUse);
   }
@@ -1582,7 +1599,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    * Our point is to fold such long command line and represent it as a single visual line by default.
    */
   private class CommandLineFolding extends ConsoleFolding {
-
     @Override
     public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
       return line.length() >= 1000 && myState.isCommandLine(line);
@@ -1597,7 +1613,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         index = text.indexOf('"', 1) + 1;
       }
       if (index == 0) {
-        for (boolean nonWhiteSpaceFound = false; index < text.length(); index++) {
+        boolean nonWhiteSpaceFound = false;
+        for (; index < text.length(); index++) {
           char c = text.charAt(index);
           if (c != ' ' && c != '\t') {
             nonWhiteSpaceFound = true;
@@ -1630,6 +1647,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     void clearRequested() {
       requested.set(false);
+    }
+
+    boolean hasRequested() {
+      return requested.get();
     }
 
     @Override

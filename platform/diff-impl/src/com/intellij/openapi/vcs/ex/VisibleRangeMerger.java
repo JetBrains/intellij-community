@@ -80,7 +80,7 @@ public class VisibleRangeMerger<T> {
 
     int sharedPrefixHeight;
     if (pair1.second == null) {
-      sharedPrefixHeight = pair1.first.intervalEnd() - pair1.first.intervalStart() + 1;
+      sharedPrefixHeight = pair1.first.intervalEnd() - pair1.first.intervalStart();
     }
     else {
       sharedPrefixHeight = pair1.second.intervalStart() - pair1.first.intervalStart();
@@ -96,11 +96,11 @@ public class VisibleRangeMerger<T> {
     }
     else {
       Pair<@NotNull Interval, @Nullable Interval> pair2 = EditorUtil.logicalLineToYRange(myEditor, end - 1);
-      int visualEnd = pair2.first.intervalEnd() + 1;
+      int visualEnd = pair2.first.intervalEnd();
 
       int sharedSuffixHeight;
       if (pair2.second == null) {
-        sharedSuffixHeight = pair2.first.intervalEnd() - pair2.first.intervalStart() + 1;
+        sharedSuffixHeight = pair2.first.intervalEnd() - pair2.first.intervalStart();
       }
       else {
         sharedSuffixHeight = pair2.first.intervalEnd() - pair2.second.intervalEnd();

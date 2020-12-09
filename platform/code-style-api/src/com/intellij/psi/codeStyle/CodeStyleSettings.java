@@ -5,11 +5,11 @@ import com.intellij.CodeStyleBundle;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.UnknownElementCollector;
 import com.intellij.configurationStore.UnknownElementWriter;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
@@ -50,7 +50,6 @@ import java.util.regex.PatternSyntaxException;
  * <b>Note:</b> A direct use of any non-final public fields from {@code CodeStyleSettings} class is strongly discouraged. These fields,
  * as well as the inheritance from {@code CommonCodeStyleSettings}, are left only for backwards compatibility and may be removed in the future.
  */
-@SuppressWarnings("deprecation")
 public class CodeStyleSettings extends LegacyCodeStyleSettings implements Cloneable, JDOMExternalizable, ImportsLayoutSettings {
   public static final int CURR_VERSION = 173;
 
@@ -86,11 +85,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    */
   @Deprecated
   public CodeStyleSettings() {
-    this(true);
+    this(true, true);
   }
 
   /**
-   * @param loadExtensions
    * @deprecated See {@link #CodeStyleSettings()}
    */
   @Deprecated
@@ -204,11 +202,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myExcludedFiles.setDescriptors(from.getExcludedFiles().getDescriptors());
     copyCustomSettingsFrom(from);
   }
-
-
-  public boolean USE_SAME_INDENTS;
-
-  public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES;
 
   public boolean AUTODETECT_INDENTS = true;
 
@@ -640,10 +633,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
     myUnknownElementWriter = unknownElementCollector.createWriter(element);
 
-    if (USE_SAME_INDENTS) {
-      IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
-    }
-
     mySoftMargins.deserializeFrom(element);
     myExcludedFiles.deserializeFrom(element);
 
@@ -655,7 +644,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public void writeExternal(Element element) throws WriteExternalException {
     setVersion(element, myVersion);
     CodeStyleSettings parentSettings = new CodeStyleSettings(true, false);
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
+    DefaultJDOMExternalizer.write(this, element, new DifferenceFilter<>(this, parentSettings));
     mySoftMargins.serializeInto(element);
     myExcludedFiles.serializeInto(element);
 
@@ -716,7 +705,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
 
-    if (USE_SAME_INDENTS || fileType == null) return OTHER_INDENT_OPTIONS;
+    if (fileType == null) return OTHER_INDENT_OPTIONS;
 
     if (!myLoadedAdditionalIndentOptions) {
       loadAdditionalIndentOptions();
@@ -801,7 +790,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
         }
       }
 
-      Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile());
+      Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile(), file.getFileType());
       if (language != null) {
         IndentOptions options = getIndentOptions(language);
         if (options != null) {
@@ -912,12 +901,12 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  private static IndentOptions getFileTypeIndentOptions(FileTypeIndentOptionsFactory factory) {
+  private static IndentOptions getFileTypeIndentOptions(@NotNull FileTypeIndentOptionsFactory factory) {
     try {
       return factory.createIndentOptions();
     }
     catch (AbstractMethodError error) {
-      LOG.error("Plugin uses obsolete API.", new ExtensionException(factory.getClass()));
+      LOG.error(PluginException.createByClass("Plugin uses obsolete API", null, factory.getClass()));
       return new IndentOptions();
     }
   }
@@ -963,16 +952,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     @Override
     public boolean isBinary() {
       return false;
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return false;
-    }
-
-    @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-      return null;
     }
   }
 
@@ -1186,7 +1165,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     CodeStyleSettings defaults = getDefaults();
     ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<>(this, defaults){
       @Override
-      public boolean isAccept(@NotNull Field field) {
+      public boolean test(@NotNull Field field) {
         return field.getAnnotation(Deprecated.class) != null;
       }
     });

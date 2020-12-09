@@ -155,6 +155,10 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return myTable.getEmptyText();
   }
 
+  public void setShowGrid(boolean v) {
+    myTable.setShowGrid(v);
+  }
+
   private void createUIComponents() {
     myTable = new ChangesTrackingTableView<Item>() {
       @Override

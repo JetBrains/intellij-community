@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,6 +14,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -97,7 +97,7 @@ public class GradleRelativeConfigCalculatingTest extends GradleJpsCompilingTestC
         e.printStackTrace();
       }
 
-      return new String(bytes, CharsetToolkit.UTF8_CHARSET);
+      return new String(bytes, StandardCharsets.UTF_8);
     });
   }
 }

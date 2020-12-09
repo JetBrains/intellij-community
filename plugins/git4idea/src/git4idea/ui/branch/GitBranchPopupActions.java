@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
-import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -18,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -25,6 +24,8 @@ import git4idea.GitProtectedBranchesKt;
 import git4idea.GitRemoteBranch;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
+import git4idea.config.GitVcsSettings;
+import git4idea.config.UpdateMethod;
 import git4idea.fetch.GitFetchSupport;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSource;
@@ -32,6 +33,7 @@ import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.update.GitUpdateExecutionProcess;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh;
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
@@ -200,11 +203,7 @@ public class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean isFresh = and(myRepositories, repository -> repository.isFresh());
-      if (isFresh) {
-        e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription(GitBundle.message("branches.checkout.is.not.possible.before.the.first.commit"));
-      }
+      disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.checkout"));
     }
   }
 
@@ -352,6 +351,11 @@ public class GitBranchPopupActions {
       }
 
       @Override
+      public void update(@NotNull AnActionEvent e) {
+        disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.push"));
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         GitLocalBranch localBranch = myRepositories.get(0).getBranches().findLocalBranch(myBranchName);
         assert localBranch != null;
@@ -398,10 +402,7 @@ public class GitBranchPopupActions {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        if (myRepositories.stream().anyMatch(Repository::isFresh)) {
-          e.getPresentation().setEnabled(false);
-          e.getPresentation().setDescription(GitBundle.message("branches.renaming.branch.is.not.possible.before.the.first.commit"));
-        }
+        disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.rename.branch"));
       }
     }
 
@@ -437,8 +438,15 @@ public class GitBranchPopupActions {
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName),
-        new LocalBranchActions.PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits())
+      return new AnAction[]{
+        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
+        new Separator(),
+        new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
+        new Separator(),
+        new UpdateSelectedBranchAction(myProject, myRepositories, myBranchName, hasIncomingCommits()),
+        new LocalBranchActions.PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits()),
+        new Separator(),
+        new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName),
       };
     }
   }
@@ -486,6 +494,9 @@ public class GitBranchPopupActions {
         new RebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, false),
         new Separator(),
+        new PullWithRebaseAction(myProject, myRepositories, myBranchName),
+        new PullWithMergeAction(myProject, myRepositories, myBranchName),
+        new Separator(),
         new RemoteDeleteAction(myProject, myRepositories, myBranchName)
       };
     }
@@ -529,9 +540,9 @@ public class GitBranchPopupActions {
         if (hasCommits) {
           int result =
             Messages.showYesNoCancelDialog(
-              GitBundle.message("branch.0.already.exists.and.has.commits.which.do.not.exist.in.1.would.you.like.to.rebase.or.reset.them",
+              GitBundle.message("local.branch.already.exists.and.has.commits.which.do.not.exist.in.remote",
                                 suggestedLocalName, remoteBranchName), GitBundle.message("checkout.0", remoteBranchName),
-              GitBundle.message("checkout.and.rebase"), CommonBundle.message("button.overwrite"),
+              GitBundle.message("checkout.and.rebase"), GitBundle.message("branches.drop.local.commits"),
               IdeBundle.message("button.cancel"), null);
           if (result == Messages.CANCEL) return;
           if (result == Messages.YES) {
@@ -563,12 +574,71 @@ public class GitBranchPopupActions {
 
       private static boolean hasTrackingConflicts(@NotNull Map<GitRepository, GitLocalBranch> conflictingLocalBranches,
                                                   @NotNull String remoteBranchName) {
-        return of(conflictingLocalBranches.keySet()).anyMatch(r -> {
+        return or(conflictingLocalBranches.keySet(), r -> {
           GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(r, conflictingLocalBranches.get(r));
           return trackInfo != null && !BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, trackInfo.getRemoteBranch().getName());
         });
       }
     }
+
+    private static class PullBranchBaseAction extends DumbAwareAction {
+
+      private final Project myProject;
+      private final List<? extends GitRepository> myRepositories;
+      private final String myRemoteBranchName;
+      private final UpdateMethod myUpdateMethod;
+
+      PullBranchBaseAction(@NotNull Project project,
+                           @NotNull List<? extends GitRepository> repositories,
+                           @NotNull String remoteBranchName,
+                           UpdateMethod updateMethod) {
+        myProject = project;
+        myRepositories = repositories;
+        myRemoteBranchName = remoteBranchName;
+        myUpdateMethod = updateMethod;
+      }
+
+      private static Map<GitRepository, GitBranchPair> configureTarget(List<? extends GitRepository> repositories, String branchName) {
+
+        Map<GitRepository, GitBranchPair> map = new LinkedHashMap<>();
+
+        for (GitRepository repo : repositories) {
+          GitLocalBranch currentBranch = repo.getCurrentBranch();
+          GitRemoteBranch remoteBranch = repo.getBranches().findRemoteBranch(branchName);
+          if (currentBranch != null && remoteBranch != null) {
+            map.put(repo, new GitBranchPair(currentBranch, remoteBranch));
+          }
+        }
+
+        return map;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        new GitUpdateExecutionProcess(myProject,
+                                      myRepositories,
+                                      configureTarget(myRepositories, myRemoteBranchName),
+                                      myUpdateMethod, false)
+          .execute();
+      }
+    }
+
+      private static class PullWithMergeAction extends PullBranchBaseAction {
+
+        PullWithMergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+          super(project, repositories, branchName, UpdateMethod.MERGE);
+          getTemplatePresentation().setText(GitBundle.messagePointer("branches.action.pull.merge"));
+        }
+
+      }
+
+      private static class PullWithRebaseAction extends PullBranchBaseAction {
+
+        PullWithRebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+          super(project, repositories, branchName, UpdateMethod.REBASE);
+          getTemplatePresentation().setText(GitBundle.messagePointer("branches.action.pull.rebase"));
+        }
+      }
 
     private static class RemoteDeleteAction extends DumbAwareAction {
       private final Project myProject;
@@ -605,6 +675,11 @@ public class GitBranchPopupActions {
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      disableActionIfAnyRepositoryIsFresh(e, myRepositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"));
     }
 
     @Override
@@ -660,7 +735,7 @@ public class GitBranchPopupActions {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher.getInstance(myProject)
-        .showDiffWithLocal(myBranchName, filter(myRepositories, repository -> !myBranchName.equals(repository.getCurrentBranchName())));
+        .showDiffWithLocal(myBranchName, myRepositories);
     }
 
     @Override
@@ -668,6 +743,7 @@ public class GitBranchPopupActions {
       e.getPresentation().setEnabledAndVisible(!new GitMultiRootBranchConfig(myRepositories).diverged());
       String description = GitBundle.message("branches.compare.the.current.working.tree.with", getBranchPresentation(myBranchName));
       e.getPresentation().setDescription(description);
+      disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.show.diff"));
     }
   }
 
@@ -770,11 +846,11 @@ public class GitBranchPopupActions {
   }
 
   private static class UpdateSelectedBranchAction extends DumbAwareAction implements CustomIconProvider {
-    private final Project myProject;
-    private final List<? extends GitRepository> myRepositories;
-    private final String myBranchName;
-    private final List<String> myBranchNameList;
-    private final boolean myHasIncoming;
+    protected final Project myProject;
+    protected final List<? extends GitRepository> myRepositories;
+    protected final String myBranchName;
+    protected final List<String> myBranchNameList;
+    protected final boolean myHasIncoming;
 
     UpdateSelectedBranchAction(@NotNull Project project,
                                @NotNull List<? extends GitRepository> repositories,
@@ -791,13 +867,14 @@ public class GitBranchPopupActions {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      Project project = e.getProject();
-      if (project == null || !hasRemotes(project)) {
+      if (!hasRemotes(myProject)) {
         presentation.setEnabledAndVisible(false);
         return;
       }
       String branchPresentation = getBranchPresentation(myBranchName);
-      String description = GitBundle.message("branches.fetch.remote.and.fast.forward", branchPresentation, myBranchName);
+      String description = GitBundle.message("action.Git.Update.Selected.description",
+                                             myBranchNameList.size(),
+                                             GitVcsSettings.getInstance(myProject).getUpdateMethod().getName().toLowerCase(Locale.ROOT));
       presentation.setDescription(description);
       if (GitFetchSupport.fetchSupport(myProject).isFetchRunning()) {
         presentation.setEnabled(false);

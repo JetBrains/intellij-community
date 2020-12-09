@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.swing.*;
@@ -76,6 +77,9 @@ public class KeyStrokeAdapter implements KeyListener {
       boolean released = id == KeyEvent.KEY_RELEASED;
       if (released || id == KeyEvent.KEY_PRESSED) {
         int code = event.getKeyCode();
+        if (code == KeyEvent.VK_UNDEFINED) {
+          code = event.getExtendedKeyCode();
+        }
         return getKeyStroke(code, event.getModifiers(), released);
       }
     }
@@ -272,7 +276,7 @@ public class KeyStrokeAdapter implements KeyListener {
 
   private static final class LazyVirtualKeys {
     private static final Map<String, Integer> myNameToCode = new HashMap<>();
-    private static final Int2ObjectOpenHashMap<String> myCodeToName = new Int2ObjectOpenHashMap<>();
+    private static final Int2ObjectMap<String> myCodeToName = new Int2ObjectOpenHashMap<>();
 
     static {
       try {

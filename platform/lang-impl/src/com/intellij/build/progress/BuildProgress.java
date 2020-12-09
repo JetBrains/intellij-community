@@ -3,7 +3,9 @@ package com.intellij.build.progress;
 
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEvent;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.ApiStatus;
@@ -49,4 +51,6 @@ public interface BuildProgress<T extends BuildProgressDescriptor> {
   @NotNull BuildProgress<BuildProgressDescriptor> cancel(long timeStamp, @BuildEventsNls.Message @NotNull String message);
 
   @NotNull BuildProgress<BuildProgressDescriptor> startChildProgress(@BuildEventsNls.Title @NotNull String title);
+
+  @NotNull BuildProgress<BuildProgressDescriptor>  buildIssue(@NotNull BuildIssue issue, @NotNull MessageEvent.Kind kind);
 }

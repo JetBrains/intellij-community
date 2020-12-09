@@ -50,11 +50,15 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
   }
 
   fun assertGradleJvmSuggestion(expected: () -> TestSdk, expectsSdkRegistration: Boolean = false) {
-    assertNewlyRegisteredSdks({ if (expectsSdkRegistration) expected() else null }) {
+    val lazyExpected by lazy { expected() }
+
+    assertNewlyRegisteredSdks({ if (expectsSdkRegistration) lazyExpected else null }) {
       val gradleJvm = suggestGradleJvm(project, externalProjectPath, gradleVersion)
       val gradleJdk = SdkLookupProviderImpl().nonblockingResolveSdkBySdkName(gradleJvm)
-      requireNotNull(gradleJdk) { "expected: ${expected()}" }
-      assertSdk(expected(), gradleJdk)
+      requireNotNull(gradleJdk) {
+        "expected: $lazyExpected ${if (expectsSdkRegistration) "to be registered" else "to be found"} but was null, gradleJvm = $gradleJvm "
+      }
+      assertSdk(lazyExpected, gradleJdk)
     }
   }
 

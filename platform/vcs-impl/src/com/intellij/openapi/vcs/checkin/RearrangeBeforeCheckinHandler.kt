@@ -6,6 +6,7 @@ import com.intellij.codeInsight.actions.RearrangeCodeProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -47,6 +48,7 @@ open class RearrangeBeforeCheckinHandler(
 
   companion object {
     @JvmField
+    @NlsSafe
     val COMMAND_NAME: String = CodeInsightBundle.message("process.rearrange.code.before.commit")
   }
 }

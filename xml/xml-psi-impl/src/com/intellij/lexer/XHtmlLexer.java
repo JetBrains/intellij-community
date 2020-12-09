@@ -15,12 +15,15 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Maxim.Mossienko
  */
 public class XHtmlLexer extends HtmlLexer {
   public XHtmlLexer(Lexer baseLexer) {
-    super(null, baseLexer, false);
+    super(baseLexer, false);
   }
 
   public XHtmlLexer() {
@@ -30,5 +33,10 @@ public class XHtmlLexer extends HtmlLexer {
   @Override
   protected boolean isHtmlTagState(int state) {
     return state == __XmlLexer.TAG || state == __XmlLexer.END_TAG;
+  }
+
+  @Override
+  protected boolean acceptEmbeddedContentProvider(@NotNull HtmlEmbeddedContentProvider provider) {
+    return !(provider instanceof HtmlRawTextTagContentProvider);
   }
 }

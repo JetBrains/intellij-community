@@ -48,13 +48,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
+public final class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
   private final ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
     super(project, new ArtifactStructureConfigurableState());
-    PackagingElementType.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+    PackagingElementType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull PackagingElementType extension, @NotNull PluginDescriptor pluginDescriptor) {
         if (extension instanceof ComplexPackagingElementType && myDefaultSettings.getTypesToShowContent().contains(extension)) {
@@ -63,7 +63,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
           myDefaultSettings.setTypesToShowContent(updated);
         }
       }
-    }, false, this);
+    }, this);
   }
 
   @Override
@@ -74,7 +74,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public void init(StructureConfigurableContext context, ModuleStructureConfigurable moduleStructureConfigurable,
                    ProjectLibrariesConfigurable projectLibrariesConfig, GlobalLibrariesConfigurable globalLibrariesConfig) {
     super.init(context);
-    myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, myDefaultSettings, new ArtifactAdapter() {
+    myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, myDefaultSettings, new ArtifactListener() {
       @Override
       public void artifactAdded(@NotNull Artifact artifact) {
         final MyNode node = addArtifactNode(artifact);
@@ -243,10 +243,10 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     return new AbstractAddGroup(JavaUiBundle.message("add.new.header.text")) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        final ArtifactType[] types = ArtifactType.getAllTypes();
-        final AnAction[] actions = new AnAction[types.length];
-        for (int i = 0; i < types.length; i++) {
-          actions[i] = createAddArtifactAction(types[i]);
+        List<ArtifactType> types = ArtifactType.getAllTypes();
+        final AnAction[] actions = new AnAction[types.size()];
+        for (int i = 0; i < types.size(); i++) {
+          actions[i] = createAddArtifactAction(types.get(i));
         }
         return actions;
       }
@@ -314,7 +314,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public void disposeUIResources() {
     myPackagingEditorContext.saveEditorSettings();
     super.disposeUIResources();
-    myPackagingEditorContext.disposeUIResources();
+    myPackagingEditorContext.resetModifiableModel();
   }
 
   @Override

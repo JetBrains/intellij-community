@@ -114,7 +114,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
       }
       else {
         message = JavaUiBundle.message("module.circular.dependency.warning.short", StringUtil.decapitalize(cycles.get(0)));
-        description = null;
+        description = HtmlChunk.empty();
       }
       problemsHolder.registerProblem(new ProjectStructureProblemDescription(message, description, place,
                                                                             ProjectStructureProblemType

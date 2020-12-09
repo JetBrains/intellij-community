@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -39,17 +39,15 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return true;
   }
 
-
-  @NotNull
-  Set<VirtualFile> getModuleRootsToIterate() {
+  public @NotNull Set<VirtualFile> getModuleRootsToIterate() {
     return ReadAction.compute(() -> {
-      if (myModule.isDisposed()) return Collections.emptySet();
+      if (myModule.isDisposed()) {
+        return Collections.emptySet();
+      }
+
       Set<VirtualFile> result = new LinkedHashSet<>();
-      List<VirtualFile[]> allRoots = Arrays.asList(
-        ModuleRootManager.getInstance(myModule).getContentRoots(),
-        ModuleRootManager.getInstance(myModule).getSourceRoots()
-      );
-      for (VirtualFile[] roots : allRoots) {
+      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModule);
+      for (VirtualFile[] roots : Arrays.asList(moduleRootManager.getContentRoots(), moduleRootManager.getSourceRoots())) {
         for (VirtualFile root : roots) {
           DirectoryInfo info = getInfoForFileOrDirectory(root);
           if (!info.isInProject(root)) continue;
@@ -57,7 +55,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
           VirtualFile parent = root.getParent();
           if (parent != null) {
             DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
-            if (myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
+            if (myModule.equals(parentInfo.getModule())) {
+              // inner content - skip it
+              continue;
+            }
           }
           result.add(root);
         }

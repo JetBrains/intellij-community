@@ -151,10 +151,16 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   protected List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
     final ProjectBuilder builder = getComponent(ProjectBuilder.class);
 
-    CustomMaven3ModelInterpolator2 modelInterpolator = (CustomMaven3ModelInterpolator2)getComponent(ModelInterpolator.class);
+    ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class);
 
-    String savedLocalRepository = modelInterpolator.getLocalRepository();
-    modelInterpolator.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
+    String savedLocalRepository = null;
+    if (modelInterpolator instanceof CustomMaven3ModelInterpolator2) {
+      CustomMaven3ModelInterpolator2 customMaven3ModelInterpolator2 = (CustomMaven3ModelInterpolator2)modelInterpolator;
+      savedLocalRepository = customMaven3ModelInterpolator2.getLocalRepository();
+      customMaven3ModelInterpolator2.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
+    }
+
+
     List<ProjectBuildingResult> buildingResults = new ArrayList<ProjectBuildingResult>();
 
     final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
@@ -182,7 +188,9 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       }
     }
     finally {
-      modelInterpolator.setLocalRepository(savedLocalRepository);
+      if (modelInterpolator instanceof CustomMaven3ModelInterpolator2 && savedLocalRepository != null) {
+        ((CustomMaven3ModelInterpolator2)modelInterpolator).setLocalRepository(savedLocalRepository);
+      }
     }
     return buildingResults;
   }

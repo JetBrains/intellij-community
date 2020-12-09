@@ -467,12 +467,12 @@ public final class MVStoreTool {
         //}
     }
 
-    /**
-     * Copy all live pages from the source store to the target store.
-     *
-     * @param source the source store
-     * @param target the target store
-     */
+    ///**
+    // * Copy all live pages from the source store to the target store.
+    // *
+    // * @param source the source store
+    // * @param target the target store
+    // */
     //public static void compact(MVStore source, MVStore target) {
     //    int autoCommitDelay = target.getAutoCommitDelay();
     //    boolean reuseSpace = target.getReuseSpace();

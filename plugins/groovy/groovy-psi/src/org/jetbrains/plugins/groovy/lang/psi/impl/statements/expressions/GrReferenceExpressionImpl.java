@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -11,7 +11,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrReassignedLocalVarsChecker;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -51,10 +49,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.psi.util.PsiUtilCore.ensureValid;
 import static java.util.Collections.emptyList;
@@ -69,7 +64,6 @@ import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalc
  * @author ilyas
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpression> implements GrReferenceExpression {
-
   private static final Logger LOG = Logger.getInstance(GrReferenceExpressionImpl.class);
 
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
@@ -473,8 +467,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return this;
   }
 
-  private static final GroovyResolver<GrReferenceExpressionImpl> RESOLVER = new DependentResolver<GrReferenceExpressionImpl>() {
-
+  private static final GroovyResolver<GrReferenceExpressionImpl> RESOLVER = new DependentResolver<>() {
     @Nullable
     @Override
     public Collection<PsiPolyVariantReference> collectDependencies(@NotNull GrReferenceExpressionImpl expression) {
@@ -517,7 +510,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final GroovyReference lValueRef = ref.getLValueReference();
       if (rValueRef != null && lValueRef != null) {
         // merge results from both references
-        final Map<PsiElement, GroovyResolveResult> results = new THashMap<>();
+        final Map<PsiElement, GroovyResolveResult> results = new HashMap<>();
         for (GroovyResolveResult result : rValueRef.resolve(false)) {
           results.putIfAbsent(result.getElement(), result);
         }

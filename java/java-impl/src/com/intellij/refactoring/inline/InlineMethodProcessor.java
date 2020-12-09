@@ -604,33 +604,27 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static void replaceParameterReferences(final PsiElement element,
                                                  final PsiMethod oldConstructor,
                                                  final PsiExpression[] instanceCreationArguments) {
-    boolean isParameterReference = false;
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression expression = (PsiReferenceExpression)element;
-      PsiElement resolved = expression.resolve();
-      if (resolved instanceof PsiParameter &&
-          element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
-        isParameterReference = true;
-        PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
-        PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
-        for (int j = 0; j < declarationParameters.length; j++) {
-          if (declarationParameters[j] == resolved) {
-            try {
-              expression.replace(instanceCreationArguments[j]);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
+    Map<PsiReferenceExpression, PsiExpression> replacement = new LinkedHashMap<>();
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiParameter &&
+            element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
+          int parameterIndex = oldConstructor.getParameterList().getParameterIndex((PsiParameter)resolved);
+          if (parameterIndex >= 0) {
+            replacement.put(expression, instanceCreationArguments[parameterIndex]);
           }
-        }
+        }  
       }
-    }
-    if (!isParameterReference) {
-      PsiElement child = element.getFirstChild();
-      while (child != null) {
-        PsiElement next = child.getNextSibling();
-        replaceParameterReferences(child, oldConstructor, instanceCreationArguments);
-        child = next;
+    });
+    for (Map.Entry<PsiReferenceExpression, PsiExpression> entry : replacement.entrySet()) {
+      try {
+        entry.getKey().replace(entry.getValue());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     }
   }
@@ -1156,8 +1150,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
     return checkUnableToInsertCodeBlock(methodBody, element,
                                         expr -> {
-                                          PsiElement parent = expr.getParent();
-                                          return parent instanceof PsiLoopStatement && PsiUtil.isCondition(expr, parent);
+                                          PsiConditionalLoopStatement loopStatement = PsiTreeUtil.getParentOfType(expr, PsiConditionalLoopStatement.class);
+                                          return loopStatement != null && PsiTreeUtil.isAncestor(loopStatement.getCondition(), expr, false);
                                         })
            ? JavaRefactoringBundle.message("inline.method.multiline.method.in.loop.condition")
            : null;
@@ -1167,7 +1161,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                       final PsiElement element,
                                                       final Predicate<? super PsiMethodCallExpression> errorCondition) {
     PsiStatement[] statements = methodBody.getStatements();
-    if (statements.length > 1 || statements.length == 1 && !(statements[0] instanceof PsiExpressionStatement)) {
+    if (statements.length > 1 || statements.length == 1 && 
+                                 !(statements[0] instanceof PsiExpressionStatement) && 
+                                 !(statements[0] instanceof PsiReturnStatement)) {
       PsiMethodCallExpression expr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, true, PsiStatement.class);
       while (expr != null) {
         if (errorCondition.test(expr)) {

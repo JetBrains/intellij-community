@@ -33,22 +33,34 @@ public interface MemoryAgent {
   @NotNull
   MemoryAgentCapabilities capabilities();
 
-  Pair<Long, ObjectReference[]> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference) throws EvaluateException;
-
-  long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
-    throws EvaluateException;
-
-  long[] getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
-    throws EvaluateException;
-
-  long[] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
-    throws EvaluateException;
-
-  Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
-    throws EvaluateException;
+  @NotNull
+  MemoryAgentActionResult<Pair<long[], ObjectReference[]>> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext,
+                                                                            @NotNull ObjectReference reference,
+                                                                            long timeoutInMillis) throws EvaluateException;
 
   @NotNull
-  ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference,
-                                                 int pathsNumber, int objectsNumber)
-    throws EvaluateException;
+  MemoryAgentActionResult<long[]> estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext,
+                                                       @NotNull List<ObjectReference> references,
+                                                       long timeoutInMillis) throws EvaluateException;
+
+  @NotNull
+  MemoryAgentActionResult<long[]> getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                          @NotNull List<ReferenceType> classes,
+                                                          long timeoutInMillis) throws EvaluateException;
+
+  @NotNull
+  MemoryAgentActionResult<long[]> getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                           @NotNull List<ReferenceType> classes,
+                                                           long timeoutInMillis) throws EvaluateException;
+
+  @NotNull
+  MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                   @NotNull List<ReferenceType> classes,
+                                                                                   long timeoutInMillis) throws EvaluateException;
+
+  @NotNull
+  MemoryAgentActionResult<ReferringObjectsInfo> findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                                          @NotNull ObjectReference reference,
+                                                                          int pathsNumber, int objectsNumber,
+                                                                          long timeoutInMillis) throws EvaluateException;
 }

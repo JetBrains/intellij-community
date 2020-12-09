@@ -199,7 +199,7 @@ public abstract class TabsLayoutBase implements TabsLayout {
   }
 
   @Override
-  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
   public int getDropSideFor(Point point) {
     JComponent component = myCallback.getComponent();
     return TabsUtil.getDropSideFor(point, component);

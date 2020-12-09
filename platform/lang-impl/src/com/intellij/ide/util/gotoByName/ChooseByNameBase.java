@@ -70,6 +70,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
@@ -440,7 +442,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     toolbarComponent.setBorder(null);
 
     if (myToolArea == null) {
-      myToolArea = new JLabel(JBUI.scale(EmptyIcon.create(1, 24)));
+      myToolArea = new JLabel(JBUIScale.scaleIcon(EmptyIcon.create(1, 24)));
     }
     else {
       myToolArea.setBorder(JBUI.Borders.emptyLeft(6)); // space between checkbox and filter/show all in view buttons
@@ -1350,7 +1352,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       Set<Object> elements = Collections.synchronizedSet(new LinkedHashSet<>());
       scheduleIncrementalListUpdate(elements, 0);
 
-      boolean scopeExpanded = populateElements(elements);
+      boolean scopeExpanded =
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> populateElements(elements));
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
       AnchoredSet resultSet = new AnchoredSet(filter(elements));
@@ -1541,7 +1544,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       final String text = getTrimmedText();
       final String prefixPattern = myFindUsagesTitle + " '" + text + "'";
       presentation.setCodeUsagesString(prefixPattern);
-      presentation.setUsagesInGeneratedCodeString(LangBundle.message("list.item.in.generated.code", prefixPattern));
       presentation.setTabName(prefixPattern);
       presentation.setTabText(prefixPattern);
       presentation.setTargetsNodeText(LangBundle.message("list.item.unsorted", StringUtil.toLowerCase(patternToLowerCase(prefixPattern))));

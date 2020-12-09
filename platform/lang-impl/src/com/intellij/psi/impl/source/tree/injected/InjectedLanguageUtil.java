@@ -249,17 +249,6 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return unescaped - shreds.get(shreds.size() - 1).getSuffix().length();
   }
 
-  /**
-   * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
-   */
-  @Deprecated
-  public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
-    if (!host.isPhysical()) return false;
-    final Ref<Boolean> result = Ref.create(false);
-    enumerate(host, (injectedPsi, places) -> result.set(true));
-    return result.get().booleanValue();
-  }
-
   public static String getUnescapedText(@NotNull PsiFile file, @Nullable final PsiElement startElement, @Nullable final PsiElement endElement) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     if (manager.getInjectionHost(file) == null) {

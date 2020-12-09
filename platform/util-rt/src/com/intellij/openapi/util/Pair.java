@@ -89,7 +89,7 @@ public class Pair<A, B> {
     return "<" + first + "," + second + ">";
   }
 
-  public static class NonNull<A, B> extends Pair<A, B> {
+  public static class NonNull<A, B> extends Pair</*@NotNull*/ A, /*@NotNull*/ B> {
     public NonNull(@NotNull A first, @NotNull B second) {
       super(first, second);
     }

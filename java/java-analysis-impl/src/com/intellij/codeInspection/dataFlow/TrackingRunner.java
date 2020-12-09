@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -38,6 +39,7 @@ import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -483,7 +485,6 @@ public final class TrackingRunner extends DataFlowRunner {
 
     @Override
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return String.format(myTemplate, myRangeSet.getPresentationText(myType));
     }
   }
@@ -613,6 +614,47 @@ public final class TrackingRunner extends DataFlowRunner {
       IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
       boolean and = tokenType.equals(JavaTokenType.ANDAND);
       if (and || tokenType.equals(JavaTokenType.OROR)) {
+        if (value != and) {
+          MemoryStateChange push = history;
+          if (history.myInstruction instanceof ResultOfInstruction) {
+            MemoryStateChange previous = history.getPrevious();
+            if (previous != null) {
+              previous = previous.getNonMerge();
+            }
+            if (previous != null && previous.myInstruction instanceof GotoInstruction) {
+              previous = previous.getPrevious();
+            }
+            if (previous != null) {
+              push = previous;
+            }
+          }
+          if (push.myInstruction instanceof PushValueInstruction &&
+              DfConstantType.isConst(((PushValueInstruction)push.myInstruction).getValue(), value) &&
+              ((PushValueInstruction)push.myInstruction).getExpression() == expression) {
+            push = push.getPrevious();
+          }
+          if (push != null && push.myInstruction instanceof ConditionalGotoInstruction) {
+            push = push.getPrevious();
+          }
+          if (push != null && push.myInstruction instanceof ExpressionPushingInstruction) {
+            ExpressionPushingInstruction<?> instruction = (ExpressionPushingInstruction<?>)push.myInstruction;
+            if (instruction.getExpressionRange() == null) {
+              PsiExpression operand = instruction.getExpression();
+              if (operand != null && expression.equals(PsiUtil.skipParenthesizedExprUp(operand.getParent()))) {
+                int i = IntStreamEx.ofIndices(((PsiPolyadicExpression)expression).getOperands(), e -> PsiTreeUtil.isAncestor(e, operand, false))
+                    .findFirst().orElse(-1);
+                if (i >= 0) {
+                  CauseItem cause = new CauseItem(
+                    JavaAnalysisBundle.message("dfa.find.cause.operand.of.boolean.expression.is.the.same", i + 1, and ? 0 : 1, value),
+                    operand);
+                  cause.addChildren(findConstantValueCause(operand, push, value));
+                  return new CauseItem[]{cause};
+                }
+              }
+            }
+          }
+          return new CauseItem[0];
+        }
         PsiExpression[] operands = ((PsiPolyadicExpression)expression).getOperands();
         List<CauseItem> operandCauses = new ArrayList<>();
         for (int i = 0; i < operands.length; i++) {
@@ -631,10 +673,7 @@ public final class TrackingRunner extends DataFlowRunner {
             operandCauses.add(cause);
           }
         }
-        if (value != and && !operandCauses.isEmpty()) {
-          return new CauseItem[]{operandCauses.get(0)};
-        }
-        else if (operandCauses.size() == operands.length) {
+        if (operandCauses.size() == operands.length) {
           return operandCauses.toArray(new CauseItem[0]);
         }
       }
@@ -1412,23 +1451,26 @@ public final class TrackingRunner extends DataFlowRunner {
             LongRangeSet fromType = Objects.requireNonNull(LongRangeSet.fromType(type));
             LongRangeSet leftRange = leftSet.myFact.intersect(fromType);
             LongRangeSet rightRange = rightSet.myFact.intersect(fromType);
-            LongRangeSet result = leftRange.binOpFromToken(binOp.getOperationTokenType(), rightRange, isLong);
-            if (range.equals(result)) {
-              String sign = binOp.getOperationSign().getText();
-              CauseItem cause = new CauseItem(new RangeDfaProblemType(
-                JavaAnalysisBundle.message("dfa.find.cause.result.of.numeric.operation.template", sign.equals("%") ? "%%" : sign),
-                range, ObjectUtils.tryCast(type, PsiPrimitiveType.class)), factUse);
-              CauseItem leftCause = null, rightCause = null;
-              if (!leftRange.equals(fromType)) {
-                leftCause = findRangeCause(leftPush, leftVal, leftRange,
-                                           JavaAnalysisBundle.message("dfa.find.cause.left.operand.range.template"));
+            LongRangeBinOp op = LongRangeBinOp.fromToken(binOp.getOperationTokenType());
+            if (op != null) {
+              LongRangeSet result = op.eval(leftRange, rightRange, isLong);
+              if (range.equals(result)) {
+                String sign = binOp.getOperationSign().getText();
+                CauseItem cause = new CauseItem(new RangeDfaProblemType(
+                  JavaAnalysisBundle.message("dfa.find.cause.result.of.numeric.operation.template", sign.equals("%") ? "%%" : sign),
+                  range, ObjectUtils.tryCast(type, PsiPrimitiveType.class)), factUse);
+                CauseItem leftCause = null, rightCause = null;
+                if (!leftRange.equals(fromType)) {
+                  leftCause = findRangeCause(leftPush, leftVal, leftRange,
+                                             JavaAnalysisBundle.message("dfa.find.cause.left.operand.range.template"));
+                }
+                if (!rightRange.equals(fromType)) {
+                  rightCause = findRangeCause(rightPush, rightVal, rightRange,
+                                              JavaAnalysisBundle.message("dfa.find.cause.right.operand.range.template"));
+                }
+                cause.addChildren(leftCause, rightCause);
+                return cause;
               }
-              if (!rightRange.equals(fromType)) {
-                rightCause = findRangeCause(rightPush, rightVal, rightRange,
-                                            JavaAnalysisBundle.message("dfa.find.cause.right.operand.range.template"));
-              }
-              cause.addChildren(leftCause, rightCause);
-              return cause;
             }
           }
         }

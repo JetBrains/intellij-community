@@ -559,6 +559,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     setBinaryContent(content, newModificationStamp, newTimeStamp, this);
   }
 
+  /**
+   * Sets contents of the virtual file to {@code content}.
+   * The BOM, if present, should be included in the {@code content} buffer.
+   */
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
@@ -575,6 +579,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
+  @NotNull
   public final OutputStream getOutputStream(Object requestor) throws IOException {
     return getOutputStream(requestor, -1, -1);
   }
@@ -600,7 +605,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Returns file content as an array of bytes.
-   * Has the same effect as contentsToByteArray(true).
+   * Has the same effect as {@link #contentsToByteArray(boolean) contentsToByteArray(true)}.
    *
    * @return file content
    * @throws IOException if an I/O error occurs
@@ -610,7 +615,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract byte @NotNull [] contentsToByteArray() throws IOException;
 
   /**
-   * Returns file content as an array of bytes.
+   * Returns file content as an array of bytes, including BOM, if present.
    *
    * @param cacheContent set true to
    * @return file content
@@ -674,6 +679,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
+  @NotNull
   public @NlsSafe String getPresentableName() {
     return getName();
   }
@@ -699,6 +705,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray
    */
+  @NotNull
   public abstract InputStream getInputStream() throws IOException;
 
   public byte @Nullable [] getBOM() {

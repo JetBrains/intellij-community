@@ -1,7 +1,7 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs
 
-import circlet.client.api.Navigator
-import circlet.client.api.ProjectLocation
+import circlet.client.api.ProjectKey
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
@@ -18,8 +18,8 @@ import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.actions.SpaceActionUtils
-import com.intellij.space.components.space
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.utils.SpaceUrls
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcsUtil.VcsUtil
@@ -28,7 +28,6 @@ import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 import icons.SpaceIcons
-import runtime.routing.Location
 import com.intellij.openapi.util.Ref as Ref1
 
 abstract class SpaceOpenInBrowserActionGroup<T>(@NlsActions.ActionText groupName: String) :
@@ -81,17 +80,15 @@ abstract class SpaceOpenInBrowserAction(@NlsActions.ActionText groupName: String
     }
 
   companion object {
-    internal fun getProjectAwareUrls(endpoint: (ProjectLocation) -> Location,
-                                     context: DataContext): List<Pair<SpaceProjectInfo, String>>? {
+    internal fun getProjectAwareUrls(
+      context: DataContext,
+      urlsBuilder: (ProjectKey) -> String
+    ): List<Pair<SpaceProjectInfo, String>>? {
       val project = context.getData(CommonDataKeys.PROJECT) ?: return null
-      val server = space.workspace.value?.client?.server?.removeSuffix("/") ?: return null
       val description = SpaceProjectContext.getInstance(project).context.value
 
       return description.reposInProject.keys.map {
-        val projectLocation = Navigator.p.project(it.key)
-        val url = endpoint(projectLocation).absoluteHref(server)
-
-        it to url
+        it to urlsBuilder(it.key)
       }.toList()
     }
   }
@@ -99,19 +96,19 @@ abstract class SpaceOpenInBrowserAction(@NlsActions.ActionText groupName: String
 
 class OpenReviews : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser.group.code.reviews")) {
   override fun getData(dataContext: DataContext): List<Pair<SpaceProjectInfo, String>>? {
-    return getProjectAwareUrls(ProjectLocation::reviews, dataContext)
+    return getProjectAwareUrls(dataContext, SpaceUrls::reviews)
   }
 }
 
 class OpenChecklists : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser.group.checklists")) {
   override fun getData(dataContext: DataContext): List<Pair<SpaceProjectInfo, String>>? {
-    return getProjectAwareUrls(ProjectLocation::checklists, dataContext)
+    return getProjectAwareUrls(dataContext, SpaceUrls::checklists)
   }
 }
 
 class OpenIssues : SpaceOpenInBrowserAction(SpaceBundle.message("open.in.browser.group.issues")) {
   override fun getData(dataContext: DataContext): List<Pair<SpaceProjectInfo, String>>? {
-    return getProjectAwareUrls(ProjectLocation::issues, dataContext)
+    return getProjectAwareUrls(dataContext, SpaceUrls::issues)
   }
 }
 
@@ -128,14 +125,13 @@ class SpaceVcsOpenInBrowserActionGroup :
 
   override fun getData(dataContext: DataContext): List<OpenData>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
-    val server = space.workspace.value?.client?.server?.removeSuffix("/") ?: return null
 
-    return getDataFromHistory(dataContext, project, server)
-           ?: getDataFromLog(dataContext, project, server)
-           ?: getDataFromVirtualFile(dataContext, project, server)
+    return getDataFromHistory(dataContext, project)
+           ?: getDataFromLog(dataContext, project)
+           ?: getDataFromVirtualFile(dataContext, project)
   }
 
-  private fun getDataFromVirtualFile(dataContext: DataContext, project: Project, server: String): List<OpenData>? {
+  private fun getDataFromVirtualFile(dataContext: DataContext, project: Project): List<OpenData>? {
     val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
     val gitRepository = VcsRepositoryManager.getInstance(project).getRepositoryForFileQuick(virtualFile) ?: return null
     if (gitRepository !is GitRepository) return null
@@ -149,27 +145,27 @@ class SpaceVcsOpenInBrowserActionGroup :
 
     val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-    return repoDescription.projectInfos.map { OpenData.File(project, server, it, repoDescription.name, virtualFile, gitRepository) }
+    return repoDescription.projectInfos.map { OpenData.File(project, it, repoDescription.name, virtualFile, gitRepository) }
 
   }
 
-  private fun getDataFromHistory(dataContext: DataContext, project: Project, server: String): List<OpenData>? {
+  private fun getDataFromHistory(dataContext: DataContext, project: Project): List<OpenData>? {
     val filePath = dataContext.getData(VcsDataKeys.FILE_PATH) ?: return null
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
     if (fileRevision !is VcsFileRevisionEx) return null
     val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
     val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-    return repoDescription.projectInfos.map { OpenData.FileRevision(project, server, it, repoDescription.name, fileRevision) }
+    return repoDescription.projectInfos.map { OpenData.FileRevision(project, it, repoDescription.name, fileRevision) }
   }
 
-  private fun getDataFromLog(dataContext: DataContext, project: Project, server: String): List<OpenData>? {
+  private fun getDataFromLog(dataContext: DataContext, project: Project): List<OpenData>? {
     val vcsLog = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
     val selectedCommit = vcsLog.selectedCommits.firstOrNull() ?: return null
     val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(selectedCommit.root) ?: return null
     val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-    return repoDescription.projectInfos.map { OpenData.Commit(project, server, it, repoDescription.name, selectedCommit) }
+    return repoDescription.projectInfos.map { OpenData.Commit(project, it, repoDescription.name, selectedCommit) }
   }
 
   private fun findProjectInfo(gitRepository: GitRepository, project: Project): SpaceRepoInfo? {
@@ -195,54 +191,43 @@ class SpaceVcsOpenInBrowserActionGroup :
     }
 
     sealed class OpenData(val project: Project,
-                          val server: String,
                           val info: SpaceProjectInfo,
                           val repo: String
     ) {
       abstract val url: String?
 
       class Commit(project: Project,
-                   server: String,
                    projectKey: SpaceProjectInfo,
                    repo: String,
-                   private val commit: CommitId) : OpenData(project, server, projectKey, repo) {
+                   private val commit: CommitId) : OpenData(project, projectKey, repo) {
 
-        override val url: String?
+        override val url: String
           get() {
-            return Navigator.p.project(info.key)
-              .commits(repo, "", commit.hash.asString())
-              .absoluteHref(server)
+            return SpaceUrls.commits(info.key, repo, commit.hash.asString())
           }
       }
 
       class FileRevision(project: Project,
-                         server: String,
                          projectKey: SpaceProjectInfo,
                          repo: String,
-                         private val vcsFileRevisionEx: VcsFileRevisionEx) : OpenData(project, server, projectKey, repo) {
+                         private val vcsFileRevisionEx: VcsFileRevisionEx) : OpenData(project, projectKey, repo) {
 
-        override val url: String?
+        override val url: String
           get() {
-            return Navigator.p.project(info.key)
-              .revision(repo, vcsFileRevisionEx.revisionNumber.asString())
-              .absoluteHref(server)
+            return SpaceUrls.revision(info.key, repo, vcsFileRevisionEx.revisionNumber.asString())
           }
       }
 
       class File(project: Project,
-                 server: String,
                  projectKey: SpaceProjectInfo,
                  repo: String,
-                 private val virtualFile: VirtualFile, private val gitRepository: GitRepository) : OpenData(project, server, projectKey,
-                                                                                                            repo) {
+                 private val virtualFile: VirtualFile, private val gitRepository: GitRepository) : OpenData(project, projectKey, repo) {
         override val url: String?
           get() {
             val relativePath = VfsUtilCore.getRelativePath(virtualFile, gitRepository.root) ?: return null
             val hash = getCurrentFileRevisionHash(project, virtualFile) ?: return null
 
-            return Navigator.p.project(info.key)
-              .fileAnnotate(repo, hash, relativePath)
-              .absoluteHref(server)
+            return SpaceUrls.fileAnnotate(info.key, repo, hash, relativePath)
           }
 
         private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {

@@ -1,0 +1,10 @@
+buildscript {
+  apply from: 'versions.gradle'
+  dependencies {
+    classpath deps.android_gradle_plugin
+  }
+}
+
+dependencies {
+  compile deps.android_gradle_plugin
+}

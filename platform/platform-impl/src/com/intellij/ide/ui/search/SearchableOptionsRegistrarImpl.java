@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -26,11 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
+import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -84,11 +83,21 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   private static @NotNull Set<String> loadStopWords() {
     try {
       // stop words
-      InputStream stream = ResourceUtil.getResourceAsStream(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
+      InputStream stream = ResourceUtil.getResourceAsStream(SearchableOptionsRegistrarImpl.class.getClassLoader(), "search", "ignore.txt");
       if (stream == null) {
         throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
       }
-      return new HashSet<>(Arrays.asList(ResourceUtil.loadText(stream).split("[\\W]")));
+
+      Set<String> result = new HashSet<>();
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          if (!line.isEmpty()) {
+            result.add(line);
+          }
+        }
+      }
+      return result;
     }
     catch (IOException e) {
       LOG.error(e);
@@ -138,9 +147,9 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     identifierTable = processor.getIdentifierTable();
   }
 
-  private static @NotNull Set<URL> findSearchableOptions() throws IOException, URISyntaxException {
+  private static @NotNull Set<URL> findSearchableOptions() throws IOException {
     Set<URL> urls = new HashSet<>();
-    Set<ClassLoader> visited = new HashSet<>();
+    Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       ClassLoader classLoader = plugin.getPluginClassLoader();
       if (!visited.add(classLoader)) {
@@ -164,8 +173,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
           }
         }
         else {
-          Path file = Paths.get(url.toURI());
-          try (DirectoryStream<Path> paths = Files.newDirectoryStream(file)) {
+          try (DirectoryStream<Path> paths = Files.newDirectoryStream(Paths.get(url.getPath()))) {
             for (Path xml : paths) {
               if (xml.getFileName().toString().endsWith(SEARCHABLE_OPTIONS_XML) && Files.isRegularFile(xml)) {
                 urls.add(xml.toUri().toURL());
@@ -440,8 +448,9 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     return result;
   }
 
-  static void collectProcessedWordsWithoutStemming(@NotNull String text, @NotNull Set<String> result, @NotNull Set<String> stopWords) {
-    for (String opt : REG_EXP.split(StringUtil.toLowerCase(text))) {
+  @ApiStatus.Internal
+  public static void collectProcessedWordsWithoutStemming(@NotNull String text, @NotNull Set<String> result, @NotNull Set<String> stopWords) {
+    for (String opt : REG_EXP.split(Strings.toLowerCase(text))) {
       if (stopWords.contains(opt)) {
         continue;
       }

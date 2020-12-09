@@ -3,16 +3,11 @@ package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
@@ -55,7 +50,7 @@ class MavenCommandLineSetup(private val project: Project,
   private val defaultJavaRuntimeConfiguration: JavaLanguageRuntimeConfiguration? = target.runtimes.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, ProgressIndicator>>()
+  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
   init {
@@ -70,12 +65,11 @@ class MavenCommandLineSetup(private val project: Project,
     setupTargetProjectDirectories(settings)
     setupMavenExtClassPath(mavenOptsValues)
     addMavenParameters(settings, mavenOptsValues)
-    commandLine.addEnvironmentVariable(MAVEN_OPTS,
-                                       TargetValue.composite(mavenOptsValues) { values -> values.joinToString(separator = " ") })
+    setupTargetEnvironmentVariables(settings, mavenOptsValues)
     return this
   }
 
-  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: ProgressIndicator) {
+  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
     environmentPromise.setResult(environment to progressIndicator)
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)
@@ -85,11 +79,12 @@ class MavenCommandLineSetup(private val project: Project,
   @Throws(CantRunException::class)
   private fun setupExePath(generalSettings: MavenGeneralSettings) {
     if (defaultMavenRuntimeConfiguration == null) {
-      throw CantRunException(message("maven.target.message.cannot.find.maven.configuration.in.target", target.displayName))
+      commandLine.setExePath("mvn")
+      return
     }
 
     val homePath: String
-    if (generalSettings.mavenHome == MavenServerManager.BUNDLED_MAVEN_3) {
+    if (generalSettings.mavenHome == MavenServerManager.BUNDLED_MAVEN_3 || generalSettings.mavenHome == MavenServerManager.WRAPPED_MAVEN) {
       homePath = defaultMavenRuntimeConfiguration.homePath
     }
     else {
@@ -97,7 +92,8 @@ class MavenCommandLineSetup(private val project: Project,
     }
 
     if (StringUtil.isEmptyOrSpaces(homePath)) {
-      throw CantRunException(message("maven.target.message.maven.home.not.configured.for.target", target.displayName))
+      commandLine.setExePath("mvn")
+      return
     }
 
     commandLine.addEnvironmentVariable("MAVEN_HOME", homePath)
@@ -122,8 +118,8 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun addMavenParameters(settings: MavenRunConfiguration.MavenSettings, mavenOptsValues: MutableList<TargetValue<String>>) {
-    val generalSettings: MavenGeneralSettings = settings.myGeneralSettings ?: MavenProjectsManager.getInstance(project).generalSettings
-    val runnerSettings: MavenRunnerSettings = settings.myRunnerSettings ?: MavenRunner.getInstance(project).state
+    val generalSettings: MavenGeneralSettings = mavenGeneralSettings(settings)
+    val runnerSettings = mavenRunnerSettings(settings)
     if (runnerSettings.isSkipTests) {
       commandLine.addParameter("-DskipTests=true")
     }
@@ -132,14 +128,6 @@ class MavenCommandLineSetup(private val project: Project,
       mavenOptsValues.add(TargetValue.fixed(runnerSettings.vmOptions))
     }
 
-    runnerSettings.environmentProperties.forEach { (name, value) ->
-      if (MAVEN_OPTS == name) {
-        mavenOptsValues.add(TargetValue.fixed(value))
-      }
-      else {
-        commandLine.addEnvironmentVariable(name, value)
-      }
-    }
     val mavenPropertiesList = ParametersList()
     runnerSettings.mavenProperties
       .filterKeys { it.isNotEmpty() }
@@ -186,21 +174,44 @@ class MavenCommandLineSetup(private val project: Project,
     generalSettings.localRepository.nullize(true)?.also { commandLine.addParameter("-Dmaven.repo.local=$it") }
   }
 
+  private fun setupTargetEnvironmentVariables(settings: MavenRunConfiguration.MavenSettings,
+                                              mavenOptsValues: MutableList<TargetValue<String>>) {
+    val runnerSettings = mavenRunnerSettings(settings)
+    runnerSettings.environmentProperties.forEach { (name, value) ->
+      if (MAVEN_OPTS == name) {
+        mavenOptsValues.add(TargetValue.fixed(value))
+      }
+      else {
+        commandLine.addEnvironmentVariable(name, value)
+      }
+    }
+    val targetValue = TargetValue.composite(mavenOptsValues) { it.joinToString(separator = " ") }
+    commandLine.addEnvironmentVariable(MAVEN_OPTS, targetValue)
+  }
+
+  private fun mavenGeneralSettings(settings: MavenRunConfiguration.MavenSettings): MavenGeneralSettings {
+    return settings.myGeneralSettings ?: MavenProjectsManager.getInstance(project).generalSettings
+  }
+
+  private fun mavenRunnerSettings(settings: MavenRunConfiguration.MavenSettings): MavenRunnerSettings {
+    return settings.myRunnerSettings ?: MavenRunner.getInstance(project).state
+  }
+
   private fun upload(uploadRoot: TargetEnvironment.UploadRoot,
                      uploadPathString: String,
                      uploadRelativePath: String): TargetValue<String> {
     val result = DeferredTargetValue(uploadPathString)
     dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
       val volume = environment.uploadVolumes.getValue(uploadRoot)
-      result.resolve(volume.upload(uploadRelativePath, progress))
+      val resolvedTargetPath = volume.resolveTargetPath(uploadRelativePath)
+      volume.upload(uploadRelativePath, progress)
+      result.resolve(resolvedTargetPath)
     }
     return result
   }
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
-    return defaultMavenRuntimeConfiguration?.createUploadRoot(volumeDescriptor, localRootPath)
-           ?: TargetEnvironment.UploadRoot(localRootPath = localRootPath,
-                                           targetRootPath = TargetEnvironment.TargetPath.Temporary())
+    return MavenRuntimeTargetConfiguration.createUploadRoot(defaultMavenRuntimeConfiguration, request, target, volumeDescriptor, localRootPath)
   }
 
   private fun setupTargetProjectDirectories(settings: MavenRunConfiguration.MavenSettings) {

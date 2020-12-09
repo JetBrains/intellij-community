@@ -24,7 +24,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -42,7 +42,7 @@ import java.util.Collection;
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
+public final class GrIntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
   private static final Logger LOG = Logger.getInstance(GrIntroduceParameterProcessor.class);
 
   private final GrIntroduceParameterSettings mySettings;
@@ -348,7 +348,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
   @NotNull
   @Override
-  public TIntArrayList getParametersToRemove() {
+  public IntList getParameterListToRemove() {
     return mySettings.parametersToRemove();
   }
 }

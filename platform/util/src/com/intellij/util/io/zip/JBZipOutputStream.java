@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
 
@@ -62,7 +58,7 @@ class JBZipOutputStream {
    * random access if possible.
    *
    * @param file the file to zip to
-   * @param currentCDOffset
+   * @param currentCDOffset {@link JBZipFile#currentCfdOffset}
    */
   JBZipOutputStream(JBZipFile file, long currentCDOffset) {
     myFile = file;
@@ -269,8 +265,6 @@ class JBZipOutputStream {
    * Writes the &quot;End of central dir record&quot;.
    *
    * @throws IOException on error
-   * @param cdLength
-   * @param cdOffset
    */
   protected void writeCentralDirectoryEnd(long cdLength, long cdOffset) throws IOException {
     writeOut(EOCD_SIG);

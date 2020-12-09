@@ -13,10 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFileSystemItem
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
@@ -33,7 +30,6 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.util.*
-import java.util.regex.Pattern
 
 /**
  * Python resolve utilities for qualified names.
@@ -58,7 +54,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val relativeDirectory = context.containingDirectory
   val relativeResults = resolveWithRelativeLevel(name, context)
   val foundRelativeImport = relativeDirectory != null &&
-                            relativeResults.any { isRelativeImportResult(name, relativeDirectory, it, context) }
+                            relativeResults.any { isSameDirectoryOrRelativeImportResult(name, relativeDirectory, it, context) }
 
   val cache = findCache(context)
   val mayCache = cache != null && !foundRelativeImport
@@ -75,8 +71,21 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val pythonResults = listOf(relativeResults,
                              resolveModuleFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
-  val allResults = pythonResults + foreignResults
-  val results = if (name.componentCount > 0) filterTopPriorityResults(pythonResults, context.module) + foreignResults else allResults
+  val (sameDirectoryPython3Results, notSameDirectoryPython3Results) = pythonResults.partition {
+    if (relativeDirectory == null || LanguageLevel.forElement(relativeDirectory).isPython2) {
+      false
+    }
+    else {
+      isSameDirectoryResult(it, context, name)
+    }
+  }
+
+  val results = if (relativeDirectory != null && PyUtil.isExplicitPackage(relativeDirectory)) {
+    filterTopPriorityResultsWithFallback(notSameDirectoryPython3Results, sameDirectoryPython3Results, foreignResults, name, context)
+  }
+  else {
+    filterTopPriorityResultsWithFallback(sameDirectoryPython3Results, notSameDirectoryPython3Results, foreignResults, name, context)
+  }
 
   if (mayCache) {
     cache?.put(key, results)
@@ -326,20 +335,35 @@ private fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? 
   }
 }
 
-private fun isRelativeImportResult(name: QualifiedName, directory: PsiDirectory, result: PsiElement,
-                                   context: PyQualifiedNameResolveContext): Boolean {
+private fun isSameDirectoryResult(element: PsiElement, context: PyQualifiedNameResolveContext, name: QualifiedName): Boolean {
+  if (context.relativeLevel != 0) return false
+  val sameDirectoryImportsEnabled = !ResolveImportUtil.isAbsoluteImportEnabledFor(context.foothold)
+  return sameDirectoryImportsEnabled && element is PsiFileSystemItem &&
+         !name.matchesPrefix(QualifiedNameFinder.findShortestImportableQName(element))
+}
+
+private fun isSameDirectoryOrRelativeImportResult(name: QualifiedName, directory: PsiDirectory, result: PsiElement,
+                                                  context: PyQualifiedNameResolveContext): Boolean {
   if (context.relativeLevel > 0) {
     return true
   }
   else {
-    val py2 = LanguageLevel.forElement(directory).isPython2
-    return context.relativeLevel == 0 && py2 && PyUtil.isPackage(directory, false, null) &&
-           result is PsiFileSystemItem && name != QualifiedNameFinder.findShortestImportableQName(result)
+    return PyUtil.isPackage(directory, false, null) && isSameDirectoryResult(result, context, name)
   }
 }
 
 private fun checkAccess() {
   Preconditions.checkState(ApplicationManager.getApplication().isReadAccessAllowed, "This method requires read access")
+}
+
+private fun filterTopPriorityResultsWithFallback(primaryResults: List<PsiElement>, fallbackResults: List<PsiElement>,
+                                                 foreignResults: List<PsiElement>, name: QualifiedName,
+                                                 context: PyQualifiedNameResolveContext): List<PsiElement> {
+  val allResults = primaryResults + fallbackResults + foreignResults
+  if (name.componentCount <= 0) return allResults
+  val filteredPrimaryResults = filterTopPriorityResults(primaryResults, context.module)
+  if (filteredPrimaryResults.isNotEmpty()) return filteredPrimaryResults + foreignResults
+  return filterTopPriorityResults(fallbackResults, context.module) + foreignResults
 }
 
 /**

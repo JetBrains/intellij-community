@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.COULD_NOT_COMPARE_WITH_BRANCH;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 
@@ -97,7 +98,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project).notifyImportantWarning(
-            "vcs.could.not.compare.with.branch",
+            COULD_NOT_COMPARE_WITH_BRANCH,
             DvcsBundle.message("notification.title.couldn.t.compare.with.branch"),
             DvcsBundle.message("notification.message.couldn.t.compare.with.branch",
                                file.isDirectory() ? 1 : 0, file.getPresentableUrl(), compare, e.getMessage()));

@@ -1,58 +1,49 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.CodeSource;
 import java.security.Permissions;
 import java.security.ProtectionDomain;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 final class SecureJarLoader extends JarLoader {
   private @Nullable ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
-  SecureJarLoader(@NotNull URL url, @NotNull String filePath, int index, @NotNull ClassPath configuration) throws IOException {
-    super(url, filePath, index, configuration);
+  SecureJarLoader(@NotNull Path file, @NotNull ClassPath configuration) throws IOException {
+    super(file, configuration, new JdkZipFile(file, configuration.lockJars, true));
   }
 
-  @NotNull
   @Override
-  protected Resource instantiateResource(@NotNull URL url, @NotNull ZipEntry entry) throws IOException {
-    return new MySecureResource(url, (JarEntry)entry);
+  protected @NotNull Resource instantiateResource(@NotNull ZipEntry entry) throws IOException {
+    return new SecureJarResource(url, (JarEntry)entry);
   }
 
-  @NotNull
-  @Override
-  protected ZipFile createZipFile(@NotNull String path) throws IOException {
-    return new JarFile(path);
-  }
-
-  private final class MySecureResource extends JarLoader.MyResource {
-    MySecureResource(@NotNull URL url, @NotNull JarEntry entry) throws IOException {
-      super(url, entry);
+  private final class SecureJarResource extends ZipFileResource {
+    SecureJarResource(@NotNull URL baseUrl, @NotNull JarEntry entry) {
+      super(baseUrl, entry);
     }
 
-    @NotNull
     @Override
-    public byte[] getBytes() throws IOException {
-      JarFile file = (JarFile)getZipFile();
+    public byte @NotNull [] getBytes() throws IOException {
+      JarFile file = (JarFile)((JdkZipFile)zipFile).getZipFile();
       try {
-        InputStream stream = file.getInputStream(myEntry);
+        InputStream stream = file.getInputStream(entry);
         try {
-          byte[] result = FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
+          byte[] result = Resource.loadBytes(stream, (int)entry.getSize());
           synchronized (myProtectionDomainMonitor) {
             if (myProtectionDomain == null) {
-              JarEntry jarEntry = file.getJarEntry(myEntry.getName());
-              CodeSource codeSource = new CodeSource(myUrl, jarEntry.getCodeSigners());
+              JarEntry jarEntry = file.getJarEntry(entry.getName());
+              CodeSource codeSource = new CodeSource(getURL(), jarEntry.getCodeSigners());
               myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
             }
           }
@@ -63,13 +54,14 @@ final class SecureJarLoader extends JarLoader {
         }
       }
       finally {
-        releaseZipFile(file);
+        if (!configuration.lockJars) {
+          file.close();
+        }
       }
     }
 
-    @Nullable
     @Override
-    public ProtectionDomain getProtectionDomain() {
+    public @Nullable ProtectionDomain getProtectionDomain() {
       synchronized (myProtectionDomainMonitor) {
         return myProtectionDomain;
       }

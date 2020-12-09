@@ -19,7 +19,6 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class LibraryScope extends LibraryScopeBase {
@@ -28,7 +27,7 @@ public class LibraryScope extends LibraryScopeBase {
 
   public LibraryScope(Project project, Library library) {
     super(project, library.getFiles(OrderRootType.CLASSES), library.getFiles(OrderRootType.SOURCES));
-    myLibraryName = LibraryUtil.getPresentableName(library);
+    myLibraryName = library.getPresentableName();
     myLibrary = library;
   }
 

@@ -28,6 +28,8 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -72,40 +74,33 @@ public final class HttpRequests {
   private HttpRequests() { }
 
   public interface Request {
-    @NotNull
-    String getURL();
+    @NotNull String getURL();
 
-    @NotNull
-    URLConnection getConnection() throws IOException;
+    @NotNull URLConnection getConnection() throws IOException;
 
-    @NotNull
-    InputStream getInputStream() throws IOException;
+    @NotNull InputStream getInputStream() throws IOException;
 
-    @NotNull
-    BufferedReader getReader() throws IOException;
+    @NotNull BufferedReader getReader() throws IOException;
 
-    @NotNull
-    BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
+    @NotNull BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
 
     /** @deprecated Called automatically on open connection. Use {@link RequestBuilder#tryConnect()} to get response code */
     @Deprecated
     boolean isSuccessful() throws IOException;
 
-    @NotNull
-    File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
+    @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException;
+
+    @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException;
 
     byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
 
-    @NotNull
-    String readString(@Nullable ProgressIndicator indicator) throws IOException;
+    @NotNull String readString(@Nullable ProgressIndicator indicator) throws IOException;
 
-    @NotNull
-    default String readString() throws IOException {
+    default @NotNull String readString() throws IOException {
       return readString(null);
     }
 
-    @NotNull
-    CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException;
+    @NotNull CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException;
 
     default void write(@NotNull String data) throws IOException {
       write(data.getBytes(StandardCharsets.UTF_8));
@@ -142,8 +137,7 @@ public final class HttpRequests {
       return myStatusCode;
     }
 
-    @NotNull
-    public String getUrl() {
+    public @NotNull String getUrl() {
       return myUrl;
     }
 
@@ -153,37 +147,30 @@ public final class HttpRequests {
     }
   }
 
-  @NotNull
   public static RequestBuilder request(@NotNull Url url) {
     return request(url.toExternalForm());
   }
 
-  @NotNull
   public static RequestBuilder request(@NotNull String url) {
     return new RequestBuilderImpl(url, null);
   }
 
-  @NotNull
   public static RequestBuilder head(@NotNull String url) {
     return new RequestBuilderImpl(url, connection -> ((HttpURLConnection)connection).setRequestMethod("HEAD"));
   }
 
-  @NotNull
   public static RequestBuilder delete(@NotNull String url) {
     return new RequestBuilderImpl(url, connection -> ((HttpURLConnection)connection).setRequestMethod("DELETE"));
   }
 
-  @NotNull
   public static RequestBuilder delete(@NotNull String url, @Nullable String contentType) {
     return requestWithBody(url, "DELETE", contentType, null);
   }
 
-  @NotNull
   public static RequestBuilder post(@NotNull String url, @Nullable String contentType) {
     return requestWithBody(url, "POST", contentType, null);
   }
 
-  @NotNull
   public static RequestBuilder put(@NotNull String url, @Nullable String contentType) {
     return requestWithBody(url, "PUT", contentType, null);
   }
@@ -194,36 +181,25 @@ public final class HttpRequests {
    * <p>
    * TODO: either fiddle with reflection or patch JDK to avoid server reliance
    */
-  @NotNull
   public static RequestBuilder patch(@NotNull String url, @Nullable String contentType) {
-    return requestWithBody(url, "POST", contentType,
-                           connection -> connection.setRequestProperty("X-HTTP-Method-Override", "PATCH"));
+    return requestWithBody(url, "POST", contentType, connection -> connection.setRequestProperty("X-HTTP-Method-Override", "PATCH"));
   }
 
-  @NotNull
-  private static RequestBuilder requestWithBody(@NotNull String url,
-                                                @NotNull String requestMethod,
-                                                @Nullable String contentType,
-                                                @Nullable ConnectionTuner tuner) {
+  public static RequestBuilder requestWithRange(@NotNull String url, @NotNull String bytes) {
+    return requestWithBody(url, "GET", null, connection -> connection.setRequestProperty("Range", "bytes=" + bytes));
+  }
+
+  private static RequestBuilder requestWithBody(String url, String requestMethod, @Nullable String contentType, @Nullable ConnectionTuner tuner) {
     return new RequestBuilderImpl(url, rawConnection -> {
       HttpURLConnection connection = (HttpURLConnection)rawConnection;
       connection.setRequestMethod(requestMethod);
       connection.setDoOutput(true);
-      if (contentType != null) {
-        connection.setRequestProperty("Content-Type", contentType);
-      }
+      if (contentType != null) connection.setRequestProperty("Content-Type", contentType);
       if (tuner != null) tuner.tune(connection);
     });
   }
 
-  public static RequestBuilder requestWithRange(@NotNull String url,
-                                                @NotNull String bytes){
-    return requestWithBody(url, "GET", null,
-                           connection -> connection.setRequestProperty("Range", "bytes="+bytes));
-  }
-
-  @NotNull
-  public static String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) {
+  public static @NotNull String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) {
     StringBuilder builder = new StringBuilder();
 
     builder.append("Cannot download '").append(request.getURL()).append("': ").append(e.getMessage());
@@ -343,9 +319,8 @@ public final class HttpRequests {
       return this;
     }
 
-    @NotNull
     @Override
-    public RequestBuilder throwStatusCodeException(boolean shouldThrow) {
+    public @NotNull RequestBuilder throwStatusCodeException(boolean shouldThrow) {
       myThrowStatusCodeException = shouldThrow;
       return this;
     }
@@ -368,42 +343,53 @@ public final class HttpRequests {
       myUrl = myBuilder.myUrl;
     }
 
-    @NotNull
     @Override
-    public String getURL() {
+    public @NotNull String getURL() {
       return myUrl;
     }
 
-    @NotNull
     @Override
-    public URLConnection getConnection() throws IOException {
+    public @NotNull URLConnection getConnection() throws IOException {
       if (myConnection == null) {
         myConnection = openConnection(myBuilder, this);
       }
       return myConnection;
     }
 
-    @NotNull
     @Override
-    public InputStream getInputStream() throws IOException {
+    public @NotNull InputStream getInputStream() throws IOException {
       if (myInputStream == null) {
-        myInputStream = getConnection().getInputStream();
-        if (myBuilder.myGzip && "gzip".equalsIgnoreCase(getConnection().getContentEncoding())) {
-          myInputStream = CountingGZIPInputStream.create(myInputStream);
-        }
+        URLConnection connection = getConnection();
+        myInputStream = unzipStreamIfNeeded(connection, connection.getInputStream());
       }
       return myInputStream;
     }
 
-    @NotNull
+    @Nullable
+    InputStream getErrorStream() throws IOException {
+      URLConnection connection = getConnection();
+      if (!(connection instanceof HttpURLConnection)) return null;
+
+      InputStream errorStream = ((HttpURLConnection)connection).getErrorStream();
+      if (errorStream == null) return null;
+
+      return unzipStreamIfNeeded(connection, errorStream);
+    }
+
+    private @NotNull InputStream unzipStreamIfNeeded(@NotNull URLConnection connection, @NotNull InputStream stream) throws IOException {
+      if (myBuilder.myGzip && "gzip".equalsIgnoreCase(connection.getContentEncoding())) {
+        return CountingGZIPInputStream.create(stream);
+      }
+      return stream;
+    }
+
     @Override
-    public BufferedReader getReader() throws IOException {
+    public @NotNull BufferedReader getReader() throws IOException {
       return getReader(null);
     }
 
-    @NotNull
     @Override
-    public BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException {
+    public @NotNull BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException {
       if (myReader == null) {
         InputStream inputStream = getInputStream();
         if (indicator != null) {
@@ -417,8 +403,7 @@ public final class HttpRequests {
       return myReader;
     }
 
-    @NotNull
-    private Charset getCharset() throws IOException {
+    private @NotNull Charset getCharset() throws IOException {
       return HttpUrlConnectionUtil.getCharset(getConnection());
     }
 
@@ -433,20 +418,17 @@ public final class HttpRequests {
       return doReadBytes(indicator).toByteArray();
     }
 
-    @NotNull
-    private BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
+    private @NotNull BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
       return HttpUrlConnectionUtil.readBytes(getInputStream(), getConnection(), indicator);
     }
 
-    @NotNull
     @Override
-    public String readString(@Nullable ProgressIndicator indicator) throws IOException {
+    public @NotNull String readString(@Nullable ProgressIndicator indicator) throws IOException {
       return HttpUrlConnectionUtil.readString(getInputStream(), getConnection(), indicator);
     }
 
-    @NotNull
     @Override
-    public CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException {
+    public @NotNull CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException {
       BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
       if (byteStream.size() == 0) {
         return Strings.EMPTY_CHAR_SEQUENCE;
@@ -457,12 +439,11 @@ public final class HttpRequests {
     }
 
     @Override
-    @NotNull
-    public File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
+    public @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
       FileUtilRt.createParentDirs(file);
 
       boolean deleteFile = true;
-      try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
+      try (OutputStream out = new FileOutputStream(file)) {
         NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
         deleteFile = false;
       }
@@ -475,6 +456,30 @@ public final class HttpRequests {
       finally {
         if (deleteFile) {
           FileUtilRt.delete(file);
+        }
+      }
+
+      return file;
+    }
+
+    @Override
+    public @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException {
+      Files.createDirectories(file.getParent());
+
+      boolean deleteFile = true;
+      try (OutputStream out = Files.newOutputStream(file)) {
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+        deleteFile = false;
+      }
+      catch (HttpStatusException e) {
+        throw e;
+      }
+      catch (IOException e) {
+        throw new IOException(createErrorMessage(e, this, false), e);
+      }
+      finally {
+        if (deleteFile) {
+          Files.deleteIfExists(file);
         }
       }
 
@@ -642,7 +647,10 @@ public final class HttpRequests {
   private static void throwHttpStatusError(HttpURLConnection connection, RequestImpl request, RequestBuilderImpl builder, int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
-      message = HttpUrlConnectionUtil.readString(connection.getErrorStream(), connection);
+      InputStream errorStream = request.getErrorStream();
+      if (errorStream != null) {
+        message = HttpUrlConnectionUtil.readString(errorStream, connection);
+      }
     }
     if (StringUtil.isEmpty(message)) {
       message = "Request failed with status code " + responseCode;

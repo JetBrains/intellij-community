@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,16 +53,67 @@ public abstract class PyRootTypeProvider {
   }
   public abstract MultiMap<ContentEntry, VirtualFilePointer> getRoots();
 
+  /**
+   * Returns the icon for the corresponding root directories in "Project Structure".
+   */
   public abstract Icon getIcon();
 
-  @Nls
+  /**
+   * Returns the name of the action for marking a directory with this root type in "Project Structure".
+   * <p>
+   * It can be displayed e.g. as the text on a dedicated button in the UI.
+   *
+   * @see #createRootEntryEditingAction(JTree, Disposable, PyContentEntriesEditor, ModifiableRootModel)
+   */
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getName();
 
-  @Nls
+  /**
+   * Returns the description of the action for marking a directory with this root type in "Project Structure".
+   * <p>
+   * It can be displayed e.g. as the tooltip for a dedicated button in the UI.
+   *
+   * @see #createRootEntryEditingAction(JTree, Disposable, PyContentEntriesEditor, ModifiableRootModel)
+   */
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getDescription();
 
-  public abstract Color getColor();
+  /**
+   * Returns the title of the list of paths to the corresponding directories in "Project Structure".
+   * <p>
+   * Normally, this title should be in plural form, e.g. "Special Folders".
+   */
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
+  public String getRootsGroupTitle() {
+    //noinspection DialogTitleCapitalization
+    return getDescription();
+  }
 
+  /**
+   * @deprecated Use {@link #getRootsGroupColor()}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated
+  public Color getColor() {
+    throw new AbstractMethodError(getClass().getSimpleName() + " should override getRootsGroupColor()");
+  }
+
+  /**
+   * Returns the color of the list of paths to the corresponding directories in "Project Structure".
+   */
+  @NotNull
+  public Color getRootsGroupColor() {
+    return getColor();
+  }
+
+  /**
+   * Returns an optional shortcut for the action for marking a directory with this root type in "Project Structure".
+   *
+   * @see #createRootEntryEditingAction(JTree, Disposable, PyContentEntriesEditor, ModifiableRootModel)
+   */
   @Nullable
   public CustomShortcutSet getShortcut() {
     return null;

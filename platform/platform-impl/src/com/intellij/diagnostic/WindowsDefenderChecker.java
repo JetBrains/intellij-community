@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.execution.ExecutionException;
@@ -9,8 +9,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -39,7 +39,7 @@ public class WindowsDefenderChecker {
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10000;
   private static final int POWERSHELL_COMMAND_TIMEOUT_MS = 10000;
   private static final int MAX_POWERSHELL_STDERR_LENGTH = 500;
-  private static final String IGNORE_VIRUS_CHECK = "ignore.virus.scanning.warn.message";
+  static final String IGNORE_VIRUS_CHECK = "ignore.virus.scanning.warn.message";
 
   public enum RealtimeScanningStatus {
     SCANNING_DISABLED,
@@ -48,7 +48,7 @@ public class WindowsDefenderChecker {
   }
 
   public static WindowsDefenderChecker getInstance() {
-    return ServiceManager.getService(WindowsDefenderChecker.class);
+    return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
   public static class CheckResult {
@@ -257,7 +257,7 @@ public class WindowsDefenderChecker {
   }
 
   /**
-   * Produces a {@link Pattern} that approximates how Windows Defender interprets the exclusion path {@link path}.
+   * Produces a {@link Pattern} that approximates how Windows Defender interprets the exclusion path {@code path}.
    * The path is split around wildcards; the non-wildcard portions are quoted, and regex equivalents of
    * the wildcards are inserted between them. See
    * https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-antivirus/configure-extension-file-exclusions-windows-defender-antivirus
@@ -283,7 +283,7 @@ public class WindowsDefenderChecker {
   }
 
   /**
-   * Checks whether each of the given paths in {@link paths} is matched by some pattern in {@link excludedPatterns},
+   * Checks whether each of the given paths in {@code paths} is matched by some pattern in {@code excludedPatterns},
    * returning a map of the results.
    */
   @NotNull

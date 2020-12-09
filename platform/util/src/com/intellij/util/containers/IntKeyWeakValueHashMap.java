@@ -79,8 +79,8 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   @Override
   @NotNull
   public final Collection<V> values() {
-    List<V> result = new ArrayList<>();
     Object[] refs = myMap.getValues();
+    List<V> result = new ArrayList<>(refs.length);
     for (Object o : refs) {
       @SuppressWarnings("unchecked")
       final V value = ((MyReference<V>)o).get();

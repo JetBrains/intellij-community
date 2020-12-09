@@ -120,7 +120,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   @NotNull
   @Override
   protected List<JComponent> createTitles() {
-    return DiffUtil.createTextTitles(myRequest, getEditors());
+    return DiffUtil.createTextTitles(this, myRequest, getEditors());
   }
 
   //
@@ -200,7 +200,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   @NotNull
-  protected List<? extends DocumentContent> getContents() {
+  public List<? extends DocumentContent> getContents() {
     //noinspection unchecked
     return (List)myRequest.getContents();
   }

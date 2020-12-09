@@ -8,70 +8,34 @@ Automatic implementation of data-driven methods such as equals and accessors hel
 </p>
 <ul>
   <li>Class must contain no inheritors and must be a top level class.</li>
-  <li>Class must contain no fields with the name clone, finalize, getClass, hashCode, notify, notifyAll, toString, or wait.</li>
-  <li>Class must contain no native methods.</li>
+  <li>All the non-static fields in class must be final.</li>
+  <li>Class must contain no instance initializers, generic constructor and native methods.</li>
 </ul>
-To get a full list of the restrictions refer to http://cr.openjdk.java.net/~gbierman/jep384/jep384-20200506/specs/records-jls.html.
+To get a full list of the restrictions refer to https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html.
 <!-- tooltip end -->
 <p>Example:</p>
 <pre>
-  interface I<T> {
-    T getA();
-  }
-  class Result<T> implements I<T> {
-    static int constant = 42;
-    @Field final T a;
-    final int b;
-    @FieldAndMethod final int[] c;
+  class Point {
+    private final double x;
+    private final double y;
 
-    Result(@Parameter T a, @Parameter int b, int... c) {
-        this.a = a;
-        this.b = b;
-        this.c = c;
+    Point(double x, double y) {
+      this.x = x;
+      this.y = y;
     }
 
-    @Override
-    @Method
-    public T getA() {
-        return a;
+    double getX() {
+      return x;
     }
 
-    @Method
-    int b() {
-        return b;
-    }
-
-    int[] getC() throws ArrayIndexOutOfBoundsException {
-        return c[0] > 0 ? c : Arrays.copyOf(c, 2);
-    }
-
-    static void test() {
+    double getY() {
+      return y;
     }
   }
 </pre>
 This record will be converted to:
 <pre>
-  interface I<T> {
-    T a();
-  }
-  record Result<T>(@Field @Method T a, @Method int b, @FieldAndMethod int... c) implements I<T> {
-    static int constant = 42;
-    Result(@Parameter T a, @Parameter int b, int... c) {
-        this.a = a;
-        this.b = b;
-        this.c = c;
-    }
-
-    /**
-     * @throws ArrayIndexOutOfBoundsException
-     */
-    @Override
-    public int[] c() {
-        return c[0] > 0 ? c : Arrays.copyOf(c, 2);
-    }
-
-    static void test() {
-    }
+  record Point(int x, int y) {
   }
 </pre>
 <p>This inspection only applies to language level 14 preview and higher.</p>

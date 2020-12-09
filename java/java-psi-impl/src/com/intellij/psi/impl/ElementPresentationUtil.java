@@ -16,6 +16,7 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.swing.*;
@@ -114,7 +115,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
     if (!DumbService.getInstance(aClass.getProject()).isDumb()) {
       final PsiManager manager = aClass.getManager();
       final PsiClass javaLangTrowable =
-        JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
+        JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
       final boolean isException = javaLangTrowable != null && InheritanceUtil.isInheritorOrSelf(aClass, javaLangTrowable, true);
       if (isException) {
         return CLASS_KIND_EXCEPTION;
@@ -130,7 +131,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
     return CLASS_KIND_CLASS;
   }
 
-  private static final Int2ObjectOpenHashMap<Icon> BASE_ICON = new Int2ObjectOpenHashMap<>(20);
+  private static final Int2ObjectMap<Icon> BASE_ICON = new Int2ObjectOpenHashMap<>(20);
   static {
     BASE_ICON.put(CLASS_KIND_CLASS, IconManager.getInstance().tooltipOnlyIfComposite(CLASS_ICON));
     BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);

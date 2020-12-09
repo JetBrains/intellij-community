@@ -19,6 +19,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -88,8 +89,8 @@ final class ActivityMonitorAction extends DumbAwareAction {
     OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
     Method getProcessCpuTime = Objects.requireNonNull(ReflectionUtil.getMethod(osBean.getClass().getInterfaces()[0], "getProcessCpuTime"));
     ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(new Runnable() {
-      final Long2LongOpenHashMap lastThreadTimes = new Long2LongOpenHashMap();
-      final Object2LongOpenHashMap<String> subsystemToSamples = new Object2LongOpenHashMap<>();
+      final Long2LongMap lastThreadTimes = new Long2LongOpenHashMap();
+      final Object2LongMap<String> subsystemToSamples = new Object2LongOpenHashMap<>();
       long lastGcTime = totalGcTime();
       long lastProcessTime = totalProcessTime();
       long lastJitTime = jitBean.getTotalCompilationTime();
@@ -211,8 +212,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
       @NotNull
       private List<Pair<String, Long>> takeSnapshot() {
         List<Pair<String, Long>> times = new ArrayList<>();
-        for (Iterator<Object2LongMap.Entry<String>> iterator = subsystemToSamples.object2LongEntrySet().fastIterator(); iterator.hasNext(); ) {
-          Object2LongMap.Entry<String> entry = iterator.next();
+        for (Object2LongMap.Entry<String> entry : subsystemToSamples.object2LongEntrySet()) {
           times.add(new Pair<>(entry.getKey(), TimeUnit.NANOSECONDS.toMillis(entry.getLongValue())));
         }
         subsystemToSamples.clear();

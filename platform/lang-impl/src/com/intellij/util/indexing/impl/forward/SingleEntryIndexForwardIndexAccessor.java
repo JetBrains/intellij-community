@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardIndexAccessor<Integer, V, Void> {
   private static final Logger LOG = Logger.getInstance(SingleEntryIndexForwardIndexAccessor.class);
-  private final VolatileNotNullLazyValue<UpdatableIndex<Integer, V, ?>> myIndex;
+  private final NotNullLazyValue<UpdatableIndex<Integer, V, ?>> myIndex;
 
   @SuppressWarnings("unchecked")
   public SingleEntryIndexForwardIndexAccessor(IndexExtension<Integer, V, ?> extension) {
@@ -28,7 +28,7 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
     LOG.assertTrue(extension instanceof SingleEntryFileBasedIndexExtension);
     IndexId<?, ?> name = extension.getName();
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    myIndex = VolatileNotNullLazyValue.createValue(() -> fileBasedIndex.getIndex((ID<Integer, V>)name));
+    myIndex = NotNullLazyValue.volatileLazy(() -> fileBasedIndex.getIndex((ID<Integer, V>)name));
   }
 
   @NotNull
@@ -73,7 +73,6 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
   }
 
   public static class SingleValueDiffBuilder<V> extends DirectInputDataDiffBuilder<Integer, V> {
-    private final int myInputId;
     private final boolean myContainsValue;
     @Nullable
     private final V myCurrentValue;
@@ -84,7 +83,6 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
 
     private SingleValueDiffBuilder(int inputId, boolean containsValue, @Nullable V currentValue) {
       super(inputId);
-      myInputId = inputId;
       myContainsValue = containsValue;
       myCurrentValue = currentValue;
     }

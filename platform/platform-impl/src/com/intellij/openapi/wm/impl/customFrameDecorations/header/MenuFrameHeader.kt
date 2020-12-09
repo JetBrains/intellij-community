@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
@@ -13,14 +13,14 @@ import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import java.awt.Rectangle
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.event.ChangeListener
+import kotlin.math.roundToInt
 
-class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle, val myIdeMenu: IdeMenuBar) : FrameHeader(frame){
+internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle, val myIdeMenu: IdeMenuBar) : FrameHeader(frame){
   private val menuHolder: JComponent
   private var changeListener: ChangeListener
 
@@ -96,23 +96,20 @@ class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle, val myI
     super.uninstallListeners()
   }
 
-  override fun getHitTestSpots(): ArrayList<RelativeRectangle> {
-    val hitTestSpots = super.getHitTestSpots()
-
-    if(menuHolder.isVisible) {
+  override fun getHitTestSpots(): List<RelativeRectangle> {
+    val hitTestSpots = super.getHitTestSpots().toMutableList()
+    if (menuHolder.isVisible) {
       val menuRect = Rectangle(menuHolder.size)
 
       val state = frame.extendedState
       if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
-        val topGap = Math.round((menuRect.height / 3).toFloat())
+        val topGap = (menuRect.height / 3).toFloat().roundToInt()
         menuRect.y += topGap
         menuRect.height -= topGap
       }
       hitTestSpots.add(RelativeRectangle(menuHolder, menuRect))
     }
-
     hitTestSpots.addAll(headerTitle.getBoundList())
-
     return hitTestSpots
   }
 }

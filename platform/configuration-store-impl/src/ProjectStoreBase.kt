@@ -12,9 +12,10 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
@@ -25,7 +26,6 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
-import kotlin.collections.ArrayList
 
 @NonNls internal const val PROJECT_FILE = "\$PROJECT_FILE$"
 @NonNls internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
@@ -37,6 +37,8 @@ private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(P
 abstract class ProjectStoreBase(final override val project: Project) : ComponentStoreWithExtraComponents(), IProjectStore {
   private var dirOrFile: Path? = null
   private var dotIdea: Path? = null
+
+  internal fun getNameFile(): Path = directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
 
   final override var loadPolicy = StateLoadPolicy.LOAD
 
@@ -135,7 +137,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
 
     val presentableUrl = (if (dotIdea == null) file else projectBasePath)
-    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, presentableUrl.fileName.toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
+    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, (presentableUrl.fileName ?: "").toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
     macros.add(Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve(cacheFileName)))
 
     storageManager.setMacros(macros)
@@ -244,7 +246,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     if (!isDirectoryBased) {
       return filePath == projectFilePath.systemIndependentPath || filePath == workspacePath.systemIndependentPath
     }
-    return PathUtil.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
+    return VfsUtilCore.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
   }
 
   override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()

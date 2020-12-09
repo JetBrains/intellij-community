@@ -90,7 +90,7 @@ public class HwFacadeHelper {
   }
 
   private static boolean isCefAppActive() {
-    return JCEFAccessor.getCefApp() != null;
+    return JCEFAccessor.getCefApp() != null && !JBCefApp.isOffScreenRenderingMode();
   }
 
   private void onShowing() {

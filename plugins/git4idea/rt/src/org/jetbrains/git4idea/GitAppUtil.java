@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Vector;
 
-public class GitAppUtil {
+public final class GitAppUtil {
   @SuppressWarnings("UseOfObsoleteCollectionType")
   public static <T> T sendXmlRequest(@NotNull String methodName, int port, @NotNull Object @NotNull ... parameters) {
     try {

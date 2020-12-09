@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.code;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -13,7 +13,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
 import java.util.*;
 
-public class DeadCodeHelper {
+public final class DeadCodeHelper {
 
   public static void removeDeadBlocks(ControlFlowGraph graph) {
 
@@ -267,7 +267,9 @@ public class DeadCodeHelper {
         for (BasicBlock block : range.getProtectedRange()) {
           setPreds.addAll(block.getPreds());
         }
-        setPreds.removeAll(range.getProtectedRange());
+        for (BasicBlock basicBlock : range.getProtectedRange()) {
+          setPreds.remove(basicBlock);
+        }
 
         if(setPreds.size() != 1) {
           continue; // multiple predecessors, obfuscated range
@@ -280,8 +282,7 @@ public class DeadCodeHelper {
         }
 
         boolean monitorexit_in_range = false;
-        Set<BasicBlock> setProtectedBlocks = new HashSet<>();
-        setProtectedBlocks.addAll(range.getProtectedRange());
+        Set<BasicBlock> setProtectedBlocks = new HashSet<>(range.getProtectedRange());
         setProtectedBlocks.add(range.getHandler());
 
         for (BasicBlock block : setProtectedBlocks) {
@@ -305,7 +306,9 @@ public class DeadCodeHelper {
         for (BasicBlock block : range.getProtectedRange()) {
           setSuccs.addAll(block.getSuccs());
         }
-        setSuccs.removeAll(range.getProtectedRange());
+        for (BasicBlock basicBlock : range.getProtectedRange()) {
+          setSuccs.remove(basicBlock);
+        }
 
         if(setSuccs.size() != 1) {
           continue; // non-unique successor
@@ -461,7 +464,9 @@ public class DeadCodeHelper {
             }
 
             // add exception ranges from predecessors
-            setPredHandlersIntersection.removeAll(block.getSuccExceptions());
+            for (BasicBlock basicBlock : block.getSuccExceptions()) {
+              setPredHandlersIntersection.remove(basicBlock);
+            }
             BasicBlock predecessor = block.getPreds().get(0);
 
             for (BasicBlock handler : setPredHandlersIntersection) {

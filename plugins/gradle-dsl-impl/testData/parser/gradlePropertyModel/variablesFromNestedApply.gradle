@@ -1,0 +1,6 @@
+apply from: "a.gradle"
+
+ext {
+  prop4 = prop1[0]
+  prop5 = 5
+}

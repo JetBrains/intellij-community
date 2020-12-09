@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 
+import static git4idea.GitNotificationIdsHolder.UNSTASH_WITH_CONFLICTS;
+
 public class GitStashChangesSaver extends GitChangesSaver {
 
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
@@ -136,7 +138,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     @Override
     protected void notifyUnresolvedRemain() {
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        "git.unstash.with.conflicts", GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.title"),
+        UNSTASH_WITH_CONFLICTS, GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.title"),
         GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.message"),
         new NotificationListener() {
           @Override
@@ -147,14 +149,13 @@ public class GitStashChangesSaver extends GitChangesSaver {
                 GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
               }
               else if (event.getDescription().equals("resolve")) {
-                mergeNoProceed();
+                mergeNoProceedInBackground();
               }
             }
           }
         }
       );
     }
-
   }
 
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {

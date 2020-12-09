@@ -29,6 +29,7 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
 
     @Override
     public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
+      if (!line.contains("Listening for transport")) return null;
       Matcher matcher = PATTERN.matcher(line);
       if (!matcher.find()) {
         return null;

@@ -31,7 +31,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
@@ -60,6 +59,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public static final @NonNls String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
   public static final @NonNls String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
   public static final @NonNls String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
+  public static final @NonNls String INSPECTION_RESULTS_LANGUAGE = "language";
   protected final @NotNull InspectionToolWrapper myToolWrapper;
   protected final @NotNull GlobalInspectionContextEx myContext;
 
@@ -95,35 +95,38 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     return myProblemElements;
   }
 
-  protected synchronized void writeOutput(CommonProblemDescriptor @NotNull [] descriptions, @NotNull RefEntity refElement) throws
-                                                                                                                           IOException {
-    Path file = InspectionsResultUtil.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
-    boolean exists = Files.exists(file);
-    Files.createDirectories(file.getParent());
-    try (Writer writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
-      if (!exists) {
-        writer.write('<');
-        writer.write(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
-        writer.write(' ');
-        writer.write(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE);
-        writer.write('=');
-        writer.write('"');
-        writer.write(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
-        writer.write('"');
-        writer.write('>');
+  private static final Object WRITER_LOCK = new Object();
+  protected void writeOutput(CommonProblemDescriptor @NotNull [] descriptions, @NotNull RefEntity refElement) throws IOException {
+    InspectionEP inspectionEP = myToolWrapper.getExtension();
+    synchronized (inspectionEP != null ? inspectionEP : WRITER_LOCK) {
+      Path file = InspectionsResultUtil.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
+      boolean exists = Files.exists(file);
+      Files.createDirectories(file.getParent());
+      try (Writer writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
+        if (!exists) {
+          writer.write('<');
+          writer.write(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+          writer.write(' ');
+          writer.write(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE);
+          writer.write('=');
+          writer.write('"');
+          writer.write(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
+          writer.write('"');
+          writer.write('>');
+          writer.write('\n');
+        }
+  
+        exportResults(descriptions, refElement, p -> {
+          try {
+            JbXmlOutputter.collapseMacrosAndWrite(p, getContext().getProject(), writer);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        });
+  
         writer.write('\n');
       }
-
-      exportResults(descriptions, refElement, p -> {
-        try {
-          JbXmlOutputter.collapseMacrosAndWrite(p, getContext().getProject(), writer);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      });
-
-      writer.write('\n');
     }
   }
 
@@ -232,6 +235,10 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       highLightedElement.addContent(sanitizeIllegalXmlChars(highlightedText));
       element.addContent(highLightedElement);
 
+      Element language = new Element(INSPECTION_RESULTS_LANGUAGE);
+      language.addContent(psiElement != null ? psiElement.getLanguage().getID() : "");
+      element.addContent(language);
+
       if (descriptor instanceof ProblemDescriptorBase) {
         TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRangeForNavigation();
         if (textRange != null) {
@@ -269,7 +276,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
 
   private static @NotNull SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
-    return new SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor>() {
+    return new SynchronizedBidiMultiMap<>() {
       @NotNull
       @Override
       protected ArrayFactory<CommonProblemDescriptor> arrayFactory() {
@@ -369,7 +376,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
     else {
       // add actual problems
-      elements = new THashSet<>(getProblemElements().keys());
+      elements = new HashSet<>(getProblemElements().keys());
       // add quick-fixed elements
       elements.addAll(getResolvedElements());
       // add suppressed elements

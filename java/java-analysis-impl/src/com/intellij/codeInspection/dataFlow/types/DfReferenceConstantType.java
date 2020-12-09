@@ -7,8 +7,8 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
@@ -33,6 +33,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @Override
   public DfType meet(@NotNull DfType other) {
     if (other.isSuperType(this)) return this;
+    if (other instanceof DfEphemeralReferenceType) return BOTTOM;
     if (other instanceof DfGenericObjectType) {
       DfReferenceType type = ((DfReferenceType)other).dropMutability();
       if (type.isSuperType(this)) return this;
@@ -83,7 +84,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
 
   @Override
   public DfType tryNegate() {
-    return new DfGenericObjectType(Collections.singleton(getValue()), TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN,
+    return new DfGenericObjectType(Set.of(getValue()), TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN,
                                    null, BOTTOM, false);
   }
 
@@ -96,7 +97,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @NotNull
   @Override
   public DfType join(@NotNull DfType other) {
-    if (other instanceof DfGenericObjectType) {
+    if (other instanceof DfGenericObjectType || other instanceof DfEphemeralReferenceType) {
       return other.join(this);
     }
     if (isSuperType(other)) return this;
@@ -109,6 +110,6 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     boolean locality = isLocal() && type.isLocal();
     SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
-    return new DfGenericObjectType(Collections.emptySet(), constraint, nullability, mutability, sf, sfType, locality);
+    return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, sf, sfType, locality);
   }
 }

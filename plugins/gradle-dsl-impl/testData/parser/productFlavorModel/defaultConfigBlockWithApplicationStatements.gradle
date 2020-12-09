@@ -1,0 +1,33 @@
+android {
+  defaultConfig {
+    applicationId "com.example.myapplication"
+    consumerProguardFiles 'proguard-android.txt', 'proguard-rules.pro'
+    dimension "abcd"
+    manifestPlaceholders activityLabel1: "defaultName1", activityLabel2: "defaultName2"
+    maxSdkVersion 23
+    minSdkVersion 15
+    multiDexEnabled true
+    multiDexKeepFile file('multidex.keep')
+    multiDexKeepProguard file('multidex.proguard')
+    proguardFiles 'proguard-android.txt', 'proguard-rules.pro'
+    renderscriptTargetApi 18
+    renderscriptSupportModeEnabled true
+    renderscriptSupportModeBlasEnabled false
+    renderscriptNdkModeEnabled true
+    resConfigs "abcd", "efgh"
+    resValue "abcd", "efgh", "ijkl"
+    targetSdkVersion 22
+    testApplicationId "com.example.myapplication.test"
+    testFunctionalTest true
+    testHandleProfiling true
+    testInstrumentationRunner "abcd"
+    testInstrumentationRunnerArguments size: "medium", foo: "bar"
+    useJack true
+    vectorDrawables {
+      useSupportLibrary true
+    }
+    versionCode 1
+    versionName "1.0"
+    wearAppUnbundled true
+  }
+}

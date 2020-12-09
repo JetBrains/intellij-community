@@ -183,7 +183,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     applicationSettings.MANAGE_IGNORE_FILES = true
   }
 
-  override val notificationDisplayId: String = "manage.ignore.files.notification"
+  override val notificationDisplayId: String = VcsNotificationIdsHolder.MANAGE_IGNORE_FILES
 
   override val askedBeforeProperty = ASKED_MANAGE_IGNORE_FILES_PROPERTY
 

@@ -1,149 +1,151 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtilRt
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 
-class WinExeInstallerBuilder {
+@CompileStatic
+final class WinExeInstallerBuilder {
   private final BuildContext buildContext
   private final AntBuilder ant
   private final WindowsDistributionCustomizer customizer
-  private final @Nullable String jreDirectoryPath
+  private final @Nullable Path jreDir
 
-  WinExeInstallerBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, @Nullable String jreDirectoryPath) {
+  WinExeInstallerBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, @Nullable Path jreDir) {
     this.buildContext = buildContext
     this.ant = buildContext.ant
     this.customizer = customizer
-    this.jreDirectoryPath = jreDirectoryPath
+    this.jreDir = jreDir
   }
 
   private void generateInstallationConfigFileForSilentMode() {
-    def targetFilePath = "${buildContext.paths.artifacts}/silent.config"
-    if (!new File(targetFilePath).exists()) {
-      String silentConfigTemplate
-      def customConfigPath = customizer.silentInstallationConfig
-      if (customConfigPath != null) {
-        if (!new File(customConfigPath).exists()) {
-          buildContext.messages.error("WindowsDistributionCustomizer.silentInstallationConfig points to a file which doesn't exist: $customConfigPath")
-        }
-        silentConfigTemplate = customConfigPath
-      }
-      else {
-        silentConfigTemplate = "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config"
-      }
-
-      buildContext.ant.copy(file: "$silentConfigTemplate", tofile: targetFilePath)
-      File silentConfigFile = new File(targetFilePath)
-      def extensionsList = getFileAssociations()
-      String associations = "\n\n; List of associations. To create an association change value to 1.\n"
-      if (!extensionsList.isEmpty()) {
-        associations += extensionsList.collect { "$it=0\n" }.join("")
-      }
-      else {
-        associations = "\n\n; There are no associations for the product.\n"
-      }
-      silentConfigFile.append(associations)
+    Path targetFilePath = Paths.get(buildContext.paths.artifacts, "silent.config")
+    if (Files.exists(targetFilePath)) {
+      return
     }
+
+    String silentConfigTemplate
+    def customConfigPath = customizer.silentInstallationConfig
+    if (customConfigPath != null) {
+      if (!new File(customConfigPath).exists()) {
+        buildContext.messages.error("WindowsDistributionCustomizer.silentInstallationConfig points to a file which doesn't exist: $customConfigPath")
+      }
+      silentConfigTemplate = customConfigPath
+    }
+    else {
+      silentConfigTemplate = "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config"
+    }
+
+    Files.createDirectories(targetFilePath.parent)
+    Files.copy(Paths.get(silentConfigTemplate), targetFilePath)
+    List<String> extensionsList = getFileAssociations()
+    String associations = "\n\n; List of associations. To create an association change value to 1.\n"
+    if (extensionsList.isEmpty()) {
+      associations = "\n\n; There are no associations for the product.\n"
+    }
+    else {
+      associations += extensionsList.collect { "$it=0\n" }.join("")
+    }
+    Files.writeString(targetFilePath, associations, StandardOpenOption.WRITE, StandardOpenOption.APPEND)
   }
 
   /**
    * Returns list of file extensions with leading dot added
    */
   private List<String> getFileAssociations() {
-    customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
+    customizer.fileAssociations.collect {it.startsWith(".") ? it : ("." + it) }
   }
 
-  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
-    if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
+  @CompileStatic(TypeCheckingMode.SKIP)
+  String buildInstaller(Path winDistPath, Path additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
+    if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
-      return
+      return null
     }
 
     String communityHome = buildContext.paths.communityHome
     String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
     buildContext.messages.progress("Building Windows installer $outFileName")
 
-    def box = "$buildContext.paths.temp/winInstaller"
-    ant.mkdir(dir: "$box/bin")
-    ant.mkdir(dir: "$box/nsiconf")
+    Path box = buildContext.paths.tempDir.resolve("winInstaller")
+    Path nsiConfDir = box.resolve("nsiconf")
+    Files.createDirectories(nsiConfDir)
 
-    def bundleJre = jreDirectoryPath != null
+    boolean bundleJre = jreDir != null
     if (!bundleJre) {
       buildContext.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
     }
 
-    ant.copy(todir: "$box/nsiconf") {
+    ant.copy(todir: nsiConfDir.toString()) {
       fileset(dir: "$communityHome/build/conf/nsis")
     }
 
     generateInstallationConfigFileForSilentMode()
 
-    if (SystemInfo.isLinux) {
-      File ideaNsiPath = new File(box, "nsiconf/idea.nsi")
-      ideaNsiPath.text = BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], "")
+    if (SystemInfoRt.isLinux) {
+      Path ideaNsiPath = nsiConfDir.resolve("idea.nsi")
+      Files.writeString(ideaNsiPath, BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], ""))
     }
 
     try {
       def generator = new NsisFileListGenerator()
       generator.addDirectory(buildContext.paths.distAll)
-      generator.addDirectory(winDistPath, ["**/idea.properties", "**/*.vmoptions"])
-      generator.addDirectory(additionalDirectoryToInclude)
+      generator.addDirectory(winDistPath.toString(), ["**/idea.properties", "**/*.vmoptions"])
+      generator.addDirectory(additionalDirectoryToInclude.toString())
 
       if (bundleJre) {
-        generator.addDirectory(jreDirectoryPath)
+        generator.addDirectory(jreDir.toString())
       }
 
-      generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
+      generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh").toFile())
 
-      generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
+      generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh").toFile())
     }
     catch (IOException e) {
       buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")
     }
 
-    prepareConfigurationFiles(box, winDistPath, jre32BitVersionSupported)
+    prepareConfigurationFiles(nsiConfDir, winDistPath, jre32BitVersionSupported)
     customizer.customNsiConfigurationFiles.each {
-      ant.copy(file: it, todir: "$box/nsiconf", overwrite: "true")
+      Path file = Paths.get(it)
+      Files.copy(file, nsiConfDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
     }
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
     buildContext.messages.block("Running NSIS tool to build .exe installer for Windows") {
-      if (SystemInfo.isWindows) {
-        ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
-                          " /DCOMMUNITY_DIR=\"$communityHome\"" +
-                          " /DIPR=\"${customizer.associateIpr}\"" +
-                          " /DOUT_FILE=\"${outFileName}\"" +
-                          " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
-                          " \"${box}/nsiconf/idea.nsi\"")
-      }
-      else if (SystemInfo.isLinux) {
-        String installerToolsDir = "$box/installer"
-        String installScriptPath = "$installerToolsDir/install_nsis3.sh"
-        buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
-        buildContext.ant.copy(todir: "$installerToolsDir") {
-          fileset(dir: "${buildContext.paths.communityHome}/build/tools") {
-            include(name: "nsis*.*")
-            include(name: "scons*.*")
-          }
+      if (SystemInfoRt.isWindows) {
+        ant.exec(executable: "${box}/NSIS/makensis.exe") {
+          arg(value: "/V2")
+          arg(value: "/DCOMMUNITY_DIR=${communityHome}")
+          arg(value: "/DIPR=${customizer.associateIpr}")
+          arg(value: "/DOUT_DIR=${buildContext.paths.artifacts}")
+          arg(value: "/DOUT_FILE=${outFileName}")
+          arg(value: "${box}/nsiconf/idea.nsi")
         }
-
-        buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
-        ant.exec(command: "chmod u+x \"$installScriptPath\"")
-        ant.exec(command: "\"$installScriptPath\" \"$installerToolsDir\"")
-        ant.exec(command: "\"${installerToolsDir}/nsis-3.02.1/bin/makensis\"" +
-                          " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
-                          " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
-                          " -DNSIS_DIR=\"${box}/NSIS\"" +
-                          " -DCOMMUNITY_DIR=\"$communityHome\"" +
-                          " -DIPR=\"${customizer.associateIpr}\"" +
-                          " -DOUT_FILE=\"${outFileName}\"" +
-                          " -DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
-                          " \"${box}/nsiconf/idea.nsi\"")
+      }
+      else {
+        ant.chmod(file: "${box}/NSIS/Bin/makensis", perm: "u+x")
+        ant.exec(executable: "${box}/NSIS/Bin/makensis") {
+          arg(value: "-V2")
+          arg(value: "-DCOMMUNITY_DIR=${communityHome}")
+          arg(value: "-DIPR=${customizer.associateIpr}")
+          arg(value: "-DOUT_DIR=${buildContext.paths.artifacts}")
+          arg(value: "-DOUT_FILE=${outFileName}")
+          arg(value: "${box}/nsiconf/idea.nsi")
+          env(key: "NSISDIR", value: "${box}/NSIS")
+        }
       }
     }
 
@@ -154,24 +156,25 @@ class WinExeInstallerBuilder {
 
     buildContext.signExeFile(installerPath)
     buildContext.notifyArtifactBuilt(installerPath)
+    return installerPath
   }
 
-  private void prepareConfigurationFiles(String box, String winDistPath, boolean jre32BitVersionSupported) {
+  private void prepareConfigurationFiles(Path nsiConfDir, Path winDistPath, boolean jre32BitVersionSupported) {
     def productProperties = buildContext.productProperties
     def x64LauncherName = "${productProperties.baseFileName}64.exe"
     def mainExeLauncherName = customizer.include32BitLauncher ? "${productProperties.baseFileName}.exe" : x64LauncherName
 
-    new File(box, "nsiconf/paths.nsi").text = """
-!define IMAGES_LOCATION "${toSystemDependentName(customizer.installerImagesPath)}"
-!define PRODUCT_PROPERTIES_FILE "${toSystemDependentName("$winDistPath/bin/idea.properties")}"
+    Files.writeString(nsiConfDir.resolve("paths.nsi"), """
+!define IMAGES_LOCATION "${FileUtilRt.toSystemDependentName(customizer.installerImagesPath)}"
+!define PRODUCT_PROPERTIES_FILE "${FileUtilRt.toSystemDependentName("$winDistPath/bin/idea.properties")}"
 !define PRODUCT_VM_OPTIONS_NAME ${productProperties.baseFileName}*.exe.vmoptions
-!define PRODUCT_VM_OPTIONS_FILE "${toSystemDependentName("$winDistPath/bin/")}\${PRODUCT_VM_OPTIONS_NAME}"
-"""
+!define PRODUCT_VM_OPTIONS_FILE "${FileUtilRt.toSystemDependentName("$winDistPath/bin/")}\${PRODUCT_VM_OPTIONS_NAME}"
+""")
 
     def extensionsList = getFileAssociations()
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
     def linkToX86Jre = customizer.include32BitLauncher ? buildContext.bundledJreManager.x86JreDownloadUrl(OsFamily.WINDOWS) : null
-    new File(box, "nsiconf/strings.nsi").text = """
+    Files.writeString(nsiConfDir.resolve("strings.nsi"), """
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
 !define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(buildContext.applicationInfo)}"
 !define PRODUCT_FULL_NAME "${customizer.getFullNameIncludingEditionAndVendor(buildContext.applicationInfo)}"
@@ -189,11 +192,11 @@ class WinExeInstallerBuilder {
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
 ; set to 1 for release build
 !define SHOULD_SET_DEFAULT_INSTDIR "0"
-"""
+""")
 
     def versionString = buildContext.applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
     def installDirAndShortcutName = customizer.getNameForInstallDirAndDesktopShortcut(buildContext.applicationInfo, buildContext.buildNumber)
-    new File(box, "nsiconf/version.nsi").text = """
+    Files.writeString(nsiConfDir.resolve("version.nsi"), """
 !define MUI_VERSION_MAJOR "${buildContext.applicationInfo.majorVersion}"
 !define MUI_VERSION_MINOR "${buildContext.applicationInfo.minorVersion}"
 
@@ -201,6 +204,6 @@ class WinExeInstallerBuilder {
 !define INSTALL_DIR_AND_SHORTCUT_NAME "${installDirAndShortcutName}"
 !define PRODUCT_WITH_VER "\${MUI_PRODUCT} $versionString"
 !define PRODUCT_PATHS_SELECTOR "${buildContext.systemSelector}"
-"""
+""")
   }
 }

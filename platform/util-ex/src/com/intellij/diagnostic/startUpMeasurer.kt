@@ -10,7 +10,7 @@ inline fun <T> Activity?.runChild(name: String, task: () -> T): T {
   return result
 }
 
-inline fun <T> runMainActivity(name: String, task: () -> T) = runActivity(name, ActivityCategory.MAIN, task)
+inline fun <T> runMainActivity(name: String, task: () -> T): T = runActivity(name, ActivityCategory.MAIN, task)
 
 inline fun <T> runActivity(@NonNls name: String, category: ActivityCategory = ActivityCategory.APP_INIT, task: () -> T): T {
   val activity = createActivity(name, category)

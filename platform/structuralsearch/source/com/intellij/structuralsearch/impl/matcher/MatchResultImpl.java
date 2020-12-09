@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
@@ -114,7 +114,7 @@ public final class MatchResultImpl extends MatchResult {
     myMultipleMatch = multipleMatch;
   }
 
-  public MatchResultImpl findChild(@NotNull String name) {
+  public MatchResultImpl getChild(@NotNull String name) {
     // @todo this could be performance bottleneck, replace with hash lookup!
     for (final MatchResult match : myChildren) {
       final MatchResultImpl res = (MatchResultImpl)match;
@@ -126,12 +126,12 @@ public final class MatchResultImpl extends MatchResult {
     return null;
   }
 
-  public static MatchResultImpl findChildDeep(@NotNull MatchResult match, @NotNull String name) {
-    for (MatchResult child : match.getChildren()) {
+  public MatchResult findChild(@NotNull String name) {
+    for (MatchResult child : myChildren) {
       if (name.equals(child.getName())) {
-        return (MatchResultImpl)child;
+        return child;
       }
-      final MatchResultImpl deep = findChildDeep(child, name);
+      final MatchResult deep = ((MatchResultImpl)child).findChild(name);
       if (deep != null) {
         return deep;
       }

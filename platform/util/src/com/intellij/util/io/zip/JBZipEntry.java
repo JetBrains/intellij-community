@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,7 +18,7 @@ import java.util.zip.ZipException;
  * Extension that adds better handling of extra fields and provides
  * access to the internal and external file attributes.
  */
-@SuppressWarnings({"OctalInteger"})
+@SuppressWarnings("OctalInteger")
 public class JBZipEntry implements Cloneable {
   private static final int PLATFORM_UNIX = 3;
   private static final int PLATFORM_FAT = 0;
@@ -40,7 +36,7 @@ public class JBZipEntry implements Cloneable {
   private int internalAttributes = 0;
   private int platform = PLATFORM_FAT;
   private long externalAttributes = 0;
-  private String name = null;
+  private String name;
 
   private long headerOffset = -1;
   private final JBZipFile myFile;
@@ -50,16 +46,12 @@ public class JBZipEntry implements Cloneable {
    * Creates a new zip entry with the specified name.
    *
    * @param name the name of the entry
-   * @param file
    */
   protected JBZipEntry(String name, JBZipFile file) {
     this.name = name;
     myFile = file;
   }
 
-  /**
-   * @param file
-   */
   protected JBZipEntry(JBZipFile file) {
     name = "";
     myFile = file;

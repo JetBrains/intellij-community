@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.util.io.storage.Storage;
 import com.intellij.util.io.storage.StorageTestBase;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -21,7 +22,7 @@ public class CompactStoragePerformanceTest extends StorageTestBase {
 
   @Test
   public void testDeleteRemovesExtendedRecords() throws IOException {
-    IntArrayList recordsList = new IntArrayList();
+    IntList recordsList = new IntArrayList();
     // 60000 records of 40000 bytes each: exercise extra record creation
     int recordCount = 60000;
     for (int i = 0; i < recordCount; ++i) {

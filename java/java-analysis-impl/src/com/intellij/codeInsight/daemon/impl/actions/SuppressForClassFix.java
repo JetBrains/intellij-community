@@ -48,7 +48,7 @@ public class SuppressForClassFix extends SuppressFix {
       }
       container = parentClass;
     }
-    return container;
+    return null;
   }
 
   @Override

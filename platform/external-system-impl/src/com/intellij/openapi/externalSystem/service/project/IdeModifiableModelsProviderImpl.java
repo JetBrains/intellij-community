@@ -169,11 +169,15 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         builder.addDiff(getActualStorageBuilder());
         return null;
       });
+
+      for (ModifiableRootModel model : rootModels1) {
+        ((ModifiableRootModelBridge)model).postCommit();
+      }
     });
     myUserData.clear();
   }
 
-  private WorkspaceEntityStorageBuilder getActualStorageBuilder() {
+  public WorkspaceEntityStorageBuilder getActualStorageBuilder() {
     if (diff != null) return diff;
     initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
     return diff = WorkspaceEntityStorageBuilder.Companion.from(initialStorage);

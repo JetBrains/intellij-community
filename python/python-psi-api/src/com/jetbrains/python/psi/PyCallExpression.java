@@ -8,7 +8,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.FunctionParameter;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -23,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
@@ -32,35 +30,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
   @Nullable
   @Override
-  default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    if (resolvedCallee instanceof PyFunction) {
-      final PyFunction function = (PyFunction)resolvedCallee;
-      if (!PyNames.NEW.equals(function.getName()) && function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
-        return null;
-      }
-    }
-
-    final PyExpression callee = getCallee();
-    if (callee instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
-      final Predicate<String> isConstructorName = name -> PyNames.INIT.equals(name) || PyNames.NEW.equals(name);
-
-      if (resolvedCallee instanceof PyFunction &&
-          qualifiedCallee.isQualified() &&
-          isConstructorName.test(resolvedCallee.getName()) &&
-          !isConstructorName.test(qualifiedCallee.getName())) {
-        return null;
-      }
-
-      if (resolvedCallee != null && PyNames.CALL.equals(resolvedCallee.getName()) && !PyNames.CALL.equals(qualifiedCallee.getName())) {
-        return qualifiedCallee;
-      }
-
-      return qualifiedCallee.getQualifier();
-    }
-
-    return null;
-  }
+  PyExpression getReceiver(@Nullable PyCallable resolvedCallee);
 
   @NotNull
   @Override

@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.compiled.TypeAnnotationContainer;
 import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -100,7 +99,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
 
   @Override
   public @NotNull TypeInfo @NotNull [] getTypes() {
-    if (shouldSkipSoleObject()) return TypeInfo.EMPTY_ARRAY;
+    if (myInfos.length == 0 || shouldSkipSoleObject()) return TypeInfo.EMPTY_ARRAY;
     return myInfos.clone();
   }
 

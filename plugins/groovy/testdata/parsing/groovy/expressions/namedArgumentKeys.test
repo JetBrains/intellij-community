@@ -65,9 +65,9 @@ Groovy script
       PsiElement(identifier)('println')
     Arguments
       PsiElement(()('(')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiComment(line comment)('// modifiers')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(abstract)('abstract')
@@ -76,7 +76,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(final)('final')
@@ -85,7 +85,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(native)('native')
@@ -94,7 +94,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(private)('private')
@@ -103,7 +103,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(protected)('protected')
@@ -112,7 +112,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(public)('public')
@@ -121,7 +121,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(static)('static')
@@ -130,7 +130,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(strictfp)('strictfp')
@@ -139,7 +139,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(synchronized)('synchronized')
@@ -148,7 +148,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(transient)('transient')
@@ -157,7 +157,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(volatile)('volatile')
@@ -166,9 +166,9 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiComment(line comment)('// primitive types')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(boolean)('boolean')
@@ -177,7 +177,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(byte)('byte')
@@ -186,7 +186,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(char)('char')
@@ -195,7 +195,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(double)('double')
@@ -204,7 +204,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(float)('float')
@@ -213,7 +213,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(int)('int')
@@ -222,7 +222,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(long)('long')
@@ -231,7 +231,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(short)('short')
@@ -240,7 +240,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(void)('void')
@@ -249,9 +249,9 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiComment(line comment)('// keywords')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(as)('as')
@@ -260,7 +260,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(assert)('assert')
@@ -269,7 +269,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(break)('break')
@@ -278,7 +278,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(case)('case')
@@ -287,7 +287,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(catch)('catch')
@@ -296,7 +296,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(class)('class')
@@ -305,7 +305,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(continue)('continue')
@@ -314,7 +314,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(def)('def')
@@ -323,7 +323,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(default)('default')
@@ -332,7 +332,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(do)('do')
@@ -341,7 +341,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(else)('else')
@@ -350,7 +350,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(enum)('enum')
@@ -359,7 +359,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(extends)('extends')
@@ -368,7 +368,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(false)('false')
@@ -377,7 +377,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(finally)('finally')
@@ -386,7 +386,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(for)('for')
@@ -395,7 +395,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(if)('if')
@@ -404,7 +404,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(implements)('implements')
@@ -413,7 +413,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(import)('import')
@@ -422,7 +422,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(in)('in')
@@ -431,7 +431,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(instanceof)('instanceof')
@@ -440,7 +440,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(interface)('interface')
@@ -449,7 +449,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(new)('new')
@@ -458,7 +458,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(null)('null')
@@ -467,7 +467,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(package)('package')
@@ -476,7 +476,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(return)('return')
@@ -485,7 +485,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(super)('super')
@@ -494,7 +494,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(switch)('switch')
@@ -503,7 +503,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(this)('this')
@@ -512,7 +512,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(throw)('throw')
@@ -521,7 +521,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(throws)('throws')
@@ -530,7 +530,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(trait)('trait')
@@ -539,7 +539,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(true)('true')
@@ -548,7 +548,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(try)('try')
@@ -557,7 +557,7 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Named argument
         Argument label
           PsiElement(while)('while')
@@ -566,5 +566,5 @@ Groovy script
         Literal
           PsiElement(Integer)('42')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement())(')')

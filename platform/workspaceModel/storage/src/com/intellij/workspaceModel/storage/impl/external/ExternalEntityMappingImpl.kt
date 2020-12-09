@@ -18,9 +18,11 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
   : ExternalEntityMapping<T> {
   protected lateinit var entityStorage: AbstractEntityStorage
 
-  override fun getEntities(data: T): List<WorkspaceEntity> = index.getKeysByValue(data)?.mapNotNull {
-    entityStorage.entityDataById(it)?.createEntity(entityStorage)
-  } ?: emptyList()
+  override fun getEntities(data: T): List<WorkspaceEntity> {
+    return index.getKeysByValue(data)?.mapNotNull {
+      entityStorage.entityDataById(it)?.createEntity(entityStorage)
+    } ?: emptyList()
+  }
 
   override fun getDataByEntity(entity: WorkspaceEntity): T? {
     entity as WorkspaceEntityBase
@@ -33,8 +35,6 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
   internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
   }
-
-  override fun getAllEntities(): List<WorkspaceEntity> = index.keys.map { entityStorage.entityDataByIdOrDie(it).createEntity(entityStorage) }
 
   override fun forEach(action: (key: WorkspaceEntity, value: T) -> Unit) {
     index.forEach { (key, value) -> action(entityStorage.entityDataByIdOrDie(key).createEntity(entityStorage), value) }
@@ -102,13 +102,22 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>, replaceMap: HashBiMap<EntityId, EntityId>) {
-    other.indexLog.forEach {
-      when (it) {
-        is IndexLogRecord.Add<*> -> add(replaceMap.getOrDefault(it.id, it.id), it.data as T)
-        is IndexLogRecord.Remove -> remove(replaceMap.getOrDefault(it.id, it.id))
+    other.indexLog.forEach { indexEntry ->
+      when (indexEntry) {
+        is IndexLogRecord.Add<*> -> getTargetId(replaceMap, indexEntry.id)?.let { add(it, indexEntry.data as T) }
+        is IndexLogRecord.Remove -> getTargetId(replaceMap, indexEntry.id)?.let { remove(it) }
         IndexLogRecord.Clear -> clearMapping()
       }
     }
+  }
+
+  private fun getTargetId(replaceMap: HashBiMap<EntityId, EntityId>, id: EntityId): EntityId? {
+    val possibleTargetId = replaceMap[id]
+    if (possibleTargetId != null) return possibleTargetId
+
+    // It's possible that before addDiff there was a gup in this particular id. If it's so, replaceMap should not have a mapping to it
+    val sourceId = replaceMap.inverse()[id]
+    return if (sourceId != null) null else id
   }
 
   private fun startWrite() {
@@ -151,9 +160,8 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 }
 
-object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
+internal object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
   override fun getEntities(data: Any): List<WorkspaceEntity> = emptyList()
   override fun getDataByEntity(entity: WorkspaceEntity): Any? = null
-  override fun getAllEntities(): List<WorkspaceEntity> = emptyList()
   override fun forEach(action: (key: WorkspaceEntity, value: Any) -> Unit) {}
 }

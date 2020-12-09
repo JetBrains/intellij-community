@@ -242,7 +242,14 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
-      return new Rectangle(myTabs.getWidth() - data.insets.right - data.moreRectAxisSize + 2, getFixedPosition(data),
+          int x;
+      if (myTabs.isEditorTabs()) {
+        x = data.layoutSize.width - data.moreRectAxisSize - 1;
+      }
+      else {
+        x = data.position;
+      }
+      return new Rectangle(x, getFixedPosition(data),
                            data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height);
     }
 

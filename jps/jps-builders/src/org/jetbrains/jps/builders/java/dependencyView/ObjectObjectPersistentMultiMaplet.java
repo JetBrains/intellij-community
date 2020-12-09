@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -82,9 +83,9 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   public void put(final K key, final Collection<V> value) {
     try {
       myCache.remove(key);
-      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(DataOutput out) throws IOException {
+        public void append(@NotNull DataOutput out) throws IOException {
           for (V v : value) {
             myValueExternalizer.save(out, v);
           }

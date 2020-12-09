@@ -9,6 +9,8 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static git4idea.GitNotificationIdsHolder.REBASE_NOT_STARTED;
+import static git4idea.GitNotificationIdsHolder.REBASE_SUCCESSFUL;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.GitUtil.getHead;
 import static git4idea.GitUtil.getRepositoryManager;
@@ -359,7 +361,7 @@ public class GitRebaseProcess {
     Collection<VirtualFile> rootsToSave = getRootsFromRepositories(getDirtyRoots(repositoriesToSave));
     String error = saveLocalChanges(rootsToSave);
     if (error != null) {
-      myNotifier.notifyError("git.rebase.not.started", GitBundle.message("rebase.notification.not.started.title"), error);
+      myNotifier.notifyError(REBASE_NOT_STARTED, GitBundle.message("rebase.notification.not.started.title"), error);
       return false;
     }
     return true;
@@ -396,7 +398,7 @@ public class GitRebaseProcess {
       baseBranch = getItemIfAllTheSame(myRebaseSpec.getInitialBranchNames().values(), baseBranch);
     }
     String message = GitSuccessfulRebase.formatMessage(rebasedBranch, baseBranch, params != null && params.getBranch() != null);
-    myNotifier.notifyMinorInfo("git.rebase.successful", GitBundle.message("rebase.notification.successful.title"), message);
+    myNotifier.notifyMinorInfo(REBASE_SUCCESSFUL, GitBundle.message("rebase.notification.successful.title"), message);
   }
 
   @Nullable

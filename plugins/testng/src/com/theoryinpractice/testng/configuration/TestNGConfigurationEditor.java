@@ -275,7 +275,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       packagesInProject.setSelected(true);
     }
     evaluateModuleClassPath();
-    alternateJDK.setPathOrName(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
+    alternateJDK.setPathOrName(config.getAlternativeJrePath(), config.ALTERNATIVE_JRE_PATH_ENABLED);
     propertiesList.clear();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
@@ -305,7 +305,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
     commonJavaParameters.applyTo(config);
-    config.ALTERNATIVE_JRE_PATH = alternateJDK.getJrePathOrName();
+    config.setAlternativeJrePath(alternateJDK.getJrePathOrName());
     config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isAlternativeJreSelected();
 
     data.TEST_PROPERTIES.clear();

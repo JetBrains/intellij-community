@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -26,7 +27,7 @@ public final class ControlFlowWrapper {
   private boolean myGenerateConditionalExit;
   private Collection<PsiStatement> myExitStatements;
   private PsiStatement myFirstExitStatementCopy;
-  private IntArrayList myExitPoints;
+  private IntList myExitPoints;
 
   public ControlFlowWrapper(PsiElement codeFragment, PsiElement[] elements) throws PrepareFailedException {
     try {

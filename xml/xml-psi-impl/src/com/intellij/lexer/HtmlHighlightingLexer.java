@@ -15,9 +15,10 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentSupport;
+import com.intellij.html.embedding.HtmlEmbedment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,7 +31,6 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private final int EMBEDDED_LEXER_ON = 0x1 << getBaseStateShift();
 
   private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
-  protected Lexer elLexer;
   private Lexer embeddedLexer;
   private boolean hasNoEmbedments;
   private final boolean hasNoLayers;
@@ -39,22 +39,18 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     this(null);
   }
 
-  protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive, FileType styleFileType) {
-    this(null, lexer, caseInsensitive, styleFileType);
-  }
-
   public HtmlHighlightingLexer(@Nullable FileType styleFileType) {
-    this(null, new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true, styleFileType);
+    this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true, styleFileType);
   }
 
-  protected HtmlHighlightingLexer(@Nullable Project project, @NotNull Lexer lexer, boolean caseInsensitive,
+  protected HtmlHighlightingLexer(@NotNull Lexer lexer, boolean caseInsensitive,
                                   @Nullable FileType styleFileType) {
-    super(project, lexer, caseInsensitive);
+    super(lexer, caseInsensitive);
     hasNoLayers = Boolean.TRUE.equals(LayeredLexer.ourDisableLayersFlag.get());
     ourStyleFileType = styleFileType;
   }
 
-  public FileType getStyleFileType() {
+  public @Nullable FileType getStyleFileType() {
     return ourStyleFileType;
   }
 
@@ -63,8 +59,9 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     super.start(buffer, startOffset, endOffset, initialState);
 
     if ((initialState & EMBEDDED_LEXER_ON) != 0) {
-      LOG.error(new IllegalStateException("Do not reset HTML Lexer with embedded lexer on"));
+      LOG.error(new IllegalStateException("Do not reset HTML Lexer to a state with embedded lexer on"));
     }
+    embeddedLexer = null;
   }
 
   @Override
@@ -93,7 +90,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     if (embedment != null && !embedment.getRange().isEmpty()) {
       if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
       try {
-        embeddedLexer = embedment.createHighlightingLexer(this);
+        embeddedLexer = embedment.createHighlightingLexer();
       }
       finally {
         if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.set(null);
@@ -116,7 +113,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   @Override
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     if (embeddedLexer != null) {
       return embeddedLexer.getTokenType();
     }
@@ -181,8 +178,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     return state;
   }
 
-  @Nullable
-  protected Lexer getEmbeddedLexer() {
+  protected @Nullable Lexer getEmbeddedLexer() {
     return embeddedLexer;
   }
 
@@ -206,6 +202,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
    *
    * @deprecated Use {@link HtmlEmbeddedContentSupport} API
    */
+  @SuppressWarnings("unused")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   @Nullable

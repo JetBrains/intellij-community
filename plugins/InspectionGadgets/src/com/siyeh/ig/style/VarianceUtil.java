@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
@@ -6,7 +6,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-class VarianceUtil {
+final class VarianceUtil {
   @NotNull
   private static Variance getMethodSignatureVariance(@NotNull PsiMethod method, @NotNull PsiTypeParameter typeParameter) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();

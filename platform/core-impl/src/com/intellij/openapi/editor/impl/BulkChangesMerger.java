@@ -17,7 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.TextChange;
-import com.intellij.util.text.StringFactory;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -45,7 +45,7 @@ public class BulkChangesMerger {
    * @return              merge result
    */
   public CharSequence mergeToCharSequence(char @NotNull [] text, int textLength, @NotNull List<? extends TextChange> changes) {
-    return StringFactory.createShared(mergeToCharArray(text, textLength, changes));
+    return new String(mergeToCharArray(text, textLength, changes));
   }
   
   /**
@@ -165,12 +165,6 @@ public class BulkChangesMerger {
       System.arraycopy(merged, 0, data, 0, length + diff);
     }
   }
-  
-  private static void copy(char @NotNull [] data, int offset, @NotNull CharSequence text) {
-    for (int i = 0; i < text.length(); i++) {
-      data[i + offset] = text.charAt(i);
-    }
-  }
 
   /**
    * Given an offset of some location in the document, returns offset of this location after application of given changes. List of changes
@@ -221,7 +215,8 @@ public class BulkChangesMerger {
           myDiff += myFirstChangeShift;
         }
         if (myDiff == 0) {
-          copy(myData, change.getStart() + (first ? myFirstChangeShift : 0), change.getText());
+          int offset = change.getStart() + (first ? myFirstChangeShift : 0);
+          CharArrayUtil.getChars(change.getText(), myData, offset);
         }
         else {
           myDataStartOffset = change.getStart();
@@ -308,7 +303,7 @@ public class BulkChangesMerger {
         }
         int length = change.getText().length();
         if (length > 0) {
-          copy(myData, outputOffset - length, change.getText());
+          CharArrayUtil.getChars(change.getText(), myData, outputOffset - length);
           outputOffset -= length;
         }
       }
@@ -338,7 +333,7 @@ public class BulkChangesMerger {
         }
         int length = change.getText().length();
         if (length > 0) {
-          copy(myData, myDataStartOffset, change.getText());
+          CharArrayUtil.getChars(change.getText(), myData, myDataStartOffset);
           myDataStartOffset += length;
         }
       }

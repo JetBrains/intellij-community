@@ -9,13 +9,13 @@
 
   <description><error descr="Value must have minimum length of 40">
   <![CDATA[
-   Not enough text <a href="http://jetbrains.com">short</a>
+   Not enough text <a href="https://jetbrains.com">short</a>
   ]]>
   </error></description>
 
-  <change-notes><error descr="Value must have minimum length of 40">
+  <change-notes>
   <![CDATA[
-   Not enough text <a href="http://jetbrains.com">short</a>
+   No minimum text length <a href="https://jetbrains.com">link</a>
   ]]>
-  </error></change-notes>
+  </change-notes>
 </idea-plugin>

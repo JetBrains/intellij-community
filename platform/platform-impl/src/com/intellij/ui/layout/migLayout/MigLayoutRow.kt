@@ -16,9 +16,7 @@ import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
-import net.miginfocom.layout.BoundSize
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LayoutUtil
+import net.miginfocom.layout.*
 import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.border.LineBorder
@@ -76,6 +74,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     private set
 
   var gapAfter: String? = null
+    set(value) {
+      field = value;
+      rowConstraints?.gapAfter = if (value == null) null else ConstraintParser.parseBoundSize(value, true, false)
+    }
+
+  var rowConstraints: DimConstraint? = null;
 
   private var componentIndexWhenCellModeWasEnabled = -1
 
@@ -162,6 +166,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       subRows?.forEach {
         it.visible = value
         it.subRowsVisible = value
+        if (it != subRows!!.last()) {
+          it.gapAfter = if (value) null else "0px!"
+        }
       }
     }
 
@@ -348,7 +355,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     if (builder.hideableRowNestingLevel > 0) {
-      cc.hideMode = 0
+      cc.hideMode = 3
     }
 
     // if this row is not labeled and:
@@ -463,6 +470,25 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun onGlobalIsModified(callback: () -> Boolean): Row {
     builder.isModifiedCallbacks.getOrPut(null, { SmartList() }).add(callback)
     return this
+  }
+
+  override fun row(label: String?, separated: Boolean, init: Row.() -> Unit): Row {
+    val newRow = super.row(label, separated, init)
+    if (newRow is MigLayoutRow) {
+      if (newRow.labeled && (newRow.components.size == 2)) {
+        var rowLabel = newRow.components[0]
+        if (rowLabel is JLabel) {
+          rowLabel.labelFor = newRow.components[1]
+        }
+        else {
+          rowLabel = newRow.components[1]
+          if (rowLabel is JLabel) {
+            rowLabel.labelFor = newRow.components[0]
+          }
+        }
+      }
+    }
+    return newRow
   }
 }
 

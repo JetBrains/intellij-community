@@ -129,19 +129,22 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     return
       "@<decorator>decorator</decorator>(<kwarg>param</kwarg>=1)\n" +
       "def f(<param>x</param>):\n" +
-      "    <docComment>\"\"\" Syntax Highlighting Demo\n" +
-      "        <docCommentTag>@param</docCommentTag> x Parameter\n" +
-      "" +
-      RainbowHighlighter.generatePaletteExample("\n        ") + "\n" +
+      "    <docComment>\"\"\"\n" +
+      "    Syntax Highlighting Demo\n" +
+      "    <docCommentTag>@param</docCommentTag> x Parameter\n" +
+      RainbowHighlighter.generatePaletteExample("\n    ") + "\n" +
       "    \"\"\"</docComment>\n" +
+      "\n" +
       "    def <nestedFuncDef>nested_func</nestedFuncDef>(<param>y</param>):\n" +
       "        <call>print</call>(<param>y</param> + 1)\n" +
+      "\n" +
       "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, f'{<param>x</param>!s:{\"^10\"}}')   # Comment\n" +
-      "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower()</mcall>)\n" +
-      "    <call>nested_func(42)</call>" +
+      "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower</mcall>())\n" +
+      "    <call>nested_func</call>(42)\n" +
       "\n" +
       "class <classDef>Foo</classDef>:\n" +
       "    tags: <annotation>List[<builtin>str</builtin>]</annotation>\n" +
+      "\n" +
       "    def <predefined>__init__</predefined>(<self>self</self>: <annotation>Foo</annotation>):\n" +
       "        <localVar>byte_string</localVar>: <annotation><builtin>bytes</builtin></annotation> = b'newline:\\n also newline:\\x0a'\n" +
       "        <localVar>text_string</localVar> = u\"Cyrillic Я is \\u042f. Oops: \\u042g\"\n" +

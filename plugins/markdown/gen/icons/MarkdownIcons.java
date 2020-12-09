@@ -11,20 +11,19 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class MarkdownIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, MarkdownIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, MarkdownIcons.class.getClassLoader(), cacheKey, flags);
   }
 
-
-  public final static class EditorActions {
-    /** 16x16 */ public static final @NotNull Icon Bold = load("/icons/editor_actions/Bold.svg", 3254957130187659755L);
-    /** 16x16 */ public static final @NotNull Icon Code_span = load("/icons/editor_actions/Code_span.svg", 1173251916184382353L);
-    /** 16x16 */ public static final @NotNull Icon Header_level_down = load("/icons/editor_actions/Header_level_down.svg", -5644439765667589620L);
-    /** 16x16 */ public static final @NotNull Icon Header_level_up = load("/icons/editor_actions/Header_level_up.svg", 1738191812294750273L);
-    /** 16x16 */ public static final @NotNull Icon Italic = load("/icons/editor_actions/Italic.svg", 3240123994625852203L);
-    /** 16x16 */ public static final @NotNull Icon Link = load("/icons/editor_actions/Link.svg", -5412337752198422491L);
-    /** 16x16 */ public static final @NotNull Icon Strike_through = load("/icons/editor_actions/Strike_through.svg", 3804698961796377166L);
-
+  public static final class EditorActions {
+    /** 16x16 */ public static final @NotNull Icon Bold = load("icons/editor_actions/Bold.svg", -6445952954704500578L, 2);
+    /** 16x16 */ public static final @NotNull Icon Code_span = load("icons/editor_actions/Code_span.svg", -9115359587845322559L, 2);
+    /** 16x16 */ public static final @NotNull Icon Header_level_down = load("icons/editor_actions/Header_level_down.svg", -4386543711380196485L, 2);
+    /** 16x16 */ public static final @NotNull Icon Header_level_up = load("icons/editor_actions/Header_level_up.svg", -4897203554988708352L, 2);
+    /** 16x16 */ public static final @NotNull Icon Italic = load("icons/editor_actions/Italic.svg", 4976429474595351440L, 2);
+    /** 16x16 */ public static final @NotNull Icon Link = load("icons/editor_actions/Link.svg", 7399315794832636966L, 2);
+    /** 16x16 */ public static final @NotNull Icon Strike_through = load("icons/editor_actions/Strike_through.svg", 7655458485343876010L, 2);
   }
-  /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("/icons/MarkdownPlugin.svg", 5350961264005962568L);
+
+  /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("icons/MarkdownPlugin.svg", -2842140869353630844L, 0);
 }

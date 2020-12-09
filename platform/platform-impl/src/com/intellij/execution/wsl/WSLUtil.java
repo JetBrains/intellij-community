@@ -14,7 +14,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -25,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Class for working with WSL after Fall Creators Update
@@ -79,14 +77,16 @@ public final class WSLUtil {
     final List<WSLDistribution> result = new ArrayList<>(descriptors.size() + 1 /* LEGACY_WSL */);
 
     for (WslDistributionDescriptor descriptor: descriptors) {
+      String executablePathStr = descriptor.getExecutablePath();
+      if (executablePathStr != null) {
+        Path executablePath = Paths.get(executablePathStr);
+        if (!executablePath.isAbsolute()) {
+          executablePath = executableRoot.resolve(executablePath);
+        }
 
-      Path executablePath = Paths.get(descriptor.getExecutablePath());
-      if (!executablePath.isAbsolute()) {
-        executablePath = executableRoot.resolve(executablePath);
-      }
-
-      if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
-        result.add(new WSLDistribution(descriptor, executablePath));
+        if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
+          result.add(new WSLDistribution(descriptor, executablePath));
+        }
       }
     }
 
@@ -125,8 +125,10 @@ public final class WSLUtil {
 
   /**
    * @return instance of WSL distribution or null if it's unavailable
+   * @deprecated Use {@link WslDistributionManager#getDistributionByMsId(String)}
    */
   @Nullable
+  @Deprecated
   public static WSLDistribution getDistributionByMsId(@Nullable String name) {
     if (name == null) {
       return null;
@@ -179,21 +181,6 @@ public final class WSLUtil {
       return null;
     }
     return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
-  }
-
-  /**
-   * @return list of existing UNC roots for known WSL distributions
-   */
-  @ApiStatus.Experimental
-  @NotNull
-  public static List<File> getExistingUNCRoots() {
-    if (!isSystemCompatible() || !Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
-      return Collections.emptyList();
-    }
-    return getAvailableDistributions().stream()
-      .map(WSLDistribution::getUNCRoot)
-      .filter(File::exists)
-      .collect(Collectors.toList());
   }
 
   @NotNull

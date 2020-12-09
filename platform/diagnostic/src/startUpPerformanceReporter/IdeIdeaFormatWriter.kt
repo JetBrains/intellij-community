@@ -14,7 +14,7 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import java.lang.management.ManagementFactory
@@ -25,8 +25,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
-                                   private val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
-                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager) {
+                                   private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
+                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager, StartUpPerformanceReporter.VERSION) {
   val publicStatMetrics = Object2IntOpenHashMap<String>()
 
   init {
@@ -58,6 +58,15 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
   override fun writeExtraData(writer: JsonGenerator) {
     writeServiceStats(writer)
     writeIcons(writer)
+
+    val classLoader = IdeIdeaFormatWriter::class.java.classLoader
+    val getClassPath = classLoader::class.java.getDeclaredMethod("getLoadingStats")
+    getClassPath.isAccessible = true
+    val stats = getClassPath.invoke(classLoader) as LongArray
+    writer.obj("classLoading") {
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats[0]))
+      writer.writeNumberField("count", stats[1])
+    }
   }
 
   override fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
@@ -88,9 +97,9 @@ private fun writeIcons(writer: JsonGenerator) {
   writer.array("icons") {
     for (stat in IconLoadMeasurer.getStats()) {
       writer.obj {
-        writer.writeStringField("name", stat.type)
-        writer.writeNumberField("count", stat.counter)
-        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.totalTime))
+        writer.writeStringField("name", stat.name)
+        writer.writeNumberField("count", stat.count)
+        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.totalDuration))
       }
     }
   }
@@ -122,9 +131,9 @@ private fun writeServiceStats(writer: JsonGenerator) {
     service.project += plugin.project.services.size
     service.module += plugin.module.services.size
 
-    component.app += plugin.app.components.size
-    component.project += plugin.project.components.size
-    component.module += plugin.module.components.size
+    component.app += plugin.app.components?.size ?: 0
+    component.project += plugin.project.components?.size ?: 0
+    component.module += plugin.module.components?.size ?: 0
   }
 
   writer.obj("stats") {

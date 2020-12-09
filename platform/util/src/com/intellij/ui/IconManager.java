@@ -32,10 +32,24 @@ public interface IconManager {
     IconManagerHelper.deactivate();
   }
 
+  @NotNull Icon getStubIcon();
+
   @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
 
+  /**
+   * Path must be specified without a leading slash, in a format for {@link ClassLoader#getResourceAsStream(String)}
+   */
   @ApiStatus.Internal
-  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey);
+  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags);
+
+  /**
+   * @deprecated Method just for backward compatibility (old generated icon classes).
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  default @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
+    return loadRasterizedIcon(path.startsWith("/") ? path.substring(1) : path, aClass.getClassLoader(), cacheKey, flags);
+  }
 
   @NotNull
   default Icon createEmptyIcon(@NotNull Icon icon) {
@@ -55,11 +69,7 @@ public interface IconManager {
     return source;
   }
 
-  @NotNull
-  Icon getAnalyzeIcon();
-
-  @NotNull
-  <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
+  @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
 
   @NotNull
   RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
@@ -76,8 +86,6 @@ public interface IconManager {
   RowIcon createRowIcon(Icon @NotNull ... icons);
 
   void registerIconLayer(int flagMask, @NotNull Icon icon);
-
-  @NotNull Icon createOverlayIcon(Icon @NotNull ... icons);
 
   @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon);
 }
@@ -110,6 +118,11 @@ final class DummyIconManager implements IconManager {
   private DummyIconManager() {
   }
 
+  @Override
+  public @NotNull Icon getStubIcon() {
+    return DummyIcon.INSTANCE;
+  }
+
   @NotNull
   @Override
   public Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
@@ -117,13 +130,7 @@ final class DummyIconManager implements IconManager {
   }
 
   @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey) {
-    return DummyIcon.INSTANCE;
-  }
-
-  @NotNull
-  @Override
-  public Icon getAnalyzeIcon() {
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int flags) {
     return DummyIcon.INSTANCE;
   }
 
@@ -138,18 +145,12 @@ final class DummyIconManager implements IconManager {
   }
 
   @Override
-  public @NotNull Icon createOverlayIcon(Icon @NotNull ... icons) {
-    return new DummyIcon();
-  }
-
-  @Override
   public @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon) {
     return new DummyIcon();
   }
 
-  @NotNull
   @Override
-  public <T> Icon createDeferredIcon(@NotNull Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
+  public @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
     return base;
   }
 

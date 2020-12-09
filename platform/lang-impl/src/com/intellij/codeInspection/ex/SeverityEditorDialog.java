@@ -104,7 +104,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
         }
       }
     });
-    TreeUIHelper.getInstance().installListSpeedSearch(myOptionsList, attrs -> attrs.getSeverity().getName());
+    TreeUIHelper.getInstance().installListSpeedSearch(myOptionsList, attrs -> StringUtil.toUpperCase(attrs.getSeverity().getDisplayName()));
     myOptionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JPanel leftPanel = ToolbarDecorator.createDecorator(myOptionsList)

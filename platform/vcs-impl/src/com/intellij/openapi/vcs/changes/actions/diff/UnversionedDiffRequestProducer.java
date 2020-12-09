@@ -47,7 +47,7 @@ public final class UnversionedDiffRequestProducer implements ChangeDiffRequestCh
 
   @Nullable
   @Override
-  public Object getPopupTag() {
+  public ChangesBrowserNode.Tag getPopupTag() {
     return ChangesBrowserNode.UNVERSIONED_FILES_TAG;
   }
 

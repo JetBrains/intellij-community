@@ -9,9 +9,11 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,7 @@ public final class SidePanel extends JPanel {
   private final DefaultListModel<SidePanelItem> myModel;
   private final Place.Navigator myNavigator;
 
-  private final Int2ObjectOpenHashMap<@Nls String> myIndex2Separator = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<@Nls String> myIndex2Separator = new Int2ObjectOpenHashMap<>();
 
   public SidePanel(Place.Navigator navigator) {
     myNavigator = navigator;
@@ -51,7 +53,7 @@ public final class SidePanel extends JPanel {
 
       @Override
       public Icon getIconFor(final SidePanelItem value) {
-        return JBUI.scale(EmptyIcon.create(16, 20));
+        return JBUIScale.scaleIcon(EmptyIcon.create(16, 20));
       }
 
       @Override

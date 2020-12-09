@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 internal fun syncIconsRepo(context: Context) {
   if (context.doSyncIconsRepo) {
@@ -13,39 +15,39 @@ internal fun syncIconsRepo(context: Context) {
 internal fun syncDevRepo(context: Context) {
   if (context.doSyncDevRepo) {
     log("Syncing ${context.devRepoName}:")
-    syncAdded(context.devRepoDir, context.iconsRepoDir, context.byDesigners.added)
-    syncModified(context.devRepoDir, context.iconsRepoDir, context.byDesigners.modified)
+    syncAdded(context.devRepoDir, context.iconRepoDir, context.byDesigners.added)
+    syncModified(context.devRepoDir.toFile(), context.iconRepoDir.toFile(), context.byDesigners.modified)
     if (context.doSyncRemovedIconsInDev) {
-      syncRemoved(context.devRepoDir, context.byDesigners.removed)
+      syncRemoved(context.devRepoDir.toFile(), context.byDesigners.removed)
     }
   }
 }
 
 internal fun syncIconsRepo(context: Context, byDev: Changes) {
-  syncAdded(context.iconsRepoDir, context.devRepoDir, byDev.added)
-  syncModified(context.iconsRepoDir, context.devRepoDir, byDev.modified)
-  syncRemoved(context.iconsRepoDir, byDev.removed)
+  syncAdded(context.iconRepoDir, context.devRepoDir, byDev.added)
+  syncModified(context.iconRepoDir.toFile(), context.devRepoDir.toFile(), byDev.modified)
+  syncRemoved(context.iconRepoDir.toFile(), byDev.removed)
 }
 
-private fun syncAdded(targetRoot: File, sourceRoot: File, added: MutableCollection<String>) {
+private fun syncAdded(targetRoot: Path, sourceRoot: Path, added: MutableCollection<String>) {
   stageChanges(added) { change, skip, stage ->
     val source = sourceRoot.resolve(change)
-    if (!source.exists()) {
+    if (!Files.exists(source)) {
       log("Sync added: unable to find $change in source repo")
       return@stageChanges
     }
     val target = targetRoot.resolve(change)
     when {
-      !target.exists() -> {
-        source.copyTo(target, overwrite = true)
+      !Files.exists(target) -> {
+        source.toFile().copyTo(target.toFile(), overwrite = true)
         val repo = findRepo(target)
-        stage(repo, target.relativeTo(repo).path)
+        stage(repo.toFile(), repo.relativize(target).toString())
       }
-      same(source, target) -> {
+      same(source.toFile(), target.toFile()) -> {
         log("Skipping $change")
         skip()
       }
-      else -> source.copyTo(target, overwrite = true)
+      else -> source.toFile().copyTo(target.toFile(), overwrite = true)
     }
   }
 }
@@ -67,8 +69,8 @@ private fun syncModified(targetRoot: File, sourceRoot: File, modified: MutableCo
     }
     if (!target.exists()) log("$change should be modified but not exist, creating")
     source.copyTo(target, overwrite = true)
-    val repo = findRepo(target)
-    stage(repo, target.toRelativeString(repo))
+    val repo = findRepo(target.toPath())
+    stage(repo.toFile(), target.toRelativeString(repo.toFile()))
   }
 }
 
@@ -82,8 +84,8 @@ private fun syncRemoved(targetRoot: File, removed: MutableCollection<String>) {
     }
     if (target.exists()) {
       if (target.delete()) {
-        val repo = findRepo(target)
-        stage(repo, target.toRelativeString(repo))
+        val repo = findRepo(target.toPath())
+        stage(repo.toFile(), target.toRelativeString(repo.toFile()))
       }
       else log("Failed to delete ${target.absolutePath}")
     }
@@ -109,7 +111,7 @@ private fun stageChanges(changes: MutableCollection<String>,
       }
     }
     toStage.forEach { (repo, change) ->
-      stageFiles(change, repo)
+      stageFiles(change, repo.toPath())
     }
   }
 }

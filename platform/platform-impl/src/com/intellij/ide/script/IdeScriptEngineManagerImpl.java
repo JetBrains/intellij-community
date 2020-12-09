@@ -94,9 +94,17 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   private static @NotNull Map<EngineInfo, ScriptEngineFactory> calcFactories() {
-    return JBIterable.<ScriptEngineFactory>empty()
-      .append(new ScriptEngineManager().getEngineFactories()) // bundled factories from java modules (Nashorn)
-      .append(new ScriptEngineManager(AllPluginsLoader.INSTANCE).getEngineFactories()) // from plugins (Kotlin)
+    // bundled factories from java modules (Groovy) and from plugins
+    return JBIterable.of(PluginManagerCore.getPlugins())
+      .flatten(o1 -> {
+        try {
+          return new ScriptEngineManager(o1.getPluginClassLoader()).getEngineFactories();
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+          return null;
+        }
+      })
       .unique(o -> o.getClass().getName())
       .toMap(factory -> {
         Class<? extends ScriptEngineFactory> aClass = factory.getClass();
@@ -254,7 +262,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       long hash = StringHash.calc(base);
 
       Class<?> c = null;
-      ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader
+      ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader or "this" if not found
       ClassLoader guess2 = myLuckyGuess.get(0L);     // last recently used
       for (ClassLoader loader : JBIterable.of(guess1, guess2)) {
         if (loader == this) throw new ClassNotFoundException(name);
@@ -269,7 +277,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       if (c == null) {
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           ClassLoader l = descriptor.getPluginClassLoader();
-          if (l == null || l == guess1 || l == guess2) continue;
+          if (l == null || !hasBase && (l == guess1 || l == guess2)) continue;
           try {
             if (hasBase) {
               l.loadClass(base);

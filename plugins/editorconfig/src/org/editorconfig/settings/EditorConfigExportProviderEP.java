@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.editorconfig.settings;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
-class EditorConfigExportProviderEP {
+final class EditorConfigExportProviderEP {
   private final static ExtensionPointName<EditorConfigExportProvider> EP_NAME = ExtensionPointName.create("editorconfig.exportProvider");
 
   static boolean tryExportViaProviders(Project project) {

@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,11 +32,59 @@ class ErrorStripeMarkersModel {
   private final ErrorStripeRangeMarkerTree myTree;
   private final ErrorStripeRangeMarkerTree myTreeForLines;
   private final List<ErrorStripeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final MarkupModelListener myDocumentMarkupListener = createMarkupListener(true);
+  private final MarkupModelListener myEditorMarkupListener = createMarkupListener(false);
+
+  private Disposable myActiveDisposable;
 
   ErrorStripeMarkersModel(@NotNull EditorImpl editor) {
     myEditor = editor;
     myTree = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
     myTreeForLines = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
+  }
+
+  void dispose() {
+    myTree.dispose(myEditor.getDocument());
+    myTreeForLines.dispose(myEditor.getDocument());
+    setActive(false);
+  }
+
+  void setActive(boolean value) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (value == (myActiveDisposable != null)) return;
+
+    if (value) {
+      myActiveDisposable = Disposer.newDisposable("ErrorStripeMarkersModel");
+      myEditor.getFilteredDocumentMarkupModel().addMarkupModelListener(myActiveDisposable, myDocumentMarkupListener);
+      myEditor.getMarkupModel().addMarkupModelListener(myActiveDisposable, myEditorMarkupListener);
+      rebuild();
+    }
+    else {
+      Disposer.dispose(myActiveDisposable);
+      myActiveDisposable = null;
+      clear();
+    }
+  }
+
+  void rebuild() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myActiveDisposable == null) return;
+
+    clear();
+
+    int textLength = myEditor.getDocument().getTextLength();
+    myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(
+      0, textLength, ex -> {
+        afterAdded(ex, false);
+        return true;
+      });
+    ((EditorFilteringMarkupModelEx)myEditor.getFilteredDocumentMarkupModel()).getDelegate().processRangeHighlightersOverlappingWith(
+      0, textLength, ex -> {
+        afterAdded(ex, true);
+        return true;
+      });
   }
 
   void addErrorMarkerListener(ErrorStripeListener listener, Disposable parent) {
@@ -47,7 +97,7 @@ class ErrorStripeMarkersModel {
     myListeners.forEach(listener -> listener.errorMarkerClicked(event));
   }
 
-  public MarkupModelListener createMarkupListener(boolean documentMarkupModel) {
+  private MarkupModelListener createMarkupListener(boolean documentMarkupModel) {
     return new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
@@ -66,26 +116,31 @@ class ErrorStripeMarkersModel {
     };
   }
 
-  public void afterAdded(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
+  private void afterAdded(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
     if (isAvailable(highlighter, documentMarkupModel)) {
-      if (highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
-        createErrorStripeMarker(highlighter);
+      createErrorStripeMarker(highlighter);
+    }
+  }
+
+  private void beforeRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
+    ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter, false);
+    if (errorStripeMarker != null) {
+      removeErrorStripeMarker(errorStripeMarker);
+    }
+    else if (isAvailable(highlighter, documentMarkupModel)) {
+      errorStripeMarker = findErrorStripeMarker(highlighter, true);
+      if (errorStripeMarker == null) {
+        LOG.error("Missing " + highlighter);
+      }
+      else {
+        LOG.error("Full scan performed for " + highlighter);
+        removeErrorStripeMarker(errorStripeMarker);
       }
     }
   }
 
-  public void beforeRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
-    ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter);
-    if (errorStripeMarker != null) {
-      removeErrorStripeMarker(errorStripeMarker);
-    }
-    else {
-      LOG.assertTrue(!isAvailable(highlighter, documentMarkupModel));
-    }
-  }
-
   public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
-    ErrorStripeMarkerImpl existingErrorStripeMarker = findErrorStripeMarker(highlighter);
+    ErrorStripeMarkerImpl existingErrorStripeMarker = findErrorStripeMarker(highlighter, false);
     boolean hasErrorStripe = isAvailable(highlighter, documentMarkupModel);
 
     if (existingErrorStripeMarker == null) {
@@ -132,10 +187,11 @@ class ErrorStripeMarkersModel {
     myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, highlighter)));
   }
 
-  private ErrorStripeMarkerImpl findErrorStripeMarker(@NotNull RangeHighlighterEx highlighter) {
+  private ErrorStripeMarkerImpl findErrorStripeMarker(@NotNull RangeHighlighterEx highlighter, boolean lookEverywhere) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int offset = highlighter.getStartOffset();
-    MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(new TextRangeInterval(offset, offset), null);
+    MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(
+      new ProperTextRange(lookEverywhere ? 0 : offset, lookEverywhere ? myEditor.getDocument().getTextLength() : offset), null);
     try {
       return ContainerUtil.find(iterator, marker -> marker.getHighlighter() == highlighter);
     }
@@ -152,8 +208,7 @@ class ErrorStripeMarkersModel {
     return highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myTree : myTreeForLines;
   }
 
-  void clear() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private void clear() {
     myTree.clear();
     myTreeForLines.clear();
   }
@@ -174,7 +229,7 @@ class ErrorStripeMarkersModel {
       endOffset = Math.max(startOffset, endOffset);
 
       MarkupIterator<ErrorStripeMarkerImpl> exact = myTree
-        .overlappingIterator(new TextRangeInterval(startOffset, endOffset), null);
+        .overlappingIterator(new ProperTextRange(startOffset, endOffset), null);
       MarkupIterator<ErrorStripeMarkerImpl> lines = myTreeForLines
         .overlappingIterator(MarkupModelImpl.roundToLineBoundaries(myEditor.getDocument(), startOffset, endOffset), null);
       myDelegate = MarkupIterator.mergeIterators(exact, lines, BY_AFFECTED_START_OFFSET);

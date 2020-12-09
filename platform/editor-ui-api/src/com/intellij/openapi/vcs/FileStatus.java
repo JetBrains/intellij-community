@@ -21,6 +21,7 @@ import com.intellij.ui.Gray;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -79,6 +80,7 @@ public interface FileStatus {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   String getText();
 
+  @Nullable
   Color getColor();
 
   @NotNull

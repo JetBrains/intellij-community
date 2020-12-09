@@ -18,6 +18,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
@@ -175,6 +176,9 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
     myResolveToWorkspaceCheckBox.setEnabled(localTarget);
     if (!localTarget) {
       myResolveToWorkspaceCheckBox.setSelected(false);
+      myResolveToWorkspaceCheckBox.setToolTipText(MavenConfigurableBundle.message("maven.settings.on.targets.runner.resolve.workspace.artifacts.tooltip"));
+    } else {
+      myResolveToWorkspaceCheckBox.setToolTipText(MavenConfigurableBundle.message("maven.settings.runner.resolve.workspace.artifacts.tooltip"));
     }
   }
 }

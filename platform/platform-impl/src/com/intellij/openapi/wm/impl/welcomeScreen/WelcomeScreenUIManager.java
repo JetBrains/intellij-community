@@ -60,7 +60,7 @@ public class WelcomeScreenUIManager {
   }
 
   public static Color getProjectsSelectionBackground(boolean hasFocus) {
-    return ListPluginComponent.HOVER_COLOR; //use the same as plugins tab use
+    return ListPluginComponent.SELECTION_COLOR; //use the same as plugins tab use
   }
 
   @NotNull

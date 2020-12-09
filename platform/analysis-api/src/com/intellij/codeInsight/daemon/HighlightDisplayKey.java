@@ -127,8 +127,9 @@ public class HighlightDisplayKey {
                                                    @NonNls @Nullable final String id) {
     HighlightDisplayKey key = find(name);
     if (key == null) {
-      key = register(name, displayName, id != null ? id : name);
-      assert key != null : name;
+      final String registrationId = id != null ? id : name;
+      key = new HighlightDisplayKey(name, registrationId);
+      ourKeyToDisplayNameMap.put(key, new Computable.PredefinedValueComputable<>(displayName));
     }
     return key;
   }

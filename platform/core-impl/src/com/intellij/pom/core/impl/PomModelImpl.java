@@ -335,7 +335,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void sendBeforeChildrenChangeEvent(@NotNull PsiElement scope) {
-    if (!scope.isPhysical()) {
+    if (!shouldFirePhysicalPsiEvents(scope)) {
       getPsiManager().beforeChange(false);
       return;
     }
@@ -350,8 +350,14 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     getPsiManager().beforeChildrenChange(event);
   }
 
+  @ApiStatus.Internal
+  public static boolean shouldFirePhysicalPsiEvents(@NotNull PsiElement scope) {
+    return scope.isPhysical() &&
+           ModelBranch.getPsiBranch(scope) == null; // injections are physical even in non-physical PSI :(
+  }
+
   private void sendAfterChildrenChangedEvent(@NotNull PsiFile scope, int oldLength) {
-    if (!scope.isPhysical()) {
+    if (!shouldFirePhysicalPsiEvents(scope)) {
       getPsiManager().afterChange(false);
       return;
     }

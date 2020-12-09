@@ -4,6 +4,7 @@ package com.intellij.serialization
 import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.system.IonReaderBuilder
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.lang.reflect.Type
 import kotlin.reflect.full.primaryConstructor
@@ -18,7 +19,7 @@ private const val ID_FIELD_NAME = "@id"
 
 internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Binding {
   private lateinit var bindings: Array<Binding>
-  private lateinit var nameToBindingIndex: Object2IntOpenHashMap<String>
+  private lateinit var nameToBindingIndex: Object2IntMap<String>
   private lateinit var properties: List<MutableAccessor>
 
   private val propertyMapping: Lazy<NonDefaultConstructorInfo?> = lazy {

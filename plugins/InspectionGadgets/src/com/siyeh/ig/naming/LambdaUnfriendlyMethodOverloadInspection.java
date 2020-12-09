@@ -11,6 +11,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public final class LambdaUnfriendlyMethodOverloadInspection extends BaseInspecti
         return;
       }
       final PsiParameter[] parameters = parameterList.getParameters();
-      final IntArrayList functionalIndices = new IntArrayList(2);
+      final IntList functionalIndices = new IntArrayList(2);
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
         if (LambdaUtil.isFunctionalType(parameter.getType())) {
@@ -129,7 +130,7 @@ public final class LambdaUnfriendlyMethodOverloadInspection extends BaseInspecti
     }
 
     private static boolean areOtherParameterTypesConvertible(PsiParameter[] parameters, PsiParameter[] otherParameters,
-                                                             IntArrayList ignores) {
+                                                             IntList ignores) {
       for (int i = 0; i < parameters.length; i++) {
         if (ignores.contains(i)) {
           continue;

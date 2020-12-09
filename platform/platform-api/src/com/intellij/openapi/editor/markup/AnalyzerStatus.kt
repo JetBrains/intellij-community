@@ -50,9 +50,9 @@ enum class AnalyzingType {
   EMPTY     // Analyzing in progress but no information is available
 }
 /**
- * Severity status item containing text (not necessarily a number) possible icon and severity type
+ * Severity status item containing text (not necessarily a number) possible icon and details text for popup
  */
-data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val type: String? = null)
+data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val detailsText: String? = null)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and
@@ -182,18 +182,21 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
     @JvmStatic
     val DEFAULT by lazy(LazyThreadSafetyMode.NONE) {
       AnalyzerStatus(EmptyIcon.ICON_0, "", "") {
-        object : UIController {
-          override fun enableToolbar(): Boolean = false
-          override fun getActions(): List<AnAction> = emptyList()
-          override fun getAvailableLevels(): List<InspectionsLevel> = emptyList()
-          override fun getHighlightLevels(): List<LanguageHighlightLevel> = emptyList()
-          override fun setHighLightLevel(newLevels: LanguageHighlightLevel) {}
-          override fun fillHectorPanels(container: Container, gc: GridBag) {}
-          override fun canClosePopup(): Boolean = true
-          override fun onClosePopup() {}
-          override fun toggleProblemsView() {}
-        }
+        EmptyController
       }
+    }
+
+    @JvmStatic
+    val EmptyController = object : UIController {
+      override fun enableToolbar(): Boolean = false
+      override fun getActions(): List<AnAction> = emptyList()
+      override fun getAvailableLevels(): List<InspectionsLevel> = emptyList()
+      override fun getHighlightLevels(): List<LanguageHighlightLevel> = emptyList()
+      override fun setHighLightLevel(newLevels: LanguageHighlightLevel) {}
+      override fun fillHectorPanels(container: Container, gc: GridBag) {}
+      override fun canClosePopup(): Boolean = true
+      override fun onClosePopup() {}
+      override fun toggleProblemsView() {}
     }
   }
 }

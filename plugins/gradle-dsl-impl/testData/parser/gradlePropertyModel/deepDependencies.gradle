@@ -1,0 +1,11 @@
+ext {
+  prop1 = '1'
+  prop2 = "2${prop1}"
+  prop3 = "3${prop2}"
+  prop4 = "4${prop3}"
+  prop5 = "5${prop4}"
+  prop6 = "6${prop5}"
+  prop7 = "7${prop6}"
+  prop8 = "8${prop7}"
+  prop9 = "9${prop8}"
+}

@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -10,6 +9,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -79,12 +79,17 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   public static void disposeInvalidEditors() {
-    EditorWindowTracker.getInstance().disposeInvalidEditors();
+    EditorWindowTracker editorWindowTracker = ApplicationManager.getApplication().getServiceIfCreated(EditorWindowTracker.class);
+    if (editorWindowTracker != null) {
+      editorWindowTracker.disposeInvalidEditors();
+    }
   }
 
   @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
-    if (!(injectedProvider instanceof InjectedFileViewProvider)) return null;
+    if (!(injectedProvider instanceof InjectedFileViewProvider)) {
+      return null;
+    }
     return ((InjectedFileViewProvider)injectedProvider).getShreds().getHostPointer().getElement();
   }
 
@@ -123,7 +128,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
-    return !(document instanceof DocumentWindow) ? null : (DocumentWindow)document;
+    return document instanceof DocumentWindow ? (DocumentWindow)document : null;
   }
 
   // used only from tests => no need for complex synchronization
@@ -234,7 +239,6 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
    *  @param rangeToEdit range in encoded(raw) PSI
    *  @return list of ranges in encoded (raw) PSI
    */
-  @SuppressWarnings("ConstantConditions")
   @Override
   public @NotNull List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
     Place shreds = InjectedLanguageUtilBase.getShreds(injectedPsi);
@@ -270,13 +274,13 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
           count--;
         }
         else {
-          //noinspection unchecked
+          //noinspection unchecked,ConstantConditions
           ((List<TextRange>)result).add(intersection);
         }
       }
       offset += shred.getPrefix().length() + shred.getRangeInsideHost().getLength() + shred.getSuffix().length();
     }
-    //noinspection unchecked
+    //noinspection unchecked,ConstantConditions
     return count == 0 ? Collections.emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
   }
 

@@ -20,13 +20,9 @@ public class DuplicateAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       duplicateLineOrSelectedBlockAtCaret(editor);
     }
 

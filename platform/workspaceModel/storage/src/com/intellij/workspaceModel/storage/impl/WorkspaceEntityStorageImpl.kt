@@ -3,25 +3,34 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBiMap
-import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ObjectUtils
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.exceptions.*
+import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
+import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
+import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.ints.IntSet
-import java.io.ByteArrayOutputStream
+import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.name
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-internal class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
-  override fun resolve(storage: WorkspaceEntityStorage): E {
-    return (storage as AbstractEntityStorage).entityDataByIdOrDie(id).createEntity(storage) as E
+internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
+  override fun resolve(storage: WorkspaceEntityStorage): E? {
+    return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
   }
 }
 
@@ -52,40 +61,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override val indexes: MutableStorageIndexes
 ) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
 
-  internal val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
-
-  private val changeLog: List<ChangeEntry>
-    get() = changeLogImpl
-
-  private inline fun updateChangeLog(updater: (MutableList<ChangeEntry>) -> Unit) {
-    updater(changeLogImpl)
-    incModificationCount()
-  }
+  internal val changeLog = WorkspaceBuilderChangeLog()
 
   internal fun incModificationCount() {
-    modificationCount++
+    this.changeLog.modificationCount++
   }
 
-  internal sealed class ChangeEntry {
-    data class AddEntity<E : WorkspaceEntity>(
-      val entityData: WorkspaceEntityData<E>,
-      val clazz: Int,
-      val children: Map<ConnectionId, Set<EntityId>>,
-      val parents: Map<ConnectionId, EntityId>
-    ) : ChangeEntry()
-
-    data class RemoveEntity(val id: EntityId) : ChangeEntry()
-
-    data class ReplaceEntity<E : WorkspaceEntity>(
-      val newData: WorkspaceEntityData<E>,
-      val newChildren: List<Pair<ConnectionId, EntityId>>,
-      val removedChildren: List<Pair<ConnectionId, EntityId>>,
-      val modifiedParents: Map<ConnectionId, EntityId?>
-    ) : ChangeEntry()
-  }
-
-  override var modificationCount: Long = 0
-    private set
+  override val modificationCount: Long
+    get() = this.changeLog.modificationCount
 
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
                                                                                  source: EntitySource,
@@ -114,11 +97,17 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (ids != null && ids.isNotEmpty()) {
         // Oh oh. This persistent id exists already
         // Fallback strategy: remove existing entity with all it's references
-        val existingEntity = entityDataByIdOrDie(ids.single()).createEntity(this)
-        removeEntityAndAssertConsistency(existingEntity, false)
+        val existingEntityData = entityDataByIdOrDie(ids.single())
+        val existingEntity = existingEntityData.createEntity(this)
+        removeEntity(existingEntity)
         LOG.error("""
           addEntity: persistent id already exists. Replacing entity with the new one.
           Persistent id: $persistentId
+          
+          Existing entity data: $existingEntityData
+          New entity data: $pEntityData
+          
+          Broken consistency: $brokenConsistency
         """.trimIndent(), PersistentIdAlreadyExistsException(persistentId))
       }
     }
@@ -128,9 +117,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Update indexes
     indexes.entityAdded(pEntityData, this)
-
-    // Assert consistency
-    this.assertConsistencyInStrictMode()
 
     return pEntityData.createEntity(this)
   }
@@ -142,10 +128,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId() else null
 
-    val pid = e.id
+    val entityId = e.id
 
-    val beforeParents = this.refs.getParentRefsOfChild(pid)
-    val beforeChildren = this.refs.getChildrenRefsOfParentBy(pid).flatMap { (key, value) -> value.map { key to it } }
+    val beforeParents = this.refs.getParentRefsOfChild(entityId)
+    val beforeChildren = this.refs.getChildrenRefsOfParentBy(entityId).flatMap { (key, value) -> value.map { key to it } }
 
     // Execute modification code
     (modifiableEntity as ModifiableWorkspaceEntityBase<*>).allowModifications {
@@ -161,12 +147,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
           // Oh oh. This persistent id exists already.
           // Remove an existing entity and replace it with the new one.
 
-          val existingEntity = entityDataByIdOrDie(ids.single()).createEntity(this)
-          removeEntityAndAssertConsistency(existingEntity, false)
+          val existingEntityData = entityDataByIdOrDie(ids.single())
+          val existingEntity = existingEntityData.createEntity(this)
+          removeEntity(existingEntity)
           LOG.error("""
             modifyEntity: persistent id already exists. Replacing entity with the new one.
-            Old persistent id: $newPersistentId
-            Persistent id: $newPersistentId
+            Old entity: $existingEntityData
+            Persistent id: $copiedData
+            
+            Broken consistency: $brokenConsistency
           """.trimIndent(), PersistentIdAlreadyExistsException(newPersistentId))
         }
       }
@@ -176,59 +165,23 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Add an entry to changelog
-    addReplaceEvent(pid, beforeChildren, beforeParents, copiedData)
+    Companion.addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData)
 
     val updatedEntity = copiedData.createEntity(this)
 
     updatePersistentIdIndexes(updatedEntity, beforePersistentId, copiedData)
 
-    // Assert consistency
-    this.assertConsistencyInStrictMode()
-
     return updatedEntity
   }
 
-  private fun <T : WorkspaceEntity> addReplaceEvent(pid: EntityId,
-                                                    beforeChildren: List<Pair<ConnectionId, EntityId>>,
-                                                    beforeParents: Map<ConnectionId, EntityId>,
-                                                    copiedData: WorkspaceEntityData<T>) {
-    val parents = this.refs.getParentRefsOfChild(pid)
-    val children = this.refs.getChildrenRefsOfParentBy(pid).flatMap { (key, value) -> value.map { key to it } }
-
-    // Collect children changes
-    val addedChildren = (children.toSet() - beforeChildren.toSet()).toList()
-    val removedChildren = (beforeChildren.toSet() - children.toSet()).toList()
-
-    // Collect parent changes
-    val parentsMapRes: MutableMap<ConnectionId, EntityId?> = beforeParents.toMutableMap()
-    for ((connectionId, parentId) in parents) {
-      val existingParent = parentsMapRes[connectionId]
-      if (existingParent != null) {
-        if (existingParent == parentId) {
-          parentsMapRes.remove(connectionId, parentId)
-        }
-        else {
-          parentsMapRes[connectionId] = parentId
-        }
-      }
-      else {
-        parentsMapRes[connectionId] = parentId
-      }
-    }
-    val removedKeys = beforeParents.keys - parents.keys
-    removedKeys.forEach { parentsMapRes[it] = null }
-
-    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, addedChildren, removedChildren, parentsMapRes)) }
-  }
-
-  private fun <T : WorkspaceEntity> updatePersistentIdIndexes(updatedEntity: WorkspaceEntity,
-                                                              beforePersistentId: PersistentEntityId<*>?,
-                                                              copiedData: WorkspaceEntityData<T>) {
-    val pid = (updatedEntity as WorkspaceEntityBase).id
+  internal fun <T : WorkspaceEntity> updatePersistentIdIndexes(updatedEntity: WorkspaceEntity,
+                                                               beforePersistentId: PersistentEntityId<*>?,
+                                                               copiedData: WorkspaceEntityData<T>) {
+    val entityId = (updatedEntity as WorkspaceEntityBase).id
     if (updatedEntity is WorkspaceEntityWithPersistentId) {
       val newPersistentId = updatedEntity.persistentId()
       if (beforePersistentId != null && beforePersistentId != newPersistentId) {
-        indexes.persistentIdIndex.index(pid, newPersistentId)
+        indexes.persistentIdIndex.index(entityId, newPersistentId)
         updateComposedIds(beforePersistentId, newPersistentId)
       }
     }
@@ -243,7 +196,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog
-      updateChangeLog { it.add(ChangeEntry.ReplaceEntity(entity, emptyList(), emptyList(), emptyMap())) }
+      this.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptyList(), emptyMap())
 
       updatePersistentIdIndexes(entity.createEntity(this), editingBeforePersistentId, entity)
     }
@@ -253,35 +206,23 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
     copiedData.entitySource = newSource
 
-    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, emptyList(), emptyList(), emptyMap())) }
+    val entityId = copiedData.createEntityId()
 
-    indexes.entitySourceIndex.index(copiedData.createPid(), newSource)
+    this.changeLog.addChangeSourceEvent(entityId, copiedData)
 
+    indexes.entitySourceIndex.index(entityId, newSource)
+    newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
     return copiedData.createEntity(this)
   }
 
   override fun removeEntity(e: WorkspaceEntity) {
-    removeEntityAndAssertConsistency(e, true)
-  }
-
-  private fun removeEntityAndAssertConsistency(e: WorkspaceEntity, assertConsistencyInStrict: Boolean) {
     e as WorkspaceEntityBase
-
     val removedEntities = removeEntity(e.id)
-    updateChangeLog {
-      removedEntities.forEach { removedEntityId -> it.add(ChangeEntry.RemoveEntity(removedEntityId)) }
-    }
-
-    if (assertConsistencyInStrict) {
-      // Assert consistency
-      this.assertConsistencyInStrictMode()
-    }
+    removedEntities.forEach { this.changeLog.addRemoveEvent(it) }
   }
-
-  override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
 
   private fun ArrayListMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
-                                                                                    storage: AbstractEntityStorage): Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>? {
+                                                                                                    storage: AbstractEntityStorage): Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>? {
     val possibleValues = this[entity.identificator(storage)]
     val persistentId = entity.persistentId(storage)
     return if (persistentId != null) {
@@ -315,10 +256,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     replaceWith as AbstractEntityStorage
 
     val initialStore = this.toStorage()
-    val initialChangeLogSize = this.changeLog.size
-
-    this.assertConsistencyInStrictMode()
-    replaceWith.assertConsistencyInStrictMode()
 
     LOG.debug { "Performing replace by source" }
 
@@ -330,7 +267,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Map of entities in THIS builder that have a reference to matched entity. Key is either hashCode or PersistentId
     val localUnmatchedReferencedNodes = ArrayListMultimap.create<Any, EntityId>()
 
-    // Association of the PId in the local store to the PId in the remote store
+    // Association of the EntityId in the local store to the EntityId in the remote store
     val replaceMap = HashBiMap.create<EntityId, EntityId>()
 
     LOG.debug { "1) Traverse all entities and store matched only" }
@@ -390,54 +327,64 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
         // Find if the entity exists in local store
         val localNodeAndId = localMatchedEntities.find(matchedEntityData, replaceWith)
-        if (localNodeAndId != null) {
-          val (localNode, localNodePid) = localNodeAndId
-          // This entity already exists. Store the association of pids
-          replaceMap[localNodePid] = matchedEntityId
-          if (localNode.hasPersistentId() && localNode != matchedEntityData) {
+
+        // We should check if the issue still exists in this builder because it can be removed if it's referenced by another entity
+        //   that had persistent id clash.
+        val entityStillExists = localNodeAndId?.second?.let { this.entityDataById(it) != null } ?: false
+        if (entityStillExists && localNodeAndId != null) {
+          val (localNode, localNodeEntityId) = localNodeAndId
+          // This entity already exists. Store the association of EntityIdss
+          replaceMap[localNodeEntityId] = matchedEntityId
+          val dataDiffersByProperties = !localNode.equalsIgnoringEntitySource(matchedEntityData)
+          val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
+          if (localNode.hasPersistentId() && (dataDiffersByEntitySource || dataDiffersByProperties) && matchedEntityData.entitySource !is DummyParentEntitySource) {
             // Entity exists in local store, but has changes. Generate replace operation
-            val clonedEntity = matchedEntityData.clone()
-            val persistentIdBefore = matchedEntityData.persistentId(replaceWith)
-                                     ?: rbsFailedAndReport("PersistentId expected for $matchedEntityData", sourceFilter, initialStore,
-                                                           replaceWith, this, initialChangeLogSize)
-            clonedEntity.id = localNode.id
-            val clonedEntityId = matchedEntityId.copy(arrayId = clonedEntity.id)
-            this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntityId.clazz)
-            val pid = clonedEntityId
-
-            updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
-            replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
-              .groupBy({ it.propertyName }, { it.vfu })
-              .forEach { (property, vfus) ->
-                this.indexes.virtualFileIndex.index(pid, property, vfus)
-              }
-            replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(pid, it) }
-            this.indexes.updateExternalMappingForEntityId(matchedEntityId, pid, replaceWith.indexes)
-
-            updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
+            replaceOperation(matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties, dataDiffersByEntitySource)
           }
 
+
           if (localNode == matchedEntityData) {
-            this.indexes.updateExternalMappingForEntityId(matchedEntityId, localNodePid, replaceWith.indexes)
+            this.indexes.updateExternalMappingForEntityId(matchedEntityId, localNodeEntityId, replaceWith.indexes)
           }
           // Remove added entity
           localMatchedEntities.remove(localNode.identificator(this), localNodeAndId)
         }
         else {
           // This is a new entity for this store. Perform add operation
+
+          val persistentId = matchedEntityData.persistentId(this)
+          if (persistentId != null) {
+            val existingEntity = this.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.firstOrNull()
+            if (existingEntity != null) {
+              // Bad news, we have this persistent id already. CPP-22547
+              // This may happened if local entity has entity source and remote entity has a different entity source
+              // Technically we should throw an exception, but now we just remove local entity
+              // Entity exists in local store, but has changes. Generate replace operation
+
+              val localNode = this.entityDataByIdOrDie(existingEntity)
+
+              val dataDiffersByProperties = !localNode.equalsIgnoringEntitySource(matchedEntityData)
+              val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
+
+              replaceOperation(matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties, dataDiffersByEntitySource)
+
+              replaceMap[existingEntity] = matchedEntityId
+              continue
+            }
+          }
+
           val entityClass = ClassConversion.entityDataToEntity(matchedEntityData.javaClass).toClassId()
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as WorkspaceEntityData<WorkspaceEntity>, entityClass)
-          val newPid = matchedEntityId.copy(arrayId = newEntity.id)
-          replaceMap[newPid] = matchedEntityId
+          val newEntityId = matchedEntityId.copy(arrayId = newEntity.id)
+          replaceMap[newEntityId] = matchedEntityId
 
           replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
-            .groupBy({ it.propertyName }, { it.vfu })
             .forEach { (property, vfus) ->
-              this.indexes.virtualFileIndex.index(newPid, property, vfus)
+              this.indexes.virtualFileIndex.index(newEntityId, property, vfus)
             }
-          replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(newPid, it) }
-          replaceWith.indexes.persistentIdIndex.getEntryById(matchedEntityId)?.also { this.indexes.persistentIdIndex.index(newPid, it) }
-          this.indexes.updateExternalMappingForEntityId(matchedEntityId, newPid, replaceWith.indexes)
+          replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(newEntityId, it) }
+          replaceWith.indexes.persistentIdIndex.getEntryById(matchedEntityId)?.also { this.indexes.persistentIdIndex.index(newEntityId, it) }
+          this.indexes.updateExternalMappingForEntityId(matchedEntityId, newEntityId, replaceWith.indexes)
           if (newEntity is SoftLinkable) indexes.updateSoftLinksIndex(newEntity)
 
           createAddEvent(newEntity)
@@ -453,7 +400,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       this.entitiesByType.remove(localEntity.id, entityClass)
       indexes.removeFromIndices(entityId)
       if (localEntity is SoftLinkable) indexes.removeFromSoftLinksIndex(localEntity)
-      updateChangeLog { it.add(ChangeEntry.RemoveEntity(entityId)) }
+      this.changeLog.addRemoveEvent(entityId)
     }
 
     val lostChildren = HashSet<EntityId>()
@@ -488,7 +435,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
-              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
+              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith, this)
             }
           }
         }
@@ -517,7 +464,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         // Check not restored connections
         for ((connectionId, parentId) in removedConnections) {
           if (!connectionId.canRemoveParent()) rbsFailedAndReport("Cannot restore connection to $parentId; $connectionId", sourceFilter,
-                                                                  initialStore, replaceWith, this, initialChangeLogSize)
+                                                                  initialStore, replaceWith, this)
         }
 
         // ----------------- Update children references -----------------------
@@ -543,7 +490,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Some children left without parents. We should delete these children as well.
     for (entityId in lostChildren) {
       if (this.refs.getParentRefsOfChild(entityId).any { !it.key.isChildNullable }) {
-        rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
+        rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child",
+                           sourceFilter, initialStore, replaceWith, this)
       }
       removeEntity(entityId)
     }
@@ -557,7 +505,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val localParent = this.entityDataById(parentId)
             if (localParent == null) rbsFailedAndReport(
               "Cannot link entities. Child entity doesn't have a parent after operation; $connectionId", sourceFilter, initialStore,
-              replaceWith, this, initialChangeLogSize)
+              replaceWith, this)
 
             val localChildId = replaceMap.inverse().getValue(nodeId)
 
@@ -574,28 +522,58 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Assert consistency
-    this.assertConsistencyInStrictModeForRbs("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
+    if (!this.brokenConsistency && !replaceWith.brokenConsistency) {
+      this.assertConsistencyInStrictMode("Check after replaceBySource", sourceFilter, initialStore, replaceWith)
+    }
+    else {
+      this.brokenConsistency = true
+    }
 
     LOG.debug { "Replace by source finished" }
+  }
+
+  private fun replaceOperation(matchedEntityData: WorkspaceEntityData<out WorkspaceEntity>,
+                               replaceWith: AbstractEntityStorage,
+                               localNode: WorkspaceEntityData<out WorkspaceEntity>,
+                               matchedEntityId: EntityId,
+                               dataDiffersByProperties: Boolean,
+                               dataDiffersByEntitySource: Boolean) {
+    val clonedEntity = matchedEntityData.clone()
+    val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: error("PersistentId expected for $matchedEntityData")
+    clonedEntity.id = localNode.id
+    val clonedEntityId = matchedEntityId.copy(arrayId = clonedEntity.id)
+    this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntityId.clazz)
+    val entityId = clonedEntityId
+
+    updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
+    replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
+      .forEach { (property, vfus) ->
+        this.indexes.virtualFileIndex.index(entityId, property, vfus)
+      }
+    replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(entityId, it) }
+    this.indexes.updateExternalMappingForEntityId(matchedEntityId, entityId, replaceWith.indexes)
+
+    if (dataDiffersByProperties) {
+      this.changeLog.addReplaceEvent(entityId, clonedEntity, emptyList(), emptyList(), emptyMap())
+    }
+    if (dataDiffersByEntitySource) {
+      this.changeLog.addChangeSourceEvent(entityId, clonedEntity)
+    }
   }
 
   private fun rbsFailedAndReport(message: String,
                                  sourceFilter: (EntitySource) -> Boolean,
                                  left: WorkspaceEntityStorage,
                                  right: WorkspaceEntityStorage,
-                                 resulting: WorkspaceEntityStorageBuilder,
-                                 initialChangeLogSize: Int): Nothing {
-    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting, initialChangeLogSize)
-    rbsFailed(message)
+                                 resulting: WorkspaceEntityStorageBuilder) {
+    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting)
   }
 
-  private fun addDiffAndReport(message: String,
-                               left: WorkspaceEntityStorage,
-                               right: WorkspaceEntityStorage,
-                               resulting: WorkspaceEntityStorageBuilder,
-                               initialChangeLogSize: Int): Nothing {
-    reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting, initialChangeLogSize)
-    adFailed(message)
+  internal fun addDiffAndReport(message: String,
+                                left: WorkspaceEntityStorage,
+                                right: WorkspaceEntityStorage,
+                                resulting: WorkspaceEntityStorageBuilder) {
+    reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting)
   }
 
   sealed class EntityDataChange<T : WorkspaceEntityData<out WorkspaceEntity>> {
@@ -605,149 +583,78 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   override fun collectChanges(original: WorkspaceEntityStorage): Map<Class<*>, List<EntityChange<*>>> {
-
-    // TODO: 27.03.2020 Since we have an instance of original storage, we actually can provide a method without an argument
-
     val originalImpl = original as AbstractEntityStorage
-    //this can be optimized to avoid creation of entity instances which are thrown away and copying the results from map to list
-    // LinkedHashMap<Long, EntityChange<T>>
-    val changes = LinkedHashMap<EntityId, Pair<Class<*>, EntityChange<*>>>()
-    for (change in changeLog) {
+
+    val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
+    for ((entityId, change) in this.changeLog.changeLog) {
       when (change) {
         is ChangeEntry.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
-          changes[addedEntity.id] = addedEntity.id.clazz.findEntityClass<WorkspaceEntity>() to EntityChange.Added(addedEntity)
+          res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Added(addedEntity))
         }
         is ChangeEntry.RemoveEntity -> {
-          val removedData = originalImpl.entityDataById(change.id)
-          val oldChange = changes.remove(change.id)
-          if (oldChange?.second !is EntityChange.Added && removedData != null) {
-            val removedEntity = removedData.createEntity(originalImpl) as WorkspaceEntityBase
-            changes[removedEntity.id] = change.id.clazz.findEntityClass<WorkspaceEntity>() to EntityChange.Removed(removedEntity)
-          }
+          val removedData = originalImpl.entityDataById(change.id) ?: continue
+          val removedEntity = removedData.createEntity(originalImpl) as WorkspaceEntityBase
+          res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
         }
         is ChangeEntry.ReplaceEntity<*> -> {
-          val id = change.newData.createPid()
-          val oldChange = changes.remove(id)
-          if (oldChange?.second is EntityChange.Added) {
-            val addedEntity = change.newData.createEntity(this) as WorkspaceEntityBase
-            changes[addedEntity.id] = addedEntity.id.clazz.findEntityClass<WorkspaceEntity>() to EntityChange.Added(addedEntity)
-          }
-          else {
-            val oldData = originalImpl.entityDataById(id)
-            if (oldData != null) {
-              val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-              val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
-              changes[replacedData.id] = replacedData.id.clazz.findEntityClass<WorkspaceEntity>() to EntityChange.Replaced(
-                replacedData, replaceToData)
-            }
-          }
+          val oldData = originalImpl.entityDataById(entityId) ?: continue
+          val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
+          val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
+          res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
+            .add(EntityChange.Replaced(replacedData, replaceToData))
+        }
+        is ChangeEntry.ChangeEntitySource<*> -> {
+          val oldData = originalImpl.entityDataById(entityId) ?: continue
+          val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
+          val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
+          res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
+            .add(EntityChange.Replaced(replacedData, replaceToData))
+        }
+        is ChangeEntry.ReplaceAndChangeSource<*> -> {
+          val oldData = originalImpl.entityDataById(entityId) ?: continue
+          val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
+          val replaceToData = change.dataChange.newData.createEntity(this) as WorkspaceEntityBase
+          res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
+            .add(EntityChange.Replaced(replacedData, replaceToData))
         }
       }
     }
-    return changes.values.groupBy { it.first }.mapValues { list -> list.value.map { it.second } }
+
+    return res
   }
 
   override fun resetChanges() {
-    updateChangeLog { it.clear() }
+    this.changeLog.clear()
   }
 
   override fun toStorage(): WorkspaceEntityStorageImpl {
-    return toStorage(true)
-  }
-
-  fun toStorage(assertConsistency: Boolean): WorkspaceEntityStorageImpl {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
     val storage = WorkspaceEntityStorageImpl(newEntities, newRefs, newIndexes)
-
-    if (assertConsistency) storage.assertConsistencyInStrictMode()
-
     return storage
   }
 
-  override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
+  override fun isEmpty(): Boolean = this.changeLog.changeLog.isEmpty()
 
   override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
     diff as WorkspaceEntityStorageBuilderImpl
-    val initialStorage = this.toStorage()
-    val initialChangeLogSize = this.changeLog.size
-    val replaceMap = HashBiMap.create<EntityId, EntityId>()
-    val diffLog = diff.changeLog
-    for (change in diffLog) {
-      when (change) {
-        is ChangeEntry.AddEntity<out WorkspaceEntity> -> {
-          change as ChangeEntry.AddEntity<WorkspaceEntity>
-
-          val newPersistentId = change.entityData.persistentId(this)
-          if (newPersistentId != null) {
-            val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-            if (existingIds != null && existingIds.isNotEmpty()) addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this, initialChangeLogSize)
-          }
-
-          val updatedChildren = change.children.mapValues { it.value.map { v -> replaceMap.getOrDefault(v, v) }.toSet() }
-          val updatedParents = change.parents.mapValues { replaceMap.getOrDefault(it.value, it.value) }
-
-          val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
-          updateEntityRefs(entity2id.second, updatedChildren, updatedParents, initialStorage, initialChangeLogSize, diff)
-          indexes.updateIndices(change.entityData.createPid(), entity2id.second, diff)
-          updateChangeLog {
-            it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
-          }
-        }
-        is ChangeEntry.RemoveEntity -> {
-          val outdatedId = change.id
-          val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
-          indexes.removeFromIndices(usedPid)
-          replaceMap.inverse().remove(usedPid)
-          if (this.entityDataById(usedPid) != null) {
-            removeEntity(usedPid)
-          }
-          updateChangeLog { it.add(ChangeEntry.RemoveEntity(usedPid)) }
-        }
-        is ChangeEntry.ReplaceEntity<out WorkspaceEntity> -> {
-          change as ChangeEntry.ReplaceEntity<WorkspaceEntity>
-
-          val updatedNewChildren = change.newChildren.map { (connectionId, id) -> connectionId to replaceMap.getOrDefault(id, id) }
-          val updatedRemovedChildren = change.removedChildren.map { (connectionId, id) -> connectionId to replaceMap.getOrDefault(id, id) }
-          val updatedModifiedParents = change.modifiedParents.mapValues { if (it.value == null) null else replaceMap.getOrDefault(it.value, it.value) }
-
-          val outdatedId = change.newData.createPid()
-          val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
-          val newData = change.newData.clone()
-          newData.id = usedPid.arrayId
-
-          val newPersistentId = change.newData.persistentId(this)
-          if (newPersistentId != null) {
-            val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-            if (existingIds != null && existingIds.isNotEmpty() && existingIds.single() != newData.createPid()) {
-              addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this, initialChangeLogSize)
-            }
-          }
-
-          // We don't modify entity that isn't exist in this version of storage
-          if (this.entityDataById(usedPid) != null) {
-            indexes.updateIndices(outdatedId, newData.createPid(), diff)
-            updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents)) }
-            replaceEntityWithRefs(newData, outdatedId.clazz, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents, initialStorage, initialChangeLogSize, diff)
-          }
-        }
-      }
-    }
-    indexes.applyExternalMappingChanges(diff, replaceMap)
-
-    // Assert consistency
-    this.assertConsistencyInStrictMode()
-    //this.assertConsistencyInStrictModeForAddDiff("Check after add Diff", initialStorage, diff, this)
-    this.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, this, initialChangeLogSize)
+    AddDiffOperation(this, diff).addDiff()
   }
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T> {
-    val mapping = indexes.externalMappings.computeIfAbsent(identifier) { MutableExternalEntityMappingImpl<T>() } as MutableExternalEntityMappingImpl<T>
+    val mapping = indexes.externalMappings.computeIfAbsent(
+      identifier) { MutableExternalEntityMappingImpl<T>() } as MutableExternalEntityMappingImpl<T>
     mapping.setTypedEntityStorage(this)
     return mapping
+  }
+
+  override fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex {
+    val virtualFileIndex = indexes.virtualFileIndex
+    virtualFileIndex.setTypedEntityStorage(this)
+    return virtualFileIndex
   }
 
   fun removeExternalMapping(identifier: String) {
@@ -755,7 +662,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   // modificationCount is not incremented
-  private fun removeEntity(idx: EntityId): Collection<EntityId> {
+  internal fun removeEntity(idx: EntityId): Collection<EntityId> {
     val accumulator: MutableSet<EntityId> = mutableSetOf(idx)
 
     accumulateEntitiesToRemove(idx, accumulator)
@@ -783,141 +690,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   internal fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
-    val pid = pEntityData.createPid()
-    val parents = refs.getParentRefsOfChild(pid)
-    val children = refs.getChildrenRefsOfParentBy(pid)
-    updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, pid.clazz, children, parents)) }
-  }
-
-  private fun <T : WorkspaceEntity> cloneEntity(entity: WorkspaceEntityData<T>, clazz: Int,
-                                                replaceMap: MutableMap<EntityId, EntityId>): Pair<WorkspaceEntityData<T>, EntityId> {
-    // Add new entity to store (without references)
-    val cloned = entitiesByType.cloneAndAdd(entity, clazz)
-    val clonedPid = cloned.createPid()
-    if (clonedPid != entity.createPid()) {
-      replaceMap[entity.createPid()] = clonedPid
-    }
-
-    // Restore links to soft references
-    if (cloned is SoftLinkable) indexes.updateSoftLinksIndex(cloned)
-
-    return cloned to clonedPid
-  }
-
-  // modificationCount is not incremented
-  private fun updateEntityRefs(entityId: EntityId,
-                               updatedChildren: Map<ConnectionId, Set<EntityId>>,
-                               updatedParents: Map<ConnectionId, EntityId>,
-                               initialStorage: WorkspaceEntityStorageImpl,
-                               initialChangeLogSize: Int,
-                               diff: WorkspaceEntityStorageBuilderImpl) {
-    // Restore children references of the entity
-    for ((connectionId, children) in updatedChildren) {
-      val (missingChildren, existingChildren) = children.partition { this.entityDataById(it) == null }
-      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this, initialChangeLogSize)
-      refs.updateChildrenOfParent(connectionId, entityId, existingChildren)
-    }
-
-    // Restore parent references of the entity
-    for ((connection, parent) in updatedParents) {
-      if (this.entityDataById(parent) != null) {
-        refs.updateParentOfChild(connection, entityId, parent)
-      }
-      else if (!connection.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connection", initialStorage, diff, this, initialChangeLogSize)
-    }
-  }
-
-  private fun <T : WorkspaceEntity> replaceEntityWithRefs(
-    newEntity: WorkspaceEntityData<T>,
-    clazz: Int,
-    addedChildren: List<Pair<ConnectionId, EntityId>>,
-    removedChildren: List<Pair<ConnectionId, EntityId>>,
-    modifiedParents: Map<ConnectionId, EntityId?>,
-    initialStorage: WorkspaceEntityStorageImpl,
-    initialChangeLogSize: Int,
-    diff: WorkspaceEntityStorageBuilderImpl
-  ) {
-
-    val id = newEntity.createPid()
-    val existingEntityData = entityDataById(id)
-    val beforePersistentId = existingEntityData?.persistentId(this)
-
-    /// Replace entity data. id should not be changed
-    entitiesByType.replaceById(newEntity, clazz)
-
-    // Restore soft references
-    updatePersistentIdIndexes(newEntity.createEntity(this), beforePersistentId, newEntity)
-
-    // Restore connections
-    val addedChildrenMap = HashMultimap.create<ConnectionId, EntityId>()
-    addedChildren.forEach { addedChildrenMap.put(it.first, it.second) }
-
-    val removedChildrenMap = HashMultimap.create<ConnectionId, EntityId>()
-    removedChildren.forEach { removedChildrenMap.put(it.first, it.second) }
-
-    //     Restore children connections
-    val existingChildren = refs.getChildrenRefsOfParentBy(id)
-    for ((connectionId, children) in existingChildren) {
-      // Take current children....
-      val mutableChildren = children.toMutableSet()
-
-      // ...   Add missing children ...
-      val addedChildrenSet = addedChildrenMap[connectionId] ?: mutableSetOf()
-      for (addedChild in addedChildrenSet) {
-        if (addedChild !in mutableChildren) {
-          val addedEntityData = this.entityDataById(addedChild)
-          if (addedEntityData == null && !connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this, initialChangeLogSize)
-          mutableChildren.add(addedChild)
-        }
-      }
-
-      // ...    Remove removed children ....
-      val removedChildrenSet = removedChildrenMap[connectionId] ?: mutableSetOf()
-      for (removedChild in removedChildrenSet) {
-        if (removedChild !in mutableChildren && StrictMode.enabled) addDiffAndReport("Trying to remove child that isn't present", initialStorage, diff, this, initialChangeLogSize)
-        mutableChildren.remove(removedChild)
-      }
-
-      // .... Update if something changed
-      if (children != mutableChildren) {
-        refs.updateChildrenOfParent(connectionId, id, mutableChildren)
-      }
-      addedChildrenMap.removeAll(connectionId)
-      removedChildrenMap.removeAll(connectionId)
-    }
-    // Do we have more children to remove? This should not happen
-    if (!removedChildrenMap.isEmpty && StrictMode.enabled) addDiffAndReport("Trying to remove children that aren't present", initialStorage, diff, this, initialChangeLogSize)
-    // Do we have more children to add? Add them
-    for ((connectionId, children) in addedChildrenMap.asMap()) {
-      refs.updateChildrenOfParent(connectionId, id, children)
-    }
-
-    //       Restore parent connections
-    val modifiedParentsMap = modifiedParents.toMutableMap()
-    val existingParents = refs.getParentRefsOfChild(id)
-    for ((connectionId, existingParent) in existingParents) {
-      if (connectionId in modifiedParentsMap) {
-        val parent = modifiedParentsMap.getValue(connectionId)
-        if (parent != null && this.entityDataById(parent) != null && parent != existingParent) {
-          // This child has parent, but different one. Update parent
-          refs.updateParentOfChild(connectionId, id, parent)
-        }
-        else if (parent == null || this.entityDataById(parent) != null) {
-          // This child doesn't have a pareny anymore
-          if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this, initialChangeLogSize)
-          else refs.removeParentToChildRef(connectionId, existingParent, id)
-        }
-        modifiedParentsMap.remove(connectionId)
-      }
-    }
-    // Any new parents? Add them
-    for ((connectionId, parentId) in modifiedParentsMap) {
-      if (parentId == null) continue
-      if (this.entityDataById(parentId) != null) {
-        refs.updateParentOfChild(connectionId, id, parentId)
-      }
-      else if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this, initialChangeLogSize)
-    }
+    val entityId = pEntityData.createEntityId()
+    this.changeLog.addAddEvent(entityId, pEntityData)
   }
 
   /**
@@ -963,6 +737,40 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
       }
     }
+
+    internal fun <T : WorkspaceEntity> addReplaceEvent(builder: WorkspaceEntityStorageBuilderImpl, entityId: EntityId,
+                                                       beforeChildren: List<Pair<ConnectionId, EntityId>>,
+                                                       beforeParents: Map<ConnectionId, EntityId>,
+                                                       copiedData: WorkspaceEntityData<T>) {
+      val parents = builder.refs.getParentRefsOfChild(entityId)
+      val unmappedChildren = builder.refs.getChildrenRefsOfParentBy(entityId)
+      val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
+
+      // Collect children changes
+      val addedChildren = (children.toSet() - beforeChildren.toSet()).toList()
+      val removedChildren = (beforeChildren.toSet() - children.toSet()).toList()
+
+      // Collect parent changes
+      val parentsMapRes: MutableMap<ConnectionId, EntityId?> = beforeParents.toMutableMap()
+      for ((connectionId, parentId) in parents) {
+        val existingParent = parentsMapRes[connectionId]
+        if (existingParent != null) {
+          if (existingParent == parentId) {
+            parentsMapRes.remove(connectionId, parentId)
+          }
+          else {
+            parentsMapRes[connectionId] = parentId
+          }
+        }
+        else {
+          parentsMapRes[connectionId] = parentId
+        }
+      }
+      val removedKeys = beforeParents.keys - parents.keys
+      removedKeys.forEach { parentsMapRes[it] = null }
+
+      builder.changeLog.addReplaceEvent(entityId, copiedData, addedChildren, removedChildren, parentsMapRes)
+    }
   }
 }
 
@@ -971,6 +779,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   internal abstract val entitiesByType: EntitiesBarrel
   internal abstract val refs: AbstractRefsTable
   internal abstract val indexes: StorageIndexes
+
+  internal var brokenConsistency: Boolean = false
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
@@ -988,22 +798,25 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R> {
+  override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>,
+                                                                                    entityClass: Class<R>): Sequence<R> {
     TODO("Not yet implemented")
   }
 
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val pids = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
-    if (pids.isEmpty()) return null
-    if (pids.size > 1) {
-      val entities = pids.associateWith { this.entityDataById(it) }.entries.joinToString("\n") { (k, v) -> "$k : $v : EntitySource: ${v?.entitySource}" }
-      LOG.error("""Cannot resolve persistent id $id. The store contains ${pids.size} associated entities:
+    val entityIds = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
+    if (entityIds.isEmpty()) return null
+    if (entityIds.size > 1) {
+      val entities = entityIds.associateWith { this.entityDataById(it) }.entries.joinToString(
+        "\n") { (k, v) -> "$k : $v : EntitySource: ${v?.entitySource}" }
+      LOG.error("""Cannot resolve persistent id $id. The store contains ${entityIds.size} associated entities:
         |$entities
+        |Broken consistency: $brokenConsistency
       """.trimMargin())
-      return entityDataById(pids.first())?.createEntity(this) as E?
+      return entityDataById(entityIds.first())?.createEntity(this) as E?
     }
-    val pid = pids.single()
-    return entityDataById(pid)?.createEntity(this) as E?
+    val entityId = entityIds.single()
+    return entityDataById(entityId)?.createEntity(this) as E?
   }
 
   // Do not remove cast to Class<out TypedEntity>. kotlin fails without it
@@ -1029,17 +842,19 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     return indexes.virtualFileIndex
   }
 
+  override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
+
   internal fun assertConsistency() {
     entitiesByType.assertConsistency(this)
     // Rules:
     //  1) Refs should not have links without a corresponding entity
-    //    1.1) For abstract containers: PId has the class of ConnectionId
+    //    1.1) For abstract containers: EntityId has the class of ConnectionId
     //  2) There is no child without a parent under the hard reference
 
     refs.oneToManyContainer.forEach { (connectionId, map) ->
 
       // Assert correctness of connection id
-      LOG.assertTrue(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY)
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY)
 
       //  1) Refs should not have links without a corresponding entity
       map.forEachKey { childId, parentId ->
@@ -1056,7 +871,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     refs.oneToOneContainer.forEach { (connectionId, map) ->
 
       // Assert correctness of connection id
-      LOG.assertTrue(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE)
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE)
 
       //  1) Refs should not have links without a corresponding entity
       map.forEachKey { childId, parentId ->
@@ -1072,14 +887,14 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
 
       // Assert correctness of connection id
-      LOG.assertTrue(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY)
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY)
 
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
         assertResolvable(parentId.clazz, parentId.arrayId)
         assertResolvable(childId.clazz, childId.arrayId)
 
-        //  1.1) For abstract containers: PId has the class of ConnectionId
+        //  1.1) For abstract containers: EntityId has the class of ConnectionId
         assertCorrectEntityClass(connectionId.parentClass, parentId)
         assertCorrectEntityClass(connectionId.childClass, childId)
       }
@@ -1093,14 +908,14 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     refs.abstractOneToOneContainer.forEach { (connectionId, map) ->
 
       // Assert correctness of connection id
-      LOG.assertTrue(connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE)
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE)
 
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
         assertResolvable(parentId.clazz, parentId.arrayId)
         assertResolvable(childId.clazz, childId.arrayId)
 
-        //  1.1) For abstract containers: PId has the class of ConnectionId
+        //  1.1) For abstract containers: EntityId has the class of ConnectionId
         assertCorrectEntityClass(connectionId.parentClass, parentId)
         assertCorrectEntityClass(connectionId.childClass, childId)
       }
@@ -1110,7 +925,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
         checkStrongAbstractConnection(map.keys.toMutableSet(), map.keys.toMutableSet().map { it.clazz }.toSet(), connectionId.debugStr())
       }
       if (!connectionId.isChildNullable) {
-        checkStrongAbstractConnection(map.values.toMutableSet(), map.values.toMutableSet().map { it.clazz }.toSet(), connectionId.debugStr())
+        checkStrongAbstractConnection(map.values.toMutableSet(), map.values.toMutableSet().map { it.clazz }.toSet(),
+                                      connectionId.debugStr())
       }
     }
 
@@ -1120,17 +936,15 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   private fun checkStrongConnection(connectionKeys: IntSet, entityFamilyClass: Int, connectionTo: Int) {
 
     var counter = 0
-    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: run {
-      LOG.error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
-      return
-    }
+    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass]
+                       ?: error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
-      LOG.assert(i in connectionKeys) { "Entity $entity doesn't have a correct connection to ${connectionTo.findWorkspaceEntity()}" }
+      assert(i in connectionKeys) { "Entity $entity doesn't have a correct connection to ${connectionTo.findWorkspaceEntity()}" }
       counter++
     }
 
-    LOG.assert(counter == connectionKeys.size) { "Store is inconsistent" }
+    assert(counter == connectionKeys.size) { "Store is inconsistent" }
   }
 
   private fun checkStrongAbstractConnection(connectionKeys: Set<EntityId>, entityFamilyClasses: Set<Int>, debugInfo: String) {
@@ -1138,118 +952,108 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     entityFamilyClasses.forEach { entityFamilyClass ->
       checkAllStrongConnections(entityFamilyClass, keys, debugInfo)
     }
-    LOG.assert(keys.isEmpty()) { "Store is inconsistent. $debugInfo" }
+    assert(keys.isEmpty()) { "Store is inconsistent. $debugInfo" }
   }
 
   private fun checkAllStrongConnections(entityFamilyClass: Int, keys: MutableSet<EntityId>, debugInfo: String) {
-    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: run {
-      LOG.error("Entity family doesn't exist. $debugInfo")
-      return
-    }
+    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: error("Entity family doesn't exist. $debugInfo")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
-      val removed = keys.remove(entity.createPid())
-      LOG.assert(removed) { "Entity $entity doesn't have a correct connection. $debugInfo" }
+      val removed = keys.remove(entity.createEntityId())
+      assert(removed) { "Entity $entity doesn't have a correct connection. $debugInfo" }
     }
   }
 
-  internal fun assertConsistencyInStrictMode() {
-    if (StrictMode.enabled) this.assertConsistency()
-  }
-
-  internal fun assertConsistencyInStrictModeForRbs(message: String, sourceFilter: (EntitySource) -> Boolean, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder, initialChangeLogSize: Int) {
-    if (StrictMode.enabled || StrictMode.rbsEnabled) {
+  internal fun assertConsistencyInStrictMode(message: String,
+                                             sourceFilter: ((EntitySource) -> Boolean)?,
+                                             left: WorkspaceEntityStorage,
+                                             right: WorkspaceEntityStorage) {
+    if (StrictMode.rbsEnabled) {
       try {
         this.assertConsistency()
       }
       catch (e: Throwable) {
-        reportConsistencyIssue(message, e, sourceFilter, left, right, resulting, initialChangeLogSize)
+        brokenConsistency = true
+        val storage = if (this is WorkspaceEntityStorageBuilder) this.toStorage() as AbstractEntityStorage else this
+        consistencyChecker.execute { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
       }
     }
   }
 
-  internal fun reportConsistencyIssue(message: String, e: Throwable, sourceFilter: ((EntitySource) -> Boolean)?, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder, initialChangeLogSize: Int) {
-    val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
-
+  internal fun reportConsistencyIssue(message: String,
+                                      e: Throwable,
+                                      sourceFilter: ((EntitySource) -> Boolean)?,
+                                      left: WorkspaceEntityStorage,
+                                      right: WorkspaceEntityStorage,
+                                      resulting: WorkspaceEntityStorage) {
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()
       allEntitySources.addAll((right as AbstractEntityStorage).indexes.entitySourceIndex.entries())
       allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
-    } else null
-
-    val rightLogBytes = if (right is WorkspaceEntityStorageBuilder) {
-      right as WorkspaceEntityStorageBuilderImpl
-      val stream = ByteArrayOutputStream()
-      serializer.serializeDiffLog(stream, right.changeLogImpl)
-      stream.toByteArray()
-    } else null
-
-    var stream = ByteArrayOutputStream()
-    serializer.serializeDiffLog(stream, (resulting as WorkspaceEntityStorageBuilderImpl).changeLogImpl.take(initialChangeLogSize))
-    val leftLogBytes = stream.toByteArray()
-
-    stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, left.makeSureItsStore())
-    val leftBytes = stream.toByteArray()
-
-    stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, right.makeSureItsStore())
-    val rightBytes = stream.toByteArray()
-
-    stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, resulting.makeSureItsStore())
-    val resBytes = stream.toByteArray()
-
-    stream = ByteArrayOutputStream()
-    serializer.serializeClassToIntConverter(stream)
-    val classToIntConverter = stream.toByteArray()
-
-    val displayText = "Content of the workspace model in binary format"
-    var _message = "$message\n\n!Please include all attachments to the report!"
-    _message += "\n\nEntity source filter: $entitySourceFilter"
-    _message += "\n\nVersion: ${serializer.serializerDataFormatVersion}"
-
-    val leftAttachment = createAttachment("Left_Store", leftBytes, displayText)
-    val rightAttachment = createAttachment("Right_Store", rightBytes, displayText)
-    val resAttachment = createAttachment("Res_Store", resBytes, displayText)
-    val classToIntConverterAttachment = createAttachment("ClassToIntConverter", classToIntConverter, "Class to int converter")
-    val leftLogAttachment = createAttachment("Left_Diff_Log", leftLogBytes, "Log of left builder")
-
-    if (rightLogBytes == null) {
-      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment, leftLogAttachment)
     }
-    else {
-      val rightLogAttachment = createAttachment("Right_Diff_Log", rightLogBytes, "Log of right builder")
-      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, rightLogAttachment, classToIntConverterAttachment, leftLogAttachment)
+    else null
+
+    var _message = "$message\n\nEntity source filter: $entitySourceFilter"
+    _message += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
+
+    val dumpDirectory = getStoreDumpDirectory()
+    _message += "\nSaving store content at: $dumpDirectory"
+    val zipFile = serializeContentToFolder(dumpDirectory, left, right, resulting)
+    if (zipFile != null) {
+      val attachment = Attachment("workspaceModelDump.zip", zipFile.readBytes(), "Zip of workspace model store")
+      attachment.isIncluded = true
+      LOG.error(_message, e, attachment)
+    } else {
+      LOG.error(_message, e)
     }
   }
 
-  private fun createAttachment(path: String, leftBytes: ByteArray, displayText: String): Attachment {
-    val attachment = Attachment(path, leftBytes, displayText)
-    attachment.isIncluded = true
-    return attachment
-  }
+  private fun serializeContentToFolder(contentFolder: Path,
+                                       left: WorkspaceEntityStorage,
+                                       right: WorkspaceEntityStorage,
+                                       resulting: WorkspaceEntityStorage): File? {
+    serializeEntityStorage(contentFolder.resolve("Left_Store"), left)
+    serializeEntityStorage(contentFolder.resolve("Right_Store"), right)
+    serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting)
+    serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
 
-  private fun WorkspaceEntityStorage.makeSureItsStore(): WorkspaceEntityStorage {
-    return if (this is WorkspaceEntityStorageBuilderImpl) this.toStorage(false) else this
+    if (right is WorkspaceEntityStorageBuilder) {
+      serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, stream ->
+        right as WorkspaceEntityStorageBuilderImpl
+        serializer.serializeDiffLog(stream, right.changeLog)
+      }
+    }
+
+    return if (!executingOnTC()) {
+      val zipFile = contentFolder.parent.resolve(contentFolder.name + ".zip").toFile()
+      Compressor.Zip(zipFile).use { it.addDirectory(contentFolder.toFile()) }
+      FileUtil.delete(contentFolder)
+      zipFile
+    } else null
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {
-    LOG.assert(entitiesByType[clazz]?.get(id) != null) {
+    assert(entitiesByType[clazz]?.get(id) != null) {
       "Reference to ${clazz.findEntityClass<WorkspaceEntity>()}-:-$id cannot be resolved"
     }
   }
 
   private fun assertCorrectEntityClass(connectionClass: Int, entityId: EntityId) {
-    LOG.assert(connectionClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(entityId.clazz.findEntityClass<WorkspaceEntity>())) {
+    assert(connectionClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(entityId.clazz.findEntityClass<WorkspaceEntity>())) {
       "Entity storage with connection class ${connectionClass.findEntityClass<WorkspaceEntity>()} contains entity data of wrong type $entityId"
     }
   }
 
   companion object {
     val LOG = logger<AbstractEntityStorage>()
+
+    private val consistencyChecker = AppExecutorUtil.createBoundedApplicationPoolExecutor("Check workspace model consistency", 1)
   }
 }
+
+/** This function exposes `brokenConsistency` property to the outside and should be removed along with the property itself */
+val WorkspaceEntityStorage.isConsistent: Boolean
+  get() = !(this as AbstractEntityStorage).brokenConsistency
 
 internal object ClassConversion {
 
@@ -1262,7 +1066,7 @@ internal object ClassConversion {
   fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> modifiableEntityToEntity(clazz: KClass<out M>): KClass<T> {
     return modifiableToEntityCache.getOrPut(clazz) {
       try {
-        Class.forName(getPackage(clazz) + clazz.java.simpleName.drop(10)).kotlin
+        Class.forName(getPackage(clazz) + clazz.java.simpleName.drop(10), true, clazz.java.classLoader).kotlin
       }
       catch (e: ClassNotFoundException) {
         error("Cannot get modifiable class for $clazz")
@@ -1272,19 +1076,20 @@ internal object ClassConversion {
 
   fun <T : WorkspaceEntity> entityToEntityData(clazz: KClass<out T>): KClass<WorkspaceEntityData<T>> {
     return entityToEntityDataCache.getOrPut(clazz) {
-      (Class.forName(clazz.java.name + "Data") as Class<WorkspaceEntityData<T>>).kotlin
+      (Class.forName(clazz.java.name + "Data", true, clazz.java.classLoader) as Class<WorkspaceEntityData<T>>).kotlin
     } as KClass<WorkspaceEntityData<T>>
   }
 
   fun <M : WorkspaceEntityData<out T>, T : WorkspaceEntity> entityDataToEntity(clazz: Class<out M>): Class<T> {
     return entityDataToEntityCache.getOrPut(clazz) {
-      (Class.forName(clazz.name.dropLast(4)) as Class<T>)
+      (Class.forName(clazz.name.dropLast(4), true, clazz.classLoader) as Class<T>)
     } as Class<T>
   }
 
   fun <D : WorkspaceEntityData<T>, T : WorkspaceEntity> entityDataToModifiableEntity(clazz: KClass<out D>): KClass<ModifiableWorkspaceEntity<T>> {
     return entityDataToModifiableEntityCache.getOrPut(clazz) {
-      Class.forName(getPackage(clazz) + "Modifiable" + clazz.java.simpleName.dropLast(4)).kotlin as KClass<ModifiableWorkspaceEntity<T>>
+      Class.forName(getPackage(clazz) + "Modifiable" + clazz.java.simpleName.dropLast(4), true,
+                    clazz.java.classLoader).kotlin as KClass<ModifiableWorkspaceEntity<T>>
     } as KClass<ModifiableWorkspaceEntity<T>>
   }
 

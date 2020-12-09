@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -167,9 +168,9 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
 
-        vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
-        vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
-        vm.defineProperty("idea.plugins.path", canonicalSandbox + File.separator + "plugins");
+        vm.defineProperty(PathManager.PROPERTY_CONFIG_PATH, canonicalSandbox + File.separator + "config");
+        vm.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, canonicalSandbox + File.separator + "system");
+        vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, canonicalSandbox + File.separator + "plugins");
         vm.defineProperty("idea.classpath.index.enabled", "false");
 
         if (!vm.hasProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) && PluginModuleType.isOfType(module)) {

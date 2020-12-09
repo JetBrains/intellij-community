@@ -2,16 +2,18 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.junit.*
 import org.junit.Assert
 import org.junit.ClassRule
@@ -20,10 +22,14 @@ import org.junit.Test
 import java.io.File
 
 class ImlReplaceBySourceTest {
+  @Rule
+  @JvmField
+  val projectModel = ProjectModelRule(true)
+
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
   }
 
   @Test

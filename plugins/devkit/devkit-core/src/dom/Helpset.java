@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated not used anymore
  */
-@SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public interface Helpset extends DomElement {
 

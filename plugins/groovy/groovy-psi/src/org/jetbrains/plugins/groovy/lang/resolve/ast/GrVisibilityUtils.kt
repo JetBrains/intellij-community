@@ -30,9 +30,9 @@ enum class Visibility {
 fun extractVisibility(element : PsiModifierListOwner) : Visibility {
   val modifierList = element.modifierList as? GrModifierList ?: return Visibility.PUBLIC
   return when {
-    hasModifierProperty(modifierList, "public") -> Visibility.PUBLIC
-    hasModifierProperty(modifierList, "private") -> Visibility.PRIVATE
-    hasModifierProperty(modifierList, "protected") -> Visibility.PROTECTED
+    hasModifierProperty(modifierList, "public", false) -> Visibility.PUBLIC
+    hasModifierProperty(modifierList, "private", false) -> Visibility.PRIVATE
+    hasModifierProperty(modifierList, "protected", false) -> Visibility.PROTECTED
     else -> Visibility.PACKAGE_PRIVATE
   }
 }

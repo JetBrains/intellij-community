@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
@@ -34,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -78,7 +79,8 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       return toolWindow;
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(TOOL_WINDOW_ID, AllIcons.Toolwindows.ToolWindowBuild));
+    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(
+      TOOL_WINDOW_ID, UIBundle.messagePointer("tool.window.name.build"), AllIcons.Toolwindows.ToolWindowBuild));
     ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addDataProvider(new DataProvider() {
       private int myInsideGetData = 0;

@@ -1,3 +1,9 @@
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
+import java.util.stream.Collectors
+import java.util.stream.Stream
+
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 repositories {
   maven { url 'https://cache-redirector.jetbrains.com/plugins.jetbrains.com/maven' }
@@ -19,10 +25,25 @@ dependencies {
   }
 }
 
-task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
+task unzipKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
   from zipTree(configurations.kotlinPlugin.singleFile)
   into "${project.buildDir}/kotlin"
 }
+
+task setKotlincExecutablePermissions(dependsOn: unzipKotlinPlugin) {
+  doLast {
+    if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+      file("${project.buildDir}/kotlin/Kotlin/kotlinc/bin").eachFileMatch(
+        { it.startsWith('kotlin') && !it.endsWith(".bat") },
+        {
+          Files.setPosixFilePermissions(it.toPath(), Stream.of(PosixFilePermission.values()).collect(Collectors.toSet()))
+        }
+      )
+    }
+  }
+}
+
+task setupKotlinPlugin(dependsOn: setKotlincExecutablePermissions)
 
 task deployKotlinPlugin(dependsOn: setupKotlinPlugin, type: Sync) {
   from file("${project.buildDir}/kotlin")

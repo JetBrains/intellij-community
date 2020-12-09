@@ -39,53 +39,58 @@
 //
 // NOTE: next functions are called only from EDT
 //
-
+__used
 void selectItemsToShow(id touchBar, const char** ppIds, int count) {
-    NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
-    NSMutableArray<NSTouchBarItemIdentifier> * all = [[[NSMutableArray alloc] initWithCapacity:count] autorelease];
-    for (int c = 0; c < count; ++c) {
-        const char * pId = ppIds[c];
-        if (!pId)
-            continue;
+    @autoreleasepool {
+        NSMutableArray<NSTouchBarItemIdentifier> *all = [[[NSMutableArray alloc] initWithCapacity:count] autorelease];
+        for (int c = 0; c < count; ++c) {
+            const char *pId = ppIds[c];
+            if (!pId)
+                continue;
 
-        NSString * nsId = [NSString stringWithUTF8String:pId];
-        if ([nsId isEqualToString:@"static_touchbar_item_small_space"]) {
-            [all addObject:NSTouchBarItemIdentifierFixedSpaceSmall];
-        } else if ([nsId isEqualToString:@"static_touchbar_item_large_space"]) {
-            [all addObject:NSTouchBarItemIdentifierFixedSpaceLarge];
-        } else if ([nsId isEqualToString:@"static_touchbar_item_flexible_space"]) {
-            [all addObject:NSTouchBarItemIdentifierFlexibleSpace];
-        } else
-            [all addObject:nsId];
+            NSString *nsId = [NSString stringWithUTF8String:pId];
+            if ([nsId isEqualToString:@"static_touchbar_item_small_space"]) {
+                [all addObject:NSTouchBarItemIdentifierFixedSpaceSmall];
+            } else if ([nsId isEqualToString:@"static_touchbar_item_large_space"]) {
+                [all addObject:NSTouchBarItemIdentifierFixedSpaceLarge];
+            } else if ([nsId isEqualToString:@"static_touchbar_item_flexible_space"]) {
+                [all addObject:NSTouchBarItemIdentifierFlexibleSpace];
+            } else
+                [all addObject:nsId];
+        }
+
+        TouchBar *tb = (TouchBar *) touchBar;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [tb.touchBar setDefaultItemIdentifiers:all];
+        });
     }
-
-    TouchBar * tb = (TouchBar *)touchBar;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [tb.touchBar setDefaultItemIdentifiers:all];
-    });
-    [edtPool release];
 }
 
 // NOTE: called from EDT (when java-wrapper of touchbar created)
+__used
+NS_RETURNS_RETAINED
 id createTouchBar(const char * name, createItem jcreator, const char * escId) {
-    NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
-    TouchBar * result = [[TouchBar alloc] init:createStringFromUTF8(name) jcreator:jcreator customEscId:createStringFromUTF8(escId)]; // creates non-autorelease obj to be owned by java-wrapper
-    [edtPool release];
-    return result;
+    @autoreleasepool {
+        return [[TouchBar alloc] init:createStringFromUTF8(name) jcreator:jcreator customEscId:createStringFromUTF8(escId)]; // creates non-autorelease obj to be owned by java-wrapper
+    }
 }
 
+__used
 void setPrincipal(id tbobj, const char * uid) {
-    NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
-    TouchBar * tb = (TouchBar *)tbobj;
-    [tb.touchBar setPrincipalItemIdentifier:createStringFromUTF8(uid)];
-    [edtPool release];
+    @autoreleasepool {
+        TouchBar *tb = (TouchBar *) tbobj;
+        [tb.touchBar setPrincipalItemIdentifier:createStringFromUTF8(uid)];
+    }
 }
 
+__used
 void releaseTouchBar(id tbobj) {
     [tbobj release];
 }
 
 // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
+__used
+NS_RETURNS_RETAINED
 id createGroupItem(const char * uid, id * items, int count) {
     NSMutableArray *allItems = [NSMutableArray arrayWithCapacity:count];
     for (int c = 0; c < count; ++c)
@@ -98,6 +103,7 @@ id createGroupItem(const char * uid, id * items, int count) {
     return result;
 }
 
+__used
 void setTouchBar(id tb) {
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSApplication sharedApplication] setTouchBar:((TouchBar *) tb).touchBar];

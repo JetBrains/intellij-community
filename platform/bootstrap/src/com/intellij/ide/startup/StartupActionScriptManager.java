@@ -3,16 +3,14 @@ package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,20 +24,24 @@ public final class StartupActionScriptManager {
   private StartupActionScriptManager() { }
 
   public static synchronized void executeActionScript() throws IOException {
+    Path scriptFile = getActionScriptFile();
+    List<ActionCommand> commands = null;
     try {
-      for (ActionCommand command : loadActionScript(getActionScriptFile())) {
+      commands = loadActionScript(scriptFile);
+      for (ActionCommand command : commands) {
         command.execute();
       }
     }
     finally {
       // deleting a file should not cause an exception
-      saveActionScript(null);
+      if (commands == null /* error occurred on load */ || !commands.isEmpty() /* not empty list means that there is some data */) {
+        Files.deleteIfExists(scriptFile);
+      }
     }
   }
 
   public static synchronized void executeActionScript(@NotNull Path scriptFile, @NotNull Path oldTarget, @NotNull Path newTarget) throws IOException {
-    List<ActionCommand> commands = loadActionScript(scriptFile);
-    executeActionScriptCommands(commands, oldTarget, newTarget);
+    executeActionScriptCommands(loadActionScript(scriptFile), oldTarget, newTarget);
   }
 
   public static void executeActionScriptCommands(List<ActionCommand> commands,
@@ -57,7 +59,7 @@ public final class StartupActionScriptManager {
     addActionCommands(Collections.singletonList(command));
   }
 
-  public static synchronized void addActionCommands(List<? extends ActionCommand> commands) throws IOException {
+  public static synchronized void addActionCommands(@NotNull List<? extends ActionCommand> commands) throws IOException {
     if (Boolean.getBoolean(STARTUP_WIZARD_MODE)) {
       for (ActionCommand command : commands) {
         command.execute();
@@ -66,7 +68,9 @@ public final class StartupActionScriptManager {
     else {
       List<ActionCommand> script;
       try {
-        script = loadActionScript(getActionScriptFile());
+        List<ActionCommand> savedScript = loadActionScript(getActionScriptFile());
+        script = new ArrayList<>(savedScript.size() + commands.size());
+        script.addAll(savedScript);
         script.addAll(commands);
       }
       catch (ObjectStreamException e) {
@@ -78,27 +82,25 @@ public final class StartupActionScriptManager {
     }
   }
 
-  @NotNull
-  private static Path getActionScriptFile() {
+  private static @NotNull Path getActionScriptFile() {
     return Paths.get(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
   public static @NotNull List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
-    if (!Files.isRegularFile(scriptFile)) {
-      return new ArrayList<>();
-    }
-
     try (ObjectInput ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
       Object data = ois.readObject();
       if (data instanceof ActionCommand[]) {
-        return new ArrayList<>(Arrays.asList((ActionCommand[])data));
+        return Arrays.asList((ActionCommand[])data);
       }
-      else if (data instanceof List && ((List<?>)data).size() == 0) {
-        return new ArrayList<>();
+      else if (data instanceof List && ((List<?>)data).isEmpty()) {
+        return Collections.emptyList();
       }
       else {
         throw new IOException("An unexpected object: " + data + "/" + data.getClass());
       }
+    }
+    catch (NoSuchFileException | AccessDeniedException e) {
+      return Collections.emptyList();
     }
     catch (ReflectiveOperationException e) {
       throw (StreamCorruptedException)new StreamCorruptedException("Stream error: " + scriptFile).initCause(e);
@@ -106,8 +108,7 @@ public final class StartupActionScriptManager {
   }
 
   private static void saveActionScript(@Nullable List<ActionCommand> commands) throws IOException {
-    Path scriptFile = getActionScriptFile();
-    saveActionScript(commands, scriptFile);
+    saveActionScript(commands, getActionScriptFile());
   }
 
   public static void saveActionScript(@Nullable List<ActionCommand> commands, @NotNull Path scriptFile)
@@ -125,9 +126,9 @@ public final class StartupActionScriptManager {
 
   private static ActionCommand mapPaths(ActionCommand command, Path oldTarget, Path newTarget) {
     if (command instanceof CopyCommand) {
-      Path destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
+      Path destination = mapPath(((CopyCommand)command).destination, oldTarget, newTarget);
       if (destination != null) {
-        return new CopyCommand(Paths.get(((CopyCommand)command).mySource), destination);
+        return new CopyCommand(Paths.get(((CopyCommand)command).source), destination);
       }
     }
     else if (command instanceof UnzipCommand) {
@@ -168,12 +169,12 @@ public final class StartupActionScriptManager {
   public static final class CopyCommand implements Serializable, ActionCommand {
     private static final long serialVersionUID = 201708031943L;
 
-    private final String mySource;
-    private final String myDestination;
+    private final String source;
+    private final String destination;
 
     public CopyCommand(@NotNull Path source, @NotNull Path destination) {
-      mySource = source.toAbsolutePath().toString();
-      myDestination = destination.toAbsolutePath().toString();
+      this.source = source.toAbsolutePath().toString();
+      this.destination = destination.toAbsolutePath().toString();
     }
 
     /**
@@ -181,33 +182,26 @@ public final class StartupActionScriptManager {
      */
     @Deprecated
     public CopyCommand(@NotNull File source, @NotNull File destination) {
-      mySource = source.getAbsolutePath();
-      myDestination = destination.getAbsolutePath();
+      this.source = source.getAbsolutePath();
+      this.destination = destination.getAbsolutePath();
     }
 
     @Override
     public void execute() throws IOException {
-      File source = new File(mySource), destination = new File(myDestination);
-      if (!source.isFile()) {
-        throw new IOException("Source file missing: " + source);
-      }
-
-      File destDir = destination.getParentFile();
-      if (!(destDir.isDirectory() || destDir.mkdirs())) {
-        throw new IOException("Cannot create a directory: " + destDir);
-      }
-
-      FileUtilRt.copy(source, destination);
+      Path destination = Paths.get(this.destination);
+      Path destDir = destination.getParent();
+      Files.createDirectories(destDir);
+      Files.copy(Paths.get(source), destination);
     }
 
     @Override
     @NonNls
     public String toString() {
-      return "copy[" + mySource + "," + myDestination + "]";
+      return "copy[" + source + "," + destination + "]";
     }
 
     public String getSource() {
-      return mySource;
+      return source;
     }
   }
 
@@ -279,10 +273,8 @@ public final class StartupActionScriptManager {
 
     @Override
     public void execute() throws IOException {
-      File source = new File(mySource);
-      if (source.exists() && !FileUtilRt.delete(source)) {
-        throw new IOException("Cannot delete: " + source);
-      }
+      // source here it is directory - Files.deleteIfExists must be not used here
+      NioFiles.deleteRecursively(Paths.get(mySource));
     }
 
     @Override

@@ -39,17 +39,17 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
 
   // PY-28243
   fun testTypeVarAndTargetName() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with target name")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with the target name")
   }
 
   // PY-28249
   fun testInstanceCheckOnCallable() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameter(s)")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameters")
   }
 
   // PY-28249
   fun testInstanceCheckOnCustom() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameter(s)")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameters")
   }
 
   // PY-28249
@@ -58,12 +58,12 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
     myFixture.configureByFile("${getTestName(true)}.py")
     myFixture.checkHighlighting(true, false, false)
 
-    assertEmpty(myFixture.filterAvailableIntentions("Remove generic parameter(s)"))
+    assertEmpty(myFixture.filterAvailableIntentions("Remove generic parameters"))
   }
 
   // PY-28249
   fun testInstanceCheckOnOperandReference() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameter(s)")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameters")
   }
 
   // PY-20530
@@ -88,12 +88,12 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
 
   // PY-20530
   fun testSelfInAnnotation() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with type name", LanguageLevel.PYTHON37)
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with the type name", LanguageLevel.PYTHON37)
   }
 
   // PY-20530
   fun testSelfInTypeComment() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with type name")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with the type name")
   }
 
   // PY-20530

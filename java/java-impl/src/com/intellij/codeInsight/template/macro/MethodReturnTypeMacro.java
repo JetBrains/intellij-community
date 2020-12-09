@@ -17,11 +17,6 @@ public class MethodReturnTypeMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return "methodReturnType()";
-  }
-
-  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";

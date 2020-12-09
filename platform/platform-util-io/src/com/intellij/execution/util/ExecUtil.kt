@@ -5,6 +5,8 @@ import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -18,19 +20,18 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.nio.charset.Charset
 
 object ExecUtil {
-  private val hasGkSudo = PathExecLazyValue("gksudo")
-  private val hasKdeSudo = PathExecLazyValue("kdesudo")
-  private val hasPkExec = PathExecLazyValue("pkexec")
-  private val hasGnomeTerminal = PathExecLazyValue("gnome-terminal")
-  private val hasKdeTerminal = PathExecLazyValue("konsole")
-  private val hasUrxvt = PathExecLazyValue("urxvt")
-  private val hasXTerm = PathExecLazyValue("xterm")
-  private val hasSetsid = PathExecLazyValue("setsid")
+  private val hasGkSudo = PathExecLazyValue.create("gksudo")
+  private val hasKdeSudo = PathExecLazyValue.create("kdesudo")
+  private val hasPkExec = PathExecLazyValue.create("pkexec")
+  private val hasGnomeTerminal = PathExecLazyValue.create("gnome-terminal")
+  private val hasKdeTerminal = PathExecLazyValue.create("konsole")
+  private val hasUrxvt = PathExecLazyValue.create("urxvt")
+  private val hasXTerm = PathExecLazyValue.create("xterm")
+  private val hasSetsid = PathExecLazyValue.create("setsid")
 
   @field:NlsSafe
   private const val nicePath = "/usr/bin/nice"
@@ -91,6 +92,18 @@ object ExecUtil {
   @Throws(ExecutionException::class)
   fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput =
     CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
+
+  @JvmStatic
+  fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String =
+    CapturingProcessHandler(commandLine).also { processHandler ->
+      processHandler.addProcessListener(object : ProcessAdapter() {
+        override fun startNotified(event: ProcessEvent) {
+          processHandler.processInput.writer(commandLine.charset).use {
+            it.write(stdin)
+          }
+        }
+      })
+    }.runProcess().stdout
 
   @JvmStatic
   fun execAndReadLine(commandLine: GeneralCommandLine): String? =
@@ -219,7 +232,7 @@ object ExecUtil {
     execAndGetOutput(sudoCommand(commandLine, prompt))
 
   @NlsSafe
-  private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"")}\""
+  private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
   @JvmStatic
   fun escapeUnixShellArgument(arg: String): String = "'${arg.replace("'", "'\"'\"'")}'"

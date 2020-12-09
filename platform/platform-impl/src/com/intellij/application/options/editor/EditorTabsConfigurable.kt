@@ -3,6 +3,7 @@ package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.TABS_NONE
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
@@ -22,7 +23,8 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
   ID
 ), EditorOptionsProvider {
   private lateinit var myEditorTabPlacement: JComboBox<Int>
-  private lateinit var myScrollTabLayoutInEditorCheckBox: JCheckBox
+  private lateinit var myOneRowRadio: JRadioButton
+  private lateinit var myMultipleRowsRadio: JRadioButton
 
   override fun createPanel(): DialogPanel {
     return panel {
@@ -60,13 +62,29 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
             }
           }
           row {
-            myScrollTabLayoutInEditorCheckBox =
-              checkBox(scrollTabLayoutInEditor).enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+            label(ApplicationBundle.message("editor.show.tabs.in"))
             row {
-              checkBox(hideTabsIfNeeded).enableIf(
-                myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
-                                                    and myScrollTabLayoutInEditorCheckBox.selected).component
+              cell(false, false, {
+                myOneRowRadio = radioButton(showTabsInOneRow)
+                  .enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+                checkBox(hideTabsIfNeeded).enableIf(
+                  myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
+                    and myOneRowRadio.selected).withLargeLeftGap().component
+
+              })
             }
+            row {
+              cell(false, false, {
+                myMultipleRowsRadio = radioButton(showTabsInMultipleRows)
+                  .enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+                checkBox(showPinnedTabsInASeparateRow).enableIf(
+                  myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
+                    and myMultipleRowsRadio.selected).withLargeLeftGap().component
+              })
+            }
+            val group = ButtonGroup()
+            group.add(myOneRowRadio)
+            group.add(myMultipleRowsRadio)
           }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }
@@ -85,6 +103,17 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
       titledRow(message("group.tab.order")) {
         row { checkBox(sortTabsAlphabetically) }
         row { checkBox(openTabsAtTheEnd) }
+      }
+      titledRow(message("group.tab.opening.policy")) {
+        row {
+          checkBox(openInPreviewTabIfPossible)
+        }
+        row {
+          checkBox(reuseNotModifiedTabs)
+        }
+        row {
+          checkBox(openTabsInMainWindow)
+        }
       }
       titledRow(message("group.tab.closing.policy")) {
         row {
@@ -111,9 +140,6 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
             row { radioButton(message("radio.activate.right.neighbouring.tab"), ui::activeRightEditorOnClose) }
             row { radioButton(message("radio.activate.most.recently.opened.tab"), ui::activeMruEditorOnClose) }.largeGapAfter()
           }
-        }
-        row {
-          checkBox(reuseNotModifiedTabs)
         }
       }
     }

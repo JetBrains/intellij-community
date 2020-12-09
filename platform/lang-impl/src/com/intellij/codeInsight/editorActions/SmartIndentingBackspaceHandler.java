@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +9,6 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -31,7 +29,6 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
 
   @Override
   protected void doBeforeCharDeleted(char c, PsiFile file, Editor editor) {
-    Project project = file.getProject();
     Document document = editor.getDocument();
     CharSequence charSequence = document.getImmutableCharSequence();
     CaretModel caretModel = editor.getCaretModel();
@@ -43,8 +40,7 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
       myReplacement = null;
       return;
     }
-    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-    myReplacement = codeStyleFacade.getLineIndent(editor, file.getLanguage(), lineStartOffset, true);
+    myReplacement = CodeStyle.getLineIndent(editor, file.getLanguage(), lineStartOffset, true);
     if (myReplacement == null) {
       return;
     }
@@ -63,8 +59,8 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     else {
       int prevLineEndOffset = document.getLineEndOffset(logicalPosition.line - 1);
       myStartOffset = CharArrayUtil.shiftBackward(charSequence, prevLineEndOffset - 1, " \t") + 1;
-      if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1)) {
-        int spacing = codeStyleFacade.getJoinedLinesSpacing(editor, file.getLanguage(), endOffset, true);
+      if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1) || myStartOffset == 0) {
+        int spacing = CodeStyle.getJoinedLinesSpacing(editor, file.getLanguage(), endOffset, true);
         if (spacing < 0) {
           LOG.error("The call `codeStyleFacade.getJoinedLinesSpacing` should not return the negative value");
           spacing = 0;

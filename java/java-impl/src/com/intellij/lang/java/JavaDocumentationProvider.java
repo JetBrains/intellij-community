@@ -13,7 +13,6 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -46,10 +45,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
@@ -191,18 +187,18 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static @Nls String generateClassInfo(PsiClass aClass) {
     @Nls StringBuilder buffer = new StringBuilder();
 
-    if (aClass instanceof PsiAnonymousClass) return JavaPsiBundle.message("java.terms.anonymous.class");
+    if (aClass instanceof PsiAnonymousClass) return JavaElementKind.ANONYMOUS_CLASS.subject();
 
     generateOrderEntryAndPackageInfo(buffer, aClass);
     generateModifiers(buffer, aClass);
 
-    final String classString = aClass.isAnnotationType() ? "java.terms.annotation.interface"
-                                                         : aClass.isInterface()
-                                                           ? "java.terms.interface"
-                                                           : aClass instanceof PsiTypeParameter
-                                                             ? "java.terms.type.parameter"
-                                                             : aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
-    buffer.append(JavaBundle.message(classString)).append(" ");
+    final String classString = aClass.isAnnotationType() ? '@' + PsiKeyword.INTERFACE :
+                               aClass.isInterface() ? PsiKeyword.INTERFACE :
+                               aClass instanceof PsiTypeParameter ? JavaBundle.message("java.terms.type.parameter") :
+                               aClass.isEnum() ? PsiKeyword.ENUM :
+                               aClass.isRecord() ? PsiKeyword.RECORD :
+                               PsiKeyword.CLASS;
+    buffer.append(classString).append(" ");
 
     buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
 
@@ -386,7 +382,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
-    sb.append(JavaBundle.message("java.terms.module")).append(' ').append(module.getName());
+    sb.append(PsiKeyword.MODULE).append(' ').append(module.getName());
 
     return sb.toString();
   }

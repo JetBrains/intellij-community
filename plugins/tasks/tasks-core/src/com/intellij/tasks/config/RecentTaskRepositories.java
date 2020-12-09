@@ -2,8 +2,8 @@
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +50,7 @@ public final class RecentTaskRepositories implements PersistentStateComponent<El
   }
 
   public static RecentTaskRepositories getInstance() {
-    return ServiceManager.getService(RecentTaskRepositories.class);
+    return ApplicationManager.getApplication().getService(RecentTaskRepositories.class);
   }
 
   public Set<TaskRepository> getRepositories() {

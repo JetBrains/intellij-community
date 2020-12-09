@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,14 +47,12 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -95,11 +94,11 @@ public class ExternalSystemNotificationManager implements Disposable {
    *
    * @return {@link NotificationData} or null for not user-friendly errors.
    */
-  public @Nullable NotificationData createNotification(@NotNull String title,
-                                             @NotNull Throwable error,
-                                             @NotNull ProjectSystemId externalSystemId,
-                                             @NotNull Project project,
-                                             @NotNull DataProvider dataProvider) {
+  public @Nullable NotificationData createNotification(@NotNull @NotificationTitle String title,
+                                                       @NotNull Throwable error,
+                                                       @NotNull ProjectSystemId externalSystemId,
+                                                       @NotNull Project project,
+                                                       @NotNull DataProvider dataProvider) {
     if (isInternalError(error, externalSystemId)) {
       return null;
     }
@@ -130,6 +129,7 @@ public class ExternalSystemNotificationManager implements Disposable {
           quickFix.runQuickFix(project, dataProvider);
         });
       }
+      notificationData.setNavigatable(buildIssue.getNavigatable(project));
       return notificationData;
     }
 
@@ -424,8 +424,10 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static @NotNull String getContentDisplayName(final @NotNull NotificationSource notificationSource,
-                                                      final @NotNull ProjectSystemId externalSystemId) {
+  public static @NotNull @Nls String getContentDisplayName(
+    final @NotNull NotificationSource notificationSource,
+    final @NotNull ProjectSystemId externalSystemId
+  ) {
     final String contentDisplayName;
     switch (notificationSource) {
       case PROJECT_SYNC:

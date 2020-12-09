@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.PopupHandler;
@@ -177,7 +178,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
       return getPresentableName(testProxy);
-    });
+    }, Registry.is("tests.view.node.expanding.search"));
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     HintUpdateSupply.installHintUpdateSupply(this, obj -> {

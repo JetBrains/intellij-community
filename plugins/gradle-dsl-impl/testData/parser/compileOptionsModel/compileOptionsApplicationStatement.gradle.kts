@@ -1,0 +1,2 @@
+android.compileOptions.setSourceCompatibility(JavaVersion.VERSION_1_6)
+android.compileOptions.setTargetCompatibility(1.6)

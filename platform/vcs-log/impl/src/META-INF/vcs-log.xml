@@ -14,6 +14,7 @@
     <changesViewContent tabName="Log"
                         className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"
+                        preloaderClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogContentPreloader"
                         displayNameSupplierClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$DisplayNameSupplier"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
@@ -77,6 +78,7 @@
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
 
+    <virtualFileSystem key="vcs-log" implementationClass="com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem"/>
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
     <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>

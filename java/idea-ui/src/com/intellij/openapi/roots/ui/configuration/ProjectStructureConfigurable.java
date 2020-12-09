@@ -370,6 +370,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myName2Config.clear();
 
     myModuleConfigurator.getFacetsConfigurator().clearMaps();
+    myHistory.clear();
 
     myUiInitialized = false;
   }

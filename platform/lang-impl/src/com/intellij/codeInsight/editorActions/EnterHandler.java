@@ -6,7 +6,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
@@ -191,7 +190,7 @@ public class EnterHandler extends BaseEnterHandler {
     String commentText = comment.getText();
     final boolean docComment = isDocComment(comment, commenter);
     final String expectedCommentEnd = docComment ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
-    if (!commentText.endsWith(expectedCommentEnd)) return false;
+    if (expectedCommentEnd != null && !commentText.endsWith(expectedCommentEnd)) return false;
 
     final PsiFile containingFile = comment.getContainingFile();
     final Language language = containingFile.getLanguage();
@@ -308,7 +307,7 @@ public class EnterHandler extends BaseEnterHandler {
     final CharSequence docChars = document.getCharsSequence();
     int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
     int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
-    String newIndent = CodeStyleFacade.getInstance(editor.getProject()).getLineIndent(editor, language, offset, false);
+    String newIndent = CodeStyle.getLineIndent(editor, language, offset, false);
     if (newIndent == null) {
       return -1;
     }
@@ -366,6 +365,7 @@ public class EnterHandler extends BaseEnterHandler {
         Commenter langCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
         CodeDocumentationUtil.CommentContext commentContext
           = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, lineStart);
+        boolean isBeforeEof = myOffset == chars.length() && chars.charAt(myOffset - 1) == '\n';
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
         if (commentContext.docStart) {
@@ -380,7 +380,7 @@ public class EnterHandler extends BaseEnterHandler {
             PsiComment comment = isDocComment(parent, commentContext.commenter) ? (PsiComment)parent:(PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
 
-            if (myOffset >= commentEnd) {
+            if (myOffset > commentEnd || myOffset == commentEnd && !isBeforeEof) {
               commentContext.docStart = false;
             }
             else {
@@ -421,7 +421,7 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         if (commentContext.docAsterisk) {
-          commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, commentContext.docAsterisk,
+          commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, true,
                                                          !StringUtil.isEmpty(indentInsideJavadoc), commentContext.commenter);
         }
 
@@ -448,7 +448,7 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         if ((commentContext.docAsterisk || commentContext.docStart) && !docIndentApplied) {
-          if (myInsertSpace) {
+          if (myInsertSpace && !(commentContext.docStart && isBeforeEof)) {
             if (myOffset == myDocument.getTextLength()) {
               myDocument.insertString(myOffset, " ");
             }

@@ -41,7 +41,6 @@ import java.util.Objects;
 import java.util.Set;
 
 public class MoveInnerDialog extends MoveDialogBase {
-  private final Project myProject;
   private final PsiClass myInnerClass;
   private final PsiElement myTargetContainer;
   private final MoveInnerProcessor myProcessor;
@@ -68,7 +67,6 @@ public class MoveInnerDialog extends MoveDialogBase {
 
   public MoveInnerDialog(Project project, PsiClass innerClass, MoveInnerProcessor processor, final PsiElement targetContainer) {
     super(project, true, true);
-    myProject = project;
     myInnerClass = innerClass;
     myTargetContainer = targetContainer;
     myOuterClass = myInnerClass.getContainingClass();

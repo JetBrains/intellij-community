@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -39,7 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> {
+public final class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> {
   @NonNls
   public static final ID<String, Kind> NAME = ID.create("XsltSymbolIndex");
 
@@ -52,7 +51,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
   @Override
   @NotNull
   public DataIndexer<String, Kind, FileContent> getIndexer() {
-    return new DataIndexer<String, Kind, FileContent>() {
+    return new DataIndexer<>() {
       @Override
       @NotNull
       public Map<String, Kind> map(@NotNull FileContent inputData) {

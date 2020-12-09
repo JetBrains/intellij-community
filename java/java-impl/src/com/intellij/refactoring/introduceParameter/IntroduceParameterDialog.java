@@ -31,7 +31,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
 
-  private final Project myProject;
   private final PsiFile myFile;
   private final List<? extends UsageInfo> myClassMembersList;
   private final int myOccurenceNumber;
@@ -67,7 +66,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
                            final boolean mustBeFinal) {
     super(project, true);
     myPanel = new IntroduceParameterSettingsPanel(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
-    myProject = project;
     myFile = methodToReplaceIn.getContainingFile();
     myClassMembersList = classMembersList;
     myOccurenceNumber = occurences.length;

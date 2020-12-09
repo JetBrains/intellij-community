@@ -45,7 +45,7 @@ public class ProjectConfigurationProblem extends ConfigurationError {
   }
 
   private static HtmlChunk computeDescription(ProjectStructureProblemDescription description) {
-    if (description.getDescription() == null) {
+    if (description.getDescription().isEmpty()) {
       return HtmlChunk.text(description.getMessage(true));
     }
 

@@ -211,6 +211,20 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     assertEquals(3, lineRange.intervalEnd());
   }
 
+  public void testCommentAnnotationAfterDoc() {
+    configure("/**\n" +
+              " * doc\n" +
+              " */\n" +
+              "<caret>@Deprecated\n" +
+              "class C {}", true);
+    executeAction(IdeActions.ACTION_COMMENT_LINE);
+    checkResultByText("/**\n" +
+                      " * doc\n" +
+                      " */\n" +
+                      "//@Deprecated\n" +
+                      "class C {}");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);

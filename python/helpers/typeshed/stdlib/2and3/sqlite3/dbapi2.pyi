@@ -1,6 +1,3 @@
-# Filip Hron <filip.hron@gmail.com>
-# based heavily on Andrey Vlasovskikh's python-skeletons https://github.com/JetBrains/python-skeletons/blob/master/sqlite3.py
-
 import os
 import sys
 from datetime import date, datetime, time

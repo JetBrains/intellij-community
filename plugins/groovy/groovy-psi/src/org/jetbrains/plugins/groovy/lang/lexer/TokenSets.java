@@ -29,8 +29,6 @@ public interface TokenSets {
 
   TokenSet SEPARATORS = TokenSet.create(mNLS, mSEMI);
 
-  TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.WHITE_SPACE;
-
   TokenSet NUMBERS = TokenSet.create(
     mNUM_INT,
     mNUM_BIG_DECIMAL,
@@ -94,20 +92,6 @@ public interface TokenSets {
 
   TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
   TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
-  TokenSet REFERENCE_NAME_PREFIXES = TokenSet.orSet(
-    NUMBERS,
-    KEYWORDS,
-    GroovyTokenSets.STRING_LITERALS,
-    TokenSet.create(
-      mIDENT,
-      mGSTRING_BEGIN,
-      mREGEX_BEGIN,
-      mDOLLAR_SLASH_REGEX_BEGIN,
-      mAT
-    )
-  );
-
-  TokenSet VISIBILITY_MODIFIERS = TokenSet.create(kPRIVATE, kPROTECTED, kPUBLIC);
 
   TokenSet MODIFIERS = TokenSet.create(
     kABSTRACT,
@@ -142,10 +126,6 @@ public interface TokenSets {
   ));
 
   TokenSet GSTRING_CONTENT_PARTS = TokenSet.create(GSTRING_CONTENT, GSTRING_INJECTION);
-
-  TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
-
-  TokenSet RELATIONS = TokenSet.create(mLT, mGT, mLE, mGE, kIN);
 
   TokenSet WHITE_SPACES_SET = TokenSet.create(mNLS, TokenType.WHITE_SPACE);
 

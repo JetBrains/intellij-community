@@ -53,15 +53,7 @@ class ClientExperimentStatus : ExperimentStatus {
   init {
     for (languageSettings in experimentConfig.languages) {
       val bucket = EventLogConfiguration.bucket % languageSettings.experimentBucketsCount
-      val overriddenGroupNumber = Registry.intValue("completion.ml.override.experiment.group.number")
-      val groupNumber = when {
-        overriddenGroupNumber in languageSettings.includeGroups -> {
-          setDisabled(false)
-          overriddenGroupNumber
-        }
-        languageSettings.includeGroups.size > bucket -> languageSettings.includeGroups[bucket]
-        else -> experimentConfig.version
-      }
+      val groupNumber = if (languageSettings.includeGroups.size > bucket) languageSettings.includeGroups[bucket] else experimentConfig.version
       val group = experimentConfig.groups.find { it.number == groupNumber }
       val groupInfo = if (group == null) ExperimentInfo(false, experimentConfig.version)
       else ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
@@ -73,6 +65,14 @@ class ClientExperimentStatus : ExperimentStatus {
     if (ApplicationManager.getApplication().isUnitTestMode) return ExperimentInfo(false, 0)
     val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(
       false, experimentConfig.version)
+    val experimentGroupRegistry = Registry.get("completion.ml.override.experiment.group.number")
+    if (experimentGroupRegistry.isChangedFromDefault) {
+      val group = experimentConfig.groups.find { it.number == experimentGroupRegistry.asInteger() }
+      if (group != null) {
+        setDisabled(false)
+        return ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
+      }
+    }
     return language2group[matchingLanguage] ?: ExperimentInfo(false, experimentConfig.version)
   }
 

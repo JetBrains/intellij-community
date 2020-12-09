@@ -21,7 +21,7 @@ import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -264,7 +264,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     @NotNull
     @Override
-    public TIntArrayList getParametersToRemove() {
+    public IntList getParameterListToRemove() {
       return myHelper.parametersToRemove();
     }
 

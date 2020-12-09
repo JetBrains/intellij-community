@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -300,7 +301,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
 
-  public static String getMethodSignature(PsiMethod method) {
+  public static @NlsSafe String getMethodSignature(PsiMethod method) {
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
     StringBuilder s = new StringBuilder(signature.getName() + "(");
     int i = 0;

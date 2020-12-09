@@ -17,6 +17,7 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * An interface for compilers which validate something after the compilation finishes. The validators are disabled by default and can be
@@ -38,6 +39,7 @@ public interface Validator extends FileProcessingCompiler {
   /**
    * Returns unique ID which can be used in project configuration files.
    */
+  @NotNull
   default @NonNls String getId() {
     DeprecatedMethodException.reportDefaultImplementation(getClass(), "getId",
                                                           "The default implementation delegates to 'getDescription' which may be localized but return value of this method must not depend on current localization.");

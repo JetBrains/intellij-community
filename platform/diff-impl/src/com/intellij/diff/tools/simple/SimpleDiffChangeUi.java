@@ -162,16 +162,22 @@ public class SimpleDiffChangeUi {
     });
   }
 
-  private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    String text;
-    Icon icon = DiffUtil.getArrowIcon(side);
+  static @NotNull @Nls String getApplyActionText(@NotNull SimpleDiffViewer viewer, @NotNull Side sourceSide) {
+    String customValue = DiffUtil.getUserData(viewer.getRequest(), viewer.getContext(),
+                                              sourceSide.select(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT,
+                                                                DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_ACTION_TEXT));
+    if (customValue != null) return customValue;
 
-    if (side == Side.LEFT && myViewer.isDiffForLocalChanges()) {
-      text = DiffBundle.message("action.presentation.diff.revert.text");
+    if (sourceSide == Side.LEFT && viewer.isDiffForLocalChanges()) {
+      return DiffBundle.message("action.presentation.diff.revert.text");
     }
-    else {
-      text = DiffBundle.message("action.presentation.diff.accept.text");
-    }
+
+    return DiffBundle.message("action.presentation.diff.accept.text");
+  }
+
+  private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
+    String text = getApplyActionText(myViewer, side);
+    Icon icon = DiffUtil.getArrowIcon(side);
 
     String actionId = side.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide");
     Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);

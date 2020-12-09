@@ -176,10 +176,15 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   private boolean processDirectories(@NotNull String qualifiedName,
-                                     @NotNull final GlobalSearchScope scope,
+                                     @NotNull GlobalSearchScope scope,
                                      @NotNull final Processor<? super VirtualFile> processor) {
+    //TODO use some generic approach
+    if (scope instanceof EverythingGlobalScope) {
+      scope = ALL_SCOPE;
+    }
+    @NotNull GlobalSearchScope finalScope = scope;
     return ContainerUtil.process(getCache(scope).getDirectoriesByPackageName(qualifiedName),
-                                 file -> !scope.contains(file) || processor.process(file));
+                                 file -> !finalScope.contains(file) || processor.process(file));
   }
 
   @Override
@@ -208,7 +213,10 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     List<GlobalSearchScope> nonClasspathScopes = new SmartList<>();
     for (PsiElementFinder finder : EP.getExtensions(project)) {
       if (finder instanceof NonClasspathClassFinder) {
-        nonClasspathScopes.add(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
+        GlobalSearchScope scope = NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots());
+        if (scope != GlobalSearchScope.EMPTY_SCOPE) {
+          nonClasspathScopes.add(scope);
+        }
       }
     }
     if (nonClasspathScopes.isEmpty()) {

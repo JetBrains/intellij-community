@@ -110,7 +110,9 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     TypeExpression expression = new TypeExpression(project, expectedTypes);
 
     if (isInline) {
-      decl = (PsiDeclarationStatement)new CommentTracker().replaceAndRestoreComments(anchor, decl);
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(initializer);
+      decl = (PsiDeclarationStatement)tracker.replaceAndRestoreComments(anchor, decl);
     }
     else {
       decl = (PsiDeclarationStatement)anchor.getParent().addBefore(decl, anchor);

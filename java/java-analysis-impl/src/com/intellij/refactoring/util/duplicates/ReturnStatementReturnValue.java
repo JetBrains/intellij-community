@@ -21,7 +21,7 @@ public final class ReturnStatementReturnValue implements ReturnValue {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression,@Nullable PsiType returnType) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(methodCallExpression.getProject());
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());

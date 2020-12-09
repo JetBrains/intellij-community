@@ -15,34 +15,31 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.DynamicBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class PresentationFactory {
-  private static final @NotNull NotNullLazyValue<Boolean> hasAnyLanguagePack =
-    NotNullLazyValue.createValue(DynamicBundle.LanguageBundleEP.EP_NAME::hasAnyExtensions);
+  private final Map<AnAction, Presentation> myAction2Presentation = ContainerUtil.createWeakMap();
+  private boolean myNeedRebuild;
 
-  private final Map<AnAction,Presentation> myAction2Presentation = ContainerUtil.createWeakMap();
-
-  private static final WeakList<PresentationFactory> ourAllFactories = new WeakList<>();
+  private static final Collection<PresentationFactory> ourAllFactories = new WeakList<>();
 
   public PresentationFactory() {
     ourAllFactories.add(this);
   }
 
   @NotNull
-  public final Presentation getPresentation(@NotNull AnAction action){
+  public final Presentation getPresentation(@NotNull AnAction action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Presentation presentation = myAction2Presentation.get(action);
-    if (presentation == null || !action.isDefaultIcon()){
+    if (presentation == null || !action.isDefaultIcon()) {
       Presentation templatePresentation = action.getTemplatePresentation();
       if (presentation == null) {
         presentation = templatePresentation.clone();
@@ -57,11 +54,21 @@ public class PresentationFactory {
     return presentation;
   }
 
-  protected void processPresentation(Presentation presentation) { }
+  protected void processPresentation(@NotNull Presentation presentation) {
+  }
 
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myAction2Presentation.clear();
+    myNeedRebuild = true;
+  }
+
+  public boolean isNeedRebuild() {
+    return myNeedRebuild;
+  }
+
+  public void resetNeedRebuild() {
+    myNeedRebuild = false;
   }
 
   public static void clearPresentationCaches() {

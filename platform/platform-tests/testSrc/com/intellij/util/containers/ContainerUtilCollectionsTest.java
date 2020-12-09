@@ -10,7 +10,6 @@ import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -28,9 +27,9 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
-  private static final TObjectHashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new TObjectHashingStrategy<String>() {
+  private static final HashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new HashingStrategy<>() {
     @Override
-    public int computeHashCode(String object) {
+    public int hashCode(String object) {
       return Character.toLowerCase(object.charAt(object.length() - 1));
     }
 
@@ -48,7 +47,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapTossedEvenWithIdentityStrategy() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap(10, 0.5f, 8, ContainerUtil.identityStrategy());
+    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap(10, 0.5f, 8, HashingStrategy.identity());
     checkKeyTossedEventually(map);
   }
 
@@ -69,34 +68,34 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakKeyWeakValueTossedEvenWithIdentityStrategy() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap(ContainerUtil.identityStrategy());
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentWeakKeyWeakValueIdentityMap();
     checkKeyTossedEventually(map);
     checkValueTossedEventually(map);
   }
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftKeySoftValueTossedEvenWithIdentityStrategy() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftKeySoftValueMap(10, 0.5f, 8, ContainerUtil.identityStrategy());
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentSoftKeySoftValueIdentityMap(10, 0.5f, 8);
     checkKeyTossedEventually(map);
     checkValueTossedEventually(map);
   }
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakKeySoftValueTossedEvenWithIdentityStrategy() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakKeySoftValueMap(10, 0.5f, 8, ContainerUtil.identityStrategy());
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentWeakKeySoftValueIdentityMap(10, 0.5f, 8);
     checkKeyTossedEventually(map);
     checkValueTossedEventually(map);
   }
 
   @Test(timeout = TIMEOUT)
   public void testWeakMapTossedEvenWithIdentityStrategy() {
-    Map<Object, Object> map = ContainerUtil.createWeakMap(10,0.5f,ContainerUtil.identityStrategy());
+    Map<Object, Object> map = CollectionFactory.createWeakIdentityMap(10, 0.5f);
     checkKeyTossedEventually(map);
   }
 
   @Test(timeout = TIMEOUT)
   public void testSoftMapTossedEvenWithIdentityStrategy() {
-    Map<Object, Object> map = ContainerUtil.createSoftMap(ContainerUtil.identityStrategy());
+    Map<Object, Object> map = CollectionFactory.createSoftIdentityMap();
     checkKeyTossedEventually(map);
   }
 
@@ -148,7 +147,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test(timeout = TIMEOUT)
   public void testConcurrentSKSVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
-    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentSoftKeySoftValueMap(1,1,1,ContainerUtil.canonicalStrategy()));
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentSoftKeySoftValueMap(1, 1, 1));
   }
 
   private void checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(Map<Object, Object> map) {
@@ -281,14 +280,14 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testWeakNativeHashCodeDoesNotGetCalledWhenCustomStrategyIsSpecified() {
-    Map<Object, Object> map = ContainerUtil.createWeakMap(10,0.5f,ContainerUtil.identityStrategy());
+    Map<Object, Object> map = CollectionFactory.createWeakIdentityMap(10, 0.5f);
 
     checkHashCodeDoesntCalledFor(map);
   }
 
   @Test(timeout = TIMEOUT)
   public void testSoftNativeHashCodeDoesNotGetCalledWhenCustomStrategyIsSpecified() {
-    Map<Object, Object> map = ContainerUtil.createSoftMap(ContainerUtil.identityStrategy());
+    Map<Object, Object> map = CollectionFactory.createSoftIdentityMap();
 
     checkHashCodeDoesntCalledFor(map);
   }
@@ -537,15 +536,15 @@ public class ContainerUtilCollectionsTest extends Assert {
       }
     }
 
-    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createMap(new TObjectHashingStrategy<Object>() {
+    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createMap(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(Object object) {
+      public int hashCode(Object object) {
         return 0;
       }
 
       @Override
       public boolean equals(Object o1, Object o2) {
-        return o1==o2;
+        return o1 == o2;
       }
     });
     int N = 1000;

@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.colors;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -43,6 +44,16 @@ public class DelegatingFontPreferences extends FontPreferences {
   @Override
   public String getFontFamily() {
     return myDelegateSupplier.get().getFontFamily();
+  }
+
+  @Override
+  public @Nullable String getRegularSubFamily() {
+    return myDelegateSupplier.get().getRegularSubFamily();
+  }
+
+  @Override
+  public @Nullable String getBoldSubFamily() {
+    return myDelegateSupplier.get().getBoldSubFamily();
   }
 
   @Override

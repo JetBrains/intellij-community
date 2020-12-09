@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,8 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection extends Ba
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      // note: no call to super
-      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null, HardcodedMethodConstants.NEXT)) {
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+          !MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null, HardcodedMethodConstants.NEXT)) {
         return;
       }
       for (final PsiType exception : ExceptionUtil.getThrownExceptions(method)) {
