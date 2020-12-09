@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -62,15 +61,16 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
     if (icon == null) return null;
 
+    return createLineMarker(element, icon, infos);
+  }
+
+  public static @NotNull LineMarkerInfo<PsiElement> createLineMarker(@NotNull PsiElement element,
+                                                                     @NotNull Icon icon,
+                                                                     @NotNull List<Info> infos) {
     if (infos.size() > 1) {
       infos.sort(COMPARATOR);
       final Info first = infos.get(0);
-      for (Iterator<Info> it = infos.iterator(); it.hasNext(); ) {
-        Info info = it.next();
-        if (info != first && first.shouldReplace(info)) {
-          it.remove();
-        }
-      }
+      infos.removeIf(info -> info != first && first.shouldReplace(info));
     }
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -84,10 +84,9 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
     }
 
-    List<Info> finalInfos = infos;
     Function<PsiElement, String> tooltipProvider = element1 -> {
       final StringBuilder tooltip = new StringBuilder();
-      for (Info info : finalInfos) {
+      for (Info info : infos) {
         if (info.tooltipProvider != null) {
           String string = info.tooltipProvider.apply(element1);
           if (string == null) continue;
