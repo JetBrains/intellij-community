@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import training.actions.OpenLessonAction
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.interfaces.Lesson
@@ -60,7 +59,7 @@ class CourseManager internal constructor() : Disposable {
   fun openLesson(projectWhereToOpen: Project, lesson: Lesson?) {
     LessonManager.instance.stopLesson()
     if (lesson == null) return //todo: remove null lessons
-    OpenLessonAction.openLesson(projectWhereToOpen, lesson)
+    OpenLessonActivities.openLesson(projectWhereToOpen, lesson)
   }
 
   fun findLesson(lessonName: String): Lesson? {
