@@ -20,8 +20,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 final class RegisteredIndexes {
-  private static final Logger LOG = Logger.getInstance(RegisteredIndexes.class);
-
   @NotNull
   private final FileDocumentManager myFileDocumentManager;
   @NotNull

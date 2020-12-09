@@ -52,7 +52,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   public enum TestMode {
     PUSHING, PUSHING_AND_SCANNING
   }
-  @VisibleForTesting
+  @SuppressWarnings("StaticNonFinalField") @VisibleForTesting
   public static volatile TestMode ourTestMode;
 
   public static final ExecutorService GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
