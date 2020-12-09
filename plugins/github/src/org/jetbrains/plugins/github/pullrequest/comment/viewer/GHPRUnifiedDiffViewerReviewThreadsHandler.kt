@@ -36,7 +36,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                                                                                 inlaysManager,
                                                                                 componentsFactory,
                                                                                 cumulative) { fileLine ->
-      val (end, start) = getSelectedLines(viewer.editor, fileLine)
+      val (end, start) = getCommentLinesRange(viewer.editor, fileLine)
 
       val (endIndices, side) = viewer.transferLineFromOneside(end)
       val endLine = side.select(endIndices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
@@ -80,7 +80,3 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                            ?.filterKeys { it >= 0 }.orEmpty())
   }
 }
-
-
-
-

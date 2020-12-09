@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -48,9 +48,11 @@ abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(privat
   abstract fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?)
 
   companion object {
-    internal fun getSelectedLines(editor: EditorEx, line: Int): Pair<Int, Int> {
+    internal fun getCommentLinesRange(editor: EditorEx, line: Int): Pair<Int, Int> {
+      if (!editor.selectionModel.hasSelection()) return line to line
+
       return with(editor.selectionModel) {
-        (selectionEndPosition?.line ?: line) to (selectionStartPosition?.line ?: line)
+        editor.offsetToLogicalPosition(selectionStart).line to editor.offsetToLogicalPosition(selectionEnd).line
       }
     }
   }

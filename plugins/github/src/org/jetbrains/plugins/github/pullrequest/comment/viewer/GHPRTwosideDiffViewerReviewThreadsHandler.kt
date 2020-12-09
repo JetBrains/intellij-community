@@ -35,7 +35,7 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                                                                                     inlaysManagerLeft,
                                                                                     componentsFactory,
                                                                                     cumulative) { line ->
-      val (endLine, startLine) = getSelectedLines(viewer.editor1, line)
+      val (endLine, startLine) = getCommentLinesRange(viewer.editor1, line)
       GHPRCommentLocation(Side.LEFT, endLine, startLine)
     }
 
@@ -48,7 +48,7 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                                                                                      inlaysManagerRight,
                                                                                      componentsFactory,
                                                                                      cumulative) { line ->
-      val (endLine, startLine) = getSelectedLines(viewer.editor2, line)
+      val (endLine, startLine) = getCommentLinesRange(viewer.editor2, line)
       GHPRCommentLocation(Side.RIGHT, endLine, startLine)
     }
 
@@ -70,4 +70,3 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
                                 ?.groupBy({ it.fileLineIndex }, { it.thread }).orEmpty())
   }
 }
-
