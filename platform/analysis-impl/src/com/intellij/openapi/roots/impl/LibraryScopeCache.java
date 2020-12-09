@@ -35,7 +35,7 @@ public final class LibraryScopeCache {
 
   private final Project myProject;
   private final ConcurrentMap<Module[], GlobalSearchScope> myLibraryScopes =
-    ConcurrentCollectionFactory.createMap(new HashingStrategy<>() {
+    ConcurrentCollectionFactory.createConcurrentMap(new HashingStrategy<>() {
       @Override
       public int hashCode(Module[] object) {
         return Arrays.hashCode(object);

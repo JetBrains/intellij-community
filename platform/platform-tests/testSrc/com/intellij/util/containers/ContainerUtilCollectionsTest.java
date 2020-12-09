@@ -536,7 +536,7 @@ public class ContainerUtilCollectionsTest extends Assert {
       }
     }
 
-    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createMap(new HashingStrategy<>() {
+    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createConcurrentMap(new HashingStrategy<>() {
       @Override
       public int hashCode(Object object) {
         return 0;

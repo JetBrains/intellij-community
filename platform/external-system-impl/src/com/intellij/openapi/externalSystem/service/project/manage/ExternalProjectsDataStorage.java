@@ -69,7 +69,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   private final Project myProject;
   @NotNull
   private final Map<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
-    ConcurrentCollectionFactory.createMap(ExternalSystemUtil.HASHING_STRATEGY);
+    ConcurrentCollectionFactory.createConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
 
   private final AtomicBoolean changed = new AtomicBoolean();
   private State myState = new State();

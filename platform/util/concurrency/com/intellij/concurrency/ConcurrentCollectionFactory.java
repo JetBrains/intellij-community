@@ -19,41 +19,41 @@ public final class ConcurrentCollectionFactory {
   }
 
   @Contract(pure = true)
-  public static @NotNull <T, V> ConcurrentMap<T, V> createMap(@NotNull HashingStrategy<T> hashStrategy) {
+  public static @NotNull <T, V> ConcurrentMap<T, V> createConcurrentMap(@NotNull HashingStrategy<T> hashStrategy) {
     return new ConcurrentHashMap<>(hashStrategy);
   }
 
   @Contract(pure = true)
-  public static @NotNull <T, V> ConcurrentMap<T, V> createMap() {
+  public static @NotNull <T, V> ConcurrentMap<T, V> createConcurrentMap() {
     return new ConcurrentHashMap<>(HashingStrategy.canonical());
   }
 
   @Contract(pure = true)
-  public static @NotNull <T, V> ConcurrentMap<T, V> createMap(int initialCapacity,
-                                                              float loadFactor,
-                                                              int concurrencyLevel,
-                                                              @NotNull HashingStrategy<T> hashStrategy) {
+  public static @NotNull <T, V> ConcurrentMap<T, V> createConcurrentMap(int initialCapacity,
+                                                                        float loadFactor,
+                                                                        int concurrencyLevel,
+                                                                        @NotNull HashingStrategy<T> hashStrategy) {
     return new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashStrategy);
   }
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> createConcurrentSet(@NotNull HashingStrategy<T> hashStrategy) {
-    return Collections.newSetFromMap(createMap(hashStrategy));
+    return Collections.newSetFromMap(createConcurrentMap(hashStrategy));
   }
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> createConcurrentIdentitySet() {
-    return Collections.newSetFromMap(createMap(HashingStrategy.identity()));
+    return Collections.newSetFromMap(createConcurrentMap(HashingStrategy.identity()));
   }
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> createConcurrentIdentitySet(int initialCapacity) {
-    return Collections.newSetFromMap(createMap(initialCapacity, 0.75f, 16, HashingStrategy.identity()));
+    return Collections.newSetFromMap(createConcurrentMap(initialCapacity, 0.75f, 16, HashingStrategy.identity()));
   }
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> createConcurrentSet(int initialCapacity, @NotNull HashingStrategy<T> hashStrategy) {
-    return Collections.newSetFromMap(createMap(initialCapacity, 0.75f, 16, hashStrategy));
+    return Collections.newSetFromMap(createConcurrentMap(initialCapacity, 0.75f, 16, hashStrategy));
   }
 
   @Contract(pure = true)
@@ -61,7 +61,7 @@ public final class ConcurrentCollectionFactory {
                                                         float loadFactor,
                                                         int concurrencyLevel,
                                                         @NotNull HashingStrategy<T> hashStrategy) {
-    return Collections.newSetFromMap(createMap(initialCapacity, loadFactor, concurrencyLevel, hashStrategy));
+    return Collections.newSetFromMap(createConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, hashStrategy));
   }
 
   @Contract(value = " -> new", pure = true)

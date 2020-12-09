@@ -25,7 +25,7 @@ public class MapInvariantsTestSuite {
   public static Iterable<Object[]> parameters() {
     return Arrays.asList(
       name("Our HashMap", HashMap::new),
-      name("Our ConcurrentHashMap", () -> ConcurrentCollectionFactory.createMap()),
+      name("Our ConcurrentHashMap", () -> ConcurrentCollectionFactory.createConcurrentMap()),
       name("Our LinkedHashMap", LinkedHashMap::new),
       name("ConcurrentFactoryMap (on ConcurrentHashMap)", () -> ConcurrentFactoryMap.createMap(k -> "val_" + k))
     );

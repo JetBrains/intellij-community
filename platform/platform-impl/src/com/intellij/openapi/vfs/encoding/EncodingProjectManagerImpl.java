@@ -58,7 +58,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   private @Nullable Charset myDefaultConsoleCharset;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
   private BOMForNewUTF8Files myBomForNewUtf8Files = BOMForNewUTF8Files.NEVER;
-  private final Map<VirtualFilePointer, Charset> myMapping = ConcurrentCollectionFactory.createMap(new HashingStrategy<>() {
+  private final Map<VirtualFilePointer, Charset> myMapping = ConcurrentCollectionFactory.createConcurrentMap(new HashingStrategy<>() {
     @Override
     public int hashCode(VirtualFilePointer pointer) {
       // TODO !! hashCode is unstable - VirtualFilePointer URL can change

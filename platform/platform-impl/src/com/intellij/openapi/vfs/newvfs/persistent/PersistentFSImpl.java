@@ -72,7 +72,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       myRoots = new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
     }
     else {
-      myRoots = ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), HashingStrategy.caseInsensitive());
+      myRoots = ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), HashingStrategy.caseInsensitive());
     }
 
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
