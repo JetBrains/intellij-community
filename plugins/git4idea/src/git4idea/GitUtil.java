@@ -1030,7 +1030,7 @@ public final class GitUtil {
     }
   }
 
-  public static boolean isGitRoot(@NotNull @NonNls Path rootDir) {
+  public static boolean isGitRoot(@NotNull Path rootDir) {
     Path dotGit = rootDir.resolve(DOT_GIT);
     BasicFileAttributes attributes;
     try {
