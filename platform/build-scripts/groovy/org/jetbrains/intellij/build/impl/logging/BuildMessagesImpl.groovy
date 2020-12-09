@@ -66,12 +66,12 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
-  void log(Level level, String message) {
+  void log(System.Logger.Level level, String message) {
     log(level, null, message, null as Throwable)
   }
 
   @Override
-  void log(Level level, String message, Throwable thrown) {
+  void log(System.Logger.Level level, String message, Throwable thrown) {
     log(level, null, message, thrown)
   }
 
