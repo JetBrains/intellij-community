@@ -77,13 +77,6 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       }
 
       @Override
-      public void setCloseFunction(String event, Runnable runnable) {
-        if (terminalHandler instanceof TerminalHandlerBase && runnable != null) {
-          ((TerminalHandlerBase)terminalHandler).setCloseFunction(event, runnable);
-        }
-      }
-
-      @Override
       public void setTtyResizeHandler(@Nullable TtyResizeHandler ttyResizeHandler) {
         if (terminalHandler instanceof TerminalHandlerBase && ttyResizeHandler != null) {
           ((TerminalHandlerBase)terminalHandler).setResizeHandler(ttyResizeHandler);

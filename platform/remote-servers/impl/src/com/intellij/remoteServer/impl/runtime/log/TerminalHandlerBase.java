@@ -6,14 +6,10 @@ import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.function.BiConsumer;
 
 public abstract class TerminalHandlerBase extends LoggingHandlerBase implements TerminalHandler {
   private boolean myClosed = false;
   private TerminalListener.TtyResizeHandler myResizeHandler = (width, height) -> {
-  };
-
-  private BiConsumer<String, Runnable> mySetCloseFunctionConsumer = (e, r) -> {
   };
 
   public TerminalHandlerBase(@NotNull String presentableName) {
@@ -31,14 +27,6 @@ public abstract class TerminalHandlerBase extends LoggingHandlerBase implements 
   @Override
   public void close() {
     myClosed = true;
-  }
-
-  public void setCloseFunction(String event, Runnable runnable) {
-    this.mySetCloseFunctionConsumer.accept(event, runnable);
-  }
-
-  protected void setCloseFunctionConsumer(BiConsumer<String, Runnable> consumer) {
-    this.mySetCloseFunctionConsumer = consumer;
   }
 
   public void setResizeHandler(@NotNull TerminalListener.TtyResizeHandler resizeHandler) {

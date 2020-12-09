@@ -66,11 +66,6 @@
               class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.ChooseDeploymentWithDebugAction"
               icon="AllIcons.Actions.StartDebugger"/>
 
-      <action id="Servers.StopDeploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.StopDeployAction"
-              icon="AllIcons.Actions.Suspend">
-        <add-to-group group-id="RunDashboardContentToolbar" anchor="last"/>
-      </action>
-
       <action id="Servers.Deploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAction"
               icon="AllIcons.Nodes.Deploy">
         <add-to-group group-id="RunDashboardContentToolbar" anchor="last"/>

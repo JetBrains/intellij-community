@@ -422,6 +422,11 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     }
 
     @Override
+    public void started(@NotNull DeploymentRuntime deploymentRuntime) {
+      myDeployment.changeState(myDeployment.getStatus(), DeploymentStatus.DEPLOYING, null, deploymentRuntime);
+    }
+
+    @Override
     public Deployment succeeded(@NotNull DeploymentRuntime deploymentRuntime) {
       myLoggingHandler.printlnSystemMessage("'" + myDeploymentName + "' has been deployed successfully.");
       myDeployment.changeState(DeploymentStatus.DEPLOYING, DeploymentStatus.DEPLOYED, null, deploymentRuntime);
@@ -458,6 +463,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       myLoggingHandler.printlnSystemMessage("Failed to deploy '" + myDeploymentName + "': " + errorMessage);
       myAllDeployments.updateAnyState(myDeployment, null,
                                       DeploymentStatus.DEPLOYING, DeploymentStatus.NOT_DEPLOYED, errorMessage);
+      myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
+    }
+
+    @Override
+    public void errorOccurred(@NotNull @Nls String errorMessage,
+                              @NotNull DeploymentRuntime failedDeployment) {
+      myLoggingHandler.printlnSystemMessage("Failed to deploy '" + myDeploymentName + "': " + errorMessage);
+      myDeployment.changeState(DeploymentStatus.DEPLOYING, DeploymentStatus.NOT_DEPLOYED, errorMessage, failedDeployment);
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
     }
   }
