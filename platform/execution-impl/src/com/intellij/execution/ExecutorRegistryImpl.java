@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.impl.ExecutionManagerImplKt;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
@@ -52,7 +53,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private final Map<String, AnAction> myRunDebugIdToAction = new HashMap<>();
 
   public ExecutorRegistryImpl() {
-    Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(new ExtensionPointListener<Executor>() {
+    Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull Executor extension, @NotNull PluginDescriptor pluginDescriptor) {
         //noinspection TestOnlyProblems
@@ -303,9 +304,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
 
-      List<RunContentDescriptor> runningDescriptors = executionManager.getRunningDescriptors(s -> {
-        return s != null && s.getConfiguration() == selectedConfiguration.getConfiguration();
-      });
+      List<RunContentDescriptor> runningDescriptors =
+        executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
       runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> {
         RunContentDescriptor contentDescriptor = RunContentManager.getInstance(project).findContentDescriptor(myExecutor, descriptor.getProcessHandler());
         return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);

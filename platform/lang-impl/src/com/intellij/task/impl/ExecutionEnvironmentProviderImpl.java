@@ -4,9 +4,8 @@ package com.intellij.task.impl;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +33,7 @@ public final class ExecutionEnvironmentProviderImpl implements ExecutionEnvironm
                                                          @Nullable RunnerAndConfigurationSettings settings) {
     ExecuteRunConfigurationTask
       runTask = new ExecuteRunConfigurationTaskImpl(runProfile, target, runnerSettings, configurationSettings, settings);
-    return ProjectTaskRunner.EP_NAME.computeSafeIfAny(projectTaskRunner -> {
+    ExecutionEnvironment environment = ProjectTaskRunner.EP_NAME.computeSafeIfAny(projectTaskRunner -> {
       try {
         if (projectTaskRunner.canRun(project, runTask)) {
           return projectTaskRunner.createExecutionEnvironment(project, runTask, executor);
@@ -49,5 +48,37 @@ public final class ExecutionEnvironmentProviderImpl implements ExecutionEnvironm
 
       return null;
     });
+    if (environment != null) {
+      RunProfile environmentRunProfile = environment.getRunProfile();
+      ExecutionManagerImpl.setDelegatedRunProfile(environmentRunProfile, runProfile);
+      copySettings(settings, environment);
+      copyCommonRunProfileOptions(runProfile, environmentRunProfile);
+    }
+    return environment;
+  }
+
+  private static void copySettings(@Nullable RunnerAndConfigurationSettings settings, @NotNull ExecutionEnvironment environment) {
+    if (settings != null) {
+      RunnerAndConfigurationSettings environmentSettings = environment.getRunnerAndConfigurationSettings();
+      if (environmentSettings != null && environmentSettings != settings) {
+        environmentSettings.setActivateToolWindowBeforeRun(settings.isActivateToolWindowBeforeRun());
+        environmentSettings.setEditBeforeRun(settings.isEditBeforeRun());
+      }
+    }
+  }
+
+  private static void copyCommonRunProfileOptions(@NotNull RunProfile runProfile, @NotNull RunProfile environmentRunProfile) {
+    if (environmentRunProfile instanceof RunConfiguration && runProfile instanceof RunConfiguration) {
+      ((RunConfiguration)environmentRunProfile).setAllowRunningInParallel(((RunConfiguration)runProfile).isAllowRunningInParallel());
+    }
+
+    if (environmentRunProfile instanceof RunConfigurationBase && runProfile instanceof RunConfigurationBase) {
+      for (LogFileOptions logFile : ((RunConfigurationBase<?>)runProfile).getLogFiles()) {
+        if (!((RunConfigurationBase<?>)environmentRunProfile).getLogFiles().contains(logFile)) {
+          ((RunConfigurationBase<?>)environmentRunProfile).addLogFile(logFile.getPathPattern(), logFile.getName(), logFile.isEnabled(),
+                                                                      logFile.isSkipContent(), logFile.isShowAll());
+        }
+      }
+    }
   }
 }

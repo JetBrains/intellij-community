@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
+import com.intellij.execution.impl.ExecutionManagerImpl.Companion.DELEGATED_RUN_PROFILE_KEY
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
 import com.intellij.execution.process.*
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -27,7 +28,6 @@ import com.intellij.internal.statistic.IdeActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.AppUIUtil
@@ -70,6 +71,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
+
+    internal val DELEGATED_RUN_PROFILE_KEY = Key.create<RunProfile>("DELEGATED_RUN_PROFILE_KEY")
 
     @JvmField
     val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
@@ -119,6 +122,14 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     @JvmStatic
     fun getAllDescriptors(project: Project): List<RunContentDescriptor> {
       return project.serviceIfCreated<RunContentManager>()?.allDescriptors ?: emptyList()
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun setDelegatedRunProfile(runProfile: RunProfile, runProfileToDelegate: RunProfile) {
+      if (runProfile !== runProfileToDelegate && runProfile is UserDataHolder) {
+        DELEGATED_RUN_PROFILE_KEY[runProfile] = runProfileToDelegate
+      }
     }
   }
 
@@ -454,7 +465,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     val contentToReuse = environment.contentToReuse
     val runningOfTheSameType = if (configuration != null && !configuration.configuration.isAllowRunningInParallel) {
-      getRunningDescriptors(Condition { configuration === it })
+      getRunningDescriptors(Condition { it.isOfSameType(configuration) })
     }
     else if (isProcessRunning(contentToReuse)) {
       listOf(contentToReuse!!)
@@ -783,6 +794,21 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     }
     return result
   }
+}
+
+@ApiStatus.Internal
+fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: RunnerAndConfigurationSettings): Boolean {
+  if (this === runnerAndConfigurationSettings) return true
+  val thisConfiguration = configuration
+  val thatConfiguration = runnerAndConfigurationSettings.configuration
+  if (thisConfiguration === thatConfiguration) return true
+
+  if (thisConfiguration is UserDataHolder) {
+    val originalRunProfile = DELEGATED_RUN_PROFILE_KEY[thisConfiguration] ?: return false
+    if (originalRunProfile === thatConfiguration) return true
+    if (thatConfiguration is UserDataHolder) return originalRunProfile === DELEGATED_RUN_PROFILE_KEY[thatConfiguration]
+  }
+  return false
 }
 
 private fun triggerUsage(environment: ExecutionEnvironment): IdeActivity? {
