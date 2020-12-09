@@ -4,9 +4,10 @@ package com.intellij.workspaceModel.storage.impl.indices
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
@@ -45,6 +46,29 @@ open class VirtualFileIndex internal constructor(
   internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
   }
+
+  internal fun assertConsistency() {
+    val existingVfuInFirstMap = HashSet<VirtualFileUrl>()
+    this.entityId2VirtualFileUrl.forEach { (entityId, property2Vfu) ->
+      property2Vfu.forEach { (property, vfuSet) ->
+        vfuSet.forEach { vfu ->
+          existingVfuInFirstMap.add(vfu)
+          val property2EntityId = this.vfu2EntityId[vfu]
+          assert(property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
+
+          val compositeKey = getCompositeKey(entityId, property)
+          val existingEntityId = property2EntityId!![compositeKey]
+          assert(existingEntityId != null) { "VirtualFileUrl: $vfu exist in both maps but EntityId: $entityId with Property: $property absent at other" }
+        }
+      }
+    }
+    val existingVfuISecondMap = this.vfu2EntityId.keys
+    assert(existingVfuInFirstMap.size == existingVfuISecondMap.size) { "Different count of VirtualFileUrls EntityId2VirtualFileUrl: ${existingVfuInFirstMap.size} Vfu2EntityId: ${existingVfuISecondMap.size}" }
+    existingVfuInFirstMap.removeAll(existingVfuISecondMap)
+    assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
+  }
+
+  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId}_$propertyName"
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
@@ -163,8 +187,6 @@ open class VirtualFileIndex internal constructor(
       originMap.forEach{ (key, value) -> copiedMap[key] = HashMap(value) }
       return copiedMap
     }
-
-    private fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId}_$propertyName"
 
     companion object {
       private val LOG = logger<MutableVirtualFileIndex>()

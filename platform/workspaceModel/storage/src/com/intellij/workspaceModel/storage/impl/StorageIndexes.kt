@@ -13,7 +13,6 @@ import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalInd
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
@@ -52,7 +51,7 @@ internal open class StorageIndexes(
 
     assertSoftLinksIndex(storage)
 
-    assertVirtualFileIndex(storage)
+    virtualFileIndex.assertConsistency()
 
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
@@ -141,28 +140,6 @@ internal open class StorageIndexes(
     }
 
     assert(expectedSize == entitySourceIndex.index.size) { "Incorrect size of entity source index. Expected: $expectedSize, actual: ${entitySourceIndex.index.size}" }
-  }
-
-  private fun assertVirtualFileIndex(storage: AbstractEntityStorage) {
-    val existingVfuInFirstMap = HashSet<VirtualFileUrl>()
-    val vfuIndex = storage.indexes.virtualFileIndex
-    vfuIndex.entityId2VirtualFileUrl.forEach { (entityId, property2Vfu) ->
-      property2Vfu.forEach { (property, vfuSet) ->
-        vfuSet.forEach { vfu ->
-          existingVfuInFirstMap.add(vfu)
-          val property2EntityId = vfuIndex.vfu2EntityId[vfu]
-          assert(property2EntityId != null) { "VirtualFileUrl: $vfu exists in the first collection by EntityId: $entityId with Property: $property but absent at other" }
-
-          val compositeKey = "${entityId}_$property"
-          val existingEntityId = property2EntityId!![compositeKey]
-          assert(existingEntityId != null) { "VirtualFileUrl: $vfu exist in both maps but EntityId: $entityId with Property: $property absent at other" }
-        }
-      }
-    }
-    val existingVfuISecondMap = vfuIndex.vfu2EntityId.keys
-    assert(existingVfuInFirstMap.size == existingVfuISecondMap.size) { "Different count of VirtualFileUrls EntityId2VirtualFileUrl: ${existingVfuInFirstMap.size} Vfu2EntityId: ${existingVfuISecondMap.size}" }
-    existingVfuInFirstMap.removeAll(existingVfuISecondMap)
-    assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 }
 
