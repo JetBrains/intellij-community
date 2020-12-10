@@ -74,6 +74,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   private boolean myShowIdLabel = true;
 
+  private OnDemandPresentationProvider myOnDemandPresentationProvider = node -> {
+    node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(JavaDebuggerBundle.message("message.node.evaluate")));
+    node.setPresentation(AllIcons.Debugger.Db_watch, new XRegularValuePresentation("", null, ""), false);
+  };
+
   protected ValueDescriptorImpl(Project project, Value value) {
     myProject = project;
     myValue = value;
@@ -232,13 +237,17 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myIsNew = false;
   }
 
-  public void setOnDemandEvaluationPresentation(@NotNull final XValueNode node) {
-    node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(JavaDebuggerBundle.message("message.node.evaluate")));
-    node.setPresentation(AllIcons.Debugger.Db_watch, new XRegularValuePresentation("", null, ""), false);
-  }
-
   protected boolean isPrintExceptionToConsole() {
     return true;
+  }
+
+  @NotNull
+  public OnDemandPresentationProvider getOnDemandPresentationProvider() {
+    return myOnDemandPresentationProvider;
+  }
+
+  public void setOnDemandPresentationProvider(@NotNull OnDemandPresentationProvider onDemandPresentationProvider) {
+    myOnDemandPresentationProvider = onDemandPresentationProvider;
   }
 
   @Nullable
