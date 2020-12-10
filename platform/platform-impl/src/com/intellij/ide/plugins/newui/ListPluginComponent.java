@@ -795,10 +795,6 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else if (!restart && !update) {
-      if (keyCode == KeyEvent.VK_SPACE && event.getComponent() instanceof JCheckBox) {
-        return;
-      }
-
       DumbAwareAction action = keyCode == KeyEvent.VK_SPACE && event.getModifiersEx() == 0 ?
                                createEnableDisableAction(getEnableDisableAction(selection), selection) :
                                keyCode == EventHandler.DELETE_CODE ?
