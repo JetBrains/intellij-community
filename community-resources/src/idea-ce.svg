@@ -1,39 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="idea-ce-b" x1="60.958%" x2="33.882%" y1="100%" y2="57.698%">
-      <stop offset="0%" stop-color="#2773E7"/>
-      <stop offset="100%" stop-color="#FC801D"/>
-    </linearGradient>
-    <polygon id="idea-ce-a" points="0 52 14.5 49 23 24.5 0 18.5"/>
-    <linearGradient id="idea-ce-c" x1="56.288%" x2="26.808%" y1="30.518%" y2="106.868%">
-      <stop offset="0%" stop-color="#FE2857"/>
-      <stop offset="100%" stop-color="#9039D0"/>
-    </linearGradient>
-    <linearGradient id="idea-ce-d" x1="50%" x2="50%" y1="0%" y2="75.199%">
-      <stop offset="0%" stop-color="#2773E7"/>
-      <stop offset="100%" stop-color="#9039D0"/>
-    </linearGradient>
-    <linearGradient id="idea-ce-f" x1="50%" x2="50%" y1="-11.618%" y2="60.589%">
-      <stop offset="0%" stop-color="#A6A5A5"/>
-      <stop offset="0%" stop-color="#989898" stop-opacity=".568"/>
-      <stop offset="100%"/>
-    </linearGradient>
-    <polygon id="idea-ce-e" points="0 40 40 40 40 0 0 0"/>
-  </defs>
-  <g fill="none" fill-rule="evenodd">
-    <g transform="translate(4 4)">
-      <use fill="#F97A12" xlink:href="#idea-ce-a"/>
-      <use fill="url(#idea-ce-b)" xlink:href="#idea-ce-a"/>
-      <polygon fill="#2773E7" points="9.5 56 56 56 56 43 56 0 24.5 0"/>
-      <polygon fill="url(#idea-ce-c)" points="0 0 0 21 10.5 27.5 0 48.5 0 56 12.5 56 24 50 46.5 24 25.5 0"/>
-      <polygon fill="url(#idea-ce-d)" points="40.5 29.5 56 15 56 0 25 0"/>
-    </g>
-    <g transform="translate(12 12)">
-      <use fill="#000" xlink:href="#idea-ce-e"/>
-      <use fill="url(#idea-ce-f)" xlink:href="#idea-ce-e"/>
-      <polygon fill="#FFF" points="4 35 19 35 19 32.5 4 32.5"/>
-    </g>
-    <path fill="#FFF" d="M26.0898,31.7417 L28.5048,29.0537 C29.4998,30.1487 30.4708,30.7957 31.6908,30.7957 C33.1338,30.7957 34.2958,29.9247 34.2958,27.9087 L34.2958,16.9997 L37.9998,16.9997 L37.9998,28.0837 C37.9998,30.1487 37.3848,31.6917 36.3388,32.7377 C35.2688,33.8067 33.6918,34.3547 31.7998,34.3547 C29.0858,34.3547 27.2838,33.1597 26.0898,31.7417"/>
-    <polygon fill="#FFF" points="24 20.072 24 17 16 17 16 20.072 18.244 20.072 18.244 30.825 16 30.825 16 34 24 34 24 30.825 21.756 30.825 21.756 20.072"/>
-  </g>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M58 6H6V58H58V6Z" fill="url(#paint0_linear)"/>
+<path d="M51 13H13V51H51V13Z" fill="url(#paint1_linear)"/>
+<path d="M32.1444 44H18V46.3222H32.1444V44Z" fill="white"/>
+<path d="M24.8935 20.3707V17.75H17.7711V20.3707H19.7578V29.3951H17.7711V31.9946H24.8935V29.3951H22.8857V20.3707H24.8935Z" fill="white"/>
+<path d="M31.7411 32.2062C30.621 32.2062 29.6911 31.9949 28.9513 31.5722C28.1905 31.1495 27.5776 30.6423 27.0915 30.0716L29.057 27.8737C29.4586 28.3175 29.8813 28.6768 30.2828 28.9304C30.7055 29.184 31.1493 29.3108 31.6566 29.3108C32.2483 29.3108 32.7133 29.1206 33.0514 28.7402C33.3896 28.3597 33.5587 27.768 33.5587 26.9437V17.7714H36.7711V27.0917C36.7711 27.9371 36.6654 28.6768 36.433 29.3108C36.2005 29.9448 35.8623 30.4732 35.4396 30.8959C34.9958 31.3397 34.4674 31.6567 33.8334 31.8892C33.1994 32.1006 32.5019 32.2062 31.7411 32.2062Z" fill="white"/>
+<defs>
+<linearGradient id="paint0_linear" x1="63.8328" y1="63.7936" x2="-9.6207" y2="-9.65938" gradientUnits="userSpaceOnUse">
+<stop offset="0.3475" stop-color="#087CFA"/>
+<stop offset="0.8562" stop-color="#FE2857"/>
+<stop offset="1" stop-color="#FE2857"/>
+</linearGradient>
+<linearGradient id="paint1_linear" x1="31.9493" y1="3.7641" x2="31.9493" y2="37.8425" gradientUnits="userSpaceOnUse">
+<stop offset="0.0842986" stop-color="#878585"/>
+<stop offset="0.5377"/>
+</linearGradient>
+</defs>
 </svg>
