@@ -33,11 +33,12 @@ internal fun symbolSearchTargets(project: Project, targetSymbols: Collection<Sym
   }.toList()
 }
 
-private val SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.symbolSearchTarget")
+private val SYMBOL_SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.symbolSearchTarget")
+private val SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.searchTarget")
 
 @ApiStatus.Internal
 fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
-  for (factory in SEARCH_TARGET_EXTENSION.forKey(symbol.javaClass)) {
+  for (factory in SYMBOL_SEARCH_TARGET_EXTENSION.forKey(symbol.javaClass)) {
     @Suppress("UNCHECKED_CAST")
     val factory_ = factory as SymbolSearchTargetFactory<Symbol>
     val target = factory_.createTarget(project, symbol)
