@@ -15,6 +15,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class KotlinClassRenderer : ClassRenderer() {
+    // TODO: Add asynchronous collection of methods and remove code duplication
     override fun buildChildren(value: Value?, builder: ChildrenBuilder, evaluationContext: EvaluationContext) {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (value !is ObjectReference) {

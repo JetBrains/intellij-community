@@ -24,14 +24,13 @@ class GetterDescriptor(
 
     init {
         OnDemandRenderer.ON_DEMAND_CALCULATED.set(this, false)
+        setOnDemandPresentationProvider { node ->
+            node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator("... get()"))
+            node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", null, ""), false)
+        }
     }
 
     override fun getDescriptorEvaluation(context: DebuggerContext): PsiExpression = throw EvaluateException("Getter evaluation is not supported")
-
-    override fun setOnDemandEvaluationPresentation(node: XValueNode) {
-        node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator("... get()"))
-        node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", null, ""), false)
-    }
 
     override fun getName() = name
 
