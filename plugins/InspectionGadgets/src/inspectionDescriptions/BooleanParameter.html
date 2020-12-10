@@ -1,10 +1,18 @@
 <html>
 <body>
-It's almost always a mistake to add a <b>boolean</b> parameter to a public method (part of an API) if that method is not a setter.
-When reading code using such a method, it can be difficult to decipher what the <b>boolean</b> stands for without looking at
+Reports public methods that accept a <code>boolean</code> parameter.
+It's almost always a bad practice to add a <code>boolean</code> parameter to a public method (part of an API) if that method is not a setter.
+When reading code using such a method, it can be difficult to decipher what the <code>boolean</code> stands for without looking at
 the source or documentation.
 This problem is also known as <a href="https://ariya.io/2011/08/hall-of-api-shame-boolean-trap">the boolean trap</a>.
-The <b>boolean</b> parameter can often be profitably replaced with an <b>enum</b>
+The <code>boolean</code> parameter can often be profitably replaced with an <code>enum</code>.
+<p>Example:</p>
+<pre>
+  // Warning: it's hard to understand what boolean parameters mean when reading the code
+  public boolean setPermission(File f, int access, boolean enable, boolean owneronly) {
+    ...
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the option below to only warn when a method contains more than one boolean parameter.
