@@ -3,6 +3,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.ValueKey;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see LangDataKeys
  */
 public final class DataKey<T> implements ValueKey<T> {
-  private static final ConcurrentMap<String, DataKey> ourDataKeyIndex = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, DataKey<?>> ourDataKeyIndex = new ConcurrentHashMap<>();
 
   private final String myName;
 
@@ -34,7 +35,12 @@ public final class DataKey<T> implements ValueKey<T> {
 
   public static @NotNull <T> DataKey<T> create(@NotNull @NonNls String name) {
     //noinspection unchecked
-    return ourDataKeyIndex.computeIfAbsent(name, DataKey::new);
+    return (DataKey<T>)ourDataKeyIndex.computeIfAbsent(name, DataKey::new);
+  }
+
+  @ApiStatus.Internal
+  public static DataKey<?> @NotNull [] allKeys() {
+    return ourDataKeyIndex.values().toArray(new DataKey[0]);
   }
 
   @Override
