@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -124,7 +125,15 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
 
   fun startLesson() {
     addAllInactiveMessages()
-    processNextTask(0)
+    if (lesson.properties.canStartInDumbMode) {
+      processNextTask(0)
+    }
+    else {
+      DumbService.getInstance(project).runWhenSmart {
+        if (!hasBeenStopped)
+          processNextTask(0)
+      }
+    }
   }
 
   private fun processNextTask(taskIndex: Int) {

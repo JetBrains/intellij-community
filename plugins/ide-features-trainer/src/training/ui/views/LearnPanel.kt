@@ -3,6 +3,7 @@ package training.ui.views
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.labels.LinkLabel
@@ -247,34 +248,39 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     buttonPanel.removeAll()
     rootPane?.defaultButton = null
 
-    val prevLesson = getPreviousLessonForCurrent()
-    prevButton.isVisible = prevLesson != null
-    if (prevLesson != null) {
-      prevButton.action = object : AbstractAction() {
-        override fun actionPerformed(actionEvent: ActionEvent) {
-          CourseManager.instance.openLesson(learnToolWindow.project, prevLesson)
-        }
-      }
-      prevButton.text = LearnBundle.message("learn.new.ui.button.back")
-      prevButton.updateUI()
-      prevButton.isSelected = true
-
-      buttonPanel.add(prevButton)
-    }
+    updateButton(prevButton, getPreviousLessonForCurrent(), LearnBundle.message("learn.new.ui.button.back"))
 
     val nextLesson = getNextLessonForCurrent()
-    nextButton.isVisible = nextLesson != null
-    if (nextLesson != null) {
-      nextButton.action = object : AbstractAction() {
+    updateButton(nextButton, nextLesson, LearnBundle.message("learn.new.ui.button.next", nextLesson?.name ?: ""))
+  }
+
+
+  private fun updateButton(button: JButton, targetLesson: Lesson?, @Nls buttonText: String) {
+    button.isVisible = targetLesson != null
+    if (targetLesson != null) {
+      button.action = object : AbstractAction() {
         override fun actionPerformed(actionEvent: ActionEvent) {
-          CourseManager.instance.openLesson(learnToolWindow.project, nextLesson)
+          CourseManager.instance.openLesson(learnToolWindow.project, targetLesson)
         }
       }
-      nextButton.text = LearnBundle.message("learn.new.ui.button.next", nextLesson.name)
-      nextButton.updateUI()
-      nextButton.isSelected = true
+      button.text = buttonText
+      button.updateUI()
+      button.isSelected = true
 
-      buttonPanel.add(nextButton)
+      if (!targetLesson.passed &&
+          !targetLesson.properties.canStartInDumbMode &&
+          DumbService.getInstance(learnToolWindow.project).isDumb) {
+        button.isEnabled = false
+        button.toolTipText = LearnBundle.message("indexing.message")
+        button.isSelected = false
+        DumbService.getInstance(learnToolWindow.project).runWhenSmart {
+          button.isEnabled = true
+          button.toolTipText = ""
+          button.isSelected = true
+        }
+      }
+
+      buttonPanel.add(button)
     }
   }
 

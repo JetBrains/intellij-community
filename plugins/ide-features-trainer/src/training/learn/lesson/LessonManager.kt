@@ -177,6 +177,8 @@ class LessonManager {
     shownRestoreNotification = notification
   }
 
+  fun lessonShouldBeOpenedCompleted(lesson: Lesson): Boolean = lesson.passed && currentLesson != lesson
+
   companion object {
     @Volatile
     var externalTestActionsExecutor: Executor? = null
