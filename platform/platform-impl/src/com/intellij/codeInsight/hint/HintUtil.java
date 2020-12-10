@@ -179,7 +179,7 @@ public final class HintUtil {
   }
 
   @NotNull
-  private static HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
+  public static HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(icon);
@@ -248,7 +248,7 @@ public final class HintUtil {
     }
   }
 
-  private static final class HintLabel extends JPanel {
+  public static final class HintLabel extends JPanel {
     private JEditorPane myPane;
     private SimpleColoredComponent myColored;
     private JLabel myIcon;
