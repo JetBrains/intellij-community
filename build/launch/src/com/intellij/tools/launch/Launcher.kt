@@ -75,7 +75,7 @@ object Launcher {
       cmd.add(arg.trim('"'))
     }
 
-    cmd.add("\"@${classPathArgFile.canonicalPath}\"")
+    cmd.add("@${classPathArgFile.canonicalPath}")
     cmd.add("com.intellij.idea.Main")
 
     for (arg in options.ideaArguments) {
