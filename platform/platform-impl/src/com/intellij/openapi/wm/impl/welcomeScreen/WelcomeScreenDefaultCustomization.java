@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.wm.WelcomeScreenCustomization;
 import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +21,9 @@ public class WelcomeScreenDefaultCustomization implements WelcomeScreenCustomiza
   @Override
   public @Nullable Component createQuickAccessComponent(@NotNull Disposable parentDisposable) {
     AnAction action = createShowPopupAction(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS);
-    ActionLink link = new ActionLink("", AllIcons.General.Gear, action);
-    link.setHoveringIcon(AllIcons.General.GearHover);
+    ActionLink link = new ActionLink("", AllIcons.General.GearHover, action);
     link.setToolTipText(ActionsBundle.groupText(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS));
+    link.setBorder(JBUI.Borders.emptyBottom(4));
     return WelcomeScreenComponentFactory.wrapActionLink(link);
   }
 }
