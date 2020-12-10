@@ -252,17 +252,22 @@ public class IconUtil {
 
   @NotNull
   public static BufferedImage toBufferedImage(@NotNull Icon icon) {
-    return toBufferedImage(icon, null);
+    return toBufferedImage(icon, false);
   }
 
   @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Icon icon, @Nullable ScaleContext context) {
+  public static BufferedImage toBufferedImage(@NotNull Icon icon, boolean inUserScale) {
+    return toBufferedImage(icon, null, inUserScale);
+  }
+
+  @NotNull
+  public static BufferedImage toBufferedImage(@NotNull Icon icon, @Nullable ScaleContext context, boolean inUserScale) {
     Image image = IconLoader.toImage(icon, context);
     if (image == null) {
       //noinspection UndesirableClassUsage
       image = new BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB);
     }
-    return ImageUtil.toBufferedImage(image);
+    return ImageUtil.toBufferedImage(image, inUserScale);
   }
 
   @NotNull
