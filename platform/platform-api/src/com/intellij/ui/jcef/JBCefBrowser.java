@@ -13,11 +13,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefClient;
@@ -48,6 +49,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.ui.jcef.JBCefEventUtils.convertCefKeyEvent;
 import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 
 /**
@@ -72,36 +74,41 @@ public class JBCefBrowser extends JBCefBrowserBase {
   private JDialog myDevtoolsFrame = null;
   protected CefContextMenuHandler myDefaultContextMenuHandler;
   @Nullable private final CefLoadHandler myLoadHandler;
-  private static final LazyInitializer.NotNullValue<String> LOAD_ERROR_PAGE = new LazyInitializer.NotNullValue<>() {
-    @Override
-    public @NotNull String initialize() {
-      try {
-        URL url = JBCefApp.class.getResource("resources/load_error.html");
-        if (url != null) return Files.readString(Paths.get(url.toURI()));
-      }
-      catch (IOException | URISyntaxException ex) {
-        Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", ex);
-      }
-      return "";
-    }
-  };
 
-  private static final LazyInitializer.NotNullValue<ScaleContext.Cache<String>> BASE64_ERR_IMAGE = new LazyInitializer.NotNullValue<>() {
-    @Override
-    public @NotNull ScaleContext.Cache<String> initialize() {
-      return new ScaleContext.Cache<>((ctx) -> {
-        BufferedImage image = ImageUtil.toBufferedImage(IconUtil.toImage(AllIcons.General.Error, ctx));
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-          ImageIO.write(image, "png", out);
-          return Base64.getEncoder().encodeToString(out.toByteArray());
+  @NotNull private static final Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
+
+  private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
+    new LazyInitializer.NotNullValue<>() {
+      @Override
+      public @NotNull String initialize() {
+        try {
+          URL url = JBCefApp.class.getResource("resources/load_error.html");
+          if (url != null) return Files.readString(Paths.get(url.toURI()));
         }
-        catch (IOException ex) {
-          Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
+        catch (IOException | URISyntaxException ex) {
+          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", ex);
         }
         return "";
-      });
-    }
-  };
+      }
+    };
+
+  private static final LazyInitializer.NotNullValue<ScaleContext.Cache<String>> BASE64_ERROR_PAGE_ICON =
+    new LazyInitializer.NotNullValue<>() {
+      @Override
+      public @NotNull ScaleContext.Cache<String> initialize() {
+        return new ScaleContext.Cache<>((ctx) -> {
+          try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), ctx);
+            ImageIO.write(image, "png", out);
+            return Base64.getEncoder().encodeToString(out.toByteArray());
+          }
+          catch (IOException ex) {
+            Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
+          }
+          return "";
+        });
+      }
+    };
 
   private static final class ShortcutProvider {
     // Since these CefFrame::* methods are available only with JCEF API 1.1 and higher, we are adding no shortcuts for older JCEF
@@ -176,35 +183,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
     myComponent = createComponent();
 
-
     if (cefBrowser == null) {
       myCefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
         @Override
         public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-          int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.33);
-          int bigFontSize = (int)(fontSize * 1.5);
-          int bigFontSize_div_2 = bigFontSize / 2;
-          int bigFontSize_div_3 = bigFontSize / 3;
-          Color bgColor = JBColor.background();
-          String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
-          Color fgColor = JBColor.foreground();
-          String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
-          String fgWebColor_05 = fgWebColor + "50";
-
-          String html = LOAD_ERROR_PAGE.get();
-          html = html.replace("${fontSize}", String.valueOf(fontSize));
-          html = html.replace("${bigFontSize}", String.valueOf(bigFontSize));
-          html = html.replace("${bigFontSize_div_2}", String.valueOf(bigFontSize_div_2));
-          html = html.replace("${bigFontSize_div_3}", String.valueOf(bigFontSize_div_3));
-          html = html.replace("${bgWebColor}", bgWebColor);
-          html = html.replace("${fgWebColor}", fgWebColor);
-          html = html.replace("${fgWebColor_05}", fgWebColor_05);
-          html = html.replace("${errorText}", errorText);
-          html = html.replace("${failedUrl}", failedUrl);
-          html = html.replace("${base64Image}",
-                              ObjectUtils.notNull(BASE64_ERR_IMAGE.get().getOrProvide(ScaleContext.create(getComponent())), ""));
-
-          loadHTML(html);
+          UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
         }
       }, myCefBrowser);
     } else {
@@ -230,7 +213,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
       }
     }, myCefBrowser);
 
-
     myCefClient.addKeyboardHandler(myKeyboardHandler = new CefKeyboardHandlerAdapter() {
       @Override
       public boolean onKeyEvent(CefBrowser browser, CefKeyEvent cefKeyEvent) {
@@ -251,7 +233,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
     myDefaultContextMenuHandler = createDefaultContextMenuHandler();
     myCefClient.addContextMenuHandler(myDefaultContextMenuHandler, this.getCefBrowser());
   }
-
 
   @SuppressWarnings("deprecation") // New API is not available in JBR yet
   @NotNull
@@ -345,8 +326,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
     ourOnBrowserMoveResizeCallbacks.remove(callback);
   }
 
-
-
   /**
    * Creates a browser with default {@link JBCefClient}. The default client is disposed with this browser and may not be used with other browsers.
    */
@@ -418,6 +397,36 @@ public class JBCefBrowser extends JBCefBrowserBase {
         Disposer.dispose(myCefClient);
       }
     });
+  }
+
+  private void loadErrorPage(@NotNull String errorText, @NotNull String failedUrl) {
+    int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
+    int headerFontSize = fontSize + JBUIScale.scale(9);
+    int headerPaddingTop = headerFontSize / 5;
+    int lineHeight = JBUIScale.scale(20);
+    int iconPaddingRight = JBUIScale.scale(12);
+    Color bgColor = JBColor.background();
+    String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
+    Color fgColor = JBColor.foreground();
+    String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
+
+    String html = ERROR_PAGE_READER.get();
+    html = html.replace("${lineHeight}", String.valueOf(lineHeight));
+    html = html.replace("${iconPaddingRight}", String.valueOf(iconPaddingRight));
+    html = html.replace("${fontSize}", String.valueOf(fontSize));
+    html = html.replace("${headerFontSize}", String.valueOf(headerFontSize));
+    html = html.replace("${headerPaddingTop}", String.valueOf(headerPaddingTop));
+    html = html.replace("${bgWebColor}", bgWebColor);
+    html = html.replace("${fgWebColor}", fgWebColor);
+    html = html.replace("${errorText}", errorText);
+    html = html.replace("${failedUrl}", failedUrl);
+
+    ScaleContext ctx = ScaleContext.create(getComponent());
+    ctx.update(OBJ_SCALE.of(fontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
+
+    html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
+
+    loadHTML(html);
   }
 
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
