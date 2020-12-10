@@ -59,14 +59,19 @@ dependencies {
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-annotation-processing-gradle:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-build-common:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-runner:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-daemon-embeddable:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-api:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-model:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-reflect:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-script-runtime:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-common:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-jvm:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-common:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-test:${kotlin_version}"
@@ -111,9 +116,6 @@ task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncAndroidSdk], 
 
 task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncAndroidSdk], type: OfflineMavenRepository) {
   def verFile = "${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/${kotlin_version}"
-  onlyIf {
-    !file(verFile).isFile()
-  }
   configurationName = "kotlinDeps"
   repoDir = file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository")
   doLast {
