@@ -234,12 +234,34 @@ public class IconUtil {
     return baseIcon;
   }
 
+  @NotNull
   public static Image toImage(@NotNull Icon icon) {
-    return IconLoader.toImage(icon, null);
+    return toImage(icon, null);
   }
 
+  @NotNull
   public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext context) {
-    return IconLoader.toImage(icon, context);
+    Image image = IconLoader.toImage(icon, context);
+    if (image == null) {
+      //noinspection UndesirableClassUsage
+      image = new BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB);
+    }
+    return image;
+  }
+
+  @NotNull
+  public static BufferedImage toBufferedImage(@NotNull Icon icon) {
+    return toBufferedImage(icon, null);
+  }
+
+  @NotNull
+  public static BufferedImage toBufferedImage(@NotNull Icon icon, @Nullable ScaleContext context) {
+    Image image = IconLoader.toImage(icon, context);
+    if (image == null) {
+      //noinspection UndesirableClassUsage
+      image = new BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB);
+    }
+    return ImageUtil.toBufferedImage(image);
   }
 
   @NotNull
