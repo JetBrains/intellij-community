@@ -488,6 +488,9 @@ public abstract class VcsVFSListener implements Disposable {
     List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;
     List<FilePath> deletedFiles = allFiles.deletedFiles;
 
+    filesToDelete.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
+    deletedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
+
     VcsShowConfirmationOption.Value removeOption = myRemoveOption.getValue();
     if (removeOption == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       filesToDelete.addAll(deletedFiles);
