@@ -10,10 +10,8 @@ import com.intellij.util.ui.codereview.BaseHtmlEditorPane
 import icons.GithubIcons
 import java.awt.*
 import java.awt.image.ImageObserver
-import javax.swing.text.Element
-import javax.swing.text.FlowView
+import javax.swing.text.*
 import javax.swing.text.ParagraphView
-import javax.swing.text.View
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.StyleSheet
 import javax.swing.text.html.*
@@ -63,12 +61,11 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
   }
 
   private class GHParagraphView(elem: Element) : MyParagraphView(elem) {
-    override fun getStyleSheet(): StyleSheet = super.getStyleSheet().apply {
-      val margin = JBUI.scale(10)
+    init {
       //language=CSS
-      addRule("""
+      styleSheet.addRule("""
         p {
-          margin-bottom: ${margin}px;
+          margin-bottom: ${JBUI.scale(10)}px;
         }
       """.trimIndent())
     }
