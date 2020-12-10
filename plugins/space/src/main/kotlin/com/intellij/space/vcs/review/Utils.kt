@@ -40,6 +40,7 @@ internal fun openReviewInEditor(
   val review = codeReviewListItem.review.resolve()
   val chatRef = review.feedChannel ?: return
   val chatFile = SpaceChatFile(
+    review.key ?: review.id,
     "space-review/${review.key}",
     SpaceBundle.message("review.chat.editor.tab.name", review.key, review.title),
     workspace.chatVm.channels,

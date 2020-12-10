@@ -19,7 +19,11 @@ import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
 import javax.swing.Icon
 
+/**
+ * @param id is used only for equals and hashcode to avoid multiple editor tabs the same [SpaceChatFile]
+ */
 internal class SpaceChatFile(
+  @NlsSafe val id: String,
   @NlsSafe path: String,
   @NlsContexts.TabTitle val displayName: String,
   val channelsVm: ChannelsVm,
@@ -30,6 +34,19 @@ internal class SpaceChatFile(
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
     isWritable = false
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SpaceChatFile
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = id.hashCode()
 }
 
 internal class SpaceChatFileTabTitleProvider : EditorTabTitleProvider {
