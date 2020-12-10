@@ -39,10 +39,9 @@ public class CompositeElement extends TreeElement {
   private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper;
+  private static final AtomicFieldUpdater<CompositeElement, PsiElement> myWrapperUpdater = AtomicFieldUpdater.forFieldOfType(CompositeElement.class, PsiElement.class);
   private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
 
-  private static final AtomicFieldUpdater<CompositeElement, PsiElement> ourPsiUpdater =
-    AtomicFieldUpdater.forFieldOfType(CompositeElement.class, PsiElement.class);
 
   public CompositeElement(@NotNull IElementType type) {
     super(type);
@@ -689,7 +688,7 @@ public class CompositeElement extends TreeElement {
     if (wrapper != null) return wrapper;
 
     wrapper = createPsiNoLock();
-    return ourPsiUpdater.compareAndSet(this, null, wrapper) ? wrapper : Objects.requireNonNull(myWrapper);
+    return myWrapperUpdater.compareAndSet(this, null, wrapper) ? wrapper : Objects.requireNonNull(myWrapper);
   }
 
   @Override

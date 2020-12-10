@@ -99,7 +99,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       prolog = (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
 
       if(!MY_PROLOG_UPDATER.compareAndSet(this, null, prolog)) {
-        prolog = MY_PROLOG_UPDATER.get(this);
+        prolog = MY_PROLOG_UPDATER.getVolatile(this);
       }
     }
 
@@ -114,7 +114,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       rootTag = (XmlTag)XmlPsiUtil.findElement(this, IXmlTagElementType.class::isInstance);
 
       if (!MY_ROOT_TAG_UPDATER.compareAndSet(this, null, rootTag)) {
-        rootTag = MY_ROOT_TAG_UPDATER.get(this);
+        rootTag = MY_ROOT_TAG_UPDATER.getVolatile(this);
       }
     }
 

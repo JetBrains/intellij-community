@@ -3644,7 +3644,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         strBuf.append(c);
       }
 
-      composedText = new String(strBuf);
+      composedText = strBuf.toString();
     }
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {

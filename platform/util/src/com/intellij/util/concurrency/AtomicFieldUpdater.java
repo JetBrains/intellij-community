@@ -18,12 +18,14 @@ import java.lang.reflect.Modifier;
  */
 public final class AtomicFieldUpdater<ContainingClass, FieldType> {
   private static final Object unsafe;
+  private final long offset;
 
-  private static final MethodHandle compareAndSwapIntHandle;
-  private static final MethodHandle compareAndSwapLongHandle;
-  private static final MethodHandle compareAndSwapObjectHandle;
-  private static final MethodHandle putObjectVolatileHandle;
-  private static final MethodHandle getObjectVolatileHandle;
+  private static final MethodHandle compareAndSwapInt;
+  private static final MethodHandle compareAndSwapLong;
+  private static final MethodHandle compareAndSwapObject;
+  private static final MethodHandle putObjectVolatile;
+  private static final MethodHandle getObjectVolatile;
+
 
   static {
     Class<?> unsafeClass;
@@ -39,11 +41,11 @@ public final class AtomicFieldUpdater<ContainingClass, FieldType> {
     }
     MethodHandles.Lookup lookup = MethodHandles.publicLookup();
     try {
-      compareAndSwapIntHandle = lookup.findVirtual(unsafeClass, "compareAndSwapInt", MethodType.methodType(boolean.class, Object.class, long.class, int.class, int.class)).bindTo(unsafe);
-      compareAndSwapLongHandle = lookup.findVirtual(unsafeClass, "compareAndSwapLong", MethodType.methodType(boolean.class, Object.class, long.class, long.class, long.class)).bindTo(unsafe);
-      compareAndSwapObjectHandle = lookup.findVirtual(unsafeClass, "compareAndSwapObject", MethodType.methodType(boolean.class, Object.class, long.class, Object.class, Object.class)).bindTo(unsafe);
-      putObjectVolatileHandle = lookup.findVirtual(unsafeClass, "putObjectVolatile", MethodType.methodType(void.class, Object.class, long.class, Object.class)).bindTo(unsafe);
-      getObjectVolatileHandle = lookup.findVirtual(unsafeClass, "getObjectVolatile", MethodType.methodType(Object.class, Object.class, long.class)).bindTo(unsafe);
+      compareAndSwapInt = lookup.findVirtual(unsafeClass, "compareAndSwapInt", MethodType.methodType(boolean.class, Object.class, long.class, int.class, int.class)).bindTo(unsafe);
+      compareAndSwapLong = lookup.findVirtual(unsafeClass, "compareAndSwapLong", MethodType.methodType(boolean.class, Object.class, long.class, long.class, long.class)).bindTo(unsafe);
+      compareAndSwapObject = lookup.findVirtual(unsafeClass, "compareAndSwapObject", MethodType.methodType(boolean.class, Object.class, long.class, Object.class, Object.class)).bindTo(unsafe);
+      putObjectVolatile = lookup.findVirtual(unsafeClass, "putObjectVolatile", MethodType.methodType(void.class, Object.class, long.class, Object.class)).bindTo(unsafe);
+      getObjectVolatile = lookup.findVirtual(unsafeClass, "getObjectVolatile", MethodType.methodType(Object.class, Object.class, long.class)).bindTo(unsafe);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -53,8 +55,6 @@ public final class AtomicFieldUpdater<ContainingClass, FieldType> {
   public static @NotNull Object getUnsafe() {
     return unsafe;
   }
-
-  private final long offset;
 
   public static @NotNull <T, V> AtomicFieldUpdater<T, V> forFieldOfType(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
     return new AtomicFieldUpdater<>(ownerClass, fieldType);
@@ -91,7 +91,7 @@ public final class AtomicFieldUpdater<ContainingClass, FieldType> {
 
   public boolean compareAndSet(@NotNull ContainingClass owner, FieldType expected, FieldType newValue) {
     try {
-      return (boolean)compareAndSwapObjectHandle.invokeExact(owner, offset, expected, newValue);
+      return (boolean)compareAndSwapObject.invokeExact(owner, offset, expected, newValue);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -100,7 +100,7 @@ public final class AtomicFieldUpdater<ContainingClass, FieldType> {
 
   public boolean compareAndSetLong(@NotNull ContainingClass owner, long expected, long newValue) {
     try {
-      return (boolean)compareAndSwapLongHandle.invokeExact(owner, offset, expected, newValue);
+      return (boolean)compareAndSwapLong.invokeExact(owner, offset, expected, newValue);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -109,25 +109,26 @@ public final class AtomicFieldUpdater<ContainingClass, FieldType> {
 
   public boolean compareAndSetInt(@NotNull ContainingClass owner, int expected, int newValue) {
     try {
-      return (boolean)compareAndSwapIntHandle.invokeExact(owner, offset, expected, newValue);
+      return (boolean)compareAndSwapInt.invokeExact(owner, offset, expected, newValue);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
     }
   }
 
-  public void set(@NotNull ContainingClass owner, FieldType newValue) {
+  public void setVolatile(@NotNull ContainingClass owner, FieldType newValue) {
     try {
-      putObjectVolatileHandle.invokeExact(owner, offset, newValue);
+      putObjectVolatile.invokeExact(owner, offset, newValue);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
     }
   }
 
-  public FieldType get(@NotNull ContainingClass owner) {
+  public FieldType getVolatile(@NotNull ContainingClass owner) {
     try {
-      return (FieldType)getObjectVolatileHandle.invokeExact(owner, offset);
+      //noinspection unchecked
+      return (FieldType)getObjectVolatile.invokeExact(owner, offset);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
