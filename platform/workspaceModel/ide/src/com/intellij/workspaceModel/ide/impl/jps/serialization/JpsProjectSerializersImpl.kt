@@ -327,8 +327,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     val sourcesStoredExternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
       .filter { it.storedExternally }
-      .map { it.internalFile to it }
-      .toMap()
+      .associateBy { it.internalFile }
 
     val obsoleteSources = affectedSources - entitiesToSave.keys
     for (source in obsoleteSources) {
@@ -343,7 +342,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val deleteObsoleteFile = source in internalSourceConvertedToImported || (affectedImportedSourceStoredExternally != null &&
                                                                                  affectedImportedSourceStoredExternally !in obsoleteSources)
         processObsoleteSource(fileUrl, deleteObsoleteFile)
-        val actualSource = if (source is JpsImportedEntitySource) source.internalFile else source
+        val actualSource = if (source is JpsImportedEntitySource && !source.storedExternally) source.internalFile else source
         if (actualSource is JpsFileEntitySource.FileInDirectory) {
           fileIdToFileName.remove(actualSource.fileNameId)
         }
