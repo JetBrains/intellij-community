@@ -82,6 +82,21 @@ class EntityStorageSerializationTest {
 
     assertTrue(result is SerializationResult.Fail<*>)
   }
+
+  @Test
+  fun `serialize abstract`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+
+    builder.addSampleEntity("myString")
+
+    val stream = ByteArrayOutputStream()
+    val result = serializer.serializeCache(stream, builder.toStorage())
+
+    assertTrue(result is SerializationResult.Success)
+  }
 }
 
 // Kotlin tip: Use the ugly ${'$'} to insert the $ into the multiline string

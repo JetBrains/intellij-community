@@ -246,11 +246,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     if (entity is VirtualFileUrl) return
     if (entity is Enum<*>) return
 
-    if (entity is WorkspaceEntityData<*>) {
-      // lateinit property seems not captured by fields
-      recursiveClassFinder(kryo, entity.entitySource, simpleClasses, objectClasses)
-    }
-    jClass.declaredFields.forEach {
+    ReflectionUtil.collectFields(jClass).forEach {
       val retType = it.type.name
 
       if ((retType.startsWith("kotlin") || retType.startsWith("java"))
