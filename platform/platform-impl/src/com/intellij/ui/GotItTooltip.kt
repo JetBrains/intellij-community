@@ -307,7 +307,9 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
 
         override fun componentResized(event: ComponentEvent) {
           if (balloon == null && !event.component.bounds.isEmpty && event.component.isShowing) {
-            val tracker = PositionTracker.Static<Balloon>(RelativePoint(event.component, pointProvider(event.component)))
+            val tracker = object : PositionTracker<Balloon>(event.component) {
+              override fun recalculateLocation(balloon: Balloon): RelativePoint = RelativePoint(getComponent(), pointProvider(getComponent()))
+            }
             balloon = createAndShow(tracker)
           }
           else {
@@ -319,6 +321,10 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
       toolbar.addAncestorListener(object : AncestorListenerAdapter() {
         override fun ancestorRemoved(event: AncestorEvent) {
           hideBalloon()
+        }
+
+        override fun ancestorMoved(event: AncestorEvent?) {
+          hideOrRepaint(component)
         }
       }.also{ Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
     }
