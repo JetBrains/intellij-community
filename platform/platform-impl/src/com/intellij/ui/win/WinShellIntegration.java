@@ -169,6 +169,6 @@ final class WinShellIntegration implements Disposable {
 
     isAvailable = SystemInfo.isWin8OrNewer
                   && ideIsLaunchedViaDLL
-                  && !"false".equals(System.getProperty("ide.win.shell.integration"));
+                  && !Boolean.getBoolean("ide.win.shell.integration.disabled");
   }
 }
