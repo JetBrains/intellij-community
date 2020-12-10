@@ -546,7 +546,14 @@ public class IconUtil {
    */
   @NotNull
   public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
-    ScaleContext ctx = ScaleContext.create(ancestor);
+    ScaleContext ctx;
+    if (ancestor == null && icon instanceof ScaleContextAware) {
+      // In this case the icon's context should be preserved, except the OBJ_SCALE.
+      UserScaleContext usrCtx = ((ScaleContextAware)icon).getScaleContext();
+      ctx = ScaleContext.create(usrCtx);
+    } else {
+      ctx = ScaleContext.create(ancestor);
+    }
     ctx.update(OBJ_SCALE.of(scale));
     return scale(icon, ctx);
   }
