@@ -265,7 +265,8 @@ public abstract class VcsVFSListener implements Disposable {
       if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported() && !isRecursiveDeleteSupported()) {
         for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
           ProgressManager.checkCanceled();
-          if (!myChangeListManager.isIgnoredFile(child)) {
+          FileStatus status = myChangeListManager.getStatus(child);
+          if (!filterOutByStatus(status)) {
             processDeletedFile(child);
           }
         }
@@ -275,6 +276,9 @@ public abstract class VcsVFSListener implements Disposable {
         if (type == VcsDeleteType.IGNORE) return;
 
         FilePath filePath = VcsUtil.getFilePath(file);
+        FileStatus status = myChangeListManager.getStatus(filePath);
+        if (filterOutByStatus(status)) return;
+
         withLock(PROCESSING_LOCK.writeLock(), () -> {
           if (type == VcsDeleteType.CONFIRM) {
             myDeletedFiles.add(filePath);
@@ -292,7 +296,7 @@ public abstract class VcsVFSListener implements Disposable {
 
       String newPath = newParentPath + "/" + newName;
       withLock(PROCESSING_LOCK.writeLock(), () -> {
-        if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
+        if (!filterOutByStatus(status)) {
           MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, info -> Comparing.equal(info.myFile, file));
           if (existingMovedFile != null) {
             LOG.debug("Reusing existing moved file [" + file + "] with new path [" + newPath + "]");
@@ -584,8 +588,21 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
+  /**
+   * Determine if the listener should process files with {@link FileStatus#UNKNOWN} status.
+   *
+   * @see #filterOutByStatus(FileStatus)
+   */
   protected boolean filterOutUnknownFiles() {
     return true;
+  }
+
+  /**
+   * Determine if the listener should process files with the given status.
+   * By default skip {@link FileStatus#IGNORED} and {@link FileStatus#UNKNOWN}.
+   */
+  protected boolean filterOutByStatus(@NotNull FileStatus status) {
+    return status == FileStatus.IGNORED || (filterOutUnknownFiles() && status == FileStatus.UNKNOWN);
   }
 
   @NotNull
