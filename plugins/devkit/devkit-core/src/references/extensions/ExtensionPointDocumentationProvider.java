@@ -112,10 +112,14 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
         defBuilder.append(bindingRows.br().wrapWith(DocumentationMarkup.SECTIONS_TABLE));
       }
     }
-    HtmlChunk.Element definition = defBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT);
 
     HtmlBuilder builder = new HtmlBuilder();
-    builder.append(definition);
+    builder.append(defBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT));
+
+    HtmlBuilder platformExplorerLink = new HtmlBuilder();
+    platformExplorerLink.appendLink("https://jb.gg/ipe?extensions=" + extensionPoint.getEffectiveQualifiedName(),
+                    DevKitBundle.message("extension.point.documentation.link.platform.explorer"));
+    builder.append(platformExplorerLink.wrapWith(DocumentationMarkup.CONTENT_ELEMENT));
 
     final PsiClass extensionPointClass = extensionPoint.getExtensionPointClass();
     if (extensionPointClass != null) { // e.g. ServiceDescriptor
