@@ -11,9 +11,9 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import training.keymap.KeymapUtil
 import training.learn.LearnBundle
@@ -23,6 +23,9 @@ import java.awt.Insets
 import java.awt.Point
 import javax.swing.JLabel
 import javax.swing.JPanel
+
+private val SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", JBColor(0x787878, 0x999999))
+private val BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", JBColor(0xadadad, 0x636569))
 
 internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String) {
   val action = ActionManager.getInstance().getAction(actionId)
@@ -39,7 +42,7 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
       val keyStrokeText = KeymapUtil.getKeyStrokeText(shortcut.firstKeyStroke)
       val shortcutLabel = JLabel(if (SystemInfo.isMac) KeymapUtil.decryptMacShortcut(keyStrokeText) else keyStrokeText).also {
         it.font = it.font.deriveFont((it.font.size - 1).toFloat())
-        it.foreground = JBUI.CurrentTheme.Tooltip.shortcutForeground()
+        it.foreground = SHORTCUT_COLOR
       }
       jPanel.add(shortcutLabel)
     }
@@ -64,7 +67,7 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
     .setCalloutShift(height/2 + 1)
     .setCornerToPointerDistance(80)
     .setBlockClicksThroughBalloon(true)
-    .setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor())
+    .setBorderColor(BORDER_COLOR)
     .setFillColor(UIUtil.getToolTipBackground())
     .setBorderInsets(Insets(8, 10, 8, 10))
     .setShadow(true)
