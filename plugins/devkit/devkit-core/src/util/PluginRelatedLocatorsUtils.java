@@ -6,6 +6,9 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -15,11 +18,14 @@ import java.util.Collection;
 public final class PluginRelatedLocatorsUtils {
   @NotNull
   public static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
-    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project)
-      .uniteWith(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project)
+        .uniteWith(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
 
-    Collection<VirtualFile> candidates = DomService.getInstance()
-      .getDomFileCandidates(IdeaPlugin.class, scope);
-    return GlobalSearchScope.filesWithLibrariesScope(project, candidates);
+      Collection<VirtualFile> candidates = DomService.getInstance()
+        .getDomFileCandidates(IdeaPlugin.class, scope);
+      final GlobalSearchScope filesScope = GlobalSearchScope.filesWithLibrariesScope(project, candidates);
+      return new CachedValueProvider.Result<>(filesScope, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 }
