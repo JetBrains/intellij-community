@@ -60,55 +60,53 @@ class FileTemplatesLoader implements Disposable {
   private final ClearableLazyValue<LoadedConfiguration> myManagers;
 
   FileTemplatesLoader(@Nullable Project project) {
-    myManagers = ClearableLazyValue.createAtomic(() -> {
-      return loadConfiguration(project);
-    });
-    ApplicationManager.getApplication().getMessageBus().connect(this).
-      subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-        @Override
-        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          // this shouldn't be necessary once we update to a new Velocity Engine with this leak fixed (IDEA-240449, IDEABKL-7932)
-          clearClassLeakViaStaticExceptionTrace();
-          resetParserPool();
-        }
+    myManagers = ClearableLazyValue.createAtomic(() -> loadConfiguration(project));
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        // this shouldn't be necessary once we update to a new Velocity Engine with this leak fixed (IDEA-240449, IDEABKL-7932)
+        clearClassLeakViaStaticExceptionTrace();
+        resetParserPool();
+      }
 
-        private void clearClassLeakViaStaticExceptionTrace() {
-          Field field = ReflectionUtil.getDeclaredField(Stop.class, "STOP_ALL");
-          if (field != null) {
-            try {
-              ThrowableInterner.clearBacktrace((Throwable)field.get(null));
-            }
-            catch (Throwable e) {
-              LOG.info(e);
-            }
-          }
-        }
-
-        private void resetParserPool() {
+      private void clearClassLeakViaStaticExceptionTrace() {
+        Field field = ReflectionUtil.getDeclaredField(Stop.class, "STOP_ALL");
+        if (field != null) {
           try {
-            RuntimeServices ri = RuntimeSingleton.getRuntimeServices();
-            Field ppField = ReflectionUtil.getDeclaredField(ri.getClass(), "parserPool");
-            if (ppField != null) {
-              Object pp = ppField.get(ri);
-              if (pp instanceof ParserPool) {
-                ((ParserPool)pp).initialize(ri);
-              }
-            }
+            ThrowableInterner.clearBacktrace((Throwable)field.get(null));
           }
           catch (Throwable e) {
             LOG.info(e);
           }
         }
+      }
 
-        @Override
-        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-          myManagers.drop();
+      private void resetParserPool() {
+        try {
+          RuntimeServices ri = RuntimeSingleton.getRuntimeServices();
+          Field ppField = ReflectionUtil.getDeclaredField(ri.getClass(), "parserPool");
+          if (ppField != null) {
+            Object pp = ppField.get(ri);
+            if (pp instanceof ParserPool) {
+              ((ParserPool)pp).initialize(ri);
+            }
+          }
         }
-        @Override
-        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          myManagers.drop();
+        catch (Throwable e) {
+          LOG.info(e);
         }
-      });
+      }
+
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        myManagers.drop();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        myManagers.drop();
+      }
+    });
   }
 
   @Override
@@ -180,21 +178,20 @@ class FileTemplatesLoader implements Disposable {
     Set<URL> processedUrls = new HashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
     for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {
-      final ClassLoader loader = plugin.getPluginClassLoader();
+      ClassLoader loader = plugin.getPluginClassLoader();
       if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getFiles().isEmpty() ||
           !processedLoaders.add(loader)) {
-        continue; // test or development mode, when IDEA_CORE's loader contains all the classpath
+        // test or development mode, when IDEA_CORE's loader contains all the classpath
+        continue;
       }
       try {
-        final Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
-        if (systemResources.hasMoreElements()) {
-          while (systemResources.hasMoreElements()) {
-            final URL url = systemResources.nextElement();
-            if (!processedUrls.add(url)) {
-              continue;
-            }
-            loadDefaultsFromRoot(url, prefixes, result);
+        Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
+        while (systemResources.hasMoreElements()) {
+          URL url = systemResources.nextElement();
+          if (!processedUrls.add(url)) {
+            continue;
           }
+          loadDefaultsFromRoot(url, prefixes, result);
         }
       }
       catch (IOException e) {

@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.List;
 
 final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
+  private static final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataFile";
+
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
 
@@ -25,7 +27,6 @@ final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
         registrar,
         UastPatterns.injectionHostUExpression().inCall(UastPatterns.callExpression()),
         new UastInjectionHostReferenceProvider() {
-          private final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataFile";
 
           @Override
           public boolean acceptsTarget(@NotNull PsiElement target) {
@@ -33,9 +34,9 @@ final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
           }
 
           @Override
-          public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression expression,
-                                                                        @NotNull PsiLanguageInjectionHost host,
-                                                                        @NotNull ProcessingContext context) {
+          public @NotNull PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression expression,
+                                                                                 @NotNull PsiLanguageInjectionHost host,
+                                                                                 @NotNull ProcessingContext context) {
             UCallExpression call = UastUtils.getUCallExpression(expression);
             if (call == null) return PsiReference.EMPTY_ARRAY;
 
