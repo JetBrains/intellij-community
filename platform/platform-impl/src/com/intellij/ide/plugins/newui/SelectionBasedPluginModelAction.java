@@ -63,7 +63,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
                         @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
       super(
         action.toString(),
-        shortcutSet,
+        isCheckboxesEnabled() ? shortcutSet : null,
         pluginModel,
         selection,
         pluginDescriptor
@@ -97,6 +97,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         getAllDescriptors(),
         myAction
       );
+    }
+
+    private static boolean isCheckboxesEnabled() {
+      return Registry.is("ide.plugins.per.project.use.checkboxes", false);
     }
 
     private static boolean isPerProjectEnabled() {
