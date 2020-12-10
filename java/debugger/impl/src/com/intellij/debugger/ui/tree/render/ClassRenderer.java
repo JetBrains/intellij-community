@@ -189,16 +189,28 @@ public class ClassRenderer extends NodeRendererImpl{
           return;
         }
 
-        List<List<Field>> chunks = DebuggerUtilsImpl.partition(fieldsToShow, XCompositeNode.MAX_CHILDREN_TO_SHOW);
-        Set<String> names = Collections.synchronizedSet(new HashSet<>());
         //noinspection unchecked
-        CompletableFuture<List<DebuggerTreeNode>>[] futures = chunks.stream()
-          .map(l -> createNodes(l, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, objRef, names))
-          .toArray(CompletableFuture[]::new);
+        CompletableFuture<List<DebuggerTreeNode>>[] futures = createNodesChunked(
+          fieldsToShow, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, objRef
+        );
         CompletableFuture.allOf(futures)
           .thenAccept(__ -> builder.setChildren(StreamEx.of(futures).flatCollection(CompletableFuture::join).toList()));
       }
     );
+  }
+
+  protected CompletableFuture<List<DebuggerTreeNode>>[] createNodesChunked(List<Field> fields,
+                                                                           EvaluationContext evaluationContext,
+                                                                           ValueDescriptorImpl parentDescriptor,
+                                                                           NodeManager nodeManager,
+                                                                           NodeDescriptorFactory nodeDescriptorFactory,
+                                                                           ObjectReference objRef) {
+    List<List<Field>> chunks = DebuggerUtilsImpl.partition(fields, XCompositeNode.MAX_CHILDREN_TO_SHOW);
+    Set<String> names = Collections.synchronizedSet(new HashSet<>());
+    //noinspection unchecked
+    return chunks.stream()
+      .map(l -> createNodes(l, evaluationContext, parentDescriptor, nodeManager, nodeDescriptorFactory, objRef, names))
+      .toArray(CompletableFuture[]::new);
   }
 
   private CompletableFuture<List<DebuggerTreeNode>> createNodes(List<Field> fields,
