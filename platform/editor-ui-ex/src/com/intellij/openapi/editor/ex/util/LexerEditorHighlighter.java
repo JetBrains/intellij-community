@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private HighlighterClient myEditor;
   private final Lexer myLexer;
   private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
+  private final Map<IElementType, TextAttributesKey[]> myKeysMap = new HashMap<>();
   private SegmentArrayWithData mySegments;
   private final SyntaxHighlighter myHighlighter;
   @NotNull
@@ -479,10 +481,17 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     TextAttributes attrs = myAttributesMap.get(tokenType);
     if (attrs == null) {
       // let's fetch syntax highlighter attributes for token and merge them with "TEXT" attribute of current color scheme
-      attrs = convertAttributes(myHighlighter.getTokenHighlights(tokenType));
+      attrs = convertAttributes(getAttributesKeys(tokenType));
       myAttributesMap.put(tokenType, attrs);
     }
     return attrs;
+  }
+
+  @ApiStatus.Internal
+  public TextAttributesKey @NotNull [] getAttributesKeys(@NotNull IElementType tokenType) {
+    return myKeysMap.computeIfAbsent(tokenType, type -> {
+      return myHighlighter.getTokenHighlights(type);
+    });
   }
 
   @NotNull
@@ -585,10 +594,16 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @NotNull
   TextAttributes convertAttributes(TextAttributesKey @NotNull [] keys) {
+    return convertAttributes(myScheme, keys);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static @NotNull TextAttributes convertAttributes(@NotNull EditorColorsScheme scheme, TextAttributesKey @NotNull [] keys) {
     TextAttributes resultAttributes = new TextAttributes();
     boolean firstPass = true;
     for (TextAttributesKey key : keys) {
-      TextAttributes attributesByKey = myScheme.getAttributes(key);
+      TextAttributes attributesByKey = scheme.getAttributes(key);
       if (attributesByKey == null) {
         continue;
       }
@@ -630,6 +645,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     @Override
     public TextAttributes getTextAttributes() {
       return getAttributes(getTokenType());
+    }
+
+    @Override
+    public TextAttributesKey @NotNull [] getTextAttributesKeys() {
+      return getAttributesKeys(getTokenType());
     }
 
     @Override
