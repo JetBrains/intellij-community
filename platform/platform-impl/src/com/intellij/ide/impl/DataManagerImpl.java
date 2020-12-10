@@ -298,7 +298,7 @@ public class DataManagerImpl extends DataManager {
    * @deprecated use {@link DataManager#getDataContext(Component)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
