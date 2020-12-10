@@ -8,7 +8,6 @@ import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.facet.impl.invalid.InvalidFacet
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
@@ -35,14 +34,14 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
   : FacetModelBase(), ModifiableFacetModelBridge {
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  private fun getModuleEntity() = initialStorage.findModuleEntity(moduleBridge)!!
+  private val moduleEntity: ModuleEntity
+    get() = (diff as WorkspaceEntityStorageBuilder).findModuleEntity(moduleBridge) ?: error("Cannot find module entity for '$moduleBridge'")
 
   override fun addFacet(facet: Facet<*>) {
     addFacet(facet, null)
   }
 
   override fun addFacet(facet: Facet<*>, externalSource: ProjectModelExternalSource?) {
-    val moduleEntity = getModuleEntity()
     val moduleSource = moduleEntity.entitySource
     val source = when {
       moduleSource is JpsFileEntitySource && externalSource != null ->
@@ -117,7 +116,6 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
 
   override fun prepareForCommit() {
     // In some cases configuration for newly added facets changes before the actual commit e.g. MavenProjectImportHandler#configureFacet.
-    val moduleEntity = getModuleEntity()
     val changes = ArrayList<Triple<FacetEntity, FacetEntity, Facet<*>>>()
 
     diff.facetMapping().forEach { facetEntity, facet ->
@@ -139,11 +137,6 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
 
   override fun getAllFacets(): Array<Facet<*>> {
     val facetMapping = diff.facetMapping()
-    val moduleEntity = (diff as WorkspaceEntityStorageBuilder).resolve(moduleBridge.moduleEntityId)
-    if (moduleEntity == null) {
-      LOG.error("Cannot resolve module ${moduleBridge.moduleEntityId}")
-      return emptyArray()
-    }
     val facetEntities = moduleEntity.facets
     return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()
   }
@@ -167,9 +160,5 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
   override fun facetsChanged() {
     super.facetsChanged()
     listeners.forEach { it.onChanged() }
-  }
-
-  companion object {
-    private val LOG = logger<ModifiableFacetModelBridgeImpl>()
   }
 }
