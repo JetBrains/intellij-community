@@ -43,7 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,18 +80,8 @@ public final class PyInterpreterInspection extends PyInspection {
 
       final List<LocalQuickFix> fixes = new ArrayList<>();
       if (sdk == null) {
-        Optional<PyInterpreterInspectionQuickFixData> fixData = PySdkProvider.EP_NAME.extensions()
-          .map(ext -> ext.createMissingSdkFix(module, node))
-          .filter(it -> it != null)
-          .findFirst();
-
         final @InspectionMessage String message;
-        if (fixData.isPresent()) {
-          fixes.add(fixData.get().getQuickFix());
-          // noinspection HardCodedStringLiteral
-          message = fixData.get().getMessage();
-        }
-        else if (pyCharm) {
+        if (pyCharm) {
           message = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.project");
         }
         else {

@@ -7,11 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.packaging.pipenv.PyPipEnvPackageManagementService
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -20,10 +18,6 @@ import org.jdom.Element
 import javax.swing.Icon
 
 class PyPipEnvSdkProvider : PySdkProvider {
-  override val configureSdkProgressText: String
-    get() = PyBundle.message("looking.for.pipfile")
-
-  override fun configureSdk(project: Project, module: Module, existingSdks: List<Sdk>): Sdk? = null
 
   override fun getSdkAdditionalText(sdk: Sdk): String? = if (sdk.isPipEnv) sdk.versionString else null
 
@@ -36,8 +30,6 @@ class PyPipEnvSdkProvider : PySdkProvider {
   override fun tryCreatePackageManagementServiceForSdk(project: Project, sdk: Sdk): PyPackageManagementService? {
     return if (sdk.isPipEnv) PyPipEnvPackageManagementService(project, sdk) else null
   }
-
-  override fun createMissingSdkFix(module: Module, file: PyFile): PyInterpreterInspectionQuickFixData? = null
 
   override fun createEnvironmentAssociationFix(module: Module,
                                                sdk: Sdk,

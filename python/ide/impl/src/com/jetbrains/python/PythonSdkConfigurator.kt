@@ -30,7 +30,6 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReady
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingExtension
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import kotlin.streams.asSequence
 
 /**
  * @author vlan
@@ -127,18 +126,6 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
       indicator.text = ""
       setSdkUsingExtension(module, extension) { extension.createAndAddSdkForConfigurator(module) }
       return
-    }
-
-    PySdkProvider.EP_NAME.extensions().asSequence().forEach { extension ->
-      indicator.text = extension.configureSdkProgressText
-      LOGGER.debug(extension.configureSdkProgressText)
-      guardIndicator(indicator) { extension.configureSdk(project, module, existingSdks) }?.let {
-        runInEdt {
-          SdkConfigurationUtil.addSdk(it)
-          setReadyToUseSdk(project, module, it)
-        }
-        return
-      }
     }
 
     if (indicator.isCanceled) return
