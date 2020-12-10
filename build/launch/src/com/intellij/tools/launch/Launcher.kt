@@ -14,13 +14,13 @@ object Launcher {
              modules: ModulesProvider,
              options: LauncherOptions): Process {
     val classPathBuilder = ClassPathBuilder(paths, modules)
-    val classPathFile = classPathBuilder.build()
+    val classPathArgFile = classPathBuilder.build()
 
-    return launch(paths, classPathFile, options)
+    return launch(paths, classPathArgFile, options)
   }
 
   fun launch(paths: PathsProvider,
-             classPathFile: File,
+             classPathArgFile: File,
              options: LauncherOptions): Process {
 
     // We should create config folder to avoid import settings dialog.
@@ -29,7 +29,6 @@ object Launcher {
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
       "-ea",
-      "-classpath", classPathFile.canonicalPath,
       "-Dapple.laf.useScreenMenuBar=true",
       "-Dfus.internal.test.mode=true",
       "-Djb.privacy.policy.text=\"<!--999.999-->\"",
@@ -76,6 +75,7 @@ object Launcher {
       cmd.add(arg.trim('"'))
     }
 
+    cmd.add("\"@${classPathArgFile.canonicalPath}\"")
     cmd.add("com.intellij.idea.Main")
 
     for (arg in options.ideaArguments) {

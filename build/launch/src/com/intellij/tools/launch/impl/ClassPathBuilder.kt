@@ -13,12 +13,22 @@ import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.util.*
-import java.util.jar.Manifest
 
-internal class ClassPathBuilder(private val paths: PathsProvider, private val modules: ModulesProvider) {
+class ClassPathBuilder(private val paths: PathsProvider, private val modules: ModulesProvider) {
+
+  companion object {
+    fun createClassPathArgFile(paths: PathsProvider, classpath: List<String>): File {
+      val launcherFolder = paths.launcherFolder
+      if (!launcherFolder.exists()) {
+        launcherFolder.mkdirs()
+      }
+
+      val classPathArgFile = launcherFolder.resolve("RiderLauncher_${UUID.randomUUID()}.classpath")
+      CommandLineWrapperUtil.writeArgumentsFile(classPathArgFile, listOf("-classpath", classpath.distinct().joinToString(File.pathSeparator)), Charsets.UTF_8)
+      return classPathArgFile
+    }
+  }
 
   private val model = JpsElementFactory.getInstance().createModel() ?: throw Exception("Couldn't create JpsModel")
 
@@ -56,10 +66,10 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
     modulesList.addAll(modules.additionalModules)
     modulesList.add("intellij.configurationScript")
 
-    return createClassPathFileForModules(modulesList)
+    return createClassPathArgFileForModules(modulesList)
   }
 
-  private fun createClassPathFileForModules(modulesList: List<String>): File {
+  private fun createClassPathArgFileForModules(modulesList: List<String>): File {
     val classpath = mutableListOf<String>()
     for (moduleName in modulesList) {
       val module = model.project.modules.singleOrNull { it.name == moduleName }
@@ -76,17 +86,7 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
     //}
     //println("-- END")
 
-    val tempClasspathJarFile = CommandLineWrapperUtil.createClasspathJarFile(Manifest(), classpath.distinct())
-    val launcherFolder = paths.launcherFolder
-    if (!launcherFolder.exists()) {
-      launcherFolder.mkdirs()
-    }
-
-    // Important note: classpath file should start from CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX
-    val launcherClasspathPrefix = CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX
-    val launcherClasspathFile = launcherFolder.resolve("${launcherClasspathPrefix}Launcher${UUID.randomUUID()}.jar")
-    Files.move(tempClasspathJarFile.toPath(), launcherClasspathFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-    return launcherClasspathFile
+    return createClassPathArgFile(paths, classpath)
   }
 
   private fun getClasspathForModule(module: JpsModule): List<String> {
