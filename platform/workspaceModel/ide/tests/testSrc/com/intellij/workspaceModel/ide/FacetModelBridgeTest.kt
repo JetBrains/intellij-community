@@ -20,12 +20,15 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.AssertionFailedError
 import org.junit.Assert.*
@@ -128,5 +131,21 @@ class FacetModelBridgeTest {
       }
     }
     assertEquals("bar", facet.configuration.data)
+  }
+
+  @Test
+  fun `getting module facets after module rename`() {
+    val module = projectModel.createModule()
+    val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("foo"))
+
+    val diff = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
+    val modifiableModuleModel = (ModuleManager.getInstance(projectModel.project) as ModuleManagerComponentBridge).getModifiableModel(diff)
+    val modifiableFacetModel = (FacetManager.getInstance(module) as FacetManagerBridge).createModifiableModel(diff)
+
+    var existingFacet = assertOneElement(modifiableFacetModel.allFacets)
+    assertEquals(facet.name, existingFacet.name)
+    modifiableModuleModel.renameModule(module, "newModuleName")
+    existingFacet = assertOneElement(modifiableFacetModel.allFacets)
+    assertEquals(facet.name, existingFacet.name)
   }
 }
