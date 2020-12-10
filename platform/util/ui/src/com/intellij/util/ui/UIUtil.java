@@ -105,7 +105,7 @@ public final class UIUtil {
       return;
     }
 
-    JBInsets topWindowInset = JBUI.insetsTop(24);
+    JBInsets topWindowInset =  JBUI.insetsTop("small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24);
     rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
     AbstractBorder customDecorationBorder = new AbstractBorder() {
       @Override
