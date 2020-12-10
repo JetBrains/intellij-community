@@ -5,12 +5,16 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Set;
 
 public abstract class ScratchFileService {
   public enum Option {existing_only, create_if_missing, create_new_always}
@@ -49,5 +53,18 @@ public abstract class ScratchFileService {
   @ApiStatus.ScheduledForRemoval
   public static boolean isInScratchRoot(@Nullable VirtualFile file) {
     return findRootType(file) != null;
+  }
+
+
+  @NotNull
+  public static Set<VirtualFile> getAllRootPaths() {
+    ScratchFileService instance = getInstance();
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    Set<VirtualFile> result = new ObjectOpenHashSet<>();
+    for (RootType rootType : RootType.getAllRootTypes()) {
+      if (rootType.isHidden()) continue;
+      ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(instance.getRootPath(rootType)));
+    }
+    return result;
   }
 }
