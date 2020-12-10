@@ -4,6 +4,7 @@ package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewListItem
 import circlet.platform.client.KCircletClient
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.space.messages.SpaceBundle
@@ -19,7 +20,8 @@ import libraries.coroutines.extra.Lifetime
 import runtime.reactive.MutableProperty
 import runtime.reactive.SequentialLifetimes
 
-internal class SpaceReviewDetails(project: Project,
+internal class SpaceReviewDetails(parentDisposable: Disposable,
+                                  project: Project,
                                   lifetime: Lifetime,
                                   private val client: KCircletClient,
                                   private val spaceProjectInfo: SpaceProjectInfo,
@@ -32,13 +34,18 @@ internal class SpaceReviewDetails(project: Project,
   }
 
   init {
+    var uiDisposable: Disposable? = null
+
     currentReview.forEach(lifetime) { reviewListItem: CodeReviewListItem? ->
       view.removeAll()
+
+      uiDisposable?.let { Disposer.dispose(it) }
       if (reviewListItem == null) return@forEach
       val detailsLifetime = sequentialLifetimes.next()
       val detailsVm = createReviewDetailsVm(detailsLifetime, project, client, spaceProjectInfo, repoInfo, reviewListItem)
 
-      val uiDisposable = Disposer.newDisposable()
+      uiDisposable = Disposer.newDisposable()
+      Disposer.register(parentDisposable, uiDisposable as Disposable)
 
       val detailsTabInfo = TabInfo(SpaceReviewInfoTabPanel(detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.details")
@@ -46,7 +53,7 @@ internal class SpaceReviewDetails(project: Project,
           currentReview.value = null
         }
       }
-      val commitsTabInfo = TabInfo(SpaceReviewCommitListPanel(detailsVm)).apply {
+      val commitsTabInfo = TabInfo(SpaceReviewCommitListPanel(parentDisposable,detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.commits")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null
@@ -59,7 +66,7 @@ internal class SpaceReviewDetails(project: Project,
           else SpaceBundle.message("review.tab.name.commits.count", it.size)
       }
 
-      val tabs = object : SingleHeightTabs(project, uiDisposable) {
+      val tabs = object : SingleHeightTabs(project, uiDisposable as Disposable) {
         override fun adjust(each: TabInfo?) {}
       }.apply {
         setDataProvider { dataId ->

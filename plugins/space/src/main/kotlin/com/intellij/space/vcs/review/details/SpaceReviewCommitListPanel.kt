@@ -2,12 +2,12 @@
 package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewRecord
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.IdeBorderFactory
@@ -22,11 +22,12 @@ import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import javax.swing.JComponent
 
-internal class SpaceReviewCommitListPanel(reviewDetailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
+internal class SpaceReviewCommitListPanel(parentDisposable: Disposable,
+                                          reviewDetailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
   init {
     val commitsBrowser = OnePixelSplitter(true, "space.review.commit.list", 0.4f).apply {
       val selectedCommitDetails = OnePixelSplitter(true, "space.review.commit.list.details", 0.3f).apply {
-        val commitDetailsPanel = createCommitsDetailsPanel(reviewDetailsVm.ideaProject, reviewDetailsVm.changesVm)
+        val commitDetailsPanel = createCommitsDetailsPanel(parentDisposable,reviewDetailsVm.ideaProject, reviewDetailsVm.changesVm)
         val tree = SpaceReviewChangesTreeFactory.create(
           reviewDetailsVm.ideaProject,
           this,
@@ -49,11 +50,9 @@ internal class SpaceReviewCommitListPanel(reviewDetailsVm: SpaceReviewDetailsVm<
     addToCenter(commitsBrowser)
   }
 
-  private fun createCommitsDetailsPanel(project: Project, changesVm: SpaceReviewChangesVm): JComponent {
-    val disposable = Disposer.newDisposable()
+  private fun createCommitsDetailsPanel(parentDisposable: Disposable, project: Project, changesVm: SpaceReviewChangesVm): JComponent {
     val lifetime = changesVm.lifetime
-    lifetime.add { Disposer.dispose(disposable) }
-    val commitListPanel: CommitDetailsListPanel<CommitDetailsPanel> = object : CommitDetailsListPanel<CommitDetailsPanel>(disposable) {
+    val commitListPanel: CommitDetailsListPanel<CommitDetailsPanel> = object : CommitDetailsListPanel<CommitDetailsPanel>(parentDisposable) {
       init {
         border = JBUI.Borders.empty()
       }

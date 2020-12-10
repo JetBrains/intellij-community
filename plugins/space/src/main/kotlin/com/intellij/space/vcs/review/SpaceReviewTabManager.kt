@@ -88,7 +88,7 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
       setDisposer(disposable)
       icon = SpaceIcons.Main
 
-      component = ReviewLoginComponent(lifetime, project, spaceProjectInfo, projectRepos).view
+      component = ReviewLoginComponent(disposable, lifetime, project, spaceProjectInfo, projectRepos).view
       description = spaceProjectInfo.key.key // NON-NLS
     }
   }

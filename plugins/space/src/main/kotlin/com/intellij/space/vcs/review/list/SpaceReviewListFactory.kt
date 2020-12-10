@@ -4,10 +4,10 @@ package com.intellij.space.vcs.review.list
 import circlet.code.api.CodeReviewListItem
 import circlet.platform.client.BatchResult
 import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.progress.util.ProgressWindow
-import com.intellij.openapi.util.Disposer
 import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.bindScroll
 import com.intellij.space.ui.toLoadable
@@ -25,7 +25,7 @@ import javax.swing.JComponent
 import javax.swing.JScrollPane
 
 object SpaceReviewListFactory {
-  fun create(listVm: SpaceReviewsListVm): JComponent {
+  fun create(parentDisposable: Disposable, listVm: SpaceReviewsListVm): JComponent {
     val listModel: CollectionListModel<CodeReviewListItem> = CollectionListModel()
 
     val reviewsList: SpaceReviewsList = SpaceReviewsList(listModel, listVm.lifetime).apply {
@@ -56,14 +56,9 @@ object SpaceReviewListFactory {
       if (SpaceReviewDataKeys.REVIEWS_LIST_VM.`is`(dataId)) listVm else null
     }
 
-    val disposable = Disposer.newDisposable()
-    listVm.lifetime.add {
-      Disposer.dispose(disposable)
-    }
-
     val progressStripe = ProgressStripe(
       scrollableList,
-      disposable,
+      parentDisposable,
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
     )
 

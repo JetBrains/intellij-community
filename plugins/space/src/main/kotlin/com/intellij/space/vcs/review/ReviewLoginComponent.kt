@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
@@ -13,7 +14,8 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import libraries.coroutines.extra.Lifetime
 
-internal class ReviewLoginComponent(lifetime: Lifetime,
+internal class ReviewLoginComponent(parentDisposable: Disposable,
+                                    lifetime: Lifetime,
                                     project: Project,
                                     spaceProjectInfo: SpaceProjectInfo,
                                     spaceRepos: Set<SpaceRepoInfo>) {
@@ -41,7 +43,8 @@ internal class ReviewLoginComponent(lifetime: Lifetime,
                                                    spaceProjectInfo,
                                                    workspace.me)
 
-        val reviewComponent = SpaceReviewComponent(project,
+        val reviewComponent = SpaceReviewComponent(parentDisposable,
+                                                   project,
                                                    lifetime,
                                                    spaceProjectInfo,
                                                    spaceRepos,

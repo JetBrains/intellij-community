@@ -2,6 +2,7 @@
 package com.intellij.space.vcs.review
 
 import circlet.platform.client.KCircletClient
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.space.vcs.SpaceProjectInfo
@@ -15,7 +16,8 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.coroutines.extra.Lifetime
 import javax.swing.JComponent
 
-internal class SpaceReviewComponent(project: Project,
+internal class SpaceReviewComponent(parentDisposable: Disposable,
+                                    project: Project,
                                     lifetime: Lifetime,
                                     spaceProjectInfo: SpaceProjectInfo,
                                     repoInfo: Set<SpaceRepoInfo>,
@@ -24,6 +26,7 @@ internal class SpaceReviewComponent(project: Project,
                                     private val selectedReviewVm: SpaceSelectedReviewVmImpl
 ) : Wrapper(), DataProvider {
   private val detailsView: SpaceReviewDetails = SpaceReviewDetails(
+    parentDisposable,
     project,
     lifetime,
     client,
@@ -34,7 +37,7 @@ internal class SpaceReviewComponent(project: Project,
 
   init {
     val filtersPanel = SpaceReviewListFiltersPanel(listVm)
-    val reviewsList: JComponent = SpaceReviewListFactory.create(listVm)
+    val reviewsList: JComponent = SpaceReviewListFactory.create(parentDisposable, listVm)
 
     val reviewsListPanel = BorderLayoutPanel()
       .addToTop(filtersPanel.view)
