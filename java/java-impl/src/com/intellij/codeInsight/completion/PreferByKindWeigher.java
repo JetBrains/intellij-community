@@ -341,7 +341,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (myCompletionType == CompletionType.SMART) {
         boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? ThreeState.YES : ThreeState.UNSURE;
-      } else if (Arrays.stream(myExpectedTypes).anyMatch(info -> PsiType.BOOLEAN.isAssignableFrom(info.getDefaultType())) &&
+      } else if (ContainerUtil.exists(myExpectedTypes, info -> PsiType.BOOLEAN.isAssignableFrom(info.getDefaultType())) &&
                  !(myPosition.getParent() instanceof PsiIfStatement)) {
         return ThreeState.YES;
       }
@@ -350,7 +350,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       return ThreeState.NO;
     }
     if (PsiKeyword.NULL.equals(keyword) && isComparisonRhs(myPosition)) {
-      boolean expectsNotNull = Arrays.stream(myExpectedTypes).anyMatch(PreferByKindWeigher::isEnumClass);
+      boolean expectsNotNull = ContainerUtil.exists(myExpectedTypes, PreferByKindWeigher::isEnumClass);
       return expectsNotNull ? ThreeState.NO : ThreeState.YES;
     }
     if (JavaKeywordCompletion.PRIMITIVE_TYPES.contains(keyword) || PsiKeyword.VOID.equals(keyword)) {
