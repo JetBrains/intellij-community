@@ -6,6 +6,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.flavor.FileIndexingFlavorProvider;
 import com.intellij.util.indexing.flavor.HashBuilder;
@@ -27,7 +28,7 @@ public final class IndexedHashesSupport {
   public static final int HASH_SIZE_IN_BYTES = INDEXED_FILE_CONTENT_HASHER.bits() / Byte.SIZE;
 
   public static int getVersion() {
-    return 3;
+    return 3 + (SKIP_CONTENT_DEPENDENT_CHARSETS ? 1 : 0);
   }
 
   public static byte @NotNull [] getOrInitIndexedHash(@NotNull FileContentImpl content) {
@@ -62,6 +63,15 @@ public final class IndexedHashesSupport {
                           ? ((ForcedCharset)charsetHint).getCharset()
                           : getCharsetFromIndexedFile(indexedFile);
         hasher.putString(charset.name(), StandardCharsets.UTF_8);
+      }
+      else {
+        Charset charset = EncodingRegistry.getInstance().getEncoding(indexedFile.getFile(), true);
+        if (charset != null) {
+          hasher.putString(charset.name(), StandardCharsets.UTF_8);
+        }
+        else {
+          // do nothing charset is not required and depends only on content
+        }
       }
     }
 

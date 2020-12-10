@@ -18,7 +18,7 @@ import java.util.Arrays;
 @ApiStatus.Internal
 public final class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[]> {
 
-  private static final int SIGNATURE_LENGTH = 20;
+  private static final int SIGNATURE_LENGTH = 20; // in bytes
 
   public ContentHashEnumerator(@NotNull Path contentsHashesFile) throws IOException {
     this(contentsHashesFile, null);
