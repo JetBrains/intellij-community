@@ -16,10 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -40,7 +37,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +48,6 @@ import java.util.*;
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable, Cloneable {
   private static final Logger LOG = Logger.getInstance(PsiFileImpl.class);
   static final @NonNls String STUB_PSI_MISMATCH = "stub-psi mismatch";
-  private static final AtomicFieldUpdater<PsiFileImpl, FileTrees> ourTreeUpdater =
-    AtomicFieldUpdater.forFieldOfType(PsiFileImpl.class, FileTrees.class);
 
   private IElementType myElementType;
   protected IElementType myContentElementType;
@@ -145,21 +139,21 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     if (!myPossiblyInvalidated) return true;
-    
+
     /*
     Originally, all PSI was invalidated on root change, to avoid UI freeze (IDEA-172762),
     but that has led to too many PIEAEs (like IDEA-191185, IDEA-188292, IDEA-184186, EA-114990).
-    
+
     Ideally those clients should all be converted to smart pointers, but that proved to be quite hard to do, especially without breaking API.
     And they mostly worked before those batch invalidations.
-    
+
     So now we have a smarter way of dealing with this issue. On root change, we mark
     PSI as "potentially invalid", and then, when someone calls "isValid"
     (hopefully not for all cached PSI at once, and hopefully in a background thread),
-    we check if the old PSI is equivalent to the one that would be re-created in its place. 
+    we check if the old PSI is equivalent to the one that would be re-created in its place.
     If yes, we return valid. If no, we invalidate the old PSI forever and return the new one.
     */
-    
+
     // synchronized by read-write action
     if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
       myPossiblyInvalidated = false;
@@ -255,7 +249,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public StubbedSpine getStubbedSpine() {
     StubTree tree = getGreenStubTree();
     if (tree != null) return tree.getSpine();
-    
+
     AstSpine astSpine = calcTreeElement().getStubbedSpine();
     if (!myTrees.useSpineRefs()) {
       synchronized (myPsiLock) {
@@ -300,7 +294,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final ASTNode tree = derefTreeElement();
     if (!isValid()) {
       ProgressManager.checkCanceled();
-      
+
       // even invalid PSI can calculate its text by concatenating its children
       if (tree != null) return tree.getText();
 
@@ -686,10 +680,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void updateTrees(@NotNull FileTrees trees) {
-    if (!ourTreeUpdater.compareAndSet(this, myTrees, trees)) {
-      LOG.error("Non-atomic trees update");
-      myTrees = trees;
-    }
+    myTrees = trees;
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
