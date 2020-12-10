@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.LastComputedIconCache;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,7 +42,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (element == null) return null;
 
     Icon icon = computeIconNow(element, request.myFlags);
-    LastComputedIcon.put(element, icon, request.myFlags);
+    LastComputedIconCache.put(element, icon, request.myFlags);
     return icon;
   };
 
@@ -69,7 +70,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!psiElement.isValid()) return null;
 
     if (Registry.is("psi.deferIconLoading", true)) {
-      Icon baseIcon = LastComputedIcon.get(psiElement, flags);
+      Icon baseIcon = LastComputedIconCache.get(psiElement, flags);
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
       }

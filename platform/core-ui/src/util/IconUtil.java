@@ -40,6 +40,7 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
  */
 @ApiStatus.NonExtendable
 public class IconUtil {
+  public static final Key<Integer> ICON_FLAG_IGNORE_MASK = new Key<>("ICON_FLAG_IGNORE_MASK");
   private static final Key<Boolean> PROJECT_WAS_EVER_INITIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
 
   private static boolean wasEverInitialized(@NotNull Project project) {
@@ -172,7 +173,7 @@ public class IconUtil {
       icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
     }
 
-    Iconable.LastComputedIcon.put(file, icon, flags);
+    LastComputedIconCache.put(file, icon, flags);
 
     return icon;
   }
@@ -180,8 +181,8 @@ public class IconUtil {
   @Iconable.IconFlags
   private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
     UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
-    int fileTypeFlagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
-    int flagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
+    int fileTypeFlagIgnoreMask = ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
+    int flagIgnoreMask = ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
     //noinspection MagicConstant
     return flags & ~flagIgnoreMask;
   }
@@ -191,7 +192,7 @@ public class IconUtil {
    * Use {@link #computeFileIcon} where possible (e.g. in background threads) to get a non-deferred icon.
    */
   public static @NotNull Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
-    Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
+    Icon lastIcon = LastComputedIconCache.get(file, flags);
     Icon base = lastIcon != null ? lastIcon : computeBaseFileIcon(file);
     return IconManager.getInstance().createDeferredIcon(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }

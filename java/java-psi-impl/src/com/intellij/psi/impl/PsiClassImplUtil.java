@@ -8,10 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -237,7 +234,7 @@ public final class PsiClassImplUtil {
     RowIcon baseIcon =
       IconManager.getInstance().createLayeredIcon(r.psiClass, symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
     Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
-    Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
+    LastComputedIconCache.put(r.psiClass, result, r.flags);
     return result;
   };
 
@@ -246,7 +243,7 @@ public final class PsiClassImplUtil {
   }
 
   public static Icon getClassIcon(int flags, @NotNull PsiClass aClass, @Nullable Icon symbolIcon) {
-    Icon base = Iconable.LastComputedIcon.get(aClass, flags);
+    Icon base = LastComputedIconCache.get(aClass, flags);
     if (base == null) {
       if (symbolIcon == null) {
         symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
