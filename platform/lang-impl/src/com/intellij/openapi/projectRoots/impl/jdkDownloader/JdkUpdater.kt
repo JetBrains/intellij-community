@@ -62,7 +62,7 @@ internal class JdkUpdaterStartup : StartupActivity.Background {
 private val LOG = logger<JdkUpdatesCollector>()
 
 @Service // project
-private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue()
+private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue(7_000)
 
 @Service
 internal class JdkUpdatesCollector(
