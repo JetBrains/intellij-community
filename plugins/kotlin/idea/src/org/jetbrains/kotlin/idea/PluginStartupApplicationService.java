@@ -38,7 +38,6 @@ public class PluginStartupApplicationService implements Disposable {
             try {
                 Path flagFile = Files.createTempFile("kotlin-idea-", "-is-running");
                 File file = flagFile.toFile();
-                file.deleteOnExit();
                 Disposer.register(this, new Disposable() {
                     @Override
                     public void dispose() {
