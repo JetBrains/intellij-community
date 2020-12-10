@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -52,6 +53,7 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
   private fun attachGradleProjectAndRefresh(settings: ExternalProjectSettings, project: Project) {
     val externalProjectPath = settings.externalProjectPath
     ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
+    if (Registry.`is`("external.system.auto.import.disabled")) return
     ExternalSystemUtil.refreshProject(
       externalProjectPath,
       ImportSpecBuilder(project, SYSTEM_ID)
