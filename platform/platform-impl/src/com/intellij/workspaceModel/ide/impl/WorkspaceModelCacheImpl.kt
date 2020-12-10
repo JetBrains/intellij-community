@@ -22,10 +22,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.EntityStorageSerializer
-import com.intellij.workspaceModel.storage.EntityTypesResolver
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -116,7 +113,10 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
   private fun saveCache(storage: WorkspaceEntityStorage) {
     val tmpFile = FileUtil.createTempFile(cacheFile.parent.toFile(), "cache", ".tmp")
     try {
-      tmpFile.outputStream().use { serializer.serializeCache(it, storage) }
+      val serializationResult = tmpFile.outputStream().use { serializer.serializeCache(it, storage) }
+      if (serializationResult is SerializationResult.Fail<*>) {
+        LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
+      }
 
       try {
         Files.move(tmpFile.toPath(), cacheFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
