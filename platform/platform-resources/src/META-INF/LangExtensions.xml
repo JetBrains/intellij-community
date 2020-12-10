@@ -739,7 +739,6 @@
 
     <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator" order="first"
                                   id="PlatformProjectConfigurator"/>
-    <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectViewOpener"/>
 
     <fileIconProvider implementation="com.intellij.openapi.updateSettings.impl.WhatsNewFileIconProvider"/>
     <fileIconProvider implementation="com.intellij.ide.FileIconPatcherImpl"/>
