@@ -214,30 +214,34 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
   private static String getCommandText(@NotNull Project project, @NotNull Editor editor) {
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
     Document document = editor.getDocument();
-    if (selectedRange.isEmpty()) {
-      int line = document.getLineNumber(selectedRange.getStartOffset());
-      selectedRange = TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    if (!selectedRange.isEmpty()) {
+      return document.getText(selectedRange);
+    }
+    int line = document.getLineNumber(selectedRange.getStartOffset());
+    int lineStart = document.getLineStartOffset(line);
+    int lineEnd = document.getLineEndOffset(line);
 
-      // try detect a non-trivial composite PSI element if there's a PSI file
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file != null && file.getFirstChild() != null && file.getFirstChild() != file.getLastChild()) {
-        PsiElement e1 = file.findElementAt(selectedRange.getStartOffset());
-        PsiElement e2 = file.findElementAt(selectedRange.getEndOffset());
-        while (e1 != e2 && (e1 instanceof PsiWhiteSpace || e1 != null && StringUtil.isEmptyOrSpaces(e1.getText()))) {
-          e1 = ObjectUtils.chooseNotNull(e1.getNextSibling(), PsiTreeUtil.getDeepestFirst(e1.getParent()));
-        }
-        while (e1 != e2 && (e2 instanceof PsiWhiteSpace || e2 != null && StringUtil.isEmptyOrSpaces(e2.getText()))) {
-          e2 = ObjectUtils.chooseNotNull(e2.getPrevSibling(), PsiTreeUtil.getDeepestLast(e2.getParent()));
-        }
-        if (e1 instanceof LeafPsiElement) e1 = e1.getParent();
-        if (e2 instanceof LeafPsiElement) e2 = e2.getParent();
-        PsiElement parent = e1 == null ? e2 : e2 == null ? e1 : PsiTreeUtil.findCommonParent(e1, e2);
-        if (parent != null && parent != file) {
-          selectedRange = parent.getTextRange();
-        }
+    // try detect a non-trivial composite PSI element if there's a PSI file
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file != null && file.getFirstChild() != null && file.getFirstChild() != file.getLastChild()) {
+      PsiElement e1 = file.findElementAt(lineStart);
+      PsiElement e2 = file.findElementAt(lineEnd > lineStart ? lineEnd - 1 : lineEnd);
+      while (e1 != e2 && (e1 instanceof PsiWhiteSpace || e1 != null && StringUtil.isEmptyOrSpaces(e1.getText()))) {
+        e1 = ObjectUtils.chooseNotNull(e1.getNextSibling(), PsiTreeUtil.getDeepestFirst(e1.getParent()));
+      }
+      while (e1 != e2 && (e2 instanceof PsiWhiteSpace || e2 != null && StringUtil.isEmptyOrSpaces(e2.getText()))) {
+        e2 = ObjectUtils.chooseNotNull(e2.getPrevSibling(), PsiTreeUtil.getDeepestLast(e2.getParent()));
+      }
+      if (e1 instanceof LeafPsiElement) e1 = e1.getParent();
+      if (e2 instanceof LeafPsiElement) e2 = e2.getParent();
+      PsiElement parent = e1 != null && e2 != null ? PsiTreeUtil.findCommonParent(e1, e2) : ObjectUtils.chooseNotNull(e1, e2);
+      if (parent != null && parent != file) {
+        TextRange combined = parent.getTextRange().union(TextRange.create(lineStart, lineEnd));
+        editor.getSelectionModel().setSelection(combined.getStartOffset(), combined.getEndOffset());
+        return document.getText(combined);
       }
     }
-    return document.getText(selectedRange);
+    return document.getText(TextRange.create(lineStart, lineEnd));
   }
 
   private static void selectContent(RunContentDescriptor descriptor) {
