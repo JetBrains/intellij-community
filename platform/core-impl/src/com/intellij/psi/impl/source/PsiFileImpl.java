@@ -260,10 +260,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Nullable
-  public IStubFileElementType getElementTypeForStubBuilder() {
+  public IStubFileElementType<?> getElementTypeForStubBuilder() {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
     IFileElementType type = definition == null ? null : definition.getFileNodeType();
-    return type instanceof IStubFileElementType ? (IStubFileElementType)type : null;
+    return type instanceof IStubFileElementType ? (IStubFileElementType<?>)type : null;
   }
 
   @NotNull
@@ -376,7 +376,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final FileElement treeClone = (FileElement)calcTreeElement().clone();
       clone.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
       treeClone.setPsi(clone);
-    } else {
+    }
+    else {
       clone.setTreeElementPointer(null);
     }
 
@@ -530,20 +531,24 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return CharArrayUtil.fromSequence(getViewProvider().getContents());
   }
 
-  @SuppressWarnings("unchecked")
   public <T> T @NotNull [] findChildrenByClass(Class<T> aClass) {
     List<T> result = new ArrayList<>();
     for (PsiElement child : getChildren()) {
-      if (aClass.isInstance(child)) result.add((T)child);
+      if (aClass.isInstance(child)) {
+        //noinspection unchecked
+        result.add((T)child);
+      }
     }
     return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   public <T> T findChildByClass(Class<T> aClass) {
     for (PsiElement child : getChildren()) {
-      if (aClass.isInstance(child)) return (T)child;
+      if (aClass.isInstance(child)) {
+        //noinspection unchecked
+        return (T)child;
+      }
     }
     return null;
   }
@@ -597,7 +602,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    * @see #getStubTree()
    */
   @Nullable
-  public final StubElement getGreenStub() {
+  public final StubElement<?> getGreenStub() {
     StubTree stubHolder = getGreenStubTree();
     return stubHolder != null ? stubHolder.getRoot() : null;
   }
@@ -621,7 +626,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     final VirtualFile vFile = getVirtualFile();
 
-    ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
+    ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return null;
     final FileViewProvider viewProvider = getViewProvider();
     final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
@@ -632,14 +637,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      PsiFileStubImpl baseRoot = (PsiFileStubImpl)((StubTree)tree).getRoot();
+      PsiFileStubImpl<?> baseRoot = (PsiFileStubImpl<?>)((StubTree)tree).getRoot();
       if (!baseRoot.rootsAreSet()) {
         LOG.error("Stub roots must be set when stub tree was read or built with StubTreeLoader");
         return null;
       }
-      final PsiFileStub[] stubRoots = baseRoot.getStubRoots();
+      PsiFileStub<?>[] stubRoots = baseRoot.getStubRoots();
       if (stubRoots.length != roots.size()) {
-        final Function<PsiFileStub, String> stubToString = stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getType().getLanguage() + "}";
+        Function<PsiFileStub<?>, String> stubToString = stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getType().getLanguage() + "}";
         LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
                   StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
         rebuildStub();
@@ -663,9 +668,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @NotNull
-  private StubTree setStubTree(PsiFileStub root) {
+  private StubTree setStubTree(PsiFileStub<?> root) {
     //noinspection unchecked
-    ((StubBase)root).setPsi(this);
+    ((StubBase<PsiFile>)root).setPsi(this);
     StubTree stubTree = new StubTree(root);
     FileElement fileElement = getTreeElement();
     stubTree.setDebugInfo("created in getStubTree(), with AST = " + (fileElement != null));
@@ -954,7 +959,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       if (tree == null) {
         assertReadAccessAllowed();
-        IStubFileElementType contentElementType = getElementTypeForStubBuilder();
+        IStubFileElementType<?> contentElementType = getElementTypeForStubBuilder();
         if (contentElementType == null) {
           VirtualFile vFile = getVirtualFile();
           String message = "ContentElementType: " + getContentElementType() +
@@ -967,12 +972,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           throw new AssertionError(message);
         }
 
-        StubElement currentStubTree = contentElementType.getBuilder().buildStubTree(this);
+        StubElement<?> currentStubTree = contentElementType.getBuilder().buildStubTree(this);
         if (currentStubTree == null) {
           throw new AssertionError("Stub tree wasn't built for " + contentElementType + "; file: " + this);
         }
 
-        tree = new StubTree((PsiFileStub)currentStubTree);
+        tree = new StubTree((PsiFileStub<?>)currentStubTree);
         tree.setDebugInfo("created in calcStubTree");
         updateTrees(myTrees.withStub(tree, fileElement));
       }
@@ -1005,7 +1010,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     putInfo(this, info);
   }
 
-  public static void putInfo(@NotNull PsiFile psiFile, @NotNull Map<String, String> info) {
+  public static void putInfo(@NotNull PsiFile psiFile, @NotNull Map<? super String, ? super String> info) {
     info.put("fileName", psiFile.getName());
     info.put("fileType", psiFile.getFileType().toString());
   }
