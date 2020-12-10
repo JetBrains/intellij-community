@@ -15,10 +15,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * <p>Use it to create a collector which records IDE/project state.</p>
+ * <p>Use it to create a collector which records IDE/project state or user/IDE internal actions.</p>
+ * <br/>
+ * For more information see <i>fus-collectors.md</i>
  *
  * @see ApplicationUsagesCollector
  * @see ProjectUsagesCollector
+ * @see CounterUsagesCollector
  */
 @ApiStatus.Internal
 public abstract class FeatureUsagesCollector {

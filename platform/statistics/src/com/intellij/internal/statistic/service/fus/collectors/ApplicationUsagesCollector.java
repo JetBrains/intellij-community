@@ -14,34 +14,35 @@ import java.util.Set;
 
 /**
  * <p>Use it to create a collector which records IDE state.</p>
- *
+ * <br/>
  * To implement a new collector:
  * <ol>
- *   <li>Inherit the class, implement {@link ApplicationUsagesCollector#getMetrics()} and register collector in plugin.xml.
- *   See "fus-collectors.md" for more details.</li>
+ *   <li>Inherit the class, implement {@link ApplicationUsagesCollector#getGroup()} and {@link ApplicationUsagesCollector#getMetrics()} and register collector in plugin.xml.
+ *   See <i>fus-collectors.md</i> for more details.</li>
  *   <li>Implement custom validation rules if necessary. For more information see {@link SensitiveDataValidator}.</li>
- *   <li>If new group is implemented in a platform or a plugin bundled with IntelliJ Ultimate, YT issue will be created automatically</li>
+ *   <li>If new group is implemented in a platform or a plugin built with IntelliJ Ultimate, YT issue will be created automatically</li>
  *   <li>Otherwise, create a YT issue in FUS project with group data scheme and descriptions to register it on the statistics metadata server</li>
  * </ol>
- *
+ * <br/>
  * To test collector:
  * <ol>
  *  <li>
- *    If group is not registered on the server, add it to events test scheme with "Add Group to Events Test Scheme" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction}
+ *    Open "Statistics Event Log" toolwindow.
  *  </li>
  *  <li>
- *    Open toolwindow with event logs with "Show Statistics Event Log" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.OpenEventLogFileAction}
+ *    Add group to events test scheme with "Add Group to Events Test Scheme" action.<br/>
+ *    {@link com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction}
  *  </li>
  *  <li>
  *    Record all state collectors with "Record State Collectors to Event Log" action.<br/>
  *    {@link com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction}
  *  </li>
  * </ol>
+ * <br/>
+ * For more information see <i>fus-collectors.md</i>
  *
  * @see ProjectUsagesCollector
- * @see FUCounterUsageLogger
+ * @see CounterUsagesCollector
  */
 @ApiStatus.Internal
 public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector {

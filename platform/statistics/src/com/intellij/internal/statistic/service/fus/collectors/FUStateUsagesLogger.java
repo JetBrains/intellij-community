@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
  * <p><b>Don't</b> use it directly unless absolutely necessary.
  * Implement {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector} instead.</p>
  *
- * <p>To record IDE events (e.g. invoked action, opened dialog) use {@link FUCounterUsageLogger}</p>
+ * <p>To record IDE events (e.g. invoked action, opened dialog) use {@link CounterUsagesCollector}</p>
  */
 public final class FUStateUsagesLogger implements UsagesCollectorConsumer {
   private static final Logger LOG = Logger.getInstance(FUStateUsagesLogger.class);
