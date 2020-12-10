@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analyzer.ResolverForProject
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -49,9 +50,12 @@ private class ResolutionFacadeWithDebugInfo(
         }
     }
 
-    override fun analyzeWithAllCompilerChecks(elements: Collection<KtElement>): AnalysisResult {
+    override fun analyzeWithAllCompilerChecks(
+        elements: Collection<KtElement>,
+        callback: DiagnosticSink.DiagnosticsCallback?
+    ): AnalysisResult {
         return wrapExceptions({ ResolvingWhat(elements) }) {
-            delegate.analyzeWithAllCompilerChecks(elements)
+            delegate.analyzeWithAllCompilerChecks(elements, callback)
         }
     }
 
