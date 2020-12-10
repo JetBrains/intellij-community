@@ -29,5 +29,4 @@ compile the latter, and pack both together. **Note**: please make sure all archi
    - 'Plugins/x86-unicode/ShellLink.dll'
    - 'Plugins/x86-unicode/UAC.dll'
    - 'Plugins/x86-unicode/untgz.dll'
-   - 'Plugins/x86-unicode/WinShell.dll'
 1. Zip the 'NSIS' directory.

@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jdom.Element;
@@ -104,8 +103,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myDefaultLightLaf;
   private String myDefaultDarkLaf;
 
-  private final @Nullable String myWin32AppUserModelId;
-
   private static final @NonNls String ELEMENT_VERSION = "version";
   private static final @NonNls String ATTRIBUTE_MAJOR = "major";
   private static final @NonNls String ATTRIBUTE_MINOR = "minor";
@@ -184,8 +181,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final @NonNls String ELEMENT_DEFAULT_LAF = "default-laf";
   private static final @NonNls String ATTRIBUTE_LAF_LIGHT = "light";
   private static final @NonNls String ATTRIBUTE_LAF_DARK = "dark";
-
-  private static final @NonNls String PROPERTY_WIN_APPUSERMODELID = "idea.win.appUserModelId";
 
   static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
@@ -422,23 +417,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       if (laf != null) {
         myDefaultDarkLaf = laf.trim();
       }
-    }
-
-    // AppUserModelId entity exists only on Windows 7+
-    if (SystemInfo.isWin7OrNewer) {
-      final String propertyValue = System.getProperty(PROPERTY_WIN_APPUSERMODELID);
-      if (propertyValue == null) {
-        myWin32AppUserModelId = fallbackWin32AppUserModelId(this);
-      } else {
-        if (StringUtilRt.isEmptyOrSpaces(propertyValue)) {
-          myWin32AppUserModelId = fallbackWin32AppUserModelId(this);
-        }
-        else {
-          myWin32AppUserModelId = propertyValue;
-        }
-      }
-    } else {
-      myWin32AppUserModelId = null;
     }
   }
 
@@ -1003,32 +981,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @Nullable String getDefaultDarkLaf() {
     return myDefaultDarkLaf;
-  }
-
-  @Override
-  public @Nullable String getWin32AppUserModelId() {
-    return myWin32AppUserModelId;
-  }
-
-  private static @NotNull String fallbackWin32AppUserModelId(final @NotNull ApplicationInfoImpl instance) {
-    final String shortCompanyName = instance.getShortCompanyName().replace('.', '-');
-    final String productName = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition().replace('.', '-');
-    final String postfix = "Config" + PathManager.getConfigPath().hashCode();
-
-    final String result;
-    {
-      final String likelyResult = (shortCompanyName + "." + productName + "." + postfix).replaceAll("\\s+", "");
-      final int overflowSize = likelyResult.length() - 128; // AppUserModelId can have no more than 128 characters
-      if (overflowSize > 0) {
-        final String newPostfix = ".HASH" + likelyResult.hashCode();
-        // make smth like VeryLongCompanyNameOrProductName.HASH12345678
-        result = likelyResult.substring(0, likelyResult.length() - overflowSize - newPostfix.length()) + newPostfix;
-      } else {
-        result = likelyResult;
-      }
-    }
-
-    return result;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

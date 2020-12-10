@@ -5,7 +5,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
@@ -23,17 +22,12 @@ final class WinExeInstallerBuilder {
   private final AntBuilder ant
   private final WindowsDistributionCustomizer customizer
   private final @Nullable Path jreDir
-  private final @NotNull String appUserModelId
 
-  WinExeInstallerBuilder(BuildContext buildContext,
-                         WindowsDistributionCustomizer customizer,
-                         @Nullable Path jreDir,
-                         @NotNull String appUserModelId) {
+  WinExeInstallerBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, @Nullable Path jreDir) {
     this.buildContext = buildContext
     this.ant = buildContext.ant
     this.customizer = customizer
     this.jreDir = jreDir
-    this.appUserModelId = appUserModelId
   }
 
   private void generateInstallationConfigFileForSilentMode() {
@@ -210,8 +204,6 @@ final class WinExeInstallerBuilder {
 !define INSTALL_DIR_AND_SHORTCUT_NAME "${installDirAndShortcutName}"
 !define PRODUCT_WITH_VER "\${MUI_PRODUCT} $versionString"
 !define PRODUCT_PATHS_SELECTOR "${buildContext.systemSelector}"
-
-!define PRODUCT_APP_USER_MODEL_ID "${appUserModelId}"
 """)
   }
 }

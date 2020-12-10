@@ -482,18 +482,6 @@ done:
 FunctionEnd
 
 
-!macro CreateLauncherShortcut LNK_PATH TARGET_PATH
-  CreateShortcut `${LNK_PATH}` `${TARGET_PATH}` "" "" "" SW_SHOWNORMAL
-  WinShell::SetLnkAUMI `${LNK_PATH}` `${PRODUCT_APP_USER_MODEL_ID}`
-!macroend
-
-
-!macro DeleteLauncherShortcut LNK_PATH
-  WinShell::UninstShortcut `${LNK_PATH}`
-  Delete `${LNK_PATH}`
-!macroend
-
-
 Function downloadJre
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $downloadJRE" "State"
   ${If} $R0 == 1
@@ -1109,7 +1097,7 @@ user:
 back_up:
  ; back up old value of an association
   StrCpy $1 $R4
-  Call OMReadRegStr
+call OMReadRegStr
   StrCmp $3 "" skip_backup
   StrCmp $3 ${PRODUCT_PATHS_SELECTOR} skip_backup
   StrCpy $2 "backup_val"
@@ -1129,6 +1117,10 @@ skip_backup:
   StrCpy $2 ""
   StrCpy $3 "open"
   Call OMWriteRegStr
+  StrCpy $1 "$R5\DefaultIcon"
+  StrCpy $2 ""
+  StrCpy $3 "$productLauncher,0"
+  Call OMWriteRegStr
 command_exists:
   StrCpy $1 "$R5\DefaultIcon"
   StrCpy $2 ""
@@ -1137,10 +1129,6 @@ command_exists:
   StrCpy $1 "$R5\shell\open\command"
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
-  Call OMWriteRegStr
-  StrCpy $1 $R5
-  StrCpy $2 "AppUserModelID"
-  StrCpy $3 ${PRODUCT_APP_USER_MODEL_ID}
   Call OMWriteRegStr
 
   ; add "Edit with PRODUCT" action for files to Windows context menu
@@ -1233,13 +1221,15 @@ shortcuts:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $launcherShortcut" "State"
   StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" shortcut_for_exe_64 0
   StrCmp $R2 1 "" exe_64
-  !insertmacro CreateLauncherShortcut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
+                 "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
   ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
 shortcut_for_exe_64:
   StrCmp $R2 1 "" add_to_path
-  !insertmacro CreateLauncherShortcut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
+  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" \
+                 "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
   ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
 
 add_to_path:
@@ -1310,7 +1300,9 @@ skip_ipr:
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-  !insertmacro CreateLauncherShortcut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher"
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
+                 "$productLauncher" "" "" "" SW_SHOWNORMAL
+
   StrCpy $7 "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
   ShellLink::GetShortCutWorkingDirectory $7
   Pop $0
@@ -1836,7 +1828,7 @@ shortcuts:
   goto delete_caches
 
 remove_link:
-  !insertmacro DeleteLauncherShortcut "$7"
+  Delete $7
   ; Delete only if empty (last IDEA version is uninstalled)
   RMDir  "$SMPROGRAMS\$3"
 
@@ -1910,11 +1902,11 @@ continue_uninstall:
 desktop_shortcut_launcher32:
   IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" 0 desktop_shortcut_launcher64
     DetailPrint "remove desktop shortcut to launcher32: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-    !insertmacro DeleteLauncherShortcut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
+    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
 desktop_shortcut_launcher64:
   IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" 0 registry
     DetailPrint "remove desktop shortcut to launcher64: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
-    !insertmacro DeleteLauncherShortcut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
+    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
 
 registry:
   StrCpy $0 "SHCTX"

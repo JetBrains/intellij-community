@@ -164,16 +164,4 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @Nullable String getDefaultLightLaf();
 
   public abstract @Nullable String getDefaultDarkLaf();
-
-  /**
-   * AppUserModelID is the Windows-only property of processes allows to associate them with a particular application.
-   *
-   * <p>
-   * Note: see detailed description at https://docs.microsoft.com/en-us/windows/win32/shell/appids
-   * </p>
-   *
-   * @return explicit AppUserModelID has to be used in the process or null if the value is undefined.
-   *         (Implementations are allowed to just return null if the current OS is not Windows 7+)
-   */
-  public abstract @Nullable String getWin32AppUserModelId();
 }

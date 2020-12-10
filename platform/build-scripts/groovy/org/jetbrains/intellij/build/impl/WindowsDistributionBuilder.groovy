@@ -5,7 +5,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -33,10 +32,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final Path ideaProperties
   private final Path patchedApplicationInfo
   private final Path icoFile
-  /**
-   * See {@link com.intellij.openapi.application.ex.ApplicationInfoEx#getWin32AppUserModelId}
-   */
-  private final String appUserModelId
 
   WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, Path ideaProperties, Path patchedApplicationInfo) {
     super(buildContext)
@@ -46,8 +41,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String icoPath = (buildContext.applicationInfo.isEAP ? customizer.icoPathForEAP : null) ?: customizer.icoPath
     icoFile = icoPath == null ? null : Paths.get(icoPath)
-
-    appUserModelId = generateAppUserModelId(this.buildContext)
   }
 
   @Override
@@ -125,7 +118,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
       generateProductJson(productJsonDir, jreDir != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath.toString(), jreDir.toString()], [])
-      exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir, appUserModelId)
+      exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir)
         .buildInstaller(winDistPath, productJsonDir, '', buildContext.windowsDistributionCustomizer.include32BitLauncher)
     }
 
@@ -169,20 +162,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
   }
 
-  private static String generateAppUserModelId(BuildContext buildContext) {
-    // result example: "JetBrains.IntelliJIDEACommunityEdition"
-
-    final def shortCompanyName = buildContext.applicationInfo.shortCompanyName.replace('.', '-')
-    final def productName = buildContext.applicationInfo.productNameWithEdition.replace('.', '-')
-
-    final def result = (shortCompanyName + "." + productName).replaceAll("\\s+", "")
-    if (result.length() > 128) { // AppUserModelId can have no more than 128 characters
-      buildContext.messages.error("Generated AppUserModelId is too long (> 128 characters): \"$result\"")
-    }
-
-    return result
-  }
-
   @CompileStatic(TypeCheckingMode.SKIP)
   private void generateScripts(@NotNull Path distBinDir) {
     String fullName = buildContext.applicationInfo.productName
@@ -210,7 +189,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: scriptName)
         filter(token: "base_name", value: baseName)
-        filter(token: "win_app_user_model_id", value: appUserModelId)
       }
     }
 
@@ -245,8 +223,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       String vmOptions = (buildContext.additionalJvmArguments +
                           " -Dide.native.launcher=true" +
                           " -Didea.vendor.name=${buildContext.applicationInfo.shortCompanyName}" +
-                          " -Didea.paths.selector=${buildContext.systemSelector}" +
-                          " -Didea.win.appUserModelId=${appUserModelId}").trim()
+                          " -Didea.paths.selector=${buildContext.systemSelector}").trim()
       def productName = buildContext.applicationInfo.shortProductName
       String classPath = buildContext.bootClassPathJarNames.join(";")
 

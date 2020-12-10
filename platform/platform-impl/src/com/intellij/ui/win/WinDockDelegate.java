@@ -8,9 +8,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.SystemDock;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
@@ -21,7 +23,11 @@ import java.util.List;
  * @author Denis Fokin
  * @author Nikita Provotorov
  */
-final class WinDockDelegate implements SystemDock.Delegate {
+public final class WinDockDelegate implements SystemDock.Delegate {
+  public static @Nullable WinDockDelegate getInstance() {
+    return instance;
+  }
+
   @Override
   public void updateRecentProjectsMenu() {
     final List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
@@ -43,7 +49,7 @@ final class WinDockDelegate implements SystemDock.Delegate {
   }
 
 
-  WinDockDelegate(@NotNull final WinShellIntegration wsi)
+  private WinDockDelegate(@NotNull final WinShellIntegration wsi)
   {
     this.wsi = wsi;
   }
@@ -80,4 +86,25 @@ final class WinDockDelegate implements SystemDock.Delegate {
 
 
   private static final Logger LOG = Logger.getInstance(WinDockDelegate.class);
+  private static final @Nullable WinDockDelegate instance;
+
+
+  static {
+    @Nullable WinDockDelegate instanceInitializer = null;
+
+    try {
+      if (Registry.is("windows.jumplist")) {
+        final @Nullable var wsi = WinShellIntegration.getInstance();
+        if (wsi != null) {
+          instanceInitializer = new WinDockDelegate(WinShellIntegration.getInstance());
+        }
+      }
+    }
+    catch (Throwable err) {
+      LOG.error(err);
+      instanceInitializer = null;
+    }
+
+    instance = instanceInitializer;
+  }
 }

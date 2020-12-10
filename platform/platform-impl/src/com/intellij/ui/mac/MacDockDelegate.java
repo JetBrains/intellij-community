@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Denis Fokin
  */
-final class MacDockDelegate implements SystemDock.Delegate {
+public final class MacDockDelegate implements SystemDock.Delegate {
   private static final Logger LOG = Logger.getInstance(MacDockDelegate.class);
 
   private static boolean initialized = false;

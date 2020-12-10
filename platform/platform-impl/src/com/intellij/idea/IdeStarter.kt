@@ -95,8 +95,6 @@ open class IdeStarter : ApplicationStarter {
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
-    SystemDock.onUiInitialization()
-
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
     val isStandaloneLightEdit = PlatformUtils.getPlatformPrefix() == "LightEdit"
     val needToOpenProject: Boolean
@@ -246,7 +244,6 @@ private fun postOpenUiTasks(app: Application) {
   }
 
   invokeLaterWithAnyModality("system dock menu") {
-    SystemDock.onUiInitialized()
     SystemDock.updateMenu()
   }
   invokeLaterWithAnyModality("ScreenReader") {

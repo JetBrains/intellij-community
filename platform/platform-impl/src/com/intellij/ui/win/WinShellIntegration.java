@@ -2,11 +2,9 @@
 package com.intellij.ui.win;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.loader.NativeLibraryLoader;
 import org.jetbrains.annotations.ApiStatus;
@@ -74,12 +72,6 @@ final class WinShellIntegration implements Disposable {
   @Nullable
   public static WinShellIntegration getInstance() {
     return isAvailable ? ServiceManager.getService(WinShellIntegration.class) : null;
-  }
-
-
-  public void updateAppUserModelId() {
-    if (appUserModelIdProperty != null)
-      bridge.setAppUserModelIdNative(appUserModelIdProperty);
   }
 
 
@@ -172,14 +164,11 @@ final class WinShellIntegration implements Disposable {
   private final @NotNull Bridge bridge;
 
 
-  static final String appUserModelIdProperty;
-
   static {
-    final var appInfo = ApplicationInfoEx.getInstanceEx();
+    final boolean ideIsLaunchedViaDLL = Boolean.getBoolean("ide.native.launcher");
 
-    appUserModelIdProperty = appInfo.getWin32AppUserModelId();
     isAvailable = SystemInfo.isWin8OrNewer
-                  && !"false".equals(System.getProperty("ide.win.shell.integration"))
-                  && !StringUtilRt.isEmptyOrSpaces(appUserModelIdProperty);
+                  && ideIsLaunchedViaDLL
+                  && !"false".equals(System.getProperty("ide.win.shell.integration"));
   }
 }
