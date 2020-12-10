@@ -61,6 +61,7 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
+import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
 import com.intellij.ui.tree.project.ProjectFileTreeModel;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformUtils;
@@ -229,6 +230,10 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       object = ((AbstractTreeNode<?>)object).getValue();
     }
     return object;
+  }
+
+  public @NotNull ProjectFileNodeUpdater getUpdater() {
+    return model.getUpdater();
   }
 
   @NotNull

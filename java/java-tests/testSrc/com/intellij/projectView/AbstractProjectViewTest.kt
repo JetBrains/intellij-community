@@ -10,9 +10,16 @@ import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRu
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.scopeView.ScopeViewPane
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.ProjectFilesScope
 import com.intellij.psi.search.scope.packageSet.NamedScope
+import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.PackageWrapper
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor
+import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination
+import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestSourceBasedTestCase
 import com.intellij.ui.tree.TreeTestUtil
@@ -62,6 +69,30 @@ abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
   protected fun selectFile(file: VirtualFile) {
     waitWhileBusy()
     currentPane.select(null, file, false)
+  }
+
+  protected fun selectElement(element: PsiElement) {
+    waitWhileBusy()
+    currentPane.select(element, PsiUtil.getVirtualFile(element), false)
+  }
+
+  protected fun deleteElement(element: PsiElement) {
+    WriteCommandAction.runWriteCommandAction(null) { element.delete() }
+  }
+
+  protected fun renameElement(element: PsiElement, name: String) {
+    RenameProcessor(project, element, name, false, false).run()
+  }
+
+  protected fun moveElementToPackage(element: PsiElement, qualifiedName: String) {
+    val psi = javaFacade.findPackage(qualifiedName)!!
+    val destination = SingleSourceRootMoveDestination(PackageWrapper.create(psi), psi.directories[0])
+    MoveClassesOrPackagesProcessor(project, arrayOf(element), destination, false, false, null).run()
+  }
+
+  protected fun movePackageToPackage(srcQualifiedName: String, dstQualifiedName: String) {
+    val psi = javaFacade.findPackage(srcQualifiedName)!!
+    moveElementToPackage(psi, dstQualifiedName)
   }
 
   protected fun setFileNestingRules(vararg rules: Pair<String, String>) {
