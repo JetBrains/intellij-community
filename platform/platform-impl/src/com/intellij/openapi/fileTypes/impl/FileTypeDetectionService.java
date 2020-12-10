@@ -290,7 +290,7 @@ final class FileTypeDetectionService implements Disposable {
 
   private static String getDetectorsString() {
     return Arrays.stream(FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensions())
-      .map(detector -> detector.getClass().getCanonicalName())
+      .map(detector -> detector.getClass().getName())
       .sorted()
       .collect(Collectors.joining(":"));
   }
