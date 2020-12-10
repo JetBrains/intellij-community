@@ -70,7 +70,7 @@ public final class IndexedHashesSupport {
           hasher.putString(charset.name(), StandardCharsets.UTF_8);
         }
         else {
-          // do nothing charset is not required and depends only on content
+          // do nothing; charset is not required and depends only on content
         }
       }
     }
