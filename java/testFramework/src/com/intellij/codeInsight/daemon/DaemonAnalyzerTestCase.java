@@ -40,10 +40,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
-import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.testFramework.FileTreeAccessFilter;
-import com.intellij.testFramework.HighlightTestInfo;
-import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlSchemaProvider;
@@ -122,8 +119,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
   protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
     try {
-      for (Class c : toolProvider.getInspectionClasses()) {
-        enableInspectionTool((InspectionProfileEntry)c.newInstance());
+      for (Class<? extends LocalInspectionTool> c : toolProvider.getInspectionClasses()) {
+        enableInspectionTool(InspectionTestUtil.instantiateTool(c));
       }
     }
     catch (Exception e) {
@@ -142,14 +139,13 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     return LocalInspectionTool.EMPTY_ARRAY;
   }
 
-  protected static LocalInspectionTool[] createLocalInspectionTools(final InspectionToolProvider... provider) {
+  protected static LocalInspectionTool[] createLocalInspectionTools(InspectionToolProvider... provider) {
     List<LocalInspectionTool> result = new ArrayList<>();
     for (InspectionToolProvider toolProvider : provider) {
-      for (Class<?> aClass : toolProvider.getInspectionClasses()) {
+      for (Class<? extends LocalInspectionTool> aClass : toolProvider.getInspectionClasses()) {
         try {
-          final Object tool = aClass.newInstance();
-          assertTrue(tool instanceof LocalInspectionTool);
-          result.add((LocalInspectionTool)tool);
+          LocalInspectionTool tool = InspectionTestUtil.instantiateTool(aClass);
+          result.add(tool);
         }
         catch (Exception e) {
           LOG.error(e);
