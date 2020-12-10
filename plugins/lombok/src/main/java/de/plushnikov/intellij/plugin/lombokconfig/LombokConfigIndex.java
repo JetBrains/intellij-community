@@ -1,11 +1,12 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
 import de.plushnikov.intellij.plugin.language.LombokConfigFileType;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigCleaner;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigFile;
@@ -20,42 +21,36 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, ConfigValue> {
+public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, ConfigValue> {
   @NonNls
-  public static final ID<ConfigIndexKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
-
-  private static final int INDEX_FORMAT_VERSION = 10;
+  public static final ID<ConfigKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
 
   @NotNull
   @Override
-  public ID<ConfigIndexKey, ConfigValue> getName() {
+  public ID<ConfigKey, ConfigValue> getName() {
     return NAME;
   }
 
   @NotNull
   @Override
-  public DataIndexer<ConfigIndexKey, ConfigValue, FileContent> getIndexer() {
-    return new DataIndexer<ConfigIndexKey, ConfigValue, FileContent>() {
+  public DataIndexer<ConfigKey, ConfigValue, FileContent> getIndexer() {
+    return new DataIndexer<>() {
       @NotNull
       @Override
-      public Map<ConfigIndexKey, ConfigValue> map(@NotNull FileContent inputData) {
-        Map<ConfigIndexKey, ConfigValue> result = Collections.emptyMap();
+      public Map<ConfigKey, ConfigValue> map(@NotNull FileContent inputData) {
+        Map<ConfigKey, ConfigValue> result = Collections.emptyMap();
 
         final VirtualFile directoryFile = inputData.getFile().getParent();
         if (null != directoryFile) {
           final String canonicalPath = PathUtil.toSystemIndependentName(directoryFile.getCanonicalPath());
           if (null != canonicalPath) {
-            final Map<String, String> configValues = extractValues((LombokConfigFile) inputData.getPsiFile());
+            final Map<String, String> configValues = extractValues((LombokConfigFile)inputData.getPsiFile());
 
             final boolean stopBubblingValue = Boolean.parseBoolean(configValues.get(ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()));
-            result = Stream.of(ConfigKey.values())
-              .map(ConfigKey::getConfigKey)
-              .collect(Collectors.toMap(
-                key -> new ConfigIndexKey(canonicalPath, key),
-                key -> new ConfigValue(configValues.get(key), stopBubblingValue)));
+            result = ContainerUtil.map2Map(ConfigKey.values(),
+                                           key -> Pair.create(key,
+                                                              new ConfigValue(configValues.get(key.getConfigKey()), stopBubblingValue)));
           }
         }
 
@@ -82,7 +77,8 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, C
           final String sign = LombokConfigPsiUtil.getSign(configProperty);
           if (null == sign) {
             result.put(key, value);
-          } else {
+          }
+          else {
             final String previousValue = StringUtil.defaultIfEmpty(result.get(key), "");
             final String combinedValue = previousValue + sign + value + ";";
             result.put(key, combinedValue);
@@ -96,49 +92,28 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, C
 
   @NotNull
   @Override
-  public KeyDescriptor<ConfigIndexKey> getKeyDescriptor() {
-    return new KeyDescriptor<ConfigIndexKey>() {
-      @Override
-      public int getHashCode(ConfigIndexKey configKey) {
-        return configKey.hashCode();
-      }
-
-      @Override
-      public boolean isEqual(ConfigIndexKey val1, ConfigIndexKey val2) {
-        return val1.equals(val2);
-      }
-
-      @Override
-      public void save(@NotNull DataOutput out, ConfigIndexKey value) throws IOException {
-        out.writeUTF(StringUtil.notNullize(value.getDirectoryName()));
-        out.writeUTF(StringUtil.notNullize(value.getConfigKey()));
-      }
-
-      @Override
-      public ConfigIndexKey read(@NotNull DataInput in) throws IOException {
-        return new ConfigIndexKey(in.readUTF(), in.readUTF());
-      }
-    };
+  public KeyDescriptor<ConfigKey> getKeyDescriptor() {
+    return new EnumDataDescriptor<>(ConfigKey.class);
   }
 
   @NotNull
   @Override
   public DataExternalizer<ConfigValue> getValueExternalizer() {
-    return new DataExternalizer<ConfigValue>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, ConfigValue configValue) throws IOException {
-        final boolean hasNullValue = null == configValue.getValue();
-        out.writeBoolean(hasNullValue);
-        out.writeUTF(hasNullValue ? "" : configValue.getValue());
+        var isNotNullValue = configValue.getValue() != null;
+        out.writeBoolean(isNotNullValue);
+        if (isNotNullValue) {
+          EnumeratorStringDescriptor.INSTANCE.save(out, configValue.getValue());
+        }
         out.writeBoolean(configValue.isStopBubbling());
       }
 
       @Override
       public ConfigValue read(@NotNull DataInput in) throws IOException {
-        final boolean hasNullValue = in.readBoolean();
-        final String configValue = in.readUTF();
-        final boolean stopBubbling = in.readBoolean();
-        return new ConfigValue(hasNullValue ? null : configValue, stopBubbling);
+        var isNotNullValue = in.readBoolean();
+        return new ConfigValue(isNotNullValue ? EnumeratorStringDescriptor.INSTANCE.read(in) : null, in.readBoolean());
       }
     };
   }
@@ -154,14 +129,8 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, C
     return true;
   }
 
-  // TODO: make this index shareable IDEA-253057. Avoid using canonical paths.
-  @Override
-  public boolean canBeShared() {
-    return false;
-  }
-
   @Override
   public int getVersion() {
-    return INDEX_FORMAT_VERSION;
+    return 11;
   }
 }
