@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
+import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.headTailOrNull
 import org.jetbrains.annotations.ApiStatus
 
@@ -62,9 +63,6 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
   constructor(string: String) : this(string, null, TextRange.EMPTY_RANGE)
 
-  constructor(host: PsiElement) : this(
-    StringEntry.Known(ElementManipulators.getValueText(host), host, ElementManipulators.getValueTextRange(host)))
-
   @JvmOverloads
   fun findIndexOfInKnown(pattern: String, startFrom: Int = 0): Int {
     var accumulated = 0
@@ -82,6 +80,15 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     return -1
   }
 
+  private fun buildSegmentWithMappedRange(value: String, sourcePsi: PsiElement?, rangeInPks: TextRange): StringEntry.Known =
+    StringEntry.Known(
+      value,
+      sourcePsi,
+      sourcePsi.castSafelyTo<PsiLanguageInjectionHost>()?.let { host ->
+        mapRangeToHostRange(host, getRangeInHost(host) ?: ElementManipulators.getValueTextRange(host), rangeInPks)
+      } ?: rangeInPks
+    )
+
   fun splitAtInKnown(splitAt: Int): Pair<PartiallyKnownString, PartiallyKnownString> {
     var accumulated = 0
     val left = SmartList<StringEntry>()
@@ -95,13 +102,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           else {
             val leftPart = segment.value.substring(0, splitAt - accumulated)
             val rightPart = segment.value.substring(splitAt - accumulated)
-            left.add(StringEntry.Known(leftPart, segment.sourcePsi, TextRange.from(segment.range.startOffset, leftPart.length)))
+            left.add(buildSegmentWithMappedRange(leftPart, segment.sourcePsi, TextRange.from(0, leftPart.length)))
 
             return PartiallyKnownString(left) to PartiallyKnownString(
               ArrayList<StringEntry>(segments.lastIndex - i + 1).apply {
                 if (rightPart.isNotEmpty())
-                  add(StringEntry.Known(rightPart, segment.sourcePsi,
-                                        TextRange.from(segment.range.startOffset + leftPart.length, rightPart.length)))
+                  add(buildSegmentWithMappedRange(rightPart, segment.sourcePsi, TextRange.from(leftPart.length, rightPart.length)))
                 addAll(segments.subList(i + 1, segments.size))
               }
             )
