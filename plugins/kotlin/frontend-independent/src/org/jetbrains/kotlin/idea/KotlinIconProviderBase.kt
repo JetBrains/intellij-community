@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.ide.IconProvider
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Iconable
@@ -17,6 +18,7 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedIsKtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.idea.KotlinIconsIndependent.ACTUAL
@@ -131,6 +133,10 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
                     KotlinIconsIndependent.FUNCTION
             }
             is KtConstructor<*> -> PlatformIcons.METHOD_ICON
+            is KtLightMethod -> when(val u = unwrapped) {
+                is KtProperty -> if (!u.hasBody()) PlatformIcons.ABSTRACT_METHOD_ICON else PlatformIcons.METHOD_ICON
+                else -> PlatformIcons.METHOD_ICON
+            }
             is KtFunctionLiteral -> KotlinIconsIndependent.LAMBDA
             is KtClass -> when {
                 isInterface() -> KotlinIconsIndependent.INTERFACE
