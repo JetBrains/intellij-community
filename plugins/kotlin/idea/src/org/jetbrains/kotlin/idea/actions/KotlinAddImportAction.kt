@@ -164,8 +164,9 @@ class KotlinAddImportAction internal constructor(
         }
 
         object : ListPopupImpl(getVariantSelectionPopup()) {
+            @Suppress("UNCHECKED_CAST")
             override fun getListElementRenderer(): ListCellRenderer<AutoImportVariant> {
-                val baseRenderer = super.getListElementRenderer() as PopupListElementRenderer
+                val baseRenderer = super.getListElementRenderer() as PopupListElementRenderer<Any>
                 val psiRenderer = DefaultPsiElementCellRenderer()
                 return ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
                     JPanel(BorderLayout()).apply {
