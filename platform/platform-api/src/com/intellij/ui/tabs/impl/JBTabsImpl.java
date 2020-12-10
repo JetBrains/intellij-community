@@ -530,6 +530,9 @@ public class JBTabsImpl extends JComponent
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
+    if (Registry.is("ui.no.bangs.and.whistles", false)) {
+      return;
+    }
     if (Registry.is("ide.editor.tabs.show.fadeout") && !getTabsPosition().isSide() && myMoreToolbar.getComponent().isShowing()) {
       int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
       Rectangle labelsArea = null;
