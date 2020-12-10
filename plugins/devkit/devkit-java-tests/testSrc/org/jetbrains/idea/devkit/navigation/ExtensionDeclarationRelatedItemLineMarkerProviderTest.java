@@ -32,4 +32,8 @@ public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends Exten
   public void testExtension() {
     doTestExtension("MyExtension.java", "<myEp implementation=\"MyExtension\"/>");
   }
+
+  public void testNestedClassExtension() {
+    doTestExtension("MyNestedClassExtension.java", "<myEp implementation=\"MyNestedClassExtension$Nested\"/>");
+  }
 }
