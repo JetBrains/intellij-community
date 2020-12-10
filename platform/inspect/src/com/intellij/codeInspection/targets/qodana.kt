@@ -123,11 +123,11 @@ class QodanaRunner(val application: InspectionApplication,
 
 
   private fun launchInspections(launchScope: AnalysisScope, resultsPath: Path, context: GlobalInspectionContextEx, progressIndicator: ProgressIndicator): List<Path> {
+    application.configureProject(projectPath, project, launchScope)
     if (!GlobalInspectionContextUtil.canRunInspections(project, false) {}) {
       application.gracefulExit()
       return emptyList()
     }
-    application.configureProject(projectPath, project, launchScope)
     val converter = ReportConverterUtil.getReportConverter(application.myOutputFormat)
 
     converter?.projectData(project, resultsPath.resolve("projectStructure"))
