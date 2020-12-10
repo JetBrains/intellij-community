@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.context.GlobalContextImpl
 import org.jetbrains.kotlin.context.withProject
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -145,10 +146,13 @@ internal class ProjectResolutionFacade(
     internal fun findModuleDescriptor(ideaModuleInfo: IdeaModuleInfo): ModuleDescriptor {
         return cachedResolverForProject.descriptorForModule(ideaModuleInfo)
     }
-    
+
     internal fun getResolverForProject(): ResolverForProject<IdeaModuleInfo> = cachedResolverForProject
 
-    internal fun getAnalysisResultsForElements(elements: Collection<KtElement>): AnalysisResult {
+    internal fun getAnalysisResultsForElements(
+        elements: Collection<KtElement>,
+        callback: DiagnosticSink.DiagnosticsCallback? = null
+    ): AnalysisResult {
         assert(elements.isNotEmpty()) { "elements collection should not be empty" }
 
         val cache = analysisResultsSimpleLock.guarded {
@@ -159,7 +163,7 @@ internal class ProjectResolutionFacade(
                 val containingKtFile = it.containingKtFile
                 val perFileCache = cache[containingKtFile]
                 try {
-                    perFileCache.getAnalysisResults(it)
+                    perFileCache.getAnalysisResults(it, callback)
                 } catch (e: Throwable) {
                     if (e is ControlFlowException) {
                         throw e
