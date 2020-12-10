@@ -82,7 +82,7 @@ class OpenLessonAction(val lesson: Lesson) : DumbAwareAction(lesson.name) {
       activeToolWindow.setModulesPanel()
     }
 
-    if (lesson.passed && LessonManager.instance.currentLesson != lesson) {
+    if (LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
       // TODO: Do not stop lesson in another toolwindow IFT-110
       LearningUiManager.activeToolWindow?.setLearnPanel() ?: error("No active toolwindow in $projectWhereToStartLesson")
       LessonManager.instance.openLessonPassed(lesson as KLesson, projectWhereToStartLesson)

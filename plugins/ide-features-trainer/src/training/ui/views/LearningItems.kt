@@ -18,6 +18,7 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.Module
+import training.learn.lesson.LessonManager
 import training.ui.UISettings
 import training.util.createBalloon
 import java.awt.Color
@@ -69,8 +70,8 @@ class LearningItems : JPanel() {
     name.setListener(
       { _, _ ->
         val project = guessCurrentProject(this)
-        val dumbService = DumbService.getInstance(project)
-        if (dumbService.isDumb && !lesson.properties.canStartInDumbMode) {
+        val cantBeOpenedInDumb = DumbService.getInstance(project).isDumb && !lesson.properties.canStartInDumbMode
+        if (cantBeOpenedInDumb && !LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
           val balloon = createBalloon(LearnBundle.message("indexing.message"))
           balloon.showInCenterOf(name)
           return@setListener
