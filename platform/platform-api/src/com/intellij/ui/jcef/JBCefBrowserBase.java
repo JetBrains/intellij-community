@@ -83,10 +83,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * @param url  a dummy URL that may affect restriction policy applied to the content
    */
   public final void loadHTML(@NotNull String html, @NotNull String url) {
-    if (!html.contains("table_full")) {
-      loadURL("http://qwerty.qwerty");
-      return;
-    }
     if (myIsCefBrowserCreated) {
       loadString(myCefBrowser, html, url);
     }
