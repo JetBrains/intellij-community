@@ -98,7 +98,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       public @NotNull ScaleContext.Cache<String> initialize() {
         return new ScaleContext.Cache<>((ctx) -> {
           try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), ctx);
+            BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), ctx, false);
             ImageIO.write(image, "png", out);
             return Base64.getEncoder().encodeToString(out.toByteArray());
           }
