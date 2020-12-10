@@ -121,9 +121,8 @@ class VirtualFileIndexTest {
 
   internal val vfuGenerator: Generator<VirtualFileUrl> = Generator.from { env ->
     val select = env.generate(Generator.integers(0, 10))
-    val file = if (select == 0) {
-      val index = env.generate(Generator.integers(0, existingPaths.size - 1))
-      existingPaths[index]
+    val file = if (select == 0 && existingPaths.isNotEmpty()) {
+      env.generate(Generator.sampledFrom(existingPaths))
     }
     else {
       val temp = temporaryDirectoryRule.newPath()
