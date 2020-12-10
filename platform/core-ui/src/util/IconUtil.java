@@ -523,11 +523,37 @@ public class IconUtil {
    */
   @NotNull
   public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
-    if (icon instanceof ScalableIcon) {
-      if (icon instanceof ScaleContextAware) {
-        ((ScaleContextAware)icon).updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
+    ScaleContext ctx = ScaleContext.create(ancestor);
+    ctx.update(OBJ_SCALE.of(scale));
+    return scale(icon, ctx);
+  }
+
+  /**
+   * Returns a scaled icon instance.
+   * <p>
+   * The passed {@code ctx} is applied to the icon and the {@link ScaleType#OBJ_SCALE} is used to scale it.
+   *
+   * @see #scale(Icon, Component, float)
+   * @param icon the icon to scale
+   * @param ctx the scale context to apply
+   * @param scale the scale factor
+   * @return the scaled icon
+   */
+  @NotNull
+  public static Icon scale(@NotNull Icon icon, @NotNull ScaleContext ctx) {
+    double scale = ctx.getScale(OBJ_SCALE);
+    if (icon instanceof CopyableIcon) {
+      icon = ((CopyableIcon)icon).deepCopy();
+      if (icon instanceof ScalableIcon) {
+        if (icon instanceof ScaleContextAware) {
+          ctx = ctx.copy();
+          // Reset OBJ_SCALE in the context to preserve ScalableIcon.scale(float) implementation
+          // from accumulation of the scales: OBJ_SCALE * scale.
+          ctx.update(OBJ_SCALE.of(1.0));
+          ((ScaleContextAware)icon).updateScaleContext(ctx);
+        }
+        return ((ScalableIcon)icon).scale((float)scale);
       }
-      return ((ScalableIcon)icon).scale(scale);
     }
     return scale(icon, scale);
   }
