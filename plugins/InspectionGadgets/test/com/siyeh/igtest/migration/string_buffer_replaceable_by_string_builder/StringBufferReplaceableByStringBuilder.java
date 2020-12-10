@@ -1,5 +1,7 @@
 package com.siyeh.igtest.migration.string_buffer_replaceable_by_string_builder;
 
+import java.util.Random;
+
 public class StringBufferReplaceableByStringBuilder {
 
     public void foo()
@@ -37,4 +39,20 @@ public class StringBufferReplaceableByStringBuilder {
         };
         logContainer.append(allLogs);
     }
+
+  private final Random rnd = new Random(123);
+
+  void convert() {
+    StringBuffer <warning descr="'StringBuffer sb' may be declared as 'StringBuilder'">sb</warning> = new StringBuffer();
+    for (int i = 0, n = rnd.nextInt(15) + 1; i < n; i++)
+      sb.append(nextChar());
+    String symbol = new String(sb);
+    System.out.println(symbol);
+  }
+
+  private char nextChar() {
+    int i = rnd.nextInt('Z' - 'A');
+    char c = (char) ('A' + i);
+    return c;
+  }
 }

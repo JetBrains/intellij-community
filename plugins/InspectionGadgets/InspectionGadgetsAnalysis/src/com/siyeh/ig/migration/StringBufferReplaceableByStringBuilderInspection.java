@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -145,8 +146,9 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
 
   private static class StringBufferReplaceableByStringBuilderVisitor extends BaseInspectionVisitor {
 
-    private static final Set<String> excludes = ContainerUtil.newHashSet(CommonClassNames.JAVA_LANG_STRING_BUILDER,
-                                                                         CommonClassNames.JAVA_LANG_STRING_BUFFER);
+    private static final Set<String> EXCLUDES = ContainerUtil.newHashSet(CommonClassNames.JAVA_LANG_STRING_BUILDER,
+                                                                         CommonClassNames.JAVA_LANG_STRING_BUFFER,
+                                                                         CommonClassNames.JAVA_LANG_STRING);
 
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
@@ -196,14 +198,15 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       if (VariableAccessUtils.variableIsUsedInInnerClass(variable, context)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context, true, call -> {
+      final Processor<PsiCall> processor = call -> {
         final PsiMethod method = call.resolveMethod();
         if (method == null) {
           return false;
         }
         final PsiClass aClass = method.getContainingClass();
-        return aClass != null && excludes.contains(aClass.getQualifiedName());
-      })) {
+        return aClass != null && EXCLUDES.contains(aClass.getQualifiedName());
+      };
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context, true, processor)) {
         return false;
       }
       return true;
