@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
-import circlet.platform.client.KCircletClient
+import circlet.workspaces.Workspace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
@@ -21,7 +21,7 @@ internal class SpaceReviewComponent(parentDisposable: Disposable,
                                     lifetime: Lifetime,
                                     spaceProjectInfo: SpaceProjectInfo,
                                     repoInfo: Set<SpaceRepoInfo>,
-                                    client: KCircletClient,
+                                    workspace: Workspace,
                                     listVm: SpaceReviewsListVm,
                                     private val selectedReviewVm: SpaceSelectedReviewVmImpl
 ) : Wrapper(), DataProvider {
@@ -29,7 +29,7 @@ internal class SpaceReviewComponent(parentDisposable: Disposable,
     parentDisposable,
     project,
     lifetime,
-    client,
+    workspace,
     spaceProjectInfo,
     repoInfo,
     selectedReviewVm.selectedReview

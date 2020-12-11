@@ -48,7 +48,7 @@ internal class ReviewLoginComponent(parentDisposable: Disposable,
                                                    lifetime,
                                                    spaceProjectInfo,
                                                    spaceRepos,
-                                                   client,
+                                                   workspace,
                                                    reviewsListVm,
                                                    SpaceSelectedReviewVmImpl(workspace, spaceProjectInfo))
         view.setContent(reviewComponent)

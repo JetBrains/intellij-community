@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
-import circlet.code.api.CodeReviewListItem
+import circlet.code.api.CodeReviewRecord
+import circlet.platform.api.Ref
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
@@ -35,9 +36,9 @@ internal fun openReviewInEditor(
   project: Project,
   workspace: Workspace,
   projectInfo: SpaceProjectInfo,
-  codeReviewListItem: CodeReviewListItem
+  ref: Ref<CodeReviewRecord>
 ) {
-  val review = codeReviewListItem.review.resolve()
+  val review = ref.resolve()
   val chatRef = review.feedChannel ?: return
   val chatFile = SpaceChatFile(
     review.key ?: review.id,

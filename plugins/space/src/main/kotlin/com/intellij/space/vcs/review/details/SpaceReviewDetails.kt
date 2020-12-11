@@ -3,7 +3,7 @@ package com.intellij.space.vcs.review.details
 
 
 import circlet.code.api.CodeReviewListItem
-import circlet.platform.client.KCircletClient
+import circlet.workspaces.Workspace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -23,7 +23,7 @@ import runtime.reactive.SequentialLifetimes
 internal class SpaceReviewDetails(parentDisposable: Disposable,
                                   project: Project,
                                   lifetime: Lifetime,
-                                  private val client: KCircletClient,
+                                  private val workspace: Workspace,
                                   private val spaceProjectInfo: SpaceProjectInfo,
                                   private val repoInfo: Set<SpaceRepoInfo>,
                                   private val currentReview: MutableProperty<CodeReviewListItem?>) {
@@ -42,7 +42,7 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
       uiDisposable?.let { Disposer.dispose(it) }
       if (reviewListItem == null) return@forEach
       val detailsLifetime = sequentialLifetimes.next()
-      val detailsVm = createReviewDetailsVm(detailsLifetime, project, client, spaceProjectInfo, repoInfo, reviewListItem)
+      val detailsVm = createReviewDetailsVm(detailsLifetime, project, workspace, spaceProjectInfo, repoInfo, reviewListItem)
 
       uiDisposable = Disposer.newDisposable()
       Disposer.register(parentDisposable, uiDisposable as Disposable)

@@ -80,6 +80,6 @@ private class SpaceOpenCodeReviewDetailsAction : DumbAwareAction(SpaceBundle.mes
     val selectedReviewVm = e.getData(SpaceReviewDataKeys.SELECTED_REVIEW_VM) ?: return
     selectedReviewVm.selectedReview.value = data
 
-    openReviewInEditor(project, selectedReviewVm.workspace, selectedReviewVm.projectInfo, data)
+    openReviewInEditor(project, selectedReviewVm.workspace, selectedReviewVm.projectInfo, data.review)
   }
 }

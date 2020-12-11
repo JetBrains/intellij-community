@@ -9,6 +9,7 @@ import circlet.code.codeReview
 import circlet.platform.api.Ref
 import circlet.platform.api.TID
 import circlet.platform.client.*
+import circlet.workspaces.Workspace
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import com.intellij.space.utils.SpaceUrls
@@ -26,9 +27,11 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   val ideaProject: Project,
   val spaceProjectInfo: SpaceProjectInfo,
   spaceReposInfo: Set<SpaceRepoInfo>,
-  private val reviewRef: Ref<R>,
-  val client: KCircletClient
+  val reviewRef: Ref<R>,
+  val workspace: Workspace
 ) : Lifetimed {
+  val client: KCircletClient = workspace.client
+
   val review: Property<R> = reviewRef.property()
 
   val projectKey: ProjectKey = review.value.project
@@ -108,8 +111,8 @@ internal class MergeRequestDetailsVm(
   spaceProjectInfo: SpaceProjectInfo,
   spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<MergeRequestRecord>,
-  client: KCircletClient
-) : SpaceReviewDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
+  workspace: Workspace
+) : SpaceReviewDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, workspace) {
 
   private val branchPair: Property<MergeRequestBranchPair> = cellProperty { review.live.branchPair }
 
@@ -124,15 +127,16 @@ internal class CommitSetReviewDetailsVm(
   spaceProjectInfo: SpaceProjectInfo,
   spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<CommitSetReviewRecord>,
-  client: KCircletClient
-) : SpaceReviewDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client)
+  workspace: Workspace
+) : SpaceReviewDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, workspace)
 
 internal fun createReviewDetailsVm(lifetime: Lifetime,
                                    project: Project,
-                                   client: KCircletClient,
+                                   workspace: Workspace,
                                    spaceProjectInfo: SpaceProjectInfo,
                                    spaceReposInfo: Set<SpaceRepoInfo>,
                                    codeReviewListItem: CodeReviewListItem): SpaceReviewDetailsVm<out CodeReviewRecord> {
+  val client = workspace.client
   return when (val codeReviewRecord = codeReviewListItem.review.resolve()) {
     is MergeRequestRecord -> MergeRequestDetailsVm(
       lifetime,
@@ -140,7 +144,7 @@ internal fun createReviewDetailsVm(lifetime: Lifetime,
       spaceProjectInfo,
       spaceReposInfo,
       codeReviewRecord.toRef(client.arena),
-      client
+      workspace
     )
     is CommitSetReviewRecord -> CommitSetReviewDetailsVm(
       lifetime,
@@ -148,7 +152,7 @@ internal fun createReviewDetailsVm(lifetime: Lifetime,
       spaceProjectInfo,
       spaceReposInfo,
       codeReviewRecord.toRef(client.arena),
-      client
+      workspace
     )
     else -> throw IllegalArgumentException("Unable to resolve CodeReviewRecord")
   }

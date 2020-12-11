@@ -13,6 +13,7 @@ import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
+import com.intellij.space.vcs.review.openReviewInEditor
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
@@ -25,7 +26,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.Nullable
 import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -95,6 +95,13 @@ internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeR
       }
     }
 
+    val openTimelineLinkLabel = LinkLabel.create(SpaceBundle.message("review.details.view.timeline.link.action")) {
+      openReviewInEditor(detailsVm.ideaProject,
+                         detailsVm.workspace,
+                         detailsVm.spaceProjectInfo,
+                         detailsVm.reviewRef
+      )
+    }
 
     val contentPanel: JPanel = ScrollablePanel(VerticalLayout(JBUI.scale(6))).apply {
       border = JBUI.Borders.empty(8)
@@ -106,7 +113,8 @@ internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeR
 
       add(titleComponent)
       add(createdByComponent)
-      add(usersPanel, VerticalLayout.FILL_HORIZONTAL)
+      add(usersPanel)
+      add(openTimelineLinkLabel)
     }
 
     val scrollPane = ScrollPaneFactory.createScrollPane(contentPanel, true)
@@ -145,7 +153,6 @@ private fun addListPanel(panel: JPanel, label: JLabel, jComponent: JComponent) {
 }
 
 
-fun link(@Nullable @NlsContexts.LinkLabel text: String, url: String): LinkLabel<*> {
+fun link(@NlsContexts.LinkLabel text: String, url: String): LinkLabel<*> {
   return LinkLabel.create(text) { BrowserUtil.browse(url) }
 }
-
