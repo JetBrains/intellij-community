@@ -12,7 +12,7 @@ class MavenTargetConfigurationIntrospector(private val config: MavenRuntimeTarge
   override fun introspect(subject: LanguageRuntimeType.Introspectable): CompletableFuture<MavenRuntimeTargetConfiguration> {
     var isWindows = false
     return subject.promiseExecuteScript("ver")
-      .thenApply { isWindows = it?.contains("Microsoft Windows") ?: false }
+      .handle { output, _ -> isWindows = output?.contains("Microsoft Windows") ?: false }
       .thenFindMaven(subject, isWindows)
       .thenApply { (mavenHome, versionOutput) ->
         if (versionOutput != null) {
@@ -26,7 +26,8 @@ class MavenTargetConfigurationIntrospector(private val config: MavenRuntimeTarge
   }
 
   private fun extractMavenVersion(versionOutput: String): String? {
-    return StringUtil.splitByLines(versionOutput, true).firstOrNull()
+    val lines = StringUtil.splitByLines(versionOutput, true)
+    return lines.find { it.startsWith("Apache Maven ") } ?: lines.firstOrNull()
   }
 
   private fun extractMavenHome(versionOutput: String): String? {
@@ -45,18 +46,19 @@ class MavenTargetConfigurationIntrospector(private val config: MavenRuntimeTarge
                                   mavenHomeEnvVariable: String?,
                                   isWindows: Boolean): CompletableFuture<Pair<String?, String?>> {
     if (mavenHomeEnvVariable == null) {
-      return subject.promiseExecuteScript("mvn -version").thenCompose { completedFuture(null to it) }
+      return subject.promiseExecuteScript("mvn -version").handle { output, _ -> output?.run { null to output } ?: null to null }
     }
 
     return subject.promiseEnvironmentVariable(mavenHomeEnvVariable).thenCompose { mavenHome ->
-      if (mavenHome == null) {
+      if (mavenHome.isNullOrBlank()) {
         return@thenCompose completedFuture(null)
       }
       else {
+        val mavenHomeTrimmed = mavenHome.trim()
         val fileSeparator = if (isWindows) Platform.WINDOWS.fileSeparator else Platform.UNIX.fileSeparator
-        val mvnScriptPath = arrayOf(mavenHome, "bin", "mvn").joinToString(fileSeparator.toString())
+        val mvnScriptPath = arrayOf(mavenHomeTrimmed, "bin", "mvn").joinToString(fileSeparator.toString())
         return@thenCompose subject.promiseExecuteScript("$mvnScriptPath -version")
-          .thenCompose { completedFuture(mavenHome to it) }
+          .handle { output, _ -> output?.run { mavenHomeTrimmed to output } }
       }
     }
   }
