@@ -67,13 +67,11 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
       .withJUnit("4.12")
-      .withTask(
-        "additionalTest",
-        types = arrayOf("Test"),
-        content = "testClassesDirs = sourceSets.test.output.classesDirs\n" +
-                  "classpath = sourceSets.test.runtimeClasspath\n" +
-                  "jvmArgs += \"-Dprop='integ test error'\""
-      )
+      .withTask("additionalTest", "Test") {
+        property("testClassesDirs", "sourceSets.test.output.classesDirs")
+        property("classpath", "sourceSets.test.runtimeClasspath")
+        line("jvmArgs += \"-Dprop='integ test error'\"")
+      }
 
     importProject(buildScript.generate())
 

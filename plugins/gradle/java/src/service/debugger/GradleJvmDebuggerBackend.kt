@@ -31,31 +31,35 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
   override fun initializationCode(dispatchPort: String, parameters: String) =
     //language=Gradle
     """
-    import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper    
+    import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
+    
+    def getCurrentProject() {
+      def currentPath = gradle.startParameter.currentDir.path
+      def currentProject = rootProject.allprojects
+        .find { it.projectDir.path == currentPath }
+      return currentProject == null ? project : currentProject
+    }
+    
+    def findAllTaskPathsInStartParameters() {
+      def currentProject = getCurrentProject()
+      logger.debug("Current project: ${'$'}{currentProject}")
+      def startTaskNames = gradle.startParameter.taskNames
+      if (startTaskNames.isEmpty()) {
+        startTaskNames = currentProject.defaultTasks
+      }
+      logger.debug("Start Tasks Names: ${'$'}{startTaskNames}")
+      def allTaskContainers = currentProject.allprojects.collect { it.tasks }
+      return startTaskNames.findResults { taskName -> 
+        allTaskContainers.findResult { it.findByPath(taskName)?.path }
+          ?: allTaskContainers.findResult { it.find { it.name.startsWith(taskName) || it.path.startsWith(taskName) }?.path }
+      }
+    }
+    
     gradle.taskGraph.whenReady { taskGraph ->
       def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
-      def taskPathsList = []
+      def taskPathsList = debugAllIsEnabled ? [] : findAllTaskPathsInStartParameters()
       logger.debug("idea.gradle.debug.all is ${'$'}{debugAllIsEnabled}")
-      if (!debugAllIsEnabled) {
-        def currentPath = gradle.getStartParameter().getCurrentDir().path
-        def currentProject = rootProject.allprojects.find { it.projectDir.path == currentPath }
-        if (currentProject == null) {
-          currentProject = project
-        }
-        logger.debug("Current project [${'$'}{currentProject}]")
-        
-        def startTaskNames = gradle.getStartParameter().getTaskNames()
-        if (startTaskNames.isEmpty()) {
-          startTaskNames = currentProject.getDefaultTasks() 
-        } 
-        logger.debug("Start Tasks Names: ${'$'}{startTaskNames}")
-        List<TaskContainer> allTaskContainers = currentProject.getAllprojects().collect { it.tasks }
-        taskPathsList = startTaskNames.collect { taskName -> 
-            def foundContainer = allTaskContainers.find { it.findByPath(taskName) != null }
-            foundContainer?.findByPath(taskName)?.path
-          }.findAll { it != null }
-        logger.debug("Task paths: ${'$'}{taskPathsList}")
-      }
+      logger.debug("Task paths: ${'$'}{taskPathsList}")
       
       taskGraph.allTasks.each { Task task ->
         if (task instanceof org.gradle.api.tasks.testing.Test) {
