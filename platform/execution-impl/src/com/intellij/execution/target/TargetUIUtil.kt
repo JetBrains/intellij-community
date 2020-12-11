@@ -7,20 +7,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
+import java.util.function.Supplier
 
 class TargetUIUtil {
   companion object {
     @JvmStatic
     fun textFieldWithBrowseButton(row: Row,
-                                  target: BrowsableTargetEnvironmentConfiguration,
+                                  targetType: BrowsableTargetEnvironmentType,
+                                  targetSupplier: Supplier<TargetEnvironmentConfiguration>,
                                   project: Project,
                                   @NlsContexts.DialogTitle title: String,
                                   property: PropertyBinding<String>): CellBuilder<TextFieldWithBrowseButton> {
       val textFieldWithBrowseButton = TextFieldWithBrowseButton()
-      val browser = target.createBrowser(project,
-                                         title,
-                                         com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-                                         textFieldWithBrowseButton.textField)
+      val browser = targetType.createBrowser(project,
+                                             title,
+                                             com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+                                             textFieldWithBrowseButton.textField,
+                                             targetSupplier)
       textFieldWithBrowseButton.addActionListener(browser)
       textFieldWithBrowseButton.text = property.get()
       return row.component(textFieldWithBrowseButton).withBinding(TextFieldWithBrowseButton::getText,

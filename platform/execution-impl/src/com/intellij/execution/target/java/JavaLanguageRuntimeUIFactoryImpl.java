@@ -2,9 +2,13 @@
 package com.intellij.execution.target.java;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfigurationKt;
+import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.openapi.options.BoundConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 public class JavaLanguageRuntimeUIFactoryImpl implements JavaLanguageRuntimeUIFactory {
   @Override
@@ -12,6 +16,16 @@ public class JavaLanguageRuntimeUIFactoryImpl implements JavaLanguageRuntimeUIFa
   public BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,
                                   @NotNull TargetEnvironmentConfiguration target,
                                   @NotNull Project project) {
-    return new JavaLanguageRuntimeUI(config, target, project);
+    return new JavaLanguageRuntimeUI(config, TargetEnvironmentConfigurationKt.getTargetType(target), () -> {
+      return target;
+    }, project);
+  }
+
+  @Override
+  public @NotNull BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,
+                                           @NotNull TargetEnvironmentType<? extends TargetEnvironmentConfiguration> targetType,
+                                           @NotNull Supplier<TargetEnvironmentConfiguration> targetSupplier,
+                                           @NotNull Project project) {
+    return new JavaLanguageRuntimeUI(config, targetType, targetSupplier, project);
   }
 }

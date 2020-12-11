@@ -8,11 +8,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.function.Supplier;
 
-public interface BrowsableTargetEnvironmentConfiguration {
+public interface BrowsableTargetEnvironmentType {
 
   @NotNull <T extends Component> ActionListener createBrowser(@NotNull Project project,
                                                               @NlsContexts.DialogTitle String title,
                                                               @NotNull TextComponentAccessor<T> textComponentAccessor,
-                                                              @NotNull T component);
+                                                              @NotNull T component,
+                                                              @NotNull Supplier<TargetEnvironmentConfiguration> configurationSupplier);
 }
