@@ -2,6 +2,8 @@
 package training.learn.lesson.general
 
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
@@ -21,7 +23,9 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
+    lateinit var showIntentionsTaskId: TaskContext.TaskId
     task("ShowIntentionActions") {
+      showIntentionsTaskId = taskId
       text(LessonsBundle.message("context.actions.invoke.intentions.for.warning", LessonUtil.actionName(it), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(warningQuickFix)
@@ -43,11 +47,12 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
       stateCheck {
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
-      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea)
+      restoreIfIntentionsPopupClosed(showIntentionsTaskId)
     }
 
     caret(intentionCaret)
     task("ShowIntentionActions") {
+      showIntentionsTaskId = taskId
       text(LessonsBundle.message("context.actions.invoke.general.intentions", LessonUtil.actionName(it), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(intentionText)
@@ -64,7 +69,7 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
       stateCheck {
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
-      restoreIfModifiedOrMovedIncorrectly(intentionPossibleArea)
+      restoreIfIntentionsPopupClosed(showIntentionsTaskId)
     }
 
     text(LessonsBundle.message("context.actions.refactorings.promotion",
@@ -76,5 +81,11 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
 
   private fun insideIntention() = Thread.currentThread().stackTrace.any {
     it.className.contains(ShowIntentionActionsHandler::class.simpleName!!)
+  }
+
+  private fun TaskContext.restoreIfIntentionsPopupClosed(restoreId: TaskContext.TaskId) {
+    restoreState(restoreId = restoreId, delayMillis = defaultRestoreDelay) {
+      focusOwner is EditorComponentImpl
+    }
   }
 }

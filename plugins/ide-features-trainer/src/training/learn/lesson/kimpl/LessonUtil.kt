@@ -235,10 +235,9 @@ val defaultRestoreDelay: Int
  * @param [restoreRequired] returns true iff restore is needed
  */
 fun TaskContext.restoreAfterStateBecomeFalse(restoreId: TaskContext.TaskId? = null,
-                                             delayMillis: Int = 0,
                                              restoreRequired: TaskRuntimeContext.() -> Boolean) {
   var restoreIsPossible = false
-  restoreState(restoreId, delayMillis) {
+  restoreState(restoreId) {
     val required = restoreRequired()
     (restoreIsPossible && required).also { restoreIsPossible = restoreIsPossible || !required }
   }

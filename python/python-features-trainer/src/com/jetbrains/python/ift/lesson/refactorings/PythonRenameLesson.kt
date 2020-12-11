@@ -15,6 +15,7 @@ import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.ift.PythonLessonsBundle
 import org.jetbrains.annotations.Nullable
+import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskTestContext
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
@@ -104,6 +105,7 @@ class PythonRenameLesson(module: Module)
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         path.pathCount == 6 && path.getPathComponent(5).toString().contains("company_members")
       }
+      showWarningIfFindToolbarClosed()
       test {
         ideFrame {
           val jTree = runReadAction {
@@ -124,12 +126,14 @@ class PythonRenameLesson(module: Module)
         val dataContext = DataManager.getInstance().getDataContext(tree)
         val exclusionProcessor: ExclusionHandler<*> = ExclusionHandler.EXCLUSION_HANDLER.getData(dataContext) ?: return@stateCheck false
         val leafToBeExcluded = last.lastPathComponent
+
         @Suppress("UNCHECKED_CAST")
         fun <T : Any?> castHack(processor: ExclusionHandler<T>): Boolean {
           return processor.isNodeExclusionAvailable(leafToBeExcluded as T) && processor.isNodeExcluded(leafToBeExcluded as T)
         }
         castHack(exclusionProcessor)
       }
+      showWarningIfFindToolbarClosed()
       test {
         ideFrame {
           type("co_me")
@@ -149,6 +153,7 @@ class PythonRenameLesson(module: Module)
       val result = replace?.let { template.replace("<name>", it).replace("<caret>", "") }
       text(PythonLessonsBundle.message("python.rename.finish.refactoring", strong(confirmRefactoringButton)))
       stateCheck { editor.document.text == result }
+      showWarningIfFindToolbarClosed()
       test {
         ideFrame {
           button(confirmRefactoringButton).click()
@@ -164,5 +169,11 @@ class PythonRenameLesson(module: Module)
       else
         TreeVisitor.Action.CONTINUE
     }).blockingGet(200)
+  }
+
+  private fun TaskContext.showWarningIfFindToolbarClosed() {
+    showWarning(PythonLessonsBundle.message("python.rename.find.window.closed.warning", action("ActivateFindToolWindow"))) {
+      previous.ui?.isShowing != true
+    }
   }
 }
