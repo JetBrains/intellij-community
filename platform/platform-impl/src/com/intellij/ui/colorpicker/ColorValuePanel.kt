@@ -469,7 +469,9 @@ private class ColorLabel(@NlsContexts.Label text: String = ""): JLabel(text, Swi
 }
 
 private const val ACTION_UP = "up"
+private const val ACTION_UP_FAST = "up_fast"
 private const val ACTION_DOWN = "down"
+private const val ACTION_DOWN_FAST = "down_fast"
 
 class ColorValueField(private val hex: Boolean = false, private val showAlpha: Boolean = false): JTextField(fieldLength(hex, showAlpha)) {
 
@@ -494,14 +496,22 @@ class ColorValueField(private val hex: Boolean = false, private val showAlpha: B
       // Don't increase value for hex field.
       with(getInputMap(JComponent.WHEN_FOCUSED)) {
         put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), ACTION_UP)
+        put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.SHIFT_DOWN_MASK), ACTION_UP_FAST)
         put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), ACTION_DOWN)
+        put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.SHIFT_DOWN_MASK), ACTION_DOWN_FAST)
       }
       with(actionMap) {
         put(ACTION_UP, object : AbstractAction() {
           override fun actionPerformed(e: ActionEvent) = increaseValue(1)
         })
+        put(ACTION_UP_FAST, object : AbstractAction() {
+          override fun actionPerformed(e: ActionEvent) = increaseValue(10)
+        })
         put(ACTION_DOWN, object : AbstractAction() {
           override fun actionPerformed(e: ActionEvent) = increaseValue(-1)
+        })
+        put(ACTION_DOWN_FAST, object : AbstractAction() {
+          override fun actionPerformed(e: ActionEvent) = increaseValue(-10)
         })
       }
     }
