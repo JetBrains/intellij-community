@@ -11,6 +11,7 @@ import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
 
 class CodeFormatLesson(module: Module, override val lang: String, private val sample: LessonSample, private val optimizeImports: Boolean) :
   KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name"), module, lang) {
@@ -55,6 +56,9 @@ class CodeFormatLesson(module: Module, override val lang: String, private val sa
         text(LessonsBundle.message("code.format.optimize.imports", strong(optimizeImportsActionText), strong(runButtonText)))
         stateCheck {
           focusOwner is EditorComponentImpl && properties.getBoolean("LayoutCode.optimizeImports")
+        }
+        restoreAfterStateBecomeFalse {
+          focusOwner is EditorComponentImpl
         }
         test {
           properties.setValue("LayoutCode.optimizeImports", true)
