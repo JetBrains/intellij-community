@@ -2,6 +2,7 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
@@ -16,9 +17,11 @@ import training.learn.lesson.kimpl.LessonUtil
 abstract class FileStructureLesson(module: Module, lang: String)
   : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name"), module, lang) {
   abstract override val existedFile: String
-  abstract val searchSubstring: String
-  abstract val firstWord: String
-  abstract val secondWord: String
+  abstract val methodToFindPosition: LogicalPosition
+
+  private val searchSubstring: String = "hosa"
+  private val firstWord: String = "homo"
+  private val secondWord: String = "sapience"
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
@@ -39,7 +42,7 @@ abstract class FileStructureLesson(module: Module, lang: String)
       }
       task {
         text(LessonsBundle.message("file.structure.navigate", LessonUtil.rawEnter()))
-        stateCheck { focusOwner is EditorComponentImpl }
+        stateCheck { editor.caretModel.logicalPosition == methodToFindPosition }
         test { GuiTestUtil.shortcut(Key.ENTER) }
       }
       task("ActivateStructureToolWindow") {
