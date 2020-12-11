@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,8 +30,6 @@ import java.util.Collections;
 import java.util.List;
 
 final class FilePartNodeRoot extends FilePartNode {
-  private static final boolean IS_CONSISTENCY_CHECK_DISABLED = Boolean.valueOf(System.getProperty("disable.vfs.consistencyCheck"));
-
   private FilePartNodeRoot(@NotNull NewVirtualFileSystem fs) {
     super(fs);
   }
@@ -280,7 +277,7 @@ final class FilePartNodeRoot extends FilePartNode {
   }
 
   void checkConsistency() {
-    if (VirtualFilePointerManagerImpl.IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest() && !IS_CONSISTENCY_CHECK_DISABLED) {
+    if (VirtualFilePointerManagerImpl.shouldCheckConsistency()) {
       doCheckConsistency(null, "", myFS.getProtocol() + URLUtil.SCHEME_SEPARATOR);
     }
   }

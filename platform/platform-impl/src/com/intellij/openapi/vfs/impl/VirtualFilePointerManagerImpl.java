@@ -48,7 +48,17 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, BulkFileListener {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerManagerImpl.class);
-  static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
+  private static volatile boolean disableConsistencyCheckInTest = false;
+
+  static boolean shouldCheckConsistency() {
+    return IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest() && !disableConsistencyCheckInTest;
+  }
+
+  @TestOnly
+  public static void setDisableConsistencyCheckInTest(boolean isDisabled) {
+    disableConsistencyCheckInTest = isDisabled;
+  }
 
   /*
    virtual file pointers are stored in a trie structure rooted either here in myLocalRoot or in myTempRoot.
