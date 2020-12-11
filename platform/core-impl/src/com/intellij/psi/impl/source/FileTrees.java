@@ -19,6 +19,7 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.StaticGetter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -156,7 +157,7 @@ final class FileTrees {
   }
 
   static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file) {
-    return new FileTrees(file, null, ast, null);
+    return new FileTrees(file, null, new StaticGetter<>(ast), null);
   }
 
   /**

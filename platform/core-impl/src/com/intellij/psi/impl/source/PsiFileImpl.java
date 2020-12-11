@@ -702,7 +702,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @NotNull
   private Getter<FileElement> createTreeElementPointer(@NotNull FileElement treeElement) {
     if (isKeepTreeElementByHardReference()) {
-      return treeElement;
+      return new StaticGetter<>(treeElement);
     }
     return myManager.isBatchFilesProcessingMode()
                  ? new PatchedWeakReference<>(treeElement)
