@@ -31,6 +31,8 @@ import java.util.Collections;
 import java.util.List;
 
 final class FilePartNodeRoot extends FilePartNode {
+  private static final boolean IS_CONSISTENCY_CHECK_DISABLED = Boolean.valueOf(System.getProperty("disable.vfs.consistencyCheck"));
+
   private FilePartNodeRoot(@NotNull NewVirtualFileSystem fs) {
     super(fs);
   }
@@ -278,7 +280,7 @@ final class FilePartNodeRoot extends FilePartNode {
   }
 
   void checkConsistency() {
-    if (VirtualFilePointerManagerImpl.IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
+    if (VirtualFilePointerManagerImpl.IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest() && !IS_CONSISTENCY_CHECK_DISABLED) {
       doCheckConsistency(null, "", myFS.getProtocol() + URLUtil.SCHEME_SEPARATOR);
     }
   }
