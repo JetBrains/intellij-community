@@ -25,7 +25,7 @@ class GetterDescriptor(
     init {
         OnDemandRenderer.ON_DEMAND_CALCULATED.set(this, false)
         setOnDemandPresentationProvider { node ->
-            node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator("... get()"))
+            node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(KotlinDebuggerCoreBundle.message("message.node.get")))
             node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", null, ""), false)
         }
     }
