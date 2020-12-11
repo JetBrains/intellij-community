@@ -86,4 +86,16 @@ class SaveFacetsTest {
     projectModel.saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("facet-in-module-with-custom-storage")))
   }
+
+  @Test
+  fun `remove last facet`() {
+    registerFacetType(MockFacetType(), disposable.disposable)
+    val module = projectModel.createModule("foo")
+    val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("my-data"))
+    projectModel.saveProjectState()
+    projectModel.removeFacet(facet)
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-module")))
+  }
+
 }
