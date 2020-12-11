@@ -100,4 +100,11 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
      */
     fun toStorableMap(): Map<String, String>
   }
+
+  /**
+   * Used for browsing to get current configurable's state without invoking [Configurable.apply]. See IDEA-255466.
+   */
+  interface ConfigurableCurrentConfigurationProvider {
+    fun getCurrentConfiguration(): TargetEnvironmentConfiguration
+  }
 }

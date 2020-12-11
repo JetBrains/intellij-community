@@ -15,10 +15,12 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.util.function.Supplier
 import javax.swing.JPanel
 
 class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
-                            private val target: TargetEnvironmentConfiguration,
+                            private val targetType: TargetEnvironmentType<*>,
+                            private val targetProvider: Supplier<TargetEnvironmentConfiguration>,
                             private val project: Project) :
   BoundConfigurable(config.displayName, config.getRuntimeType().helpTopic) {
 
@@ -32,8 +34,9 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
     mainPanel = panel {
       row(ExecutionBundle.message("java.language.runtime.jdk.home.path")) {
         val cellBuilder: CellBuilder<*>
-        if (target is BrowsableTargetEnvironmentConfiguration) {
-          cellBuilder = TargetUIUtil.textFieldWithBrowseButton(this, target, project,
+        if (targetType is BrowsableTargetEnvironmentType) {
+          cellBuilder = TargetUIUtil.textFieldWithBrowseButton(this, targetType, targetProvider,
+                                                               project,
                                                                ExecutionBundle.message("java.language.runtime.jdk.home.path.title"),
                                                                config::homePath.toBinding())
         }
@@ -97,8 +100,9 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
         set = { config.setTargetPath(volumeDescriptor, it.nullize(true)) })
 
       val cellBuilder: CellBuilder<*>
-      if (target is BrowsableTargetEnvironmentConfiguration) {
-        cellBuilder = TargetUIUtil.textFieldWithBrowseButton(this, target, project, volumeDescriptor.browsingTitle, propertyBinding)
+      if (targetType is BrowsableTargetEnvironmentType) {
+        cellBuilder = TargetUIUtil.textFieldWithBrowseButton(this, targetType, targetProvider, project, volumeDescriptor.browsingTitle,
+                                                             propertyBinding)
       }
       else {
         cellBuilder = textField(propertyBinding)
@@ -106,7 +110,7 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
       cellBuilder.comment(volumeDescriptor.description)
     }
 
-    target.getTargetType().createVolumeContributionUI()?.let {
+    targetType.createVolumeContributionUI()?.let {
       targetVolumeContributions[volumeDescriptor] = it
       val component = it.createComponent()
       it.resetFrom(volumeDescriptor)
