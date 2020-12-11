@@ -1,13 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ui.paint.ImageComparator;
+import com.intellij.ui.scale.paint.ImageComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
@@ -19,7 +17,7 @@ import java.net.MalformedURLException;
 import java.util.function.BiFunction;
 
 import static com.intellij.ui.scale.ScaleType.*;
-import static com.intellij.util.ui.TestScaleHelper.*;
+import static com.intellij.ui.scale.TestScaleHelper.*;
 
 /**
  * @author tav

@@ -20,8 +20,8 @@ import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
 import com.intellij.util.ui.JBHtmlEditorKit
-import com.intellij.util.ui.TestScaleHelper
-import com.intellij.util.ui.paint.ImageComparator
+import com.intellij.ui.scale.TestScaleHelper
+import com.intellij.ui.scale.paint.ImageComparator
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName

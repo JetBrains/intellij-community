@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+package com.intellij.ui;
 
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.ui.svg.SvgCacheManager;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ui.paint.ImageComparator;
+import com.intellij.ui.scale.paint.ImageComparator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;

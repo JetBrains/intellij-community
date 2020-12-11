@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
@@ -11,9 +11,10 @@ import com.intellij.ui.DeferredIconImpl;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.ui.scale.*;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.paint.ImageComparator;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.ui.scale.paint.ImageComparator;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -30,7 +31,7 @@ import java.util.function.Function;
 import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
 import static com.intellij.ui.scale.DerivedScaleType.EFF_USR_SCALE;
 import static com.intellij.ui.scale.ScaleType.*;
-import static com.intellij.util.ui.TestScaleHelper.*;
+import static com.intellij.ui.scale.TestScaleHelper.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -192,7 +193,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertThat(icon.getIconWidth()).describedAs(testDescription + ": unexpected icon user width").isEqualTo(usrSize);
     assertThat(icon.getIconHeight()).describedAs(testDescription + ": unexpected icon user height").isEqualTo(usrSize);
 
-    assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width").isEqualTo(devSize);
+    Assertions.assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width").isEqualTo(devSize);
     assertThat(ImageUtil.getRealHeight(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real height").isEqualTo(devSize);
   }
 

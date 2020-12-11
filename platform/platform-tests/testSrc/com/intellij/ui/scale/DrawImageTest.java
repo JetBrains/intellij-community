@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.RetinaImage;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.UIUtil;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -15,8 +16,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 
-import static com.intellij.util.ui.TestScaleHelper.createImageAndGraphics;
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.createImageAndGraphics;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
 import static junit.framework.TestCase.assertEquals;

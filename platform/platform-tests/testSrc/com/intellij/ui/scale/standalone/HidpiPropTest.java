@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.standalone;
+package com.intellij.ui.scale.standalone;
 
 import com.intellij.idea.StartupUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.TestScaleHelper;
+import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.Assert;
 import org.junit.Test;
 

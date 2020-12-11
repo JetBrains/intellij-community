@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.paint;
+package com.intellij.ui.scale.paint;
 
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.paint.LinePainter2D;
@@ -15,7 +15,7 @@ import java.awt.geom.Line2D;
 import java.util.EnumSet;
 
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests the {@link LinePainter2D} painting.

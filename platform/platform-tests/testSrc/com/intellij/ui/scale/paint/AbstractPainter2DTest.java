@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.paint;
+package com.intellij.ui.scale.paint;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
+import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
@@ -13,8 +13,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.function.Function;
 
-import static com.intellij.util.ui.TestScaleHelper.loadImage;
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.loadImage;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 import static java.lang.Math.ceil;
 
 /**

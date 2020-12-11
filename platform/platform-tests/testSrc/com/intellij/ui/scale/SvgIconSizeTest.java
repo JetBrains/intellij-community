@@ -1,12 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+package com.intellij.ui.scale;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.ImageUtil;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -19,8 +18,8 @@ import java.net.URL;
 
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
-import static com.intellij.util.ui.TestScaleHelper.loadImage;
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.loadImage;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 

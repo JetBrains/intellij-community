@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.paint;
+package com.intellij.ui.scale.paint;
 
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.paint.PaintUtil;
@@ -13,7 +13,7 @@ import org.junit.rules.ExternalResource;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 

@@ -3,7 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.util.ui.TestScaleHelper;
+import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.junit.After;
 import org.junit.Before;

@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.standalone;
+package com.intellij.ui.scale.standalone;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.util.ui.TestScaleHelper;
+import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.intellij.util.ui.standalone.Java2DUiScaleEnabledPropTest.JAVA2D_UI_SCALE_ENABLED_PROP;
+import static com.intellij.ui.scale.standalone.Java2DUiScaleEnabledPropTest.JAVA2D_UI_SCALE_ENABLED_PROP;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assume.assumeFalse;
 

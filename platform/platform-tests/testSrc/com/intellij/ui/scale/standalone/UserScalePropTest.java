@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.standalone;
+package com.intellij.ui.scale.standalone;
 
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.TestScaleHelper;
+import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;

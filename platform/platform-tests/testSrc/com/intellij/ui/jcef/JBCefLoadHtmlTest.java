@@ -4,7 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ui.TestScaleHelper;
+import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests that {@link JBCefBrowser#loadHTML(String, String)} can load html that references JS via "file://"
