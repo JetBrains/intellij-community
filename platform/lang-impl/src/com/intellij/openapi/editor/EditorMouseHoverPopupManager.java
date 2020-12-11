@@ -78,7 +78,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-@Service
 public class EditorMouseHoverPopupManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorMouseHoverPopupManager.class);
   private static final Key<Boolean> DISABLE_BINDING = Key.create("EditorMouseHoverPopupManager.disable.binding");
