@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.toolbar.floating
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -17,7 +16,7 @@ import javax.swing.JPanel
 
 class FloatingToolbarComponentImpl(
   parentComponent: JComponent,
-  private val contextComponent: JComponent,
+  contextComponent: JComponent,
   actionGroup: ActionGroup,
   autoHideable: Boolean,
   parentDisposable: Disposable
@@ -32,9 +31,7 @@ class FloatingToolbarComponentImpl(
 
   override fun getData(dataId: String): Any? {
     if (FloatingToolbarComponent.KEY.`is`(dataId)) return this
-    val dataManager = DataManager.getInstance()
-    val dataContext = dataManager.getDataContext(contextComponent)
-    return dataContext.getData(dataId)
+    return null
   }
 
   override fun paintChildren(g: Graphics) {
@@ -76,7 +73,7 @@ class FloatingToolbarComponentImpl(
     isVisible = false
 
     actionToolbar = ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true)
-    actionToolbar.setTargetComponent(this)
+    actionToolbar.setTargetComponent(contextComponent)
     actionToolbar.setMinimumButtonSize(Dimension(22, 22))
     actionToolbar.setSkipWindowAdjustments(true)
     actionToolbar.setReservePlaceAutoPopupIcon(false)
