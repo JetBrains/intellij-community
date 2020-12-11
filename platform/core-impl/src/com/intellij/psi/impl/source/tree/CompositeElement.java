@@ -22,12 +22,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(CompositeElement.class);
@@ -39,7 +39,8 @@ public class CompositeElement extends TreeElement {
   private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper;
-  private static final AtomicFieldUpdater<CompositeElement, PsiElement> myWrapperUpdater = AtomicFieldUpdater.forFieldOfType(CompositeElement.class, PsiElement.class);
+  private static final AtomicReferenceFieldUpdater<CompositeElement, PsiElement>
+    myWrapperUpdater = AtomicReferenceFieldUpdater.newUpdater(CompositeElement.class, PsiElement.class, "myWrapper");
   private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
 
 

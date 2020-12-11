@@ -13,7 +13,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.WalkingState;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.NonNls;
@@ -27,6 +26,7 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -305,7 +305,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
      * N        - 1bit flag.  if set then all deltas up to root are null
      * MMMMMMMM - 32bit int containing this node modification count
      */
-    private static final AtomicFieldUpdater<IntervalNode, Long> cachedDeltaUpdater = AtomicFieldUpdater.forLongFieldIn(IntervalNode.class);
+    private static final AtomicLongFieldUpdater<IntervalNode>
+      cachedDeltaUpdater = AtomicLongFieldUpdater.newUpdater(IntervalNode.class, "cachedDeltaUpToRoot");
 
     private void setCachedValues(int deltaUpToRoot, boolean allDeltaUpToRootAreNull, int modCount) {
       cachedDeltaUpToRoot = packValues(deltaUpToRoot, allDeltaUpToRootAreNull, modCount);
@@ -319,7 +320,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       if (myIntervalTree.getModCount() != treeModCount) return false;
       long newValue = packValues(deltaUpToRoot, allDeltasUpAreNull, treeModCount);
       long oldValue = cachedDeltaUpToRoot;
-      return cachedDeltaUpdater.compareAndSetLong(this, oldValue, newValue);
+      return cachedDeltaUpdater.compareAndSet(this, oldValue, newValue);
     }
 
     private static boolean allDeltasUpAreNull(long packedOffsets) {
