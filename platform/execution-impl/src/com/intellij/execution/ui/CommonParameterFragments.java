@@ -60,7 +60,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   @NotNull
   public SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
     RawCommandLineEditor programArguments = new RawCommandLineEditor();
-    CommandLinePanel.setMinimumWidth(programArguments, 200);
+    CommandLinePanel.setMinimumWidth(programArguments, 400);
     String message = ExecutionBundle.message("run.configuration.program.parameters.placeholder");
     programArguments.getEditorField().getEmptyText().setText(message);
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
