@@ -1,7 +1,7 @@
 <html>
 
 <style>
-  .table_full {
+  .outer_container {
       display: table;
       position: absolute;
       top: 0;
@@ -10,13 +10,17 @@
       width: 100%;
       background-color:${bgWebColor};
   }
-  .table_cell_middle {
+  .middle_container {
       display: table-cell;
       vertical-align: middle;
   }
-  .table_h_center {
+  .center_container {
       display: table;
       margin: 0 auto;
+  }
+  .top_td {
+      vertical-align:top;
+      padding:0;
   }
   .txt {
       text-align:left;
@@ -24,6 +28,7 @@
       font-family: monospace;
       font-size:${fontSize}px;
       line-height:${lineHeight}px;
+      margin:0;
   }
 </style>
 
@@ -32,19 +37,21 @@
 </head>
 
 <body>
-<div class="table_full">
-  <div class="table_cell_middle">
-    <div class="table_h_center">
+<div class="outer_container">
+  <div class="middle_container">
+    <div class="center_container">
       <table>
         <tr>
-          <td style="vertical-align:top;">
-            <div style="padding-right:${iconPaddingRight}px">
-              <img src="data:image/png;base64,${base64Image}" alt="Error"/>
+          <td class="top_td">
+            <div style="display:table;margin:0;padding:0;height:${lineHeight}px;">
+              <div style="display:table-cell;vertical-align:middle;margin:0;padding-right:${iconPaddingRight}px;">
+                <img src="data:image/png;base64,${base64Image}" alt="Error"/>
+              </div>
             </div>
           </td>
-          <td>
+          <td class="top_td">
             <div>
-              <p class="txt" style="font-size:${headerFontSize}px;font-weight:bold;padding-top:${headerPaddingTop}px;">Cannot Open the Page</p>
+              <p class="txt" style="font-size:${headerFontSize}px;">Cannot Open the Page</p>
               <p class="txt">${failedUrl}</p>
               <p class="txt">${errorText}</p>
             </div>

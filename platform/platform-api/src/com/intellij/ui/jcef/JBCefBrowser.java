@@ -50,6 +50,7 @@ import java.util.function.Consumer;
 import static com.intellij.ui.jcef.JBCefEventUtils.convertCefKeyEvent;
 import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 
 /**
@@ -98,7 +99,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       public @NotNull ScaleContext.Cache<String> initialize() {
         return new ScaleContext.Cache<>((ctx) -> {
           try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), ctx, false);
+            BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), false);
             ImageIO.write(image, "png", out);
             return Base64.getEncoder().encodeToString(out.toByteArray());
           }
@@ -401,9 +402,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   private void loadErrorPage(@NotNull String errorText, @NotNull String failedUrl) {
     int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
-    int headerFontSize = fontSize + JBUIScale.scale(9);
+    int headerFontSize = fontSize + JBUIScale.scale(3);
     int headerPaddingTop = headerFontSize / 5;
-    int lineHeight = JBUIScale.scale(20);
+    int lineHeight = headerFontSize * 2;
     int iconPaddingRight = JBUIScale.scale(12);
     Color bgColor = JBColor.background();
     String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
@@ -421,8 +422,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
     html = html.replace("${errorText}", errorText);
     html = html.replace("${failedUrl}", failedUrl);
 
-    ScaleContext ctx = ScaleContext.create(getComponent());
-    ctx.update(OBJ_SCALE.of(fontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
+    ScaleContext ctx = ScaleContext.create();
+    ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
+    // Reset sys scale to prevent raster downscaling on passing the image to jcef.
+    // Overriding is used to prevent scale change during further intermediate context transformations.
+    ctx.overrideScale(SYS_SCALE.of(1.0));
 
     html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
 
