@@ -9,7 +9,7 @@ import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
-class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
+open class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
 
   private var isExpanded: Boolean = true
 
@@ -19,7 +19,7 @@ class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSepa
 
   fun collapse() = update(false)
 
-  private fun update(expand: Boolean) {
+  protected open fun update(expand: Boolean) {
     isExpanded = expand
     row.visible = expand
     row.subRowsVisible = expand
