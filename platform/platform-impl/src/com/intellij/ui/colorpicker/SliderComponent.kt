@@ -128,9 +128,9 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
 
     with (getInputMap(WHEN_FOCUSED)) {
       put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), ACTION_SLIDE_LEFT)
-      put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK), ACTION_SLIDE_LEFT_STEP)
+      put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.SHIFT_DOWN_MASK), ACTION_SLIDE_LEFT_STEP)
       put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), ACTION_SLIDE_RIGHT)
-      put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_DOWN_MASK), ACTION_SLIDE_RIGHT_STEP)
+      put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.SHIFT_DOWN_MASK), ACTION_SLIDE_RIGHT_STEP)
     }
   }
 
