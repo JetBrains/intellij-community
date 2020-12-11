@@ -211,16 +211,13 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   /** @return a callback to clear resources used to track restore */
   private fun checkForRestore(taskContext: TaskContextImpl,
                               taskData: TaskData): () -> Unit {
-    lateinit var clearRestore: () -> Unit
-    fun restoreTask(restoreId: TaskContext.TaskId) {
-      applyRestore(taskContext, restoreId)
-    }
+    var clearRestore: () -> Unit = {}
 
     fun restore(restoreId: TaskContext.TaskId) {
       clearRestore()
       invokeLater(ModalityState.any()) { // restore check must be done after pass conditions (and they will be done during current event processing)
-        if (!isTaskCompleted(taskContext)) {
-          restoreTask(restoreId)
+        if (canBeRestored(taskContext)) {
+          applyRestore(taskContext, restoreId)
         }
       }
     }
@@ -233,13 +230,22 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
         clearRestore()
         return false
       }
-      val restoreId = shouldRestoreToTask()
-      return if (restoreId != null) {
-        if (taskData.delayMillis == 0) restore(restoreId)
-        else Alarm().addRequest({ restore(restoreId) }, taskData.delayMillis)
-        true
+
+      val checkAndRestoreIfNeeded = {
+        if (canBeRestored(taskContext)) {
+          val restoreId = shouldRestoreToTask()
+          if (restoreId != null) {
+            restore(restoreId)
+          }
+        }
       }
-      else false
+      if (taskData.delayMillis == 0) {
+        checkAndRestoreIfNeeded()
+      }
+      else {
+        Alarm().addRequest(checkAndRestoreIfNeeded, taskData.delayMillis)
+      }
+      return false
     }
 
     // Not sure about use-case when we need to check restore at the start of current task
@@ -280,6 +286,10 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   }
 
   private fun isTaskCompleted(taskContext: TaskContextImpl) = taskContext.steps.all { it.isDone && it.get() }
+
+  private fun canBeRestored(taskContext: TaskContextImpl): Boolean {
+    return !hasBeenStopped && taskContext.steps.all { !it.isCancelled && !it.isCompletedExceptionally && (!it.isDone || !it.get()) }
+  }
 
   private fun processTestActions(taskContext: TaskContextImpl) {
     if (TaskTestContext.inTestMode) {
