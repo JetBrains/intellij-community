@@ -138,7 +138,7 @@ public final class FUStateUsagesLogger implements UsagesCollectorConsumer {
    * </p>
    * <br/>
    * <p>
-   * Consider using counter events {@link FUCounterUsageLogger} or
+   * Consider using counter events {@link CounterUsagesCollector} or
    * state events recorded by a scheduler {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector}
    * </p>
    */
@@ -155,7 +155,7 @@ public final class FUStateUsagesLogger implements UsagesCollectorConsumer {
    * </p>
    * <br/>
    * <p>
-   * Consider using counter events {@link FUCounterUsageLogger} or
+   * Consider using counter events {@link CounterUsagesCollector} or
    * state events recorded by a scheduler {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector}
    * </p>
    */

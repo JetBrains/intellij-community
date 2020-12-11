@@ -10,7 +10,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * To use new style API define "implementationClass" field using {@code com.intellij.statistics.counterUsagesCollector} extension point.
  * See fus-collectors.md for more information.<br/>
- * To use old API define "groupId" and "version" and log events with {@link com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger}
+ *
+ * "groupId" and "version" fields are deprecated.
  */
 public final class CounterUsageCollectorEP {
   @Attribute("groupId")
