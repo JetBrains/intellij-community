@@ -1,4 +1,4 @@
-<keymap name="QtCreator" parent="$default" version="1" disable-mnemonics="false">
+<keymap name="QtCreator (Mac OS X)" parent="Mac OS X 10.5+" version="1" disable-mnemonics="false">
   <action id="OpenFile">
     <keyboard-shortcut first-keystroke="control O"/>
   </action>
@@ -47,35 +47,35 @@
   </action>
   <action id="PreviousTab"/>
   <action id="Back">
-    <keyboard-shortcut first-keystroke="alt LEFT"/>
+    <keyboard-shortcut first-keystroke="meta LEFT"/>
   </action>
   <action id="NextTab"/>
   <action id="Forward">
-    <keyboard-shortcut first-keystroke="alt RIGHT"/>
+    <keyboard-shortcut first-keystroke="meta RIGHT"/>
   </action>
   <action id="GotoLine">
     <keyboard-shortcut first-keystroke="control L"/>
   </action>
   <action id="ActivateProblemsViewToolWindow">
-    <keyboard-shortcut first-keystroke="alt 1"/>
+    <keyboard-shortcut first-keystroke="meta 1"/>
   </action>
   <action id="ActivateFindToolWindow">
-    <keyboard-shortcut first-keystroke="alt 2"/>
+    <keyboard-shortcut first-keystroke="meta 2"/>
   </action>
   <action id="ActivateRunToolWindow">
-    <keyboard-shortcut first-keystroke="alt 3"/>
+    <keyboard-shortcut first-keystroke="meta 3"/>
   </action>
   <action id="ActivateMessagesToolWindow">
-    <keyboard-shortcut first-keystroke="alt 4"/>
+    <keyboard-shortcut first-keystroke="meta 4"/>
   </action>
   <action id="ShowBookmarks">
-    <keyboard-shortcut first-keystroke="alt M"/>
+    <keyboard-shortcut first-keystroke="meta M"/>
   </action>
   <action id="RecentFiles">
-    <keyboard-shortcut first-keystroke="alt O"/>
+    <keyboard-shortcut first-keystroke="meta O"/>
   </action>
   <action id="ActivateProjectToolWindow">
-    <keyboard-shortcut first-keystroke="alt X"/>
+    <keyboard-shortcut first-keystroke="meta X"/>
   </action>
   <action id="ToggleFullScreen">
     <keyboard-shortcut first-keystroke="control shift F11"/>
@@ -103,7 +103,7 @@
     <keyboard-shortcut first-keystroke="control SPACE"/>
   </action>
   <action id="EditorDuplicateLines">
-    <keyboard-shortcut first-keystroke="control alt DOWN"/>
+    <keyboard-shortcut first-keystroke="control meta DOWN"/>
   </action>
   <action id="PasteMultiple">
     <keyboard-shortcut first-keystroke="control shift V"/>
@@ -162,7 +162,7 @@
     <keyboard-shortcut first-keystroke="control U"/>
   </action>
   <action id="EditorUnSelectWord">
-    <keyboard-shortcut first-keystroke="control alt shift U"/>
+    <keyboard-shortcut first-keystroke="control meta shift U"/>
   </action>
   <action id="MoveLineDown">
     <keyboard-shortcut first-keystroke="control shift DOWN"/>
@@ -171,7 +171,7 @@
     <keyboard-shortcut first-keystroke="control shift UP"/>
   </action>
   <action id="ShowIntentionActions">
-    <keyboard-shortcut first-keystroke="alt ENTER"/>
+    <keyboard-shortcut first-keystroke="meta ENTER"/>
   </action>
   <action id="EditorToggleUseSoftWraps">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="control W"/>
@@ -218,7 +218,7 @@
     <keyboard-shortcut first-keystroke="F4"/>
   </action>
   <action id="EditorToggleCase">
-    <keyboard-shortcut first-keystroke="alt U"/>
+    <keyboard-shortcut first-keystroke="meta U"/>
   </action>
   <action id="Find">
     <keyboard-shortcut first-keystroke="control F"/>
@@ -269,7 +269,7 @@
     <keyboard-shortcut first-keystroke="control shift b" />
   </action>
   <action id="Compile">
-    <keyboard-shortcut first-keystroke="control alt B"/>
+    <keyboard-shortcut first-keystroke="control meta B"/>
   </action>
   <action id="Vcs.UpdateProject"/>
   <action id="ChooseRunConfiguration">
@@ -282,25 +282,25 @@
     <keyboard-shortcut first-keystroke="F1"/>
   </action>
   <action id="ChangesView.AddUnversioned">
-    <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt A"/>
+    <keyboard-shortcut first-keystroke="meta G" second-keystroke="meta A"/>
   </action>
   <action id="CheckinProject">
-    <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt C"/>
+    <keyboard-shortcut first-keystroke="meta G" second-keystroke="meta C"/>
   </action>
   <action id="Compare.SameVersion">
-    <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt D"/>
+    <keyboard-shortcut first-keystroke="meta G" second-keystroke="meta D"/>
   </action>
   <action id="Annotate">
-    <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt B"/>
+    <keyboard-shortcut first-keystroke="meta G" second-keystroke="meta B"/>
   </action>
   <action id="Vcs.ShowTabbedFileHistory">
-    <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt L" />
+    <keyboard-shortcut first-keystroke="meta G" second-keystroke="meta L" />
   </action>
   <action id="Vcs.Show.Log">
-    <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt K"/>
+    <keyboard-shortcut first-keystroke="meta G" second-keystroke="meta K"/>
   </action>
   <action id="ChangesView.Revert">
-    <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt U"/>
+    <keyboard-shortcut first-keystroke="meta G" second-keystroke="meta U"/>
   </action>
   <action id="Move"/>
   <action id="CopyFile"/>
