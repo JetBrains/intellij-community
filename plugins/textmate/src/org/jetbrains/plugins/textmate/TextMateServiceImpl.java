@@ -220,7 +220,7 @@ public final class TextMateServiceImpl extends TextMateService {
   public TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension) {
     if (StringUtil.isEmpty(extension)) return null;
     ensureInitialized();
-    CharSequence scopeName = myExtensionsMapping.get(extension.toString());
+    CharSequence scopeName = myExtensionsMapping.get(StringUtil.toLowerCase(extension.toString()));
     return !StringUtil.isEmpty(scopeName) ? new TextMateLanguageDescriptor(scopeName, mySyntaxTable.getSyntax(scopeName)) : null;
   }
 
@@ -305,7 +305,7 @@ public final class TextMateServiceImpl extends TextMateService {
         CharSequence rootScopeName = mySyntaxTable.loadSyntax(plist, myInterner);
         Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
         for (String extension : extensions) {
-          extensionsMapping.put(extension, rootScopeName);
+          extensionsMapping.put(StringUtil.toLowerCase(extension), rootScopeName);
         }
       }
       catch (IOException e) {
