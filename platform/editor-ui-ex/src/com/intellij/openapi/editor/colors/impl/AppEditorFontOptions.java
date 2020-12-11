@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,14 +85,26 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
   private static void copyState(PersistentFontPreferences state, @NotNull ModifiableFontPreferences fontPreferences) {
     fontPreferences.clear();
     int fontSize = UISettings.restoreFontSize(state.FONT_SIZE, state.FONT_SCALE);
-    fontPreferences.register(state.FONT_FAMILY, fontSize);
-    fontPreferences.setRegularSubFamily(state.FONT_REGULAR_SUB_FAMILY);
-    fontPreferences.setBoldSubFamily(state.FONT_BOLD_SUB_FAMILY);
+    String[] names = migrateFamilyNameIfNeeded(state.FONT_FAMILY, state.FONT_REGULAR_SUB_FAMILY, state.FONT_BOLD_SUB_FAMILY);
+    fontPreferences.register(names[0], fontSize);
+    fontPreferences.setRegularSubFamily(names[1]);
+    fontPreferences.setBoldSubFamily(names[2]);
     fontPreferences.setLineSpacing(state.LINE_SPACING);
     fontPreferences.setUseLigatures(state.USE_LIGATURES);
     if (state.SECONDARY_FONT_FAMILY != null) {
       fontPreferences.register(state.SECONDARY_FONT_FAMILY, fontSize);
     }
+  }
+
+  private static String[] migrateFamilyNameIfNeeded(String family, String regularSubFamily, String boldSubFamily) {
+    if (SystemInfo.isJetBrainsJvm && SystemProperties.is("new.editor.font.selector")) {
+      switch (family) {
+        case "Fira Code Light": return new String[] {"Fira Code", "Light", null};
+        case "Fira Code Medium": return new String[] {"Fira Code", "Medium", null};
+        case "Fira Code Retina": return new String[] {"Fira Code", "Retina", null};
+      }
+    }
+    return new String[] {family, regularSubFamily, boldSubFamily};
   }
 
   public static void initDefaults(@NotNull ModifiableFontPreferences fontPreferences) {
