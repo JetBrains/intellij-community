@@ -187,4 +187,23 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
     doTestCompletion("<htm<caret> xmlns='http://www.w3.org/1999/xhtml'></htm>", null,
                      "<html<caret> xmlns='http://www.w3.org/1999/xhtml'></html>");
   }
+
+  public void testEmptyTagStartSync() {
+    myFixture.configureByText("foo.html","<div>ab<<caret>>cd</>ef</div>");
+    myFixture.type("div");
+    myFixture.checkResult("<div>ab<div>cd</div>ef</div>");
+  }
+
+  public void testEmptyTagEndSync() {
+    myFixture.configureByText("foo.html","<div>ab<>cd</<caret>>ef</div>");
+    myFixture.type("div");
+    myFixture.checkResult("<div>ab<div>cd</div>ef</div>");
+  }
+
+  public void testEmptyEndSync() {
+    myFixture.configureByText("foo.html","<b>ab</<caret>>cd</b>");
+    myFixture.type("br");
+    myFixture.checkResult("<b>ab</br>cd</b>");
+  }
+
 }
