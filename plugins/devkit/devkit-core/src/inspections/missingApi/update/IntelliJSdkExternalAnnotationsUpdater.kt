@@ -1,12 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
-import com.intellij.codeInspection.ex.modifyAndCommitProjectProfile
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
@@ -20,7 +14,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
-import com.intellij.util.Consumer
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection
 import org.jetbrains.idea.devkit.inspections.missingApi.resolve.IntelliJSdkExternalAnnotations
@@ -40,16 +33,12 @@ class IntelliJSdkExternalAnnotationsUpdater {
   companion object {
     private val LOG = Logger.getInstance(IntelliJSdkExternalAnnotationsUpdater::class.java)
 
-    private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("IntelliJ API Annotations")
-
-    private val UPDATE_RETRY_TIMEOUT = Duration.of(10, ChronoUnit.MINUTES)
+    private val UPDATE_RETRY_TIMEOUT = Duration.of(1, ChronoUnit.HOURS)
 
     fun getInstance(): IntelliJSdkExternalAnnotationsUpdater = service()
   }
 
   private val buildNumberLastFailedUpdateInstant = hashMapOf<BuildNumber, Instant>()
-
-  private val buildNumberNotificationShown = hashSetOf<BuildNumber>()
 
   private val buildNumberUpdateInProgress = hashSetOf<BuildNumber>()
 
@@ -66,7 +55,7 @@ class IntelliJSdkExternalAnnotationsUpdater {
       return
     }
 
-    if (synchronized(this) { buildNumber in buildNumberUpdateInProgress || buildNumber in buildNumberNotificationShown }) {
+    if (synchronized(this) { buildNumber in buildNumberUpdateInProgress }) {
       return
     }
 
@@ -76,19 +65,12 @@ class IntelliJSdkExternalAnnotationsUpdater {
     }
 
     runInEdt {
-      val canShowNotification = synchronized(this) {
+      synchronized(this) {
         val lastFailedInstant = buildNumberLastFailedUpdateInstant[buildNumber]
         val lastFailedWasLongAgo = lastFailedInstant == null || Instant.now().isAfter(lastFailedInstant.plus(UPDATE_RETRY_TIMEOUT))
-        if (lastFailedWasLongAgo && buildNumber !in buildNumberNotificationShown) {
-          buildNumberNotificationShown.add(buildNumber)
-          true
-        } else {
-          false
+        if (lastFailedWasLongAgo) {
+          updateAnnotationsInBackground(ideaJdk, project, buildNumber)
         }
-      }
-
-      if (canShowNotification) {
-        showUpdateAnnotationsNotification(project, ideaJdk, buildNumber)
       }
     }
   }
@@ -127,84 +109,12 @@ class IntelliJSdkExternalAnnotationsUpdater {
       .mapNotNull { getAnnotationsBuildNumber(it) }
 
 
-  private fun showUpdateAnnotationsNotification(project: Project, ideaJdk: Sdk, buildNumber: BuildNumber) {
-    val notification = NOTIFICATION_GROUP.createNotification(
-      DevKitBundle.message("intellij.api.annotations.update.title", buildNumber),
-      DevKitBundle.message("intellij.api.annotations.update.confirmation.content", buildNumber),
-      NotificationType.INFORMATION,
-      null
-    ).apply {
-      addAction(object : NotificationAction(DevKitBundle.message("intellij.api.annotations.update.confirmation.update.button")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          updateAnnotationsInBackground(ideaJdk, project, buildNumber)
-          notification.expire()
-        }
-      })
-      addAction(object : NotificationAction(
-        DevKitBundle.message("intellij.api.annotations.update.confirmation.disable.inspection.button")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          disableInspection(project)
-          notification.expire()
-        }
-      })
-    }
-
-    notification.whenExpired {
-      synchronized(this) {
-        buildNumberNotificationShown.remove(buildNumber)
-      }
-    }
-    notification.notify(project)
-  }
-
-  private fun disableInspection(project: Project) {
-    modifyAndCommitProjectProfile(project, Consumer {
-      it.disableToolByDefault(listOf(MissingRecentApiInspection.INSPECTION_SHORT_NAME), project)
-    })
-  }
-
   private fun updateAnnotationsInBackground(ideaJdk: Sdk, project: Project, buildNumber: BuildNumber) {
     if (synchronized(this) { !buildNumberUpdateInProgress.add(buildNumber) }) {
       return
     }
 
     UpdateTask(project, ideaJdk, buildNumber).queue()
-  }
-
-  private fun showSuccessfullyUpdated(project: Project, buildNumber: BuildNumber, annotationsBuild: BuildNumber) {
-    synchronized(this) {
-      buildNumberLastFailedUpdateInstant.remove(buildNumber)
-    }
-    val updateMessage = if (annotationsBuild >= buildNumber) {
-      DevKitBundle.message("intellij.api.annotations.update.successfully.updated", buildNumber)
-    } else {
-      DevKitBundle.message("intellij.api.annotations.update.successfully.updated.but.not.latest.version", buildNumber, annotationsBuild)
-    }
-    NOTIFICATION_GROUP
-      .createNotification(
-        DevKitBundle.message("intellij.api.annotations.update.title", buildNumber),
-        updateMessage,
-        NotificationType.INFORMATION,
-        null
-      )
-      .notify(project)
-  }
-
-  private fun showUnableToUpdate(project: Project, throwable: Throwable, buildNumber: BuildNumber) {
-    synchronized(this) {
-      buildNumberLastFailedUpdateInstant[buildNumber] = Instant.now()
-    }
-
-    val message = DevKitBundle.message("intellij.api.annotations.update.failed", throwable.message)
-    LOG.warn(message, throwable)
-
-    NOTIFICATION_GROUP
-      .createNotification(
-        DevKitBundle.message("intellij.api.annotations.update.title", buildNumber),
-        message,
-        NotificationType.WARNING,
-        null
-      ).notify(project)
   }
 
   private inner class UpdateTask(
@@ -217,7 +127,7 @@ class IntelliJSdkExternalAnnotationsUpdater {
 
     override fun run(indicator: ProgressIndicator) {
       val annotations = tryDownloadAnnotations(ideBuildNumber)
-        ?: throw Exception(DevKitBundle.message("intellij.api.annotations.update.failed.no.annotations.found", ideBuildNumber))
+                        ?: throw Exception("No external annotations found for $ideBuildNumber in the Maven repository.")
 
       ideAnnotations.set(annotations)
       reattachAnnotations(project, ideaJdk, annotations)
@@ -226,17 +136,23 @@ class IntelliJSdkExternalAnnotationsUpdater {
     private fun tryDownloadAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations? {
       return try {
         PublicIntelliJSdkExternalAnnotationsRepository(project).downloadExternalAnnotations(ideBuildNumber)
-      } catch (e: Exception) {
-        throw Exception(DevKitBundle.message("intellij.api.annotations.update.failed.download", ideBuildNumber), e)
+      }
+      catch (e: Exception) {
+        throw Exception("Failed to download annotations for $ideBuildNumber", e)
       }
     }
 
     override fun onSuccess() {
-      showSuccessfullyUpdated(project, ideBuildNumber, ideAnnotations.get().annotationsBuild)
+      synchronized(this@IntelliJSdkExternalAnnotationsUpdater) {
+        buildNumberLastFailedUpdateInstant.remove(ideBuildNumber)
+      }
     }
 
     override fun onThrowable(error: Throwable) {
-      showUnableToUpdate(project, error, ideBuildNumber)
+      synchronized(this@IntelliJSdkExternalAnnotationsUpdater) {
+        buildNumberLastFailedUpdateInstant[ideBuildNumber] = Instant.now()
+      }
+      LOG.warn("Failed to update IntelliJ API external annotations", error)
     }
 
     override fun onFinished() {
