@@ -16,14 +16,6 @@ import java.io.IOException;
 public interface FileBasedIndexInfrastructureExtension {
   ExtensionPointName<FileBasedIndexInfrastructureExtension> EP_NAME = ExtensionPointName.create("com.intellij.fileBasedIndexInfrastructureExtension");
 
-  /**
-   * This notification is sent from the IDE to let the extension point implementation
-   * update it's internal state in order to supply indexes.
-   * Extension point must not run any heavy tasks in this thread.
-   * @param indexingIndicator used only to track cancellation of the indexing, must not be used for updating texts/fractions.
-   */
-  void processIndexingProject(@NotNull Project project, @NotNull ProgressIndicator indexingIndicator);
-
   interface FileIndexingStatusProcessor {
     /**
      * Serves as an optimization when time-consuming {@link FileIndexingStatusProcessor#processUpToDateFile(IndexedFile, int, ID)}
@@ -93,6 +85,12 @@ public interface FileBasedIndexInfrastructureExtension {
    **/
   @NotNull
   InitializationResult initialize();
+
+  /**
+   * Executed when IntelliJ is requested to clear indexes. Each extension should clear its caches.
+   * For example, it may happen on index invalidation.
+   */
+  void clearPersistentData();
 
   /**
    * Executed when IntelliJ is shutting down it's indexes (IDE shutdown or plugin load/unload). It is the best time

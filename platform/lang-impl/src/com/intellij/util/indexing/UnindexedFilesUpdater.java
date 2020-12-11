@@ -138,13 +138,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     snapshot = PerformanceWatcher.takeSnapshot();
 
-    Instant indexExtensionsStart = Instant.now();
-    try {
-      FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processIndexingProject(myProject, indicator));
-    } finally {
-      projectIndexingHistory.getTimes().setIndexExtensionsDuration(Duration.between(indexExtensionsStart, Instant.now()));
-    }
-
     Instant scanFilesStart = Instant.now();
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
