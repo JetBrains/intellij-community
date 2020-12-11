@@ -220,12 +220,12 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
 
     private boolean isMonospaced() {
       Font font = members.entrySet().iterator().next().getValue();
-      if (!font.canDisplay('l') || !font.canDisplay('W')) {
+      if (!font.canDisplay(' ') || !font.canDisplay('M')) {
         return false;
       }
       FontMetrics metrics = FontInfo.getFontMetrics(font.deriveFont((float)EditorFontsConstants.getDefaultEditorFontSize()),
                                                     FontInfo.DEFAULT_CONTEXT);
-      return metrics.charWidth('l') == metrics.charWidth('W');
+      return metrics.charWidth(' ') == metrics.charWidth('M');
     }
 
     private List<String> getBaseSubFamilies() {
