@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
@@ -56,6 +58,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -1091,12 +1094,34 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
       }
 
-      myResultsList.setEmptyText(pattern.isEmpty() ? "" : getNotFoundText());
+      updateEmptyText(pattern);
+
       hasMoreContributors.forEach(myListModel::setHasMore);
 
       mySelectionTracker.resetSelectionIfNeeded();
 
       if (testCallback != null) testCallback.consume(myListModel.getItems());
+    }
+
+    private void updateEmptyText(String pattern) {
+      StatusText emptyStatus = myResultsList.getEmptyText();
+      emptyStatus.clear();
+
+      if (pattern.isEmpty()) return;
+      emptyStatus.appendLine(getNotFoundText());
+
+      Optional.ofNullable(myProject)
+        .map(project -> FindInProjectManager.getInstance(project))
+        .filter(manager -> manager.isEnabled())
+        .ifPresent(manager -> {
+          DataContext context = DataManager.getInstance().getDataContext(SearchEverywhereUI.this);
+          ActionListener findInFilesAction = e -> manager.findInProject(context, null);
+
+          String findInFilesText = IdeBundle.message("searcheverywhere.try.to.find.in.files");
+          String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
+          emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_ATTRIBUTES, findInFilesAction)
+            .appendText(" (" + findInFilesShortcut + ")");
+        });
     }
 
     @TestOnly
