@@ -34,7 +34,7 @@ public interface ExternalFormatProcessor {
    * @param range the range for formatting
    * @param canChangeWhiteSpacesOnly procedure can change only whitespaces
    * @param keepLineBreaks don't add or remove line breaks
-   * @param disableBulkUpdate don't turn on the bulk update
+   * @param enableBulkUpdate don't turn on the bulk update
    * @return the range after formatting or null, if external format procedure cannot be applied to the source
    */
   @Nullable
@@ -42,7 +42,7 @@ public interface ExternalFormatProcessor {
                    @NotNull TextRange range,
                    boolean canChangeWhiteSpacesOnly,
                    boolean keepLineBreaks,
-                   boolean disableBulkUpdate);
+                   boolean enableBulkUpdate);
 
   /**
    * Indents the line.
@@ -103,7 +103,7 @@ public interface ExternalFormatProcessor {
    * @param range the range for formatting
    * @param canChangeWhiteSpacesOnly procedure can change only whitespaces
    * @param keepLineBreaks don't add or remove line breaks
-   * @param disableBulkUpdate don't turn on the bulk update
+   * @param enableBulkUpdate don't turn on the bulk update
    * @return the range after formatting or null, if external format procedure was not found or inactive (disabled)
    */
   @Nullable
@@ -111,9 +111,9 @@ public interface ExternalFormatProcessor {
                                      @NotNull TextRange range,
                                      boolean canChangeWhiteSpacesOnly,
                                      boolean keepLineBreaks,
-                                     boolean disableBulkUpdate) {
+                                     boolean enableBulkUpdate) {
     ExternalFormatProcessor efp = activeExternalFormatProcessor(source);
-    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, disableBulkUpdate) : null;
+    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, enableBulkUpdate) : null;
   }
 
   @Nullable
@@ -121,7 +121,7 @@ public interface ExternalFormatProcessor {
                                      @NotNull TextRange range,
                                      boolean canChangeWhiteSpacesOnly,
                                      boolean keepLineBreaks) {
-    return formatRangeInFile(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, false);
+    return formatRangeInFile(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, true);
   }
 
   /**

@@ -57,7 +57,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
                           @NotNull TextRange range,
                           boolean canChangeWhiteSpacesOnly,
                           boolean keepLineBreaks,
-                          boolean disableBulkUpdate) {
+                          boolean enableBulkUpdate) {
     doFormat(source.getProject(), source.getVirtualFile());
     return range;
   }
