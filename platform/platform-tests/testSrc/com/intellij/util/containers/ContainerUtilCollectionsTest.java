@@ -370,7 +370,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test(timeout = TIMEOUT)
   public void testConcurrentLongObjectHashMap() {
     ConcurrentLongObjectMap<Object> map = ConcurrentCollectionFactory.createConcurrentLongObjectMap();
-    for (long i = Long.MAX_VALUE-1000; i != Long.MAX_VALUE+1000; i++) {
+    for (long i = Long.MAX_VALUE-1000; i != Long.MIN_VALUE+1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
       Object ret = map.get(i);
