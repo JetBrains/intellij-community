@@ -93,7 +93,9 @@ public class GeneralCommandLine implements UserDataHolder {
   private File myInputFile;
   private Map<Object, Object> myUserData;
 
-  public GeneralCommandLine() { }
+  public GeneralCommandLine() {
+    this(Collections.emptyList());
+  }
 
   public GeneralCommandLine(@NonNls String @NotNull ... command) {
     this(Arrays.asList(command));
