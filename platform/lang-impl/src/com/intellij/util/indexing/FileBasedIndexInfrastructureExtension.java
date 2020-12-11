@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.StubIndexKey;
@@ -15,19 +14,6 @@ import java.io.IOException;
 @ApiStatus.Internal
 public interface FileBasedIndexInfrastructureExtension {
   ExtensionPointName<FileBasedIndexInfrastructureExtension> EP_NAME = ExtensionPointName.create("com.intellij.fileBasedIndexInfrastructureExtension");
-
-  /**
-   * This notification is sent from the IDE to let the extension point implementation
-   * update it's internal state in order to supply indexes.
-   * Extension point must not run any heavy tasks in this thread.
-   * @param indexingIndicator used only to track cancellation of the indexing, must not be used for updating texts/fractions.
-   */
-  void processIndexingProject(@NotNull Project project, @NotNull ProgressIndicator indexingIndicator);
-
-  /**
-   * This notification is sent when the indexing is started and there are no files detected to index
-   */
-  void noFilesFoundToProcessIndexingProject(@NotNull Project project, @NotNull ProgressIndicator indexingIndicator);
 
   interface FileIndexingStatusProcessor {
     /**
@@ -98,6 +84,12 @@ public interface FileBasedIndexInfrastructureExtension {
    **/
   @NotNull
   InitializationResult initialize();
+
+  /**
+   * Executed when IntelliJ is requested to clear indexes. Each extension should clear its caches.
+   * For example, it may happen on index invalidation.
+   */
+  void clearPersistentData();
 
   /**
    * Executed when IntelliJ is shutting down it's indexes (IDE shutdown or plugin load/unload). It is the best time
