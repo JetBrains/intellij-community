@@ -23,8 +23,8 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.Consumer
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection
-import org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotations
-import org.jetbrains.idea.devkit.inspections.missingApi.resolve.PublicIdeExternalAnnotationsRepository
+import org.jetbrains.idea.devkit.inspections.missingApi.resolve.IntelliJSdkExternalAnnotations
+import org.jetbrains.idea.devkit.inspections.missingApi.resolve.PublicIntelliJSdkExternalAnnotationsRepository
 import org.jetbrains.idea.devkit.inspections.missingApi.resolve.getAnnotationsBuildNumber
 import org.jetbrains.idea.devkit.inspections.missingApi.resolve.isAnnotationsRoot
 import java.time.Duration
@@ -33,18 +33,18 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Utility class that updates IntelliJ API external annotations.
+ * Utility class that updates external annotations of IntelliJ SDK.
  */
-class IdeExternalAnnotationsUpdater {
+class IntelliJSdkExternalAnnotationsUpdater {
 
   companion object {
-    private val LOG = Logger.getInstance(IdeExternalAnnotationsUpdater::class.java)
+    private val LOG = Logger.getInstance(IntelliJSdkExternalAnnotationsUpdater::class.java)
 
     private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("IntelliJ API Annotations")
 
     private val UPDATE_RETRY_TIMEOUT = Duration.of(10, ChronoUnit.MINUTES)
 
-    fun getInstance(): IdeExternalAnnotationsUpdater = service()
+    fun getInstance(): IntelliJSdkExternalAnnotationsUpdater = service()
   }
 
   private val buildNumberLastFailedUpdateInstant = hashMapOf<BuildNumber, Instant>()
@@ -93,7 +93,7 @@ class IdeExternalAnnotationsUpdater {
     }
   }
 
-  private fun reattachAnnotations(project: Project, ideaJdk: Sdk, annotationsRoot: IdeExternalAnnotations) {
+  private fun reattachAnnotations(project: Project, ideaJdk: Sdk, annotationsRoot: IntelliJSdkExternalAnnotations) {
     val annotationsUrl = runReadAction { annotationsRoot.annotationsRoot.url }
 
     ApplicationManager.getApplication().invokeAndWait {
@@ -213,7 +213,7 @@ class IdeExternalAnnotationsUpdater {
     private val ideBuildNumber: BuildNumber
   ) : Task.Backgroundable(project, DevKitBundle.message("intellij.api.annotations.update.task.title", ideBuildNumber), true) {
 
-    private val ideAnnotations = AtomicReference<IdeExternalAnnotations>()
+    private val ideAnnotations = AtomicReference<IntelliJSdkExternalAnnotations>()
 
     override fun run(indicator: ProgressIndicator) {
       val annotations = tryDownloadAnnotations(ideBuildNumber)
@@ -223,9 +223,9 @@ class IdeExternalAnnotationsUpdater {
       reattachAnnotations(project, ideaJdk, annotations)
     }
 
-    private fun tryDownloadAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations? {
+    private fun tryDownloadAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations? {
       return try {
-        PublicIdeExternalAnnotationsRepository(project).downloadExternalAnnotations(ideBuildNumber)
+        PublicIntelliJSdkExternalAnnotationsRepository(project).downloadExternalAnnotations(ideBuildNumber)
       } catch (e: Exception) {
         throw Exception(DevKitBundle.message("intellij.api.annotations.update.failed.download", ideBuildNumber), e)
       }
@@ -240,7 +240,7 @@ class IdeExternalAnnotationsUpdater {
     }
 
     override fun onFinished() {
-      synchronized(this@IdeExternalAnnotationsUpdater) {
+      synchronized(this@IntelliJSdkExternalAnnotationsUpdater) {
         buildNumberUpdateInProgress.remove(ideBuildNumber)
       }
     }

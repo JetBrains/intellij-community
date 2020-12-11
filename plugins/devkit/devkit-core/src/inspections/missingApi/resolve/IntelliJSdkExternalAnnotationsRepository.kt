@@ -4,13 +4,13 @@ package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 import com.intellij.openapi.util.BuildNumber
 
 /**
- * Repository interface to download external annotations for IDEs.
+ * Repository interface to download external annotations for IntelliJ SDKs.
  */
-interface IdeExternalAnnotationsRepository {
+interface IntelliJSdkExternalAnnotationsRepository {
   /**
    * Downloads external annotations suitable for IDE.
    *
    * Returns annotations to be attached, or `null` if no suitable annotations are found.
    */
-  fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations?
+  fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations?
 }

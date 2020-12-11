@@ -13,7 +13,7 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 /**
  * Startup activity that updates external annotations of IDEA JDKs configured in the project.
  */
-class IdeExternalAnnotationsUpdateStartupActivity : StartupActivity {
+class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) {
@@ -26,7 +26,7 @@ class IdeExternalAnnotationsUpdateStartupActivity : StartupActivity {
   private fun updateAnnotationsLaterIfNecessary(project: Project, ideaJdk: Sdk) {
     val buildNumber = getIdeaBuildNumber(ideaJdk)
     if (buildNumber != null) {
-      IdeExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk, buildNumber)
+      IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk, buildNumber)
     }
   }
 

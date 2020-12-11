@@ -11,10 +11,10 @@ import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 
 /**
- * Default implementation of [IdeExternalAnnotationsRepository] that delegates to [JarRepositoryManager]
+ * Default implementation of [IntelliJSdkExternalAnnotationsRepository] that delegates to [JarRepositoryManager]
  * for searching and downloading artifacts from the IntelliJ Artifacts Repositories.
  */
-class PublicIdeExternalAnnotationsRepository(private val project: Project) : IdeExternalAnnotationsRepository {
+class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Project) : IntelliJSdkExternalAnnotationsRepository {
 
   @Suppress("HardCodedStringLiteral")
   companion object {
@@ -40,7 +40,7 @@ class PublicIdeExternalAnnotationsRepository(private val project: Project) : Ide
     return "com.jetbrains.intellij.idea" to "ideaIU"
   }
 
-  override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IdeExternalAnnotations? {
+  override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations? {
     val (groupId, artifactId) = getAnnotationsCoordinates() ?: return null
 
     val lastReleaseVersion = "${ideBuildNumber.baselineVersion}.999999"
@@ -70,12 +70,12 @@ class PublicIdeExternalAnnotationsRepository(private val project: Project) : Ide
     artifactId: String,
     version: String,
     repos: List<RemoteRepositoryDescription>
-  ): IdeExternalAnnotations? {
+  ): IntelliJSdkExternalAnnotations? {
     val annotations = tryDownloadAnnotationsArtifact(groupId, artifactId, version, repos)
     if (annotations != null) {
       val buildNumber = getAnnotationsBuildNumber(annotations)
       if (buildNumber != null) {
-        return IdeExternalAnnotations(buildNumber, annotations)
+        return IntelliJSdkExternalAnnotations(buildNumber, annotations)
       }
     }
     return null

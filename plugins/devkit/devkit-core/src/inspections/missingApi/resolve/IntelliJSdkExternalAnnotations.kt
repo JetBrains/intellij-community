@@ -7,9 +7,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
- * External annotations of IntelliJ API, which are to be included to the project.
+ * External annotations of IntelliJ SDK, which are to be included to the project.
  */
-data class IdeExternalAnnotations(val annotationsBuild: BuildNumber, val annotationsRoot: VirtualFile)
+data class IntelliJSdkExternalAnnotations(val annotationsBuild: BuildNumber, val annotationsRoot: VirtualFile)
 
 private const val BUILD_TXT_FILE_NAME = "build.txt"
 

@@ -356,9 +356,9 @@
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdater"/>
     <postStartupActivity
-        implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdateStartupActivity"/>
+        implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
         implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
     <projectService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
