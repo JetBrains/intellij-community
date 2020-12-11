@@ -56,7 +56,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
       @Override
       public Object getData(@NotNull String dataId) {
         if (shownDataKey.is(dataId)) {
-          return getSelectedVirtualFiles(null);
+          return getSelectedFilePaths(null);
         }
         return super.getData(dataId);
       }
