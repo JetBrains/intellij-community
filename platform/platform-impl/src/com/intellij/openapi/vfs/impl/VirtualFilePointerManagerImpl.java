@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,15 +51,16 @@ import java.util.concurrent.ConcurrentMap;
 public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, BulkFileListener {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerManagerImpl.class);
   private static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
-  private static volatile boolean disableConsistencyCheckInTest = false;
+  private static final Key<Boolean> disableConsistencyCheckInTest = Key.create("DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST");
 
   static boolean shouldCheckConsistency() {
-    return IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest() && !disableConsistencyCheckInTest;
+    return IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()
+           && !Boolean.TRUE.equals(TestModeFlags.get(disableConsistencyCheckInTest));
   }
 
   @TestOnly
-  public static void setDisableConsistencyCheckInTest(boolean isDisabled) {
-    disableConsistencyCheckInTest = isDisabled;
+  public static void disableConsistencyChecksInTestsTemporarily(@NotNull Disposable testDisposable) {
+    TestModeFlags.set(disableConsistencyCheckInTest, true, testDisposable);
   }
 
   /*
