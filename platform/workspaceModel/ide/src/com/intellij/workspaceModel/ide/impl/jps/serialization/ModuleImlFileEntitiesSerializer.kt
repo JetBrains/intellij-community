@@ -348,9 +348,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
     @Suppress("UNCHECKED_CAST")
     val facets = (entities[FacetEntity::class.java] as List<FacetEntity>?)?.filter { acceptsSource(it.entitySource) } ?: emptyList()
-    if (facets.isNotEmpty()) {
-      createFacetSerializer().saveFacetEntities(facets, writer)
-    }
+    createFacetSerializer().saveFacetEntities(facets, writer)
   }
 
   protected open fun createFacetSerializer(): FacetEntitiesSerializer {
