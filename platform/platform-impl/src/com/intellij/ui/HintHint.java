@@ -19,6 +19,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,7 +147,7 @@ public class HintHint {
   }
 
   public Color getBorderColor() {
-    return myBorderColor != null ? myBorderColor : getTooltipManager().getBorderColor(myAwtTooltip);
+    return myBorderColor != null ? myBorderColor : JBUI.CurrentTheme.Tooltip.borderColor();
   }
 
   public Insets getBorderInsets() {

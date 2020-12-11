@@ -439,7 +439,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
 
     Color bg = tooltip.getTextBackground() != null ? tooltip.getTextBackground() : getTextBackground(true);
     Color fg = tooltip.getTextForeground() != null ? tooltip.getTextForeground() : getTextForeground(true);
-    Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
+    Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : JBUI.CurrentTheme.Tooltip.borderColor();
 
     BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(tooltip.getTipComponent())
       .setFillColor(bg)
@@ -508,9 +508,14 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     return StartupUiUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
+
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.Tooltip#borderColor()} instead.
+   */
   @SuppressWarnings("UnusedParameters")
+  @Deprecated
   public Color getBorderColor(boolean awtTooltip) {
-    return new JBColor(Gray._160, new Color(91, 93, 95));
+    return JBUI.CurrentTheme.Tooltip.borderColor();
   }
 
   @SuppressWarnings("UnusedParameters")
