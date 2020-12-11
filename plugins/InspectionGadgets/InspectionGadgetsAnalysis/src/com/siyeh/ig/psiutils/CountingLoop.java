@@ -23,19 +23,22 @@ public final class CountingLoop {
   final @NotNull PsiExpression myBound;
   final boolean myIncluding;
   final boolean myDescending;
+  final boolean myMayOverflow;
 
   private CountingLoop(@NotNull PsiLoopStatement loop,
                        @NotNull PsiLocalVariable counter,
                        @NotNull PsiExpression initializer,
                        @NotNull PsiExpression bound,
                        boolean including,
-                       boolean descending) {
+                       boolean descending,
+                       boolean mayOverflow) {
     myInitializer = initializer;
     myCounter = counter;
     myLoop = loop;
     myBound = bound;
     myIncluding = including;
     myDescending = descending;
+    myMayOverflow = mayOverflow;
   }
 
   /**
@@ -84,6 +87,14 @@ public final class CountingLoop {
     return myDescending;
   }
 
+  /**
+   * @return true if the loop variable may experience integer overflow before reaching the bound, 
+   * like for(int i = 10; i != -10; i++) will go through MAX_VALUE and MIN_VALUE. 
+   */
+  public boolean mayOverflow() {
+    return myMayOverflow;
+  }
+
   @Nullable
   public static CountingLoop from(PsiForStatement forStatement) {
     // check that initialization is for(int/long i = <initial_value>;...;...)
@@ -129,6 +140,6 @@ public final class CountingLoop {
     if (!relationType.isSubRelation(RelationType.LT)) return null;
     if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
     if(VariableAccessUtils.variableIsAssigned(counter, forStatement.getBody())) return null;
-    return new CountingLoop(forStatement, counter, initializer, bound, closed, descending);
+    return new CountingLoop(forStatement, counter, initializer, bound, closed, descending, relationType == RelationType.NE);
   }
 }

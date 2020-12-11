@@ -691,15 +691,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     else if (start != null) {
       long maxValue = end == null ? Long.MAX_VALUE : loop.isIncluding() ? end + 1 : end;
-      if (start >= maxValue) {
+      if (start >= maxValue && !loop.mayOverflow()) {
         addInstruction(new GotoInstruction(getEndOffset(statement)));
       }
       else {
-        LongRangeSet rangeSet = LongRangeSet.range(start + 1L, maxValue);
+        LongRangeSet rangeSet = start >= maxValue
+                                ? LongRangeSet.all().subtract(LongRangeSet.range(maxValue + 1, start))
+                                : LongRangeSet.range(start + 1L, maxValue);
         DfType range = DfTypes.rangeClamped(rangeSet, type.equals(PsiType.LONG));
         new CFGBuilder(this).assignAndPop(loopVar, range);
       }
     } else {
+      // loop like for(int i = start; i != end; i++)
+      if (loop.mayOverflow()) return false;
       new CFGBuilder(this).assign(loopVar, DfTypes.TOP)
                           .push(origin)
                           .compare(JavaTokenType.LE);
