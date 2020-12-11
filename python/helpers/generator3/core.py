@@ -145,18 +145,15 @@ def module_hash(mod_qname, mod_path):
     if mod_path:
         hash_ = physical_module_hash(mod_path)
     else:
-        hash_ = builtin_module_hash(mod_qname)
+        hash_ = builtin_module_hash()
     # Use shorter hashes in test data as it might affect developers on Windows
     if is_test_mode():
         return hash_[:10]
     return hash_
 
 
-def builtin_module_hash(mod_qname):
-    # Hash the content of interpreter executable, i.e. it will be the same for all built-in modules.
-    # Also, it's the same for a virtualenv interpreter and its base.
-    with fopen(sys.executable, 'rb') as f:
-        return sha256_digest(f)
+def builtin_module_hash():
+    return sha256_digest(sys.version.encode(encoding='utf-8'))
 
 
 def physical_module_hash(mod_path):
