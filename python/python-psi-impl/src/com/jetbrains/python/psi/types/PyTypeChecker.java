@@ -156,6 +156,10 @@ public final class PyTypeChecker {
       return Optional.of(actual instanceof PyModuleType && ((PyModuleType)expected).getModule() == ((PyModuleType)actual).getModule());
     }
 
+    if (expected instanceof PyClassType && actual instanceof PyModuleType) {
+      return match(expected, ((PyModuleType)actual).getModuleClassType(), context);
+    }
+
     return Optional.of(matchNumericTypes(expected, actual));
   }
 

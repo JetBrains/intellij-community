@@ -494,4 +494,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                          "mymap(myfoo, [1, 2, 3])\n")
     );
   }
+
+  // PY-36062
+  public void testModuleTypeParameter() {
+    // `types.ModuleType` class qualified name is `_importlib_modulespec.ModuleType` in Python 3
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+  }
 }

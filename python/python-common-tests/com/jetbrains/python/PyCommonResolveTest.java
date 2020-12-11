@@ -1532,4 +1532,12 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     assertEmpty(file.findTopLevelAttribute("t").multiResolveAssignedValue(PyResolveContext.defaultContext().withTypeEvalContext(context)));
   }
+
+  // PY-36062
+  public void testModuleTypeAttributes() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "__name__");
+    assertEquals("ModuleType", target.getContainingClass().getName());
+    assertEquals("types.pyi", target.getContainingFile().getName());
+  }
 }
