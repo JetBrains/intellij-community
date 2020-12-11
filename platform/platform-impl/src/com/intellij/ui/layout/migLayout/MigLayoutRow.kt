@@ -286,7 +286,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun hideableRow(title: String, incrementsIndent: Boolean, init: Row.() -> Unit): Row {
-    val titledSeparator = HideableTitledSeparator(title)
+    return hideableRow(HideableTitledSeparator(title), incrementsIndent, init)
+  }
+
+  override fun hideableRow(titledSeparator: HideableTitledSeparator, incrementsIndent: Boolean, init: Row.() -> Unit): Row {
     val separatorRow = createChildRow()
     separatorRow.addTitleComponent(titledSeparator, isEmpty = false)
     builder.hideableRowNestingLevel++
