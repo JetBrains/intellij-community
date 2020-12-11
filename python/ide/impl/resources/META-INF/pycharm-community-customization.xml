@@ -46,7 +46,7 @@
                                   order="after sdk"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.buildout.BuildoutFacetConfigurator" id="buildout"
                                   order="after sourceRoot"/>
-    <directoryProjectConfigurator implementation="com.intellij.platform.PlatformInspectionProfileConfigurator"/>
+    <directoryProjectConfigurator implementation="com.jetbrains.python.PlatformInspectionProfileConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.newProject.welcome.PyWelcomeConfigurator" id="welcome" order="last"/>
 
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
