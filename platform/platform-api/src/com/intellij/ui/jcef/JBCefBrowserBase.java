@@ -20,7 +20,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   protected static final String BLANK_URI = "about:blank";
   @SuppressWarnings("SpellCheckingInspection")
   protected static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
-  @NotNull protected final DisposeHelper myDisposeHelper = new DisposeHelper();
+  @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
   @Nullable private volatile LoadDeferrer myLoadDeferrer;
 
   /**

@@ -71,6 +71,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
   @NotNull private final CefKeyboardHandler myKeyboardHandler;
   @NotNull private static final List<Consumer<? super JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
     Collections.synchronizedList(new ArrayList<>(1));
+
+  @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
   private final boolean myIsDefaultClient;
   private JDialog myDevtoolsFrame = null;
   protected CefContextMenuHandler myDefaultContextMenuHandler;
