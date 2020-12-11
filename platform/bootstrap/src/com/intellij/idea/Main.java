@@ -87,7 +87,11 @@ public final class Main {
 
     try {
       if (Runtime.version().feature() < 11) {
-        String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea").replace("AndroidStudio", "studio");
+        String baseName = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea")
+          .replace("AndroidStudio", "studio").replace("Edu", "");
+        if (baseName.startsWith("Py")) baseName = "pycharm";
+        else if (baseName.equals("Ruby")) baseName = "rubymine";
+
         @Nls StringBuilder message = new StringBuilder(BootstrapBundle.message("bootstrap.error.message.unsupported.jre", 11)).append('\n');
         int min = message.length();
 
