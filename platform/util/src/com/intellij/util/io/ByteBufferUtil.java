@@ -4,7 +4,7 @@ package com.intellij.util.io;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -22,7 +22,7 @@ public final class ByteBufferUtil {
 
     if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       // in Java 9+, the "official" dispose method is sun.misc.Unsafe#invokeCleaner
-      Object unsafe = AtomicFieldUpdater.getUnsafe();
+      Object unsafe = ReflectionUtil.getUnsafe();
       try {
         MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
         MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);

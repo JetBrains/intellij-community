@@ -28,32 +28,18 @@ public final class AtomicFieldUpdater<ContainingClass, FieldType> {
 
 
   static {
-    Class<?> unsafeClass;
-    try {
-      unsafeClass = Class.forName("sun.misc.Unsafe");
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-    unsafe = ReflectionUtil.getStaticFieldValue(unsafeClass, unsafeClass, "theUnsafe");
-    if (unsafe == null) {
-      throw new RuntimeException("Could not find 'theUnsafe' field in the Unsafe class");
-    }
+    unsafe = ReflectionUtil.getUnsafe();
     MethodHandles.Lookup lookup = MethodHandles.publicLookup();
     try {
-      compareAndSwapInt = lookup.findVirtual(unsafeClass, "compareAndSwapInt", MethodType.methodType(boolean.class, Object.class, long.class, int.class, int.class)).bindTo(unsafe);
-      compareAndSwapLong = lookup.findVirtual(unsafeClass, "compareAndSwapLong", MethodType.methodType(boolean.class, Object.class, long.class, long.class, long.class)).bindTo(unsafe);
-      compareAndSwapObject = lookup.findVirtual(unsafeClass, "compareAndSwapObject", MethodType.methodType(boolean.class, Object.class, long.class, Object.class, Object.class)).bindTo(unsafe);
-      putObjectVolatile = lookup.findVirtual(unsafeClass, "putObjectVolatile", MethodType.methodType(void.class, Object.class, long.class, Object.class)).bindTo(unsafe);
-      getObjectVolatile = lookup.findVirtual(unsafeClass, "getObjectVolatile", MethodType.methodType(Object.class, Object.class, long.class)).bindTo(unsafe);
+      compareAndSwapInt = lookup.findVirtual(unsafe.getClass(), "compareAndSwapInt", MethodType.methodType(boolean.class, Object.class, long.class, int.class, int.class)).bindTo(unsafe);
+      compareAndSwapLong = lookup.findVirtual(unsafe.getClass(), "compareAndSwapLong", MethodType.methodType(boolean.class, Object.class, long.class, long.class, long.class)).bindTo(unsafe);
+      compareAndSwapObject = lookup.findVirtual(unsafe.getClass(), "compareAndSwapObject", MethodType.methodType(boolean.class, Object.class, long.class, Object.class, Object.class)).bindTo(unsafe);
+      putObjectVolatile = lookup.findVirtual(unsafe.getClass(), "putObjectVolatile", MethodType.methodType(void.class, Object.class, long.class, Object.class)).bindTo(unsafe);
+      getObjectVolatile = lookup.findVirtual(unsafe.getClass(), "getObjectVolatile", MethodType.methodType(Object.class, Object.class, long.class)).bindTo(unsafe);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public static @NotNull Object getUnsafe() {
-    return unsafe;
   }
 
   public static @NotNull <T, V> AtomicFieldUpdater<T, V> forFieldOfType(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {

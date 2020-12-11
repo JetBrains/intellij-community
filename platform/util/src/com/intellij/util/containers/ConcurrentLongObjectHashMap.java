@@ -2,7 +2,7 @@
 
 package com.intellij.util.containers;
 
-import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -2167,7 +2167,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
     static {
       try {
-        Object unsafe = AtomicFieldUpdater.getUnsafe();
+        Object unsafe = ReflectionUtil.getUnsafe();
         MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
         MethodHandle objectFieldOffset =
           publicLookup.findVirtual(unsafe.getClass(), "objectFieldOffset", MethodType.methodType(long.class, Field.class));
@@ -2759,7 +2759,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
   static {
     try {
       MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
-      Object unsafe = AtomicFieldUpdater.getUnsafe();
+      Object unsafe = ReflectionUtil.getUnsafe();
       MethodHandle objectFieldOffset = publicLookup.findVirtual(unsafe.getClass(), "objectFieldOffset", MethodType.methodType(long.class, Field.class));
       Class<?> k = ConcurrentLongObjectHashMap.class;
       SIZECTL = (long) objectFieldOffset.invoke(unsafe, k.getDeclaredField("sizeCtl"));
