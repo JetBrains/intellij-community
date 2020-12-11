@@ -235,16 +235,16 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      */
 
   @SuppressWarnings("unchecked")
-  static final <V> ConcurrentIntObjectHashMap.Node<V> tabAt(ConcurrentIntObjectHashMap.Node<V>[] tab, int i) {
+  static <V> ConcurrentIntObjectHashMap.Node<V> tabAt(ConcurrentIntObjectHashMap.Node<V>[] tab, int i) {
     return (ConcurrentIntObjectHashMap.Node<V>)TAB_ARRAY.getVolatile(tab, i);
   }
 
-  static final <V> boolean casTabAt(ConcurrentIntObjectHashMap.Node<V>[] tab, int i,
+  static <V> boolean casTabAt(ConcurrentIntObjectHashMap.Node<V>[] tab, int i,
                                     ConcurrentIntObjectHashMap.Node<V> c, ConcurrentIntObjectHashMap.Node<V> v) {
     return TAB_ARRAY.compareAndSet(tab, i, c, v);
   }
 
-  static final <V> void setTabAt(ConcurrentIntObjectHashMap.Node<V>[] tab, int i, ConcurrentIntObjectHashMap.Node<V> v) {
+  static <V> void setTabAt(ConcurrentIntObjectHashMap.Node<V>[] tab, int i, ConcurrentIntObjectHashMap.Node<V> v) {
     TAB_ARRAY.setVolatile(tab, i, v);
   }
 

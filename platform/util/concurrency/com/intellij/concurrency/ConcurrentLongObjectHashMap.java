@@ -236,16 +236,16 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
      */
 
   @SuppressWarnings("unchecked")
-  static final <V> Node<V> tabAt(Node<V>[] tab, int i) {
+  static <V> Node<V> tabAt(Node<V>[] tab, int i) {
     return (Node<V>)TAB_ARRAY.getVolatile(tab, i);
   }
 
-  static final <V> boolean casTabAt(Node<V>[] tab, int i,
+  static <V> boolean casTabAt(Node<V>[] tab, int i,
                                       Node<V> c, Node<V> v) {
     return TAB_ARRAY.compareAndSet(tab, i, c, v);
   }
 
-  static final <V> void setTabAt(Node<V>[] tab, int i, Node<V> v) {
+  static <V> void setTabAt(Node<V>[] tab, int i, Node<V> v) {
     TAB_ARRAY.setVolatile(tab, i, v);
   }
 

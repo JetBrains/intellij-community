@@ -735,16 +735,16 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
 
     @SuppressWarnings("unchecked")
-    static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
+    static <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
         return (Node<K, V>)TAB_ARRAY.getVolatile(tab, i);
     }
 
-    static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
+    static <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
                                         Node<K,V> c, Node<K,V> v) {
         return TAB_ARRAY.compareAndSet(tab, i, c, v);
     }
 
-    static final <K,V> void setTabAt(Node<K,V>[] tab, int i, Node<K,V> v) {
+    static <K,V> void setTabAt(Node<K,V>[] tab, int i, Node<K,V> v) {
         TAB_ARRAY.setVolatile(tab, i, v);
     }
 
