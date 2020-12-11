@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.junit.Assume
 import org.junit.runners.Parameterized
 import java.io.File
 
@@ -28,6 +29,11 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
     protected open fun testDataDirectory(): File {
         val baseDir = IDEA_TEST_DATA_DIR.resolve("gradle/${testDataDirName()}")
         return File(baseDir, getTestName(true).substringBefore("_").substringBefore(" "))
+    }
+
+    override fun setUp() {
+        Assume.assumeFalse(AndroidStudioTestUtils.checkIsAndroidStudio())
+        super.setUp()
     }
 
     protected fun configureKotlinVersionAndProperties(text: String, properties: Map<String, String>? = null): String {
