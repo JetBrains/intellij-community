@@ -44,7 +44,9 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       myLanguageLevel = readLanguageLevel(level);
     }
     String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
-    setDefault(aDefault == null ? null : Boolean.parseBoolean(aDefault));
+    if (aDefault != null) {
+      setDefault(Boolean.parseBoolean(aDefault));
+    }
   }
 
   private static LanguageLevel readLanguageLevel(String level) {
@@ -61,11 +63,9 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
     }
 
-    if (!myProject.isDefault()) {
-      Boolean aBoolean = getDefault();
-      if (aBoolean != null) {
-        element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
-      }
+    Boolean aBoolean = getDefault();
+    if (aBoolean != null && aBoolean != myProject.isDefault()) { // do not write default 'true' for default project
+      element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
     }
   }
 
