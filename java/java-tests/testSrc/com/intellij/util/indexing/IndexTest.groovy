@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
@@ -92,6 +93,8 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
 
 import java.util.concurrent.CountDownLatch
 
+import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadExtensionWithText
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -111,7 +114,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    if ("testUndoToFileContentForUnsavedCommittedDocument".equals(getName())) {
+    if ("testUndoToFileContentForUnsavedCommittedDocument" == getName() ||
+        "test requestReindex" == getName()) {
       super.runTestRunnable(testRunnable)
     }
     else {
@@ -1480,6 +1484,22 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     file.delete(null)
     fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
+  }
+
+  void 'test requestReindex'() {
+    def file = ScratchRootType.getInstance().createScratchFile(project, "Foo.java", JavaLanguage.INSTANCE, "class Foo {}")
+
+    def text = "<fileBasedIndex implementation=\"" + CountingFileBasedIndexExtension.class.getName() + "\"/>"
+    Disposer.register(testRootDisposable, loadExtensionWithText(text, CountingFileBasedIndexExtension.class.classLoader))
+
+    FileBasedIndex.getInstance().getFileData(CountingFileBasedIndexExtension.INDEX_ID, file, project)
+    assertTrue(CountingFileBasedIndexExtension.COUNTER.get() > 0)
+
+    CountingFileBasedIndexExtension.COUNTER.set(0)
+    FileBasedIndex.instance.requestReindex(file)
+
+    FileBasedIndex.getInstance().getFileData(CountingFileBasedIndexExtension.INDEX_ID, file, project)
+    assertTrue(CountingFileBasedIndexExtension.COUNTER.get() > 0)
   }
 
   private <T> ThrowableComputable<T, RuntimeException> asComputable(CachedValue<T> cachedValue) {
