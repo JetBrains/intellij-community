@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +71,7 @@ public final class ReflectionUtil {
   }
 
   @NotNull
-  public static String declarationToString(@NotNull GenericDeclaration anInterface) {
+  private  static String declarationToString(@NotNull GenericDeclaration anInterface) {
     return anInterface.toString() + Arrays.asList(anInterface.getTypeParameters()) + " loaded by " + ((Class<?>)anInterface).getClassLoader();
   }
 
@@ -188,15 +187,6 @@ public final class ReflectionUtil {
   public static void resetField(@NotNull Class<?> clazz, @Nullable("null means of any type") Class<?> type, @NotNull @NonNls String name)  {
     try {
       resetField(null, findField(clazz, type, name));
-    }
-    catch (NoSuchFieldException e) {
-      LOG.info(e);
-    }
-  }
-
-  public static void resetField(@NotNull Object object, @Nullable("null means any type") Class<?> type, @NotNull @NonNls String name)  {
-    try {
-      resetField(object, findField(object.getClass(), type, name));
     }
     catch (NoSuchFieldException e) {
       LOG.info(e);
@@ -577,20 +567,16 @@ public final class ReflectionUtil {
   }
 
   public static <T> boolean comparePublicNonFinalFields(@NotNull T first, @NotNull T second) {
-    return compareFields(first, second, field -> isPublic(field) && !isFinal(field));
-  }
-
-  public static <T> boolean compareFields(@NotNull T defaultSettings, @NotNull T newSettings, @NotNull Predicate<? super Field> useField) {
-    Class<?> defaultClass = defaultSettings.getClass();
+    Class<?> defaultClass = first.getClass();
     Field[] fields = defaultClass.getDeclaredFields();
-    if (defaultClass != newSettings.getClass()) {
-      fields = ArrayUtil.mergeArrays(fields, newSettings.getClass().getDeclaredFields());
+    if (defaultClass != second.getClass()) {
+      fields = ArrayUtil.mergeArrays(fields, second.getClass().getDeclaredFields());
     }
     for (Field field : fields) {
-      if (!useField.test(field)) continue;
+      if (!isPublic(field) || isFinal(field)) continue;
       field.setAccessible(true);
       try {
-        if (!Comparing.equal(field.get(newSettings), field.get(defaultSettings))) {
+        if (!Comparing.equal(field.get(second), field.get(first))) {
           return false;
         }
       }
@@ -612,11 +598,11 @@ public final class ReflectionUtil {
     }
   }
 
-  private static boolean isPublic(final Field field) {
+  private static boolean isPublic(@NotNull Field field) {
     return (field.getModifiers() & Modifier.PUBLIC) != 0;
   }
 
-  private static boolean isFinal(final Field field) {
+  private static boolean isFinal(@NotNull Field field) {
     return (field.getModifiers() & Modifier.FINAL) != 0;
   }
 
@@ -699,10 +685,5 @@ public final class ReflectionUtil {
 
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
-  }
-
-  @NotNull
-  public static JBTreeTraverser<Class<?>> classTraverser(@Nullable Class<?> root) {
-    return ReflectionStartupUtil.classTraverser(root);
   }
 }
