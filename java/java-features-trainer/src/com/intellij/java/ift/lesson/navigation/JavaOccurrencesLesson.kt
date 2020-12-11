@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ift.lesson.navigation
 
+import com.intellij.find.SearchTextArea
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.actionButton
@@ -58,13 +59,16 @@ class JavaOccurrencesLesson(module: Module)
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
 
-    actionTask("Find") {
+    task("Find") {
+      text(JavaLessonsBundle.message("java.find.occurrences.invoke.find", code("cellphone"), action(it)))
+      triggerByUiComponentAndHighlight(false, false) { _: SearchTextArea -> true }
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.find.occurrences.invoke.find", code("cellphone"), action(it))
+      test { actions(it) }
     }
     task("FindNext") {
       trigger("com.intellij.find.editorHeaderActions.NextOccurrenceAction")
       text(JavaLessonsBundle.message("java.find.occurrences.find.next", LessonUtil.rawEnter(), action(it)))
+      restoreByUi()
       test {
         ideFrame {
           actionButton(UsageViewBundle.message("action.next.occurrence")).click()
@@ -74,6 +78,9 @@ class JavaOccurrencesLesson(module: Module)
     task("FindPrevious") {
       trigger("com.intellij.find.editorHeaderActions.PrevOccurrenceAction")
       text(JavaLessonsBundle.message("java.find.occurrences.find.previous", action("FindPrevious")))
+      showWarning(JavaLessonsBundle.message("java.find.occurrences.search.closed.warning", action("Find"))) {
+        editor.headerComponent == null
+      }
       test {
         ideFrame {
           actionButton(UsageViewBundle.message("action.previous.occurrence")).click()

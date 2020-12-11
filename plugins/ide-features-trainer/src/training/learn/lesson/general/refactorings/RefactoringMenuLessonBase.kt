@@ -5,20 +5,21 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
+import com.intellij.ui.components.JBList
+import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.dropMnemonic
 import javax.swing.JList
 
 abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, languageId: String)
   : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name"), module, languageId) {
   fun LessonContext.extractParameterTasks() {
+    lateinit var showPopupTaskId: TaskContext.TaskId
     actionTask("Refactorings.QuickListPopupAction") {
+      showPopupTaskId = taskId
       restoreIfModifiedOrMoved()
       LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it))
     }
@@ -27,7 +28,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, langu
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JList<*> ->
         ui.model.size > 0 && ui.model.getElementAt(0).toString().contains(it)
       }
-      restoreIfModifiedOrMoved()
+      restoreAfterStateBecomeFalse { focusOwner !is JBList<*> }
       test {
         type("pa")
       }
@@ -38,7 +39,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, langu
                                  action("EditorChooseLookupItem"), LessonUtil.actionName(it)))
       trigger(it)
       stateCheck { hasInplaceRename() }
-      restoreIfModifiedOrMoved()
+      restoreState(restoreId = showPopupTaskId) { focusOwner !is JBList<*> }
       test {
         GuiTestUtil.shortcut(Key.ENTER)
       }
