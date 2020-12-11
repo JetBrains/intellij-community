@@ -15,6 +15,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
@@ -3169,12 +3170,18 @@ public final class UIUtil {
 
   // background
 
+  /**
+   * @see RenderingUtil#getBackground(JList)
+   */
   public static @NotNull Color getListBackground() {
     return LIST_BACKGROUND;
   }
 
   private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 75);
 
+  /**
+   * @see RenderingUtil#getSelectionBackground(JList)
+   */
   public static @NotNull Color getListSelectionBackground(boolean focused) {
     if (!focused) return UnfocusedSelection.LIST_BACKGROUND;
     Color color = UIManager.getColor("List.selectionBackground");
@@ -3188,6 +3195,9 @@ public final class UIUtil {
     return size;
   }
 
+  /**
+   * @see RenderingUtil#getBackground(JList, boolean)
+   */
   public static @NotNull Color getListBackground(boolean selected, boolean focused) {
     return !selected ? getListBackground() : getListSelectionBackground(focused);
   }
@@ -3223,16 +3233,25 @@ public final class UIUtil {
 
   // foreground
 
+  /**
+   * @see RenderingUtil#getForeground(JList)
+   */
   public static @NotNull Color getListForeground() {
     return UIManager.getColor("List.foreground");
   }
 
+  /**
+   * @see RenderingUtil#getSelectionForeground(JList)
+   */
   public static @NotNull Color getListSelectionForeground(boolean focused) {
     Color foreground = UIManager.getColor(focused ? "List.selectionForeground" : "List.selectionInactiveForeground");
     if (focused && foreground == null) foreground = UIManager.getColor("List[Selected].textForeground");  // Nimbus
     return foreground != null ? foreground : getListForeground();
   }
 
+  /**
+   * @see RenderingUtil#getForeground(JList, boolean)
+   */
   public static @NotNull Color getListForeground(boolean selected, boolean focused) {
     return !selected ? getListForeground() : getListSelectionForeground(focused);
   }
@@ -3262,14 +3281,23 @@ public final class UIUtil {
 
   // background
 
+  /**
+   * @see RenderingUtil#getBackground(JTree)
+   */
   public static @NotNull Color getTreeBackground() {
     return TREE_BACKGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getSelectionBackground(JTree)
+   */
   public static @NotNull Color getTreeSelectionBackground(boolean focused) {
     return focused ? FocusedSelection.TREE_BACKGROUND : UnfocusedSelection.TREE_BACKGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getBackground(JTree, boolean)
+   */
   public static @NotNull Color getTreeBackground(boolean selected, boolean focused) {
     return !selected ? getTreeBackground() : getTreeSelectionBackground(focused);
   }
@@ -3297,15 +3325,24 @@ public final class UIUtil {
 
   // foreground
 
+  /**
+   * @see RenderingUtil#getForeground(JTree)
+   */
   public static @NotNull Color getTreeForeground() {
     return UIManager.getColor("Tree.foreground");
   }
 
+  /**
+   * @see RenderingUtil#getSelectionForeground(JTree)
+   */
   public static @NotNull Color getTreeSelectionForeground(boolean focused) {
     Color foreground = UIManager.getColor(focused ? "Tree.selectionForeground" : "Tree.selectionInactiveForeground");
     return foreground != null ? foreground : getTreeForeground();
   }
 
+  /**
+   * @see RenderingUtil#getForeground(JTree, boolean)
+   */
   public static @NotNull Color getTreeForeground(boolean selected, boolean focused) {
     return !selected ? getTreeForeground() : getTreeSelectionForeground(focused);
   }
@@ -3318,14 +3355,23 @@ public final class UIUtil {
     return getTreeSelectionForeground(true);
   }
 
+  /**
+   * @see RenderingUtil#getBackground(JTable)
+   */
   public static @NotNull Color getTableBackground() {
     return TABLE_BACKGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getSelectionBackground(JTable)
+   */
   public static @NotNull Color getTableSelectionBackground(boolean focused) {
     return focused ? FocusedSelection.TABLE_BACKGROUND : UnfocusedSelection.TABLE_BACKGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getBackground(JTable, boolean)
+   */
   public static @NotNull Color getTableBackground(boolean selected, boolean focused) {
     return !selected ? getTableBackground() : getTableSelectionBackground(focused);
   }
@@ -3361,15 +3407,24 @@ public final class UIUtil {
 
   // foreground
 
+  /**
+   * @see RenderingUtil#getForeground(JTable)
+   */
   public static @NotNull Color getTableForeground() {
     return UIManager.getColor("Table.foreground");
   }
 
+  /**
+   * @see RenderingUtil#getSelectionForeground(JTable)
+   */
   public static @NotNull Color getTableSelectionForeground(boolean focused) {
     Color foreground = UIManager.getColor(focused ? "Table.selectionForeground" : "Table.selectionInactiveForeground");
     return foreground != null ? foreground : getTreeForeground();
   }
 
+  /**
+   * @see RenderingUtil#getForeground(JTable, boolean)
+   */
   public static @NotNull Color getTableForeground(boolean selected, boolean focused) {
     return !selected ? getTableForeground() : getTableSelectionForeground(focused);
   }
