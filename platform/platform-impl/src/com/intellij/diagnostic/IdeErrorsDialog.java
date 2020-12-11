@@ -467,13 +467,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         .append(DiagnosticBundle.message("error.list.disable.plugin")).append("</a>");
     }
 
-    if (message.isSubmitted()) {
+    if (message.isSubmitting()) {
+      info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
+    }
+    else if (message.getSubmissionInfo() != null) {
       info.append(' ').append("<span style=\"white-space: nowrap;\">");
       appendSubmissionInformation(message.getSubmissionInfo(), info);
       info.append("</span>");
-    }
-    else if (message.isSubmitting()) {
-      info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
     }
 
     myInfoLabel.setText(info.toString());
@@ -949,7 +949,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   public static void appendSubmissionInformation(@NotNull SubmittedReportInfo info, @NotNull StringBuilder out) {
     if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
-      out.append(DiagnosticBundle.message("error.list.message.submission.failed"));
+      String details = info.getLinkText();
+      out.append(details != null ? DiagnosticBundle.message("error.list.message.submission.failed.details", details)
+                                 : DiagnosticBundle.message("error.list.message.submission.failed"));
     }
     else if (info.getURL() != null && info.getLinkText() != null) {
       out.append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getURL(), info.getLinkText()));
