@@ -230,9 +230,11 @@ fun TaskRuntimeContext.lineWithBreakpoints(): Set<Int> {
  * @param [restoreId] where to restore, `null` means the previous task
  * @param [restoreRequired] returns true iff restore is needed
  */
-fun TaskContext.restoreAfterStateBecomeFalse(restoreId: TaskContext.TaskId? = null, restoreRequired: TaskRuntimeContext.() -> Boolean) {
+fun TaskContext.restoreAfterStateBecomeFalse(restoreId: TaskContext.TaskId? = null,
+                                             delayMillis: Int = 0,
+                                             restoreRequired: TaskRuntimeContext.() -> Boolean) {
   var restoreIsPossible = false
-  restoreState(restoreId) {
+  restoreState(restoreId, delayMillis) {
     val required = restoreRequired()
     (restoreIsPossible && required).also { restoreIsPossible = restoreIsPossible || !required }
   }

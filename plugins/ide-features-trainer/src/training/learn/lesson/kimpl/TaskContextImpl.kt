@@ -57,14 +57,29 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   override fun proposeRestore(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) {
     restoreState {
       // restoreState is used to trigger by any IDE state change and check restore proposal is needed
-      this@TaskContextImpl.proposeRestoreCheck(restoreCheck)
+      this@TaskContextImpl.checkAndShowNotificationIfNeeded(restoreCheck) {
+        LessonManager.instance.setRestoreNotification(it)
+      }
       return@restoreState false
     }
   }
 
-  private fun proposeRestoreCheck(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) {
+  override fun showWarning(text: String, warningRequired: TaskRuntimeContext.() -> Boolean) {
+    restoreState(delayMillis = 50) {
+      val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
+        if (warningRequired()) RestoreNotification(text) {} else null
+      }
+      this@TaskContextImpl.checkAndShowNotificationIfNeeded(notificationRequired) {
+        LessonManager.instance.setWarningNotification(it)
+      }
+      false
+    }
+  }
+
+  private fun checkAndShowNotificationIfNeeded(notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
+                                               setNotification: (RestoreNotification) -> Unit) {
     val file = lessonExecutor.virtualFile
-    val proposal = restoreCheck(runtimeContext)
+    val proposal = notificationRequired(runtimeContext)
     if (proposal == null) {
       if (LessonManager.instance.shownRestoreNotification != null) {
         LessonManager.instance.clearRestoreMessage()
@@ -73,7 +88,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     else {
       if (proposal.message != LessonManager.instance.shownRestoreNotification?.message) {
         EditorNotifications.getInstance(runtimeContext.project).updateNotifications(file)
-        LessonManager.instance.setRestoreNotification(proposal)
+        setNotification(proposal)
       }
     }
   }

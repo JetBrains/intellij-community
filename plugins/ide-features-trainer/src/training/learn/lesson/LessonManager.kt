@@ -17,10 +17,7 @@ import training.learn.interfaces.Lesson
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonExecutor
 import training.learn.lesson.kimpl.OpenPassedContext
-import training.ui.LearningUiHighlightingManager
-import training.ui.LearningUiManager
-import training.ui.LessonMessagePane
-import training.ui.MessagePart
+import training.ui.*
 import training.ui.views.LearnPanel
 import training.util.createNamedSingleThreadExecutor
 import java.awt.Rectangle
@@ -161,20 +158,30 @@ class LessonManager {
   }
 
   fun setRestoreNotification(notification: TaskContext.RestoreNotification) {
-    clearRestoreMessage()
-    val proposalText = notification.message
-    val warningIconIndex = LearningUiManager.getIconIndex(AllIcons.General.NotificationWarning)
     val callback = Runnable {
       notification.callback()
       invokeLater {
         clearRestoreMessage()
       }
     }
-    learnPanel?.addMessages(listOf(MessagePart(warningIconIndex, MessagePart.MessageType.ICON_IDX),
-                                   MessagePart(" ${proposalText} ", MessagePart.MessageType.TEXT_BOLD),
-                                   MessagePart("Restore", MessagePart.MessageType.LINK).also { it.runnable = callback }
-    ), LessonMessagePane.MessageState.RESTORE)
+    val message = MessagePart(" ${notification.message} ", MessagePart.MessageType.TEXT_BOLD)
+    val restoreLink = MessagePart("Restore", MessagePart.MessageType.LINK).also { it.runnable = callback }
+    setNotification(listOf(message, restoreLink))
     shownRestoreNotification = notification
+  }
+
+  fun setWarningNotification(notification: TaskContext.RestoreNotification) {
+    val messages = MessageFactory.convert(notification.message)
+    setNotification(messages)
+    shownRestoreNotification = notification
+  }
+
+  private fun setNotification(messages: List<MessagePart>) {
+    clearRestoreMessage()
+    val warningIconIndex = LearningUiManager.getIconIndex(AllIcons.General.NotificationWarning)
+    val warningIconMessage = MessagePart(warningIconIndex, MessagePart.MessageType.ICON_IDX)
+    val allMessages = mutableListOf(warningIconMessage).also { it.addAll(messages) }
+    learnPanel?.addMessages(allMessages, LessonMessagePane.MessageState.RESTORE)
   }
 
   fun lessonShouldBeOpenedCompleted(lesson: Lesson): Boolean = lesson.passed && currentLesson != lesson
