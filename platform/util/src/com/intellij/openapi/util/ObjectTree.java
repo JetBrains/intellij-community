@@ -220,9 +220,11 @@ final class ObjectTree {
           objectNode = objectNode.getParent();
         }
         final Throwable trace = objectNode.getTrace();
-        RuntimeException exception = new RuntimeException("Memory leak detected: '" + object + "' of " + object.getClass()
-                                                          + "\nSee the cause for the corresponding Disposer.register() stacktrace:\n",
-                                                          trace);
+        String message = "Memory leak detected: '" + object + "' of " + object.getClass() + " is registered in Disposer but wasn't disposed.\n" +
+                         "Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.\n" +
+                         "See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.\n" +
+                         "The corresponding Disposer.register() stacktrace is shown as the cause:\n";
+        RuntimeException exception = new RuntimeException(message, trace);
         if (throwError) {
           throw exception;
         }
