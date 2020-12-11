@@ -45,7 +45,7 @@ public class AddManagedFilesAction extends MavenAction {
     if (manager == null) {
       return;
     }
-    FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, true, false, false, false, true) {
+    FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, true, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         return super.isFileSelectable(file) && !manager.isManagedFile(file);
