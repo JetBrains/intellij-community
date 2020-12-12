@@ -20,16 +20,30 @@ class MarkdownNumberHighlightingAnnotator : Annotator {
 
     val offset = element.startOffset
 
-    for (match in isolatedNumberRegex.findAll(element.text)) {
+    for (match in numberRegex.findAll(element.text)) {
+      if (!element.text.hasNumberIsolatedWithin(match.range)) {
+        continue
+      }
+
+      val matchTextRange = TextRange.create(match.range.first, match.range.last + 1).shiftRight(offset)
+
       holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-        .range(TextRange.create(offset + match.range.first, offset + match.range.last + 1))
+        .range(matchTextRange)
         .textAttributes(MarkdownHighlighterColors.NUMBER)
         .create()
     }
   }
 
+  private fun String.hasNumberIsolatedWithin(numberRange: IntRange): Boolean {
+    val first = numberRange.first
+    val last = numberRange.last
+
+    return (first == 0 || !this[first - 1].isLetter()) &&
+           (last == this.lastIndex || !this[last + 1].isLetter())
+  }
+
   companion object {
-    private const val numberRegexStr = """\d(\d|_)*([.,]\d(\d|_)*)?"""
-    private val isolatedNumberRegex = Regex("""(?<=(^|[^a-zA-Z\d]))(${numberRegexStr})(?=($|[^a-zA-Z\d]))""")
+    private const val intRegexStr = """\d([\d_]*\d)?"""
+    private val numberRegex = Regex("""${intRegexStr}([.,]${intRegexStr})?""")
   }
 }
