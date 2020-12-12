@@ -160,15 +160,17 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   //tests and server entities
   public void headlessInit() {
-    //initToolWindow();
     listenForProjectsChanges();
     boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
 
-    if (myToolWindow.isAvailable() != hasMavenProjects) {
-      myToolWindow.setAvailable(hasMavenProjects);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID);
+    if (toolWindow == null) return;
+
+    if (toolWindow.isAvailable() != hasMavenProjects) {
+      toolWindow.setAvailable(hasMavenProjects);
 
       if (hasMavenProjects) {
-        myToolWindow.activate(null);
+        toolWindow.activate(null);
       }
     }
 
