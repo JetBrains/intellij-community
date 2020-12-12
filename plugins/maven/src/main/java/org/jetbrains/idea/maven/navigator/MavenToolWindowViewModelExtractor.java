@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -73,7 +72,7 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
       iconActions.add(iconAction);
     }
 
-    return new ActionBarViewModel(iconActions);
+    return new ActionBarViewModel(true, iconActions);
   }
 
   // TODO also seems like could be made more generic @see SimpleNode
@@ -83,7 +82,7 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
 
     ViewModelNode viewModelRoot = new ViewModelNode(mavenRoot.getName(), () -> {
     // TODO
-    }, mavenRoot.getIcon());
+    }, true, mavenRoot.getIcon());
 
     processRecursive(mavenRoot, viewModelRoot);
 
@@ -97,13 +96,19 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     for (SimpleNode child : children) {
       ViewModelNode childViewModelNode = new ViewModelNode(child.getName(), () -> {
       // TODO
-      }, child.getIcon());
+      }, hasChildren(child), child.getIcon());
       childrenViewModel.add(childViewModelNode);
 
       processRecursive(child, childViewModelNode);
     }
 
     currentViewModelNode.setChildren(childrenViewModel);
+  }
+
+  private static Boolean hasChildren(SimpleNode child) {
+    if (child.isAlwaysShowPlus()) return true;
+    if (child.isAlwaysLeaf()) return false;
+    return child.getChildCount() > 0;
   }
 
   @Override
