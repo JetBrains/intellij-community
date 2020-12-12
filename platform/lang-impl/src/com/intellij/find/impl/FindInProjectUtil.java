@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -97,7 +96,11 @@ public final class FindInProjectUtil {
         } else {
           VirtualFile parent = virtualFile.getParent();
           if (parent != null && parent.isDirectory()) {
-            FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
+            if (editor == null) {
+              directoryName = parent.getPresentableUrl();
+            } else {
+              FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
+            }
           }
         }
       }
