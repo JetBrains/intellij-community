@@ -74,18 +74,29 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
 
     @Override
     public boolean isAcceptable(Object element, PsiElement context) {
-      if (context != null && context.getParent() instanceof PsiArrayInitializerMemberValue) {
-        context = context.getParent();
-      }
       UElement type = UastContextKt.toUElement(context, UElement.class);
       if (type == null) return false;
-      if (!(type.getUastParent() instanceof UNamedExpression)) return false;
-      UNamedExpression uPair = (UNamedExpression)type.getUastParent();
-      if (!(uPair.getUastParent() instanceof UAnnotation)) return false;
+      UAnnotation annotation = isCheapEnoughToSearch(type);
+      if (annotation == null || !myAnnotation.equals(annotation.getQualifiedName())) return false;
+      UNamedExpression uPair = UastUtils.getParentOfType(type, UNamedExpression.class);
+      if (uPair == null) return false;
       String name = ObjectUtils.notNull(uPair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-      if (!myParameterName.equals(name)) return false;
-      UAnnotation uAnnotation = (UAnnotation)uPair.getUastParent();
-      return myAnnotation.equals(uAnnotation.getQualifiedName());
+      return myParameterName.equals(name);
+    }
+
+    private static UAnnotation isCheapEnoughToSearch(UElement element) {
+      for (int i = 0; i < 5; i++) {
+        if (element instanceof UDeclarationsExpression) {
+          return null;
+        }
+        if (element instanceof UAnnotation) {
+          return (UAnnotation)element;
+        }
+        if (element.getUastParent() != null) {
+          element = element.getUastParent();
+        } else return null;
+      }
+      return null;
     }
 
     @Override
