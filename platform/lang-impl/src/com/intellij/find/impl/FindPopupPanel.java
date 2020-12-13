@@ -56,13 +56,10 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.*;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupState;
@@ -112,7 +109,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
   private static final KeyStroke ENTER_WITH_MODIFIERS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
                                                                                                   ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
-  private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_MASK);
+  private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke RESET_FILTERS = KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK);
 
   private static final String FIND_TYPE = "FindInPath";
@@ -141,6 +138,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private final AtomicBoolean myWholeWordsState = new AtomicBoolean();
   private final AtomicBoolean myRegexState = new AtomicBoolean();
   private StateRestoringCheckBox myCbFileFilter;
+  private JCheckBox myNewTabCheckbox;
   private ActionToolbarImpl myScopeSelectionToolbar;
   private ComboBox<String> myFileMaskField;
   private ActionButton myFilterContextButton;
@@ -452,7 +450,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
     });
     myCbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
-    myFileMaskField = new ComboBox<String>() {
+    myFileMaskField = new ComboBox<>() {
       @Override
       public Dimension getPreferredSize() {
         int width = 0;
@@ -527,19 +525,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     ActionButton pinButton =
       new ActionButton(pinAction, pinAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
 
-    DefaultActionGroup tabOptionsGroup = new DefaultActionGroup() {{
-      Presentation presentation = getTemplatePresentation();
-      presentation.setText(FindBundle.messagePointer("find.popup.show.tab.options"));
-      presentation.setIcon(AllIcons.General.GearPlain);
-      setPopup(true);
-      setShortcutSet(CustomShortcutSet.fromString("alt ctrl DOWN"));
-      add(new MySkipTabWithOneUsageAction());
-      add(new MyOpenResultsInNewTabAction());
-    }};
-    ActionButton tabOptionsButton = new ActionButton(
-      tabOptionsGroup, tabOptionsGroup.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
-    );
-    DumbAwareAction.create(event -> tabOptionsButton.click()).registerCustomShortcutSet(tabOptionsGroup.getShortcutSet(), this);
     myResetFiltersAction = DumbAwareAction.create(event -> resetAllFilters());
     myResetFiltersAction.registerCustomShortcutSet(new CustomShortcutSet(RESET_FILTERS), this);
 
@@ -800,7 +785,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     scrollPane.setBorder(JBUI.Borders.empty());
     myPreviewSplitter.setFirstComponent(scrollPane);
     JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 4 4, fillx, hidemode 3, gap 0"));
-    bottomPanel.add(tabOptionsButton);
+    bottomPanel.add(myNewTabCheckbox = new JBCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView()));
+    myNewTabCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        FindSettings.getInstance().setShowResultsInSeparateView(myNewTabCheckbox.isSelected());
+      }
+    });
     myOKHintLabel = new JBLabel("");
     myOKHintLabel.setEnabled(false);
     myNavigationHintLabel = new JBLabel("");
@@ -1793,27 +1784,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
   }
 
-  private static final class MyOpenResultsInNewTabAction extends ToggleAction {
-    private MyOpenResultsInNewTabAction() {
-      super(FindBundle.messagePointer("find.open.in.new.tab.action"));
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return true;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return FindSettings.getInstance().isShowResultsInSeparateView();
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      FindSettings.getInstance().setShowResultsInSeparateView(state);
-    }
-  }
-
   private class MySwitchContextToggleAction extends ToggleAction implements DumbAware {
     MySwitchContextToggleAction(@NotNull FindModel.SearchContext context) {
       super(FindInProjectUtil.getPresentableName(context));
@@ -2016,33 +1986,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         "find", "pin.toggled", new FeatureUsageData().
           addData("option_value", state)
       );
-    }
-  }
-
-  private final class MySkipTabWithOneUsageAction extends ToggleAction {
-    private MySkipTabWithOneUsageAction() {
-      super(FindBundle.messagePointer("find.options.skip.results.tab.with.one.usage.action"));
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return true;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return FindSettings.getInstance().isSkipResultsWithOneUsage();
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      FindSettings.getInstance().setSkipResultsWithOneUsage(state);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(!myHelper.isReplaceState());
     }
   }
 
