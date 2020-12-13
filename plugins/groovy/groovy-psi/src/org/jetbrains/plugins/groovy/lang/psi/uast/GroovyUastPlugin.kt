@@ -118,14 +118,17 @@ class GrUAnnotation(val grElement: GrAnnotation,
     }
   }
 
-  override fun findAttributeValue(name: String?): UExpression? = null //not implemented
+  override fun findAttributeValue(name: String?): UExpression? = findDeclaredAttributeValue(name)
 
-  override fun findDeclaredAttributeValue(name: String?): UExpression? = null //not implemented
+  override fun findDeclaredAttributeValue(name: String?): UExpression? {
+    return grElement.parameterList.attributes.asSequence()
+      .find { it.name == name || it.name == null && "value" == name }
+      ?.let { GrUNamedExpression(it) { this } }
+  }
 
   override val uastParent: UElement? by lazy(parentProvider)
 
   override val psi: PsiElement? = grElement
-
 }
 
 class GrUnknownUExpression(override val psi: PsiElement?, override val uastParent: UElement?) : UExpression {
