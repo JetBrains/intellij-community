@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 
@@ -63,7 +64,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
-    var myCopyOnSelection: Boolean = false
+    var myCopyOnSelection: Boolean = SystemInfo.isLinux
     var myPasteOnMiddleMouseButton: Boolean = true
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
