@@ -3,12 +3,18 @@ package com.intellij.ui.viewModel.definition;
 
 public class TreeViewModel {
   private final ViewModelNode myRoot;
+  private final boolean myIsRootVisible;
 
-  public TreeViewModel(ViewModelNode root) {
+  public TreeViewModel(ViewModelNode root, boolean isRootVisible) {
     myRoot = root;
+    myIsRootVisible = isRootVisible;
   }
 
   public ViewModelNode getRoot() {
     return myRoot;
+  }
+
+  public boolean isRootVisible() {
+    return myIsRootVisible;
   }
 }

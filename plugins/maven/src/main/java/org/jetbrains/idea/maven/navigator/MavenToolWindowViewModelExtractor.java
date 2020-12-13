@@ -79,14 +79,13 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
   private TreeViewModel extractViewModel(SimpleTree tree) {
     PatchedDefaultMutableTreeNode rawRoot = (PatchedDefaultMutableTreeNode)tree.getModel().getRoot();
     MavenProjectsStructure.MavenSimpleNode mavenRoot = (MavenProjectsStructure.MavenSimpleNode) rawRoot.getUserObject();
-
     ViewModelNode viewModelRoot = new ViewModelNode(mavenRoot.getName(), () -> {
     // TODO
     }, true, mavenRoot.getIcon());
 
     processRecursive(mavenRoot, viewModelRoot);
 
-    return new TreeViewModel(viewModelRoot);
+    return new TreeViewModel(viewModelRoot, tree.isRootVisible());
   }
 
   // TODO move somewhere else as it may be useful for other toolwindows
