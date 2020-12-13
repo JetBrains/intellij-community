@@ -76,6 +76,7 @@ internal class ChangesViewCommitWorkflowHandler(
     setupCommitHandlersTracking()
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
+    currentChangeList = workflow.getAffectedChangeList(emptySet())
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
@@ -110,14 +111,11 @@ internal class ChangesViewCommitWorkflowHandler(
 
     inclusionModel.changeLists = changeLists
     ui.setCompletionContext(changeLists)
-    currentChangeList = currentChangeList?.run { changeLists.find { it.id == id } }
   }
 
   fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
     setInclusion(items, force)
     setSelection(changeList)
-
-    currentChangeList = workflow.getAffectedChangeList(inclusionModel.getInclusion().filterIsInstance<Change>())
   }
 
   private fun setInclusion(items: Collection<Any>, force: Boolean) {
@@ -194,6 +192,7 @@ internal class ChangesViewCommitWorkflowHandler(
     // ensure all included active changes are known => if user explicitly checks and unchecks some change, we know it is unchecked
     knownActiveChanges = knownActiveChanges.union(includedActiveChanges)
 
+    currentChangeList = workflow.getAffectedChangeList(inclusion.filterIsInstance<Change>())
     super.inclusionChanged()
   }
 
