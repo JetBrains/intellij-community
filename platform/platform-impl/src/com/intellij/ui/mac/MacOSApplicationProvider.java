@@ -2,6 +2,7 @@
 package com.intellij.ui.mac;
 
 import com.apple.eawt.AppEvent;
+import com.apple.eawt.AppReOpenedListener;
 import com.apple.eawt.Application;
 import com.apple.eawt.OpenURIHandler;
 import com.intellij.diagnostic.LoadingState;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.SmartList;
@@ -105,6 +107,13 @@ public final class MacOSApplicationProvider {
         }
         else {
           IdeStarter.openFilesOnLoading(list);
+        }
+      });
+
+      application.addAppEventListener(new AppReOpenedListener() {
+        @Override
+        public void appReOpened(AppEvent.AppReOpenedEvent event) {
+          WelcomeFrame.showIfNoProjectOpened();
         }
       });
 

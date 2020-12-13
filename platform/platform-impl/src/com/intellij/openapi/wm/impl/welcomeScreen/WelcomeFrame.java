@@ -20,6 +20,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -114,8 +115,11 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(WindowEvent e) {
-        if (ProjectUtil.getOpenProjects().length == 0) {
+        if (ProjectUtil.getOpenProjects().length == 0 && !Registry.get("idea.welcome.screen.close.no-exit").asBoolean()) {
           ApplicationManager.getApplication().exit();
+        }
+        else if (Registry.get("idea.welcome.screen.close.no-exit").asBoolean()) {
+          frame.setVisible(false);
         }
         else {
           frame.dispose();
@@ -147,6 +151,8 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
 
   public static void showNow() {
     if (ourInstance != null) {
+      ((JFrame)ourInstance).setVisible(true);
+      ((JFrame)ourInstance).requestFocus();
       return;
     }
 
