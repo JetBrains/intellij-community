@@ -1122,6 +1122,144 @@ public class JBUI {
       }
     }
 
+    private static final Color DEFAULT_RENDERER_BACKGROUND = new JBColor(0xFFFFFF, 0x3C3F41);
+    private static final Color DEFAULT_RENDERER_SELECTION_BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
+    private static final Color DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND = new JBColor(0xD4D4D4, 0x0D293E);
+    private static final Color DEFAULT_RENDERER_HOVER_BACKGROUND = new JBColor(0xEDF5FC, 0x464A4D);
+    private static final Color DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND = new JBColor(0xF5F5F5, 0x464A4D);
+
+    public interface List {
+      Color BACKGROUND = JBColor.namedColor("List.background", DEFAULT_RENDERER_BACKGROUND);
+      Color FOREGROUND = JBColor.namedColor("List.foreground", Label.foreground(false));
+
+      static @NotNull Color background(boolean selected, boolean focused) {
+        return selected ? Selection.background(focused) : BACKGROUND;
+      }
+
+      static @NotNull Color foreground(boolean selected, boolean focused) {
+        return selected ? Selection.foreground(focused) : FOREGROUND;
+      }
+
+      final class Selection {
+        private static final Color BACKGROUND = JBColor.namedColor("List.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
+        private static final Color FOREGROUND = JBColor.namedColor("List.selectionForeground", Label.foreground(true));
+
+        public static @NotNull Color background(boolean focused) {
+          if (focused && UIUtil.isUnderDefaultMacTheme()) {
+            double alpha = getInt("List.selectedItemAlpha", 75);
+            if (0 <= alpha && alpha < 100) return ColorUtil.mix(Color.WHITE, BACKGROUND, alpha / 100.0);
+          }
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        public static @NotNull Color foreground(boolean focused) {
+          return focused ? FOREGROUND : Inactive.FOREGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("List.selectionInactiveBackground", DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND);
+          Color FOREGROUND = JBColor.namedColor("List.selectionInactiveForeground", List.FOREGROUND);
+        }
+      }
+
+      final class Hover {
+        private static final Color BACKGROUND = JBColor.namedColor("List.hoverBackground", DEFAULT_RENDERER_HOVER_BACKGROUND);
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("List.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
+        }
+      }
+    }
+
+    public interface Table {
+      Color BACKGROUND = JBColor.namedColor("Table.background", DEFAULT_RENDERER_BACKGROUND);
+      Color FOREGROUND = JBColor.namedColor("Table.foreground", Label.foreground(false));
+
+      static @NotNull Color background(boolean selected, boolean focused) {
+        return selected ? Selection.background(focused) : BACKGROUND;
+      }
+
+      static @NotNull Color foreground(boolean selected, boolean focused) {
+        return selected ? Selection.foreground(focused) : FOREGROUND;
+      }
+
+      final class Selection {
+        private static final Color BACKGROUND = JBColor.namedColor("Table.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
+        private static final Color FOREGROUND = JBColor.namedColor("Table.selectionForeground", Label.foreground(true));
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        public static @NotNull Color foreground(boolean focused) {
+          return focused ? FOREGROUND : Inactive.FOREGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("Table.selectionInactiveBackground", DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND);
+          Color FOREGROUND = JBColor.namedColor("Table.selectionInactiveForeground", Table.FOREGROUND);
+        }
+      }
+
+      final class Hover {
+        private static final Color BACKGROUND = JBColor.namedColor("Table.hoverBackground", DEFAULT_RENDERER_HOVER_BACKGROUND);
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("Table.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
+        }
+      }
+    }
+
+    public interface Tree {
+      Color BACKGROUND = JBColor.namedColor("Tree.background", DEFAULT_RENDERER_BACKGROUND);
+      Color FOREGROUND = JBColor.namedColor("Tree.foreground", Label.foreground(false));
+
+      static @NotNull Color background(boolean selected, boolean focused) {
+        return selected ? Selection.background(focused) : BACKGROUND;
+      }
+
+      static @NotNull Color foreground(boolean selected, boolean focused) {
+        return selected ? Selection.foreground(focused) : FOREGROUND;
+      }
+
+      final class Selection {
+        private static final Color BACKGROUND = JBColor.namedColor("Tree.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
+        private static final Color FOREGROUND = JBColor.namedColor("Tree.selectionForeground", Label.foreground(true));
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        public static @NotNull Color foreground(boolean focused) {
+          return focused ? FOREGROUND : Inactive.FOREGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("Tree.selectionInactiveBackground", DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND);
+          Color FOREGROUND = JBColor.namedColor("Tree.selectionInactiveForeground", Tree.FOREGROUND);
+        }
+      }
+
+      final class Hover {
+        private static final Color BACKGROUND = JBColor.namedColor("Tree.hoverBackground", DEFAULT_RENDERER_HOVER_BACKGROUND);
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("Tree.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
+        }
+      }
+    }
   }
 
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {

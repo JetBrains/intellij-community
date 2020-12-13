@@ -3128,39 +3128,6 @@ public final class UIUtil {
   }
 
 
-  private static final Color BACKGROUND = new JBColor(0xFFFFFF, 0x3C3F41);
-  private static final Color LIST_BACKGROUND = JBColor.namedColor("List.background", BACKGROUND);
-  private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.background", BACKGROUND);
-  private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.background", BACKGROUND);
-
-  private static final class FocusedSelection {
-    private static final Color BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
-    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.selectionBackground", BACKGROUND);
-    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionBackground", BACKGROUND);
-  }
-
-  private static final class UnfocusedSelection {
-    private static final Color BACKGROUND = new JBColor(0xD4D4D4, 0x0D293E);
-    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.selectionInactiveBackground", BACKGROUND);
-    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.selectionInactiveBackground", BACKGROUND);
-    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionInactiveBackground", BACKGROUND);
-  }
-
-  private static final class FocusedHover {
-    private static final Color BACKGROUND = new JBColor(0xEDF5FC, 0x464A4D);
-    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.hoverBackground", BACKGROUND);
-    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.hoverBackground", BACKGROUND);
-    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.hoverBackground", BACKGROUND);
-  }
-
-  private static final class UnfocusedHover {
-    private static final Color BACKGROUND = new JBColor(0xF5F5F5, 0x464A4D);
-    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.hoverInactiveBackground", BACKGROUND);
-    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.hoverInactiveBackground", BACKGROUND);
-    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.hoverInactiveBackground", BACKGROUND);
-  }
-
-
   // List
 
   public static @NotNull Font getListFont() {
@@ -3174,20 +3141,14 @@ public final class UIUtil {
    * @see RenderingUtil#getBackground(JList)
    */
   public static @NotNull Color getListBackground() {
-    return LIST_BACKGROUND;
+    return JBUI.CurrentTheme.List.BACKGROUND;
   }
-
-  private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 75);
 
   /**
    * @see RenderingUtil#getSelectionBackground(JList)
    */
   public static @NotNull Color getListSelectionBackground(boolean focused) {
-    if (!focused) return UnfocusedSelection.LIST_BACKGROUND;
-    Color color = UIManager.getColor("List.selectionBackground");
-    double alpha = SELECTED_ITEM_ALPHA.getFloat() / 100.0;
-    //noinspection UseJBColor
-    return isUnderDefaultMacTheme() && alpha >= 0 && alpha <= 1.0 ? ColorUtil.mix(Color.WHITE, color, alpha) : color;
+    return JBUI.CurrentTheme.List.Selection.background(focused);
   }
 
   public static @NotNull Dimension updateListRowHeight(@NotNull Dimension size) {
@@ -3228,7 +3189,7 @@ public final class UIUtil {
 
   @ApiStatus.Experimental
   public static @NotNull Color getListHoverBackground(boolean focused) {
-    return focused ? FocusedHover.LIST_BACKGROUND : UnfocusedHover.LIST_BACKGROUND;
+    return JBUI.CurrentTheme.List.Hover.background(focused);
   }
 
   // foreground
@@ -3237,16 +3198,14 @@ public final class UIUtil {
    * @see RenderingUtil#getForeground(JList)
    */
   public static @NotNull Color getListForeground() {
-    return UIManager.getColor("List.foreground");
+    return JBUI.CurrentTheme.List.FOREGROUND;
   }
 
   /**
    * @see RenderingUtil#getSelectionForeground(JList)
    */
   public static @NotNull Color getListSelectionForeground(boolean focused) {
-    Color foreground = UIManager.getColor(focused ? "List.selectionForeground" : "List.selectionInactiveForeground");
-    if (focused && foreground == null) foreground = UIManager.getColor("List[Selected].textForeground");  // Nimbus
-    return foreground != null ? foreground : getListForeground();
+    return JBUI.CurrentTheme.List.Selection.foreground(focused);
   }
 
   /**
@@ -3285,14 +3244,14 @@ public final class UIUtil {
    * @see RenderingUtil#getBackground(JTree)
    */
   public static @NotNull Color getTreeBackground() {
-    return TREE_BACKGROUND;
+    return JBUI.CurrentTheme.Tree.BACKGROUND;
   }
 
   /**
    * @see RenderingUtil#getSelectionBackground(JTree)
    */
   public static @NotNull Color getTreeSelectionBackground(boolean focused) {
-    return focused ? FocusedSelection.TREE_BACKGROUND : UnfocusedSelection.TREE_BACKGROUND;
+    return JBUI.CurrentTheme.Tree.Selection.background(focused);
   }
 
   /**
@@ -3320,7 +3279,7 @@ public final class UIUtil {
 
   @ApiStatus.Experimental
   public static @NotNull Color getTreeHoverBackground(boolean focused) {
-    return focused ? FocusedHover.TREE_BACKGROUND : UnfocusedHover.TREE_BACKGROUND;
+    return JBUI.CurrentTheme.Tree.Hover.background(focused);
   }
 
   // foreground
@@ -3329,15 +3288,14 @@ public final class UIUtil {
    * @see RenderingUtil#getForeground(JTree)
    */
   public static @NotNull Color getTreeForeground() {
-    return UIManager.getColor("Tree.foreground");
+    return JBUI.CurrentTheme.Tree.FOREGROUND;
   }
 
   /**
    * @see RenderingUtil#getSelectionForeground(JTree)
    */
   public static @NotNull Color getTreeSelectionForeground(boolean focused) {
-    Color foreground = UIManager.getColor(focused ? "Tree.selectionForeground" : "Tree.selectionInactiveForeground");
-    return foreground != null ? foreground : getTreeForeground();
+    return JBUI.CurrentTheme.Tree.Selection.foreground(focused);
   }
 
   /**
@@ -3359,14 +3317,14 @@ public final class UIUtil {
    * @see RenderingUtil#getBackground(JTable)
    */
   public static @NotNull Color getTableBackground() {
-    return TABLE_BACKGROUND;
+    return JBUI.CurrentTheme.Table.BACKGROUND;
   }
 
   /**
    * @see RenderingUtil#getSelectionBackground(JTable)
    */
   public static @NotNull Color getTableSelectionBackground(boolean focused) {
-    return focused ? FocusedSelection.TABLE_BACKGROUND : UnfocusedSelection.TABLE_BACKGROUND;
+    return JBUI.CurrentTheme.Table.Selection.background(focused);
   }
 
   /**
@@ -3402,7 +3360,7 @@ public final class UIUtil {
 
   @ApiStatus.Experimental
   public static @NotNull Color getTableHoverBackground(boolean focused) {
-    return focused ? FocusedHover.TABLE_BACKGROUND : UnfocusedHover.TABLE_BACKGROUND;
+    return JBUI.CurrentTheme.Table.Hover.background(focused);
   }
 
   // foreground
@@ -3411,15 +3369,14 @@ public final class UIUtil {
    * @see RenderingUtil#getForeground(JTable)
    */
   public static @NotNull Color getTableForeground() {
-    return UIManager.getColor("Table.foreground");
+    return JBUI.CurrentTheme.Table.FOREGROUND;
   }
 
   /**
    * @see RenderingUtil#getSelectionForeground(JTable)
    */
   public static @NotNull Color getTableSelectionForeground(boolean focused) {
-    Color foreground = UIManager.getColor(focused ? "Table.selectionForeground" : "Table.selectionInactiveForeground");
-    return foreground != null ? foreground : getTreeForeground();
+    return JBUI.CurrentTheme.Table.Selection.foreground(focused);
   }
 
   /**
@@ -3442,7 +3399,7 @@ public final class UIUtil {
    */
   @Deprecated
   public static @NotNull Color getTableSelectionForeground() {
-    return UIManager.getColor("Table.selectionForeground");
+    return getTableSelectionForeground(true);
   }
 
   /**
