@@ -44,10 +44,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   private val toolWindows = mutableSetOf<ToolWindow>()
   private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
 
-  private fun Content.isInCommitToolWindow() = IS_IN_COMMIT_TOOLWINDOW_KEY.get(this) == true
+  private fun Content.resolveToolWindowId(): String {
+    val isInCommitToolWindow = IS_IN_COMMIT_TOOLWINDOW_KEY.get(this) == true
+    if (isInCommitToolWindow && isCommitToolWindowShown) return COMMIT_TOOLWINDOW_ID
+    return TOOLWINDOW_ID
+  }
 
   private fun Content.resolveContentManager(): ContentManager? {
-    val toolWindowId = if (isInCommitToolWindow() && isCommitToolWindowShown) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
+    val toolWindowId = resolveToolWindowId()
     val toolWindow = toolWindows.find { it.id == toolWindowId }
     return toolWindow?.contentManager
   }
@@ -156,6 +160,11 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return allContents.filter { predicate.test(it) }
   }
 
+  private fun getContentToolWindowId(tabName: String): String? {
+    val content = findContents { it.tabName == tabName }.firstOrNull() ?: return null
+    return content.resolveToolWindowId()
+  }
+
   private inner class ContentProvidersListener : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
       val content = event.content
@@ -216,8 +225,11 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     @JvmStatic
     fun getToolWindowIdFor(project: Project, tabName: String): String {
       val manager = getInstanceImpl(project) ?: return TOOLWINDOW_ID
-      val toolWindow = manager.toolWindows.find { it.contentManager.contents.any { content -> content.tabName == tabName } }
-      if (toolWindow != null) return toolWindow.id
+
+      val toolWindowId = manager.getContentToolWindowId(tabName)
+      if (toolWindowId != null) {
+        return toolWindowId
+      }
 
       val extension = ChangesViewContentEP.EP_NAME.getExtensions(project).find { it.tabName == tabName }
       if (extension != null) return getToolWindowId(project, extension)
