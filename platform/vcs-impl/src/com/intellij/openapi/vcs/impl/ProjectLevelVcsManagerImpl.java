@@ -649,18 +649,31 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
    * Used to guess VCS for automatic mapping through a look into a working copy
    */
   @Override
-  public @Nullable AbstractVcs findVersioningVcs(VirtualFile file) {
-    final VcsDescriptor[] vcsDescriptors = getAllVcss();
-    VcsDescriptor probableVcs = null;
-    for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
-      if (vcsDescriptor.probablyUnderVcs(file)) {
-        if (probableVcs != null) {
-          return null;
-        }
-        probableVcs = vcsDescriptor;
+  public @Nullable AbstractVcs findVersioningVcs(@NotNull VirtualFile file) {
+    Set<String> checkedVcses = new HashSet<>();
+
+    for (VcsRootChecker checker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList()) {
+      String vcsName = checker.getSupportedVcs().getName();
+      checkedVcses.add(vcsName);
+
+      if (checker.isRoot(file.getPath())) {
+        return findVcsByName(vcsName);
       }
     }
-    return probableVcs == null ? null : findVcsByName(probableVcs.getName());
+
+    String foundVcs = null;
+    for (VcsDescriptor vcsDescriptor : getAllVcss()) {
+      String vcsName = vcsDescriptor.getName();
+      if (checkedVcses.contains(vcsName)) continue;
+
+      if (vcsDescriptor.probablyUnderVcs(file)) {
+        if (foundVcs != null) {
+          return null;
+        }
+        foundVcs = vcsName;
+      }
+    }
+    return findVcsByName(foundVcs);
   }
 
   @Override

@@ -219,7 +219,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator,
                                       @Nullable VirtualFileFilter directoryFilter);
 
-  public abstract @Nullable AbstractVcs findVersioningVcs(VirtualFile file);
+  public abstract @Nullable AbstractVcs findVersioningVcs(@NotNull VirtualFile file);
 
   public abstract @NotNull VcsRootChecker getRootChecker(@NotNull AbstractVcs vcs);
 

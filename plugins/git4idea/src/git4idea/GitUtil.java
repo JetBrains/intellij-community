@@ -124,6 +124,7 @@ public final class GitUtil {
     String content = readContent(dotGit);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
+    if (pathToDir == null) return null;
     File file = findRealRepositoryDir(rootDir.toNioPath(), pathToDir);
     if (file == null) return null;
     return VcsUtil.getVirtualFileWithRefresh(file);
@@ -133,19 +134,20 @@ public final class GitUtil {
   private static File findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
     if (!FileUtil.isAbsolute(path)) {
       String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath.toString(), path), true);
-      if (canonicalPath == null) {
-        return null;
-      }
       path = FileUtil.toSystemIndependentName(canonicalPath);
     }
     File file = new File(path);
     return file.isDirectory() ? file : null;
   }
 
-  @NotNull
+  @Nullable
   private static String parsePathToRepository(@NotNull @NonNls String content) {
     content = content.trim();
-    return content.startsWith(REPO_PATH_LINK_PREFIX) ? content.substring(REPO_PATH_LINK_PREFIX.length()).trim() : content;
+    if (content.startsWith(REPO_PATH_LINK_PREFIX)) {
+      content = content.substring(REPO_PATH_LINK_PREFIX.length()).trim();
+    }
+    if (content.isEmpty() || content.contains("\n")) return null;
+    return content;
   }
 
   @Nullable
@@ -1065,6 +1067,7 @@ public final class GitUtil {
     }
 
     String pathToDir = parsePathToRepository(content);
+    if (pathToDir == null) return false;
     return findRealRepositoryDir(rootDir, pathToDir) != null;
   }
 
