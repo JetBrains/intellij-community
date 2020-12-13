@@ -718,7 +718,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
    * @return a background color for hovered row, or {@code null} to ignore
    */
   protected @Nullable Color getHoveredRowBackground() {
-    return UIUtil.getTableHoverBackground(true);
+    return JBUI.CurrentTheme.Table.Hover.background(true);
   }
 
   private static void setRendererBackground(@NotNull JComponent container, Color background) {

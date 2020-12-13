@@ -3187,11 +3187,6 @@ public final class UIUtil {
     return getListSelectionBackground(false);
   }
 
-  @ApiStatus.Experimental
-  public static @NotNull Color getListHoverBackground(boolean focused) {
-    return JBUI.CurrentTheme.List.Hover.background(focused);
-  }
-
   // foreground
 
   /**
@@ -3277,11 +3272,6 @@ public final class UIUtil {
     return getTreeSelectionBackground(false);
   }
 
-  @ApiStatus.Experimental
-  public static @NotNull Color getTreeHoverBackground(boolean focused) {
-    return JBUI.CurrentTheme.Tree.Hover.background(focused);
-  }
-
   // foreground
 
   /**
@@ -3356,11 +3346,6 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull Color getTableUnfocusedSelectionBackground() {
     return getTableSelectionBackground(false);
-  }
-
-  @ApiStatus.Experimental
-  public static @NotNull Color getTableHoverBackground(boolean focused) {
-    return JBUI.CurrentTheme.Table.Hover.background(focused);
   }
 
   // foreground
