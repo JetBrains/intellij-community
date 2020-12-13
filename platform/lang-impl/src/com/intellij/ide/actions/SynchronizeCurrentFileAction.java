@@ -51,6 +51,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   }
 
   private static Stream<VirtualFile> localFiles(AnActionEvent e) {
-    return Stream.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).filter(f -> f.isValid() && f.isInLocalFileSystem());
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    return files != null ? Stream.of(files).filter(f -> f.isValid() && f.isInLocalFileSystem()) : Stream.empty();
   }
 }
