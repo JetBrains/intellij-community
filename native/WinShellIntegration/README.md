@@ -31,12 +31,12 @@ For example if your `javac.exe` is located at `C:\Soft\jdk\bin\javac.exe` you sh
 
 ## Current binaries in repository
 Current version of IntelliJ Platform uses binaries located in:
-* x32: [bin/win/winshellintegrationbridge.dll](../../bin/win/winshellintegrationbridge.dll)
-* x64: [bin/win/winshellintegrationbridge64.dll](../../bin/win/winshellintegrationbridge64.dll)
+* x32: [bin/win/WinShellIntegrationBridge.dll](../../bin/win/WinShellIntegrationBridge.dll);
+* x64: [bin/win/WinShellIntegrationBridge64.dll](../../bin/win/WinShellIntegrationBridge64.dll).
 
 These binaries are built in the following environment:
 * Windows 10 build 19041;
-* Visual Studio 2017 Community MSVC 19.16.27043.0, Windows SDK 10.0.18362.0;
+* Visual Studio 2017 Community MSVC 19.16.27043.0, Windows SDK v8.0 6.2.9200.16384;
 * [Amazon Corretto JDK 11.0.8.10.1](https://corretto.aws/downloads/resources/11.0.8.10.1/amazon-corretto-11.0.8.10.1-windows-x64.msi).
 
 And using the following commands **ran at Visual Studio Developer Command Prompt**:
