@@ -18,7 +18,7 @@ public abstract class DocumentWriteAccessGuard {
   public static final ExtensionPointName<DocumentWriteAccessGuard> EP_NAME =
     ExtensionPointName.create("com.intellij.documentWriteAccessGuard");
 
-  public abstract @NotNull Result isWritable(@NotNull Document document, boolean writeThreadOnly);
+  public abstract @NotNull Result isWritable(@NotNull Document document);
 
   protected static Result success() {
     return new Result(true, null);
