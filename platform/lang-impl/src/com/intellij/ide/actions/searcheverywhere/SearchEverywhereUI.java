@@ -1122,6 +1122,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
           emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_ATTRIBUTES, findInFilesAction)
             .appendText(" (" + findInFilesShortcut + ")");
         });
+
+      if (myHeader.getSelectedTab().canClearFilter()) {
+        ActionListener clearFiltersAction = e -> {
+          myHeader.getSelectedTab().clearFilter();
+          scheduleRebuildList();
+        };
+        emptyStatus.appendLine(IdeBundle.message("searcheverywhere.reset.filters"),
+                               SimpleTextAttributes.LINK_ATTRIBUTES, clearFiltersAction);
+      }
     }
 
     @TestOnly
