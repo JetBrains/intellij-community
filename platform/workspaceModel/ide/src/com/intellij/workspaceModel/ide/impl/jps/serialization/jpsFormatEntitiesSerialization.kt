@@ -53,6 +53,7 @@ interface JpsFileEntityTypeSerializer<E : WorkspaceEntity> : JpsFileEntitiesSeri
   val isExternalStorage: Boolean
   val entityFilter: (E) -> Boolean
     get() = { true }
+  fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter)
 }
 
 /**
@@ -85,7 +86,6 @@ interface JpsModuleListSerializer {
   fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity>
   fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter)
   fun getFileName(entity: ModuleEntity): String
-
   fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter)
 }
 

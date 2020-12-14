@@ -57,9 +57,11 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 
 class ExternalSystemStorageTest {
   companion object {
@@ -484,7 +486,7 @@ class ExternalSystemStorageTest {
       cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir), FileTextMatcher.ignoreBlankLines())
     }
     else {
-      assertFalse("$cacheDir doesn't exist", Files.exists(cacheDir))
+      assertTrue("$cacheDir doesn't exist", !Files.exists(cacheDir) || isFolderWithoutFiles(cacheDir.toFile()))
     }
   }
 
@@ -522,5 +524,19 @@ class ExternalSystemStorageTest {
         }
       }
     }
+  }
+
+  private fun isFolderWithoutFiles(root: File): Boolean {
+    val dirs: Queue<File> = LinkedList()
+    var listFiles = root.listFiles()
+    if (listFiles == null) return true
+    dirs.addAll(listFiles)
+    while (!dirs.isEmpty()) {
+      val currentFile = dirs.poll()
+      if (currentFile.isFile) return false
+      listFiles = currentFile.listFiles()
+      if (listFiles != null) dirs.addAll(listFiles)
+    }
+    return true;
   }
 }
