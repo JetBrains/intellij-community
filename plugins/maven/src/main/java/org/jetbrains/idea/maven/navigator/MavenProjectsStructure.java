@@ -6,6 +6,8 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -83,6 +85,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   private final SimpleTreeBuilder myTreeBuilder;
   private final RootNode myRoot = new RootNode();
+  private volatile boolean isUnloading = false;
 
   private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new THashMap<>();
 
@@ -98,6 +101,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     myShortcutsManager = shortcutsManager;
     myProjectsNavigator = projectsNavigator;
     boundedUpdateService = AppExecutorUtil.createBoundedApplicationPoolExecutor("Maven Plugin Updater", 1);
+    project.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        if(MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
+          isUnloading = true;
+        }
+      }
+    });
 
     configureTree(tree);
 
@@ -1516,15 +1527,21 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     public void run() {
       File localRepository = myProjectsManager.getLocalRepository();
-      List<PluginNode> pluginInfos = ContainerUtil.map(myPlugins, it -> new PluginNode(myParentNode, it, MavenArtifactUtil
-        .readPluginInfo(localRepository, it.getMavenId())));
 
+      List<PluginNode> pluginInfos = new ArrayList<>();
+      Iterator<MavenPlugin> iterator = myPlugins.iterator();
+      while(!isUnloading && iterator.hasNext()){
+        MavenPlugin next = iterator.next();
+        pluginInfos.add(new PluginNode(myParentNode, next, MavenArtifactUtil
+          .readPluginInfo(localRepository, next.getMavenId())));
+      }
       updateNodesInEDT(pluginInfos);
     }
 
     private void updateNodesInEDT(List<PluginNode> pluginNodes) {
       ApplicationManager.getApplication().invokeLater(() -> {
         myParentNode.myPluginNodes.clear();
+        if(isUnloading) return;
         myParentNode.myPluginNodes.addAll(pluginNodes);
         myParentNode.sort(myParentNode.myPluginNodes);
         myParentNode.childrenChanged();

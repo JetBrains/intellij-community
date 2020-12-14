@@ -102,7 +102,8 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
 
-public final class MavenUtil {
+public class MavenUtil {
+  public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
   @ApiStatus.Experimental
   @NonNls public static final String MAVEN_NAME = "Maven";
   @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
