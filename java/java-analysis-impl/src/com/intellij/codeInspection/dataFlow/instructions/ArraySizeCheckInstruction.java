@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ArraySizeCheckInstruction extends Instruction {
-  final @NotNull PsiExpression myExpression;
-  final @Nullable DfaControlTransferValue myTransferValue;
+  private final @NotNull PsiExpression myExpression;
+  private final @Nullable DfaControlTransferValue myTransferValue;
 
   public ArraySizeCheckInstruction(@NotNull PsiExpression expression,
                                    @Nullable DfaControlTransferValue value) {
