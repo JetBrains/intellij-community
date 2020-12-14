@@ -649,12 +649,18 @@ public final class FileSystemUtil {
 
       CoreFoundation.CFTypeRef url = cf.CFURLCreateFromFileSystemRepresentation(null, path, path.length(), true);
       try {
-        PointerByReference result = new PointerByReference();
-        if (cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, result, null)) {
-          boolean value = new CoreFoundation.CFBooleanRef(result.getValue()).booleanValue();
+        PointerByReference resultPtr = new PointerByReference();
+        Pointer result;
+        if (!cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, resultPtr, null)) {
+          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
+        }
+        else if ((result = resultPtr.getValue()) == null) {
+          LOG.info("CFURLCopyResourcePropertyForKey(" + path + "): property not available");
+        }
+        else {
+          boolean value = new CoreFoundation.CFBooleanRef(result).booleanValue();
           return value ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
         }
-        LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
       }
       finally {
         url.release();
