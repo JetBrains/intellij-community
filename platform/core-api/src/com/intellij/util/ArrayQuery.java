@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class ArrayQuery<T> implements Query<T> {
   private final T[] myArray;
@@ -35,10 +34,5 @@ public class ArrayQuery<T> implements Query<T> {
   @Override
   public T @NotNull [] toArray(final T @NotNull [] a) {
     return myArray;
-  }
-
-  @Override
-  public Iterator<T> iterator() {
-    return Arrays.asList(myArray).iterator();
   }
 }

@@ -36,10 +36,4 @@ public class CollectionQuery<T> implements Query<T> {
   public T @NotNull [] toArray(final T @NotNull [] a) {
     return findAll().toArray(a);
   }
-
-  @NotNull
-  @Override
-  public Iterator<T> iterator() {
-    return myCollection.iterator();
-  }
 }

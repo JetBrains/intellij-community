@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -119,5 +120,10 @@ public interface Query<Result> extends Iterable<Result> {
   @Contract(pure = true)
   default Query<Result> allowParallelProcessing() {
     return this;
+  }
+
+  @Override
+  default @NotNull Iterator<Result> iterator() {
+    return findAll().iterator();
   }
 }

@@ -36,7 +36,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   @Override
   public Iterator<Result> iterator() {
     assertNotProcessing();
-    return new UnmodifiableIterator<>(findAll().iterator());
+    return new UnmodifiableIterator<>(Query.super.iterator());
   }
 
   @Override
