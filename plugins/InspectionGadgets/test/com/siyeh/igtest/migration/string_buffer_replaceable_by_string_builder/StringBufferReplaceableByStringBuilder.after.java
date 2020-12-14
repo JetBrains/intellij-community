@@ -6,7 +6,7 @@ public class StringBufferReplaceableByStringBuilder {
 
     public void foo()
     {
-        final StringBuffer <warning descr="'StringBuffer buffer' may be declared as 'StringBuilder'"><caret>buffer</warning> = new StringBuffer();
+        final StringBuilder buffer = new StringBuilder();
         buffer.append("bar");
         buffer.append("bar");
         System.out.println(buffer.toString());
@@ -43,7 +43,7 @@ public class StringBufferReplaceableByStringBuilder {
   private final Random rnd = new Random(123);
 
   void convert() {
-    StringBuffer <warning descr="'StringBuffer sb' may be declared as 'StringBuilder'">sb</warning> = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0, n = rnd.nextInt(15) + 1; i < n; i++)
       sb.append(nextChar());
     String symbol = new String(sb);
