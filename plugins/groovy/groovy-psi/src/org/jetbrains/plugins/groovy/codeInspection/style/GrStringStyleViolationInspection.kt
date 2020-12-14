@@ -243,6 +243,15 @@ class GrStringStyleViolationInspection : BaseInspection() {
     val stringContent = literal.text
     val startQuote = GrStringUtil.getStartQuote(stringContent)
     val meaningfulText = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(stringContent))
+    val currentKind = when(startQuote) {
+      GrStringUtil.QUOTE -> SINGLE_QUOTED
+      GrStringUtil.DOUBLE_QUOTES -> DOUBLE_QUOTED
+      GrStringUtil.TRIPLE_QUOTES -> TRIPLE_QUOTED
+      GrStringUtil.TRIPLE_DOUBLE_QUOTES -> TRIPLE_DOUBLE_QUOTED
+      GrStringUtil.SLASH -> SLASHY
+      GrStringUtil.DOLLAR_SLASH -> DOLLAR_SLASHY_QUOTED
+      else -> UNDEFINED
+    }
     val doubleQuotes = meaningfulText.count { it == '"' }
     val singleQuotes = meaningfulText.count { it == '\'' }
     val dollars = meaningfulText.count { it == '$' }
@@ -252,20 +261,20 @@ class GrStringStyleViolationInspection : BaseInspection() {
     val slashes = meaningfulText.count { it == '/' }
     val reversedSlashes = meaningfulText.count { it == '\\' }
     val currentEscapingScore = when (startQuote) {
-      GrStringUtil.QUOTE -> singleQuotes + reversedSlashes
-      GrStringUtil.DOUBLE_QUOTES -> doubleQuotes + reversedSlashes
+      GrStringUtil.QUOTE -> singleQuotes + reversedSlashes + dollars
+      GrStringUtil.DOUBLE_QUOTES -> doubleQuotes + reversedSlashes + dollars
       GrStringUtil.TRIPLE_QUOTES -> tripleQuotes
-      GrStringUtil.TRIPLE_DOUBLE_QUOTES -> tripleDoubleQuotes
+      GrStringUtil.TRIPLE_DOUBLE_QUOTES -> tripleDoubleQuotes + dollars
       GrStringUtil.DOLLAR_SLASH -> dollars
       GrStringUtil.SLASH -> slashes
       else -> return null
     }
-    val bestEscaping = listOf(DOUBLE_QUOTED to doubleQuotes + reversedSlashes,
+    val bestEscaping = listOf(DOUBLE_QUOTED to doubleQuotes + reversedSlashes + dollars,
                               SINGLE_QUOTED to singleQuotes + reversedSlashes,
                               TRIPLE_QUOTED to tripleQuotes,
                               SLASHY to slashes,
                               DOLLAR_SLASHY_QUOTED to dollars,
-                              TRIPLE_DOUBLE_QUOTED to tripleDoubleQuotes)
+                              TRIPLE_DOUBLE_QUOTED to tripleDoubleQuotes + dollars)
       .map { it.first to currentEscapingScore - it.second }
       .maxWithOrNull { (kind, num), (kind2, num2) ->
         if (num == num2) {
@@ -273,7 +282,9 @@ class GrStringStyleViolationInspection : BaseInspection() {
           if (kind2 == mainKind) return@maxWithOrNull -1
           if (kind == preferredKindInEscaping) return@maxWithOrNull 1
           if (kind2 == preferredKindInEscaping) return@maxWithOrNull -1
-          kind.toString().compareTo(kind2.toString()) // induce total order
+          if (kind == currentKind) return@maxWithOrNull 1
+          if (kind2 == currentKind) return@maxWithOrNull -1
+          kind.toString().compareTo(kind2.toString()) // induce deterministic total order
         }
         else {
           num.compareTo(num2)

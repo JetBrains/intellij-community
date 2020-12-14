@@ -72,6 +72,10 @@ cde"""
     doTest($/"ab//\"c"/$, $/'''ab//"c'''/$, plain: DOUBLE_QUOTED, escape: SLASHY)
   }
 
+  void "test complex minimization"() {
+    doTest("""'\$ /\$ \$\$\$ //\\n'""", plain: DOUBLE_QUOTED, escape: SLASHY)
+  }
+
   void "test conversion to dollar-slashy string"() {
     doTest '\'abc$de\'', '$/abc$$de/$', plain: DOLLAR_SLASHY_QUOTED, escape: UNDEFINED
   }
