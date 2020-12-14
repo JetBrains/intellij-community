@@ -70,6 +70,7 @@ data class JdkItem(
   private val jdkVendorVersion: String?,
   val suggestedSdkName: String,
 
+  @NlsSafe
   val arch: String,
   val packageType: JdkPackageType,
   val url: String,
