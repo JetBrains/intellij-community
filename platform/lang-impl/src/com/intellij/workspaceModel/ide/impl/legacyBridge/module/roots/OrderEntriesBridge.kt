@@ -19,7 +19,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryNa
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.moduleMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleByEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -108,7 +108,7 @@ internal class ModuleOrderEntryBridge(
     val storage = getRootModel().storage
     val moduleEntity = storage.resolve(moduleDependencyItem.module)
     val module = moduleEntity?.let {
-      storage.moduleMap.getDataByEntity(it)
+      storage.findModuleByEntity(it)
     }
     return getRootModel().accessor.getModule(module, moduleName)
   }
