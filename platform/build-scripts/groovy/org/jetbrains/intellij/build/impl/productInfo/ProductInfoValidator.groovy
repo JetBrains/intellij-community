@@ -7,10 +7,12 @@ import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.apache.tools.tar.TarEntry
 import org.apache.tools.tar.TarInputStream
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.GZIPInputStream
@@ -30,14 +32,15 @@ class ProductInfoValidator {
   /**
    * Checks that product-info.json file located in {@code archivePath} archive in {@code pathInArchive} subdirectory is correct
    */
-  void checkInArchive(String archivePath, String pathInArchive) {
-    def productJsonPath = joinPaths(pathInArchive, ProductInfoGenerator.FILE_NAME)
-    if (!archiveContainsEntry(archivePath, productJsonPath)) {
-      context.messages.error("Failed to validate product-info.json: cannot find '$productJsonPath' in $archivePath")
-    }
+  static void checkInArchive(BuildContext context, String archivePath, String pathInArchive) {
+    String productJsonPath = joinPaths(pathInArchive, ProductInfoGenerator.FILE_NAME)
 
     Path archiveFile = Paths.get(archivePath)
-    validateProductJson(loadEntry(archiveFile, productJsonPath), archiveFile, "", [], [new Pair<>(archivePath, pathInArchive)])
+    String entryData = loadEntry(archiveFile, productJsonPath)
+    if (entryData == null) {
+      context.messages.error("Failed to validate product-info.json: cannot find '$productJsonPath' in $archivePath")
+    }
+    validateProductJson(context, entryData, archiveFile, "", Collections.<String>emptyList(), List.of(new Pair<>(archivePath, pathInArchive)))
   }
 
   /**
@@ -49,15 +52,23 @@ class ProductInfoValidator {
   void validateInDirectory(Path directoryWithProductJson, String relativePathToProductJson, List<String> installationDirectories,
                            List<Pair<String, String>> installationArchives) {
     Path productJsonFile = directoryWithProductJson.resolve(relativePathToProductJson + ProductInfoGenerator.FILE_NAME)
-    if (!Files.exists(productJsonFile)) {
-      context.messages.error("Failed to validate product-info.json: $productJsonFile doesn't exist")
-    }
 
-    validateProductJson(Files.readString(productJsonFile), productJsonFile, relativePathToProductJson, installationDirectories, installationArchives)
+    String string
+    try {
+      string = Files.readString(productJsonFile)
+    }
+    catch (NoSuchFileException ignored) {
+      context.messages.error("Failed to validate product-info.json: $productJsonFile doesn't exist")
+      return
+    }
+    validateProductJson(context, string, productJsonFile, relativePathToProductJson, installationDirectories, installationArchives)
   }
 
-  private void validateProductJson(String jsonText, Path productJsonFile, String relativePathToProductJson, List<String> installationDirectories,
-                                   List<Pair<String, String>> installationArchives) {
+  private static void validateProductJson(BuildContext context,
+                                          String jsonText, Path productJsonFile,
+                                          String relativePathToProductJson,
+                                          List<String> installationDirectories,
+                                          List<Pair<String, String>> installationArchives) {
     ProductInfoData productJson
     try {
       productJson = new Gson().fromJson(jsonText, ProductInfoData.class)
@@ -67,19 +78,24 @@ class ProductInfoValidator {
       return
     }
 
-    productJson.launch.each {
-      checkFileExists(it.launcherPath, "$it.os launcher", relativePathToProductJson, installationDirectories,
-                      installationArchives)
-      checkFileExists(it.javaExecutablePath, "$it.os java executable", relativePathToProductJson,
+    for (it in productJson.launch) {
+      checkFileExists(context, it.launcherPath, "$it.os launcher", relativePathToProductJson, installationDirectories, installationArchives)
+      checkFileExists(context, it.javaExecutablePath, "$it.os java executable", relativePathToProductJson,
                       installationDirectories, installationArchives)
-      checkFileExists(it.vmOptionsFilePath, "$it.os VM options file", relativePathToProductJson,
+      checkFileExists(context, it.vmOptionsFilePath, "$it.os VM options file", relativePathToProductJson,
                       installationDirectories, installationArchives)
     }
   }
 
-  private void checkFileExists(String path, String description, String relativePathToProductJson, List<String> installationDirectories,
-                               List<Pair<String, String>> installationArchives) {
-    if (path == null) return
+  private static void checkFileExists(BuildContext context,
+                                      String path,
+                                      String description,
+                                      String relativePathToProductJson,
+                                      List<String> installationDirectories,
+                                      List<Pair<String, String>> installationArchives) {
+    if (path == null) {
+      return
+    }
 
     String pathFromProductJson = relativePathToProductJson + path
     if (!installationDirectories.any { new File(it, pathFromProductJson).exists() } && !installationArchives.any { archiveContainsEntry(it.first, joinPaths(it.second, pathFromProductJson)) }) {
@@ -89,11 +105,11 @@ class ProductInfoValidator {
   }
 
   private static String joinPaths(String parent, String child) {
-    FileUtil.toCanonicalPath("$parent/$child", '/' as char).dropWhile { it == '/' as char}
+    return FileUtil.toCanonicalPath("$parent/$child", '/' as char).dropWhile { it == '/' as char }
   }
 
   static boolean archiveContainsEntry(String archivePath, String entryPath) {
-    def archiveFile = new File(archivePath)
+    File archiveFile = new File(archivePath)
     if (archiveFile.name.endsWith(".zip")) {
       return new ZipFile(archiveFile).withCloseable {
         it.getEntry(entryPath) != null
@@ -102,9 +118,9 @@ class ProductInfoValidator {
 
     if (archiveFile.name.endsWith(".tar.gz")) {
       return archiveFile.withInputStream {
-        def inputStream = new TarInputStream(new GZIPInputStream(it))
+        TarInputStream inputStream = new TarInputStream(new GZIPInputStream(it))
         TarEntry entry
-        def altEntryPath = "./$entryPath"
+        String altEntryPath = "./$entryPath"
         while (null != (entry = inputStream.nextEntry)) {
           if (entry.name == entryPath || entry.name == altEntryPath) {
             return true
@@ -116,27 +132,31 @@ class ProductInfoValidator {
     return false
   }
 
-  private static String loadEntry(Path archiveFile, String entryPath) {
+  private static @Nullable String loadEntry(Path archiveFile, String entryPath) {
     if (archiveFile.fileName.toString().endsWith(".zip")) {
-      return new ZipFile(archiveFile.toFile()).withCloseable {
-        it.getInputStream(it.getEntry(entryPath)).text
+      ZipFile zipFile = new ZipFile(archiveFile.toFile())
+      try {
+        InputStream inputStream = zipFile.getInputStream(zipFile.getEntry(entryPath))
+        return inputStream == null ? null : new String(inputStream.readAllBytes(), StandardCharsets.UTF_8)
+      }
+      finally {
+        zipFile.close()
       }
     }
-
-    if (archiveFile.fileName.toString().endsWith(".tar.gz")) {
-      return archiveFile.withInputStream {
-        TarInputStream inputStream = new TarInputStream(new GZIPInputStream(it))
+    else if (archiveFile.fileName.toString().endsWith(".tar.gz")) {
+      TarInputStream inputStream = new TarInputStream(new GZIPInputStream(Files.newInputStream(archiveFile)))
+      try {
         TarEntry entry
         while (null != (entry = inputStream.getNextEntry())) {
           if (entry.name == entryPath) {
-            ByteArrayOutputStream output = new ByteArrayOutputStream()
-            inputStream.copyEntryContents(output)
-            return new String(output.toByteArray(), StandardCharsets.UTF_8)
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8)
           }
         }
-        return false
+      }
+      finally {
+        inputStream.close()
       }
     }
-    return false
+    return null
   }
 }

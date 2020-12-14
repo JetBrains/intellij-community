@@ -171,7 +171,7 @@ final class CrossPlatformDistributionBuilder {
           include(name: "fsnotifier*")
         }
       }
-      new ProductInfoValidator(buildContext).checkInArchive(targetPath, "")
+      ProductInfoValidator.checkInArchive(buildContext, targetPath, "")
       buildContext.notifyArtifactBuilt(targetPath)
 
       targetPath

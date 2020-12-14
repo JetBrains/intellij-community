@@ -206,7 +206,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      new ProductInfoValidator(buildContext).checkInArchive(tarPath, tarRoot)
+      ProductInfoValidator.checkInArchive(buildContext, tarPath, tarRoot)
       buildContext.notifyArtifactBuilt(tarPath)
     }
   }

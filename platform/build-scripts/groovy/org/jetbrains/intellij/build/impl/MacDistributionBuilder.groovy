@@ -330,7 +330,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      new ProductInfoValidator(buildContext).checkInArchive(targetPath, "$zipRoot/Resources")
+      ProductInfoValidator.checkInArchive(buildContext, targetPath, "$zipRoot/Resources")
       return targetPath
     }
   }
