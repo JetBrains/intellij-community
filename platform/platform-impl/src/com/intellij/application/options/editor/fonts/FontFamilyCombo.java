@@ -98,17 +98,20 @@ public class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontIte
 
   private static class MyModel extends AbstractListModel<MyFontItem> implements ComboBoxModel<MyFontItem> {
 
+    /**
+     * The list contains bundled fonts and platform-specific default fonts specified in
+     * {@link com.intellij.openapi.editor.colors.FontPreferences}.
+     * It is used for quick filtering of monospaced fonts before the actual list is shown.
+     */
     private final static String[] KNOWN_MONOSPACED_FAMILIES = {
+      "Consolas",
+      "DejaVu Sans Mono",
+      "Droid Sans Mono",
       "JetBrains Mono",
       "Fira Code",
-      "Ubuntu Mono",
-      "Hack",
+      "Inconsolata",
+      "Menlo",
       "Monospaced",
-      "Dialog Input",
-      "Liberation Mono",
-      "Droid Sans Mono",
-      "Noto Mono",
-      "Noto Sans Mono",
       "Source Code Pro"
     };
 
