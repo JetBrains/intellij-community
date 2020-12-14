@@ -125,7 +125,8 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     for (Iterator<LinkMatch> iterator = result.iterator(); iterator.hasNext(); ) {
       LinkMatch oldMatch = iterator.next();
       if (oldMatch.getRange().intersectsStrict(range)) {
-        if (oldMatch.getRange().getStartOffset() <= range.getStartOffset()) {
+        if (oldMatch.getRange().getStartOffset() <= range.getStartOffset() &&
+            !oldMatch.getRange().equals(range)) {
           return;
         }
         iterator.remove();

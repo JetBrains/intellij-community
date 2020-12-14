@@ -77,5 +77,16 @@ class IssueLinkMatchingTest {
     assertEquals(listOf("239:", "CDE-666"), getIssueMatches(source))
   }
 
+  @Test
+  fun `equal range matches -- pick last`() {
+    issueNavigationConfiguration.links = listOf(
+      IssueNavigationLink("[A-Z]+\\-\\d+", "http://d1.com/$0"),
+      IssueNavigationLink("ABC\\-(\\d+)", "http://d2.com/$1"),
+    )
+    val source = "fixes ABC-23 issue"
+    assertEquals(listOf("http://d2.com/23"), getIssueUrls(source))
+  }
+
   private fun getIssueMatches(source: String) = issueNavigationConfiguration.findIssueLinks(source).map { it.range.substring(source) }
+  private fun getIssueUrls(source: String) = issueNavigationConfiguration.findIssueLinks(source).map { it.targetUrl }
 }
