@@ -5,7 +5,7 @@ import com.intellij.diff.editor.DiffRequestProcessorEditor
 import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ActionToolbarGotItTooltip
@@ -17,13 +17,11 @@ class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCustomizer {
 
   override fun customize(editor: DiffRequestProcessorEditor) {
     val diffProcessor = editor.processor
-    val project = diffProcessor.project ?: return
-    ShowDiffInEditorTabTooltipHolder(project, editor, diffProcessor)
+    ShowDiffInEditorTabTooltipHolder(editor, diffProcessor)
   }
 }
 
-private class ShowDiffInEditorTabTooltipHolder(project: Project,
-                                               disposable: Disposable,
+private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
                                                private val diffProcessor: DiffRequestProcessor) :
   EditorDiffPreviewFilesListener, Disposable {
 
@@ -38,7 +36,7 @@ private class ShowDiffInEditorTabTooltipHolder(project: Project,
 
   init {
     Disposer.register(disposable, this)
-    project.messageBus.connect(this).subscribe(EditorDiffPreviewFilesListener.TOPIC, this)
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(EditorDiffPreviewFilesListener.TOPIC, this)
   }
 
   override fun shouldOpenInNewWindowChanged(shouldOpenInNewWindow: Boolean) {

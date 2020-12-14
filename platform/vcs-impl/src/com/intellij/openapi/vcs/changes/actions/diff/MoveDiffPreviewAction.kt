@@ -28,14 +28,14 @@ internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boole
     val project = e.project!!
     val diffPreviewFile = VcsUtil.getVirtualFiles(e).first() as PreviewDiffVirtualFile
 
-    EditorDiffPreviewFilesManager.getInstance(project).openFile(diffPreviewFile, true, openInNewWindow, true)
+    EditorDiffPreviewFilesManager.getInstance().openFile(project, diffPreviewFile, true, openInNewWindow, true)
   }
 }
 
 internal class MoveDiffPreviewToEditorAction : MoveDiffPreviewAction(false) {
-  override fun isEnabledAndVisible(project: Project): Boolean = EditorDiffPreviewFilesManager.getInstance(project).shouldOpenInNewWindow
+  override fun isEnabledAndVisible(project: Project): Boolean = EditorDiffPreviewFilesManager.getInstance().shouldOpenInNewWindow
 }
 
 internal class MoveDiffPreviewToNewWindowAction : MoveDiffPreviewAction(true) {
-  override fun isEnabledAndVisible(project: Project): Boolean = !EditorDiffPreviewFilesManager.getInstance(project).shouldOpenInNewWindow
+  override fun isEnabledAndVisible(project: Project): Boolean = !EditorDiffPreviewFilesManager.getInstance().shouldOpenInNewWindow
 }
