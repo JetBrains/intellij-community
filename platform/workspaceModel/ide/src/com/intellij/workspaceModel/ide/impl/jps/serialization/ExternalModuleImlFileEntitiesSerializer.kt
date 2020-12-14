@@ -136,4 +136,9 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
     val filePath = JpsPathUtil.urlToPath(fileUrl.url)
     return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, virtualFileManager, internalSource, this)
   }
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    super.deleteObsoleteFile(fileUrl, writer)
+    writer.saveComponent(fileUrl, "ExternalFacetManager", null)
+  }
 }

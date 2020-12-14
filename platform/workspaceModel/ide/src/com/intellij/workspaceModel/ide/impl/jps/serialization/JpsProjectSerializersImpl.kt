@@ -300,6 +300,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val obsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
       fileSerializersByUrl.removeKey(fileUrl)
       obsoleteSerializers.forEach {
+        // Clean up module files content
         val fileFactory = moduleSerializers.remove(it)
         if (fileFactory != null) {
           if (deleteObsoleteFilesFromFileFactories) {
@@ -307,11 +308,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           }
           affectedFileFactories.add(fileFactory)
         }
-      }
-      obsoleteSerializers.forEach {
+        // Remove libraries under `.idea/libraries` folder
         val directoryFactory = serializerToDirectoryFactory.remove(it)
         if (directoryFactory != null) {
           writer.saveComponent(fileUrl, directoryFactory.componentName, null)
+        }
+        // Remove libraries under `external_build_system/libraries` folder
+        if (it in entityTypeSerializers) {
+          (it as JpsFileEntityTypeSerializer).deleteObsoleteFile(fileUrl, writer)
         }
       }
     }
@@ -323,14 +327,19 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val sourcesStoredExternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
       .filter { it.storedExternally }
       .associateBy { it.internalFile }
+    val sourcesStoredInternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
+      .filter { !it.storedExternally }
+      .associateBy { it.internalFile }
 
     val obsoleteSources = affectedSources - entitiesToSave.keys
     for (source in obsoleteSources) {
       val fileUrl = getActualFileUrl(source)
       if (fileUrl != null) {
-        val affectedImportedSourceStoredExternally = if (source is JpsImportedEntitySource && !source.storedExternally) {
-          sourcesStoredExternally[source.internalFile]
-        } else null
+        val affectedImportedSourceStoredExternally = when {
+          source is JpsImportedEntitySource && source.storedExternally -> sourcesStoredInternally[source.internalFile]
+          source is JpsImportedEntitySource && !source.storedExternally -> sourcesStoredExternally[source.internalFile]
+          else -> null
+        }
         // Cleanup old entity source in the following cases:
         // 1) If it was changed from [JpsFileEntitySource] to [JpsImportedEntitySource] e.g Mavenize
         // 2) If [JpsImportedEntitySource#storedExternally] property changed from false to true e.g changing Gradle property for storing in external_build_system folder
@@ -409,6 +418,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
           storage.entities(it).toList()
         }
+        fileSerializersByUrl.put(serializer.fileUrl.url, serializer)
         serializersToRun.add(Pair(serializer, entitiesMap))
       }
     }
