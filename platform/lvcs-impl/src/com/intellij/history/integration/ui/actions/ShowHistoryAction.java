@@ -25,12 +25,11 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-
-import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 public class ShowHistoryAction extends LocalHistoryAction {
   @Override
@@ -58,6 +57,6 @@ public class ShowHistoryAction extends LocalHistoryAction {
 
   @Nullable
   protected static VirtualFile getFile(@NotNull AnActionEvent e) {
-    return getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
+    return JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
   }
 }

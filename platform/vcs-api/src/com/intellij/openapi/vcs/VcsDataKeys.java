@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
@@ -12,14 +13,12 @@ import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.openapi.ListSelection;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * @author yole
@@ -34,7 +33,7 @@ public interface VcsDataKeys {
   DataKey<VcsFileRevision[]> VCS_FILE_REVISIONS = DataKey.create("VCS_FILE_REVISIONS");
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");
   DataKey<FilePath> FILE_PATH = DataKey.create("FILE_PATH");
-  @ApiStatus.Internal DataKey<Stream<FilePath>> FILE_PATH_STREAM = DataKey.create("FILE_PATH_STREAM");
+  @ApiStatus.Internal DataKey<Iterable<FilePath>> FILE_PATHS = DataKey.create("VCS_FILE_PATHS");
   DataKey<Object> FILE_HISTORY_PANEL = DataKey.create("FILE_HISTORY_PANEL");
   DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
@@ -60,6 +59,6 @@ public interface VcsDataKeys {
   DataKey<VcsRevisionNumber> VCS_REVISION_NUMBER = DataKey.create("VCS_REVISION_NUMBER");
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
   DataKey<VcsHistoryProvider> HISTORY_PROVIDER = DataKey.create("VCS_HISTORY_PROVIDER");
-  DataKey<Stream<VirtualFile>> VIRTUAL_FILE_STREAM = DataKey.create("virtualFileStream");
+  DataKey<Iterable<VirtualFile>> VIRTUAL_FILES = DataKey.create("VCS_VIRTUAL_FILES");
   DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");
 }

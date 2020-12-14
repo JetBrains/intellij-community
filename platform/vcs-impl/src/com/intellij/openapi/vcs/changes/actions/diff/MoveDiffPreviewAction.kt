@@ -4,10 +4,10 @@ package com.intellij.openapi.vcs.changes.actions.diff
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsDataKeys.VIRTUAL_FILE_STREAM
+import com.intellij.openapi.vcs.VcsDataKeys.VIRTUAL_FILES
 import com.intellij.openapi.vcs.changes.EditorDiffPreviewFilesManager
 import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
-import com.intellij.util.containers.getIfSingle
+import com.intellij.util.containers.JBIterable
 import com.intellij.vcsUtil.VcsUtil
 
 internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boolean) : DumbAwareAction() {
@@ -16,7 +16,7 @@ internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boole
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val file = e.getData(VIRTUAL_FILE_STREAM).getIfSingle()
+    val file = JBIterable.from(e.getData(VIRTUAL_FILES)).single()
     e.presentation.isEnabledAndVisible = project != null
                                          && isEnabledAndVisible(project)
                                          && file is PreviewDiffVirtualFile

@@ -27,10 +27,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.isEmpty
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
@@ -45,20 +44,18 @@ import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionListener
-import java.util.stream.Stream
-import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.SwingConstants
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
-import kotlin.streams.toList
 
 abstract class GitStageTree(project: Project, private val settings: GitStageUiSettings, parentDisposable: Disposable) :
   ChangesTree(project, false, true) {
@@ -156,8 +153,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       GitStageDataKeys.GIT_STAGE_TREE.`is`(dataId) -> this
       GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
       GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
-      VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
-      VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
+      VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
+      VcsDataKeys.VIRTUAL_FILES.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
         .toList().toTypedArray()
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
@@ -167,8 +164,9 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }
   }
 
-  fun selectedStatusNodes(): Stream<GitFileStatusNode> {
-    return VcsTreeModelData.selected(this).userObjectsStream(GitFileStatusNode::class.java)
+  fun selectedStatusNodes(): JBIterable<GitFileStatusNode> {
+    val data = VcsTreeModelData.selected(this)
+    return JBIterable.create { data.userObjectsStream(GitFileStatusNode::class.java).iterator() }
   }
 
   fun statusNodesListSelection(preferLimitedContext: Boolean): ListSelection<GitFileStatusNode> {
@@ -323,7 +321,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
         renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"),
                         SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
                         Runnable {
-                          val conflictedFiles = getObjectsUnderStream(GitFileStatusNode::class.java).map {
+                          val conflictedFiles = traverseObjectsUnder().filter(GitFileStatusNode::class.java).map {
                             it.filePath.virtualFile
                           }.filter { it != null }.toList() as List<VirtualFile>
                           showMergeDialog(conflictedFiles)

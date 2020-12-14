@@ -22,8 +22,8 @@ import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElements
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.asJBIterable
 import com.intellij.vcsUtil.VcsUtil
-import kotlin.streams.toList
 
 class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() {
 
@@ -85,8 +85,8 @@ internal fun getIgnoredFileBeans(e: AnActionEvent, ignoreFileRoot: VirtualFile, 
 }
 
 fun getSelectedFiles(e: AnActionEvent): List<VirtualFile> {
-  val exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)?.toList()
+  val exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY).asJBIterable().toList()
 
-  return if (!exactlySelectedFiles.isNullOrEmpty()) exactlySelectedFiles
+  return if (exactlySelectedFiles.isNotEmpty()) exactlySelectedFiles
   else e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList() ?: emptyList()
 }

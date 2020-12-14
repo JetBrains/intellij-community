@@ -21,6 +21,8 @@ import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.util.containers.UtilKt.isEmpty;
-import static com.intellij.util.containers.UtilKt.notNullize;
 import static kotlin.collections.CollectionsKt.intersect;
 
 @SuppressWarnings("ComponentNotRegistered")
@@ -92,12 +93,10 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @NotNull
   public static Stream<VirtualFile> getUnversionedFiles(@NotNull DataContext context, @NotNull Project project) {
-    boolean hasExplicitUnversioned = !isEmpty(context.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
+    JBIterable<FilePath> filePaths = JBIterable.from(context.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
 
-    if (hasExplicitUnversioned) {
-      Stream<FilePath> fileStream = context.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
-      assert fileStream != null;
-      return fileStream.map(FilePath::getVirtualFile).filter(Objects::nonNull);
+    if (filePaths.isNotEmpty()) {
+      return StreamEx.of(filePaths.map(FilePath::getVirtualFile).filter(Objects::nonNull).iterator());
     }
 
     // As an optimization, we assume that if {@link ChangesListView#UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys#CHANGES} is
@@ -108,7 +107,9 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    return notNullize(context.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, changeListManager));
+    return StreamEx.of(JBIterable.from(context.getData(VcsDataKeys.VIRTUAL_FILES))
+                         .filter(file -> isFileUnversioned(file, vcsManager, changeListManager))
+                         .iterator());
   }
 
   private static boolean isFileUnversioned(@NotNull VirtualFile file,

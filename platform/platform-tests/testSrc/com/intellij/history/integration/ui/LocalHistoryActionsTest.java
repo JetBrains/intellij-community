@@ -32,9 +32,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.util.containers.UtilKt.stream;
 
 public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   VirtualFile f;
@@ -134,7 +133,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
 
   private AnActionEvent createEventFor(AnAction a, final VirtualFile[] files, final Project p) {
     DataContext dc = id -> {
-      if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(id)) return stream(files);
+      if (VcsDataKeys.VIRTUAL_FILES.is(id)) return JBIterable.of(files);
       if (CommonDataKeys.EDITOR.is(id)) return editor;
       if (CommonDataKeys.PROJECT.is(id)) return p;
       return null;

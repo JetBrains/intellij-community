@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnProgressCanceller;
@@ -29,7 +30,6 @@ import java.util.Objects;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.escape;
@@ -45,7 +45,7 @@ public class CreateExternalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = Objects.requireNonNull(getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+    VirtualFile file = Objects.requireNonNull(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single());
     SelectCreateExternalTargetDialog dialog = new SelectCreateExternalTargetDialog(project, file);
 
     if (dialog.showAndGet()) {
@@ -109,7 +109,7 @@ public class CreateExternalAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     boolean visible = project != null && isSvnActive(project);
-    boolean enabled = visible && isEnabled(project, getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+    boolean enabled = visible && isEnabled(project, JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single());
 
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(enabled);

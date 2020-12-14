@@ -270,3 +270,7 @@ inline fun <T> Iterator<T>.stopAfter(crossinline predicate: (T) -> Boolean): Ite
 }
 
 fun <T> Optional<T>.orNull(): T? = orElse(null)
+
+fun <T> Iterable<T>?.asJBIterable(): JBIterable<T> = JBIterable.from(this)
+
+fun <T> Array<T>?.asJBIterable(): JBIterable<T> = if (this == null) JBIterable.empty() else JBIterable.of(*this)

@@ -32,7 +32,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
@@ -45,7 +44,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull @NlsContexts.DialogTitle String title,
-                                    @NotNull DataKey<Stream<FilePath>> shownDataKey,
+                                    @NotNull DataKey<Iterable<FilePath>> shownDataKey,
                                     @NotNull List<? extends FilePath> initDataFiles) {
     super(project, true);
     setTitle(title);

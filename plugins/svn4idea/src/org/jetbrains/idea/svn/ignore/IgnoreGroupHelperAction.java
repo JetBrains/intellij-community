@@ -23,12 +23,12 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-
-import java.util.stream.Stream;
 
 import static com.intellij.util.ArrayUtil.isEmpty;
 
@@ -52,9 +52,9 @@ public class IgnoreGroupHelperAction {
 
   private VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
-      Stream<VirtualFile> exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY);
+      Iterable<VirtualFile> exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY);
       if (exactlySelectedFiles != null) {
-        return exactlySelectedFiles.toArray(VirtualFile[]::new);
+        return JBIterable.from(exactlySelectedFiles).toList().toArray(VirtualFile[]::new);
       }
     }
     return e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
@@ -62,7 +62,7 @@ public class IgnoreGroupHelperAction {
 
   protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     return ProjectLevelVcsManager.getInstance(vcs.getProject()).checkAllFilesAreUnder(vcs, files) &&
-           Stream.of(files).allMatch(file -> isEnabled(vcs, file));
+           ContainerUtil.and(files, file -> isEnabled(vcs, file));
   }
 
   public void setFileIterationListener(FileIterationListener listener) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,6 @@ import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.vcs.actions.AbstractCommonCheckinActionKt.isProjectUsesNonModalCommit;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.util.containers.UtilKt.notNullize;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
 import static com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName;
 import static java.util.Collections.emptyList;
@@ -71,8 +71,9 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
     ChangeListManager manager = ChangeListManager.getInstance(e.getRequiredData(CommonDataKeys.PROJECT));
     Set<VirtualFile> modifiedWithoutEditing = new HashSet<>(manager.getModifiedWithoutEditing());
 
-    return notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).anyMatch(
-      file -> manager.haveChangesUnder(file) != ThreeState.NO || manager.isFileAffected(file) || modifiedWithoutEditing.contains(file));
+    return JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).filter(
+      file -> manager.haveChangesUnder(file) != ThreeState.NO || manager.isFileAffected(file) || modifiedWithoutEditing.contains(file))
+      .isNotEmpty();
   }
 
   private static boolean currentChangelistNotEmpty(Project project) {

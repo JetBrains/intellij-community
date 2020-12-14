@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName
-import kotlin.streams.toList
 
 class RollbackFilesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
@@ -23,7 +22,7 @@ class RollbackFilesAction : DumbAwareAction() {
     if (!e.isProjectUsesNonModalCommit()) return
     val project = e.project ?: return
     val changesView = e.getData(ChangesListView.DATA_KEY) ?: return
-    val changes = changesView.selectedChanges.limit(2).toList()
+    val changes = changesView.selectedChanges.take(2).toList()
 
     with(e.presentation) {
       isVisible = true

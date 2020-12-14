@@ -17,8 +17,13 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -197,14 +202,11 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   @NotNull
   public <U> List<U> getAllObjectsUnder(@NotNull Class<U> clazz) {
-    return getObjectsUnderStream(clazz).collect(Collectors.toList());
+    return traverseObjectsUnder().filter(clazz).toList();
   }
 
-  @NotNull
-  public <U> Stream<U> getObjectsUnderStream(@NotNull Class<U> clazz) {
-    return toStream(preorderEnumeration())
-      .map(ChangesBrowserNode::getUserObject)
-      .select(clazz);
+  public @NotNull JBIterable<?> traverseObjectsUnder() {
+    return TreeUtil.treeNodeTraverser(this).traverse().map(TreeUtil::getUserObject);
   }
 
   @NotNull
@@ -214,10 +216,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   @NotNull
   public Stream<VirtualFile> getFilesUnderStream() {
-    return toStream(preorderEnumeration())
-      .map(ChangesBrowserNode::getUserObject)
-      .select(VirtualFile.class)
-      .filter(VirtualFile::isValid);
+    return StreamEx.of(traverseObjectsUnder().filter(VirtualFile.class).filter(VirtualFile::isValid).iterator());
   }
 
   @NotNull

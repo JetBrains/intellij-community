@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -8,7 +9,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ListSelection;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -165,16 +165,16 @@ public abstract class VcsTreeModelData {
   }
 
   private static class ExactlySelectedData extends VcsTreeModelData {
-    @NotNull private final JTree myTree;
+    private final TreePath[] myPaths;
 
     ExactlySelectedData(@NotNull JTree tree) {
-      myTree = tree;
+      myPaths = tree.getSelectionPaths();
     }
 
     @NotNull
     @Override
     public Stream<ChangesBrowserNode<?>> rawNodesStream() {
-      TreePath[] paths = myTree.getSelectionPaths();
+      TreePath[] paths = myPaths;
       if (paths == null) return Stream.empty();
 
       return Stream.of(paths).map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent());
@@ -182,21 +182,21 @@ public abstract class VcsTreeModelData {
   }
 
   private static class ExactlySelectedTagData extends VcsTreeModelData {
-    @NotNull private final JTree myTree;
-    @NotNull private final Object myTag;
+    private final TreePath[] myPaths;
+    private final ChangesBrowserNode<?> myTagNode;
 
     ExactlySelectedTagData(@NotNull JTree tree, @NotNull Object tag) {
-      myTree = tree;
-      myTag = tag;
+      myPaths = tree.getSelectionPaths();
+      myTagNode = findTagNode(tree, tag);
     }
 
     @NotNull
     @Override
     public Stream<ChangesBrowserNode<?>> rawNodesStream() {
-      ChangesBrowserNode<?> tagNode = findTagNode(myTree, myTag);
+      ChangesBrowserNode<?> tagNode = myTagNode;
       if (tagNode == null) return Stream.empty();
 
-      TreePath[] paths = myTree.getSelectionPaths();
+      TreePath[] paths = myPaths;
       if (paths == null) return Stream.empty();
 
       return Stream.of(paths)
@@ -222,19 +222,18 @@ public abstract class VcsTreeModelData {
   }
 
   private static class IncludedUnderData extends VcsTreeModelData {
-    @NotNull private final ChangesTree myTree;
-    @NotNull private final ChangesBrowserNode<?> myNode;
+    private final ChangesBrowserNode<?> myNode;
+    private final Set<Object> myIncluded;
 
     IncludedUnderData(@NotNull ChangesTree tree, @NotNull ChangesBrowserNode<?> node) {
-      myTree = tree;
       myNode = node;
+      myIncluded = tree.getIncludedSet();
     }
 
     @NotNull
     @Override
     public Stream<ChangesBrowserNode<?>> rawNodesStream() {
-      Set<Object> included = myTree.getIncludedSet();
-      return myNode.getNodesUnderStream().filter(node -> included.contains(node.getUserObject()));
+      return myNode.getNodesUnderStream().filter(node -> myIncluded.contains(node.getUserObject()));
     }
   }
 

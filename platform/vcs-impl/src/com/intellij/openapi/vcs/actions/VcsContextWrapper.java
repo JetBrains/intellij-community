@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +29,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.UtilKt.concat;
 import static com.intellij.util.containers.UtilKt.stream;
-import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 
 public class VcsContextWrapper implements VcsContext {
   @NotNull protected final DataContext myContext;
@@ -95,17 +94,18 @@ public class VcsContextWrapper implements VcsContext {
   @NotNull
   @Override
   public Stream<VirtualFile> getSelectedFilesStream() {
-    Stream<VirtualFile> result = VcsDataKeys.VIRTUAL_FILE_STREAM.getData(myContext);
+    Iterable<VirtualFile> result = VcsDataKeys.VIRTUAL_FILES.getData(myContext);
 
-    return result != null ? result.filter(VirtualFile::isInLocalFileSystem) : VcsContext.super.getSelectedFilesStream();
+    return result != null ? StreamEx.of(JBIterable.from(result).iterator()).filter(VirtualFile::isInLocalFileSystem) :
+           VcsContext.super.getSelectedFilesStream();
   }
 
   @NotNull
   @Override
   public List<FilePath> getSelectedUnversionedFilePaths() {
-    Stream<FilePath> result = ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY.getData(myContext);
+    Iterable<FilePath> result = ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY.getData(myContext);
 
-    return result != null ? result.collect(toList()) : emptyList();
+    return JBIterable.from(result).toList();
   }
 
   @Override
@@ -154,11 +154,11 @@ public class VcsContextWrapper implements VcsContext {
   @Override
   public Stream<FilePath> getSelectedFilePathsStream() {
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
-    Stream<FilePath> pathStream = VcsDataKeys.FILE_PATH_STREAM.getData(myContext);
+    Iterable<FilePath> pathsData = VcsDataKeys.FILE_PATHS.getData(myContext);
 
     return concat(
       StreamEx.ofNullable(path),
-      pathStream != null ? pathStream : getSelectedFilesStream().map(VcsUtil::getFilePath),
+      pathsData != null ? StreamEx.of(JBIterable.from(pathsData).iterator()) : getSelectedFilesStream().map(VcsUtil::getFilePath),
       stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
     ).distinct();
   }
