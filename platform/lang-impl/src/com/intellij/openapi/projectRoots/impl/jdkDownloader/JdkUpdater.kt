@@ -161,7 +161,6 @@ internal class JdkUpdatesCollector(
       JdkListDownloader
         .getInstance()
         .downloadModelForJdkInstaller(progress = indicator)
-        .associateBy { it.suggestedSdkName }
     }
 
     val notifications = service<JdkUpdaterNotifications>()
@@ -169,7 +168,9 @@ internal class JdkUpdatesCollector(
     val noUpdatesFor = HashSet<Sdk>(knownSdks)
     for (jdk in knownSdks) {
       val actualItem = JdkInstaller.getInstance().findJdkItemForInstalledJdk(jdk.homePath) ?: continue
-      val feedItem = jdkFeed[actualItem.suggestedSdkName] ?: continue
+      val feedItem = jdkFeed.firstOrNull {
+        it.suggestedSdkName == actualItem.suggestedSdkName && it.arch == actualItem.arch
+      } ?: continue
 
       if (!service<JdkUpdaterState>().isAllowed(jdk, feedItem)) continue
 
