@@ -521,9 +521,7 @@ public final class JUnitUtil {
 
     @Override
     public boolean value(final PsiMethod method) {
-      return framework != null
-             ? framework.isTestMethod(method, myClass)
-             : isTestMethod(MethodLocation.elementInClass(method, myClass));
+      return framework != null && framework.isTestMethod(method, myClass);
     }
   }
 

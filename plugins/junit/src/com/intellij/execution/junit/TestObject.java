@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
@@ -49,6 +50,7 @@ import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.spi.SPIFileType;
 import com.intellij.spi.psi.SPIClassProviderReferenceElement;
+import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -555,20 +557,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     final PsiClass psiClass = isMethodConfiguration || isClassConfiguration
                               ? JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope) : null;
     if (psiClass != null) {
-      if (JUnitUtil.isJUnit5TestClass(psiClass, false)) {
+      TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
+      if (testFramework instanceof JUnit5Framework) {
         return JUnitStarter.JUNIT5_PARAMETER;
       }
-
-      if (isClassConfiguration || JUnitUtil.isJUnit4TestClass(psiClass)) {
+      if (isClassConfiguration || testFramework instanceof JUnit4Framework) {
         return JUnitStarter.JUNIT4_PARAMETER;
-      }
-
-      final String methodName = data.getMethodName();
-      final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
-      for (PsiMethod method : methods) {
-        if (JUnitUtil.isJUnit4TestAnnotated(method)) {
-          return JUnitStarter.JUNIT4_PARAMETER;
-        }
       }
       return JUnitStarter.JUNIT3_PARAMETER;
     }

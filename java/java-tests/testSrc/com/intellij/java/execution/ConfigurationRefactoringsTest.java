@@ -140,7 +140,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     configuration.setMainClass(psiClass);
     configuration.setModule(configuration.getValidModules().iterator().next());
 
-    checkConfigurationException("NotATest isn't test class", configuration);
+    checkConfigurationException("Class 'NotATest' is not a test", configuration);
 
     RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);
     runManager.setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(runManager, configuration, false));
