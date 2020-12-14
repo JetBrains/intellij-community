@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInspection.style
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -38,16 +39,16 @@ class GrStringTransformationFixFactory {
 
     private fun doGetStringTransformationFix(targetKind: StringKind): GroovyFix = object : GroovyFix() {
       override fun getFamilyName(): String {
-        return "Fix quotation"
+        return GroovyBundle.message("intention.family.name.fix.quotation")
       }
 
       override fun getName(): String = when (targetKind) {
-        StringKind.SINGLE_QUOTED -> "Convert to single-quoted string"
-        StringKind.TRIPLE_SINGLE_QUOTED -> "Change quotes to '''"
-        StringKind.DOUBLE_QUOTED -> "Convert to double-quoted string"
-        StringKind.TRIPLE_DOUBLE_QUOTED -> "Change quotes to \"\"\""
-        StringKind.SLASHY -> "Convert to slashy string"
-        StringKind.DOLLAR_SLASHY -> "Convert to dollar-slashy string"
+        StringKind.SINGLE_QUOTED -> GroovyBundle.message("intention.name.convert.to.single.quoted.string")
+        StringKind.TRIPLE_SINGLE_QUOTED -> GroovyBundle.message("intention.name.change.quotes.to.triple.single.quotes")
+        StringKind.DOUBLE_QUOTED -> GroovyBundle.message("intention.name.convert.to.double.quoted.string")
+        StringKind.TRIPLE_DOUBLE_QUOTED -> GroovyBundle.message("intention.name.change.quotes.to.triple.double.quotes")
+        StringKind.SLASHY -> GroovyBundle.message("intention.name.convert.to.slashy.string")
+        StringKind.DOLLAR_SLASHY -> GroovyBundle.message("intention.name.convert.to.dollar.slashy.string")
       }
 
       override fun doFix(project: Project, descriptor: ProblemDescriptor) {

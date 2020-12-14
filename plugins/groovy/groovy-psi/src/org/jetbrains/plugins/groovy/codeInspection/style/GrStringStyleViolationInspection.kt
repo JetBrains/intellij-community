@@ -8,10 +8,11 @@ import com.intellij.ui.SeparatorFactory
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
-import org.jetbrains.plugins.groovy.codeInspection.style.GroovyStringStyleViolationInspection.InspectionStringKind.*
-import org.jetbrains.plugins.groovy.codeInspection.style.GroovyStringStyleViolationInspection.TargetKind.*
+import org.jetbrains.plugins.groovy.codeInspection.style.GrStringStyleViolationInspection.InspectionStringKind.*
+import org.jetbrains.plugins.groovy.codeInspection.style.GrStringStyleViolationInspection.TargetKind.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
@@ -23,7 +24,7 @@ import kotlin.reflect.KMutableProperty
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind as OuterStringKind
 
 
-class GroovyStringStyleViolationInspection : BaseInspection() {
+class GrStringStyleViolationInspection : BaseInspection() {
 
   internal enum class InspectionStringKind {
     UNDEFINED,
@@ -34,15 +35,16 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     TRIPLE_DOUBLE_QUOTED,
     DOLLAR_SLASHY_QUOTED;
 
+    @Nls
     override fun toString(): String {
       return when (this) {
-        UNDEFINED -> "Do not handle specifically"
-        DOUBLE_QUOTED -> "Double-quoted string"
-        SINGLE_QUOTED -> "Single-quoted string"
-        SLASHY -> "Slashy string"
-        TRIPLE_QUOTED -> "Triple-quoted string"
-        TRIPLE_DOUBLE_QUOTED -> "Triple-double-quoted string"
-        DOLLAR_SLASHY_QUOTED -> "Dollar-slashy string"
+        UNDEFINED -> GroovyBundle.message("string.option.do.not.handle.specifically")
+        DOUBLE_QUOTED -> GroovyBundle.message("string.option.double.quoted.string")
+        SINGLE_QUOTED -> GroovyBundle.message("string.option.single.quoted.string")
+        SLASHY -> GroovyBundle.message("string.option.slashy.string")
+        TRIPLE_QUOTED -> GroovyBundle.message("string.option.triple.quoted.string")
+        TRIPLE_DOUBLE_QUOTED -> GroovyBundle.message("string.option.triple.double.quoted.string")
+        DOLLAR_SLASHY_QUOTED -> GroovyBundle.message("string.option.dollar.slashy.string")
       }
     }
   }
@@ -98,10 +100,13 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     val constraints = GridBagConstraints().apply {
       weightx = 1.0; weighty = 1.0; fill = GridBagConstraints.HORIZONTAL; anchor = GridBagConstraints.WEST
     }
-    addStringKindComboBox("Default", ::plainVersion, PLAIN_STRING_OPTIONS, 0, constraints)
-    addStringKindComboBox("Strings with escaping", ::escapeVersion, arrayOf(UNDEFINED, *ESCAPED_STRING_OPTIONS), 1, constraints)
-    addStringKindComboBox("Strings with interpolation", ::interpolationVersion, arrayOf(UNDEFINED, *INTERPOLATED_STRING_OPTIONS), 2, constraints)
-    addStringKindComboBox("Multiline string", ::multilineVersion, arrayOf(UNDEFINED, *MULTILINE_STRING_OPTIONS), 3, constraints)
+    addStringKindComboBox(GroovyBundle.message("string.sort.default"), ::plainVersion, PLAIN_STRING_OPTIONS, 0, constraints)
+    addStringKindComboBox(GroovyBundle.message("string.sort.strings.with.escaping"), ::escapeVersion,
+                          arrayOf(UNDEFINED, *ESCAPED_STRING_OPTIONS), 1, constraints)
+    addStringKindComboBox(GroovyBundle.message("string.sort.strings.with.interpolation"), ::interpolationVersion,
+                          arrayOf(UNDEFINED, *INTERPOLATED_STRING_OPTIONS), 2, constraints)
+    addStringKindComboBox(GroovyBundle.message("string.sort.multiline.string"), ::multilineVersion,
+                          arrayOf(UNDEFINED, *MULTILINE_STRING_OPTIONS), 3, constraints)
   }
 
   private enum class TargetKind {
@@ -114,27 +119,27 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     val desiredKind = args[1] as InspectionStringKind
     return when (carrierString) {
       PLAIN_STRING -> when (desiredKind) {
-        DOUBLE_QUOTED -> "Plain string should be double-quoted"
-        SINGLE_QUOTED -> "Plain string should be single-quoted"
-        SLASHY -> "Plain string should be slashy-quoted"
-        DOLLAR_SLASHY_QUOTED -> "Plain string should be dollar-slashy-quoted"
-        TRIPLE_QUOTED -> "Plain string should be quoted with '''"
-        TRIPLE_DOUBLE_QUOTED -> "Plain string should be quoted with \"\"\""
+        DOUBLE_QUOTED -> GroovyBundle.message("inspection.message.plain.string.should.be.double.quoted")
+        SINGLE_QUOTED -> GroovyBundle.message("inspection.message.plain.string.should.be.single.quoted")
+        SLASHY -> GroovyBundle.message("inspection.message.plain.string.should.be.slashy.quoted")
+        DOLLAR_SLASHY_QUOTED -> GroovyBundle.message("inspection.message.plain.string.should.be.dollar.slashy.quoted")
+        TRIPLE_QUOTED -> GroovyBundle.message("inspection.message.plain.string.should.be.quoted.with.triple.quotes")
+        TRIPLE_DOUBLE_QUOTED -> GroovyBundle.message("inspection.message.plain.string.should.be.quoted.with.triple.double.quotes")
         else -> error("Unexpected error message")
       }
       MULTILINE_STRING -> when (desiredKind) {
-        TRIPLE_QUOTED -> "Multiline string should be quoted with '''"
-        TRIPLE_DOUBLE_QUOTED -> "Multiline string should be quoted with \"\"\""
-        SLASHY -> "Multiline string should be slashy-quoted"
-        DOLLAR_SLASHY_QUOTED -> "Multiline string should be dollar-slashy-quoted"
+        TRIPLE_QUOTED -> GroovyBundle.message("inspection.message.multiline.string.should.be.quoted.with.triple.quotes")
+        TRIPLE_DOUBLE_QUOTED -> GroovyBundle.message("inspection.message.multiline.string.should.be.quoted.with.triple.double.quotes")
+        SLASHY -> GroovyBundle.message("inspection.message.multiline.string.should.be.slashy.quoted")
+        DOLLAR_SLASHY_QUOTED -> GroovyBundle.message("inspection.message.multiline.string.should.be.dollar.slashy.quoted")
         else -> error("Unexpected error message")
       }
-      ESCAPED_STRING -> "Escaping could be minimized"
+      ESCAPED_STRING -> GroovyBundle.message("inspection.message.string.escaping.could.be.minimized")
       INTERPOLATED_STRING -> when (desiredKind) {
-        DOUBLE_QUOTED -> "Interpolated string should be double-quoted"
-        DOLLAR_SLASHY_QUOTED -> "Interpolated string should be dollar-slashy-quoted"
-        SLASHY -> "Interpolated string should be slashy-quoted"
-        TRIPLE_DOUBLE_QUOTED -> "Interpolated string should be quoted with \"\"\""
+        DOUBLE_QUOTED -> GroovyBundle.message("inspection.message.interpolated.string.should.be.double.quoted")
+        DOLLAR_SLASHY_QUOTED -> GroovyBundle.message("inspection.message.interpolated.string.should.be.dollar.slashy.quoted")
+        SLASHY -> GroovyBundle.message("inspection.message.interpolated.string.should.be.slashy.quoted")
+        TRIPLE_DOUBLE_QUOTED -> GroovyBundle.message("inspection.message.interpolated.string.should.be.quoted.with.triple.double.quotes")
         else -> error("Unexpected error message")
       }
     }
@@ -146,12 +151,13 @@ class GroovyStringStyleViolationInspection : BaseInspection() {
     val containerPanel = JPanel()
     containerPanel.border = JBUI.Borders.empty()
     containerPanel.layout = BoxLayout(containerPanel, BoxLayout.Y_AXIS)
-    containerPanel.add(SeparatorFactory.createSeparator("Preferable kind", null))
+    containerPanel.add(SeparatorFactory.createSeparator(GroovyBundle.message("separator.preferable.string.kind"), null))
     containerPanel.add(generateComboBoxes(), BorderLayout.NORTH)
 
     containerPanel.apply {
-      add(SeparatorFactory.createSeparator("Domain of usage", null))
-      add(SingleCheckboxOptionsPanel("Inspect Gradle files", this@GroovyStringStyleViolationInspection, "inspectGradle"))
+      add(SeparatorFactory.createSeparator(GroovyBundle.message("separator.domain.of.inspection.usage"), null))
+      add(SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.inspect.gradle.files"), this@GrStringStyleViolationInspection,
+                                     "inspectGradle"))
     }
 
     compressingPanel.add(containerPanel, BorderLayout.NORTH)
