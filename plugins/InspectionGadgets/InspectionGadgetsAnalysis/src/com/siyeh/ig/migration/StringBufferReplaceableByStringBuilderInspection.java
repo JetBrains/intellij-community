@@ -99,8 +99,6 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       }
       final PsiElementFactory factory = psiFacade.getElementFactory();
       final PsiJavaCodeReferenceElement stringBuilderClassReference = factory.createClassReferenceElement(stringBuilderClass);
-      final PsiClassType stringBuilderType = factory.createType(stringBuilderClass);
-      final PsiTypeElement stringBuilderTypeElement = factory.createTypeElement(stringBuilderType);
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiDeclarationStatement)) {
         return;
@@ -111,13 +109,20 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
         if (!(declaredElement instanceof PsiVariable)) {
           continue;
         }
-        replaceWithStringBuilder(stringBuilderClassReference, stringBuilderTypeElement, (PsiVariable)declaredElement);
+        replaceWithStringBuilder(stringBuilderClassReference, (PsiVariable)declaredElement);
       }
     }
 
-    private static void replaceWithStringBuilder(PsiJavaCodeReferenceElement newClassReference,
-                                                 PsiTypeElement newTypeElement,
-                                                 PsiVariable variable) {
+    private static void replaceWithStringBuilder(PsiJavaCodeReferenceElement newClassReference, PsiVariable variable) {
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement == null) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement oldReferenceElement = typeElement.getInnermostComponentReferenceElement();
+      if (oldReferenceElement == null) {
+        return;
+      }
+      oldReferenceElement.replace(newClassReference);
       final PsiNewExpression newExpression = getNewStringBuffer(variable.getInitializer());
       if (newExpression == null) {
         return;
@@ -125,10 +130,6 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference(); // no anonymous classes because StringBuffer is final
       if (classReference == null) {
         return;
-      }
-      final PsiTypeElement typeElement = variable.getTypeElement();
-      if (typeElement != null && typeElement.getParent() == variable) {
-        typeElement.replace(newTypeElement);
       }
       classReference.replace(newClassReference);
     }

@@ -1,5 +1,6 @@
 package com.siyeh.igtest.migration.string_buffer_replaceable_by_string_builder;
 
+import java.lang.annotation.*;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -46,7 +47,7 @@ public class StringBufferReplaceableByStringBuilder {
   private final Random rnd = new Random(123);
 
   void convert() {
-    StringBuilder sb = new StringBuilder();
+    @NonNls StringBuilder sb = new StringBuilder();
     for (int i = 0, n = rnd.nextInt(15) + 1; i < n; i++)
       sb.append(nextChar());
     String symbol = new String(sb);
@@ -75,3 +76,6 @@ public class StringBufferReplaceableByStringBuilder {
     return m.appendTail(sb).toString();
   }
 }
+@Retention(RetentionPolicy.CLASS)
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE, ElementType.TYPE, ElementType.PACKAGE})
+@interface NonNls {}
