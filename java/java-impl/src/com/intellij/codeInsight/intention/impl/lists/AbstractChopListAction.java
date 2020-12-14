@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
@@ -41,8 +43,12 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
       document.insertString(findOffsetOfBreakBeforeFirst(first), "\n");
     }
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    SmartPsiElementPointer<L> pointer = SmartPointerManager.createPointer(context.list);
     documentManager.commitDocument(document);
-    CodeStyleManager.getInstance(project).adjustLineIndent(context.list.getContainingFile(), context.list.getParent().getTextRange());
+    L list = pointer.getElement();
+    if (list != null) {
+      CodeStyleManager.getInstance(project).adjustLineIndent(list.getContainingFile(), list.getParent().getTextRange());
+    }
   }
 
   abstract int findOffsetForBreakAfter(E element);
