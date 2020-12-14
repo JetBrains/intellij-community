@@ -23,8 +23,6 @@ add_library(winshellintegrationbridge SHARED
     "com_intellij_ui_win_WinShellIntegration_Bridge.h"
     "com_intellij_ui_win_WinShellIntegration_Bridge.cpp"
 
-    "dllmain.cpp"
-
     "${CMAKE_CURRENT_BINARY_DIR}/resources.rc"
 )
 
