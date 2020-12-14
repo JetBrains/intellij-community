@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -282,7 +283,7 @@ public final class ClassPath {
     }
 
     String filePath = file.toString();
-    if (filePath.startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX, filePath.lastIndexOf('/') + 1)) {
+    if (filePath.startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX, filePath.lastIndexOf(File.separatorChar) + 1)) {
       String[] referencedJars = loadManifestClasspath(loader);
       if (referencedJars != null) {
         long startReferenced = logLoadingInfo ? System.nanoTime() : 0;
