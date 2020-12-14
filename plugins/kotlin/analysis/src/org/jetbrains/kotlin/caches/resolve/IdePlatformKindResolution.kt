@@ -28,12 +28,13 @@ import org.jetbrains.kotlin.storage.StorageManager
 interface IdePlatformKindResolution {
     val kind: IdePlatformKind<*>
 
-    fun getKeyForBuiltIns(moduleInfo: ModuleInfo, sdkInfo: SdkInfo?): BuiltInsCacheKey
+    fun getKeyForBuiltIns(moduleInfo: ModuleInfo, sdkInfo: SdkInfo?, stdlibInfo: LibraryInfo?): BuiltInsCacheKey
     fun createBuiltIns(
         moduleInfo: IdeaModuleInfo,
         projectContext: ProjectContext,
         resolverForProject: ResolverForProject<IdeaModuleInfo>,
-        sdkDependency: SdkInfo?
+        sdkDependency: SdkInfo?,
+        stdlibDependency: LibraryInfo?
     ): KotlinBuiltIns
 
     fun createResolverForModuleFactory(
