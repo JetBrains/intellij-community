@@ -137,6 +137,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
     myEnableLigaturesCheckbox.setBorder(null);
     panel.add(myEnableLigaturesCheckbox);
+    JLabel hintLabel = new JLabel(AllIcons.General.ContextHelp);
+    hintLabel.setToolTipText(ApplicationBundle.message("ligatures.tooltip"));
+    hintLabel.setBorder(JBUI.Borders.emptyLeft(5));
+    panel.add(hintLabel);
     JLabel warningIcon = new JLabel(AllIcons.General.BalloonWarning);
     IdeTooltipManager.getInstance().setCustomTooltip(
       warningIcon,
