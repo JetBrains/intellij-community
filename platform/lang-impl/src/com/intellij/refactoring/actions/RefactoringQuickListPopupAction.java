@@ -19,7 +19,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
   }
 
   @Override
-  protected void fillActions(@Nullable final Project project,
+  public void fillActions(@Nullable final Project project,
                              @NotNull final DefaultActionGroup group,
                              @NotNull final DataContext dataContext) {
     if (project == null) {
