@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
@@ -9,15 +10,18 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.function.Supplier
 
 class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
@@ -77,7 +81,8 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
   companion object {
     private val NULL_ELEMENT = Element("null")
   }
-  private val internalModuleComponents = ConcurrentHashMap<String, ConcurrentHashMap<String, Element?>>()
+  private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element?>> = if (!SystemInfoRt.isFileSystemCaseSensitive)
+    ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive()) else ConcurrentCollectionFactory.createConcurrentMap()
   private val externalModuleComponents = ConcurrentHashMap<String, ConcurrentHashMap<String, Element?>>()
 
   fun setModuleComponentState(imlFilePath: String, componentName: String, componentTag: Element?) {
@@ -102,7 +107,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
     }
 
     val moduleFilePath = moduleStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
-    val internalComponents = internalModuleComponents.get(moduleFilePath.systemIndependentPath)
+    val internalComponents = internalModuleComponents[moduleFilePath.systemIndependentPath]
     if (internalComponents != null) {
       commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
