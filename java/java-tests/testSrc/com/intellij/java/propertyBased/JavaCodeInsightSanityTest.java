@@ -64,7 +64,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaPreviewIntentionPolicy()),
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
                                     new StripTestDataMarkup(file),
-                                    new DeleteRange(file));
+                                    new DeleteRange(file),
+                                    new IntroduceVariable(file));
     PropertyChecker
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }

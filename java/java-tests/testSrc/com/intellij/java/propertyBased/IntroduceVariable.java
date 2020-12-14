@@ -1,0 +1,127 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.java.propertyBased;
+
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceVariable.InputValidator;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
+import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.propertyBased.ActionOnFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.ImperativeCommand;
+
+import java.util.List;
+
+public class IntroduceVariable extends ActionOnFile {
+  public IntroduceVariable(@NotNull PsiFile file) {
+    super(file);
+  }
+
+  @Override
+  public void performCommand(@NotNull ImperativeCommand.Environment env) {
+    Project project = getProject();
+    PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
+    int offset = env.generateValue(Generator.integers(0, getDocument().getTextLength()).noShrink(), "Offset");
+    Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
+    assert editor != null;
+    PsiElement element = getFile().findElementAt(offset);
+    if (element == null) return;
+    List<PsiExpression> expressions = PsiTreeUtil.collectParents(element, PsiExpression.class, true, e -> false);
+    if (expressions.isEmpty()) return;
+    PsiExpression expression = env.generateValue(Generator.sampledFrom(expressions), "Expression");
+    TextRange range = expression.getTextRange();
+    editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    IntroduceVariableBase handler = new MockIntroduceVariableHandler(env.generateValue(Generator.asciiIdentifiers(), "var name"),
+                                                                     env.generateValue(Generator.booleans(), "replaceAll"),
+                                                                     env.generateValue(Generator.booleans(), "replaceFinal"),
+                                                                     env.generateValue(Generator.booleans(), "replaceVar"),
+                                                                     env.generateValue(Generator.booleans(), "replaceLValues"));
+    try {
+    handler.invoke(project, expression, editor);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException ignored) { }
+  }
+
+  static class MockIntroduceVariableHandler extends IntroduceVariableBase {
+    private final String myName;
+    private final boolean myReplaceAll;
+    private final boolean myDeclareFinal;
+    private final boolean myDeclareVar;
+    private final boolean myReplaceLValues;
+
+    MockIntroduceVariableHandler(String name,
+                                 boolean replaceAll,
+                                 boolean declareFinal,
+                                 boolean declareVar,
+                                 boolean replaceLValues) {
+      myName = name;
+      myReplaceAll = replaceAll;
+      myDeclareFinal = declareFinal;
+      myDeclareVar = declareVar;
+      myReplaceLValues = replaceLValues;
+    }
+
+    @Override
+    public IntroduceVariableSettings getSettings(Project project,
+                                                 Editor editor,
+                                                 PsiExpression expr,
+                                                 PsiExpression[] occurrences,
+                                                 TypeSelectorManagerImpl typeSelectorManager,
+                                                 boolean declareFinalIfAll,
+                                                 boolean anyAssignmentLHS,
+                                                 InputValidator validator,
+                                                 PsiElement anchor,
+                                                 JavaReplaceChoice replaceChoice) {
+      boolean isDeclareVarType = myDeclareVar && canBeExtractedWithoutExplicitType(expr);
+      return new IntroduceVariableSettings() {
+        @Override
+        public @NlsSafe String getEnteredName() {
+          return myName;
+        }
+
+        @Override
+        public boolean isReplaceAllOccurrences() {
+          return myReplaceAll && occurrences.length > 1;
+        }
+
+        @Override
+        public boolean isDeclareFinal() {
+          return myDeclareFinal || isReplaceAllOccurrences() && declareFinalIfAll;
+        }
+
+        @Override
+        public boolean isReplaceLValues() {
+          return myReplaceLValues;
+        }
+
+        @Override
+        public PsiType getSelectedType() {
+          return typeSelectorManager.getDefaultType();
+        }
+
+        @Override
+        public boolean isOK() {
+          return true;
+        }
+
+        @Override
+        public boolean isDeclareVarType() {
+          return isDeclareVarType;
+        }
+      };
+    }
+
+    @Override
+    protected void showErrorMessage(Project project, Editor editor, String message) {
+    }
+  }
+}
