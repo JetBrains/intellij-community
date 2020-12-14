@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.*;
@@ -96,7 +97,7 @@ public final class JarHandler extends ZipHandler {
       return originalFile;
     }
 
-    if (FSRecords.WE_HAVE_CONTENT_HASHES) {
+    if (FSRecords.useContentHashes) {
       return getMirrorWithContentHash(originalFile, originalAttributes);
     }
 

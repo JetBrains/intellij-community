@@ -24,16 +24,16 @@ class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
-  static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version) {
+  static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes) {
     return FSRecords.writeAndHandleErrors(() -> {
-      return init(cachesDir, version);
+      return init(cachesDir, version, useContentHashes);
     });
   }
 
-  private static @NotNull PersistentFSConnection init(@NotNull String cachesDir, int expectedVersion) {
+  private static @NotNull PersistentFSConnection init(@NotNull String cachesDir, int expectedVersion, boolean useContentHashes) {
     Exception exception = null;
     for (int i = 0; i < MAX_INITIALIZATION_ATTEMPTS; i++) {
-      Pair<PersistentFSConnection, Exception> pair = tryInit(cachesDir, expectedVersion);
+      Pair<PersistentFSConnection, Exception> pair = tryInit(cachesDir, expectedVersion, useContentHashes);
       exception = pair.getSecond();
       if (exception == null) {
         return pair.getFirst();
@@ -43,7 +43,8 @@ class PersistentFSConnector {
   }
 
   private static @NotNull Pair<PersistentFSConnection, Exception> tryInit(@NotNull String cachesDir,
-                                                                          int expectedVersion) {
+                                                                          int expectedVersion,
+                                                                          boolean useContentHashes) {
     Storage attributes = null;
     RefCountingStorage contents = null;
     PersistentFSRecordsStorage records = null;
@@ -99,8 +100,7 @@ class PersistentFSConnector {
       };
 
       // sources usually zipped with 4x ratio
-      contentHashesEnumerator =
-        FSRecords.WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile, storageLockContext) : null;
+      contentHashesEnumerator = useContentHashes ? new ContentHashEnumerator(contentsHashesFile, storageLockContext) : null;
 
       boolean aligned = PagedFileStorage.BUFFER_SIZE % PersistentFSRecordsStorage.RECORD_SIZE == 0;
       if (!aligned) {

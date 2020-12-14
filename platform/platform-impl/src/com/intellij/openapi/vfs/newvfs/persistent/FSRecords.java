@@ -21,19 +21,15 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
-import com.intellij.util.io.storage.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -44,8 +40,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStor
 public final class FSRecords {
   private static final Logger LOG = Logger.getInstance(FSRecords.class);
 
-  public static final boolean WE_HAVE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
-
+  public static final boolean useContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
   static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
   static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
@@ -54,6 +49,8 @@ public final class FSRecords {
   static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
   static volatile PersistentFSConnection ourConnection;
+  static volatile PersistentFSContentAccessor ourContentAccessor;
+  static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
 
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
@@ -70,7 +67,7 @@ public final class FSRecords {
     return nextMask(versionValue, 8, prevMask);
   }
   static final int VERSION = nextMask(58,  // acceptable range is [0..255]
-                                     nextMask(WE_HAVE_CONTENT_HASHES,
+                                     nextMask(useContentHashes,
                                      nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
                                      nextMask(bulkAttrReadSupport,
                                      nextMask(inlineAttributes,
@@ -140,7 +137,9 @@ public final class FSRecords {
   }
 
   static void connect() {
-    ourConnection = PersistentFSConnector.connect(getCachesDir(), getVersion());
+    ourConnection = PersistentFSConnector.connect(getCachesDir(), getVersion(), useContentHashes);
+    ourContentAccessor = new PersistentFSContentAccessor(useContentHashes);
+    ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes);
     try {
       ourConnection.getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action
     }
@@ -206,37 +205,8 @@ public final class FSRecords {
   }
 
   private static void deleteContentAndAttributes(int id) throws IOException {
-    int content_page = ourConnection.getRecords().getContentRecordId(id);
-    if (content_page != 0) {
-      if (WE_HAVE_CONTENT_HASHES) {
-        ourConnection.getContents().releaseRecord(content_page, false);
-      }
-      else {
-        ourConnection.getContents().releaseRecord(content_page);
-      }
-    }
-
-    int att_page = ourConnection.getRecords().getAttributeRecordId(id);
-    if (att_page != 0) {
-      try (final DataInputStream attStream = ourConnection.getAttributes().readStream(att_page)) {
-        if (bulkAttrReadSupport) skipRecordHeader(attStream, PersistentFSConnection.RESERVED_ATTR_ID, id);
-
-        while (attStream.available() > 0) {
-          DataInputOutputUtil.readINT(attStream);// Attribute ID;
-          int attAddressOrSize = DataInputOutputUtil.readINT(attStream);
-
-          if (inlineAttributes) {
-            if (attAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-              attStream.skipBytes(attAddressOrSize);
-              continue;
-            }
-            attAddressOrSize -= MAX_SMALL_ATTR_SIZE;
-          }
-          ourConnection.getAttributes().deleteRecord(attAddressOrSize);
-        }
-      }
-      ourConnection.getAttributes().deleteRecord(att_page);
-    }
+    ourContentAccessor.deleteContent(id, ourConnection);
+    ourAttributeAccessor.deleteAttributes(id, ourConnection);
   }
 
   private static void addToFreeRecordsList(int id) {
@@ -489,7 +459,10 @@ public final class FSRecords {
   }
 
   static boolean wereChildrenAccessed(int id) {
-    return readAndHandleErrors(() -> findAttributePage(id, ourChildrenAttr, false) != 0);
+    checkFileIsValid(id);
+    return readAndHandleErrors(() -> {
+      return ourAttributeAccessor.hasAttributePage(id, ourChildrenAttr, ourConnection);
+    });
   }
 
   static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ?> action) {
@@ -537,7 +510,7 @@ public final class FSRecords {
     }
   }
 
-  static <T extends Exception>  void write(@NotNull ThrowableRunnable<T> action) throws T {
+  static <T extends Exception> void write(@NotNull ThrowableRunnable<T> action) throws T {
     w.lock();
     try {
       action.run();
@@ -853,13 +826,13 @@ public final class FSRecords {
 
   @Nullable
   static DataInputStream readContent(int fileId) {
-    int page = readAndHandleErrors(() -> {
+    ThrowableComputable<DataInputStream, IOException> computable = readAndHandleErrors(() -> {
       checkFileIsValid(fileId);
-      return ourConnection.getRecords().getContentRecordId(fileId);
+      return ourContentAccessor.readContent(fileId, ourConnection);
     });
-    if (page == 0) return null;
+    if (computable == null) return null;
     try {
-      return doReadContentById(page);
+      return computable.compute();
     }
     catch (OutOfMemoryError outOfMemoryError) {
       throw outOfMemoryError;
@@ -873,23 +846,12 @@ public final class FSRecords {
   @NotNull
   static DataInputStream readContentById(int contentId) {
     try {
-      return doReadContentById(contentId);
+      return ourContentAccessor.readContentDirectly(contentId, ourConnection);
     }
     catch (Throwable e) {
       handleError(e);
     }
     return null;
-  }
-
-  @NotNull
-  private static DataInputStream doReadContentById(int contentId) throws IOException {
-    DataInputStream stream = ourConnection.getContents().readStream(contentId);
-    if (useCompressionUtil) {
-      byte[] bytes = CompressionUtil.readCompressed(stream);
-      stream = new DataInputStream(new UnsyncByteArrayInputStream(bytes));
-    }
-
-    return stream;
   }
 
   @Nullable
@@ -917,125 +879,7 @@ public final class FSRecords {
   private static DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
     checkFileIsValid(fileId);
 
-    int recordId = ourConnection.getRecords().getAttributeRecordId(fileId);
-    if (recordId == 0) return null;
-    int encodedAttrId = ourConnection.getAttributeId(attribute.getId());
-
-    Storage storage = ourConnection.getAttributes();
-
-    int page = 0;
-
-    try (DataInputStream attrRefs = storage.readStream(recordId)) {
-      if (bulkAttrReadSupport) skipRecordHeader(attrRefs, PersistentFSConnection.RESERVED_ATTR_ID, fileId);
-
-      while (attrRefs.available() > 0) {
-        final int attIdOnPage = DataInputOutputUtil.readINT(attrRefs);
-        final int attrAddressOrSize = DataInputOutputUtil.readINT(attrRefs);
-
-        if (attIdOnPage != encodedAttrId) {
-          if (inlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-            attrRefs.skipBytes(attrAddressOrSize);
-          }
-        }
-        else {
-          if (inlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-            byte[] b = new byte[attrAddressOrSize];
-            attrRefs.readFully(b);
-            return new DataInputStream(new UnsyncByteArrayInputStream(b));
-          }
-          page = inlineAttributes ? attrAddressOrSize - MAX_SMALL_ATTR_SIZE : attrAddressOrSize;
-          break;
-        }
-      }
-    }
-
-    if (page == 0) {
-      return null;
-    }
-    DataInputStream stream = ourConnection.getAttributes().readStream(page);
-    if (bulkAttrReadSupport) skipRecordHeader(stream, encodedAttrId, fileId);
-    return stream;
-  }
-
-  // Vfs small attrs: store inline:
-  // file's AttrId -> [size, capacity] attr record (RESERVED_ATTR_ID fileId)? (attrId ((smallAttrSize smallAttrData) | (attr record)) )
-  // other attr record: (AttrId, fileId) ? attrData
-  private static final int MAX_SMALL_ATTR_SIZE = 64;
-
-  private static int findAttributePage(int fileId, @NotNull FileAttribute attr, boolean toWrite) throws IOException {
-    checkFileIsValid(fileId);
-
-    int recordId = ourConnection.getRecords().getAttributeRecordId(fileId);
-    int encodedAttrId = ourConnection.getAttributeId(attr.getId());
-    boolean directoryRecord = false;
-
-    Storage storage = ourConnection.getAttributes();
-
-    if (recordId == 0) {
-      if (!toWrite) return 0;
-
-      recordId = storage.createNewRecord();
-      ourConnection.getRecords().setAttributeRecordId(fileId, recordId);
-      directoryRecord = true;
-    }
-    else {
-      try (DataInputStream attrRefs = storage.readStream(recordId)) {
-        if (bulkAttrReadSupport) skipRecordHeader(attrRefs, PersistentFSConnection.RESERVED_ATTR_ID, fileId);
-
-        while (attrRefs.available() > 0) {
-          final int attIdOnPage = DataInputOutputUtil.readINT(attrRefs);
-          final int attrAddressOrSize = DataInputOutputUtil.readINT(attrRefs);
-
-          if (attIdOnPage == encodedAttrId) {
-            if (inlineAttributes) {
-              return attrAddressOrSize < MAX_SMALL_ATTR_SIZE ? -recordId : attrAddressOrSize - MAX_SMALL_ATTR_SIZE;
-            }
-            else {
-              return attrAddressOrSize;
-            }
-          }
-          else {
-            if (inlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-              attrRefs.skipBytes(attrAddressOrSize);
-            }
-          }
-        }
-      }
-    }
-
-    if (toWrite) {
-      try (AbstractStorage.AppenderStream appender = storage.appendStream(recordId)) {
-        if (bulkAttrReadSupport) {
-          if (directoryRecord) {
-            DataInputOutputUtil.writeINT(appender, PersistentFSConnection.RESERVED_ATTR_ID);
-            DataInputOutputUtil.writeINT(appender, fileId);
-          }
-        }
-
-        DataInputOutputUtil.writeINT(appender, encodedAttrId);
-        int attrAddress = storage.createNewRecord();
-        DataInputOutputUtil.writeINT(appender, inlineAttributes ? attrAddress + MAX_SMALL_ATTR_SIZE : attrAddress);
-        PersistentFSConnection.REASONABLY_SMALL.myAttrPageRequested = true;
-        return attrAddress;
-      }
-      finally {
-        PersistentFSConnection.REASONABLY_SMALL.myAttrPageRequested = false;
-      }
-    }
-
-    return 0;
-  }
-
-  private static void skipRecordHeader(DataInputStream refs, int expectedRecordTag, int expectedFileId) throws IOException {
-    int attId = DataInputOutputUtil.readINT(refs);// attrId
-    assert attId == expectedRecordTag || expectedRecordTag == 0;
-    int fileId = DataInputOutputUtil.readINT(refs);// fileId
-    assert expectedFileId == fileId || expectedFileId == 0;
-  }
-
-  private static void writeRecordHeader(int recordTag, int fileId, @NotNull DataOutputStream appender) throws IOException {
-    DataInputOutputUtil.writeINT(appender, recordTag);
-    DataInputOutputUtil.writeINT(appender, fileId);
+    return ourAttributeAccessor.readAttribute(fileId, attribute, ourConnection);
   }
 
   private static void checkFileIsValid(int fileId) {
@@ -1043,327 +887,64 @@ public final class FSRecords {
   }
 
   static int acquireFileContent(int fileId) {
-    return writeAndHandleErrors(() -> {
-      int record = ourConnection.getRecords().getContentRecordId(fileId);
-      if (record > 0) ourConnection.getContents().acquireRecord(record);
-      return record;
-    });
+    return writeAndHandleErrors(() -> ourContentAccessor.acquireContentRecord(fileId, ourConnection));
   }
 
   static void releaseContent(int contentId) {
-    writeAndHandleErrors(() -> ourConnection.getContents().releaseRecord(contentId, !WE_HAVE_CONTENT_HASHES));
+    writeAndHandleErrors(() -> ourContentAccessor.releaseContentRecord(contentId, ourConnection));
   }
 
   static int getContentId(int fileId) {
     return readAndHandleErrors(() -> ourConnection.getRecords().getContentRecordId(fileId));
   }
 
+  @TestOnly
   static byte[] getContentHash(int fileId) {
-    if (!WE_HAVE_CONTENT_HASHES) return null;
-
-    return readAndHandleErrors(() -> {
-      int contentId = ourConnection.getRecords().getContentRecordId(fileId);
-      return contentId <= 0 ? null : ourConnection.getContentHashesEnumerator().valueOf(contentId);
-    });
+    return readAndHandleErrors(() -> ourContentAccessor.getContentHash(fileId, ourConnection));
   }
 
   @NotNull
   static DataOutputStream writeContent(int fileId, boolean readOnly) {
-    return new ContentOutputStream(fileId, readOnly);
+    checkFileIsValid(fileId);
+    return new DataOutputStream(ourContentAccessor.new ContentOutputStream(fileId, readOnly, ourConnection)) {
+      @Override
+      public void close() {
+        writeAndHandleErrors(() -> {
+          super.close();
+          if (((PersistentFSContentAccessor.ContentOutputStream)out).isModified()) {
+            incModCount(fileId);
+          }
+        });
+      }
+    };
   }
 
-  static void writeContent(int fileId, ByteArraySequence bytes, boolean readOnly) {
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
+  static void writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean readOnly) {
+    checkFileIsValid(fileId);
+    writeAndHandleErrors(() -> {
+      if (ourContentAccessor.writeContent(fileId, bytes, readOnly, ourConnection)) {
+        incModCount(fileId);
+      }
+    });
   }
 
   static int storeUnlinkedContent(byte[] bytes) {
-    return writeAndHandleErrors(() -> {
-      int recordId;
-      if (WE_HAVE_CONTENT_HASHES) {
-        recordId = findOrCreateContentRecord(bytes, 0, bytes.length);
-        if (recordId > 0) return recordId;
-        recordId = -recordId;
-      }
-      else {
-        recordId = ourConnection.getContents().acquireNewRecord();
-      }
-      try (AbstractStorage.StorageDataOutput output = ourConnection.getContents().writeStream(recordId, true)) {
-        output.write(bytes);
-      }
-      return recordId;
-    });
+    return writeAndHandleErrors(() -> ourContentAccessor.allocateContentRecordAndStore(bytes, ourConnection));
   }
 
   @NotNull
   public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    DataOutputStream stream = new AttributeOutputStream(fileId, att);
-    if (att.isVersioned()) {
-      try {
-        DataInputOutputUtil.writeINT(stream, att.getVersion());
+    DataOutputStream dataOutputStream = ourAttributeAccessor.writeAttribute(fileId, att, ourConnection);
+    return new DataOutputStream(dataOutputStream) {
+      @Override
+      public void close() {
+        writeAndHandleErrors(() -> super.close());
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return stream;
+    };
   }
 
   public static PersistentFSPaths getPersistentFSPaths() {
     return new PersistentFSPaths(getCachesDir());
-  }
-
-  private static final class ContentOutputStream extends DataOutputStream {
-    final int myFileId;
-    final boolean myFixedSize;
-
-    private ContentOutputStream(final int fileId, boolean readOnly) {
-      super(new BufferExposingByteArrayOutputStream());
-      myFileId = fileId;
-      myFixedSize = readOnly;
-    }
-
-    @Override
-    public void close() throws IOException {
-      super.close();
-
-      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-      writeBytes(_out.toByteArraySequence());
-    }
-
-    private void writeBytes(ByteArraySequence bytes) {
-      writeAndHandleErrors(() -> {
-        RefCountingStorage contentStorage = ourConnection.getContents();
-        checkFileIsValid(myFileId);
-
-        int page;
-        final boolean fixedSize;
-        if (WE_HAVE_CONTENT_HASHES) {
-          page = findOrCreateContentRecord(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
-
-          if (page < 0 || getContentId(myFileId) != page) {
-            incModCount(myFileId);
-            int value = page > 0 ? page : -page;
-            ourConnection.getRecords().setContentRecordId(myFileId, value);
-          }
-
-          int value = page > 0 ? page : -page;
-          ourConnection.getRecords().setContentRecordId(myFileId, value);
-
-          if (page > 0) return;
-          page = -page;
-          fixedSize = true;
-        }
-        else {
-          incModCount(myFileId);
-          page = ourConnection.getRecords().getContentRecordId(myFileId);
-          if (page == 0 || contentStorage.getRefCount(page) > 1) {
-            page = contentStorage.acquireNewRecord();
-            ourConnection.getRecords().setContentRecordId(myFileId, page);
-          }
-          fixedSize = myFixedSize;
-        }
-
-        ByteArraySequence newBytes;
-        if (useCompressionUtil) {
-          BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-          try (DataOutputStream outputStream = new DataOutputStream(out)) {
-            CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
-          }
-          newBytes = out.toByteArraySequence();
-        }
-        else {
-          newBytes = bytes;
-        }
-        contentStorage.writeBytes(page, newBytes, fixedSize);
-      });
-    }
-  }
-
-  private static final boolean DUMP_STATISTICS = WE_HAVE_CONTENT_HASHES;  // TODO: remove once not needed
-  private static long totalContents;
-  private static long totalReuses;
-  private static long time;
-  private static int contents;
-  private static int reuses;
-
-  @NotNull
-  private static MessageDigest getContentHashDigest() {
-    // TODO replace with sha-256
-    return DigestUtil.sha1();
-  }
-
-  private static byte @NotNull[] calculateHash(byte[] bytes, int offset, int length) {
-    // Probably we don't need to hash the length and "\0000".
-    MessageDigest digest = getContentHashDigest();
-    digest.update(String.valueOf(length).getBytes(StandardCharsets.UTF_8));
-    digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
-    digest.update(bytes, offset, length);
-    return digest.digest();
-  }
-
-  private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
-    assert WE_HAVE_CONTENT_HASHES;
-
-    long started = DUMP_STATISTICS ? System.nanoTime():0;
-    byte[] contentHash = calculateHash(bytes, offset, length);
-    long done = DUMP_STATISTICS ? System.nanoTime() - started : 0;
-    time += done;
-
-    ++contents;
-    totalContents += length;
-
-    if (DUMP_STATISTICS && (contents & 0x3FFF) == 0) {
-      LOG.info("Contents:" + contents + " of " + totalContents + ", reuses:" + reuses + " of " + totalReuses + " for " + time / 1000000);
-    }
-
-    ContentHashEnumerator hashesEnumerator = ourConnection.getContentHashesEnumerator();
-    final int largestId = hashesEnumerator.getLargestId();
-    int page = hashesEnumerator.enumerate(contentHash);
-
-    if (page <= largestId) {
-      ++reuses;
-      ourConnection.getContents().acquireRecord(page);
-      totalReuses += length;
-
-      return page;
-    }
-    else {
-      int newRecord = ourConnection.getContents().acquireNewRecord();
-      assert page == newRecord : "Unexpected content storage modification: page="+page+"; newRecord="+newRecord;
-
-      return -page;
-    }
-  }
-
-  private static final class AttributeOutputStream extends DataOutputStream {
-    @NotNull
-    private final FileAttribute myAttribute;
-    private final int myFileId;
-
-    private AttributeOutputStream(final int fileId, @NotNull FileAttribute attribute) {
-      super(new BufferExposingByteArrayOutputStream());
-      myFileId = fileId;
-      myAttribute = attribute;
-    }
-
-    @Override
-    public void close() throws IOException {
-      super.close();
-      writeAndHandleErrors(() -> {
-        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-
-        if (inlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
-          rewriteDirectoryRecordWithAttrContent(_out);
-          ourConnection.incLocalModCount();
-        }
-        else {
-          ourConnection.incLocalModCount();
-          int page = findAttributePage(myFileId, myAttribute, true);
-          if (inlineAttributes && page < 0) {
-            rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
-            page = findAttributePage(myFileId, myAttribute, true);
-          }
-
-          if (bulkAttrReadSupport) {
-            BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
-            out = stream;
-            writeRecordHeader(ourConnection.getAttributeId(myAttribute.getId()), myFileId, this);
-            write(_out.getInternalBuffer(), 0, _out.size());
-            ourConnection.getAttributes().writeBytes(page, stream.toByteArraySequence(), myAttribute.isFixedSize());
-          }
-          else {
-            ourConnection.getAttributes().writeBytes(page, _out.toByteArraySequence(), myAttribute.isFixedSize());
-          }
-        }
-      });
-    }
-
-    void rewriteDirectoryRecordWithAttrContent(@NotNull BufferExposingByteArrayOutputStream _out) throws IOException {
-      int recordId = ourConnection.getRecords().getAttributeRecordId(myFileId);
-      assert inlineAttributes;
-      int encodedAttrId = ourConnection.getAttributeId(myAttribute.getId());
-
-      Storage storage = ourConnection.getAttributes();
-      BufferExposingByteArrayOutputStream unchangedPreviousDirectoryStream = null;
-      boolean directoryRecord = false;
-
-
-      if (recordId == 0) {
-        recordId = storage.createNewRecord();
-        ourConnection.getRecords().setAttributeRecordId(myFileId, recordId);
-        directoryRecord = true;
-      }
-      else {
-        try (DataInputStream attrRefs = storage.readStream(recordId)) {
-
-          DataOutputStream dataStream = null;
-
-          try {
-            final int remainingAtStart = attrRefs.available();
-            if (bulkAttrReadSupport) {
-              unchangedPreviousDirectoryStream = new BufferExposingByteArrayOutputStream();
-              dataStream = new DataOutputStream(unchangedPreviousDirectoryStream);
-              int attId = DataInputOutputUtil.readINT(attrRefs);
-              assert attId == PersistentFSConnection.RESERVED_ATTR_ID;
-              int fileId = DataInputOutputUtil.readINT(attrRefs);
-              assert myFileId == fileId;
-
-              writeRecordHeader(attId, fileId, dataStream);
-            }
-            while (attrRefs.available() > 0) {
-              final int attIdOnPage = DataInputOutputUtil.readINT(attrRefs);
-              final int attrAddressOrSize = DataInputOutputUtil.readINT(attrRefs);
-
-              if (attIdOnPage != encodedAttrId) {
-                if (dataStream == null) {
-                  unchangedPreviousDirectoryStream = new BufferExposingByteArrayOutputStream();
-                  //noinspection IOResourceOpenedButNotSafelyClosed
-                  dataStream = new DataOutputStream(unchangedPreviousDirectoryStream);
-                }
-                DataInputOutputUtil.writeINT(dataStream, attIdOnPage);
-                DataInputOutputUtil.writeINT(dataStream, attrAddressOrSize);
-
-                if (attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-                  byte[] b = new byte[attrAddressOrSize];
-                  attrRefs.readFully(b);
-                  dataStream.write(b);
-                }
-              }
-              else {
-                if (attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-                  if (_out.size() == attrAddressOrSize) {
-                    // update inplace when new attr has the same size
-                    int remaining = attrRefs.available();
-                    storage.replaceBytes(recordId, remainingAtStart - remaining,
-                                         _out.toByteArraySequence());
-                    return;
-                  }
-                  attrRefs.skipBytes(attrAddressOrSize);
-                }
-              }
-            }
-          }
-          finally {
-            if (dataStream != null) dataStream.close();
-          }
-        }
-      }
-
-      try (AbstractStorage.StorageDataOutput directoryStream = storage.writeStream(recordId)) {
-        if (directoryRecord) {
-          if (bulkAttrReadSupport) writeRecordHeader(PersistentFSConnection.RESERVED_ATTR_ID, myFileId, directoryStream);
-        }
-        if (unchangedPreviousDirectoryStream != null) {
-          directoryStream.write(unchangedPreviousDirectoryStream.getInternalBuffer(), 0, unchangedPreviousDirectoryStream.size());
-        }
-        if (_out.size() > 0) {
-          DataInputOutputUtil.writeINT(directoryStream, encodedAttrId);
-          DataInputOutputUtil.writeINT(directoryStream, _out.size());
-          directoryStream.write(_out.getInternalBuffer(), 0, _out.size());
-        }
-      }
-    }
   }
 
   static synchronized void dispose() {
@@ -1374,6 +955,8 @@ public final class FSRecords {
       }
       finally {
         ourConnection = null;
+        ourContentAccessor = null;
+        ourAttributeAccessor = null;
       }
     });
   }
@@ -1412,8 +995,10 @@ public final class FSRecords {
     LOG.info("Sanity check took " + t + " ms");
   }
 
-  private static void checkRecordSanity(final int id, final int recordCount, final IntList usedAttributeRecordIds,
-                                        final IntList validAttributeIds) {
+  private static void checkRecordSanity(int id,
+                                        int recordCount,
+                                        @NotNull IntList usedAttributeRecordIds,
+                                        @NotNull IntList validAttributeIds) {
     int parentId = getParent(id);
     assert parentId >= 0 && parentId < recordCount;
     if (parentId > 0 && getParent(parentId) > 0) {
@@ -1426,68 +1011,12 @@ public final class FSRecords {
     LOG.assertTrue(parentId == 0 || name.length()!=0, "File with empty name found under " + getNameSequence(parentId) + ", id=" + id);
 
     writeAndHandleErrors(() -> {
-      checkContentsStorageSanity(id);
-      checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds);
+      ourContentAccessor.checkContentsStorageSanity(id, ourConnection);
+      ourAttributeAccessor.checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds, ourConnection);
     });
 
     long length = getLength(id);
     assert length >= -1 : "Invalid file length found for " + name + ": " + length;
-  }
-
-  private static void checkContentsStorageSanity(int id) {
-    int recordId = ourConnection.getRecords().getContentRecordId(id);
-    assert recordId >= 0;
-    if (recordId > 0) {
-      ourConnection.getContents().checkSanity(recordId);
-    }
-  }
-
-  private static void checkAttributesStorageSanity(int id, IntList usedAttributeRecordIds, IntList validAttributeIds) {
-    int attributeRecordId = ourConnection.getRecords().getAttributeRecordId(id);
-
-    assert attributeRecordId >= 0;
-    if (attributeRecordId > 0) {
-      try {
-        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
-      }
-      catch (IOException ex) {
-        handleError(ex);
-      }
-    }
-  }
-
-  private static void checkAttributesSanity(int attributeRecordId, IntList usedAttributeRecordIds, IntList validAttributeIds) throws IOException {
-    assert !usedAttributeRecordIds.contains(attributeRecordId);
-    usedAttributeRecordIds.add(attributeRecordId);
-
-    try (DataInputStream dataInputStream = ourConnection.getAttributes().readStream(attributeRecordId)) {
-      if (bulkAttrReadSupport) skipRecordHeader(dataInputStream, 0, 0);
-
-      while (dataInputStream.available() > 0) {
-        int attId = DataInputOutputUtil.readINT(dataInputStream);
-
-        if (!validAttributeIds.contains(attId)) {
-          //assert !getNames().valueOf(attId).isEmpty();
-          validAttributeIds.add(attId);
-        }
-
-        int attDataRecordIdOrSize = DataInputOutputUtil.readINT(dataInputStream);
-
-        if (inlineAttributes) {
-          if (attDataRecordIdOrSize < MAX_SMALL_ATTR_SIZE) {
-            dataInputStream.skipBytes(attDataRecordIdOrSize);
-            continue;
-          }
-          else {
-            attDataRecordIdOrSize -= MAX_SMALL_ATTR_SIZE;
-          }
-        }
-        assert !usedAttributeRecordIds.contains(attDataRecordIdOrSize);
-        usedAttributeRecordIds.add(attDataRecordIdOrSize);
-
-        ourConnection.getAttributes().checkSanity(attDataRecordIdOrSize);
-      }
-    }
   }
 
   @Contract("_->fail")
