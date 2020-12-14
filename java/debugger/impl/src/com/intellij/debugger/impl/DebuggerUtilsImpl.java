@@ -213,6 +213,13 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
   }
 
+  public static void logError(Throwable e) {
+    if (e instanceof VMDisconnectedException) {
+      throw (VMDisconnectedException)e;
+    }
+    LOG.error(e);
+  }
+
   public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier, T defaultValue) throws E {
     return suppressExceptions(supplier, defaultValue, true, null);
   }

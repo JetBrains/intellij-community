@@ -129,7 +129,7 @@ public final class AsyncStacksUtils {
         return res;
       }
       catch (Exception e) {
-        LOG.error(e);
+        DebuggerUtilsImpl.logError(e);
       }
     }
     return null;
@@ -260,7 +260,7 @@ public final class AsyncStacksUtils {
             process.invokeMethod(evaluationContext, captureClass, method, args, ObjectReference.INVOKE_SINGLE_THREADED, true);
           }
           catch (Exception e) {
-            LOG.error(e);
+            DebuggerUtilsImpl.logError(e);
           }
         }
       }

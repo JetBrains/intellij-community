@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -22,7 +22,6 @@ import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
-import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,11 +177,8 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
             return xStackFrame;
           }
         }
-        catch (VMDisconnectedException e) {
-          throw e;
-        }
         catch (Throwable e) {
-          LOG.error(e);
+          DebuggerUtilsImpl.logError(e);
         }
       }
     }
@@ -203,7 +199,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
           }
         }
         catch (Throwable e) {
-          LOG.error(e);
+          DebuggerUtilsImpl.logError(e);
         }
       }
     }

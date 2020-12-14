@@ -5,6 +5,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
@@ -92,11 +93,8 @@ public class MethodReturnValueWatcher implements OverheadProducer {
         enableEntryWatching(false);
       }
     }
-    catch (VMDisconnectedException e) {
-      throw e;
-    }
     catch (Exception e) {
-      LOG.error(e);
+      DebuggerUtilsImpl.logError(e);
     }
   }
 
