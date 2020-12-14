@@ -128,7 +128,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
       .setSearchDirectionForward(forwardDirection)
       .setSearchBounds(fromPageNumber, SearchTaskOptions.NO_LIMIT,
                        toPageNumber, SearchTaskOptions.NO_LIMIT)
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected())
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
       .setWholeWords(myToggleWholeWordsAction.isSelected())
       .setRegularExpression(myToggleRegularExpression.isSelected())
       .setContextOneSideLength(CONTEXT_ONE_SIDE_LENGTH);
@@ -244,7 +244,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     SearchTaskOptions options = new SearchTaskOptions()
       .setSearchDirectionForward(directionForward)
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected())
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
       .setWholeWords(myToggleWholeWordsAction.isSelected())
       .setRegularExpression(myToggleRegularExpression.isSelected())
       .setContextOneSideLength(CONTEXT_ONE_SIDE_LENGTH);
@@ -454,7 +454,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     SearchTaskOptions options = new SearchTaskOptions()
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected())
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
       .setWholeWords(myToggleWholeWordsAction.isSelected())
       .setRegularExpression(myToggleRegularExpression.isSelected())
       .setSearchDirectionForward(true)
