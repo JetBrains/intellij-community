@@ -18,7 +18,9 @@ class ConvertStringIntentionTest extends GroovyLatestTest implements ActionTest 
       'hello / world' : 'hello / world',
       'hello $/ world': 'hello $$/ world',
       'hello $$ world': 'hello $$$ world',
-      'hello /$ world': 'hello $/$ world'
+      'hello /$ world': 'hello $/$ world',
+      'hello $world'  : 'hello $$world',
+      'hello $_world' : 'hello $$_world'
     ]
     for (entry in data) {
       doActionTest(
