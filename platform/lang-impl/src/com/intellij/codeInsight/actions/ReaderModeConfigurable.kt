@@ -4,6 +4,7 @@ package com.intellij.codeInsight.actions
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -39,8 +40,9 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
             checkBox(cdLigatures).enableIf(enabled.selected)
           }
           row {
-            checkBox(cdLineSpacing).enableIf(enabled.selected)
-          }
+            checkBox(cdLineSpacing)
+            commentNoWrap(LangBundle.message("checkbox.reader.mode.line.height.comment")).withLargeLeftGap()
+          }.enableIf(enabled.selected)
           row {
             checkBox(cdInlays).enableIf(enabled.selected).visible(PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaEducational() || PlatformUtils.isIdeaUltimate())
           }
