@@ -58,12 +58,12 @@ public final class HTMLControls {
     ArrayList<Control> controls = new ArrayList<>();
     for (Element child : element.getChildren()) {
       if ("control".equals(child.getName())) {
-        Control control = new Control();
-        control.name = child.getAttributeValue("name");
-        control.startTag = TagState.valueOf(StringUtil.toUpperCase(child.getAttributeValue("startTag")));
-        control.endTag = TagState.valueOf(StringUtil.toUpperCase(child.getAttributeValue("endTag")));
-        control.emptyAllowed = "true".equalsIgnoreCase(child.getAttributeValue("emptyAllowed"));
-        control.autoClosedBy = autoClosed(child.getAttributeValue("autoClosedBy"));
+        Control control = new Control(
+          child.getAttributeValue("name"),
+          TagState.valueOf(StringUtil.toUpperCase(child.getAttributeValue("startTag"))),
+          TagState.valueOf(StringUtil.toUpperCase(child.getAttributeValue("endTag"))),
+          "true".equalsIgnoreCase(child.getAttributeValue("emptyAllowed")),
+          autoClosed(child.getAttributeValue("autoClosedBy")));
         controls.add(control);
       }
     }
@@ -79,13 +79,21 @@ public final class HTMLControls {
     return result;
   }
 
-  public enum TagState { REQUIRED, OPTIONAL, FORBIDDEN }
+  public enum TagState {REQUIRED, OPTIONAL, FORBIDDEN}
 
   public static class Control {
-    public String name;
-    public TagState startTag;
-    public TagState endTag;
-    public boolean emptyAllowed;
-    public Set<String> autoClosedBy = Collections.emptySet();
+    public final String name;
+    public final TagState startTag;
+    public final TagState endTag;
+    public final boolean emptyAllowed;
+    public final Set<String> autoClosedBy;
+
+    public Control(String name, TagState startTag, TagState endTag, boolean emptyAllowed, Set<String> autoClosedBy) {
+      this.name = name;
+      this.endTag = endTag;
+      this.startTag = startTag;
+      this.emptyAllowed = emptyAllowed;
+      this.autoClosedBy = autoClosedBy;
+    }
   }
 }
