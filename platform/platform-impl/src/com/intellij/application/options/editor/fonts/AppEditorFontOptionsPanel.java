@@ -27,13 +27,13 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
-import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.AbstractFontCombo;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -193,7 +193,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
 
   @Override
   protected AbstractFontCombo<?> createPrimaryFontCombo() {
-    if (FontFamilyService.isServiceSupported()) {
+    if (isAdvancedFontFamiliesUI()) {
       return new FontFamilyCombo(false);
     }
     else {
@@ -203,11 +203,15 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
 
   @Override
   protected AbstractFontCombo<?> createSecondaryFontCombo() {
-    if (FontFamilyService.isServiceSupported()) {
+    if (isAdvancedFontFamiliesUI()) {
       return new FontFamilyCombo(true);
     }
     else {
       return super.createSecondaryFontCombo();
     }
+  }
+
+  private static boolean isAdvancedFontFamiliesUI() {
+    return SystemProperties.is("new.editor.font.selector");
   }
 }
