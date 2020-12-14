@@ -8,11 +8,10 @@ import java.awt.*;
 public class DataViewCellRenderer extends DefaultTableCellRenderer {
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
     if (!isSelected)
       colorize(table, value, isSelected, hasFocus, row, column);
 
+    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     return this;
   }
 
