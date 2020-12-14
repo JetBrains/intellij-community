@@ -675,6 +675,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public boolean isWriteThreadOnly() {
+    return myAssertThreading;
+  }
+
   private void assertWriteAccess() {
     if (myAssertThreading) {
       final Application application = ApplicationManager.getApplication();
