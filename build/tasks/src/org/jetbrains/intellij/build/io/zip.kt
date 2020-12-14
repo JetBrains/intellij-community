@@ -6,6 +6,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.parallel.InputStreamSupplier
 import java.io.BufferedInputStream
+import java.io.InputStream
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
@@ -13,20 +14,39 @@ import java.util.concurrent.Executors
 import java.util.zip.ZipEntry
 
 // symlinks not supported but can be easily implemented - see CollectingVisitor.visitFile
-fun zipForWindows(targetFile: Path, dirs: Iterable<Path>) {
+@JvmOverloads
+fun zipForWindows(targetFile: Path, dirs: Iterable<Path>, addDirEntries: Boolean = false) {
   val zipCreator = ParallelScatterZipCreator(Executors.newWorkStealingPool())
   // note - dirs contain duplicated directories (you cannot simply add directory entry on visit - uniqueness must be preserved)
   // anyway, directory entry are not added
   for (dir in dirs) {
-    val visitor = CollectingVisitor(zipCreator, dir.toAbsolutePath().normalize())
+    val visitor = CollectingVisitor(zipCreator, dir.toAbsolutePath().normalize(), addDirEntries = addDirEntries)
     Files.walkFileTree(visitor.rootDir, visitor)
   }
   ZipArchiveOutputStream(Files.newByteChannel(targetFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)))
     .use(zipCreator::writeTo)
 }
 
+private val emptyInputStream = object : InputStream() {
+  override fun read() = -1
+}
+
+private val emptyInputStreamSupplier = InputStreamSupplier {
+  emptyInputStream
+}
+
 private class CollectingVisitor(private val zipCreator: ParallelScatterZipCreator,
-                                val rootDir: Path) : SimpleFileVisitor<Path>() {
+                                val rootDir: Path,
+                                val addDirEntries: Boolean = false) : SimpleFileVisitor<Path>() {
+  override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+    if (addDirEntries) {
+      val entry = ZipArchiveEntry("${rootDir.relativize(dir).toString().replace('\\', '/')}/")
+      entry.method = ZipEntry.STORED
+      zipCreator.addArchiveEntry(entry, emptyInputStreamSupplier)
+    }
+    return super.preVisitDirectory(dir, attrs)
+  }
+
   override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
     if (attrs.isSymbolicLink) {
       throw RuntimeException("Symlinks are not allowed for Windows archive")

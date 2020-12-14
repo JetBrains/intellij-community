@@ -4,17 +4,20 @@ package org.jetbrains.intellij.build.tasks
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.lang.JarMemoryLoader
 import com.intellij.util.lang.JdkZipResourceFile
 import com.intellij.util.lang.ZipResourceFile
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.io.zipForWindows
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipEntry
+import kotlin.random.Random
 
 private val testDataPath: Path
   get() = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins/reorderJars")
@@ -22,7 +25,41 @@ private val testDataPath: Path
 class ReorderJarsTest {
   @JvmField
   @Rule
+  val fsRule = InMemoryFsRule()
+
+  @JvmField
+  @Rule
   val tempDir = TemporaryDirectory()
+
+  @Test
+  fun `keep all dirs with resources`() {
+    // check that not only immediate parent of resource file is preserved, but also any dir in a path
+    val random = Random(42)
+
+    val rootDir = fsRule.fs.getPath("/dir")
+    val dir = rootDir.resolve("dir2/dir3")
+    Files.createDirectories(dir)
+    Files.write(dir.resolve("resource.txt"), random.nextBytes(random.nextInt(128)))
+
+    val dir2 = rootDir.resolve("anotherDir")
+    Files.createDirectories(dir2)
+    Files.write(dir2.resolve("resource2.txt"), random.nextBytes(random.nextInt(128)))
+
+    val archiveFile = fsRule.fs.getPath("/dir/archive.jar")
+    zipForWindows(archiveFile, listOf(rootDir), addDirEntries = true)
+
+    doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent, TaskTest.logger)
+    ZipFile(Files.newByteChannel(archiveFile)).use { zipFile ->
+      assertThat(zipFile.entriesInPhysicalOrder.asSequence().map { it.name }.sorted().joinToString(separator = "\n")).isEqualTo("""
+        META-INF/jb/${'$'}${'$'}size${'$'}${'$'}
+        anotherDir/
+        anotherDir/resource2.txt
+        dir2/
+        dir2/dir3/
+        dir2/dir3/resource.txt
+      """.trimIndent())
+    }
+  }
 
   @Test
   fun testReordering() {
@@ -41,7 +78,7 @@ class ReorderJarsTest {
     val file = files[0].toPath()
     assertThat(file.fileName.toString()).isEqualTo("annotations.jar")
     var data: ByteArray
-    ZipFile(file.toFile()).use { zipFile2 ->
+    ZipFile(Files.newByteChannel(file)).use { zipFile2 ->
       val entries = zipFile2.entriesInPhysicalOrder.toList()
       assertThat(entries[0].name).isEqualTo(SIZE_ENTRY)
       val entry = entries[1]

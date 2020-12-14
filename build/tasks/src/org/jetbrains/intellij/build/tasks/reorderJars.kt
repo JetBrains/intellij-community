@@ -247,9 +247,14 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
     for (entry in entries) {
       val name = entry.name
       if (!entry.isDirectory && !name.endsWith(".class") && !name.endsWith("/package.html") && name != "META-INF/MANIFEST.MF") {
-        val slashIndex = name.lastIndexOf('/')
+        var slashIndex = name.lastIndexOf('/')
         if (slashIndex != -1) {
-          dirSetWithoutClassFiles.add(name.substring(0, slashIndex))
+          while (dirSetWithoutClassFiles.add(name.substring(0, slashIndex))) {
+            slashIndex = name.lastIndexOf('/', slashIndex - 2)
+            if (slashIndex == -1) {
+              break
+            }
+          }
         }
       }
     }
