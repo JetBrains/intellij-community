@@ -165,7 +165,7 @@ data class JdkItem(
     get() = StringUtil.formatFileSize(archiveSize)
 
   val fullPresentationText: String
-    get() = product.packagePresentationText + " " + jdkVersion
+    get() = product.packagePresentationText + " " + jdkVersion + (if (arch != "x86_64") " ($arch)" else "")
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
