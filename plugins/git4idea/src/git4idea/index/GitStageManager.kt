@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
-import com.intellij.vcs.commit.CommitWorkflowManager
+import com.intellij.vcs.commit.CommitModeManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
 
@@ -42,7 +42,7 @@ internal class StagingSettingsListener(val project: Project) : GitStagingAreaSet
   }
 }
 
-internal class CommitSettingsListener(val project: Project) : CommitWorkflowManager.SettingsListener {
+internal class CommitSettingsListener(val project: Project) : CommitModeManager.SettingsListener {
   override fun settingsChanged() {
     onAvailabilityChanged(project)
   }
@@ -70,7 +70,7 @@ fun enableStagingArea(enabled: Boolean) {
   ApplicationManager.getApplication().messageBus.syncPublisher(GitStagingAreaSettingsListener.TOPIC).settingsChanged()
 }
 
-fun canEnableStagingArea() = CommitWorkflowManager.isNonModalInSettings()
+fun canEnableStagingArea() = CommitModeManager.isNonModalInSettings()
 
 fun isStagingAreaAvailable() = isStagingAreaEnabled() && canEnableStagingArea()
 fun isStagingAreaAvailable(project: Project): Boolean {

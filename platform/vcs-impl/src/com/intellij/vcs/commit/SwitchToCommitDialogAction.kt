@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.IdeActions.ACTION_CHECKIN_PROJECT
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.actions.isProjectUsesNonModalCommit
-import com.intellij.vcs.commit.CommitWorkflowManager.Companion.setCommitFromLocalChanges
+import com.intellij.vcs.commit.CommitModeManager.Companion.setCommitFromLocalChanges
 
 private class SwitchToCommitDialogAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {

@@ -35,7 +35,7 @@ import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.VcsExecutablePathSelector
-import com.intellij.vcs.commit.CommitWorkflowManager
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
@@ -459,7 +459,7 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
 
 private class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
   override fun addListener(listener: (Boolean) -> Unit) {
-    project.messageBus.connect(disposable).subscribe(CommitWorkflowManager.SETTINGS, object : CommitWorkflowManager.SettingsListener {
+    project.messageBus.connect(disposable).subscribe(CommitModeManager.SETTINGS, object : CommitModeManager.SettingsListener {
       override fun settingsChanged() {
         listener(invoke())
       }

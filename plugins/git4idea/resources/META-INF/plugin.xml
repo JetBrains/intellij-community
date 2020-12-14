@@ -604,7 +604,7 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.index.StagingSettingsListener" topic="git4idea.index.GitStagingAreaSettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="git4idea.index.CommitSettingsListener" topic="com.intellij.vcs.commit.CommitWorkflowManager$SettingsListener"
+    <listener class="git4idea.index.CommitSettingsListener" topic="com.intellij.vcs.commit.CommitModeManager$SettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>
 </idea-plugin>

@@ -262,7 +262,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   @Override
   public void updateCommitWorkflow() {
-    boolean isNonModal = CommitWorkflowManager.getInstance(myProject).isNonModal();
+    boolean isNonModal = CommitModeManager.getInstance(myProject).isNonModal();
     if (myToolWindowPanel != null) {
       myToolWindowPanel.updateCommitWorkflow(isNonModal);
     }
@@ -603,7 +603,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void configureToolbars() {
-      boolean isToolbarHorizontal = CommitWorkflowManager.getInstance(myProject).isNonModal() && isToolbarHorizontalSetting.asBoolean();
+      boolean isToolbarHorizontal = CommitModeManager.getInstance(myProject).isNonModal() && isToolbarHorizontalSetting.asBoolean();
       myChangesPanel.setToolbarHorizontal(isToolbarHorizontal);
       if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
     }

@@ -19,8 +19,8 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
-import com.intellij.vcs.commit.CommitWorkflowManager
-import com.intellij.vcs.commit.CommitWorkflowManager.Companion.isNonModalInSettings
+import com.intellij.vcs.commit.CommitModeManager
+import com.intellij.vcs.commit.CommitModeManager.Companion.isNonModalInSettings
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
@@ -71,7 +71,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   fun updateToolWindowMapping() {
-    isCommitToolWindowShown = CommitWorkflowManager.getInstance(project).isNonModal() && isCommitToolWindowRegistryValue.asBoolean()
+    isCommitToolWindowShown = CommitModeManager.getInstance(project).isNonModal() && isCommitToolWindowRegistryValue.asBoolean()
   }
 
   private fun remapContents() {

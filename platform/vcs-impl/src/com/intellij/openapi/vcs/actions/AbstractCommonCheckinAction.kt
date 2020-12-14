@@ -17,7 +17,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.CommitWorkflowHandler
-import com.intellij.vcs.commit.CommitWorkflowManager
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.removeEllipsisSuffix
 
 private val LOG = logger<AbstractCommonCheckinAction>()
@@ -28,7 +28,7 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
 }
 
 internal fun AnActionEvent.isProjectUsesNonModalCommit() =
-  project?.let { CommitWorkflowManager.getInstance(it).isNonModal() } ?: CommitWorkflowManager.isNonModalInSettings()
+  project?.let { CommitModeManager.getInstance(it).isNonModal() } ?: CommitModeManager.isNonModalInSettings()
 
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 

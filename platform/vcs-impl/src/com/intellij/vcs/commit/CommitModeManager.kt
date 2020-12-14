@@ -45,7 +45,7 @@ internal class NonModalCommitCustomization : ApplicationInitializedListener {
   }
 }
 
-class CommitWorkflowManager(private val project: Project) {
+class CommitModeManager(private val project: Project) {
   class MyStartupActivity : VcsStartupActivity {
     override fun runActivity(project: Project) {
       runInEdt {
@@ -98,7 +98,7 @@ class CommitWorkflowManager(private val project: Project) {
     val SETTINGS: Topic<SettingsListener> = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
 
     @JvmStatic
-    fun getInstance(project: Project): CommitWorkflowManager = project.service()
+    fun getInstance(project: Project): CommitModeManager = project.service()
 
     @JvmStatic
     fun setCommitFromLocalChanges(value: Boolean) {

@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.ui.layout.*
-import com.intellij.vcs.commit.CommitWorkflowManager.Companion.setCommitFromLocalChanges
+import com.intellij.vcs.commit.CommitModeManager.Companion.setCommitFromLocalChanges
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
 
 private val vcsOptionGroupName get() = VcsBundle.message("settings.version.control.option.group")
