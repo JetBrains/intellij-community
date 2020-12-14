@@ -16,28 +16,21 @@ class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
   final GrStringStyleViolationInspection inspection = new GrStringStyleViolationInspection()
 
   void 'test plain string correction'() {
-    doTest '''
-<weak_warning>"abc"</weak_warning>
-''', plain: SINGLE_QUOTED
+    doTest '"abc"', "'abc'", plain: SINGLE_QUOTED
   }
 
   void 'test no complaint on correct kind'() {
-    doTest '''
-'abc'
-''', plain: SINGLE_QUOTED
+    doTest "'abc'", plain: SINGLE_QUOTED
   }
 
   void 'test correction to slashy string'() {
-    doTest """
-<weak_warning>'''abc'''</weak_warning>
-""", plain: SLASHY
+    doTest "'''abc'''", "/abc/", plain: SLASHY
   }
 
   void 'test multiline'() {
-    doTest """
-<weak_warning>'''abc
-cde'''</weak_warning>
-""", multiline: SLASHY
+    doTest """'''abc
+cde'''""", """/abc
+cde/""", multiline: SLASHY
   }
 
 
@@ -56,43 +49,34 @@ cde"""
   }
 
   void "test interpolated string"() {
-    doTest '''
-<weak_warning>"${1}"</weak_warning>
-''', interpolation: SLASHY
+    doTest '"abc${1}de"', '/abc${1}de/', interpolation: SLASHY
   }
 
   void "test don't complain to interpolated string if settings are disabled"() {
-    doTest '''
-"${1}"
-''', interpolation: UNDEFINED
+    doTest '"${1}"', interpolation: UNDEFINED
   }
 
   void "test don't complain to interpolated string if its kind coincides with settings"() {
-    doTest '''
-"""${1}"""
-''', interpolation: TRIPLE_DOUBLE_QUOTED
+    doTest '"""${1}"""', interpolation: TRIPLE_DOUBLE_QUOTED
   }
 
   void "test escaping minimization"() {
-    doTest """
-<weak_warning>"ab\\"c"</weak_warning>
-""", plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED
+    doTest '"ab\\"c"', /'ab"c'/, plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED
   }
 
-
   void "test leave plain string if escaping can't be minimized"() {
-    doTest """
-<weak_warning>"ab\\"'c"</weak_warning>
-""", plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED
+    doTest(/"ab\"'c"/, /'''ab"'c'''/, plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED)
   }
 
   void "test consider slashes for slashy strings"() {
-    doTest """
-<weak_warning>"ab//\\"c"</weak_warning>
-""", plain: DOUBLE_QUOTED, escape: SLASHY
+    doTest($/"ab//\"c"/$, $/'''ab//"c'''/$, plain: DOUBLE_QUOTED, escape: SLASHY)
   }
 
-  private void doTest(Map<String, InspectionStringKind> map = [:], String before) {
+  void "test conversion to dollar-slashy string"() {
+    doTest '\'abc$de\'', '$/abc$$de/$', plain: DOLLAR_SLASHY_QUOTED, escape: UNDEFINED
+  }
+
+  private void doTest(Map<String, InspectionStringKind> map = [:], String before, String after = null) {
     inspection.with {
       plainVersion$intellij_groovy_psi = map.plain ?: SINGLE_QUOTED
       escapeVersion$intellij_groovy_psi = map.escape ?: UNDEFINED
@@ -102,7 +86,14 @@ cde"""
     fixture.with {
       enableInspections inspection
       configureByText '_.groovy', before
-      checkHighlighting(true, false, true)
+      if (after == null) {
+        checkHighlighting(true, false, true)
+      } else {
+        def intention = availableIntentions.find { it.familyName.startsWith("Convert to") || it.familyName.contains("Change quotes") }
+        launchAction intention
+        checkResult after
+      }
+      null
     }
   }
 }

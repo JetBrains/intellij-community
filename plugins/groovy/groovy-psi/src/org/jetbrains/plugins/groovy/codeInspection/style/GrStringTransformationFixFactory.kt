@@ -8,6 +8,8 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind
 
@@ -51,12 +53,24 @@ class GrStringTransformationFixFactory {
         StringKind.DOLLAR_SLASHY -> GroovyBundle.message("intention.name.convert.to.dollar.slashy.string")
       }
 
-      override fun doFix(project: Project, descriptor: ProblemDescriptor) {
-        val literal = descriptor.psiElement.parentOfType<GrLiteral>(true) ?: return
+      private fun escapeTextPart(innerKind: StringKind, text: String): String =
+        targetKind.escape(innerKind.unescape(GrStringUtil.removeQuotes(text)))
+
+      private fun getNewText(literal: GrLiteral): String {
         val literalText = literal.text
         val quote = GrStringUtil.getStartQuote(literalText)
-        val kind = getCurrentKind(quote) ?: return
-        val newText = targetKind.escape(kind.unescape(GrStringUtil.removeQuotes(literalText)))
+        val kind = getCurrentKind(quote) ?: return literalText
+        return if (literal is GrString) {
+          literal.allContentParts.joinToString("") { if (it is GrStringContent) escapeTextPart(kind, it.text) else it.text }
+        }
+        else {
+          escapeTextPart(kind, literalText)
+        }
+      }
+
+      override fun doFix(project: Project, descriptor: ProblemDescriptor) {
+        val literal = descriptor.psiElement.parentOfType<GrLiteral>(true) ?: return
+        val newText = getNewText(literal)
         val newQuote = getQuoteByKind(targetKind)
         val endQuote = if (newQuote == GrStringUtil.DOLLAR_SLASH) GrStringUtil.SLASH_DOLLAR else newQuote
         val newExpression = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("$newQuote$newText$endQuote")
