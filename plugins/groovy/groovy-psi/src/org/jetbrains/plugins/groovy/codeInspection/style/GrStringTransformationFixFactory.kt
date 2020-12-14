@@ -1,0 +1,66 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.groovy.codeInspection.style
+
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.StringKind
+
+class GrStringTransformationFixFactory {
+  companion object {
+
+    private fun getCurrentKind(quote: String): StringKind? = when (quote) {
+      GrStringUtil.DOLLAR_SLASH -> StringKind.DOLLAR_SLASHY
+      GrStringUtil.SLASH -> StringKind.SLASHY
+      GrStringUtil.DOUBLE_QUOTES -> StringKind.DOUBLE_QUOTED
+      GrStringUtil.TRIPLE_QUOTES -> StringKind.TRIPLE_SINGLE_QUOTED
+      GrStringUtil.TRIPLE_DOUBLE_QUOTES -> StringKind.TRIPLE_DOUBLE_QUOTED
+      GrStringUtil.QUOTE -> StringKind.SINGLE_QUOTED
+      else -> null
+    }
+
+    private fun getQuoteByKind(kind: StringKind): String = when (kind) {
+      StringKind.SINGLE_QUOTED -> GrStringUtil.QUOTE
+      StringKind.TRIPLE_SINGLE_QUOTED -> GrStringUtil.TRIPLE_QUOTES
+      StringKind.DOUBLE_QUOTED -> GrStringUtil.DOUBLE_QUOTES
+      StringKind.TRIPLE_DOUBLE_QUOTED -> GrStringUtil.TRIPLE_DOUBLE_QUOTES
+      StringKind.SLASHY -> GrStringUtil.SLASH
+      StringKind.DOLLAR_SLASHY -> GrStringUtil.DOLLAR_SLASH
+    }
+
+    private val FIXES = StringKind.values().map { it to doGetStringTransformationFix(it) }.toMap()
+
+    fun getStringTransformationFix(targetKind: StringKind): GroovyFix = FIXES[targetKind]!!
+
+    private fun doGetStringTransformationFix(targetKind: StringKind): GroovyFix = object : GroovyFix() {
+      override fun getFamilyName(): String {
+        return "Fix quotation"
+      }
+
+      override fun getName(): String = when (targetKind) {
+        StringKind.SINGLE_QUOTED -> "Convert to single-quoted string"
+        StringKind.TRIPLE_SINGLE_QUOTED -> "Change quotes to '''"
+        StringKind.DOUBLE_QUOTED -> "Convert to double-quoted string"
+        StringKind.TRIPLE_DOUBLE_QUOTED -> "Change quotes to \"\"\""
+        StringKind.SLASHY -> "Convert to slashy string"
+        StringKind.DOLLAR_SLASHY -> "Convert to dollar-slashy string"
+      }
+
+      override fun doFix(project: Project, descriptor: ProblemDescriptor) {
+        val literal = descriptor.psiElement.parentOfType<GrLiteral>(true) ?: return
+        val literalText = literal.text
+        val quote = GrStringUtil.getStartQuote(literalText)
+        val kind = getCurrentKind(quote) ?: return
+        val newText = targetKind.escape(kind.unescape(GrStringUtil.removeQuotes(literalText)))
+        val newQuote = getQuoteByKind(targetKind)
+        val endQuote = if (newQuote == GrStringUtil.DOLLAR_SLASH) GrStringUtil.SLASH_DOLLAR else newQuote
+        val newExpression = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("$newQuote$newText$endQuote")
+        literal.replaceWithExpression(newExpression, true)
+      }
+    }
+  }
+}
