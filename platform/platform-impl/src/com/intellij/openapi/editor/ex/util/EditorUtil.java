@@ -857,6 +857,11 @@ public final class EditorUtil {
     return UIUtil.getFontWithFallback(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 
+  public static Font getEditorFont(int size) {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    return UIUtil.getFontWithFallback(scheme.getEditorFontName(), Font.PLAIN, size);
+  }
+
   public static int getDefaultCaretWidth() {
     return Registry.intValue("editor.caret.width", 2);
   }

@@ -145,6 +145,6 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   }
 
   public static void setMonospaced(Component field) {
-    field.setFont(EditorUtil.getEditorFont().deriveFont(Font.PLAIN, JBUI.Fonts.label().getSize()));
+    field.setFont(EditorUtil.getEditorFont(JBUI.Fonts.label().getSize()));
   }
 }
