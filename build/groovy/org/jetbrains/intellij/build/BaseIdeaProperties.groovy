@@ -38,7 +38,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.repository.search",
     "intellij.maven.model",
     "intellij.gradle",
-    "intellij.gradle.dsl.impl",
     "intellij.gradle.java",
     "intellij.vcs.git",
     "intellij.vcs.svn",
