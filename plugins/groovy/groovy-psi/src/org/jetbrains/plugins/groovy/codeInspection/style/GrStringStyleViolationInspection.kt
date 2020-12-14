@@ -50,12 +50,10 @@ class GrStringStyleViolationInspection : BaseInspection() {
   }
 
   companion object {
-    private val PLAIN_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED,
-                                               DOLLAR_SLASHY_QUOTED)
-    private val MULTILINE_STRING_OPTIONS = arrayOf(UNDEFINED, TRIPLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
-    private val ESCAPED_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED,
-                                                 DOLLAR_SLASHY_QUOTED)
-    private val INTERPOLATED_STRING_OPTIONS = arrayOf(UNDEFINED, DOUBLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
+    private val PLAIN_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
+    private val MULTILINE_STRING_OPTIONS = arrayOf(TRIPLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
+    private val ESCAPED_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
+    private val INTERPOLATED_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
   }
 
   @Volatile
@@ -172,7 +170,7 @@ class GrStringStyleViolationInspection : BaseInspection() {
       if (literal is GrString) {
         handleGString(literal)
       }
-      else {
+      else if (GrStringUtil.getStartQuote(literal.text) != "") {
         handlePlainString(literal)
       }
       super.visitLiteralExpression(literal)
@@ -197,7 +195,9 @@ class GrStringStyleViolationInspection : BaseInspection() {
           return
         }
       }
-      checkInconsistency(plainVersion, literal, PLAIN_STRING, PLAIN_STRING_OPTIONS)
+      if ("\n" !in literal.text) {
+        checkInconsistency(plainVersion, literal, PLAIN_STRING, PLAIN_STRING_OPTIONS)
+      }
     }
 
     private fun checkInconsistency(expected: InspectionStringKind,
