@@ -51,16 +51,16 @@ import java.util.concurrent.ConcurrentMap;
 public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, BulkFileListener {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerManagerImpl.class);
   private static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
-  private static final Key<Boolean> disableConsistencyCheckInTest = Key.create("DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST");
+  private static final Key<Boolean> DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST = Key.create("DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST");
 
   static boolean shouldCheckConsistency() {
     return IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()
-           && !Boolean.TRUE.equals(TestModeFlags.get(disableConsistencyCheckInTest));
+           && !Boolean.TRUE.equals(TestModeFlags.get(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST));
   }
 
   @TestOnly
   public static void disableConsistencyChecksInTestsTemporarily(@NotNull Disposable testDisposable) {
-    TestModeFlags.set(disableConsistencyCheckInTest, true, testDisposable);
+    TestModeFlags.set(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST, true, testDisposable);
   }
 
   /*
