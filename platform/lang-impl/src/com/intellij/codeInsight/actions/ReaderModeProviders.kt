@@ -5,36 +5,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingP
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.documentation.render.DocRenderManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.xml.breadcrumbs.BreadcrumbsForceShownSettings
-import com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity
-
-class BreadcrumbsReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project,
-                                editor: Editor,
-                                readerMode: Boolean,
-                                fileIsOpenAlready: Boolean,
-                                preferGlobalSettings: Boolean) {
-    val language = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.language ?: return
-    val globalBreadcrumbsShown = EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(language.id)
-    BreadcrumbsForceShownSettings.setForcedShown(
-      when {
-        preferGlobalSettings -> globalBreadcrumbsShown
-        readerMode -> ReaderModeSettings.instance(project).showBreadcrumbs
-        else -> globalBreadcrumbsShown
-      }, editor)
-    ApplicationManager.getApplication().invokeLater { BreadcrumbsInitializingActivity.reinitBreadcrumbsInAllEditors(project) }
-  }
-}
 
 class HighlightingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project,

@@ -14,7 +14,6 @@ import com.intellij.util.PlatformUtils
 internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
   private val settings get() = ReaderModeSettings.instance(project)
 
-  private val cdBreadcrumbs get() = CheckboxDescriptor(LangBundle.message("checkbox.breadcrumbs"), settings::showBreadcrumbs)
   private val cdInlays get() = CheckboxDescriptor(LangBundle.message("checkbox.inlays"), settings::showInlaysHints)
   private val cdRenderedDocs get() = CheckboxDescriptor(LangBundle.message("checkbox.rendered.docs"), settings::showRenderedDocs)
   private val cdLigatures get() = CheckboxDescriptor(LangBundle.message("checkbox.ligatures"), settings::showLigatures)
@@ -32,9 +31,6 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
         row(LangBundle.message("titled.border.reader.mode.settings")) {
           row {
             checkBox(cdRenderedDocs).enableIf(enabled.selected)
-          }
-          row {
-            checkBox(cdBreadcrumbs).enableIf(enabled.selected)
           }
           row {
             checkBox(cdWarnings).enableIf(enabled.selected)

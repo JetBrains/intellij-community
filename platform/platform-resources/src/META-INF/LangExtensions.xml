@@ -269,7 +269,6 @@
       </description>
     </experimentalFeature>
 
-    <readerModeProvider implementation="com.intellij.codeInsight.actions.BreadcrumbsReaderModeProvider"/>
     <readerModeProvider implementation="com.intellij.codeInsight.actions.FontReaderModeProvider"/>
     <readerModeProvider implementation="com.intellij.codeInsight.actions.LigaturesReaderModeProvider"/>
     <readerModeProvider implementation="com.intellij.codeInsight.actions.HighlightingReaderModeProvider"/>

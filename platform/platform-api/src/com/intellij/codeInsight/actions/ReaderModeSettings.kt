@@ -67,7 +67,6 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
   private var myState = State()
 
   class State : BaseState() {
-    @get:ReportValue var showBreadcrumbs by property(true)
     @get:ReportValue var showLigatures by property(true)
     @get:ReportValue var increaseLineSpacing by property(false)
     @get:ReportValue var showRenderedDocs by property(true)
@@ -77,12 +76,6 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
   }
-
-  var showBreadcrumbs: Boolean
-    get() = state.showBreadcrumbs
-    set(value) {
-      state.showBreadcrumbs = value
-    }
 
   var showLigatures: Boolean
     get() = state.showLigatures
