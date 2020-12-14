@@ -479,8 +479,7 @@ public final class FileSystemUtil {
     return readParentCaseSensitivityByJavaIO(anyChild);
   }
 
-  @NotNull
-  static FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull File anyChild) {
+  static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
     if (!anyChild.exists()) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
@@ -529,8 +528,7 @@ public final class FileSystemUtil {
     return FileAttributes.CaseSensitivity.SENSITIVE;
   }
 
-  @NotNull
-  static FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull File anyChild) {
+  static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull File anyChild) {
     FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
     if (JnaLoader.isLoaded()) {
       File parent = anyChild.getParentFile();
@@ -548,15 +546,14 @@ public final class FileSystemUtil {
     return detected;
   }
 
-  @NotNull
-  private static String toggleCase(@NotNull String name) {
+  private static String toggleCase(String name) {
     String altName = name.toUpperCase(Locale.getDefault());
     if (altName.equals(name)) altName = name.toLowerCase(Locale.getDefault());
     return altName;
   }
 
   /**
-   * @return true when the {@code name} contains case-toggleable characters (for which toLowerCase() != toUpperCase())
+   * @return {@code true} when the {@code name} contains case-toggleable characters (for which toLowerCase() != toUpperCase()).
    * E.g. "Child.txt" is case-toggleable because "CHILD.TXT" != "child.txt", but "122.45" is not.
    */
   public static boolean isCaseToggleable(@NotNull String name) {
@@ -565,7 +562,7 @@ public final class FileSystemUtil {
 
   // return child which name can be used for querying by different-case names (e.g "child.txt" vs "CHILD.TXT")
   // or null if there are none (e.g there's only one child "123.456").
-  private static String findCaseToggleableChild(@NotNull File dir) {
+  private static @Nullable String findCaseToggleableChild(File dir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
@@ -579,8 +576,7 @@ public final class FileSystemUtil {
   }
 
   //<editor-fold desc="Windows case sensitivity detection (NTFS-only)">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getNtfsCaseSensitivity(String path) {
     try {
       Kernel32 kernel32 = Kernel32.INSTANCE;
       NtOsKrnl ntOsKrnl = NtOsKrnl.INSTANCE;
@@ -653,8 +649,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="macOS case sensitivity detection">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getMacOsCaseSensitivity(String path) {
     try {
       CoreFoundation cf = CoreFoundation.INSTANCE;
 
@@ -695,8 +690,7 @@ public final class FileSystemUtil {
   //</editor-fold>
 
   //<editor-fold desc="Linux case sensitivity detection">
-  @NotNull
-  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(@NotNull String path) {
+  private static FileAttributes.CaseSensitivity getLinuxCaseSensitivity(String path) {
     try {
       Memory buf = new Memory(256);
       if (LibC.INSTANCE.statfs(path, buf) != 0) {
