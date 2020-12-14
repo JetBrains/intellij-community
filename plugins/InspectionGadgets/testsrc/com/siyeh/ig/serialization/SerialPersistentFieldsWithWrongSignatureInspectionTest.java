@@ -20,6 +20,6 @@ public class SerialPersistentFieldsWithWrongSignatureInspectionTest extends Ligh
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 }

@@ -18,7 +18,7 @@ public class UnnecessaryParenthesesInspectionTest extends LightJavaCodeInsightFi
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testUnnecessaryParenthesesInspection() {

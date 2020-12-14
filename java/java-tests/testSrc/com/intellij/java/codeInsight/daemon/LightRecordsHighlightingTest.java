@@ -20,7 +20,7 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testRecordBasics() {

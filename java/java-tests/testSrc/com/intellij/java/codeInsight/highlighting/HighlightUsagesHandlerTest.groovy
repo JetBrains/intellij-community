@@ -21,7 +21,7 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14
+    return JAVA_15
   }
 
   void testHighlightImport() {

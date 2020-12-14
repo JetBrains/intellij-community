@@ -11,7 +11,7 @@ public class MissingSerialAnnotationInspectionJava14Test extends LightJavaInspec
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testSerializableClassInJava14Positive() {

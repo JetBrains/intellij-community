@@ -19,9 +19,8 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
 /**
  * @author ven
@@ -36,7 +35,7 @@ public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 
   @Override

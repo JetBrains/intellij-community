@@ -2,17 +2,14 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -53,11 +50,9 @@ public class RecordConstructorMember implements ClassMember {
   public PsiMethod generateRecordConstructor() {
     String constructor;
     AccessModifier accessModifier = AccessModifier.PUBLIC;
-    if (PsiUtil.getLanguageLevel(myRecord) != LanguageLevel.JDK_14_PREVIEW) {
-      PsiModifierList list = myRecord.getModifierList();
-      if (list != null) {
-        accessModifier = AccessModifier.fromModifierList(list);
-      }
+    PsiModifierList list = myRecord.getModifierList();
+    if (list != null) {
+      accessModifier = AccessModifier.fromModifierList(list);
     }
     if (myCompact) {
       constructor = myRecord.getName() + "{\n}";

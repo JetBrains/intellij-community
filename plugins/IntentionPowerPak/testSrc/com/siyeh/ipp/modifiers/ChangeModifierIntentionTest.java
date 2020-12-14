@@ -85,10 +85,6 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_15_PREVIEW, () -> doTest("Make 'Foo' protected")); 
   }
 
-  public void testRecordConstructor1Java14() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_14_PREVIEW, () -> assertIntentionNotAvailable("Make 'Foo' protected"));
-  }
-
   public void testRecordConstructor2() {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_15_PREVIEW, () -> doTestWithChooser("public"));
   }

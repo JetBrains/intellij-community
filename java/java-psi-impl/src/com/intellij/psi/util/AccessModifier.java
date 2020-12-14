@@ -2,7 +2,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,12 +121,10 @@ public enum AccessModifier {
       if (JavaPsiRecordUtil.isCompactConstructor(method) ||
           JavaPsiRecordUtil.isExplicitCanonicalConstructor(method) ||
           method instanceof LightRecordCanonicalConstructor) {
-        if (PsiUtil.getLanguageLevel(member) != LanguageLevel.JDK_14_PREVIEW) {
-          PsiModifierList list = containingClass.getModifierList();
-          if (list != null) {
-            AccessModifier classModifier = fromModifierList(list);
-            return ContainerUtil.filter(ALL_MODIFIERS, m -> !classModifier.isWeaker(m));
-          }
+        PsiModifierList list = containingClass.getModifierList();
+        if (list != null) {
+          AccessModifier classModifier = fromModifierList(list);
+          return ContainerUtil.filter(ALL_MODIFIERS, m -> !classModifier.isWeaker(m));
         }
         return Collections.singletonList(PUBLIC);
       }

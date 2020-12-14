@@ -29,7 +29,7 @@ public class ReplaceConcatenationWithFormatStringTest extends IPPTestCase {
     public void testParameters() { doTest(); }
     public void testLineSeparator() { doTest(); }
     public void testPreserveTextBlock() {
-        IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, () -> {
+        IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
             doTest(IntentionPowerPackBundle.message(
               "replace.concatenation.with.format.string.intention.name.formatted"));
         });

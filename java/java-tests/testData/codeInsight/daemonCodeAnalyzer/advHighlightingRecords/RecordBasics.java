@@ -71,5 +71,5 @@ record StaticFieldCollides(int i) {
   static int <error descr="Variable 'i' is already defined in the scope">i</error>;
 }
 record Incomplete(@<error descr="Class reference expected">i</error>nt a) {}
-record CStyle(int a[]) {}
+record CStyle(int a<error descr="C-style record component declaration is not allowed">[]</error>) {}
 record SafeVarargComponent(<error descr="@SafeVarargs annotation cannot be applied for a record component">@SafeVarargs</error> int... component) {}

@@ -113,20 +113,22 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testPreviewLanguageLevel() throws Exception {
+    int feature = LanguageLevel.HIGHEST.toJavaVersion().feature;
     importProject(
       "apply plugin: 'java'\n" +
-      "sourceCompatibility = 14\n" +
+      "sourceCompatibility = " + feature+ "\n" +
       "apply plugin: 'java'\n" +
       "compileTestJava {\n" +
-      "  sourceCompatibility = 14\n" +
+      "  sourceCompatibility = " + feature +"\n" +
       "  options.compilerArgs << '--enable-preview'" +
       "}\n"
     );
 
     assertModules("project", "project.main", "project.test");
-    assertEquals(LanguageLevel.JDK_14, getLanguageLevelForModule("project"));
-    assertEquals(LanguageLevel.JDK_14, getLanguageLevelForModule("project.main"));
-    assertEquals(LanguageLevel.JDK_14_PREVIEW, getLanguageLevelForModule("project.test"));
+    assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule("project"));
+    assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule("project.main"));
+    LanguageLevel highestPreview = LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1];
+    assertEquals(highestPreview, getLanguageLevelForModule("project.test"));
   }
 
   @Test

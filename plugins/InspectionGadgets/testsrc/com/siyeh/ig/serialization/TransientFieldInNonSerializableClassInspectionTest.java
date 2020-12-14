@@ -20,6 +20,6 @@ public class TransientFieldInNonSerializableClassInspectionTest extends LightJav
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 }

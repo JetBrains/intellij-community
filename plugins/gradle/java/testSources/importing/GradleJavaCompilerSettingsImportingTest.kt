@@ -68,68 +68,73 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
   fun `test language level approximation`() {
     if (isNotSupportedJava14) return
 
+    val nonPreviewLevel = LanguageLevel.HIGHEST
+    val preview = LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1]
+    
+    val feature = nonPreviewLevel.toJavaVersion().feature
+
     createJavaGradleSubProject(
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = true
     )
     importProject()
-    assertProjectLanguageLevel(LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_14_PREVIEW)
+    assertProjectLanguageLevel(preview)
+    assertModuleLanguageLevel("project", preview)
+    assertModuleLanguageLevel("project.main", preview)
+    assertModuleLanguageLevel("project.test", preview)
 
     createJavaGradleSubProject(
       "module",
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = true
     )
     createGradleSettingsFile("module")
     importProject()
-    assertProjectLanguageLevel(LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module.test", LanguageLevel.JDK_14_PREVIEW)
+    assertProjectLanguageLevel(preview)
+    assertModuleLanguageLevel("project", preview)
+    assertModuleLanguageLevel("project.main", preview)
+    assertModuleLanguageLevel("project.test", preview)
+    assertModuleLanguageLevel("project.module", preview)
+    assertModuleLanguageLevel("project.module.main", preview)
+    assertModuleLanguageLevel("project.module.test", preview)
 
     createJavaGradleSubProject(
       "module1",
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = false
     )
     createJavaGradleSubProject(
       "module2",
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = false,
       testSourceCompatibilityEnablePreview = true
     )
     createJavaGradleSubProject(
       "module3",
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = false,
       testSourceCompatibilityEnablePreview = false
     )
     createGradleSettingsFile("module", "module1", "module2", "module3", "module4")
     importProject()
-    assertProjectLanguageLevel(LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module.test", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module1", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module1.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module1.test", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module2", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module2.main", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module2.test", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module3", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module3.main", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module3.test", LanguageLevel.JDK_14)
+    assertProjectLanguageLevel(nonPreviewLevel)
+    assertModuleLanguageLevel("project", preview)
+    assertModuleLanguageLevel("project.main", preview)
+    assertModuleLanguageLevel("project.test", preview)
+    assertModuleLanguageLevel("project.module", preview)
+    assertModuleLanguageLevel("project.module.main", preview)
+    assertModuleLanguageLevel("project.module.test", preview)
+    assertModuleLanguageLevel("project.module1", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module1.main", preview)
+    assertModuleLanguageLevel("project.module1.test", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module2", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module2.main", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module2.test", preview)
+    assertModuleLanguageLevel("project.module3", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module3.main", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module3.test", nonPreviewLevel)
   }
 }

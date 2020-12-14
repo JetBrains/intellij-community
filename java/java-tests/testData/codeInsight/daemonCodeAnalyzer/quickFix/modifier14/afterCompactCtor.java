@@ -1,4 +1,4 @@
-// "Make 'R' public" "true"
-record R () {
-  public R {}
+// "Make 'R' protected" "true"
+protected record R () {
+  protected R {}
 }

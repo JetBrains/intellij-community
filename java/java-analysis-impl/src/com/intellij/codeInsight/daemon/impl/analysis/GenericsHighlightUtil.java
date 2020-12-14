@@ -1021,7 +1021,7 @@ public final class GenericsHighlightUtil {
         }
       }
       if (superMethod == null) {
-        if (languageLevel != LanguageLevel.JDK_14_PREVIEW && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+        if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
           return null;
         }
         String description = JavaErrorBundle.message("method.does.not.override.super");

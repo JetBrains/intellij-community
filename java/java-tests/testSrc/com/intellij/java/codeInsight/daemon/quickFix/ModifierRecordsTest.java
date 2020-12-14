@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.codeInspection;
+package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.RedundantRecordConstructorInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-// Remove this test when support of 14-preview is dropped
-public class RedundantRecordConstructorInspection14Test extends LightQuickFixParameterizedTestCase {
-
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new RedundantRecordConstructorInspection()};
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
-  }
-
+public class ModifierRecordsTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {
-    return "/inspection/redundantRecordConstructor/java14";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/modifier14";
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 }

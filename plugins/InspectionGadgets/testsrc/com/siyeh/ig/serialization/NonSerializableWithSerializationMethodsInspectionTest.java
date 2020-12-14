@@ -15,7 +15,7 @@ public class NonSerializableWithSerializationMethodsInspectionTest extends Light
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   private void doTest() {

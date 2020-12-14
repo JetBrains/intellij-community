@@ -75,8 +75,6 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     ourPresentableShortMessage.put(LanguageLevel.JDK_12, "13");
     ourPresentableShortMessage.put(LanguageLevel.JDK_13, "14");
     ourPresentableShortMessage.put(LanguageLevel.JDK_14, "15");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_14_PREVIEW, "15nopreview");
-
   }
 
   private static final Set<String> ourGenerifiedClasses = new HashSet<>();

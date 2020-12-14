@@ -36,33 +36,53 @@ public enum HighlightingFeature {
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
   ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
   SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
-  RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records"),
-  PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof"),
-  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences") {
+  RECORDS(LanguageLevel.JDK_15_PREVIEW, "feature.records") {
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_14_PREVIEW);
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
     }
 
     @Override
     LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_15;
+      return LanguageLevel.JDK_16;
     }
   },
-  TEXT_BLOCKS(LanguageLevel.JDK_14_PREVIEW, "feature.text.blocks") {
+  PATTERNS(LanguageLevel.JDK_15_PREVIEW, "feature.patterns.instanceof"){
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_14_PREVIEW);
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
     }
 
     @Override
     LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_15;
+      return LanguageLevel.JDK_16;
     }
   },
+  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
+  TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks") ,
   SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes"),
-  LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"),
-  LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums");
+  LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
+    }
+
+    @Override
+    LanguageLevel getStandardLevel() {
+      return LanguageLevel.JDK_16;
+    }
+  },
+  LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW);
+    }
+
+    @Override
+    LanguageLevel getStandardLevel() {
+      return LanguageLevel.JDK_16;
+    }
+  };
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
 

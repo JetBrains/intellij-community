@@ -56,7 +56,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testParam2() { doTest(); }
   public void testParam3() { doTest(); }
   public void testParam4() { doTest(); }
-  public void testRecordParamJava14Preview() { doTest(); }
+  public void testRecordParamJava15Preview() { doTest(); }
   public void testTypeParam() {
     myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "private";
     myInspection.METHOD_OPTIONS.REQUIRED_TAGS = "@param";

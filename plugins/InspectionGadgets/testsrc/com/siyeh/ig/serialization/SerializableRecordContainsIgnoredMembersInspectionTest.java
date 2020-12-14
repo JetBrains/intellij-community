@@ -19,7 +19,7 @@ public class SerializableRecordContainsIgnoredMembersInspectionTest extends Ligh
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   @Override

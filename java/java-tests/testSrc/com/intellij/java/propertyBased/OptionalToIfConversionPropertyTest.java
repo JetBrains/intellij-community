@@ -41,7 +41,7 @@ public class OptionalToIfConversionPropertyTest extends LightJavaCodeInsightFixt
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testCompilabilityAfterConversion() {

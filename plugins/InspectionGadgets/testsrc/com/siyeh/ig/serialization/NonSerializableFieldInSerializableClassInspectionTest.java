@@ -20,6 +20,6 @@ public class NonSerializableFieldInSerializableClassInspectionTest extends Light
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 }

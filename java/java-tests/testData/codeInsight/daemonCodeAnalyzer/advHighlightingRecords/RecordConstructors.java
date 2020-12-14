@@ -1,5 +1,5 @@
 record NotPublic(int x, int y) {
-  <error descr="Canonical constructor must be 'public'">NotPublic</error>(int x, int y) {this.x = x; this.y = y;}
+  NotPublic(int x, int y) {this.x = x; this.y = y;}
   NotPublic() {this(0,0);}
 }
 record Generic(String x) {

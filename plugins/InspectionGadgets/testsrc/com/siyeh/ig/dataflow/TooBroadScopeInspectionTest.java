@@ -25,6 +25,6 @@ public class TooBroadScopeInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 }

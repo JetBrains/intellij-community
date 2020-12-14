@@ -27,7 +27,7 @@ public class CreateInnerClassFromNewTest extends LightQuickFixParameterizedTestC
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 
   @Override

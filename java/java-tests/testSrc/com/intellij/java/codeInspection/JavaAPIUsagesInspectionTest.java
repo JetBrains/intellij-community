@@ -86,10 +86,10 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
 
   //generate apiXXX.txt
   //configure jdk and set test project descriptor
-  private static final String PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-14.0.1";
-  private static final String JDK_HOME = "/home/me/java/jdk-15";
-  private static final LanguageLevel LANGUAGE_LEVEL = LanguageLevel.JDK_14_PREVIEW;
-  private static final String VERSION = "15";
+  private static final String PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-15";
+  private static final String JDK_HOME = "/home/me/java/jdk-16";
+  private static final LanguageLevel LANGUAGE_LEVEL = LanguageLevel.JDK_15_PREVIEW;
+  private static final String VERSION = "16";
   private static final LightProjectDescriptor API_VERSION_PROJECT_DESCRIPTOR = new LightProjectDescriptor() {
     @Override
     public @NotNull Sdk getSdk() {

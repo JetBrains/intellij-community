@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull
 class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14
+    return JAVA_15
   }
 
   void "test unknown variable"() {
@@ -254,7 +254,7 @@ class C {
 
     def file = PsiFileFactory.getInstance(project).
       createFileFromText('a.java', JavaLanguage.INSTANCE, myFixture.file.text, false, false)
-    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW)
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_15_PREVIEW)
     def fctsTree = file.node.lighterAST
 
     assert fctsTree instanceof FCTSBackedLighterAST

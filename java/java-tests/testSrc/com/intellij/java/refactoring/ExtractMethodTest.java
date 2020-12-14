@@ -942,7 +942,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testPatternVariable() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
   }
 
   public void testPatternVariableIntroduced() throws Exception {
@@ -954,7 +954,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariableIntroduced3() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
   }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {

@@ -33,6 +33,6 @@ public class DelegateWithDefaultParamValueTest extends LightQuickFixParameterize
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_14_PREVIEW;
+    return LanguageLevel.JDK_15_PREVIEW;
   }
 }

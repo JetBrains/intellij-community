@@ -29,7 +29,6 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 
@@ -860,6 +859,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   private void doTestPreview(String compilerArgs) {
+    int feature = LanguageLevel.HIGHEST.toJavaVersion().feature;
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -871,7 +871,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "      <artifactId>maven-compiler-plugin</artifactId>\n" +
                   "      <version>3.8.0</version>\n" +
                   "      <configuration>\n" +
-                  "          <release>14</release>\n" +
+                  "          <release>" + feature + "</release>\n" +
                              compilerArgs +
                   "          <forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
                   "      </configuration>\n" +
@@ -880,7 +880,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_14_PREVIEW, getLanguageLevelForModule());
+    assertEquals(LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1], getLanguageLevelForModule());
   }
 
   public void testInheritingLanguageLevelFromPluginManagementSection() {

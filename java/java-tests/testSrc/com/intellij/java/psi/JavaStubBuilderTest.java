@@ -3,7 +3,6 @@ package com.intellij.java.psi;
 
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaFile;
@@ -33,7 +32,6 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
     myBuilder = new JavaLightStubBuilder();
   }
 
@@ -735,7 +733,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   private void doTest(/*@Language("JAVA")*/ String source, @Language("TEXT") String expected) {
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
-    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW);
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_15_PREVIEW);
     FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);
     assertFalse(fileNode.isParsed());

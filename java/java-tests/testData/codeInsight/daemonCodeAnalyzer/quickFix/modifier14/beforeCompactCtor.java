@@ -1,4 +1,4 @@
-// "Make 'R' public" "true"
-record R () {
+// "Make 'R' protected" "true"
+protected record R () {
   <caret>R {}
 }

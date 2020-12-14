@@ -2,7 +2,6 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.castSafelyTo
 import junit.framework.TestCase
@@ -150,9 +149,6 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
 }
 
 class Java13UJumpExpressionTest : JavaUJumpExpressionBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_14
-  }
 
   fun `test break in switch`() = doTest<UYieldExpression, JavaUSwitchExpression>("""
       class Break {

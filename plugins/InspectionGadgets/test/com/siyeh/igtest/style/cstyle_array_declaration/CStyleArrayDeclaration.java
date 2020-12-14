@@ -36,6 +36,6 @@ public class CStyleArrayDeclaration
         return a;
     }
 
-    record Record(int <warning descr="C-style array declaration of record component 'x'">x</warning>[]) {
+    record Record(int <warning descr="C-style array declaration of record component 'x'">x</warning><error descr="C-style record component declaration is not allowed">[]</error>) {
     }
 }

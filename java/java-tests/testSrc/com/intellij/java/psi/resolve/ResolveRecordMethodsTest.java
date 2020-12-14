@@ -15,7 +15,7 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   private PsiElement resolve() {

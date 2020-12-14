@@ -83,7 +83,7 @@ class RecordBuilder {
   PsiClass build() {
     PsiJavaFile psiFile = (PsiJavaFile)PsiFileFactory.getInstance(myOriginClass.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, myRecordText.toString(), false, false);
-    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_14_PREVIEW);
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_15_PREVIEW);
     PsiClass psiRecord = psiFile.getClasses()[0];
     CodeStyleManager.getInstance(myOriginClass.getProject()).reformat(psiRecord);
     return psiRecord;
