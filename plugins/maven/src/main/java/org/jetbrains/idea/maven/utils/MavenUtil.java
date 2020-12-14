@@ -406,7 +406,7 @@ public class MavenUtil {
     String text = fileTemplate.getText(allProperties);
     Pattern pattern = Pattern.compile("\\$\\{(.*)\\}");
     Matcher matcher = pattern.matcher(text);
-    StringBuffer builder = new StringBuffer();
+    StringBuilder builder = new StringBuilder();
     while (matcher.find()) {
       matcher.appendReplacement(builder, "\\$" + toUpperCase(matcher.group(1)) + "\\$");
     }

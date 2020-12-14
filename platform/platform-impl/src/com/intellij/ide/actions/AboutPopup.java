@@ -805,7 +805,7 @@ public final class AboutPopup {
         final Pattern pattern = Pattern.compile("(\\d+)px");
         final Matcher matcher = pattern.matcher(htmlText);
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
           matcher.appendReplacement(sb, JBUIScale.scale(Integer.parseInt(matcher.group(1))) + "px");
         }

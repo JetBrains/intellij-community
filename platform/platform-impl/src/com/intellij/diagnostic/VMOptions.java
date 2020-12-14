@@ -124,7 +124,7 @@ public final class VMOptions {
       if (!StringUtil.isEmptyOrSpaces(content)) {
         Matcher m = pattern.matcher(content);
         if (m.find()) {
-          StringBuffer b = new StringBuffer();
+          StringBuilder b = new StringBuilder();
           m.appendReplacement(b, Matcher.quoteReplacement(value));
           m.appendTail(b);
           content = b.toString();

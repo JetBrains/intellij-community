@@ -49,7 +49,7 @@ public final class GenericRepositoryUtil {
     for (TemplateVariable v : variables) {
       lookup.put(v.getName(), v.getValue());
     }
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     Matcher m = PLACEHOLDER_PATTERN.matcher(s);
     while (m.find()) {
       String name = m.group(1);

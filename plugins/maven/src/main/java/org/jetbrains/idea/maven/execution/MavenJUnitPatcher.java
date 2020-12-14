@@ -225,7 +225,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
 
   private static String resolveRuntimeProperties(String value, UnaryOperator<String> runtimeProperties) {
     Matcher matcher = ARG_LINE_PATTERN.matcher(value);
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     while (matcher.find()) {
       String replacement = runtimeProperties.apply(matcher.group(1));
       matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement == null ? matcher.group() : replacement));

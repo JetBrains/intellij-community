@@ -323,7 +323,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   public static String updateVMOptions(@NotNull String originalText, @NotNull String vmOptions) {
     Matcher matcher = VM_OPTIONS_REGEX.matcher(originalText);
 
-    StringBuffer result = new StringBuffer(originalText.length() + vmOptions.length());
+    StringBuilder result = new StringBuilder(originalText.length() + vmOptions.length());
 
     String escapedValue = StringUtil.escapeProperty(vmOptions, false);
     if (matcher.find()) {

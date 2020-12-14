@@ -245,7 +245,7 @@ public class WindowsDefenderChecker {
   @NotNull
   private static String expandEnvVars(@NotNull String path) {
     Matcher m = WINDOWS_ENV_VAR_PATTERN.matcher(path);
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     while (m.find()) {
       String value = System.getenv(m.group(1));
       if (value != null) {
