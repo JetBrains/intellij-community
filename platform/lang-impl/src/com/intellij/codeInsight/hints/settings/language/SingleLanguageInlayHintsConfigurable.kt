@@ -19,7 +19,8 @@ internal class SingleLanguageInlayHintsConfigurable(project: Project, val langua
     fun getInlayProviderSettingsModels(project: Project, language: Language) : Array<InlayProviderSettingsModel> {
       val models = InlaySettingsProvider.EP.getExtensions().flatMap { it.createModels(project, language) }
       if (models.isEmpty()) {
-        throw IllegalStateException("Language panel must have at least one config model")
+        val provider = InlaySettingsProvider.EP.getExtensions().find { language in it.getSupportedLanguages(project) }!!
+        throw IllegalStateException("Inlay settings provider ${provider.javaClass} declared support for language \"${language.id}\" but doesn't provide a model")
       }
       return models.toTypedArray()
     }
