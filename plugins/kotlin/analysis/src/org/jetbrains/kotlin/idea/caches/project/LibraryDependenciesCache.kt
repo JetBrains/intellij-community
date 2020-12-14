@@ -77,7 +77,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
                 override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
                     val jdk = jdkOrderEntry.jdk ?: return
-                    sdks += SdkInfo(project, jdk)
+                    SdkInfo(project, jdk).also { sdkInfo ->
+                        if (compatiblePlatforms(platform, sdkInfo.platform))
+                            sdks += sdkInfo
+                    }
                 }
             }, Unit)
         }
