@@ -9,17 +9,71 @@ import com.intellij.openapi.util.BuildNumber
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.ListAssert
 import org.assertj.core.api.ObjectAssert
+import org.junit.Assert
 import org.junit.Test
 
 class JdkListTest {
   private val om = ObjectMapper()
 
-  private fun buildPredicate(build: String) = JdkPredicate(BuildNumber.fromString(build)!!)
+  private fun buildPredicate(build: String = "203.123",
+                             archs : Set<String> = setOf("x86_64")) = JdkPredicate(BuildNumber.fromString(build)!!, archs.map { JdkPlatform("any", it) }.toSet())
 
   @Test
   fun `parse feed v1`() {
     val json = loadTestData("feed-v1.json")
     assertSingleItemForEachOS(json)
+  }
+
+  @Test
+  fun `parse feed v2 lists M1`() {
+    val json = loadTestData("feed-v2.json")
+
+    val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
+                                 supportedPlatforms = setOf(JdkPlatform("macOS", "aarch64")),
+    )
+
+    val items = JdkListParser.parseJdkList(json, predicate)
+    //there must be only M1 builds
+    Assert.assertEquals(3, items.size)
+  }
+
+  @Test
+  fun `parse feed v2 lists windows`() {
+    val json = loadTestData("feed-v2.json")
+
+    val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
+                                 supportedPlatforms = setOf(JdkPlatform("windows", "aarch64")),
+    )
+
+    val items = JdkListParser.parseJdkList(json, predicate)
+    //there must be only M1 builds
+    Assert.assertEquals("$items", 0, items.size)
+  }
+
+  @Test
+  fun `parse feed v2 lists linux`() {
+    val json = loadTestData("feed-v2.json")
+
+    val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
+                                 supportedPlatforms = setOf(JdkPlatform("linux", "aarch64")),
+    )
+
+    val items = JdkListParser.parseJdkList(json, predicate)
+    //there must be only M1 builds
+    Assert.assertEquals("$items", 0, items.size)
+  }
+
+  @Test
+  fun `parse feed v2 lists M1 and Intel`() {
+    val json = loadTestData("feed-v2.json")
+
+    val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
+                                 supportedPlatforms = setOf(JdkPlatform("macOS", "aarch64"), JdkPlatform("macOS", "x86_64")),
+    )
+
+    val items = JdkListParser.parseJdkList(json, predicate)
+    //there must be only M1 builds
+    Assert.assertEquals("$items", 27, items.size)
   }
 
   @Test
@@ -172,7 +226,8 @@ class JdkListTest {
 
   private inline fun assertForEachOS(json: ObjectNode, assert: ListAssert<JdkItem>.() -> Unit) {
     for (osType in listOf("windows", "linux", "macOS")) {
-      val predicate = JdkPredicate(BuildNumber.fromString("201.123")!!)
+      val archs: Set<JdkPlatform> = setOf(JdkPlatform(osType,"x86_64"))
+      val predicate = JdkPredicate(BuildNumber.fromString("201.123")!!, archs)
       val data = JdkListParser.parseJdkList(json, predicate).filter { it.os == osType }
       assertThat(data)
         .withFailMessage("should have items for $osType")

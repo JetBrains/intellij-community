@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -23,6 +23,7 @@ import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
+import com.intellij.util.system.CpuArch
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.tukaani.xz.XZInputStream
@@ -193,13 +194,30 @@ enum class JdkPackageType(@NonNls val type: String) {
   }
 }
 
+data class JdkPlatform(
+  val os: String,
+  val arch: String,
+)
+
 data class JdkPredicate(
-  private val ideBuildNumber: BuildNumber
+  private val ideBuildNumber: BuildNumber,
+  private val supportedPlatforms: Set<JdkPlatform>,
 ) {
 
   companion object {
     fun createInstance(): JdkPredicate {
-      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build)
+      val x86_64 ="x86_64"
+      val platforms = mutableListOf(JdkPlatform(currentOS, x86_64))
+
+      if ((SystemInfo.isMac && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.m1")) {
+        platforms += JdkPlatform(os = "macOS", arch = "aarch64")
+      }
+
+      if (SystemInfo.isWindows /* && test for WSL*/) {
+        platforms += JdkPlatform(os = "linux", arch = x86_64)
+      }
+
+      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, platforms.toSet())
     }
 
     val currentOS = when {
@@ -216,6 +234,9 @@ data class JdkPredicate(
   }
 
   fun testJdkPackage(pkg: ObjectNode): Boolean {
+    val os = pkg["os"]?.asText() ?: return false
+    val arch = pkg["arch"]?.asText() ?: return false
+    if (JdkPlatform(os, arch) !in supportedPlatforms) return false
     if (pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) == null) return false
     return testPredicate(pkg["filter"]) == true
   }
@@ -234,6 +255,8 @@ data class JdkPredicate(
    *         { "type": "not", "item": { same as before } }
    * or
    *         { "type": "const", "value": true | false  }
+   * or (from 2020.3.1)
+   *         { "type": "supports_arch" }
    */
   fun testPredicate(filter: JsonNode?): Boolean? {
     //no filter means predicate is true
@@ -278,6 +301,15 @@ data class JdkPredicate(
         if (ideBuildNumber > untilBuildSafe) return false
       }
 
+      return true
+    }
+
+    if (type == "supports_arch") {
+      // the main fact is that we support that filter,
+      // the actual test is implemented when the IDE compares
+      // the actual arch and os attributes
+      // the older IDEs does not support that predicate and
+      // ignores the entire element
       return true
     }
 
