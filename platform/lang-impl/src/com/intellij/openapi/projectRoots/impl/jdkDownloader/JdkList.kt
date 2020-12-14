@@ -193,7 +193,8 @@ enum class JdkPackageType(@NonNls val type: String) {
 
 data class JdkPredicate(
   private val ideBuildNumber: BuildNumber,
-  private val expectedOS: String
+  private val expectedOS: String,
+  private val supportedArchs: Set<String>
 ) {
 
   companion object {
@@ -204,7 +205,13 @@ data class JdkPredicate(
         SystemInfo.isLinux -> "linux"
         else -> error("Unsupported OS")
       }
-      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, expectedOS)
+
+      val archs = when {
+        SystemInfo.isMac && SystemInfo.isArm64 -> setOf("x86_64", "aarch64")
+        else -> setOf("x86_64")
+      }
+
+      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, expectedOS, archs)
     }
   }
 
@@ -215,6 +222,7 @@ data class JdkPredicate(
 
   fun testJdkPackage(pkg: ObjectNode): Boolean {
     if (pkg["os"]?.asText() != expectedOS) return false
+    if ((pkg["arch"]?.asText()?: "") !in supportedArchs) return false
     if (pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) == null) return false
     return testPredicate(pkg["filter"]) == true
   }
@@ -233,6 +241,8 @@ data class JdkPredicate(
    *         { "type": "not", "item": { same as before } }
    * or
    *         { "type": "const", "value": true | false  }
+   * or (from 2020.3.1)
+   *         { "type": "supports_arch", "arch": "x86_64" | "aarch64"  }
    */
   fun testPredicate(filter: JsonNode?): Boolean? {
     //no filter means predicate is true
@@ -278,6 +288,11 @@ data class JdkPredicate(
       }
 
       return true
+    }
+
+    if (type == "supports_arch") {
+      val arch = filter["arch"]?.asText() ?: return null
+      return arch in supportedArchs
     }
 
     return null
