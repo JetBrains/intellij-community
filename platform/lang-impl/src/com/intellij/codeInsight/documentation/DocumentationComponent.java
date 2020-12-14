@@ -745,6 +745,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myDecoratedText = decorate(text);
 
     showHint(viewRect, ref);
+
+    if (myManager != null) {
+      myManager.getProject().getMessageBus().syncPublisher(DocumentationComponentListener.TOPIC).onComponentDataChanged();
+    }
   }
 
   protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
