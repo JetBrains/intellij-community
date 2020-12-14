@@ -34,8 +34,4 @@ public final class NioFiles {
     }
     return path;
   }
-
-  public static void deleteRecursively(@NotNull Path path) throws IOException {
-    FileUtilRt.deleteRecursivelyNIO(path);
-  }
 }
