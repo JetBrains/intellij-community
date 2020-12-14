@@ -58,6 +58,7 @@ public class AfterSuiteEvent extends AbstractTestEvent {
           break;
       }
       getResultsViewer().onSuiteFinished(testProxy);
+      getExecutionConsole().getEventPublisher().onSuiteFinished(testProxy);
     }
   }
 }

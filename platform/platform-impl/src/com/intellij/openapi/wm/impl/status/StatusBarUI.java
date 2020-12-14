@@ -5,6 +5,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -18,7 +19,7 @@ public class StatusBarUI extends ComponentUI {
     Graphics2D g2d = (Graphics2D) g.create();
     Rectangle r = new Rectangle(c.getSize());
     try {
-      g2d.setColor(UIUtil.getPanelBackground());
+      g2d.setColor(getBackground());
       g2d.fill(r);
 
       g2d.setColor(BORDER_TOP_COLOR);
@@ -37,5 +38,9 @@ public class StatusBarUI extends ComponentUI {
   @Override
   public Dimension getMaximumSize(JComponent c) {
     return JBUI.size(Integer.MAX_VALUE, 23);
+  }
+
+  public @NotNull Color getBackground() {
+    return UIUtil.getPanelBackground();
   }
 }

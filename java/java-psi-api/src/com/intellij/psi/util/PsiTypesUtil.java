@@ -12,20 +12,16 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class PsiTypesUtil {
-  @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<>();
-  @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<>();
+  @NonNls private static final Map<String, String> ourUnboxedTypes = new HashMap<>();
+  @NonNls private static final Map<String, String> ourBoxedTypes = new HashMap<>();
 
   static {
     ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
@@ -247,7 +243,7 @@ public final class PsiTypesUtil {
       }
     }
     else if (parent instanceof PsiAssignmentExpression) {
-      if (((PsiAssignmentExpression)parent).getOperationSign().getTokenType() == JavaTokenType.EQ && 
+      if (((PsiAssignmentExpression)parent).getOperationSign().getTokenType() == JavaTokenType.EQ &&
           PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
         PsiType type = ((PsiAssignmentExpression)parent).getLExpression().getType();
         return !PsiType.NULL.equals(type) ? type : null;

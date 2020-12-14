@@ -44,6 +44,10 @@ public final class DisabledPluginsState {
     }
 
     List<String> requiredPlugins = StringUtil.split(System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, ""), ",");
+    List<String> suppressedPlugins = StringUtil.split(System.getProperty("idea.suppressed.plugins.id", ""), ",");
+    List<String> nonEssentialSuppressedPlugins =
+      ContainerUtil.filter(suppressedPlugins, it -> !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it));
+
     try {
       boolean updateDisablePluginsList = false;
       try (BufferedReader reader = Files.newBufferedReader(file)) {
@@ -54,6 +58,12 @@ public final class DisabledPluginsState {
             disabledPlugins.add(PluginId.getId(id));
           }
           else {
+            updateDisablePluginsList = true;
+          }
+        }
+
+        for (String suppressedId : nonEssentialSuppressedPlugins) {
+          if (disabledPlugins.add(PluginId.getId(suppressedId))) {
             updateDisablePluginsList = true;
           }
         }

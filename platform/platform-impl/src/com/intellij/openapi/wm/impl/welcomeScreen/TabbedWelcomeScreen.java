@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WelcomeScreenCustomization;
@@ -8,6 +9,7 @@ import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -20,11 +22,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
+import static com.intellij.ui.UIBundle.*;
 
 public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
@@ -38,6 +43,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     JBList<WelcomeScreenTab> tabList = createListWithTabs(mainListModel);
     tabList.addListSelectionListener(e -> centralPanel.select(tabList.getSelectedValue(), true));
+    tabList.getAccessibleContext().setAccessibleName(message("welcome.screen.welcome.screen.categories.accessible.name"));
 
     JComponent logoComponent = createSmallLogo();
     logoComponent.setFocusable(false);
@@ -124,17 +130,22 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       JPanel wrappedPanel = JBUI.Panels.simplePanel(keyComponent);
       UIUtil.setBackgroundRecursively(wrappedPanel, isSelected ? UIUtil.getListSelectionBackground(cellHasFocus): getMainTabListBackground());
       UIUtil.setForegroundRecursively(wrappedPanel, UIUtil.getListForeground(isSelected, cellHasFocus));
+      if (value instanceof Accessible) {
+        wrappedPanel.getAccessibleContext().setAccessibleName(((Accessible)value).getAccessibleContext().getAccessibleName());
+      }
       return wrappedPanel;
     }
   }
 
-  public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab {
+  public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab, Accessible {
 
     private final JComponent myKeyComponent;
     private JComponent myAssociatedComponent;
+    private final JBLabel myLabel;
 
     public DefaultWelcomeScreenTab(@NotNull @Nls String tabName) {
-      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(new JBLabel(tabName)).withBackground(getMainTabListBackground())
+      myLabel = new JBLabel(tabName);
+      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(myLabel).withBackground(getMainTabListBackground())
         .withBorder(JBUI.Borders.empty(8, 0));
     }
 
@@ -151,6 +162,11 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
         myAssociatedComponent = buildComponent();
       }
       return myAssociatedComponent;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      return myLabel.getAccessibleContext();
     }
 
     protected abstract JComponent buildComponent();

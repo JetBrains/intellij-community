@@ -26,13 +26,25 @@ final class PortableCompilationCache {
      * {@link JpsCaches} archive upload may be skipped if only {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s are required
      * without any incremental compilation (for tests execution as an example)
      */
-    private static final String SKIP_UPLOAD_PROPERTY = 'intellij.jps.remote.cache.compilationOutputsOnly'
+    private static final String SKIP_UPLOAD_PROPERTY = 'intellij.jps.remote.cache.uploadCompilationOutputsOnly'
+    /**
+     * {@link JpsCaches} archive download may be skipped if only {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s are required
+     * without any incremental compilation (for tests execution as an example)
+     */
+    private static final String SKIP_DOWNLOAD_PROPERTY = 'intellij.jps.remote.cache.downloadCompilationOutputsOnly'
     private final CompilationContext context
+    final boolean skipDownload = bool(SKIP_DOWNLOAD_PROPERTY, false)
     final boolean skipUpload = bool(SKIP_UPLOAD_PROPERTY, false)
     final File dir = context.compilationData.dataStorageRoot
 
     JpsCaches(CompilationContext context) {
       this.context = context
+    }
+
+    def maybeAvailableLocally() {
+      def files = dir.list()
+      context.messages.info("$dir.absolutePath: $files")
+      dir.isDirectory() && files != null && files.length > 0
     }
   }
 
@@ -107,7 +119,8 @@ final class PortableCompilationCache {
   @Lazy
   private PortableCompilationCacheDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
-    new PortableCompilationCacheDownloader(context, remoteCache.url, remoteGitUrl, availableForHeadCommit)
+    new PortableCompilationCacheDownloader(context, remoteCache.url, remoteGitUrl,
+                                           availableForHeadCommit, jpsCaches.skipDownload)
   }()
 
   @Lazy
@@ -132,15 +145,17 @@ final class PortableCompilationCache {
    * For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
    */
   def downloadCacheAndCompileProject() {
+    def cachesAreDownloaded = false
     if (forceRebuild) {
       clean()
     }
-    else if (forceDownload || !jpsCaches.dir.isDirectory() || !jpsCaches.dir.list()) {
+    else if (forceDownload || !jpsCaches.maybeAvailableLocally()) {
       downloadCache()
+      cachesAreDownloaded = true
     }
     // ensure that all Maven dependencies are resolved before compilation
     CompilationTasks.create(context).resolveProjectDependencies()
-    if (forceRebuild || !downloader.availableForHeadCommit || downloader.anyLocalChanges() || !forceDownload) {
+    if (!cachesAreDownloaded || !downloader.availableForHeadCommit || downloader.anyLocalChanges) {
       context.options.incrementalCompilation = !forceRebuild
       compileProject()
     }

@@ -1,16 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.beans.Introspector;
 import java.util.List;
 
 /**
@@ -47,7 +46,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
         if (pos >= 0) {
           epName = epName.substring(pos+1);
         }
-        epName = epNamespace + "." + StringUtil.decapitalize(epName);
+        epName = epNamespace + "." + Introspector.decapitalize(epName);
         return Extensions.getRootArea().getExtensionPoint(epName);
       }
     };

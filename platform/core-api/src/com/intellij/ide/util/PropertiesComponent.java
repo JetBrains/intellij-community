@@ -28,7 +28,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   public abstract boolean isValueSet(@NonNls @NotNull String name);
 
   @Nullable
-  public abstract @NlsSafe String getValue(@NonNls @NotNull String name);
+  public abstract @NonNls String getValue(@NonNls @NotNull String name);
 
   /**
    * Consider to use {@link #setValue(String, String, String)} to avoid write defaults.

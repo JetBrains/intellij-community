@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,7 +26,6 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.UiUtils;
-import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -211,16 +211,21 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       if (ignoreFromMethodCall || myMethodMatcher.matches(expression) || isSafelyClosedResource(expression)) {
         return;
       }
+      if (isReturnedByContract(expression)) return;
+      registerMethodCallError(expression, expression.getType(), !isStreamHoldingResource(expression));
+    }
+
+    private boolean isReturnedByContract(PsiMethodCallExpression expression) {
       PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(expression);
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
-      if (qualifier == returnedValue) return;
+      if (returnedValue != null && qualifier == returnedValue) return true;
       for (PsiExpression argument : arguments) {
         if (returnedValue == argument) {
-          return;
+          return true;
         }
       }
-      registerMethodCallError(expression, expression.getType(), !isStreamHoldingResource(expression));
+      return false;
     }
 
     @Override
@@ -249,8 +254,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       final PsiVariable variable = ResourceInspection.getVariable(expression);
       if (variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return true;
       if (variable == null) return false;
-      return StreamEx.of(ImplicitResourceCloser.EP_NAME.getExtensionList())
-                     .anyMatch(closer -> closer.isSafelyClosed(variable));
+      return ContainerUtil.or(ImplicitResourceCloser.EP_NAME.getExtensionList(), closer -> closer.isSafelyClosed(variable));
     }
   }
 }

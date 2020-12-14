@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeStyle;
 
 import com.intellij.lang.Language;
@@ -40,7 +36,7 @@ public abstract class CodeStyleFacade {
   @Nullable
   @Deprecated
   public abstract String getLineIndent(@NotNull Document document, int offset);
-  
+
   /**
    * Calculates the indent that should be used for the line at specified offset in the specified
    * editor. If there is a suitable {@code LineIndentProvider} for the language, it will be used to calculate the indent. Otherwise, if

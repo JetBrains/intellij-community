@@ -11,11 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public final class VariableTypeFromCallFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
-                                  UsageViewUtil.getType(myVar),
+                                  JavaElementKind.fromElement(myVar).lessDescriptive().subject(),
                                   myVar.getName(),
                                   myExpressionType.getPresentableText());
   }

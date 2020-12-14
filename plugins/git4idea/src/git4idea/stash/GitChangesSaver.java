@@ -80,10 +80,10 @@ public abstract class GitChangesSaver {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        "git.local.changes.not.restored", GitBundle.getString("restore.notification.failed.title"),
+        "git.local.changes.not.restored", GitBundle.message("restore.notification.failed.title"),
         getSaveMethod().selectBundleMessage(
-          GitBundle.getString("restore.notification.failed.stash.message"),
-          GitBundle.getString("restore.notification.failed.shelf.message")
+          GitBundle.message("restore.notification.failed.stash.message"),
+          GitBundle.message("restore.notification.failed.shelf.message")
         ),
         new ShowSavedChangesNotificationListener()
       );
@@ -125,7 +125,7 @@ public abstract class GitChangesSaver {
    */
   @NotNull
   protected static String getConflictRightPanelTitle() {
-    return GitBundle.getString("save.load.conflict.dialog.diff.right.title");
+    return GitBundle.message("save.load.conflict.dialog.diff.right.title");
   }
 
   /**
@@ -133,7 +133,7 @@ public abstract class GitChangesSaver {
    */
   @NotNull
   protected static String getConflictLeftPanelTitle() {
-    return GitBundle.getString("save.load.conflict.dialog.diff.left.title");
+    return GitBundle.message("save.load.conflict.dialog.diff.left.title");
   }
 
   protected final class ShowSavedChangesNotificationListener implements NotificationListener {

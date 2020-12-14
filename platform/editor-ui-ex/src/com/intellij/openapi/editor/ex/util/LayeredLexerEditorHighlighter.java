@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.MergingCharSequence;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,12 +64,12 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     return (MappingSegments)super.getSegments();
   }
 
-  private class LightMapper {
+  private final class LightMapper {
     final Mapper mapper;
     final StringBuilder text = new StringBuilder();
     final IntArrayList lengths = new IntArrayList();
     final List<IElementType> tokenTypes = new ArrayList<>();
-    final TIntIntHashMap index2Global = new TIntIntHashMap();
+    final Int2IntOpenHashMap index2Global = new Int2IntOpenHashMap();
     private final String mySeparator;
     final int insertOffset;
 

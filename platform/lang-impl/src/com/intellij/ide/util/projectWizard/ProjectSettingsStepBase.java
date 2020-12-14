@@ -278,8 +278,8 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   public void setWarningText(@Nullable @Nls String text) {
-    myErrorLabel.setText(HtmlChunk.html().children(HtmlChunk.text(LangBundle.message("warning.prefix.note")).wrapWith("strong"),
-                                                   HtmlChunk.text(" "+text+"  ")).toString());
+    myErrorLabel.setText(HtmlChunk.html().children(HtmlChunk.text(LangBundle.message("warning.prefix.note")).bold(),
+                                                   HtmlChunk.raw(" " + text + "  ")).toString());
     myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
     myErrorLabel.setIcon(StringUtil.isEmpty(text) ? null : AllIcons.Actions.Lightning);
   }

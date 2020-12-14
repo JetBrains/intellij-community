@@ -82,7 +82,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     myGateway = gw;
     myFile = f;
 
-    setImages(DiffUtil.Lazy.DIFF_FRAME_ICONS);
+    setImages(DiffUtil.DIFF_FRAME_ICONS.getValue());
     closeOnEsc();
 
     if (doInit) {

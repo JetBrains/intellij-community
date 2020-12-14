@@ -1,0 +1,7 @@
+ext.deps = [:]
+def versions = [:]
+versions.android_gradle_plugin = "3.1.0"
+
+def deps = [:]
+deps.android_gradle_plugin = "com.android.tools.build:gradle:$versions.android_gradle_plugin"
+ext.deps = deps

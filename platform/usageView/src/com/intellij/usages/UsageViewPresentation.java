@@ -166,6 +166,14 @@ public class UsageViewPresentation {
   }
 
   /**
+   * @param count number of usages
+   * @return localized string that displays a message like "2 usages"
+   */
+  public @Nls String formatUsageCount(int count) {
+    return UsageViewBundle.message("x.usages", count, myUsagesWordSupplier.apply(count));
+  }
+
+  /**
    * Please avoid using this method in string concatenations that are shown in UI
    */
   @NotNull

@@ -18,7 +18,6 @@ import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.ui.*;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +39,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected static final int CHECKED_COLUMN = 0;
   protected static final int DISPLAY_NAME_COLUMN = 1;
   protected static final int ABSTRACT_COLUMN = 2;
-  protected static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.create(AllIcons.General.OverridingMethod);
+  protected static final Icon EMPTY_OVERRIDE_ICON = IconManager.getInstance().createEmptyIcon(AllIcons.General.OverridingMethod);
   protected static final int OVERRIDE_ICON_POSITION = 2;
   protected static final int VISIBILITY_ICON_POSITION = 1;
   protected static final int MEMBER_ICON_POSITION = 0;

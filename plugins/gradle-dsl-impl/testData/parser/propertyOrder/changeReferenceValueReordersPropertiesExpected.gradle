@@ -1,0 +1,9 @@
+ext {
+  prop = 'hello'
+  prop1 = prop
+  prop2 = 'goodbye'
+  prop3 = "${prop2}"
+  prop4 = prop3
+  prop5 = prop4
+  prop6 = prop5
+}

@@ -18,6 +18,10 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.options.SettingsEditor;
 
 public class UserBinaryFileType extends UserFileType<UserBinaryFileType> {
+  public static final UserBinaryFileType INSTANCE = new UserBinaryFileType();
+  protected UserBinaryFileType() {
+  }
+
   @Override
   public SettingsEditor<UserBinaryFileType> getEditor() {
     return null;

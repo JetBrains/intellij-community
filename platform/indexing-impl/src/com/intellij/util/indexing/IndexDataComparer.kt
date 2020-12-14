@@ -38,7 +38,7 @@ object IndexDataComparer {
     return true
   }
 
-  private fun <V> areValuesTheSame(
+  fun <V> areValuesTheSame(
     extension: FileBasedIndexExtension<*, *>,
     expectedValue: V?,
     actualValue: V?

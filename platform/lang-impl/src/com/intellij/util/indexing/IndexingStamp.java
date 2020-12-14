@@ -402,7 +402,7 @@ public final class IndexingStamp {
     }
 
     private long get(ID<?, ?> id) {
-      return myIndexStamps != null? myIndexStamps.get(id) : 0L;
+      return myIndexStamps != null ? myIndexStamps.get(id) : HAS_NO_INDEXED_DATA_STAMP;
     }
 
     private void set(ID<?, ?> id, long tmst) {

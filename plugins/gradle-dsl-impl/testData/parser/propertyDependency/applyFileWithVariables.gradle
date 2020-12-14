@@ -1,0 +1,7 @@
+def namePart1 = 'super'
+ext.namePart2 = 'awesome'
+apply from: "${namePart1}${namePart2}.gradle"
+
+dependencies {
+  api("$group:$name:$version")
+}

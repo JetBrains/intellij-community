@@ -1,0 +1,4 @@
+ext.dep = 'a:b:1.0'
+dependencies {
+  compile dep
+}

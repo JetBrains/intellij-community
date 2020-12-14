@@ -1,0 +1,11 @@
+android {
+  defaultConfig {
+    minSdkVersion ext.minSdk
+    maxSdkVersion ext.maxSdk
+  }
+}
+
+ext {
+  minSdk 14
+  maxSdk 18
+}

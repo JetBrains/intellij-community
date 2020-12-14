@@ -22,7 +22,9 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
@@ -396,6 +398,27 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
     }
   }
 }
+
+/**
+ * Copy files from [projectPaths] directories to a temp directory, load project from it and pass it to [checkProject].
+ */
+fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
+  @Suppress("RedundantSuspendModifier")
+  suspend fun copyProjectFiles(dir: VirtualFile): Path {
+    val projectDir = VfsUtil.virtualToIoFile(dir)
+    for (projectPath in projectPaths) {
+      FileUtil.copyDir(projectPath.toFile(), projectDir)
+    }
+    VfsUtil.markDirtyAndRefresh(false, true, true, dir)
+    return projectDir.toPath()
+  }
+  runBlocking {
+    createOrLoadProject(tempDirectory, ::copyProjectFiles, loadComponentState = true, useDefaultProjectSettings = false) {
+      checkProject(it)
+    }
+  }
+}
+
 
 class DisposableRule : ExternalResource() {
   private var _disposable = lazy { Disposer.newDisposable() }

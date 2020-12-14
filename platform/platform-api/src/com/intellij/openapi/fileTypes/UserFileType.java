@@ -17,6 +17,9 @@ public abstract class UserFileType<T extends UserFileType<T>> implements FileTyp
   private Icon myIcon;
   private String myIconPath;
 
+  protected UserFileType() {
+  }
+
   public abstract SettingsEditor<T> getEditor();
 
   @Override

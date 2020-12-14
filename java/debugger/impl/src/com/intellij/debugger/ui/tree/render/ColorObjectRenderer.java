@@ -8,8 +8,8 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,6 +89,6 @@ class ColorObjectRenderer extends CompoundRendererProvider {
 
   private static Icon createIcon(IntegerValue rgbValue) {
     //noinspection UseJBColor
-    return JBUI.scale(new ColorIcon(16, 12, new Color(rgbValue.value(), true), true));
+    return JBUIScale.scaleIcon(new ColorIcon(16, 12, new Color(rgbValue.value(), true), true));
   }
 }

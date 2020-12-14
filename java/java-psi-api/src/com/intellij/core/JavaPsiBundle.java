@@ -2,6 +2,8 @@
 package com.intellij.core;
 
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +31,14 @@ public final class JavaPsiBundle extends DynamicBundle {
     return INSTANCE.containsKey(key);
   }
 
+  /**
+   * @param modifier modifier string constant
+   * @return modifier to display to the user. 
+   * Note that it's not localized in the usual sense: modifiers returned from this method are kept in English,
+   * regardless of the active language pack. It's believed that this way it's more clear. 
+   */
   @NotNull
-  public static @Nls String visibilityPresentation(@NotNull String modifier) {
-    return message("visibility.presentation." + modifier);
+  public static @NlsSafe String visibilityPresentation(@NotNull @PsiModifier.ModifierConstant String modifier) {
+    return modifier.equals(PsiModifier.PACKAGE_LOCAL) ? "package-private" : modifier;
   }
 }

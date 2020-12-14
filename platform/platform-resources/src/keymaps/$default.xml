@@ -2,6 +2,9 @@
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
+  <action id="OpenInRightSplit">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
+  </action>
   <action id="FileChooser.TogglePathShowing">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
@@ -1228,8 +1231,5 @@
   </action>
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control alt D"/>
-  </action>
-  <action id="UsageGrouping.Package">
-    <keyboard-shortcut first-keystroke="control alt P"/>
   </action>
 </keymap>

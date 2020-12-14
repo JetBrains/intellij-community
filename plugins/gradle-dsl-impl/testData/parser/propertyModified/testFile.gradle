@@ -1,0 +1,25 @@
+android {
+  defaultConfig {
+    proguardFiles 'proguard-android-1.txt', 'proguard-rules-1.txt'
+    testInstrumentationRunnerArguments key1: "value1", key2: "value2"
+  }
+  signingConfigs {
+    myConfig {
+      storeFile file('my_file.txt')
+      storePassword System.getenv("KSTOREPWD")
+    }
+  }
+}
+
+ext {
+  prop1 = 'value'
+  prop2 = 25
+  prop3 = prop2
+  prop4 = ["key": 'val']
+  prop5 = ['val1', 'val2', "val3"]
+  prop6 = 25.3
+}
+
+dependencies {
+  testCompile('some:gradle:thing', 'some:other:gradle:thing')
+}

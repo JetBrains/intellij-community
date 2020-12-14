@@ -26,6 +26,7 @@ class JavaAutoImportOptions(val project: Project) : DslConfigurableBase(), AutoI
   private val excludeTable = ExcludeTable(project)
 
   override fun createPanel(): DialogPanel {
+    excludeTable.tableView.setShowGrid(false)
     val dcaSettings = DaemonCodeAnalyzerSettings.getInstance()
     val ciSettings = CodeInsightSettings.getInstance()
     val ciWorkspaceSettings = CodeInsightWorkspaceSettings.getInstance(project)

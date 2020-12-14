@@ -70,6 +70,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPackageCode;
   private boolean myShowLicensee = true;
   private String myCustomizeIDEWizardStepsProvider;
+  private String myCustomizeIDEWizardDialog;
   private final UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
@@ -159,6 +160,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final @NonNls String ELEMENT_JB_TV = "jetbrains-tv";
   private static final @NonNls String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
   private static final @NonNls String STEPS_PROVIDER = "provider";
+  private static final @NonNls String WIZARD_DIALOG = "dialog";
   private static final @NonNls String ELEMENT_EVALUATION = "evaluation";
   private static final @NonNls String ATTRIBUTE_EVAL_LICENSE_URL = "license-url";
   private static final @NonNls String ELEMENT_LICENSING = "licensing";
@@ -289,6 +291,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     Element wizardSteps = getChild(element, CUSTOMIZE_IDE_WIZARD_STEPS);
     if (wizardSteps != null) {
       myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
+
+      myCustomizeIDEWizardDialog = getAttributeValue(wizardSteps, WIZARD_DIALOG);
     }
 
     Element helpElement = getChild(element, HELP_ELEMENT_NAME);
@@ -636,6 +640,9 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   }
 
   @Override
+  public @Nullable String getCustomizeIDEWizardDialog() { return myCustomizeIDEWizardDialog; }
+
+  @Override
   public @Nullable String getCustomizeIDEWizardStepsProvider() {
     return myCustomizeIDEWizardStepsProvider;
   }
@@ -955,6 +962,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     return PluginManagerCore.CORE_ID == pluginId || Collections.binarySearch(myEssentialPluginsIds, pluginId) >= 0;
   }
 
+  @Override
   public @NotNull List<PluginId> getEssentialPluginsIds() {
     return myEssentialPluginsIds;
   }

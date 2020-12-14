@@ -5,13 +5,13 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.ASTNode;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
@@ -19,10 +19,7 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -168,16 +165,25 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
-    final ASTNode node = element.getNode();
-    if (node != null && node.getElementType() == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction) {
+    IElementType elementType = element.getNode().getElementType();
+    if (elementType == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction) {
       final PyFunction function = (PyFunction)element.getParent();
       return getMethodMarker(element, function);
     }
     if (element instanceof PyTargetExpression && PyUtil.isClassAttribute(element)) {
       return getAttributeMarker((PyTargetExpression)element);
     }
-    if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS && isSeparatorAllowed(element)) {
-      return PyLineSeparatorUtil.addLineSeparatorIfNeeded(this, element);
+
+    // Separators are registered only on the first leaf element of a declaration
+    if (!DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS || element.getFirstChild() != null) {
+      return null;
+    }
+    PyElement parentDeclaration = PsiTreeUtil.getParentOfType(element, PyFunction.class, PyClass.class);
+    if (parentDeclaration == null || element != PsiTreeUtil.getDeepestFirst(parentDeclaration)) {
+      return null;
+    }
+    if (isSeparatorAllowed(parentDeclaration)) {
+      return PyLineSeparatorUtil.addLineSeparatorIfNeeded(this, parentDeclaration);
     }
     return null;
   }
@@ -185,7 +191,16 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
   @Override
   public boolean isSeparatorAllowed(@Nullable PsiElement element) {
     if (element == null || element.getContainingFile().getVirtualFile() instanceof BackedVirtualFile) return false;
-    return element instanceof PyFunction || element instanceof PyClass;
+
+    if (element instanceof PyClass) {
+      return PyUtil.isTopLevel(element);
+    }
+    else if (element instanceof PyFunction) {
+      if (PyUtil.isTopLevel(element)) return true;
+      PyClass containingClass = ((PyFunction)element).getContainingClass();
+      if (containingClass != null && PyUtil.isTopLevel(containingClass)) return true;
+    }
+    return false;
   }
 
   @Nullable

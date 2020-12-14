@@ -7,22 +7,14 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class AssignableFromContextFilter implements ElementFilter {
 
-  private final boolean myCheckIfContextIsInheritor;
   private SoftReference<PsiElement> myCurrentContext = new SoftReference<>(null);
   private SoftReference<PsiClass> myCachedClass = new SoftReference<>(null);
-
-  public AssignableFromContextFilter() {
-    myCheckIfContextIsInheritor = false;
-  }
-
-  public AssignableFromContextFilter(boolean checkIfContextIsInheritor) {
-    myCheckIfContextIsInheritor = checkIfContextIsInheritor;
-  }
 
   @Override
   public boolean isClassAcceptable(Class hintClass) {
@@ -39,10 +31,12 @@ public class AssignableFromContextFilter implements ElementFilter {
     if (curClass == null) return false;
     PsiClass candidate = tryCast(element, PsiClass.class);
     if (candidate == null) return false;
+    return checkInheritance(curClass, candidate);
+  }
+
+  protected boolean checkInheritance(@NotNull PsiClass curClass, @NotNull PsiClass candidate) {
     String qualifiedName = curClass.getQualifiedName();
-    return qualifiedName != null &&
-           (qualifiedName.equals(candidate.getQualifiedName()) ||
-            (myCheckIfContextIsInheritor ? curClass.isInheritor(candidate, true) : candidate.isInheritor(curClass, true)));
+    return qualifiedName != null && (qualifiedName.equals(candidate.getQualifiedName()) || candidate.isInheritor(curClass, true));
   }
 
   public String toString() {

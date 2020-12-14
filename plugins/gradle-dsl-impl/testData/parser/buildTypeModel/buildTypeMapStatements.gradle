@@ -1,0 +1,8 @@
+android {
+  buildTypes {
+    xyz {
+    }
+  }
+}
+android.buildTypes.xyz.manifestPlaceholders.activityLabel1 = "defaultName1"
+android.buildTypes.xyz.manifestPlaceholders['activityLabel2'] = "defaultName2"

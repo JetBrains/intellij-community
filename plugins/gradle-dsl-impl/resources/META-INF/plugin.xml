@@ -1,0 +1,29 @@
+<idea-plugin implementation-detail="true">
+  <id>org.jetbrains.idea.gradle.dsl.impl</id>
+  <name>Gradle DSL API</name>
+  <vendor>JetBrains, Google</vendor>
+  <description>
+    <![CDATA[
+    Technical plugin, provides Gradle dsl API
+    ]]>
+  </description>
+
+  <depends>com.intellij.properties</depends>
+  <depends optional="true" config-file="gradle-dsl-groovy-support.xml">org.intellij.groovy</depends>
+  <depends optional="true" config-file="gradle-dsl-kotlin-support.xml">org.jetbrains.kotlin</depends>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.android.tools.idea.gradle.dsl.api.ProjectBuildModelHandler" serviceImplementation="com.android.tools.idea.gradle.dsl.ProjectBuildModelHandlerImpl" />
+    <applicationService serviceInterface="com.android.tools.idea.gradle.dsl.api.GradleModelProvider$GradleModelProviderFactory" serviceImplementation="com.android.tools.idea.gradle.dsl.GradleModelSource$GradleModelProviderFactoryImpl" />
+    <applicationService serviceInterface="com.android.tools.idea.gradle.dsl.api.BuildModelErrorReporter" serviceImplementation="com.android.tools.idea.gradle.dsl.api.BuildModelErrorReporter$Dummy" />
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.idea.gradle.dsl.parserFactory" interface="com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.gradle.dsl.upToDateChecker" interface="com.android.tools.idea.gradle.dsl.UpToDateChecker" dynamic="true"/>
+  </extensionPoints>
+
+
+
+</idea-plugin>

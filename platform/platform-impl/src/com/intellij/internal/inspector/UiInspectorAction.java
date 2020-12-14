@@ -8,8 +8,12 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.InternalActionsBundle;
@@ -25,7 +29,9 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -37,6 +43,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.status.TextPanel;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
@@ -48,15 +57,13 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,13 +88,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Vector;
 import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.internal.inspector.UiInspectorUtil.collectAnActionInfo;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
-public class UiInspectorAction extends ToggleAction implements DumbAware {
+public class UiInspectorAction extends ToggleAction implements DumbAware, LightEditCompatible {
   private static final String CLICK_INFO = "CLICK_INFO";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
@@ -96,7 +104,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   public UiInspectorAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> setSelected(true));
+      ApplicationManager.getApplication().invokeLater(() -> setSelected((Project)null, true));
     }
   }
 
@@ -107,13 +115,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    setSelected(state);
+    setSelected(e.getProject(), state);
   }
 
-  void setSelected(boolean state) {
+  void setSelected(@Nullable Project project, boolean state) {
     if (state) {
       if (myInspector == null) {
-        myInspector = new UiInspector();
+        myInspector = new UiInspector(project);
       }
 
       UiInspectorNotification[] existing =
@@ -147,9 +155,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private boolean myIsHighlighted = true;
     @NotNull private final HierarchyTree myHierarchyTree;
     @NotNull private final Wrapper myWrapperPanel;
+    private Project myProject;
 
-    private InspectorWindow(@NotNull Component component) throws HeadlessException {
+    private InspectorWindow(@Nullable Project project, @NotNull Component component) throws HeadlessException {
       super(findWindow(component));
+      myProject = project;
       Window window = findWindow(component);
       setModal(window instanceof JDialog && ((JDialog)window).isModal());
       myComponents.add(component);
@@ -214,13 +224,43 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           updateHighlighting();
         }
       };
+      DataProvider provider = new DataProvider() {
+        @Override
+        public @Nullable Object getData(@NotNull @NonNls String dataId) {
+          if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+            return new Navigatable() {
+              @Override
+              public void navigate(boolean requestFocus) {
+                if (myHierarchyTree.hasFocus()) {
+                  openClass(myComponents.get(0).getClass().getName(), requestFocus);
+                } else if (myInspectorTable.myTable.hasFocus()) {
+                  int row = myInspectorTable.myTable.getSelectedRow();
+                  Object at = myInspectorTable.myModel.getValueAt(row, 1);
+                  openClass(at.toString(), requestFocus);
+                }
+              }
 
+              @Override
+              public boolean canNavigate() {
+                return true;
+              }
+
+              @Override
+              public boolean canNavigateToSource() {
+                return true;
+              }
+            };
+          }
+          return null;
+        }
+      };
       myWrapperPanel.setContent(myInspectorTable);
 
       Splitter splitPane = new JBSplitter(false, "UiInspector.splitter.proportion", 0.5f);
       splitPane.setSecondComponent(myWrapperPanel);
       splitPane.setFirstComponent(new JBScrollPane(myHierarchyTree));
       add(splitPane, BorderLayout.CENTER);
+      DataManager.registerDataProvider(splitPane, provider);
 
       myHierarchyTree.expandPath();
 
@@ -239,6 +279,29 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       });
       updateHighlighting();
       getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
+    }
+
+    private void openClass(String fqn, boolean requestFocus) {
+      if (myProject != null) {
+        try {
+          String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
+          PluginId pluginId = PluginManager.getPluginByClassName(javaPsiFacadeFqn);
+          if (pluginId != null) {
+            IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
+            if (plugin != null) {
+              Class<?> facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
+              Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
+              Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
+              Object result = findClass.invoke(getInstance.invoke(null, myProject), fqn, GlobalSearchScope.allScope(myProject));
+              if (result instanceof PsiElement) {
+                PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
+              }
+            }
+          }
+        }
+        catch (Exception ignore) {
+        }
+      }
     }
 
     private static String getDimensionServiceKey() {
@@ -677,6 +740,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static final class InspectorTable extends JPanel {
     InspectorTableModel myModel;
     DimensionsComponent myDimensionComponent;
+    StripeTable myTable;
 
     private InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
        myModel = new InspectorTableModel(clickInfo);
@@ -690,10 +754,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     private void init(@Nullable Component component) {
       setLayout(new BorderLayout());
-      StripeTable table = new StripeTable(myModel);
-      new TableSpeedSearch(table);
+      myTable = new StripeTable(myModel);
+      new TableSpeedSearch(myTable);
 
-      TableColumnModel columnModel = table.getColumnModel();
+      TableColumnModel columnModel = myTable.getColumnModel();
       TableColumn propertyColumn = columnModel.getColumn(0);
       propertyColumn.setMinWidth(JBUIScale.scale(220));
       propertyColumn.setMaxWidth(JBUIScale.scale(220));
@@ -719,11 +783,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       new DoubleClickListener(){
         @Override
         protected boolean onDoubleClick(@NotNull MouseEvent event) {
-          int row = table.rowAtPoint(event.getPoint());
-          int column = table.columnAtPoint(event.getPoint());
-          if (row >=0 && row < table.getRowCount() && column >=0 && column < table.getColumnCount()) {
-            Component renderer = table.getCellRenderer(row, column)
-                                        .getTableCellRendererComponent(table, myModel.getValueAt(row, column), false, false, row, column);
+          int row = myTable.rowAtPoint(event.getPoint());
+          int column = myTable.columnAtPoint(event.getPoint());
+          if (row >=0 && row < myTable.getRowCount() && column >= 0 && column < myTable.getColumnCount()) {
+            Component renderer = myTable.getCellRenderer(row, column)
+                                        .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
             if (renderer instanceof JLabel) {
               //noinspection UseOfSystemOutOrSystemErr
               System.out.println((component != null ? getComponentName(component)+ " " : "" )
@@ -733,11 +797,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           }
           return false;
         }
-      }.installOn(table);
+      }.installOn(myTable);
 
-      table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+      myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
-      add(new JBScrollPane(table), BorderLayout.CENTER);
+      add(new JBScrollPane(myTable), BorderLayout.CENTER);
       if (component != null) {
         myDimensionComponent = new DimensionsComponent(component);
         add(myDimensionComponent, BorderLayout.SOUTH);
@@ -1823,7 +1887,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class UiInspector implements AWTEventListener, Disposable {
 
-    UiInspector() {
+    private Project myProject;
+
+    UiInspector(@Nullable Project project) {
+      myProject = project;
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     }
 
@@ -1837,8 +1904,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
     }
 
-    public void showInspector(@NotNull Component c) {
-      Window window = new InspectorWindow(c);
+    public void showInspector(@Nullable Project project, @NotNull Component c) {
+      Window window = new InspectorWindow(project, c);
       if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey()) == null) {
         window.pack();
       }
@@ -1874,7 +1941,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           ((JComponent)component).putClientProperty(CLICK_INFO, getClickInfo(me, component));
           ((JComponent)component).putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
-        showInspector(component);
+        showInspector(myProject, component);
       }
     }
 

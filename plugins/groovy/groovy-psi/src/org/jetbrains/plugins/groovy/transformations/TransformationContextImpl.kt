@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.openapi.project.Project
@@ -9,7 +9,7 @@ import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.toArray
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getAnnotation
@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder
 import java.util.*
 
 internal class TransformationContextImpl(private val myCodeClass: GrTypeDefinition) : TransformationContext {
-
   private val myProject: Project = myCodeClass.project
   private val myPsiManager: PsiManager = myCodeClass.manager
   private val myPsiFacade: JavaPsiFacade = JavaPsiFacade.getInstance(myProject)
@@ -46,7 +45,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     getReferenceListTypes(myCodeClass.extendsClause).toMutableList()
   }
   private val mySignaturesCache: Map<String, MutableSet<MethodSignature>> = FactoryMap.create { name ->
-    val result = THashSet(METHOD_PARAMETERS_ERASURE_EQUALITY)
+    val result = ObjectOpenCustomHashSet(METHOD_PARAMETERS_ERASURE_EQUALITY)
     for (existingMethod in myMethods) {
       if (existingMethod.name == name) {
         result.add(existingMethod.getSignature(PsiSubstitutor.EMPTY))
@@ -225,6 +224,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
       extendsTypes.toArray(PsiClassType.EMPTY_ARRAY)
     )
 
-  private fun enumMethods() : List<PsiMethod> =
-    if (myCodeClass is GrEnumTypeDefinitionImpl) myCodeClass.defEnumMethods else emptyList()
+  private fun enumMethods() : List<PsiMethod> {
+    return if (myCodeClass is GrEnumTypeDefinitionImpl) myCodeClass.defEnumMethods else emptyList()
+  }
 }

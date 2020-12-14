@@ -20,14 +20,12 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
+
+import java.util.*;
+
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 public class MavenRunnerSettings implements Cloneable {
 
@@ -68,10 +66,11 @@ public class MavenRunnerSettings implements Cloneable {
     return jreName;
   }
 
+  /**
+   * @param jreName null means set default value
+   */
   public void setJreName(@Nullable String jreName) {
-    if (jreName != null) {
-      this.jreName = jreName;
-    }
+    this.jreName = Objects.requireNonNullElse(jreName, USE_PROJECT_JDK);
   }
 
   @NotNull

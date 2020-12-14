@@ -53,7 +53,7 @@ final class LiveTemplatesOptionsTopHitProvider implements OptionsTopHitProvider.
     }
 
     private static @NlsContexts.Label String getOptionName(TemplateImpl element) {
-      StringBuilder sb = new StringBuilder().append(element.getGroupName()).append(": ").append(element.getKey());
+      @NlsContexts.Label StringBuilder sb = new StringBuilder().append(element.getGroupName()).append(": ").append(element.getKey());
       String description = element.getDescription();
       if (description != null) {
         sb.append(" (").append(description).append(")");

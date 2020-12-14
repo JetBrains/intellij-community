@@ -1,11 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.*;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -16,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -49,7 +48,7 @@ import static com.intellij.util.ui.UIUtil.getWarningIcon;
 /**
  * @author irengrig
  */
-public class TodoCheckinHandler extends CheckinHandler {
+public class TodoCheckinHandler extends CheckinHandler implements CommitCheck {
   private final Project myProject;
   private final CheckinProjectPanel myCheckinProjectPanel;
   private final VcsConfiguration myConfiguration;
@@ -59,6 +58,11 @@ public class TodoCheckinHandler extends CheckinHandler {
     myProject = checkinProjectPanel.getProject();
     myCheckinProjectPanel = checkinProjectPanel;
     myConfiguration = VcsConfiguration.getInstance(myProject);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return myConfiguration.CHECK_NEW_TODO;
   }
 
   @Override
@@ -86,8 +90,7 @@ public class TodoCheckinHandler extends CheckinHandler {
           @Override
           public void linkSelected(LinkLabel aSource, Object aLinkData) {
             DefaultActionGroup group = SetTodoFilterAction.createPopupActionGroup(myProject, myConfiguration.myTodoPanelSettings, consumer);
-            ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR, group);
-            popupMenu.getComponent().show(linkLabel, 0, linkLabel.getHeight());
+            JBPopupMenu.showBelow(linkLabel, ActionPlaces.TODO_VIEW_TOOLBAR, group);
           }
         }, null);
         panel.add(linkLabel, BorderLayout.CENTER);
@@ -108,7 +111,8 @@ public class TodoCheckinHandler extends CheckinHandler {
 
   @Override
   public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-    if (! myConfiguration.CHECK_NEW_TODO) return ReturnResult.COMMIT;
+    if (!isEnabled()) return ReturnResult.COMMIT;
+
     if (DumbService.getInstance(myProject).isDumb()) {
       if (Messages.showOkCancelDialog(myProject,
                                       VcsBundle.message("checkin.dialog.message.cant.be.performed",

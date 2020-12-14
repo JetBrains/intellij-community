@@ -40,6 +40,11 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
       rebuildWithAlarm(myAlarm);
     }
 
+    @Override
+    public void allChangeListsMappingsChanged() {
+      updateTabName();
+    }
+
     private void updateTabName() {
       AppUIUtil.invokeOnEdt(() -> setDisplayName(getTabName(myProject)));
     }
@@ -49,10 +54,15 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
   @NlsContexts.TabTitle
   static String getTabName(@NotNull Project project) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    LocalChangeList list = changeListManager.getDefaultChangeList();
-    String changelistName = list.getName().trim();
-    String suffix = VcsBundle.message("todo.tab.title.changelist.suffix");
-    return StringUtil.endsWithIgnoreCase(changelistName, suffix) ? changelistName
-                                                                 : changelistName + " " + suffix;
+    if (changeListManager.areChangeListsEnabled()) {
+      LocalChangeList list = changeListManager.getDefaultChangeList();
+      String changelistName = list.getName().trim();
+      String suffix = VcsBundle.message("todo.tab.title.changelist.suffix");
+      return StringUtil.endsWithIgnoreCase(changelistName, suffix) ? changelistName
+                                                                   : changelistName + " " + suffix;
+    }
+    else {
+      return VcsBundle.message("todo.tab.title.all.changes");
+    }
   }
 }

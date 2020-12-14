@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.local.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,17 +23,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/** synchronization aspect is external for this class; only logic here
+/**
+ * synchronization aspect is external for this class; only logic here
  * have internal command queue; applies commands to another copy of change lists (ChangeListWorker) and sends notifications
  * (after update is done)
  */
 public class Modifier {
+  private static final Logger LOG = Logger.getInstance(Modifier.class);
+
   private final ChangeListWorker myWorker;
   private volatile boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
 
-  public Modifier(ChangeListWorker worker, DelayedNotificator notificator) {
+  public Modifier(@NotNull ChangeListWorker worker, @NotNull DelayedNotificator notificator) {
     myWorker = worker;
     myNotificator = notificator;
     myCommandQueue = new ArrayList<>();
@@ -42,7 +46,8 @@ public class Modifier {
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     AddList command = new AddList(name, comment, data);
     impl(command);
-    return command.getNewListCopy();
+    LocalChangeList newList = command.getNewListCopy();
+    return newList != null ? newList : myWorker.getDefaultList();
   }
 
   public void setDefault(@NotNull String name, boolean automatic) {
@@ -87,6 +92,10 @@ public class Modifier {
 
 
   private void impl(@NotNull ChangeListCommand command) {
+    if (!myWorker.areChangeListsEnabled()) {
+      LOG.warn("Changelists are disabled, command ignored", new Throwable());
+      return;
+    }
     if (myInsideUpdate) {
       // apply command and store it to be applied again when update is finished
       // notification about this invocation might be sent later if the update is cancelled
@@ -111,6 +120,12 @@ public class Modifier {
 
   public void finishUpdate(@Nullable ChangeListWorker updatedWorker) {
     myInsideUpdate = false;
+
+    if (!myWorker.areChangeListsEnabled()) {
+      if (!myCommandQueue.isEmpty()) LOG.warn("Changelists are disabled, commands ignored: " + myCommandQueue);
+      myCommandQueue.clear();
+      return;
+    }
 
     if (updatedWorker != null) {
       for (ChangeListCommand command : myCommandQueue) {

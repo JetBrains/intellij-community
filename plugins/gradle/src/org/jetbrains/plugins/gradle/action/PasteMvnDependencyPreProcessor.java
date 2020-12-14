@@ -150,4 +150,9 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
     }
     return false;
   }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
+  }
 }

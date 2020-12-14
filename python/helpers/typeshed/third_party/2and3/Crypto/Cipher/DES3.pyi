@@ -1,4 +1,4 @@
-from typing import Any, Union, Text
+from typing import Any, Text, Union
 
 from .blockalgo import BlockAlgo
 

@@ -15,7 +15,9 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
@@ -109,7 +111,7 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
     }
 
     data.setGoals(commandLine);
-    data.setResolveToWorkspace(myResolveToWorkspaceCheckBox.isSelected());
+    data.setResolveToWorkspace(myResolveToWorkspaceCheckBox.isEnabled() && myResolveToWorkspaceCheckBox.isSelected());
 
     Map<String, Boolean> profilesMap = new LinkedHashMap<>();
 
@@ -165,5 +167,14 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
     goalsComponent.setAnchor(anchor);
     profilesComponent.setAnchor(anchor);
     myFakeLabel.setAnchor(anchor);
+  }
+
+  @ApiStatus.Internal
+  void applyTargetEnvironmentConfiguration(@Nullable String targetName) {
+    boolean localTarget = targetName == null;
+    myResolveToWorkspaceCheckBox.setEnabled(localTarget);
+    if (!localTarget) {
+      myResolveToWorkspaceCheckBox.setSelected(false);
+    }
   }
 }

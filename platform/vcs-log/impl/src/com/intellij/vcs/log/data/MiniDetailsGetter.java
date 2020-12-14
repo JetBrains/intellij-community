@@ -1,19 +1,21 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
-import com.intellij.vcs.log.util.TroveUtil;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +33,32 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
                     @NotNull TopCommitsCache topCommitsDetailsCache,
                     @NotNull VcsLogIndex index,
                     @NotNull Disposable parentDisposable) {
-    super(storage, logProviders, new VcsCommitCache<>(), index, parentDisposable);
+    super(storage, logProviders, index, parentDisposable);
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+  }
+
+  @RequiresBackgroundThread
+  public void loadCommitsData(@NotNull Iterable<Integer> hashes,
+                              @NotNull Consumer<? super VcsCommitMetadata> consumer,
+                              @NotNull ProgressIndicator indicator) throws VcsException {
+    final TIntHashSet toLoad = new TIntHashSet();
+
+    for (int id : hashes) {
+      VcsCommitMetadata details = getFromCache(id);
+      if (details == null || details instanceof LoadingDetails) {
+        toLoad.add(id);
+      }
+      else {
+        consumer.consume(details);
+      }
+    }
+
+    if (!toLoad.isEmpty()) {
+      indicator.checkCanceled();
+      preLoadCommitData(toLoad, consumer);
+      notifyLoaded();
+    }
   }
 
   @Nullable
@@ -42,31 +67,40 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
     return myTopCommitsDetailsCache.get(commitId);
   }
 
-  @NotNull
   @Override
-  protected List<? extends VcsCommitMetadata> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
-                                                          @NotNull List<String> hashes) throws VcsException {
-    return logProvider.readMetadata(root, hashes);
+  protected void readDetails(@NotNull VcsLogProvider logProvider,
+                             @NotNull VirtualFile root,
+                             @NotNull List<String> hashes,
+                             @NotNull Consumer<? super VcsCommitMetadata> consumer) throws VcsException {
+    logProvider.readMetadata(root, hashes, consumer);
   }
 
-  @NotNull
   @Override
-  public TIntObjectHashMap<VcsCommitMetadata> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
+  protected void preLoadCommitData(@NotNull TIntHashSet commits, @NotNull Consumer<? super VcsCommitMetadata> consumer)
+    throws VcsException {
+
     IndexDataGetter dataGetter = myIndex.getDataGetter();
-    if (dataGetter == null) return super.preLoadCommitData(commits);
+    if (dataGetter == null) {
+      super.preLoadCommitData(commits, consumer);
+      return;
+    }
 
     TIntHashSet notIndexed = new TIntHashSet();
 
-    TIntObjectHashMap<VcsCommitMetadata> result = TroveUtil.map2MapNotNull(commits, commit -> {
+    commits.forEach(commit -> {
       VcsCommitMetadata metadata = IndexedDetails.createMetadata(commit, dataGetter, myStorage, myFactory);
-      if (metadata == null) notIndexed.add(commit);
-      return metadata;
+      if (metadata == null) {
+        notIndexed.add(commit);
+      }
+      else {
+        saveInCache(commit, metadata);
+        consumer.consume(metadata);
+      }
+      return true;
     });
-    saveInCache(result);
 
     if (!notIndexed.isEmpty()) {
-      TroveUtil.putAll(result, super.preLoadCommitData(notIndexed));
+      super.preLoadCommitData(notIndexed, consumer);
     }
-    return result;
   }
 }

@@ -28,6 +28,8 @@ import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -63,6 +65,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -84,6 +87,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   @NonNls
   private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";
+
+  @NonNls
+  public static final String DEPENDENCIES_DOC_URL =
+    "https://jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_dependencies.html";
 
   public List<String> myRegistrationCheckIgnoreClassList = new ExternalizableStringSet();
 
@@ -187,6 +194,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       }
       else if (element instanceof Extensions) {
         annotateExtensions((Extensions)element, holder);
+      }
+      else if (element instanceof Extensions.UnresolvedExtension) {
+        annotateUnresolvedExtension((Extensions.UnresolvedExtension)element, holder);
       }
       else if (element instanceof AddToGroup) {
         annotateAddToGroup((AddToGroup)element, holder);
@@ -616,6 +626,50 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
           }
         });
     }
+  }
+
+  private static void annotateUnresolvedExtension(Extensions.UnresolvedExtension unresolvedExtension, DomElementAnnotationHolder holder) {
+    final Module module = unresolvedExtension.getModule();
+    if (module == null) return;
+
+    final Extensions extensions = unresolvedExtension.getParentOfType(Extensions.class, true);
+    assert extensions != null;
+    String qualifiedExtensionId = extensions.getEpPrefix() + unresolvedExtension.getXmlElementName();
+
+    final ExtensionPoint extensionPoint = ExtensionPointIndex.findExtensionPoint(module, qualifiedExtensionId);
+    if (extensionPoint == null) {
+      String message = new HtmlBuilder()
+        .append(DevKitBundle.message("error.cannot.resolve.extension.point", qualifiedExtensionId))
+        .nbsp()
+        .append(HtmlChunk.link(DEPENDENCIES_DOC_URL, DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
+        .wrapWith(HtmlChunk.html()).toString();
+
+      holder.createProblem(unresolvedExtension, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, message, null);
+      return;
+    }
+
+
+    final IdeaPlugin ideaPlugin = extensionPoint.getParentOfType(IdeaPlugin.class, true);
+    assert ideaPlugin != null;
+    String dependencyId = ideaPlugin.getPluginId();
+
+    final LocalQuickFix addDependsFix = new LocalQuickFix() {
+      @Override
+      public @IntentionFamilyName @NotNull String getFamilyName() {
+        return DevKitBundle.message("error.cannot.resolve.extension.point.missing.dependency.fix.family.name");
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        final IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
+        assert ideaPlugin != null;
+        final Dependency dependency = ideaPlugin.addDependency();
+        dependency.setStringValue(dependencyId);
+      }
+    };
+    holder.createProblem(unresolvedExtension,
+                         DevKitBundle.message("error.cannot.resolve.extension.point.missing.dependency", qualifiedExtensionId),
+                         addDependsFix);
   }
 
   private static void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {

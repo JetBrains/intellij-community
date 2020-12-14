@@ -1,0 +1,3 @@
+def animal = 'penguin'
+def message = "${animal}s are cool!"
+ext.greeting = "Hello, $message"

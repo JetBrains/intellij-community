@@ -1,4 +1,5 @@
 from typing import Tuple
+
 from . import _LangModelType
 
 Latin2_HungarianCharToOrderMap: Tuple[int, ...]

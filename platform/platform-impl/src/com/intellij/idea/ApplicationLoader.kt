@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
@@ -40,7 +41,6 @@ import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.dnd.DragSource
 import java.io.IOException
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -58,7 +58,8 @@ private fun executeInitAppInEdt(args: List<String>,
                                 pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>) {
   StartupUtil.patchSystem(LOG)
   val app = runActivity("create app") {
-    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(), Main.isCommandLine())
+    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(),
+                    Main.isCommandLine())
   }
   val registerFuture = registerAppComponents(pluginDescriptorFuture, app)
 
@@ -194,7 +195,15 @@ private fun startApp(app: ApplicationImpl,
 
       val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
         placeOnEventQueueActivity.end()
-        app.loadComponents(SplashManager.createProgressIndicator())
+
+        app.loadComponents(if (SplashManager.SPLASH_WINDOW == null) {
+          null
+        }
+        else object : EmptyProgressIndicator() {
+          override fun setFraction(fraction: Double) {
+            SplashManager.SPLASH_WINDOW.showProgress(fraction)
+          }
+        })
       }, edtExecutor)
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
@@ -223,7 +232,7 @@ private fun startApp(app: ApplicationImpl,
       }
     },
       // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT, so force execution out of EDT
-      nonEdtExecutor)
+                             nonEdtExecutor)
     .thenRun {
       if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
         starter.main(args)
@@ -285,7 +294,7 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
     }, AppExecutorUtil.getAppExecutorService())
 
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
-    initConfigurationStore(app, null)
+    initConfigurationStore(app)
 
     future.thenApply {
       @Suppress("UNCHECKED_CAST")
@@ -339,10 +348,10 @@ private fun addActivateAndWindowsCliListeners() {
 
     val ref = AtomicReference<Future<CliResult>>()
     app.invokeAndWait({
-      val result = CommandLineProcessor.processExternalCommandLine(args.toList(), currentDirectory)
-      ref.set(result.future)
-      result.showErrorIfFailed()
-    }, state)
+                        val result = CommandLineProcessor.processExternalCommandLine(args.toList(), currentDirectory)
+                        ref.set(result.future)
+                        result.showErrorIfFailed()
+                      }, state)
     CliResult.unmap(ref.get(), Main.ACTIVATE_ERROR).exitCode
   }
 
@@ -410,12 +419,12 @@ private fun loadSystemFonts() {
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
 @ApiStatus.Internal
-fun initConfigurationStore(app: ApplicationImpl, configPath: Path?) {
+fun initConfigurationStore(app: ApplicationImpl) {
   var activity = StartUpMeasurer.startMainActivity("beforeApplicationLoaded")
-  val effectiveConfigPath = configPath ?: PathManager.getConfigDir()
+  val configPath = PathManager.getConfigDir()
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
-      (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath)
+      (listener ?: break).beforeApplicationLoaded(app, configPath)
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -428,7 +437,7 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: Path?) {
   activity = activity.endAndStart("init app store")
 
   // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
-  app.stateStore.setPath(effectiveConfigPath)
+  app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
 }

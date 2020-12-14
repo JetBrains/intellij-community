@@ -20,9 +20,14 @@ import com.google.protobuf.MessageLite;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Locale;
 
 /**
@@ -93,8 +98,11 @@ public class ExternalJavacMessageHandler {
 
           final JavaFileManager.Location location = outputObject.hasLocation()? StandardLocation.locationFor(outputObject.getLocation()) : null;
 
-          final String sourceUri = outputObject.hasSourceUri()? outputObject.getSourceUri() : null;
-          final URI srcUri = sourceUri != null? URI.create(sourceUri) : null;
+          Collection<URI> sources = new ArrayList<URI>();
+          for (String uri : outputObject.getSourceUriList()) {
+            sources.add(URI.create(uri));
+          }
+
           final OutputFileObject fileObject = new OutputFileObject(
             null,
             outputRootFile,
@@ -102,7 +110,7 @@ public class ExternalJavacMessageHandler {
             new File(outputObject.getFilePath()),
             convertKind(kind),
             outputObject.hasClassName()? outputObject.getClassName() : null,
-            srcUri,
+            sources,
             myEncodingName, fileObjectContent, location
           );
 

@@ -36,8 +36,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
     private val FORCED = emptyMap<String, String>() // top-level package to package on PyPI
 
     // notification will be shown for packages below
-    private val CHECKED = mapOf("boto3" to "boto3",
-                                "coincurve" to "coincurve",
+    private val CHECKED = mapOf("coincurve" to "coincurve",
                                 "docutils" to "docutils",
                                 "pika" to "pika",
                                 "gi" to "PyGObject",

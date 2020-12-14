@@ -37,7 +37,9 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
   override fun update(vcsContext: VcsContext, presentation: Presentation) {
     val project = vcsContext.project
 
-    if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
+    if (project == null ||
+        !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() ||
+        !ChangeListManager.getInstance(project).areChangeListsEnabled()) {
       presentation.isEnabledAndVisible = false
     }
     else if (!approximatelyHasRoots(vcsContext)) {

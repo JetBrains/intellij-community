@@ -1,5 +1,20 @@
-from typing import Any, Optional, Text, Tuple, Callable, Iterable, TypeVar, NoReturn, Protocol, IO, Generator, Dict, Mapping, Union
 from _typeshed.wsgi import WSGIEnvironment
+from typing import (
+    IO,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    Mapping,
+    NoReturn,
+    Optional,
+    Protocol,
+    Text,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from .datastructures import Headers
 
@@ -10,11 +25,11 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 class _StreamFactory(Protocol):
     def __call__(
-        self, total_content_length: Optional[int], filename: str, content_type: str, content_length: Optional[int] = ...,
+        self, total_content_length: Optional[int], filename: str, content_type: str, content_length: Optional[int] = ...
     ) -> IO[bytes]: ...
 
 def default_stream_factory(
-    total_content_length: Optional[int], filename: str, content_type: str, content_length: Optional[int] = ...,
+    total_content_length: Optional[int], filename: str, content_type: str, content_length: Optional[int] = ...
 ) -> IO[bytes]: ...
 def parse_form_data(
     environ: WSGIEnvironment,
@@ -49,7 +64,7 @@ class FormDataParser(object):
     def get_parse_func(self, mimetype: str, options: Any) -> Optional[_ParseFunc]: ...
     def parse_from_environ(self, environ: WSGIEnvironment) -> Tuple[IO[bytes], _Dict, _Dict]: ...
     def parse(
-        self, stream: IO[bytes], mimetype: Text, content_length: Optional[int], options: Optional[Mapping[str, str]] = ...,
+        self, stream: IO[bytes], mimetype: Text, content_length: Optional[int], options: Optional[Mapping[str, str]] = ...
     ) -> Tuple[IO[bytes], _Dict, _Dict]: ...
     parse_functions: Dict[Text, _ParseFunc]
 
@@ -76,12 +91,12 @@ class MultiPartParser(object):
     def get_part_encoding(self, headers: Mapping[str, str]) -> Optional[str]: ...
     def get_part_charset(self, headers: Mapping[str, str]) -> Text: ...
     def start_file_streaming(
-        self, filename: Union[Text, bytes], headers: Mapping[str, str], total_content_length: Optional[int],
+        self, filename: Union[Text, bytes], headers: Mapping[str, str], total_content_length: Optional[int]
     ) -> Tuple[Text, IO[bytes]]: ...
     def in_memory_threshold_reached(self, bytes: Any) -> NoReturn: ...
     def validate_boundary(self, boundary: Optional[str]) -> None: ...
     def parse_lines(
-        self, file: Any, boundary: bytes, content_length: int, cap_at_buffer: bool = ...,
+        self, file: Any, boundary: bytes, content_length: int, cap_at_buffer: bool = ...
     ) -> Generator[Tuple[str, Any], None, None]: ...
     def parse_parts(self, file: Any, boundary: bytes, content_length: int) -> Generator[Tuple[str, Any], None, None]: ...
     def parse(self, file: Any, boundary: bytes, content_length: int) -> Tuple[_Dict, _Dict]: ...

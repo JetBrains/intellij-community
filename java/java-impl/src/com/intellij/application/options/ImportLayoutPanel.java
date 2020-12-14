@@ -307,6 +307,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
     // Create the table
     final JBTable result = new JBTable(dataModel);
+    result.setShowGrid(false);
     result.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     resizeColumns(packageTable, result, panel.areStaticImportsEnabled());
 

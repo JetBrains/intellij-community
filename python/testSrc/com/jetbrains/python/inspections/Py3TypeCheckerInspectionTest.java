@@ -454,4 +454,30 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypingAnnotatedTypeMultiFile() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
   }
+
+  // PY-43838
+  public void testParameterizedClassAgainstType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Type, Any, List\n" +
+                         "\n" +
+                         "def my_function(param: Type[Any]):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "my_function(List[str])")
+    );
+  }
+
+  // PY-43838
+  public void testUnionAgainstType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Type, Any, Union\n" +
+                         "\n" +
+                         "def my_function(param: Type[Any]):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "my_function(Union[int, str])")
+    );
+  }
 }

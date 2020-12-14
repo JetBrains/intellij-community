@@ -1,0 +1,7 @@
+android {
+  productFlavors {
+    flavor1 {
+    }
+    flavor2 {}
+  }
+}

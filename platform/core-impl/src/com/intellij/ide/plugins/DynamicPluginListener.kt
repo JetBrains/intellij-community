@@ -7,20 +7,29 @@ import com.intellij.util.messages.Topic
 class CannotUnloadPluginException(value: String) : ProcessCanceledException(RuntimeException(value))
 
 interface DynamicPluginListener {
-  @JvmDefault
-  fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) { }
+  companion object {
+    @JvmField
+    val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+  }
 
   @JvmDefault
-  fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) { }
+  fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+  }
+
+  @JvmDefault
+  fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+  }
 
   /**
    * @param isUpdate `true` if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
    */
   @JvmDefault
-  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) { }
+  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+  }
 
   @JvmDefault
-  fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) { }
+  fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+  }
 
   /**
    * Checks if the plugin can be dynamically unloaded at this moment.
@@ -28,9 +37,6 @@ interface DynamicPluginListener {
    */
   @Throws(CannotUnloadPluginException::class)
   @JvmDefault
-  fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) { }
-
-  companion object {
-    @JvmField val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+  fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
   }
 }

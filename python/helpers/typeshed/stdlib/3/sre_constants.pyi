@@ -39,7 +39,6 @@ SRE_INFO_PREFIX: int
 SRE_INFO_LITERAL: int
 SRE_INFO_CHARSET: int
 
-
 # Stubgen above; manually defined constants below (dynamic at runtime)
 
 # from OPCODES

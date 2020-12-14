@@ -22,3 +22,6 @@ record CheckOverride(int x) {
   <error descr="Method does not override method from its superclass">@Override</error> public int x() { return x; }
   <error descr="Method does not override method from its superclass">@Override</error> public int y() { return x; }
 }
+record VarArg(int... x) {
+  public int[] x() { return x; }
+}

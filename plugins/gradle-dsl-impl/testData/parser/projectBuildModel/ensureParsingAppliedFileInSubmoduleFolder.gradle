@@ -1,0 +1,7 @@
+buildscript {
+  apply from: "<SUB_MODULE_NAME>/a.gradle"
+
+  dependencies {
+    classpath 'com.android.tools.build:gradle:$version'
+  }
+}

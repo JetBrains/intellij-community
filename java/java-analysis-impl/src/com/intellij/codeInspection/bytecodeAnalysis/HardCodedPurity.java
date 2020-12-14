@@ -46,13 +46,13 @@ class HardCodedPurity {
     new Member("java/lang/Double", "longBitsToDouble", "(J)D")
   );
   private static final Map<Member, Set<EffectQuantum>> solutions = new HashMap<>();
-  private static final Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
+  private static final Set<EffectQuantum> thisChange = Set.of(EffectQuantum.ThisChangeQuantum);
 
   static {
     // Native
     solutions.put(new Member("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V"),
-                  Collections.singleton(new EffectQuantum.ParamChangeQuantum(2)));
-    solutions.put(new Member("java/lang/Object", "hashCode", "()I"), Collections.emptySet());
+                  Set.of(new EffectQuantum.ParamChangeQuantum(2)));
+    solutions.put(new Member("java/lang/Object", "hashCode", "()I"), Set.of());
   }
 
   static HardCodedPurity getInstance() {

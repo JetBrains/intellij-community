@@ -1,0 +1,7 @@
+android {
+  buildTypes {
+    xyz {
+      applicationIdSuffix "mySuffix"
+    }
+  }
+}

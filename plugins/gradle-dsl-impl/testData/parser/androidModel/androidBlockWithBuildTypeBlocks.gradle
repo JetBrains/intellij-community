@@ -1,0 +1,10 @@
+android {
+  buildTypes {
+    type1 {
+      applicationIdSuffix "typeSuffix-1"
+    }
+    type2 {
+      applicationIdSuffix "typeSuffix-2"
+    }
+  }
+}

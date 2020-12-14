@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener;
 import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -52,6 +53,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.CompoundRuntimeException;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
@@ -303,10 +305,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   private void startUpdater() {
+    updateChangeListAvailability();
+
     myUpdater.initialized();
     BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeListsCopy());
-    myProject.getMessageBus().connect(this).subscribe(VCS_CONFIGURATION_CHANGED,
-                                                      () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());
+    MessageBusConnection connection = myProject.getMessageBus().connect(this);
+    connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> {
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      updateChangeListAvailability();
+    });
+    connection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> updateChangeListAvailability());
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myConflictTracker.startTracking();
     }
@@ -1175,7 +1183,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @Override
-  public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<? extends VirtualFile> files) {
+  public void addUnversionedFiles(@Nullable final LocalChangeList list, @NotNull final List<? extends VirtualFile> files) {
     ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files);
   }
 
@@ -1408,6 +1416,30 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return true;
   }
 
+  private void updateChangeListAvailability() {
+    myScheduler.submit(() -> {
+      ReadAction.run(() -> {
+        boolean enabled = shouldEnableChangeLists();
+        synchronized (myDataLock) {
+          myWorker.setChangeListsEnabled(enabled);
+        }
+      });
+    });
+  }
+
+  private boolean shouldEnableChangeLists() {
+    AbstractVcs singleVCS = ProjectLevelVcsManager.getInstance(myProject).getSingleVCS();
+    if (singleVCS != null && singleVCS.isWithCustomLocalChanges()) return false;
+    return true;
+  }
+
+  @Override
+  public boolean areChangeListsEnabled() {
+    synchronized (myDataLock) {
+      return myWorker.areChangeListsEnabled();
+    }
+  }
+
   @Override
   public int getChangeListsNumber() {
     synchronized (myDataLock) {
@@ -1495,9 +1527,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   public void replaceCommitMessage(@NotNull String oldMessage, @NotNull String newMessage) {
     VcsConfiguration.getInstance(myProject).replaceMessage(oldMessage, newMessage);
 
-    for (LocalChangeList changeList : getChangeLists()) {
-      if (oldMessage.equals(changeList.getComment())) {
-        editComment(changeList.getName(), newMessage);
+    if (areChangeListsEnabled()) {
+      for (LocalChangeList changeList : getChangeLists()) {
+        if (oldMessage.equals(changeList.getComment())) {
+          editComment(changeList.getName(), newMessage);
+        }
       }
     }
   }

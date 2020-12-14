@@ -1,0 +1,5 @@
+ext {
+  prop1 = 25
+  prop2 = prop1
+  prop3 = [key: 'value', key1: 'value']
+}

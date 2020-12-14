@@ -1,0 +1,4 @@
+dependencies {
+  runtime /* Hey */ 'org.springframework:spring-core:2.5', /* Hey */ 'org.springframework:spring-aop:2.5'
+  test 'org.gradle.test.classifiers:service:1.0:jdk15@jar'
+}

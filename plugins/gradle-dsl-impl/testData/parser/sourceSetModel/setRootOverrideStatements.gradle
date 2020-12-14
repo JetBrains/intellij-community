@@ -1,0 +1,20 @@
+android {
+  sourceSets {
+    set1 {
+      root = "source1"
+      setRoot "override1"
+    }
+    set2 {
+      root "source2"
+    }
+    set2.setRoot("override2")
+    set3 {
+      setRoot "source3"
+    }
+    set4 {
+      setRoot("source4")
+    }
+  }
+  sourceSets.set3.root "override3"
+}
+android.sourceSets.set4.root = "override4"

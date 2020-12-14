@@ -39,10 +39,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
+  public static final String RDC_GROUP = "RunDebugConfigRunnerActions";
 
   private final Set<String> myContextActionIdSet = new HashSet<>();
   private final Map<String, AnAction> myIdToAction = new HashMap<>();
   private final Map<String, AnAction> myContextActionIdToAction = new HashMap<>();
+  private final Map<String, AnAction> myRunDebugIdToAction = new HashMap<>();
 
   public ExecutorRegistryImpl() {
     Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(new ExtensionPointListener<Executor>() {
@@ -94,6 +96,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
     registerAction(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
     registerAction(actionManager, executor.getContextActionId(), runContextAction, RUN_CONTEXT_GROUP, myContextActionIdToAction);
+    if(executor.isRDCAction()) {
+      registerAction(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RDC_GROUP,
+                     myRunDebugIdToAction);
+    }
 
     myContextActionIdSet.add(executor.getContextActionId());
   }
@@ -114,6 +120,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     unregisterAction(executor.getId(), RUNNERS_GROUP, myIdToAction);
     unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionIdToAction);
+    unregisterAction(executor.getContextActionId(), RDC_GROUP, myRunDebugIdToAction);
   }
 
   private static void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.codeInsight
 
@@ -133,6 +133,12 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
             <extensionPoint name="custom"/>
         </extensionPoints>
     """)
+    addPluginXml("notInDependencies", """
+        <id>com.intellij.notincluded</id>
+        <extensionPoints>
+            <extensionPoint name="notInDependencies"/>
+        </extensionPoints>
+    """)
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}")
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}")
@@ -143,11 +149,13 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "}")
     myFixture.addClass("package foo; " +
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
+                       "import com.intellij.openapi.extensions.RequiredElement; " +
                        "public class MyServiceDescriptor { " +
                        "  @Attribute public String serviceImplementation; " +
                        "  @Attribute public java.util.concurrent.TimeUnit timeUnit; " +
                        "  @Attribute public java.lang.Integer integerNullable; " +
                        "  @Attribute public int intPropertyForClass; " +
+                       "  @Attribute @RequiredElement(allowEmpty=true) public String canBeEmptyString; " +
                        "  @Attribute public boolean forClass; " +
                        "}")
 

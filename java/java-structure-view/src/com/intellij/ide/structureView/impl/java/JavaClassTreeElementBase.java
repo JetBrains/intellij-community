@@ -111,7 +111,7 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
       return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
     }
     catch (IndexNotReadyException ignore) {
-      return null; // do not show deprecated elements while indexing
+      return null; // do not show deprecated elements during indexing
     }
   }
 

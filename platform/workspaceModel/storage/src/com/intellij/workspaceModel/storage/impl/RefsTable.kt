@@ -3,10 +3,12 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.containers.HashSetInterner
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType
 import com.intellij.workspaceModel.storage.impl.containers.*
+import java.util.function.IntFunction
 
 /**
  * [isChildNullable] property is ignored for [ConnectionType.ONE_TO_ABSTRACT_MANY] and [ConnectionType.ONE_TO_MANY]
@@ -374,7 +376,7 @@ internal sealed class AbstractRefsTable {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
       val existingValue = res.putIfAbsent(connectionId, EntityId(value, connectionId.parentClass))
-      if (existingValue != null) error("This parent already exists")
+      if (existingValue != null) thisLogger().error("This parent already exists")
     }
 
     val filteredOneToOne = oneToOneContainer.filterKeys { it.childClass == childClassId }
@@ -382,7 +384,7 @@ internal sealed class AbstractRefsTable {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
       val existingValue = res.putIfAbsent(connectionId, EntityId(value, connectionId.parentClass))
-      if (existingValue != null) error("This parent already exists")
+      if (existingValue != null) thisLogger().error("This parent already exists")
     }
 
     val filteredOneToAbstractMany = oneToAbstractManyContainer
@@ -391,7 +393,7 @@ internal sealed class AbstractRefsTable {
       if (!bimap.containsKey(childId)) continue
       val value = bimap[childId] ?: continue
       val existingValue = res.putIfAbsent(connectionId, value)
-      if (existingValue != null) error("This parent already exists")
+      if (existingValue != null) thisLogger().error("This parent already exists")
     }
 
     val filteredAbstractOneToOne = abstractOneToOneContainer
@@ -400,7 +402,7 @@ internal sealed class AbstractRefsTable {
       if (!bimap.containsKey(childId)) continue
       val value = bimap[childId] ?: continue
       val existingValue = res.putIfAbsent(connectionId, value)
-      if (existingValue != null) error("This parent already exists")
+      if (existingValue != null) thisLogger().error("This parent already exists")
     }
 
     return res
@@ -419,7 +421,7 @@ internal sealed class AbstractRefsTable {
       if (!keys.isEmpty()) {
         val children = keys.map { EntityId(it, connectionId.childClass) }.toSet()
         val existingValue = res.putIfAbsent(connectionId, children)
-        if (existingValue != null) error("These children already exist")
+        if (existingValue != null) thisLogger().error("These children already exist")
       }
     }
 
@@ -428,7 +430,7 @@ internal sealed class AbstractRefsTable {
       if (!bimap.containsValue(parentArrayId)) continue
       val key = bimap.getKey(parentArrayId)
       val existingValue = res.putIfAbsent(connectionId, setOf(EntityId(key, connectionId.childClass)))
-      if (existingValue != null) error("These children already exist")
+      if (existingValue != null) thisLogger().error("These children already exist")
     }
 
     val filteredOneToAbstractMany = oneToAbstractManyContainer
@@ -437,7 +439,7 @@ internal sealed class AbstractRefsTable {
       val keys = bimap.getKeysByValue(parentId) ?: continue
       if (keys.isNotEmpty()) {
         val existingValue = res.putIfAbsent(connectionId, keys.toSet())
-        if (existingValue != null) error("These children already exist")
+        if (existingValue != null) thisLogger().error("These children already exist")
       }
     }
 
@@ -447,7 +449,7 @@ internal sealed class AbstractRefsTable {
       val key = bimap.inverse()[parentId]
       if (key == null) continue
       val existingValue = res.putIfAbsent(connectionId, setOf(key))
-      if (existingValue != null) error("These children already exist")
+      if (existingValue != null) thisLogger().error("These children already exist")
     }
 
     return res
@@ -471,24 +473,24 @@ internal sealed class AbstractRefsTable {
     return abstractOneToOneContainer[connectionId]?.get(childId)
   }
 
-  fun <Child : WorkspaceEntity> getOneToOneChild(connectionId: ConnectionId, parentId: Int, transformer: (Int) -> Child?): Child? {
+  fun <Child : WorkspaceEntity> getOneToOneChild(connectionId: ConnectionId, parentId: Int, transformer: IntFunction<Child?>): Child? {
     val bimap = oneToOneContainer[connectionId] ?: return null
     if (!bimap.containsValue(parentId)) return null
 
-    return transformer(bimap.getKey(parentId))
+    return transformer.apply(bimap.getKey(parentId))
   }
 
-  fun <Parent : WorkspaceEntity> getOneToOneParent(connectionId: ConnectionId, childId: Int, transformer: (Int) -> Parent?): Parent? {
+  fun <Parent : WorkspaceEntity> getOneToOneParent(connectionId: ConnectionId, childId: Int, transformer: IntFunction<Parent?>): Parent? {
     val bimap = oneToOneContainer[connectionId] ?: return null
     if (!bimap.containsKey(childId)) return null
 
-    return transformer(bimap.get(childId))
+    return transformer.apply(bimap.get(childId))
   }
 
-  fun <Parent : WorkspaceEntity> getOneToManyParent(connectionId: ConnectionId, childId: Int, transformer: (Int) -> Parent?): Parent? {
+  fun <Parent : WorkspaceEntity> getOneToManyParent(connectionId: ConnectionId, childId: Int, transformer: IntFunction<Parent?>): Parent? {
     val bimap = oneToManyContainer[connectionId] ?: return null
     if (!bimap.containsKey(childId)) return null
 
-    return transformer(bimap.get(childId))
+    return transformer.apply(bimap.get(childId))
   }
 }

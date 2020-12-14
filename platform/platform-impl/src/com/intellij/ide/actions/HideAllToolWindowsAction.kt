@@ -8,6 +8,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.impl.ToolWindowEventSource
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 
 internal class HideAllToolWindowsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
@@ -42,7 +44,7 @@ internal class HideAllToolWindowsAction : AnAction(), DumbAware {
 }
 
 private fun performAction(project: Project) {
-  val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project)
+  val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project) as ToolWindowManagerImpl
   val layout = toolWindowManager.layout.copy()
   // to clear windows stack
   toolWindowManager.clearSideStack()
@@ -51,7 +53,7 @@ private fun performAction(project: Project) {
   var hasVisible = false
   for (id in ids) {
     if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
-      toolWindowManager.getToolWindow(id)?.hide(null)
+      toolWindowManager.hideToolWindow(id, false, true, ToolWindowEventSource.HideAllWindowsAction)
       hasVisible = true
     }
   }

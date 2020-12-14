@@ -1020,7 +1020,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
-    AnAction action = ActionManager.getInstance().getAction("SelectOpenedFileInProjectView");
+    AnAction action = ActionManager.getInstance().getAction("SelectInProjectView");
     if (action != null) titleActions.add(action);
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new DefaultTreeExpander(() -> {
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
@@ -2036,8 +2036,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return !isAutoscrollFromSource(myCurrentViewId);
   }
 
-  void performSelectOpenedFile() {
-    myAutoScrollFromSourceHandler.scrollFromSource(true);
+  @Nullable Runnable getSelectOpenedFile() {
+    SimpleSelectInContext context = myAutoScrollFromSourceHandler.findSelectInContext();
+    return context == null ? null : () -> context.selectInCurrentTarget(true);
   }
 
   @NotNull

@@ -3,14 +3,14 @@ package org.zmlx.hg4idea.provider.commit
 
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutorBase
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import org.jetbrains.annotations.Nls
 import org.zmlx.hg4idea.HgBundle
 import org.zmlx.hg4idea.repo.HgRepository
 
-class HgCloseBranchExecutor : CommitExecutorBase() {
+class HgCloseBranchExecutor : CommitExecutor {
   var repositories: Collection<HgRepository> = emptyList()
 
   override fun areChangesRequired(): Boolean = false

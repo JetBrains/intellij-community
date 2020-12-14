@@ -1,9 +1,9 @@
 # Stubs for Queue (Python 2)
 
 from collections import deque
-from typing import Any, Deque, TypeVar, Generic, Optional
+from typing import Any, Deque, Generic, Optional, TypeVar
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 class Empty(Exception): ...
 class Full(Exception): ...

@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -252,7 +253,8 @@ class ModifiableRootModelBridgeImpl(
     val item = entryImpl.item
 
     if (orderEntriesImpl.none { it.item == item }) {
-      error("OrderEntry $item does not belong to modifiableRootModel of module ${moduleBridge.name}")
+      LOG.error("OrderEntry $item does not belong to modifiableRootModel of module ${moduleBridge.name}")
+      return
     }
 
     if (orderEntry is LibraryOrderEntryBridge && orderEntry.isModuleLevel) {
@@ -537,5 +539,9 @@ class ModifiableRootModelBridgeImpl(
   override fun getContentRootUrls(): Array<String> = currentModel.contentRootUrls
   override fun getModuleDependencies(): Array<Module> = currentModel.moduleDependencies
   override fun getModuleDependencies(includeTests: Boolean): Array<Module> = currentModel.getModuleDependencies(includeTests)
+
+  companion object {
+    private val LOG = logger<ModifiableRootModelBridgeImpl>()
+  }
 }
 

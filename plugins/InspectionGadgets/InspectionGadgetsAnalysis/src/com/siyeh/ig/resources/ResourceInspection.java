@@ -303,24 +303,8 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   boolean isResourceEscapingFromMethod(PsiVariable boundVariable, PsiExpression resourceCreationExpression) {
-    if (resourceCreationExpression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)resourceCreationExpression;
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if (qualifierExpression instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
-        final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiField) {
-          final PsiField field = (PsiField)target;
-          final String fieldName = field.getName();
-          if ("out".equals(fieldName) || "err".equals(fieldName)) {
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass != null && "java.lang.System".equals(containingClass.getQualifiedName())) {
-              return true;
-            }
-          }
-        }
-      }
+    if (isSystemErrOrOutUse(resourceCreationExpression)) {
+      return true;
     }
     final PsiElement parent = ExpressionUtils.getPassThroughParent(resourceCreationExpression);
     if (parent instanceof PsiReturnStatement) {
@@ -331,13 +315,8 @@ public abstract class ResourceInspection extends BaseInspection {
       if (PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression()) != resourceCreationExpression) {
         return true; // non-sensical code
       }
-      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-      if (lhs instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
-        final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiField) {
-          return true;
-        }
+      if (assignedToField(assignmentExpression)) {
+        return true;
       }
     }
     else if (parent instanceof PsiExpressionList) {
@@ -359,6 +338,40 @@ public abstract class ResourceInspection extends BaseInspection {
     final EscapeVisitor visitor = new EscapeVisitor(boundVariable);
     codeBlock.accept(visitor);
     return visitor.isEscaped();
+  }
+
+  private static boolean assignedToField(PsiAssignmentExpression assignmentExpression) {
+    final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
+    if (!(lhs instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+    final PsiElement target = referenceExpression.resolve();
+    return target instanceof PsiField;
+  }
+
+  private static boolean isSystemErrOrOutUse(PsiExpression resourceCreationExpression) {
+    if (!(resourceCreationExpression instanceof PsiMethodCallExpression)) {
+      return false;
+    }
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)resourceCreationExpression;
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+    final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+    if (qualifierExpression instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+      final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiField) {
+        final PsiField field = (PsiField)target;
+        final String fieldName = field.getName();
+        if ("out".equals(fieldName) || "err".equals(fieldName)) {
+          final PsiClass containingClass = field.getContainingClass();
+          if (containingClass != null && "java.lang.System".equals(containingClass.getQualifiedName())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private final class CloseVisitor extends JavaRecursiveElementWalkingVisitor {

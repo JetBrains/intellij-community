@@ -41,6 +41,7 @@ public abstract class FileTemplateBase implements FileTemplate {
   private boolean myShouldReformatCode = DEFAULT_REFORMAT_CODE_VALUE;
   private boolean myLiveTemplateEnabled;
   private boolean myLiveTemplateEnabledChanged;
+  private String myFileName = "";
 
   @Override
   public final boolean isReformatCode() {
@@ -134,4 +135,14 @@ public abstract class FileTemplateBase implements FileTemplate {
   }
 
   public boolean isLiveTemplateEnabledByDefault() { return false; }
+
+  @Override
+  public @NotNull String getFileName() {
+    return myFileName;
+  }
+
+  @Override
+  public void setFileName(@NotNull String fileName) {
+    myFileName = fileName;
+  }
 }

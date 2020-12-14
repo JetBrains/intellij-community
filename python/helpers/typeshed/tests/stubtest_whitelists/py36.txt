@@ -24,6 +24,7 @@ copy.PyStringMap
 ctypes.CDLL.__init__
 email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
+hmac.HMAC.__init__
 importlib.metadata
 importlib.resources
 io.StringIO.readline
@@ -35,11 +36,12 @@ nntplib._NNTPBase.starttls
 os.utime
 plistlib.Dict.__init__
 pyexpat.XMLParserType.ExternalEntityParserCreate
+random.Random.randrange  # missing undocumented arg _int
+random.randrange  # missing undocumented arg _int
 secrets.SystemRandom.getstate
 smtplib.SMTP.sendmail
 sre_compile.dis
 ssl.SSLSocket.__init__
-typing.AbstractSet.isdisjoint
 typing.AsyncGenerator.ag_await
 typing.AsyncGenerator.ag_code
 typing.AsyncGenerator.ag_frame
@@ -56,30 +58,17 @@ typing.Generator.gi_yieldfrom
 typing.GenericMeta.__new__
 typing.IO.closed  # Incorrect definition in CPython, fixed in bpo-39493
 typing.Mapping.get
-typing.MutableMapping.pop
-typing.MutableMapping.setdefault
-typing.MutableSequence.append
-typing.MutableSequence.extend
-typing.MutableSequence.insert
-typing.MutableSequence.remove
-typing.MutableSet.add
-typing.MutableSet.discard
-typing.MutableSet.remove
 typing.NamedTuple.__new__
 typing.NamedTuple._asdict
 typing.NamedTuple._make
 typing.NamedTuple._replace
-typing.Sequence.count
 typing.Sequence.index
 typing.runtime_checkable
-unittest.async_case
-unittest.case._AssertLogsContext.__init__
+unittest.async_case  # Added in Python 3.8
 urllib.parse.parse_qs
 urllib.parse.parse_qsl
 uuid.UUID.int
 webbrowser.Opera.raise_opts
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
-xml.etree.cElementTree.Element.__bool__
-xml.etree.cElementTree.Element.copy
 xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
 xml.parsers.expat.XMLParserType.ExternalEntityParserCreate

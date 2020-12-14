@@ -1,0 +1,7 @@
+ext {
+  version = '3.6'
+  name = "guava"
+}
+dependencies {
+  testCompile 'org.gradle.test.classifiers:service:1.0', 'com.google.guava:guava:+'
+}

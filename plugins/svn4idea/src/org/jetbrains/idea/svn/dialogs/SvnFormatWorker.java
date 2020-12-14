@@ -31,7 +31,6 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 public class SvnFormatWorker extends Task.Backgroundable {
 
   private final List<Throwable> myExceptions;
-  private final Project myProject;
   @NotNull private final WorkingCopyFormat myNewFormat;
   private final List<? extends WCInfo> myWcInfos;
   private List<LocalChangeList> myBeforeChangeLists;
@@ -39,7 +38,6 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
   public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final List<? extends WCInfo> wcInfos) {
     super(project, message("progress.title.convert.working.copy.format"), false, DEAF);
-    myProject = project;
     myNewFormat = newFormat;
     myExceptions = new ArrayList<>();
     myWcInfos = wcInfos;

@@ -25,8 +25,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.stats.completion.tracker.CompletionTrackerInitializer"/>
-
     <applicationService serviceInterface="com.intellij.stats.completion.tracker.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.tracker.CompletionFileLoggerProvider"/>
 
@@ -56,4 +54,10 @@
 
     <preloadingActivity implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.stats.completion.tracker.CompletionLoggerInitializer"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"
+              activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

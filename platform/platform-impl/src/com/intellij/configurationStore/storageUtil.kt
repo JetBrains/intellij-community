@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
@@ -38,26 +40,24 @@ var DEBUG_LOG: String? = null
 
 @ApiStatus.Internal
 fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
-  val joinedMacroses = macros.joinToString(", ")
+  val joinedMacros = HtmlChunk.text(macros.joinToString(", ")).italic().toString()
   val mainMessage =
     if (macros.size == 1) {
-      IdeBundle.message("notification.content.unknown.macros.error.one.macros.undefined", joinedMacroses)
+      IdeBundle.message("notification.content.unknown.macros.error.one.macros.undefined", joinedMacros)
     }
     else {
-      IdeBundle.message("notification.content.unknown.macros.error.many.macroses.undefined", joinedMacroses)
+      IdeBundle.message("notification.content.unknown.macros.error.many.macroses.undefined", joinedMacros)
     }
 
   val description = IdeBundle.message("notification.content.unknown.macros.error.description",
                                       ApplicationNamesInfo.getInstance().productName)
-  val message = "$mainMessage<br/><br/>$description"
+  val message = HtmlBuilder().appendRaw(mainMessage).br().br().appendRaw(description).toString()
   val title = IdeBundle.message("notification.title.unknown.macros.error")
-  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR, null, macros)
-    .apply {
-      addAction(NotificationAction.createSimple(IdeBundle.message("notification.action.unknown.macros.error.fix")) {
-        checkUnknownMacros(project, true, macros, substitutorToStore)
-      })
-    }
-    .notify(project)
+  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR, null, macros).apply {
+    addAction(NotificationAction.createSimple(IdeBundle.message("notification.action.unknown.macros.error.fix")) {
+      checkUnknownMacros(project, true, macros, substitutorToStore)
+    })
+  }.notify(project)
 }
 
 @ApiStatus.Internal

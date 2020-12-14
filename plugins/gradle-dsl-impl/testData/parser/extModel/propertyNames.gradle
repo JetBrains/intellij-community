@@ -1,0 +1,4 @@
+ext {
+  isDebuggable = true
+  foo = isDebuggable
+}

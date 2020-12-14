@@ -60,34 +60,30 @@ import static com.intellij.codeInsight.navigation.actions.UiKt.notifyNowhereToGo
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
 
   private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
-  private static List<EventPair<?>> ourCurrentActionData; // accessed from EDT only
+  private static List<EventPair<?>> ourCurrentEventData = null; // accessed from EDT only
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Language language = file != null ? file.getLanguage() : null;
-    List<EventPair<?>> currentActionData = ContainerUtil.append(
+    List<EventPair<?>> currentEventData = ContainerUtil.append(
       ActionsCollectorImpl.actionEventData(e),
       EventFields.CurrentFile.with(language)
     );
+    List<EventPair<?>> savedEventData = ourCurrentEventData;
+    ourCurrentEventData = currentEventData;
     try {
-      ourCurrentActionData = currentActionData;
       super.actionPerformed(e);
     }
     finally {
-      ourCurrentActionData = null;
+      ourCurrentEventData = savedEventData;
     }
   }
 
-  static void recordGTD() {
+  static @NotNull List<@NotNull EventPair<?>> getCurrentEventData() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.record(ourCurrentActionData, GTDUCollector.GTDUChoice.GTD);
-  }
-
-  static void recordSU() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.record(ourCurrentActionData, GTDUCollector.GTDUChoice.SU);
+    return Objects.requireNonNull(ourCurrentEventData);
   }
 
   @NotNull

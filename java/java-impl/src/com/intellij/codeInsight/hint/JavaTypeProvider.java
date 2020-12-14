@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.ExpressionTypeProvider;
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -103,17 +103,17 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
       PsiType type = expression.getType();
       Set<Object> values = result.getExpressionValues(expression);
       if (!values.isEmpty()) {
-        if (values.size() == 1) {
-          infoLines.add(Pair.create(JavaBundle.message("type.information.value"), DfConstantType.renderValue(values.iterator().next())));
-        } else {
-          infoLines.add(Pair.create(JavaBundle.message("type.information.value.one.of"), renderValues(values)));
-        }
+        infoLines.add(Pair.create(
+          JavaBundle.message("type.information.value"),
+          StreamEx.of(values).map(DfConstantType::renderValue).sorted().collect(NlsMessages.joiningOr())));
       } else {
         if (dfType instanceof DfAntiConstantType) {
           List<Object> nonValues = new ArrayList<>(((DfAntiConstantType<?>)dfType).getNotValues());
           nonValues.remove(null); // Nullability: not-null will be displayed, so this just duplicates nullability info
           if (!nonValues.isEmpty()) {
-            infoLines.add(Pair.create(JavaBundle.message("type.information.not.equal.to"), renderValues(nonValues)));
+            infoLines.add(Pair.create(
+              JavaBundle.message("type.information.not.equal.to"),
+              StreamEx.of(nonValues).map(DfConstantType::renderValue).sorted().collect(NlsMessages.joiningNarrowAnd())));
           }
         }
         if (dfType instanceof DfIntegralType) {
@@ -145,10 +145,6 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
       return HtmlChunk.tag("table").children(rows).toString();
     }
     return basicType;
-  }
-
-  private static @NlsSafe String renderValues(Collection<Object> values) {
-    return StreamEx.of(values).map(DfConstantType::renderValue).sorted().joining(", ");
   }
 
   private static HtmlChunk makeHtmlRow(@NotNull @Nls String titleText, @Nls String contentText) {

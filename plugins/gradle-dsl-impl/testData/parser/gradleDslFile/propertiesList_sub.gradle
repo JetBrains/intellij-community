@@ -1,0 +1,7 @@
+ext {
+  def childVar1 = 23
+  childProp1 = childVar1
+  childProp3 = [parentProperty1, childProp1]
+}
+
+def childVar2 = "value"

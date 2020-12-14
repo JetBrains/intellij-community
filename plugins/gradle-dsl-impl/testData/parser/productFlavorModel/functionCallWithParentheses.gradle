@@ -1,0 +1,11 @@
+android {
+  defaultConfig {
+    applicationId "com.example.psd.sample.app.default"
+    testApplicationId "com.example.psd.sample.app.default.test"
+    maxSdkVersion 26
+    minSdkVersion 9
+    targetSdkVersion(19)
+    versionCode 1
+    versionName "1.0"
+  }
+}

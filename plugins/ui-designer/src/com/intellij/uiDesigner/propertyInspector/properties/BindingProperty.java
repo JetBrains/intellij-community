@@ -9,6 +9,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -52,7 +53,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
   private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
     @Override
-    protected void customize(@NotNull final String value) {
+    protected void customize(@NotNull final @NlsSafe String value) {
       setText(value);
     }
   };

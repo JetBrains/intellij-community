@@ -6,6 +6,7 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.AboutPopup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -14,6 +15,9 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +31,7 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +46,9 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Objects;
@@ -75,7 +82,10 @@ public class WelcomeScreenComponentFactory {
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
     appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
-    appName.setHorizontalAlignment(SwingConstants.CENTER);
+
+    ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
+    copyAbout.setHoveringIcon(AllIcons.Actions.Copy);
+    copyAbout.setToolTipText(IdeBundle.message("welcome.screen.copy.about.action.text"));
 
     String appVersion = appInfo.getFullVersion();
 
@@ -85,15 +95,27 @@ public class WelcomeScreenComponentFactory {
 
     JLabel version = new JLabel(appVersion);
     version.setFont(UIUtil.getLabelFont(SMALL));
-    version.setHorizontalAlignment(SwingConstants.CENTER);
     version.setForeground(Gray._128);
     NonOpaquePanel textPanel = new NonOpaquePanel();
-    textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+    textPanel.setLayout(new VerticalFlowLayout(0, 0));
     textPanel.setBorder(JBUI.Borders.empty(28, 10, 25, 10));
-    textPanel.add(appName);
+    JPanel namePanel = JBUI.Panels.simplePanel(appName).addToRight(copyAbout);
+    textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
     panel.setToolTipText(applicationName + " " + appVersion);
+
+    panel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        copyAbout.setIcon(AllIcons.Actions.Copy);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        copyAbout.setIcon(EmptyIcon.ICON_16);
+      }
+    });
     return panel;
   }
 
@@ -135,6 +157,12 @@ public class WelcomeScreenComponentFactory {
     return panel;
   }
 
+  private static AnAction createCopyAboutAction() {
+    return DumbAwareAction.create(e -> {
+      CopyPasteManager.getInstance().setContents(new StringSelection(AboutPopup.getAboutText()));
+    });
+  }
+
   static JComponent createRecentProjects(Disposable parentDisposable) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new NewRecentProjectPanel(parentDisposable), BorderLayout.CENTER);
@@ -146,7 +174,6 @@ public class WelcomeScreenComponentFactory {
   static JLabel createArrow(final ActionLink link) {
     JLabel arrow = new JLabel(AllIcons.General.LinkDropTriangle);
     arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    arrow.setVerticalAlignment(SwingConstants.BOTTOM);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -236,7 +263,7 @@ public class WelcomeScreenComponentFactory {
     return panel;
   }
 
-  static JComponent wrapActionLink(@NotNull ActionLink link) {
+  public static JComponent wrapActionLink(@NotNull ActionLink link) {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);

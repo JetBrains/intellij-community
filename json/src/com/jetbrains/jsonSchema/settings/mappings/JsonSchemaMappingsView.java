@@ -91,6 +91,7 @@ public class JsonSchemaMappingsView implements Disposable {
     MyAddActionButtonRunnable addActionButtonRunnable = new MyAddActionButtonRunnable();
 
     myTableView = new JsonMappingsTableView(addActionButtonRunnable);
+    myTableView.setShowGrid(false);
     myTableView.getTableHeader().setVisible(false);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
     final MyEditActionButtonRunnableImpl editAction = new MyEditActionButtonRunnableImpl();
@@ -298,12 +299,12 @@ public class JsonSchemaMappingsView implements Disposable {
       if (point == null) {
         point = new RelativePoint(button.getContextComponent(), new Point(0, 0));
       }
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JsonMappingKind>(null,
-                                                                                          JsonMappingKind.values()) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(null,
+                                                                           JsonMappingKind.values()) {
         @NotNull
         @Override
         public String getTextFor(JsonMappingKind value) {
-          return "Add " + StringUtil.capitalizeWords(value.getDescription(), true);
+          return JsonBundle.message("schema.add.mapping.kind.text", StringUtil.capitalizeWords(value.getDescription(), true));
         }
 
         @Override

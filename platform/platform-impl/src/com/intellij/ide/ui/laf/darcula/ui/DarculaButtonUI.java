@@ -7,7 +7,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.actionSystem.impl.newToolbar.ControlBarActionComponent;
+import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -109,8 +109,8 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
     Rectangle r = new Rectangle(c.getSize());
 
-    if(ControlBarActionComponent.Companion.isCustomBar(c)) {
-      return ControlBarActionComponent.Companion.paintButtonDecorations(g, c, getBackground(c, r));
+    if(SegmentedBarActionComponent.Companion.isCustomBar(c)) {
+      return SegmentedBarActionComponent.Companion.paintButtonDecorations(g, c, getBackground(c, r));
     }
 
     JBInsets.removeFrom(r, isSmallVariant(c) ? c.getInsets() : JBUI.insets(1));

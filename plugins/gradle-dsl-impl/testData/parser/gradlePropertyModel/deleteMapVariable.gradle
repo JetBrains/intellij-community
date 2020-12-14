@@ -1,0 +1,4 @@
+ext {
+  def map = [key: "value"]
+  prop = map
+}

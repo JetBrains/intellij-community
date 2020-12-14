@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -611,7 +612,8 @@ public final class AnnotationsHighlightUtil {
     PsiClass container = getRepeatableContainer(annotation);
     if (container == null) return null;
 
-    PsiMethod[] methods = container.findMethodsByName("value", false);
+    PsiMethod[] methods = !container.isAnnotationType() ? PsiMethod.EMPTY_ARRAY 
+                                                        : container.findMethodsByName("value", false);
     if (methods.length == 0) {
       return JavaErrorBundle.message("annotation.container.no.value", container.getQualifiedName());
     }
@@ -655,7 +657,7 @@ public final class AnnotationsHighlightUtil {
     PsiType containerType = ((PsiClassObjectAccessExpression)containerRef).getOperand().getType();
     if (!(containerType instanceof PsiClassType)) return null;
     PsiClass container = ((PsiClassType)containerType).resolve();
-    if (container == null || !container.isAnnotationType()) return null;
+    if (container == null) return null;
     return container;
   }
 

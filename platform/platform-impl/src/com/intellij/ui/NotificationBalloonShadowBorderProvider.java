@@ -1,12 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons.Ide.Shadow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -102,7 +100,7 @@ public final class NotificationBalloonShadowBorderProvider implements BalloonImp
 
     if (calcLength < length) {
       Icon iconSnapshot = IconLoader.getIconSnapshot(icon);
-      Image image = IconUtil.toImage(iconSnapshot, ScaleContext.create(component));
+      Image image = IconLoader.toImage(iconSnapshot, ScaleContext.create(component));
       if (horizontal) {
         StartupUiUtil.drawImage(g, image,
                                 new Rectangle(lastValue, start2, length - calcLength, iconSnapshot.getIconHeight()),

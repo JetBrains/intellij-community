@@ -1,7 +1,22 @@
-from typing import Any, Callable, Dict, Generator, Iterable, List, NamedTuple, Optional, Pattern, Union, Sequence, Set, TextIO, Tuple
-from builtins import open as _builtin_open
 import sys
+from builtins import open as _builtin_open
 from token import *  # noqa: F403
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    NamedTuple,
+    Optional,
+    Pattern,
+    Sequence,
+    Set,
+    TextIO,
+    Tuple,
+    Union,
+)
 
 if sys.version_info < (3, 7):
     COMMENT: int
@@ -50,6 +65,7 @@ def generate_tokens(readline: Callable[[], str]) -> Generator[TokenInfo, None, N
 if sys.version_info >= (3, 6):
     from os import PathLike
     def open(filename: Union[str, bytes, int, PathLike[Any]]) -> TextIO: ...
+
 elif sys.version_info >= (3, 2):
     def open(filename: Union[str, bytes, int]) -> TextIO: ...
 

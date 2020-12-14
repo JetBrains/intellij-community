@@ -87,6 +87,10 @@ class BuildOptions {
    * Note: skipping this step won't affect publication of 'Artifact paths' in TeamCity build settings and vice versa
    */
   static final String TEAMCITY_ARTIFACTS_PUBLICATION = "teamcity_artifacts_publication"
+  /**
+   * @see org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
+   */
+  static final String FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.

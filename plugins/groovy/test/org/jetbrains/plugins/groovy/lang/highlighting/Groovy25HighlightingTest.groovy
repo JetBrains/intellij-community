@@ -148,4 +148,58 @@ static void main(String[] args) {
 }
 ''', GroovyConstructorNamedArgumentsInspection
   }
+
+  void 'test @NamedVariant'() {
+    highlightingTest """
+class Rr {
+    @groovy.transform.NamedVariant
+    Rr(String s1, Integer s2) {
+        
+    }
+}
+
+@groovy.transform.CompileStatic
+def foo() {
+    new Rr(s1: "a", s2: 10)
+}
+"""
+  }
+
+  void 'test @NamedVariant with autodelegate'() {
+    highlightingTest """
+class Foo {
+    int aaa
+    boolean bbb
+}
+
+@groovy.transform.NamedVariant(autoDelegate = true)
+static def bar(Foo a) {}
+
+@groovy.transform.CompileStatic
+static def foo() {
+    bar(aaa: 10, bbb: true)
+}"""
+  }
+
+  void 'test visibility options for @NamedVariant'() {
+    fixture.addFileToProject 'other.groovy', """
+import groovy.transform.options.Visibility
+
+@groovy.transform.CompileStatic
+class Cde {
+    @groovy.transform.NamedVariant
+    @groovy.transform.VisibilityOptions(method = Visibility.PUBLIC)
+    private static def foo(String s) {}
+}"""
+    highlightingTest """
+class X {
+
+    @groovy.transform.CompileStatic
+    static void main(String[] args) {
+        Cde.foo(s : "")
+        Cde.<error>foo</error>("")
+    }
+
+}"""
+  }
 }

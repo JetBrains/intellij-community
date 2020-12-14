@@ -19,9 +19,9 @@ internal object DotnetIconSync {
 
   private val committer by lazy(::triggeredBy)
   private val context = Context().apply {
-    iconsFilter = { file ->
+    iconFilter = { file ->
       // need to filter designers' icons using developers' icon-robots.txt
-      file.toRelativeString(iconsRepoDir)
+      iconRepoDir.relativize(file)
         .let(devRepoDir::resolve)
         .let(IconRobotsDataReader::isSyncSkipped)
         .not()
@@ -61,14 +61,14 @@ internal object DotnetIconSync {
     }
     finally {
       shutdownAppScheduledExecutorService()
-      cleanup(context.iconsRepo)
+      cleanup(context.iconRepo)
     }
   }
 
   private fun transformIconsToIdeaFormat() {
     step("Transforming icons from Dotnet to Idea format..")
     syncPaths.forEach {
-      val path = context.iconsRepo.resolve(it.iconsPath).toPath()
+      val path = context.iconRepo.resolve(it.iconsPath)
       DotnetIconsTransformation.transformToIdeaFormat(path)
     }
   }
@@ -76,30 +76,30 @@ internal object DotnetIconSync {
   private fun sync(path: SyncPath) {
     step("Syncing icons for ${path.devPath}..")
     context.devRepoDir = context.devRepoRoot.resolve(path.devPath)
-    context.iconsRepoDir = context.iconsRepo.resolve(path.iconsPath)
-    context.devRepoDir.walkTopDown().forEach {
+    context.iconRepoDir = context.iconRepo.resolve(path.iconsPath)
+    context.devRepoDir.toFile().walkTopDown().forEach {
       if (isImage(it)) {
         it.delete() || error("Unable to delete $it")
       }
     }
-    context.iconsRepoDir.walkTopDown().forEach {
-      if (isImage(it) && context.iconsFilter(it)) {
-        val target = context.devRepoDir.resolve(it.toRelativeString(context.iconsRepoDir))
-        it.copyTo(target, overwrite = true)
+    context.iconRepoDir.toFile().walkTopDown().forEach {
+      if (isImage(it) && context.iconFilter(it.toPath())) {
+        val target = context.devRepoDir.resolve(context.iconRepoDir.relativize(it.toPath()))
+        it.copyTo(target.toFile(), overwrite = true)
       }
     }
   }
 
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconsClasses(DotnetIconsClasses(context.devRepoDir.absolutePath))
+    generateIconsClasses(dbFile = null, config = DotnetIconsClasses(context.devRepoDir.toAbsolutePath().toString()))
   }
 
   private fun stageChanges(): Collection<String> {
     step("Staging changes..")
     val changes = gitStatus(context.devRepoRoot, includeUntracked = true).all().filter {
       val file = context.devRepoRoot.resolve(it)
-      isImage(file) || file.extension == "java"
+      isImage(file) || file.toString().endsWith(".java")
     }
     if (changes.isNotEmpty()) {
       stageFiles(changes, context.devRepoRoot)
@@ -109,7 +109,7 @@ internal object DotnetIconSync {
 
   private fun commitChanges() {
     step("Committing changes..")
-    commit(context.devRepoRoot, "Synced from ${getOriginUrl(context.iconsRepo)}", committer.name, committer.email)
+    commit(context.devRepoRoot, "Synced from ${getOriginUrl(context.iconRepo)}", committer.name, committer.email)
     val commit = commitInfo(context.devRepoRoot) ?: error("Unable to perform commit")
     println("Committed ${commit.hash} '${commit.subject}'")
   }

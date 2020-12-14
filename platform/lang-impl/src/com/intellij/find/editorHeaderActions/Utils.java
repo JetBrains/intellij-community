@@ -7,15 +7,16 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -44,7 +45,7 @@ public final class Utils {
                                          @NlsContexts.PopupTitle String title,
                                          final JTextComponent textField,
                                          @NlsContexts.PopupAdvertisement String ad,
-                                         JBPopupListener listener) {
+                                         @Nullable PopupState<JBPopup> popupState) {
 
     final Runnable callback = () -> {
       String selectedValue = (String)list.getSelectedValue();
@@ -65,7 +66,7 @@ public final class Utils {
       popup.setAdText(ad, SwingConstants.LEFT);
     }
 
-    if (listener != null) popup.addListener(listener);
+    if (popupState != null) popupState.prepareToShow(popup);
     if (toolbarComponent != null) {
       popup.showUnderneathOf(toolbarComponent);
     }

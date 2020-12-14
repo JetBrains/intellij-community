@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.constraints.BaseConstrainedExecution;
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -46,10 +45,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -58,7 +54,7 @@ import java.util.function.Consumer;
  * @author peter
  */
 @VisibleForTesting
-public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
+public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   private static final Logger LOG = Logger.getInstance(NonBlockingReadActionImpl.class);
   private static final Executor SYNC_DUMMY_EXECUTOR = __ -> {
     throw new UnsupportedOperationException();
@@ -74,7 +70,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   private final @Nullable ProgressIndicator myProgressIndicator;
   private final Callable<? extends T> myComputation;
 
-  private static final Set<Submission<?>> ourTasks = ContainerUtil.newConcurrentSet();
+  private static final Set<Submission<?>> ourTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
@@ -161,7 +157,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
       throw new IllegalArgumentException("Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
     }
     return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions, myDisposables,
-                                           ContainerUtil.newArrayList(equality), myProgressIndicator);
+                                           new ArrayList<>(Arrays.asList(equality)), myProgressIndicator);
   }
 
   private static boolean isTooCommon(Object o) {
@@ -202,7 +198,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     return submission;
   }
 
-  private static class Submission<T> extends AsyncPromise<T> {
+  private static final class Submission<T> extends AsyncPromise<T> {
     @NotNull private final Executor backendExecutor;
     private @Nullable final String myStartTrace;
     private volatile ProgressIndicator currentIndicator;
@@ -237,7 +233,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
         ourTasks.add(this);
       }
       if (!builder.myDisposables.isEmpty()) {
-        ReadAction.run(() -> expireWithDisposables(this.builder.myDisposables));
+        ApplicationManager.getApplication().runReadAction(() -> expireWithDisposables(this.builder.myDisposables));
       }
     }
 

@@ -16,7 +16,10 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MultiResolutionImageProvider;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +36,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -47,20 +51,20 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   private static final Object SYSTEM = new Object();
   public static final @NlsSafe String NAME = "Darcula";
   private static final @NlsSafe String DESCRIPTION = "IntelliJ Dark Look and Feel";
-  BasicLookAndFeel base;
+  private BasicLookAndFeel base;
 
   protected Disposable myDisposable;
   private Alarm myMnemonicAlarm;
   private final UserDataHolderBase myUserData = new UserDataHolderBase();
   private static boolean myAltPressed;
 
-  public DarculaLaf() {}
-
   protected BasicLookAndFeel createBaseLookAndFeel() {
     try {
       if (SystemInfo.isMac) {
         final String name = UIManager.getSystemLookAndFeelClassName();
-        return (BasicLookAndFeel)Class.forName(name).newInstance();
+        Constructor<?> constructor = Class.forName(name).getDeclaredConstructor();
+        constructor.setAccessible(true);
+        return (BasicLookAndFeel)constructor.newInstance();
       }
       else {
         return new IdeaLaf();
@@ -161,10 +165,12 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   private static void applySystemFonts(UIDefaults defaults) {
     try {
       String fqn = StartupUiUtil.getSystemLookAndFeelClassName();
-      Object systemLookAndFeel = Class.forName(fqn).newInstance();
+      Constructor<?> constructor = Class.forName(fqn).getDeclaredConstructor();
+      constructor.setAccessible(true);
+      Object systemLookAndFeel = constructor.newInstance();
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
-      final UIDefaults systemDefaults = (UIDefaults)superMethod.invoke(systemLookAndFeel);
+      Map<Object, Object> systemDefaults = (UIDefaults)superMethod.invoke(systemLookAndFeel);
       for (Map.Entry<Object, Object> entry : systemDefaults.entrySet()) {
         if (entry.getValue() instanceof Font) {
           defaults.put(entry.getKey(), entry.getValue());
@@ -289,7 +295,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         }
       }
 
-      HashMap<String, Object> darculaGlobalSettings = new HashMap<>();
+      Map<String, Object> darculaGlobalSettings = new HashMap<>();
       String prefix = getPrefix();
       prefix = prefix.substring(prefix.lastIndexOf("/") + 1) + ".";
 
@@ -333,7 +339,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
 
     if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, getClass(), true);
+      Icon icon = IconLoader.findIcon(value, getClass(), true, false);
       if (icon != null) {
         return icon;
       }

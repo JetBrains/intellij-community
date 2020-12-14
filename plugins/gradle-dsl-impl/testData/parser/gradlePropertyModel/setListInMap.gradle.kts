@@ -1,0 +1,1 @@
+val prop1 by extra(mapOf("key" to "val", "key1" to "val", "key2" to "val"))

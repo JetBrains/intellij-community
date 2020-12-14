@@ -1,9 +1,11 @@
-from email._parseaddr import AddressList as _AddressList
-from email._parseaddr import mktime_tz as mktime_tz
-from email._parseaddr import parsedate as _parsedate
-from email._parseaddr import parsedate_tz as _parsedate_tz
+from email._parseaddr import (
+    AddressList as _AddressList,
+    mktime_tz as mktime_tz,
+    parsedate as _parsedate,
+    parsedate_tz as _parsedate_tz,
+)
 from quopri import decodestring as _qdecode
-from typing import Optional, Any
+from typing import Any, Optional
 
 def formataddr(pair): ...
 def getaddresses(fieldvalues): ...

@@ -1,0 +1,4 @@
+ext {
+  def animal = "rhino"
+  prop = "hello, ${animal}!"
+}

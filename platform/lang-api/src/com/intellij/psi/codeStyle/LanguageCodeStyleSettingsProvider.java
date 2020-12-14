@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Base class and extension point for common code style settings for a specific language.
  */
-public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSettingsProvider implements LanguageCodeStyleProvider {
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
 
@@ -98,6 +98,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *         use its own language-specific common settings (the settings are shared with other languages).
    * @deprecated Override {@link #customizeDefaults(CommonCodeStyleSettings, IndentOptions)} method instead.
    */
+  @Override
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Deprecated
@@ -251,6 +252,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return null;
   }
 
+  @Override
   public Set<String> getSupportedFields() {
     return new SupportedFieldCollector().collectFields();
   }
@@ -341,6 +343,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * @return {@code DocCommentSettings} wrapper object object which allows to retrieve and modify language's own
    *         settings related to doc comment. The object is used then by common platform doc comment handling algorithms.
    */
+  @Override
   @NotNull
   public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
     return DocCommentSettings.DEFAULTS;

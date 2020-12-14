@@ -31,6 +31,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
     BuildTasksImpl.addDbusJava(buildContext, unixDistPath)
     BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
+    SVGPreBuilder.copyIconDb(buildContext, unixDistPath)
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$unixDistPath/bin")
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
@@ -55,7 +56,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       if (customizer.buildOnlyBareTarGz) return
-      
+
       if (customizer.includeX86Files) {
         buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
       }

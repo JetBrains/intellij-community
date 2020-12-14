@@ -83,7 +83,7 @@ final class ConversionResultImpl implements ConversionResult {
                               VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
       if (selected != null && !selected.isEmpty()) {
         ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
-        changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), new ArrayList<>(selected));
+        changeListManager.addUnversionedFiles(null, new ArrayList<>(selected));
       }
     }, ModalityState.NON_MODAL, project.getDisposed());
   }

@@ -439,6 +439,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         if (paramList != null) {
           PsiParameter parameter = paramList.getParameter(paramIndex);
           if (parameter != null) {
+            if (TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+              arg = dereference(memState, arg, NullabilityProblemKind.unboxingMethodRefParameter.problem(methodRef, null));
+            }
             arg = DfaUtil.boxUnbox(arg, parameter.getType());
           }
         }

@@ -1,0 +1,4 @@
+ext {
+  hello = 20
+  goodbye = hello
+}

@@ -18,15 +18,15 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.loadProjectAndCheckResults
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Path
 import java.nio.file.Paths
 
-class LoadProjectTest : LoadProjectBase() {
+class LoadProjectTest {
   companion object {
     @JvmField
     @ClassRule
@@ -35,18 +35,11 @@ class LoadProjectTest : LoadProjectBase() {
 
   @JvmField
   @Rule
-  val myTempDirectory = TemporaryDirectory()
+  val tempDirectory = TemporaryDirectory()
 
   @JvmField
   @Rule
   val disposable = DisposableRule()
-
-
-  override val tempDirectory: TemporaryDirectory
-    get() = myTempDirectory
-
-  override val testDataRoot: Path
-    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore")
 
   @Test
   fun `load single module`() {
@@ -136,7 +129,7 @@ class LoadProjectTest : LoadProjectBase() {
   @Test
   fun `load repository libraries`() {
     val projectPath = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("jps/model-serialization/testData/repositoryLibraries")
-    loadProjectAndCheckResults(projectPath) { project ->
+    loadProjectAndCheckResults(listOf(projectPath), tempDirectory) { project ->
       assertThat(ModuleManager.getInstance(project).modules).isEmpty()
       val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.sortedBy { it.name }
       assertThat(libraries).hasSize(3)
@@ -157,5 +150,10 @@ class LoadProjectTest : LoadProjectBase() {
       assertThat(withoutTransitive.properties.isIncludeTransitiveDependencies).isFalse()
       assertThat(withoutTransitive.properties.excludedDependencies).isEmpty()
     }
+  }
+
+  private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
+    val testDataRoot = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore")
+    return loadProjectAndCheckResults(listOf(testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
   }
 }

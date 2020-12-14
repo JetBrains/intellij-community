@@ -48,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -142,7 +143,7 @@ public final class JavaCompletionUtil {
     }
 
     T result = new PsiTypeMapper() {
-      private final Set<PsiClassType> myVisited = ContainerUtil.newIdentityTroveSet();
+      private final Set<PsiClassType> myVisited = new ReferenceOpenHashSet<>();
 
       @Override
       public PsiType visitClassType(@NotNull final PsiClassType classType) {

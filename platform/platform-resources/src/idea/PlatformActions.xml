@@ -102,6 +102,8 @@
       <action id="Tree-scrollDownChangeSelection" class="com.intellij.ui.TreeActions$PageDown" use-shortcut-of="EditorPageDown"/>
       <action id="Tree-scrollDownExtendSelection" class="com.intellij.ui.TreeActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
+      <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
+      <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -159,9 +161,7 @@
     <action id="QuickDocCopy" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction"
             use-shortcut-of="$Copy"/>
     <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction"/>
-    <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction">
-      <keyboard-shortcut first-keystroke="shift ENTER" keymap="$default"/>
-    </action>
+    <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction" />
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
@@ -175,9 +175,9 @@
       <action id="EditorPageUpWithSelection" class="com.intellij.openapi.editor.actions.PageUpWithSelectionAction"/>
       <action id="EditorPageDownWithSelection" class="com.intellij.openapi.editor.actions.PageDownWithSelectionAction"/>
       <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
-      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" use-shortcut-of="$Cut" icon="AllIcons.Actions.Menu_cut"/>
+      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" use-shortcut-of="$Cut" icon="AllIcons.Actions.MenuCut"/>
       <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction" use-shortcut-of="$Paste"
-              icon="AllIcons.Actions.Menu_paste"/>
+              icon="AllIcons.Actions.MenuPaste"/>
       <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction"/>
       <action id="EditorPasteFromX11" class="com.intellij.openapi.editor.actions.PasteFromX11Action"/>
       <action id="EditorHungryBackSpace" class="com.intellij.openapi.editor.actions.HungryBackspaceAction"/>
@@ -276,6 +276,7 @@
       <action id="EditorSplitLine" class="com.intellij.openapi.editor.actions.SplitLineAction"/>
       <action id="EditorStartNewLine" class="com.intellij.openapi.editor.actions.StartNewLineAction"/>
       <action id="EditorStartNewLineBefore" class="com.intellij.openapi.editor.actions.StartNewLineBeforeAction"/>
+      <action id="EditorTranspose" class="com.intellij.openapi.editor.actions.TransposeAction"/>
 
       <!-- generic delete actions should go last to allow redefining shortcuts by more specific actions in the editor -->
       <!-- e.g. Cmd + Backspace on OS X should work as Delete in lists, and as 'Delete to Line Start' in the editor -->
@@ -386,7 +387,7 @@
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" internal="true"/>
-          <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
+          <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.MenuOpen"/>
           <action id="AttachProject" class="com.intellij.platform.AttachProjectAction"/>
           <group id="$LRU" popup="true">
             <group id="RecentProjectListGroup" class="com.intellij.ide.actions.RecentProjectsGroup" popup="false"/>
@@ -412,7 +413,7 @@
 
         </group>
         <separator/>
-        <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.Menu_saveall"/>
+        <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.MenuSaveall"/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
         <separator/>
@@ -451,7 +452,7 @@
         <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="AllIcons.Actions.Redo"/>
         <separator/>
         <group id="CutCopyPasteGroup">
-          <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="AllIcons.Actions.Menu_cut"/>
+          <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="AllIcons.Actions.MenuCut"/>
           <group id="CopyGroup" popup="true" class="com.intellij.ide.actions.SmartPopupActionGroup">
             <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="AllIcons.Actions.Copy"/>
             <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
@@ -463,7 +464,7 @@
             <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" icon="AllIcons.Nodes.Toolbox"/>
           </group>
           <group id="PasteGroup" popup="true" class="com.intellij.ide.actions.PopupInMainMenuActionGroup">
-            <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="AllIcons.Actions.Menu_paste"/>
+            <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="AllIcons.Actions.MenuPaste"/>
             <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction"/>
             <reference ref="EditorPasteSimple"/>
           </group>
@@ -509,6 +510,7 @@
           <reference ref="FillParagraph"/>
           <reference ref="EditorSortLines"/>
           <reference ref="EditorReverseLines"/>
+          <reference ref="EditorTranspose"/>
           <separator/>
           <reference ref="EditorIndentSelection"/>
           <reference ref="EditorUnindentSelection"/>
@@ -566,6 +568,7 @@
           </group>
         </group>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
+        <action id="OpenInRightSplit" class="com.intellij.ide.actions.OpenInRightSplitAction" icon="AllIcons.Actions.SplitVertically" />
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
         <group id="ViewRecentActions">
@@ -750,7 +753,10 @@
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
-        <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
+        <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction">
+          <synonym key="action.ShowLog.Finder.text"/>
+          <synonym key="action.ShowLog.Explorer.text"/>
+        </action>
         <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
@@ -765,7 +771,9 @@
         <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
         <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
         <separator/>
-        <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
+        <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction">
+          <override-text place="WelcomeScreen"/>
+        </action>
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
         <separator/>
       </group>
@@ -875,25 +883,25 @@
               icon="AllIcons.ToolbarDecorator.Export"/>
       <action id="WelcomeScreen.Configure.RestoreDefault" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
 
-      <action id="WelcomeScreen.Configure.CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
+      <reference ref="CollectZippedLogs"/>
 
-      <action id="WelcomeScreen.Configure.Properties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
-      <action id="WelcomeScreen.Configure.VMOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
+      <reference ref="EditCustomProperties"/>
+      <reference ref="EditCustomVmOptions"/>
 
       <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"
               icon="AllIcons.Welcome.CreateDesktopEntry"/>
 
-      <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
+      <reference ref="CheckForUpdate"/>
     </group>
 
     <group id="WelcomeScreen.Help">
       <reference ref="WelcomeScreen.Documentation"/>
       <separator/>
-      <reference ref="WelcomeScreen.Configure.Properties"/>
-      <reference ref="WelcomeScreen.Configure.VMOptions"/>
-      <reference ref="WelcomeScreen.Configure.CollectZippedLogs"/>
+      <reference ref="EditCustomProperties"/>
+      <reference ref="EditCustomVmOptions"/>
+      <reference ref="CollectZippedLogs"/>
       <separator/>
-      <reference ref="WelcomeScreen.Update"/>
+      <reference ref="CheckForUpdate"/>
     </group>
 
     <group id="WelcomeScreenRecentProjectActionGroup">
@@ -905,6 +913,7 @@
       <action id="WelcomeScreen.ChangeProjectIcon" class="com.intellij.openapi.wm.impl.welcomeScreen.ChangeProjectIconAction"/>
       <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.CopyProjectPathAction"
               use-shortcut-of="CopyPaths"/>
+      <action id="WelcomeScreen.RevealIn" class="com.intellij.openapi.wm.impl.welcomeScreen.RevealProjectDirAction" />
       <separator/>
       <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"
               use-shortcut-of="$Delete"/>
@@ -943,6 +952,8 @@
       <separator/>
       <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
               icon="AllIcons.Actions.ShowHiddens"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="ChangeScheme">
@@ -1061,6 +1072,7 @@
       </group>
 
       <action id="ShowEditorHighlighterTokens" internal="true" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"/>
+      <action id="KeymapToCsv" internal="true" class="com.intellij.internal.KeymapToCsvAction" text="Export Keymap to CSV..."/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
@@ -1145,8 +1157,7 @@
     <action id="SaveDocument" class="com.intellij.ide.actions.SaveDocumentAction"/>
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
-    <action id="SelectInProjectView" class="com.intellij.ide.actions.SelectInProjectViewAction"/>
-    <action id="SelectOpenedFileInProjectView" class="com.intellij.ide.projectView.impl.SelectOpenedFileAction" icon="AllIcons.General.Locate"/>
+    <action id="SelectInProjectView" icon="AllIcons.General.Locate" class="com.intellij.ide.projectView.impl.SelectFileAction"/>
 
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
 
@@ -1257,6 +1268,7 @@
       <action id="EditorBreadcrumbsShowAbove" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowAbove"/>
       <action id="EditorBreadcrumbsShowBelow" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowBelow"/>
       <action id="EditorBreadcrumbsHideBoth" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$HideBoth"/>
+      <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
     </group>
 
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>
@@ -1264,5 +1276,6 @@
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
     <group id="AnalyzeStacktraceToolbar"/>
     <group id="EditorTabActionGroup"/>
+    <action class="com.intellij.ide.actions.EditSourceNotInEditorAction" id="EditSourceNotInEditor"/>
   </actions>
 </idea-plugin>

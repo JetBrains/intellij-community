@@ -18,6 +18,7 @@ package com.intellij.ide.palette;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public interface PaletteGroup {
    *
    * @return the text of the group header for the palette group, or null if no header should be shown.
    */
-  @Nullable String getName();
+  @Nullable @NlsSafe String getName();
 
   String getTabName();
 

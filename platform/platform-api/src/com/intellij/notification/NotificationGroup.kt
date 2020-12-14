@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
-private val registeredGroups: MutableMap<String, NotificationGroup> = ConcurrentHashMap()
-private val registeredTitles: MutableMap<@NonNls String, @NotificationTitle String> = ConcurrentHashMap()
-
 /**
  * Groups notifications and allows controlling display options in Settings.
  */
@@ -26,7 +23,6 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
                                             @NotificationTitle var title: String? = null,
                                             pluginId: PluginId? = null,
                                             registerGroup: Boolean = false) {
-
   @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
   constructor(@NonNls displayId: String,
               displayType: NotificationDisplayType,
@@ -34,7 +30,9 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
               @NonNls toolWindowId: String? = null,
               icon: Icon? = null,
               @NotificationTitle title: String? = null,
-              pluginId: PluginId? = null) : this(displayId, displayType, isLogByDefault, toolWindowId, icon, title, pluginId, true)
+              pluginId: PluginId? = null) : this(displayId = displayId, displayType = displayType, isLogByDefault = isLogByDefault,
+                                                 toolWindowId = toolWindowId, icon = icon, title = title, pluginId = pluginId,
+                                                 registerGroup = true)
 
   // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
   @JvmOverloads
@@ -43,7 +41,8 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
               displayType: NotificationDisplayType,
               isLogByDefault: Boolean = true,
               @NonNls toolWindowId: String? = null,
-              icon: Icon? = null) : this(displayId, displayType, isLogByDefault, toolWindowId, icon, null)
+              icon: Icon? = null) : this(displayId = displayId, displayType = displayType, isLogByDefault = isLogByDefault,
+                                         toolWindowId = toolWindowId, icon = icon, registerGroup = true)
 
   var parentId: String? = null
     private set
@@ -67,6 +66,9 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
 
   companion object {
     private val LOG = logger<NotificationGroup>()
+
+    private val registeredGroups: MutableMap<String, NotificationGroup> = ConcurrentHashMap()
+    private val registeredTitles: MutableMap<@NonNls String, @NotificationTitle String> = ConcurrentHashMap()
 
     @JvmStatic
     fun create(@NonNls displayId: String,

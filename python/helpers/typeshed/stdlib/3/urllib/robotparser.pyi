@@ -1,7 +1,7 @@
 # Stubs for urllib.robotparser (Python 3.4)
 
-from typing import Iterable, List, NamedTuple, Optional
 import sys
+from typing import Iterable, List, NamedTuple, Optional
 
 class _RequestRate(NamedTuple):
     requests: int

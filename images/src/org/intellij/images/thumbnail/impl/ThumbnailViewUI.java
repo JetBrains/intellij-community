@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.CopyPasteDelegator;
@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -518,8 +519,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                     ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailViewActions.ACTION_PLACE, actionGroup);
                     JPopupMenu popupMenu = menu.getComponent();
                     popupMenu.pack();
-                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
-
+                    JBPopupMenu.showByEvent(e, popupMenu);
                     e.consume();
                 }
             }

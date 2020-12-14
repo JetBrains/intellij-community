@@ -1,0 +1,5 @@
+android {
+  buildFeatures {
+    compose false
+  }
+}

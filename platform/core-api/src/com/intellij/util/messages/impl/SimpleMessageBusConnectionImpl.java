@@ -5,11 +5,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 final class SimpleMessageBusConnectionImpl extends BaseBusConnection implements SimpleMessageBusConnection {
-  private final AtomicReference<Object[]> subscriptions = new AtomicReference<>(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
-
   SimpleMessageBusConnectionImpl(@NotNull MessageBusImpl bus) {
     super(bus);
   }

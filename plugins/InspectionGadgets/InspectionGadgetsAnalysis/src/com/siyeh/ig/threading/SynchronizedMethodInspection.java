@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,13 +97,12 @@ public class SynchronizedMethodInspection extends BaseInspection {
         final PsiClass containingClass = method.getContainingClass();
         assert containingClass != null;
         final String className = containingClass.getName();
-        replacementText = "{ synchronized(" + className + ".class){" + text.substring(1) + '}';
+        replacementText = "{ synchronized(" + className + ".class)" + text + '}';
       }
       else {
-        replacementText = "{ synchronized(this){" + text.substring(1) + '}';
+        replacementText = "{ synchronized(this)" + text + '}';
       }
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      final PsiCodeBlock block = elementFactory.createCodeBlockFromText(replacementText, null);
+      final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(replacementText, method);
       body.replace(block);
       final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
       codeStyleManager.reformat(method);

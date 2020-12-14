@@ -245,6 +245,7 @@ class CompoundRendererConfigurable extends JPanel {
   private JComponent createChildrenListEditor(JavaDebuggerEditorsProvider editorsProvider) {
     final MyTableModel tableModel = new MyTableModel();
     myTable = new JBTable(tableModel);
+    myTable.setShowGrid(false);
     myListChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "NamedChildrenConfigurable", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, false);
     JComponent editorComponent = myListChildrenEditor.getComponent();
 

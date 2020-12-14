@@ -168,7 +168,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected String getFileName(String newName) {
-    if (getDefaultExtension() == null || FileUtilRt.getExtension(newName).length() > 0) {
+    if (getDefaultExtension() == null || !FileUtilRt.getExtension(newName).isEmpty()) {
       return newName;
     }
     return newName + "." + getDefaultExtension();
@@ -245,13 +245,8 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
 
     @Override
-    public PsiElement[] create(@NotNull String newName) throws Exception {
-      return super.create(newName);
-    }
-
-    @Override
     public boolean canClose(final String inputString) {
-      if (inputString.length() == 0) {
+      if (inputString.isEmpty()) {
         return super.canClose(inputString);
       }
 

@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" />
     <orderEntry type="module" module-name="intellij.textmate" />
+    <orderEntry type="module" module-name="intellij.completionMlRankingModels" scope="RUNTIME" />
   </component>
 </module>

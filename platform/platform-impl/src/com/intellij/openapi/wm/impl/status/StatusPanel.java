@@ -116,8 +116,7 @@ class StatusPanel extends JPanel {
           if (myClearAction != null) {
             menu.add(new JBMenuItem(myClearAction));
           }
-
-          menu.show(myTextPanel, e.getX(), e.getY());
+          JBPopupMenu.showByEvent(e, menu);
         }
       }
     });

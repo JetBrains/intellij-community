@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
+import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 
 /**
  * Accumulates indexing statistics for a set of indexable files.
  *
  * This class is not thread-safe. It must be synchronized by the clients.
  */
-class IndexingJobStatistics(val fileSetName: String) {
+class IndexingJobStatistics(private val project: Project, val fileSetName: String) {
 
   var totalIndexingTime: TimeNano = 0
 
@@ -22,7 +25,7 @@ class IndexingJobStatistics(val fileSetName: String) {
 
   val tooLargeForIndexingFiles: LimitedPriorityQueue<TooLargeForIndexingFile> = LimitedPriorityQueue(5, compareBy { it.fileSize })
 
-  val indexedFiles = arrayListOf<String /* File short path */>()
+  val indexedFiles = arrayListOf<PortableFilePath>()
 
   data class StatsPerIndexer(
     val indexingTime: TimeStats,
@@ -65,7 +68,7 @@ class IndexingJobStatistics(val fileSetName: String) {
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += file.presentableUrl
+      indexedFiles += getIndexedFilePath(file)
     }
   }
 
@@ -77,8 +80,15 @@ class IndexingJobStatistics(val fileSetName: String) {
     numberOfTooLargeForIndexingFiles++
     tooLargeForIndexingFiles.addElement(tooLargeForIndexingFile)
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += file.presentableUrl
+      indexedFiles += getIndexedFilePath(file)
     }
+  }
+
+  private fun getIndexedFilePath(file: VirtualFile): PortableFilePath = try {
+    PortableFilePaths.getPortableFilePath(file, project)
+  }
+  catch (e: Exception) {
+    PortableFilePath.AbsolutePath(file.url)
   }
 
 }

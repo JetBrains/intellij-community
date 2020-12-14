@@ -47,12 +47,9 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     myIconPath = iconPath;
   }
 
-  public void addActionTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
+  @Override
+  public void addTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
-  }
-
-  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
-    myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
   }
 
   @Override

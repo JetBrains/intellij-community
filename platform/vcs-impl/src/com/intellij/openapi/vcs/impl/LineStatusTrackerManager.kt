@@ -78,7 +78,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
-  private var partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS
+  private var partialChangeListsEnabled : Boolean = false
   private val documentsInDefaultChangeList = HashSet<Document>()
   private var clmFreezeCounter: Int = 0
 
@@ -118,6 +118,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
     LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(Runnable { updateTrackingSettings() }, this)
+
+    updatePartialChangeListsAvailability()
 
     runInEdt {
       if (project.isDisposed) return@runInEdt
@@ -355,6 +357,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     return true
   }
 
+  override fun arePartialChangelistsEnabled(): Boolean = partialChangeListsEnabled
+
   override fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
     if (!partialChangeListsEnabled) return false
 
@@ -421,6 +425,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     data.tracker.release()
 
     log("Tracker released", data.tracker.virtualFile)
+  }
+
+  private fun updatePartialChangeListsAvailability() {
+    partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS &&
+                                ChangeListManager.getInstance(project).areChangeListsEnabled()
   }
 
   private fun updateTrackingSettings() {
@@ -747,8 +756,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private inner class MyLineStatusTrackerSettingListener : LineStatusTrackerSettingListener {
     override fun settingsUpdated() {
-      partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS
-
+      updatePartialChangeListsAvailability()
       updateTrackingSettings()
     }
   }
@@ -766,6 +774,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
             it.gutterComponentEx.repaint()
           }
       }
+    }
+
+    override fun changeListAvailabilityChanged() {
+      updatePartialChangeListsAvailability()
+      updateTrackingSettings()
     }
   }
 

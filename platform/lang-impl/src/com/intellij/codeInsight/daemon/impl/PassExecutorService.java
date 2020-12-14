@@ -55,12 +55,14 @@ final class PassExecutorService implements Disposable {
 
   private final Map<ScheduledPass, Job<Void>> mySubmittedPasses = new ConcurrentHashMap<>();
   private final Project myProject;
+  private final FileEditorManagerEx myFileEditorManager;
   private volatile boolean isDisposed;
   private final AtomicInteger nextAvailablePassId; // used to assign random id to a pass if not set
 
   PassExecutorService(@NotNull Project project) {
     myProject = project;
     nextAvailablePassId = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject)).getNextAvailableId();
+    myFileEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(project);
   }
 
   @Override
@@ -173,7 +175,7 @@ final class PassExecutorService implements Disposable {
     }
 
     if (LOG.isDebugEnabled()) {
-      Set<VirtualFile> vFiles = ContainerUtil.map2Set(passesMap.keySet(), fe -> ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fe));
+      Set<VirtualFile> vFiles = ContainerUtil.map2Set(passesMap.keySet(), fe -> myFileEditorManager.getFile(fe));
 
       log(updateProgress, null, vFiles + " ----- starting " + threadsToStartCountdown.get(), freePasses);
     }
@@ -241,7 +243,7 @@ final class PassExecutorService implements Disposable {
 
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      final FileEditor selected = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+      final FileEditor selected = myFileEditorManager.getSelectedEditor(file);
       if (selected != null && fileEditors.contains(selected)) {
         return selected;
       }

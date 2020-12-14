@@ -43,6 +43,8 @@ import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
+import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
+import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -117,6 +119,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myShowTabOnSuspend = new AtomicBoolean(showTabOnSuspend);
     myProject = debuggerManager.getProject();
     ValueLookupManager.getInstance(myProject).startListening();
+    DebuggerInlayListener.getInstance(myProject).startListening();
     myIcon = icon;
 
     XDebugSessionData oldSessionData = null;
@@ -742,10 +745,6 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   private boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
                                    @NotNull XSuspendContext suspendContext, boolean doProcessing) {
-    BP_NOTIFICATION_GROUP
-      .createNotification(XDebuggerBundle.message("xdebugger.breakpoint.reached"), MessageType.INFO)
-      .notify(getProject());
-
     if (doProcessing) {
       if (breakpoint.isLogMessage()) {
         XSourcePosition position = breakpoint.getSourcePosition();
@@ -768,6 +767,10 @@ public final class XDebugSessionImpl implements XDebugSession {
         return false;
       }
     }
+
+    BP_NOTIFICATION_GROUP
+      .createNotification(XDebuggerBundle.message("xdebugger.breakpoint.reached"), MessageType.INFO)
+      .notify(getProject());
 
     myActiveNonLineBreakpoint =
       (!(breakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)breakpoint).getType().canBeHitInOtherPlaces()) ? breakpoint : null;
@@ -1093,6 +1096,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   List<XExpression> getWatchExpressions() {
     return myDebuggerManager.getWatchesManager().getWatches(getConfigurationName());
   }
+
 
   @Nullable
   public ExecutionEnvironment getExecutionEnvironment() {

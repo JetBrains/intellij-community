@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
-from Crypto.PublicKey.pubkey import pubkey
 from Crypto.PublicKey.pubkey import *  # noqa: F403
+from Crypto.PublicKey.pubkey import pubkey
 
 class error(Exception): ...
 

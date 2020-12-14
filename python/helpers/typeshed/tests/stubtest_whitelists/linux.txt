@@ -1,4 +1,3 @@
-
 _posixsubprocess.cloexec_pipe
 builtins.WindowsError
 curses.COLORS
@@ -53,5 +52,5 @@ fcntl.[A-Z0-9_]+
 os.SCHED_[A-Z_]+
 
 # Loadable SQLite extensions are disabled on GitHub runners
-sqlite3(.dbapi2)?.Connection.enable_load_extension
-sqlite3(.dbapi2)?.Connection.load_extension
+(sqlite3(.dbapi2)?.Connection.enable_load_extension)?
+(sqlite3(.dbapi2)?.Connection.load_extension)?

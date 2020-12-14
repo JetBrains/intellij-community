@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
@@ -25,7 +26,7 @@ public class MenuItemPresentationFactory extends PresentationFactory {
   }
 
   @Override
-  protected void processPresentation(Presentation presentation) {
+  protected void processPresentation(@NotNull Presentation presentation) {
     super.processPresentation(presentation);
     if (shallHideIcons()) {
       presentation.setIcon(null);

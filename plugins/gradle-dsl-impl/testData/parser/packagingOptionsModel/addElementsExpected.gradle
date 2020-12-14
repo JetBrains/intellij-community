@@ -1,0 +1,21 @@
+// TODO(b/144280051)
+//
+// We could go for
+android {
+  packagingOptions {
+    exclude 'exclude'
+    merge 'merge1'
+    merge 'merge2'
+    pickFirst 'pickFirst1'
+    pickFirst 'pickFirst2'
+    pickFirst 'pickFirst3'
+  }
+}
+// or
+android {
+  packagingOptions {
+    excludes = ['exclude']
+    merges = ['merge1', 'merge2']
+    pickFirsts = ['pickFirst1', 'pickFirst2', 'pickFirst3']
+  }
+}

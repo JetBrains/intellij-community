@@ -2,9 +2,9 @@
 package org.jetbrains.jps.util;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +52,7 @@ public final class JpsPathUtil {
     }
     else if (url.startsWith("jar://")) {
       url = url.substring("jar://".length());
-      url = StringUtil.trimEnd(url, "!/");
+      url = Strings.trimEnd(url, "!/");
     }
     return url;
   }
@@ -65,7 +65,7 @@ public final class JpsPathUtil {
       String prefix = url.substring(0, idx);
       String suffix = url.substring(idx + 2);
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         url = prefix + "://" + suffix;
       }
       else {

@@ -47,27 +47,29 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     }
     else {
       candidates = TestFinderHelper.findTestsForClass(selectedElement);
-      for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
-        if (!creator.isAvailable(file.getProject(), editor, file)) continue;
-        actions.add(new AdditionalAction() {
-          @NotNull
-          @Override
-          public String getText() {
-            String text = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getPresentableText() : null;
-            return ObjectUtils.notNull(text, LangBundle.message("action.create.new.test.text"));
-          }
+      if (candidates.size() != 1) {
+        for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
+          if (!creator.isAvailable(file.getProject(), editor, file)) continue;
+          actions.add(new AdditionalAction() {
+            @NotNull
+            @Override
+            public String getText() {
+              String text = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getPresentableText() : null;
+              return ObjectUtils.notNull(text, LangBundle.message("action.create.new.test.text"));
+            }
 
-          @Override
-          public Icon getIcon() {
-            Icon icon = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getIcon(false) : null;
-            return ObjectUtils.notNull(icon, AllIcons.Actions.IntentionBulb);
-          }
+            @Override
+            public Icon getIcon() {
+              Icon icon = creator instanceof ItemPresentation ? ((ItemPresentation)creator).getIcon(false) : null;
+              return ObjectUtils.notNull(icon, AllIcons.Actions.IntentionBulb);
+            }
 
-          @Override
-          public void execute() {
-            creator.createTest(file.getProject(), editor, file);
-          }
-        });
+            @Override
+            public void execute() {
+              creator.createTest(file.getProject(), editor, file);
+            }
+          });
+        }
       }
     }
 

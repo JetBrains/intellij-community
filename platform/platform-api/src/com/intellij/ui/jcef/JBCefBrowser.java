@@ -42,6 +42,16 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
  */
 public class JBCefBrowser implements JBCefDisposable {
   private static final String BLANK_URI = "about:blank";
+  /**
+   * According to
+   * <a href="https://github.com/chromium/chromium/blob/55f44515cd0b9e7739b434d1c62f4b7e321cd530/third_party/blink/public/web/web_view.h#L191">SetZoomLevel</a>
+   * docs, there is a geometric progression that starts with 0.0 and 1.2 common ratio.
+   * Following functions provide API familiar to developers:
+   * @see #setZoomLevel(double)
+   * @see #getZoomLevel()
+   */
+  private static final double ZOOM_COMMON_RATIO = 1.2;
+  private static final double LOG_ZOOM = Math.log(ZOOM_COMMON_RATIO);
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
@@ -351,6 +361,22 @@ public class JBCefBrowser implements JBCefDisposable {
   @NotNull
   public CefBrowser getCefBrowser() {
     return myCefBrowser;
+  }
+
+  /**
+   * @param zoomLevel 1.0 is 100%.
+   * @see #ZOOM_COMMON_RATIO
+   */
+  public void setZoomLevel(double zoomLevel) {
+    myCefBrowser.setZoomLevel(Math.log(zoomLevel) / LOG_ZOOM);
+  }
+
+  /**
+   * @return 1.0 is 100%
+   * @see #ZOOM_COMMON_RATIO
+   */
+  public double getZoomLevel() {
+    return Math.pow(ZOOM_COMMON_RATIO, myCefBrowser.getZoomLevel());
   }
 
   @NotNull

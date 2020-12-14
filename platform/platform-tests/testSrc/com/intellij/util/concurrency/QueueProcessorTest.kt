@@ -16,6 +16,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -39,7 +40,7 @@ class QueueProcessorTest : LightPlatformTestCase() {
   }
 
   fun `test works fine after thrown exception`() {
-    LoggedErrorProcessor.getInstance().disableStderrDumping(testRootDisposable)
+    DefaultLogger.disableStderrDumping(testRootDisposable)
 
     val resultQueue = LinkedBlockingQueue<Any>()
     val queueProcessor = QueueProcessor<() -> Any> {

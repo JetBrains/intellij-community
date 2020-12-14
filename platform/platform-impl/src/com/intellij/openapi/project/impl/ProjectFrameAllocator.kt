@@ -188,7 +188,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     if (freeRootFrame != null) {
       isFrameBoundsCorrect = true
       frameHelper = freeRootFrame
-      return freeRootFrame.frame
+      return freeRootFrame.frame!!
     }
 
     runMainActivity("create a frame") {
@@ -207,7 +207,8 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
         val projectFrameBounds = ProjectFrameBounds.getInstance(project)
         if (isFrameBoundsCorrect) {
           // update to ensure that project stores correct frame bounds
-          projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frameHelper.frame.extendedState)) null else frameHelper.frame.bounds)
+          val frame = frameHelper.frame!!
+          projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frame.extendedState)) null else frame.bounds)
         }
         else {
           val frameInfo = projectFrameBounds.getFrameInfoInDeviceSpace()
@@ -253,7 +254,7 @@ private fun restoreFrameState(frameHelper: ProjectFrameHelper, frameInfo: FrameI
   val bounds = if (deviceBounds == null) null else FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
   val state = frameInfo.extendedState
   val isMaximized = FrameInfoHelper.isMaximized(state)
-  val frame = frameHelper.frame
+  val frame = frameHelper.frame!!
   if (bounds != null && isMaximized && frame.extendedState == Frame.NORMAL) {
     frame.rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
   }

@@ -24,7 +24,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
+import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -82,7 +82,11 @@ public abstract class XVariablesViewBase extends XDebugView {
   }
 
   protected static void clearInlays(XDebuggerTree tree) {
-    if (Registry.is("debugger.show.values.inplace")) XDebuggerInlayUtil.clearInlays(tree.getProject());
+    if (Registry.is("debugger.show.values.inplace")
+        || Registry.is("debugger.show.values.use.inlays")
+    ) {
+      XDebuggerInlayUtil.clearInlays(tree.getProject());
+    }
   }
 
   protected final XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {

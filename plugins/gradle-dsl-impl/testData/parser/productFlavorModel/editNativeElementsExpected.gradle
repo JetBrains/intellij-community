@@ -1,0 +1,25 @@
+android {
+  defaultConfig {
+    externalNativeBuild {
+      cmake {
+        abiFilters 'abiFilter1', 'abiFilterX'
+        arguments = ['argument1', 'argumentX']
+        cFlags 'cFlag1', 'cFlagX'
+        cppFlags = ['cppFlag1', 'cppFlagX']
+        targets 'target1', 'targetX'
+      }
+      ndkBuild {
+        abiFilters = ['abiFilter3', 'abiFilterY']
+        arguments 'argument3', 'argumentY'
+        cFlags = ['cFlag3', 'cFlagY']
+        cppFlags 'cppFlag3', 'cppFlagY'
+        targets = ['target3', 'targetY']
+      }
+    }
+    ndk {
+      abiFilters = ['abiFilter5']
+      abiFilter 'abiFilterZ'
+      abiFilters 'abiFilter7'
+    }
+  }
+}

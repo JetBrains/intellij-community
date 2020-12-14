@@ -43,6 +43,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -54,6 +55,7 @@ import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.
 /**
  * @author peter
  */
+@NeedsIndex.SmartMode(reason = "AutoPopup shouldn't work in dumb mode")
 class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """

@@ -389,9 +389,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     List<CommitExecutorAction> result = new ArrayList<>();
 
     if (isDefaultCommitEnabled() && UISettings.getShadowInstance().getAllowMergeButtons()) {
-      ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions");
+      ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions");
+      ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions");
 
-      result.addAll(map(group.getChildren(null), CommitExecutorAction::new));
+      result.addAll(map(primaryActions.getChildren(null), CommitExecutorAction::new));
+      result.addAll(map(executorActions.getChildren(null), CommitExecutorAction::new));
       result.addAll(map(filter(executors, CommitExecutor::useDefaultAction), CommitExecutorAction::new));
     }
     else {
@@ -689,10 +691,14 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Override
   public boolean confirmCommitWithEmptyMessage() {
+    return showEmptyCommitMessageConfirmation(myProject);
+  }
+
+  public static boolean showEmptyCommitMessageConfirmation(@NotNull Project project) {
     return MessageDialogBuilder
       .yesNo(message("confirmation.title.check.in.with.empty.comment"), message("confirmation.text.check.in.with.empty.comment"))
       .icon(Messages.getWarningIcon())
-      .ask(myProject);
+      .ask(project);
   }
 
   @Override
@@ -751,8 +757,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     public void updateEnabled(boolean hasDiffs) {
       if (myCommitExecutor != null) {
-        setEnabled(
-          hasDiffs || myCommitExecutor instanceof CommitExecutorBase && !((CommitExecutorBase)myCommitExecutor).areChangesRequired());
+        setEnabled(hasDiffs || !myCommitExecutor.areChangesRequired());
       }
     }
   }

@@ -8,6 +8,7 @@ import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.InitialPatternCondition
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SharedProcessingContext
+import gnu.trove.THashMap
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
@@ -58,7 +59,7 @@ internal class UastPatternAdapter(private val pattern: (UElement, ProcessingCont
             return getCachedUElement(sharedContext, element, UExpression::class.java, CACHED_UAST_EXPRESSION)
           }
           else -> {
-            val elementsCache = getElementsCache(sharedContext)
+            val elementsCache = getUastElementCache(sharedContext)
             if (elementsCache.containsKey(requiredType)) { // we store nulls for non-convertable element types
               return elementsCache[requiredType]
             }
@@ -72,11 +73,11 @@ internal class UastPatternAdapter(private val pattern: (UElement, ProcessingCont
       return element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray())
     }
 
-    private fun getElementsCache(sharedContext: SharedProcessingContext): MutableMap<Class<out UElement>, UElement?> {
+    private fun getUastElementCache(sharedContext: SharedProcessingContext): MutableMap<Class<out UElement>, UElement?> {
       val existingMap = sharedContext.get(CACHED_UAST_ELEMENTS)
       if (existingMap != null) return existingMap
       // we assume that patterns are queried sequentially in the same thread
-      val newMap = HashMap<Class<out UElement>, UElement?>()
+      val newMap = THashMap<Class<out UElement>, UElement?>()
       sharedContext.put(CACHED_UAST_ELEMENTS, newMap)
       return newMap
     }

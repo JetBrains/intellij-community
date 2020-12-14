@@ -75,15 +75,15 @@ final class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/runConfigurations/variables.png", "AllIcons.Actions.ListFiles");
     ourDeprecatedIconsReplacements.put("/runConfigurations/variables.svg", "AllIcons.Actions.ListFiles");
 
-    ourDeprecatedIconsReplacements.put("/general/openProject.png", "AllIcons.Actions.Menu_open");
-    ourDeprecatedIconsReplacements.put("/general/openProject.svg", "AllIcons.Actions.Menu_open");
-    ourDeprecatedIconsReplacements.put("/welcome/openProject.png", "AllIcons.Actions.Menu_open");
-    ourDeprecatedIconsReplacements.put("/welcome/openProject.svg", "AllIcons.Actions.Menu_open");
+    ourDeprecatedIconsReplacements.put("/general/openProject.png", "AllIcons.Actions.MenuOpen");
+    ourDeprecatedIconsReplacements.put("/general/openProject.svg", "AllIcons.Actions.MenuOpen");
+    ourDeprecatedIconsReplacements.put("/welcome/openProject.png", "AllIcons.Actions.MenuOpen");
+    ourDeprecatedIconsReplacements.put("/welcome/openProject.svg", "AllIcons.Actions.MenuOpen");
 
-    ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.png", "AllIcons.Actions.Menu_saveall");
-    ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.svg", "AllIcons.Actions.Menu_saveall");
-    ourDeprecatedIconsReplacements.put("/runConfigurations/saveTempConfig.png", "AllIcons.Actions.Menu_saveall");
-    ourDeprecatedIconsReplacements.put("/runConfigurations/saveTempConfig.svg", "AllIcons.Actions.Menu_saveall");
+    ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.png", "AllIcons.Actions.MenuSaveall");
+    ourDeprecatedIconsReplacements.put("/debugger/threadStates/io.svg", "AllIcons.Actions.MenuSaveall");
+    ourDeprecatedIconsReplacements.put("/runConfigurations/saveTempConfig.png", "AllIcons.Actions.MenuSaveall");
+    ourDeprecatedIconsReplacements.put("/runConfigurations/saveTempConfig.svg", "AllIcons.Actions.MenuSaveall");
 
 
     ourDeprecatedIconsReplacements.put("/actions/sortDesc.png", "AllIcons.Actions.MoveDown");
@@ -324,7 +324,7 @@ final class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
   }
 
   @Override
-  public @Nullable String patchPath(@NotNull String path, ClassLoader classLoader) {
+  public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
     return ourDeprecatedIconsReplacements.get(path);
   }
 }

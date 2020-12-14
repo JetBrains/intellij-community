@@ -1238,8 +1238,15 @@ public final class PsiUtil {
     return false;
   }
 
-  public static boolean isMapConstructorResult(@NotNull GroovyResolveResult result) {
+  /**
+   * Map constructor is trusted if it behaves in a certainly defined way, e.g. no-arg and @MapConstructor-generated constructors are trusted.
+   *
+   * These constructors directly work with properties and fields,
+   * so it's safe to assume that named argument labels correspond to class properties.
+   */
+  public static boolean isTrustedMapConstructorResult(@NotNull GroovyResolveResult result) {
     if (result instanceof GroovyConstructorResult && ((GroovyConstructorResult)result).isMapConstructor()) return true;
+    if (!(result instanceof GroovyConstructorResult) && result.getElement() instanceof PsiMethod && !((PsiMethod)result.getElement()).hasParameters()) return true;
     PsiElement method = result.getElement();
     if (method instanceof PsiMethod) {
       PsiParameter[] parameters = ((PsiMethod)method).getParameterList().getParameters();

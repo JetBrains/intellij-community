@@ -1,0 +1,5 @@
+ext {
+  prop1 = [key1: 'value1', key2: false, key3: 17]
+  prop2 = "hello"
+  prop3 = prop1 // Should only work for resolved properties.
+}

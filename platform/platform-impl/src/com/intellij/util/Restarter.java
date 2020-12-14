@@ -13,7 +13,6 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -42,7 +41,7 @@ public final class Restarter {
     return ourRestartSupported.getValue();
   }
 
-  private static final NotNullLazyValue<Boolean> ourRestartSupported = new AtomicNotNullLazyValue<Boolean>() {
+  private static final NotNullLazyValue<Boolean> ourRestartSupported = new AtomicNotNullLazyValue<>() {
     @Override
     protected @NotNull Boolean compute() {
       String problem;
@@ -118,7 +117,7 @@ public final class Restarter {
     return ourStarter.getValue();
   }
 
-  private static final NullableLazyValue<File> ourStarter = new NullableLazyValue<File>() {
+  private static final NullableLazyValue<File> ourStarter = new NullableLazyValue<>() {
     @Override
     protected File compute() {
       if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
@@ -132,13 +131,7 @@ public final class Restarter {
         if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir;
       }
       else if (SystemInfo.isUnix) {
-        String binPath = PathManager.getBinPath();
-        ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
-        File starter = new File(binPath, names.getProductName() + ".sh");
-        if (starter.canExecute()) return starter;
-        starter = new File(binPath, StringUtil.toLowerCase(names.getProductName()) + ".sh");
-        if (starter.canExecute()) return starter;
-        starter = new File(binPath, names.getScriptName() + ".sh");
+        File starter = new File(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
         if (starter.canExecute()) return starter;
       }
 

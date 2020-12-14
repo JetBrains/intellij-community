@@ -1,4 +1,4 @@
-from typing import Any, Union, Text
+from typing import Any, Text, Union
 
 MODE_ECB: int
 MODE_CBC: int

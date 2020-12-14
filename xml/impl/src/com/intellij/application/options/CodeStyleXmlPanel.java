@@ -77,7 +77,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     xmlSettings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     xmlSettings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
     xmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT = myKeepLineBreaksInText.isSelected();
-    xmlSettings.XML_ATTRIBUTE_WRAP = CodeStyleSettings.WrapStyle.getSelectedId(myWrapAttributes);
+    xmlSettings.XML_ATTRIBUTE_WRAP = CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem());
     xmlSettings.XML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
     xmlSettings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     xmlSettings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
@@ -125,7 +125,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     if (xmlSettings.XML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
     }
-    if (xmlSettings.XML_ATTRIBUTE_WRAP != CodeStyleSettings.WrapStyle.getSelectedId(myWrapAttributes)) {
+    if (xmlSettings.XML_ATTRIBUTE_WRAP !=
+        CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem())) {
       return true;
     }
     if (xmlSettings.XML_ALIGN_ATTRIBUTES != myAlignAttributes.isSelected()) {

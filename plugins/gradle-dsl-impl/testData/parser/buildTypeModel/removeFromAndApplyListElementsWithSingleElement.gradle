@@ -1,0 +1,8 @@
+android {
+  buildTypes {
+    xyz {
+      consumerProguardFiles 'proguard-android.txt'
+      proguardFiles = ['proguard-rules.pro']
+    }
+  }
+}

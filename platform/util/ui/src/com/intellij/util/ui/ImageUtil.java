@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ui.JreHiDpiUtil;
@@ -9,7 +9,6 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import org.imgscalr.Scalr;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,13 +30,8 @@ public final class ImageUtil {
    * @return a HiDPI-aware BufferedImage in device scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  @NotNull
-  public static BufferedImage createImage(int width, int height, int type) {
-    if (StartupUiUtil.isJreHiDPI()) {
-      return RetinaImage.create(width, height, type);
-    }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(width, height, type);
+  public static @NotNull BufferedImage createImage(int width, int height, int type) {
+    return createImage((GraphicsConfiguration)null, width, height, type);
   }
 
   /**
@@ -51,13 +45,28 @@ public final class ImageUtil {
    * @return a HiDPI-aware BufferedImage in the graphics scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  @NotNull
-  public static BufferedImage createImage(GraphicsConfiguration gc, int width, int height, int type) {
+  public static @NotNull BufferedImage createImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
     if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return RetinaImage.create(gc, width, height, type);
+      return new JBHiDPIScaledImage(gc, width, height, type);
     }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(width, height, type);
+    else {
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(width, height, type);
+    }
+  }
+
+  /**
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   * @see #createImage(GraphicsConfiguration, double, double, int, PaintUtil.RoundingMode)
+   */
+  public static @NotNull BufferedImage createImage(ScaleContext context, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
+    if (StartupUiUtil.isJreHiDPI(context)) {
+      return new JBHiDPIScaledImage(context, width, height, type, rm);
+    }
+    else {
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(rm.round(width), rm.round(height), type);
+    }
   }
 
   /**
@@ -181,10 +190,11 @@ public final class ImageUtil {
     return image.getHeight(null);
   }
 
-  public static Image filter(Image image, ImageFilter filter) {
-    if (image == null || filter == null) return image;
-    return Toolkit.getDefaultToolkit().createImage(
-      new FilteredImageSource(toBufferedImage(image).getSource(), filter));
+  public static Image filter(@Nullable Image image, @Nullable ImageFilter filter) {
+    if (image == null || filter == null) {
+      return image;
+    }
+    return Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(toBufferedImage(image).getSource(), filter));
   }
 
   /**
@@ -214,7 +224,9 @@ public final class ImageUtil {
    */
   @Contract("null, _ -> null; !null, _ -> !null")
   public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx) {
-    if (image == null) return null;
+    if (image == null) {
+      return null;
+    }
     if (StartupUiUtil.isJreHiDPI(ctx)) {
       return RetinaImage.createFrom(image, ctx.getScale(ScaleType.SYS_SCALE), null);
     }
@@ -222,17 +234,7 @@ public final class ImageUtil {
   }
 
   /**
-   * @deprecated Use {@link #ensureHiDPI(Image, ScaleContext)}.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @Contract("null, _ -> null; !null, _ -> !null")
-  public static Image ensureHiDPI(@Nullable Image image, @NotNull JBUI.ScaleContext ctx) {
-    return ensureHiDPI(image, (ScaleContext)ctx);
-  }
-
-  /**
-   * Wraps the {@code image} with {@link JBHiDPIScaledImage} according to {@code ctx} when applicable.
+   * Wraps the {@code image} with {@link JBHiDPIScaledImage} according to {@code context} when applicable.
    * The real (dev) width/height of the provided image is usually calculated based on the scale context and the
    * expected user width/height of the target wrapped image. In the {@link #ensureHiDPI(Image, ScaleContext)} method version,
    * the expected user width/height of the wrapped image is reconstructed from the image's real width/height and the scale context.
@@ -240,14 +242,16 @@ public final class ImageUtil {
    * may differ from the original values. To avoid the loss this method version accepts the original user width/height.
    *
    * @param image the raw image to wrap
-   * @param ctx the scale context to match
+   * @param context the scale context to match
    * @param userWidth the expected user width of the wrapped image
    * @param userHeight the expected user height of the wrapped image
    */
   @Contract("null, _, _, _ -> null; !null, _, _, _ -> !null")
-  public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx, double userWidth, double userHeight) {
-    if (image == null) return null;
-    if (StartupUiUtil.isJreHiDPI(ctx)) {
+  public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext context, double userWidth, double userHeight) {
+    if (image == null) {
+      return null;
+    }
+    if (StartupUiUtil.isJreHiDPI(context)) {
       return new JBHiDPIScaledImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;

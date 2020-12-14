@@ -12,9 +12,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,13 +48,14 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
  */
 public class PluginDetailsPageComponent extends MultiPanel {
+
+  private static final Logger LOG = Logger.getInstance(PluginDetailsPageComponent.class);
   private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
 
   private final MyPluginModel myPluginModel;
@@ -156,6 +156,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myIconLabel.setOpaque(false);
     header.add(myIconLabel, BorderLayout.WEST);
 
+    myGearButton = TabbedPaneHeaderComponent.createToolbar(
+      IdeBundle.message("plugin.settings.link.title"),
+      createGearActions()
+    );
+    myGearButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+    myGearButton.setOpaque(false);
+    header.add(myGearButton, BorderLayout.EAST);
+
     return header;
   }
 
@@ -227,12 +235,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(true));
     myInstallButton
       .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
-
-    myGearButton = TabbedPaneHeaderComponent.createToolbar(
-      IdeBundle.message("plugin.settings.link.title"),
-      createGearActions()
-    );
-    myNameAndButtons.addButtonComponent(myGearButton);
 
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
@@ -768,20 +770,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateEnabledForProject() {
-    boolean isEnabled = myPluginModel.isEnabled(myPlugin);
-    boolean isEnabledForProject = myPluginModel.isEnabledForProject(myPlugin);
-
-    String text = isEnabled ?
-                  (isEnabledForProject ?
-                   IdeBundle.message("plugins.configurable.enabled.for.current.project") :
-                   IdeBundle.message("plugins.configurable.enabled.for.all.projects")) :
-                  null;
-    myEnabledForProject.setText(text);
-
-    Icon icon = isEnabled && isEnabledForProject ?
-                AllIcons.General.ProjectConfigurable :
-                null;
-    myEnabledForProject.setIcon(icon);
+    PluginEnabledState state = myPluginModel.getState(myPlugin);
+    myEnabledForProject.setText(state.toString());
+    myEnabledForProject.setIcon(UIUtilsKt.perProjectIcon(state));
   }
 
   public void startLoading() {
@@ -833,145 +824,58 @@ public class PluginDetailsPageComponent extends MultiPanel {
     return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
   }
 
-  private void enablePlugin() {
-    myPluginModel.enablePlugins(Set.of(myPlugin));
-  }
-
-  private void disablePlugin() {
-    myPluginModel.disablePlugins(Set.of(myPlugin));
-  }
-
   private @NotNull DefaultActionGroup createGearActions() {
     DefaultActionGroup result = new DefaultActionGroup();
 
-    result.add(new EnableForAllProjectsAction());
-    result.add(new EnableForCurrentProjectAction());
+    result.add(new EnableDisableAction(PluginEnabledState.ENABLED));
+    result.add(new EnableDisableAction(PluginEnabledState.ENABLED_FOR_PROJECT));
     result.addSeparator();
-    result.add(new DisableForAllProjectsAction());
-    result.add(new DisableForCurrentProjectAction());
+    result.add(new EnableDisableAction(PluginEnabledState.DISABLED));
+    result.add(new EnableDisableAction(PluginEnabledState.DISABLED_FOR_PROJECT));
     result.addSeparator();
     result.add(new UninstallAction());
 
     return result;
   }
 
-  private final class EnableForAllProjectsAction extends DumbAwareAction {
+  private final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
 
-    private EnableForAllProjectsAction() {
-      super(IdeBundle.message("plugins.configurable.enable.for.all.projects"));
+    private EnableDisableAction(@NotNull PluginEnabledState newState) {
+      super(
+        PluginDetailsPageComponent.this.myPluginModel,
+        List.of(PluginDetailsPageComponent.this),
+        newState
+      );
+    }
+
+    @Override
+    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull PluginDetailsPageComponent component) {
+      return myPlugin;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation()
-        .setVisible(!myPluginModel.isEnabled(myPlugin));
-    }
+      PluginEnabledState state = myPluginModel.getState(myPlugin);
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      if (project != null) {
-        ProjectPluginTracker.getInstance(project)
-          .unregisterProjectPlugin(myPlugin);
-      }
-
-      enablePlugin();
+      boolean invisible = myNewState == state ||
+                          e.getProject() == null && myNewState.isPerProject();
+      e.getPresentation().setVisible(!invisible);
     }
   }
 
-  private final class EnableForCurrentProjectAction extends DumbAwareAction {
-
-    private EnableForCurrentProjectAction() {
-      super(IdeBundle.message("plugins.configurable.enable.for.current.project"));
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      boolean isVisible = e.getProject() != null &&
-                          !myPluginModel.isEnabled(myPlugin) &&
-                          !myPluginModel.isEnabledForProject(myPlugin);
-      e.getPresentation().setVisible(isVisible);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      assert project != null;
-
-      ProjectPluginTracker.getInstance(project)
-        .registerProjectPlugin(myPlugin);
-
-      enablePlugin();
-    }
-  }
-
-  private final class DisableForAllProjectsAction extends DumbAwareAction {
-
-    private DisableForAllProjectsAction() {
-      super(IdeBundle.message("plugins.configurable.disable.for.all.projects"));
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation()
-        .setVisible(myPluginModel.isEnabled(myPlugin));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      if (project != null) {
-        ProjectPluginTracker.getInstance(project)
-          .unregisterProjectPlugin(myPlugin);
-      }
-
-      disablePlugin();
-    }
-  }
-
-  private final class DisableForCurrentProjectAction extends DumbAwareAction {
-
-    private DisableForCurrentProjectAction() {
-      super(IdeBundle.message("plugins.configurable.disable.for.current.project"));
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      boolean visible = e.getProject() != null &&
-                        myPluginModel.isEnabled(myPlugin) &&
-                        myPluginModel.isEnabledForProject(myPlugin);
-      e.getPresentation().setVisible(visible);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      assert project != null;
-
-      ProjectPluginTracker.getInstance(project)
-        .unregisterProjectPlugin(myPlugin);
-
-      myPluginModel.disablePlugins(Set.of(myPlugin));
-    }
-  }
-
-  private final class UninstallAction extends DumbAwareAction {
+  private final class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
 
     private UninstallAction() {
-      super(IdeBundle.message("plugins.configurable.uninstall"));
+      super(
+        PluginDetailsPageComponent.this.myPluginModel,
+        PluginDetailsPageComponent.this,
+        List.of(PluginDetailsPageComponent.this)
+      );
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation()
-        .setEnabledAndVisible(!myPlugin.isBundled());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      if (MyPluginModel.showUninstallDialog(PluginDetailsPageComponent.this, myPlugin.getName(), 1)) {
-        myPluginModel.uninstallAndUpdateUi(PluginDetailsPageComponent.this, myPlugin);
-      }
+    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull PluginDetailsPageComponent component) {
+      return component.myPlugin;
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
@@ -8,6 +8,7 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.runInInitMode
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
@@ -44,7 +45,9 @@ class InspectionSchemeTest {
 
     runInInitMode { scheme.initInspectionTools(null) }
 
-    schemeManagerFactory.save()
+    runBlocking {
+      schemeManagerFactory.save()
+    }
 
     assertThat(scheme.schemeState).isEqualTo(SchemeState.UNCHANGED)
 

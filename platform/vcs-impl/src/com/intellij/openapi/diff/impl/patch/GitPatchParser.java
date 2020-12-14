@@ -49,7 +49,7 @@ public final class GitPatchParser {
         iterator.previous();
       }
       else if (contentParser.testIsStart(next)) {
-        patch = contentParser.readTextPatch(next, iterator, true);
+        patch = contentParser.readTextPatch(next, iterator);
       }
     }
     if (patch == null) {
@@ -137,7 +137,7 @@ public final class GitPatchParser {
 
   @Nullable
   private static String getFileNameFromGitHeaderLine(@NotNull String line, boolean before) {
-    return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), true, before);
+    return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), before);
   }
 
   @NotNull

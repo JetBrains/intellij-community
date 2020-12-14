@@ -1,0 +1,3 @@
+dependencies {
+  compile fileTree(dir: 'hello', include: ['*.aar', '*.jar']), fileTree('abc')
+}

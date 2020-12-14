@@ -139,7 +139,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return classes[0];
   }
 
-
   @NotNull
   public PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
     return createRecordFromText("public record " + name + "() { }");

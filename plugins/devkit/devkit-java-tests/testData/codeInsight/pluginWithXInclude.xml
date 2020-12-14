@@ -15,7 +15,7 @@
         <bar implementation="java.util.ArrayList"/>
         <extensionX/>
         <extension2/>
-        <<error descr="Element extensionUnknown is not allowed here">extensionUnknown</error>/>
+        <<error descr="Cannot resolve extension point 'foo.extensionUnknown' in dependencies&nbsp;(Reference: Plugin Dependencies)">extensionUnknown</error>/>
     </extensions>
 
 </idea-plugin>

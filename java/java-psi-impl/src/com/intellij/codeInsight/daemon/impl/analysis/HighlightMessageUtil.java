@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public final class HighlightMessageUtil {
 
     if (symbol instanceof PsiClass) {
       if (symbol instanceof PsiAnonymousClass) {
-        symbolName = JavaPsiBundle.message("java.terms.anonymous.class");
+        symbolName = JavaElementKind.ANONYMOUS_CLASS.subject();
       }
       else {
         symbolName = ((PsiClass)symbol).getQualifiedName();

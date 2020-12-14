@@ -103,34 +103,24 @@ public final class VcsShelveUtils {
   }
 
   /**
-   * Shelve changes
-   *
-   *
    * @param project       the context project
-   * @param shelveManager the shelve manager
    * @param changes       the changes to process
    * @param description   the description of for the shelve
-   * @param exceptions    the generated exceptions
-   * @param rollback
    * @return created shelved change list or null in case failure
    */
   @Nullable
-  public static ShelvedChangeList shelveChanges(final Project project, final ShelveChangesManager shelveManager, Collection<? extends Change> changes,
+  public static ShelvedChangeList shelveChanges(final Project project,
+                                                Collection<? extends Change> changes,
                                                 final @Nls String description,
-                                                final List<? super VcsException> exceptions, boolean rollback, boolean markToBeDeleted) {
+                                                boolean rollback,
+                                                boolean markToBeDeleted) throws VcsException {
     try {
-      ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description, rollback, markToBeDeleted);
+      ShelvedChangeList shelve = ShelveChangesManager.getInstance(project).shelveChanges(changes, description, rollback, markToBeDeleted);
       BackgroundTaskUtil.syncPublisher(project, ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(VcsShelveUtils.class));
       return shelve;
     }
-
     catch (IOException e) {
-      exceptions.add(new VcsException(VcsBundle.message("changes.error.shelving.changes.failed", description), e));
-      return null;
-    }
-    catch (VcsException e) {
-      exceptions.add(e);
-      return null;
+      throw new VcsException(VcsBundle.message("changes.error.shelving.changes.failed", description), e);
     }
   }
 }

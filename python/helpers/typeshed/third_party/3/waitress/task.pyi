@@ -1,10 +1,9 @@
-from .buffers import ReadOnlyFileBasedBuffer
-from .channel import HTTPChannel
-from .compat import reraise, tobytes
-from .utilities import Error
 from logging import Logger
 from threading import Condition, Lock
-from typing import Any, Deque, Mapping, Sequence, Optional, Set, Tuple
+from typing import Any, Deque, Mapping, Optional, Sequence, Set, Tuple
+
+from .channel import HTTPChannel
+from .utilities import Error
 
 rename_headers: Mapping[str, str]
 hop_by_hop: frozenset

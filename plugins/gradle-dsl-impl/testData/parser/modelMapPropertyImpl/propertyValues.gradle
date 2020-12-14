@@ -1,0 +1,9 @@
+// TODO(b/72940492): Replace propC1 and propRef1 with propC and propRef respectively.
+ext {
+  propB = "2"
+  propC = "3"
+  propRef = propB
+  propInterpolated = "${propB}nd"
+  propMap = [one: "1", "B": propB, "propC1": propC, propRef1: propRef, interpolated: propInterpolated]
+  propMapRef = propMap
+}

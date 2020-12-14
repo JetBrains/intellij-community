@@ -8,7 +8,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.find.usages.SearchTarget;
+import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -29,6 +29,7 @@ import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.find.actions.FindUsagesKt.findUsages;
+import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
 public class FindUsagesAction extends AnAction {
@@ -58,19 +59,24 @@ public class FindUsagesAction extends AnAction {
   }
 
   private void findSymbolUsages(@NotNull Project project, @NotNull DataContext dataContext) {
-    findShowUsages(project, dataContext, FindBundle.message("find.usages.ambiguous.title"), new UsageVariantHandler() {
+    findShowUsages(
+      project, dataContext, allTargets(dataContext), FindBundle.message("find.usages.ambiguous.title"),
+      new UsageVariantHandler() {
 
-      @Override
-      public void handleTarget(@NotNull SearchTarget target) {
-        SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
-        findUsages(toShowDialog(), project, searchScope, target);
-      }
+        @Override
+        public void handleTarget(@NotNull SearchTarget target) {
+          SearchScope searchScope = FindUsagesOptions.findScopeByName(
+            project, dataContext, FindSettings.getInstance().getDefaultScopeName()
+          );
+          findUsages(toShowDialog(), project, searchScope, target);
+        }
 
-      @Override
-      public void handlePsi(@NotNull PsiElement element) {
-        startFindUsages(element);
+        @Override
+        public void handlePsi(@NotNull PsiElement element) {
+          startFindUsages(element);
+        }
       }
-    });
+    );
   }
 
   private void findUsageTargetUsages(@NotNull Project project, @NotNull DataContext dataContext) {

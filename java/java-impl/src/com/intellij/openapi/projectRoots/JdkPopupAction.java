@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.ExecutionException;
@@ -14,6 +14,7 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.FileChooserAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -121,7 +122,7 @@ public class JdkPopupAction extends AnAction {
               (component.getHeight() - menuComponent.getHeight()) / 2);
     }
     else {
-      menuComponent.show(component, 0, component.getHeight());
+      JBPopupMenu.showBelow(component, menuComponent);
     }
   }
 

@@ -128,7 +128,7 @@ public final class DefUseUtil {
 
     ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getControlFlow(body, ourPolicy, new ControlFlowOptions(true, false, false));
+      flow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.create(true, false, false));
     }
     catch (AnalysisCanceledException e) {
       return null;

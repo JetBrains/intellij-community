@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
@@ -26,6 +27,7 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
+import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
@@ -65,18 +67,10 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       return null;
     }
 
-    Map<Variable, VariableValue> oldValues = project.getUserData(CACHE);
-    if (oldValues == null) {
-      oldValues = new HashMap<>();
-      project.putUserData(CACHE, oldValues);
-    }
+    Map<Variable, VariableValue> oldValues = getOldValues(project);
     List<XValueNodeImpl> values = data.get(file, lineNumber, doc.getModificationStamp());
     if (values != null && !values.isEmpty()) {
-      final int bpLine = getCurrentBreakPointLineInFile(session, file);
-      boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
-      final TextAttributes attributes = bpLine == lineNumber && isTopFrame &&
-                                        ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).isFullLineHighlighter()
-                                        ? getTopFrameSelectedAttributes() : getNormalAttributes();
+      final TextAttributes attributes = getAttributes(lineNumber, file, session);
 
       ArrayList<VariableText> result = new ArrayList<>();
       for (XValueNodeImpl value : values) {
@@ -87,34 +81,97 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         if (StringUtil.isEmpty(text.toString())) {
           continue;
         }
-        final VariableText res = new VariableText();
+
+        final VariableText res = computeVariablePresentationWithChanges(value, name, text, attributes, lineNumber, oldValues);
         result.add(res);
-        res.add(new LineExtensionInfo("  " + name + ": ", attributes));
-
-        Variable var = new Variable(name, lineNumber);
-        VariableValue variableValue = oldValues.computeIfAbsent(var, k -> new VariableValue(text.toString(), null, value.hashCode()));
-        if (variableValue.valueNodeHashCode != value.hashCode()) {
-          variableValue.old = variableValue.actual;
-          variableValue.actual = text.toString();
-          variableValue.valueNodeHashCode = value.hashCode();
-        }
-
-        if (!variableValue.isChanged()) {
-          for (String s : text.getTexts()) {
-            res.add(new LineExtensionInfo(s, attributes));
-          }
-        }
-        else {
-          variableValue.produceChangedParts(res.infos);
-        }
       }
       final List<LineExtensionInfo> infos = new ArrayList<>();
       for (VariableText text : result) {
-        infos.addAll(text.infos);
+        LineExtensionInfo varNameInfo = text.infos.get(0);
+        LineExtensionInfo wrappedName =
+          new LineExtensionInfo("  " + varNameInfo.getText() + XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ",
+                                varNameInfo.getColor(),
+                                varNameInfo.getEffectType(),
+                                varNameInfo.getEffectColor(),
+                                varNameInfo.getFontType());
+        List<LineExtensionInfo> value = text.infos.subList(1, text.infos.size());
+        infos.add(wrappedName);
+        infos.addAll(value);
       }
       return ContainerUtil.getFirstItems(infos, LINE_EXTENSIONS_MAX_COUNT);
     }
     return null;
+  }
+
+  public static SimpleColoredText computeVariablePresentationWithChanges(XValueNodeImpl value,
+                                                                         String name,
+                                                                         SimpleColoredText text,
+                                                                         TextAttributes attributes,
+                                                                         int lineNumber,
+                                                                         Project project) {
+    Map<Variable, VariableValue> oldValues = getOldValues(project);
+    VariableText variableText = computeVariablePresentationWithChanges(value, name, text, attributes, lineNumber, oldValues);
+
+    SimpleColoredText coloredText = new SimpleColoredText();
+    for (LineExtensionInfo info : variableText.infos) {
+      TextAttributes textAttributes = new TextAttributes(info.getColor(), info.getBgColor(), info.getEffectColor(),info.getEffectType(), info.getFontType());
+      coloredText.append(info.getText(), SimpleTextAttributes.fromTextAttributes(textAttributes));
+    }
+    return coloredText;
+  }
+
+  @NotNull
+  private static VariableText computeVariablePresentationWithChanges(XValueNodeImpl value,
+                                                                     String name,
+                                                                     SimpleColoredText text,
+                                                                     TextAttributes attributes,
+                                                                     int lineNumber,
+                                                                     Map<Variable, VariableValue> oldValues) {
+    final VariableText res = new VariableText();
+    res.add(new LineExtensionInfo(name, attributes));
+
+    Variable var = new Variable(name, lineNumber);
+    VariableValue variableValue = oldValues.computeIfAbsent(var, k -> new VariableValue(text.toString(), null, value.hashCode()));
+    if (variableValue.valueNodeHashCode != value.hashCode()) {
+      variableValue.old = variableValue.actual;
+      variableValue.actual = text.toString();
+      variableValue.valueNodeHashCode = value.hashCode();
+    }
+
+    if (!variableValue.isChanged()) {
+      ArrayList<String> texts = text.getTexts();
+      for (int i = 0; i < texts.size(); i++) {
+        String s = texts.get(i);
+        TextAttributes attr = Registry.is("debugger.show.values.colorful")
+                              ? text.getAttributes().get(i).toTextAttributes()
+                              : attributes;
+        res.add(new LineExtensionInfo(s, attr));
+      }
+    }
+    else {
+      variableValue.produceChangedParts(res.infos);
+    }
+    return res;
+  }
+
+  @NotNull
+  public static Map<Variable, VariableValue> getOldValues(@NotNull Project project) {
+    Map<Variable, VariableValue> oldValues = project.getUserData(CACHE);
+    if (oldValues == null) {
+      oldValues = new HashMap<>();
+      project.putUserData(CACHE, oldValues);
+    }
+    return oldValues;
+  }
+
+  @NotNull
+  public static TextAttributes getAttributes(int lineNumber, @NotNull VirtualFile file, XDebugSession session) {
+    final int bpLine = getCurrentBreakPointLineInFile(session, file);
+    boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
+    return bpLine == lineNumber
+           && isTopFrame
+           && ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).isFullLineHighlighter()
+           ? getTopFrameSelectedAttributes() : getNormalAttributes();
   }
 
   @Nullable
@@ -256,11 +313,9 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
   private static class VariableText {
     final List<LineExtensionInfo> infos = new ArrayList<>();
-    int length;
 
     void add(LineExtensionInfo info) {
       infos.add(info);
-      length += info.getText().length();
     }
   }
 }

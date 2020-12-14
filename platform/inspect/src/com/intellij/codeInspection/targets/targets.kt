@@ -8,7 +8,8 @@ import com.intellij.codeInspection.InspectionsResultUtil.describeInspections
 import com.intellij.codeInspection.ex.GlobalInspectionContextEx
 import com.intellij.codeInspection.ex.GlobalInspectionContextUtil
 import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.codeInspection.ex.StaticAnalysisReportConverter
+import com.intellij.codeInspection.ex.ReportConverterUtil
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -51,9 +52,14 @@ class TargetsRunner(val application: InspectionApplication,
                     val scope: AnalysisScope) {
   val inspectionCounter = mutableMapOf<TargetDefinition, AtomicInteger>()
   var currentTarget: TargetDefinition? = null
-  val converter = StaticAnalysisReportConverter()
+  val macroManager = PathMacroManager.getInstance(project)
 
   fun run() {
+    val converter = ReportConverterUtil.getReportConverter(application.myOutputFormat)
+    if (converter == null) {
+      LOG.error("Can't find converter ${application.myOutputFormat}")
+      return
+    }
     val targetsFile = Paths.get(application.myTargets)
     val targets = parseTargets(targetsFile)
     if (targets == null) {
@@ -63,19 +69,25 @@ class TargetsRunner(val application: InspectionApplication,
 
     application.configureProject(projectPath, project, scope)
 
-    converter.projectData(project, application.myOutPath)
+    val outPath = Paths.get(application.myOutPath)
+    converter.projectData(project, outPath.resolve("projectStructure"))
+
+    //for backward compatibility with teamcity plugin
+    if ( "sa" == application.myOutputFormat ) {
+      writeProjectDescription(outPath.resolve("projectDescription.json"), project)
+    }
     application.writeDescriptions(baseProfile, converter)
-    Files.copy(targetsFile, Paths.get(application.myOutPath).resolve("targets.json"), StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(targetsFile, outPath.resolve("targets.json"), StandardCopyOption.REPLACE_EXISTING)
 
     targetDefinitions.forEach { target ->
-      if (!executeTarget(target)) {
+      if (!executeTarget(target, converter)) {
         LOG.warn("Inspection run was stopped cause target '${target.description}' reached threshold: ${target.threshold}")
         return
       }
     }
   }
 
-  fun executeTarget(target: TargetDefinition): Boolean {
+  fun executeTarget(target: TargetDefinition, converter: InspectionsReportConverter): Boolean {
     application.reportMessage(1, "Target ${target.id} (${target.description}) started. Threshold ${target.threshold}")
     println("##teamcity[blockOpened name='Target ${target.id}' description='${target.description}']")
 
@@ -93,6 +105,7 @@ class TargetsRunner(val application: InspectionApplication,
         if (target.isAboveThreshold(count)) {
           progressIndicator.cancel()
         }
+        macroManager.collapsePathsRecursively(element)
         super.consume(element)
       }
     }

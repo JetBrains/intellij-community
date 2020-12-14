@@ -24,6 +24,7 @@ class CommunityRepositoryModules {
     "intellij.platform.vcs.dvcs",
     "intellij.platform.editor",
     "intellij.platform.externalSystem",
+    "intellij.platform.codeStyle",
     "intellij.platform.indexing",
     "intellij.platform.jps.model",
     "intellij.platform.lang",
@@ -56,6 +57,7 @@ class CommunityRepositoryModules {
     "intellij.platform.core.impl",
     "intellij.platform.diff.impl",
     "intellij.platform.editor.ex",
+    "intellij.platform.codeStyle.impl",
     "intellij.platform.indexing.impl",
     "intellij.platform.execution.impl",
     "intellij.platform.inspect",
@@ -109,13 +111,6 @@ class CommunityRepositoryModules {
     plugin("intellij.properties.resource.bundle.editor"),
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
-    },
-    plugin("intellij.vcs.cvs") {
-      directoryName = "cvsIntegration"
-      mainJarName = "cvsIntegration.jar"
-      withModule("intellij.vcs.cvs.javacvs")
-      withModule("intellij.vcs.cvs.smartcvs")
-      withModule("intellij.vcs.cvs.core", "cvs_util.jar")
     },
     plugin("intellij.xpath") {
       withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
@@ -179,6 +174,9 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingLoaderRt")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.gradle.dsl.impl") {
+      withModule("intellij.gradle.dsl")
+    },
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
     },
@@ -235,7 +233,7 @@ class CommunityRepositoryModules {
     javaFXPlugin("intellij.javaFX.community"),
 */
     plugin("intellij.terminal") {
-      withResource("resources/.zshrc", "")
+      withResource("resources/.zshenv", "")
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
     },

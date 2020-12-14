@@ -828,7 +828,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testNullProjectScope() throws Throwable {
-    final GlobalSearchScope allScope = new EverythingGlobalScope(null)
+    GlobalSearchScope allScope = new EverythingGlobalScope()
     // create file to be indexed
     final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile()
     assertNoException(new IllegalArgumentExceptionCase() {

@@ -20,7 +20,7 @@ public class ChangeListChooser extends DialogWrapper {
   private final ChangeListChooserPanel myPanel;
 
   public ChangeListChooser(@NotNull Project project,
-                           @NotNull Collection<? extends ChangeList> changelists,
+                           @Nullable Collection<? extends ChangeList> changelists,
                            @Nullable ChangeList defaultSelection,
                            @NlsContexts.DialogTitle String title,
                            @Nullable final @Nls String suggestedName) {

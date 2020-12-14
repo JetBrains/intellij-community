@@ -22,6 +22,7 @@ interface LookupStorage {
   val performanceTracker: CompletionPerformanceTracker
   fun mlUsed(): Boolean
   fun contextProvidersResult(): ContextFeatures
+  fun shouldReRank(): Boolean
   fun shouldComputeFeatures(): Boolean
   fun getItemStorage(id: String): LookupElementStorage
 }

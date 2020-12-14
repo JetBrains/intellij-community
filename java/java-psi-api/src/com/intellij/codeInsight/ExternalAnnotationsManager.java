@@ -134,6 +134,9 @@ public abstract class ExternalAnnotationsManager {
    */
   public abstract @NotNull AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 
+  /**
+   * @return null if were unable to load external annotations
+   */
   public abstract @Nullable List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
 
   public static class CanceledConfigurationException extends RuntimeException {}

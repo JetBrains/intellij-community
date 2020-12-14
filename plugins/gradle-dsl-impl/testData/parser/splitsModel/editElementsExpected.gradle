@@ -1,0 +1,21 @@
+android {
+  splits {
+    abi {
+      enable false
+      exclude 'abi-exclude-1', 'abi-exclude-3'
+      include 'abi-include-3', 'abi-include-2'
+      universalApk true
+    }
+    density {
+      auto true
+      compatibleScreens 'screen1', 'screen3'
+      enable false
+      exclude 'density-exclude-3', 'density-exclude-2'
+      include 'density-include-1', 'density-include-3'
+    }
+    language {
+      enable true
+      include 'language-include-3', 'language-include-2'
+    }
+  }
+}

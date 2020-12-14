@@ -5,7 +5,12 @@ import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef
+import com.intellij.psi.impl.source.tree.JavaDocElementType
+import com.intellij.psi.impl.source.tree.LazyParseablePsiElement
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
+import com.intellij.psi.javadoc.PsiDocTag
+import com.intellij.psi.javadoc.PsiDocTagValue
 import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.map2Array
@@ -177,6 +182,12 @@ internal object JavaConverter {
     is PsiImportList -> unwrapElements(element.parent)
     is PsiReferenceList -> unwrapElements(element.parent)
     is PsiBlockStatement -> unwrapElements(element.parent)
+    is PsiDocTag -> unwrapElements(element.parent)
+    is PsiDocTagValue -> unwrapElements(element.parent)
+    is LazyParseablePsiElement ->
+      if (element.elementType == JavaDocElementType.DOC_REFERENCE_HOLDER)
+        unwrapElements(element.parent)
+      else element
     else -> element
   }
 
@@ -213,8 +224,12 @@ internal object JavaConverter {
         is PsiComment -> el<UComment>(build(::UComment))
         is PsiDocToken -> el<USimpleNameReferenceExpression> {
           el.takeIf { it.tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN }?.let {
-            val methodOrFieldRef = el.parent as? PsiDocMethodOrFieldRef ?: return@let null
-            JavaUSimpleNameReferenceExpression(el, el.text, givenParent, methodOrFieldRef.reference)
+            val reference = when (val elParent = el.parent) {
+              is PsiDocMethodOrFieldRef -> elParent.reference
+              is PsiDocParamRef -> elParent.reference
+              else -> null
+            }
+            reference?.let { JavaUSimpleNameReferenceExpression(el, el.text, givenParent, it) }
           }
         }
         is PsiCatchSection -> el<UCatchClause>(build(::JavaUCatchClause))

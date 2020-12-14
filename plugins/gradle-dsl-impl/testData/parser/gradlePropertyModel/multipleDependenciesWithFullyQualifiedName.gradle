@@ -1,0 +1,5 @@
+ext {
+  prop1 = 'value1'
+  def prop1 = 'value2'
+  prop2 = "${prop1} and ${project.ext.prop1}"
+}

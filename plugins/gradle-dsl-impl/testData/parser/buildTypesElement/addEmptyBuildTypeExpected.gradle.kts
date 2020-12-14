@@ -1,0 +1,6 @@
+android {
+  buildTypes {
+    create("typeA") {
+    }
+  }
+}

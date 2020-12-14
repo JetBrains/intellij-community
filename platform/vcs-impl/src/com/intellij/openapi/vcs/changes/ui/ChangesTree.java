@@ -386,7 +386,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myModelUpdateInProgress;
   }
 
-  protected void resetTreeState() {
+  public void resetTreeState() {
     // expanding lots of nodes is a slow operation (and result is not very useful)
     if (hasAtLeastNodes(this, 30000)) {
       TreeUtil.collapseAll(this, 1);
@@ -492,6 +492,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (myTreeInclusionListener != null) myTreeInclusionListener.run();
   }
 
+  /**
+   * If called during component initialization, should be followed by {@link #resetTreeState()} or {@link #rebuildTree()}
+   * to update initial selection.
+   */
   public void setIncludedChanges(@NotNull Collection<?> changes) {
     getInclusionModel().setInclusion(changes);
   }

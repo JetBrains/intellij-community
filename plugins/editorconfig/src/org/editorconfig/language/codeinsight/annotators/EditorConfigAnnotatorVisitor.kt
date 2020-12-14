@@ -54,19 +54,12 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
   }
 
   override fun visitOption(option: EditorConfigOption) {
-    checkDanglingKey(option)
     checkLineBreaks(option)
   }
 
   private fun checkLineBreaks(option: EditorConfigOption) {
     if (!option.textContains('\n')) return
     val message = EditorConfigBundle["annotator.error.option.suspicious.line.break"]
-    holder.newAnnotation(HighlightSeverity.ERROR, message).range(option).create()
-  }
-
-  private fun checkDanglingKey(option: EditorConfigOption) {
-    if (option.anyValue != null) return
-    val message = EditorConfigBundle["annotator.error.dangling.key"]
     holder.newAnnotation(HighlightSeverity.ERROR, message).range(option).create()
   }
 

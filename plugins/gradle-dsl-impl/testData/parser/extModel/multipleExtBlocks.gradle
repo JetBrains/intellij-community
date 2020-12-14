@@ -1,0 +1,11 @@
+apply plugin: 'com.android.application'
+ext {
+  var1 = "1.5"
+}
+android {
+}
+ext {
+}
+dependencies {
+  compile fileTree(dir: 'libs', include: ['*.jar'])
+}

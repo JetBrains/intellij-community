@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -201,7 +202,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
     popupMenu.add(item);
 
     return factory.onClick(presentation, MouseButton.Right, (e, __) -> {
-      popupMenu.show(e.getComponent(), e.getX(), e.getY());
+      JBPopupMenu.showByEvent(e, popupMenu);
       return Unit.INSTANCE;
     });
   }

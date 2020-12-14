@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.*;
@@ -237,6 +238,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     //noinspection SynchronizeOnThis
     synchronized (this) {
       IStubElementType.dropRegisteredTypes();
+      IStubFileElementType.dropTemplateStubBaseVersion();
       StubSerializationHelper helper = myStubSerializationHelper;
       if (helper != null) {
         helper.dropRegisteredSerializers();

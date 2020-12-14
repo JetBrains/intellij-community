@@ -17,7 +17,7 @@
 package org.intellij.plugins.relaxNG.compact.lexer;
 
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import org.kohsuke.rngom.util.Utf16;
 
 import java.io.FilterReader;
@@ -33,11 +33,11 @@ import java.io.Reader;
  */
 class EscapePreprocessor extends FilterReader {
   private final TIntArrayList myQueuedChars;
-  private final TIntIntHashMap myLengthMap;
+  private final Int2IntMap myLengthMap;
 
   private int myOffset;
 
-  EscapePreprocessor(Reader reader, int startOffset, TIntIntHashMap map) {
+  EscapePreprocessor(Reader reader, int startOffset, Int2IntMap map) {
     super(reader);
     myOffset = startOffset;
     myQueuedChars = new TIntArrayList();

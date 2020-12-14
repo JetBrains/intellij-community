@@ -120,6 +120,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 
+  public abstract @Nullable String getCustomizeIDEWizardDialog();
+
   public abstract @Nullable String getCustomizeIDEWizardStepsProvider();
 
   public abstract int @Nullable [] getAboutLogoRect();
@@ -156,4 +158,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @Nullable String getProgressTailIcon();
 
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
+
+  public abstract @NotNull List<PluginId> getEssentialPluginsIds();
 }

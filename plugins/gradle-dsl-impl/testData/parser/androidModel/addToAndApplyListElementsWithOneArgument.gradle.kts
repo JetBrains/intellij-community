@@ -1,0 +1,3 @@
+android {
+  flavorDimensions("abi")
+}

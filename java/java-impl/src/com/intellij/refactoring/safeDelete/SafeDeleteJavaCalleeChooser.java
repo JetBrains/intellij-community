@@ -42,15 +42,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement> {
-  private final Project myProject;
-
   SafeDeleteJavaCalleeChooser(PsiMember member,
                                      Project project,
                                      ArrayList<UsageInfo> result) {
     super(member, project, JavaRefactoringBundle.message("safe.delete.select.members.to.propagate.dialog.title"), null, "dummy." + JavaFileType.INSTANCE.getDefaultExtension(), members -> result.addAll(ContainerUtil.map(members, m -> {
       return new SafeDeleteReferenceJavaDeleteUsageInfo(m, m, true);
     })));
-    myProject = project;
   }
 
   protected abstract ArrayList<SafeDeleteMemberCalleeUsageInfo> getTopLevelItems();

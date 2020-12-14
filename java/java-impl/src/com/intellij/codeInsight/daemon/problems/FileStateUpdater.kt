@@ -99,6 +99,13 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
       changes: MutableMap<PsiMember, ScopedMember?>,
       prevChanges: Map<PsiMember, ScopedMember?>
     ) {
+      // new member, maybe it is recreated
+      val recreated = prevChanges.entries.find {
+        val changedMember = it.value ?: return@find false
+        return@find member::class == changedMember::class && member.name == changedMember.name
+      }
+      if (recreated != null) changes.putIfAbsent(recreated.key, recreated.value)
+
       when (psiMember) {
         is PsiMethod -> {
           val containingClass = psiMember.containingClass ?: return

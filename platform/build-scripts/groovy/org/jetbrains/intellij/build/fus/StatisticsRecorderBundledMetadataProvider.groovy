@@ -22,18 +22,16 @@ class StatisticsRecorderBundledMetadataProvider {
 
   static File downloadMetadata(BuildContext context) {
     def eventsSchemeJson = EVENTS_SCHEME_JSON
-    context.messages.block("Downloading a default version of feature usage statistics") {
-      def dir = new File(context.paths.temp, 'events-scheme')
-      def recorderId = context.proprietaryBuildTools.featureUsageStatisticsProperties.recorderId
-      def list = new File(dir, "resources/event-log-metadata/$recorderId/$eventsSchemeJson")
-      if (!list.parentFile.mkdirs() || !list.createNewFile()) {
-        context.messages.error("Unable to create $list")
-      }
-      list.write download(context, metadataServiceUri(context).with {
-        appendProductCode(context, it)
-      })
-      return dir
+    def dir = new File(context.paths.temp, 'events-scheme')
+    def recorderId = context.proprietaryBuildTools.featureUsageStatisticsProperties.recorderId
+    def list = new File(dir, "resources/event-log-metadata/$recorderId/$eventsSchemeJson")
+    if (!list.parentFile.mkdirs() || !list.createNewFile()) {
+      context.messages.error("Unable to create $list")
     }
+    list.write download(context, metadataServiceUri(context).with {
+      appendProductCode(context, it)
+    })
+    return dir
   }
 
   private static GString appendProductCode(BuildContext context, String uri) {

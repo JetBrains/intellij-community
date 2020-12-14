@@ -6,14 +6,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.impl.ToolWindowEventSource
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 
 internal class HideSideWindowsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project)
+    val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project) as ToolWindowManagerImpl
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
     if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
-      toolWindowManager.hideToolWindow(id, true)
+      toolWindowManager.hideToolWindow(id, true, true, ToolWindowEventSource.HideSideWindowsAction)
     }
   }
 

@@ -69,13 +69,11 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
       classpath.addAll(getClasspathForModule(module))
     }
 
-/*
     println("Created classpath:")
     for (path in classpath.distinct().sorted()) {
       println("  $path")
     }
     println("-- END")
-*/
 
     val tempClasspathJarFile = CommandLineWrapperUtil.createClasspathJarFile(Manifest(), classpath.distinct())
     val launcherFolder = paths.launcherFolder

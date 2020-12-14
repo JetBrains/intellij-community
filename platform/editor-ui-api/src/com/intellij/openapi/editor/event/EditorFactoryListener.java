@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.event;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,8 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 /**
- * Allows to receive notifications when editors are created and released. To subscribe, use the &lt;editorFactoryListener&gt; extension
- * point or {@link com.intellij.openapi.editor.EditorFactory#addEditorFactoryListener(EditorFactoryListener, com.intellij.openapi.Disposable)}
+ * Allows receiving notifications when editors are created and released.
+ * To subscribe, use the {@code com.intellij.editorFactoryListener} extension point or
+ * {@link com.intellij.openapi.editor.EditorFactory#addEditorFactoryListener(EditorFactoryListener, com.intellij.openapi.Disposable)}.
  */
 public interface EditorFactoryListener extends EventListener {
   /**

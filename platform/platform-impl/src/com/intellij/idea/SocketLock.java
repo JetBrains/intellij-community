@@ -46,6 +46,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import static com.intellij.ide.SpecialConfigFiles.*;
+
 public final class SocketLock {
   public enum ActivationStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
@@ -57,10 +59,6 @@ public final class SocketLock {
    * properly; see the details in WindowsLauncher.cpp.
    */
   public static final String LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY";
-
-  private static final String PORT_FILE = "port";
-  private static final String PORT_LOCK_FILE = "port.lock";
-  private static final String TOKEN_FILE = "token";
 
   private static final String ACTIVATE_COMMAND = "activate ";
   private static final String PID_COMMAND = "pid";

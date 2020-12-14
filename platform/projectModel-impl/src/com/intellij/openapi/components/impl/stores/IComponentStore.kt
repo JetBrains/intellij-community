@@ -41,6 +41,10 @@ interface IComponentStore {
   @TestOnly
   fun removeComponent(name: String)
 
+  @TestOnly
+  @JvmDefault
+  fun clearCaches() {}
+
   @JvmDefault
   fun release() {}
 }

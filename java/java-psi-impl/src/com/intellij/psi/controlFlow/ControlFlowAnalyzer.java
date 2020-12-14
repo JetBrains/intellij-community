@@ -53,7 +53,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getEndOffset(element)
   private final Map<PsiElement, TIntArrayList> offsetsAddElementEnd = new THashMap<>();
   private final ControlFlowFactory myControlFlowFactory;
-  private final Map<PsiElement, ControlFlowSubRange> mySubRanges = new THashMap<>();
+  private final List<SubRangeInfo> mySubRanges = new ArrayList<>();
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final Map<PsiField, PsiParameter> myImplicitCompactConstructorAssignments;
 
@@ -108,13 +108,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     try {
       myCodeFragment.accept(this);
-      cleanup();
+      return cleanup();
     }
     catch (AnalysisCanceledSoftException e) {
       throw new AnalysisCanceledException(e.getErrorElement());
     }
-
-    return myCurrentFlow;
   }
 
   private void generateCompactConstructorAssignments() {
@@ -194,7 +192,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     poolIntArray(offsets);
   }
 
-  private void cleanup() {
+  private ControlFlow cleanup() {
     // make all non patched goto instructions jump to the end of control flow
     for (TIntArrayList offsets : offsetsAddElementStart.values()) {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
@@ -203,13 +201,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
     }
 
+    ControlFlow result = myCurrentFlow.immutableCopy();
+
     // register all sub ranges
-    for (Map.Entry<PsiElement, ControlFlowSubRange> entry : mySubRanges.entrySet()) {
+    for (SubRangeInfo info : mySubRanges) {
       ProgressManager.checkCanceled();
-      ControlFlowSubRange subRange = entry.getValue();
-      PsiElement element = entry.getKey();
-      myControlFlowFactory.registerSubRange(element, subRange, myOptions, myPolicy);
+      myControlFlowFactory.registerSubRange(info.myElement, new ControlFlowSubRange(result, info.myStart, info.myEnd), myOptions, myPolicy);
     }
+    return result;
   }
 
   private void startElement(@NotNull PsiElement element) {
@@ -376,10 +375,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void registerSubRange(@NotNull PsiElement codeFragment, final int startOffset) {
-    // cache child code block in hope it will be needed
-    ControlFlowSubRange flow = new ControlFlowSubRange(myCurrentFlow, startOffset, myCurrentFlow.getSize());
-    // register it later since offset may not have been patched yet
-    mySubRanges.put(codeFragment, flow);
+    mySubRanges.add(new SubRangeInfo(codeFragment, startOffset, myCurrentFlow.getSize()));
   }
 
   @Override
@@ -1868,6 +1864,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     private void addCall(@NotNull CallInstruction callInstruction) {
       myCalls.add(callInstruction);
+    }
+  }
+
+  private static final class SubRangeInfo {
+    final PsiElement myElement;
+    final int myStart;
+    final int myEnd;
+
+    private SubRangeInfo(PsiElement element, int start, int end) {
+      myElement = element;
+      myStart = start;
+      myEnd = end;
     }
   }
 }

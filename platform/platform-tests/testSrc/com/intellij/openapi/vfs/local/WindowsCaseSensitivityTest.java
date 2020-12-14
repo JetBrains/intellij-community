@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
+  private static final Logger LOG = Logger.getInstance(WindowsCaseSensitivityTest.class);
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
   @Before
@@ -57,6 +59,7 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     VirtualFile readme = createChildData(vDir, "readme.txt");
     Assert.assertTrue(readme.isCaseSensitive());
   }
+
   @Test
   public void testFSUtilWorks_tempTest() throws Exception {
     File dir = myTempDir.newDirectory();
@@ -69,23 +72,7 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     exec(system32+"\\fsutil.exe", "file", "setCaseSensitiveInfo", "\"" + dir.getPath() + "\"", "enable");
     VirtualFile readme = createChildData(vDir, "readme.txt");
     VirtualFile README = createChildData(vDir, "README.TXT");
-    System.out.println(((VirtualFileSystemEntry)readme).getId()+", "+((VirtualFileSystemEntry)README).getId());
-    Assert.assertTrue(readme.isCaseSensitive());
-    Assert.assertTrue(README.isCaseSensitive());
-  }
-  @Test
-  public void testPrintFSUtilCapabilities_tempTest() throws Exception {
-    File dir = myTempDir.newDirectory();
-    VirtualFile vDir = SymlinkHandlingTest.refreshAndFind(dir, dir);
-    Assert.assertNotNull(vDir);
-    Assert.assertFalse(vDir.isCaseSensitive());
-    String system32 = getWindowsSystem32();
-    Assert.assertNotNull(system32);
-    Assert.assertTrue(new File(system32 + "\\fsutil.exe").exists());
-    exec(system32+"\\fsutil.exe", "file");
-    VirtualFile readme = createChildData(vDir, "readme.txt");
-    VirtualFile README = createChildData(vDir, "README.TXT");
-    System.out.println(((VirtualFileSystemEntry)readme).getId()+", "+((VirtualFileSystemEntry)README).getId());
+    LOG.debug(((VirtualFileSystemEntry)readme).getId()+", "+((VirtualFileSystemEntry)README).getId());
     Assert.assertTrue(readme.isCaseSensitive());
     Assert.assertTrue(README.isCaseSensitive());
   }
@@ -110,12 +97,12 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
       Assert.fail("Too long run");
     }
     int exitValue = process.exitValue();
-    System.out.println("exitValue = " + exitValue);
+    Assert.assertEquals(0, exitValue);
     String error = FileUtil.loadTextAndClose(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
-    System.err.println("error :\n");
-    System.err.println(error);
+    LOG.debug("error :\n");
+    LOG.debug(error);
     String out = FileUtil.loadTextAndClose(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-    System.err.println("input :\n");
-    System.err.println(out);
+    LOG.debug("output :\n");
+    LOG.debug(out);
   }
 }

@@ -1,0 +1,7 @@
+ext {
+  propB = "2"
+  propC = "3"
+  propRef = propB
+  propInterpolated = "${propB}nd"
+  propList = ["1", propB, propC, propRef, propInterpolated]
+}

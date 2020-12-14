@@ -1,8 +1,8 @@
 # Stubs for typing (Python 2.7)
 
-from abc import abstractmethod, ABCMeta
-from types import CodeType, FrameType, TracebackType
 import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
+from abc import ABCMeta, abstractmethod
+from types import CodeType, FrameType, TracebackType
 
 # Definitions of special type checking related constructs.  Their definitions
 # are not used, so their value does not matter.
@@ -16,7 +16,14 @@ class TypeVar:
     __constraints__: Tuple[Type[Any], ...]
     __covariant__: bool
     __contravariant__: bool
-    def __init__(self, name: str, *constraints: Type[Any], bound: Optional[Type[Any]] = ..., covariant: bool = ..., contravariant: bool = ...) -> None: ...
+    def __init__(
+        self,
+        name: str,
+        *constraints: Type[Any],
+        bound: Optional[Type[Any]] = ...,
+        covariant: bool = ...,
+        contravariant: bool = ...,
+    ) -> None: ...
 
 _promote = object()
 
@@ -32,8 +39,10 @@ Callable: _SpecialForm = ...
 Type: _SpecialForm = ...
 ClassVar: _SpecialForm = ...
 Final: _SpecialForm = ...
-_F = TypeVar('_F', bound=Callable[..., Any])
+_F = TypeVar("_F", bound=Callable[..., Any])
+
 def final(f: _F) -> _F: ...
+
 Literal: _SpecialForm = ...
 # TypedDict is a (non-subscriptable) special form.
 TypedDict: object = ...
@@ -46,19 +55,20 @@ class GenericMeta(type): ...
 NoReturn = Union[None]
 
 # These type variables are used by the container types.
-_T = TypeVar('_T')
-_S = TypeVar('_S')
-_KT = TypeVar('_KT')  # Key type.
-_VT = TypeVar('_VT')  # Value type.
-_T_co = TypeVar('_T_co', covariant=True)  # Any type covariant containers.
-_V_co = TypeVar('_V_co', covariant=True)  # Any type covariant containers.
-_KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
-_VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
-_T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
-_TC = TypeVar('_TC', bound=Type[object])
+_T = TypeVar("_T")
+_S = TypeVar("_S")
+_KT = TypeVar("_KT")  # Key type.
+_VT = TypeVar("_VT")  # Value type.
+_T_co = TypeVar("_T_co", covariant=True)  # Any type covariant containers.
+_V_co = TypeVar("_V_co", covariant=True)  # Any type covariant containers.
+_KT_co = TypeVar("_KT_co", covariant=True)  # Key type covariant containers.
+_VT_co = TypeVar("_VT_co", covariant=True)  # Value type covariant containers.
+_T_contra = TypeVar("_T_contra", contravariant=True)  # Ditto contravariant.
+_TC = TypeVar("_TC", bound=Type[object])
 _C = TypeVar("_C", bound=Callable[..., Any])
 
 no_type_check = object()
+
 def no_type_check_decorator(decorator: _C) -> _C: ...
 
 # Type aliases and type constructors
@@ -76,12 +86,11 @@ Counter = _Alias()
 Deque = _Alias()
 
 # Predefined type variables.
-AnyStr = TypeVar('AnyStr', str, unicode)
+AnyStr = TypeVar("AnyStr", str, unicode)
 
 # Abstract base classes.
 
 def runtime_checkable(cls: _TC) -> _TC: ...
-
 @runtime_checkable
 class SupportsInt(Protocol, metaclass=ABCMeta):
     @abstractmethod
@@ -134,13 +143,16 @@ class Iterator(Iterable[_T_co], Protocol[_T_co]):
 class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     @abstractmethod
     def next(self) -> _T_co: ...
-
     @abstractmethod
-    def send(self, value: _T_contra) -> _T_co: ...
-
+    def send(self, __value: _T_contra) -> _T_co: ...
+    @overload
     @abstractmethod
-    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = ...,
-              tb: TracebackType = ...) -> _T_co: ...
+    def throw(
+        self, __typ: Type[BaseException], __val: Union[BaseException, object] = ..., __tb: Optional[TracebackType] = ...
+    ) -> _T_co: ...
+    @overload
+    @abstractmethod
+    def throw(self, __typ: BaseException, __val: None = ..., __tb: Optional[TracebackType] = ...) -> _T_co: ...
     @abstractmethod
     def close(self) -> None: ...
     @property
@@ -219,7 +231,6 @@ class AbstractSet(Iterable[_T_co], Container[_T_co], Generic[_T_co]):
     @abstractmethod
     def __len__(self) -> int: ...
 
-
 class MutableSet(AbstractSet[_T], Generic[_T]):
     @abstractmethod
     def add(self, x: _T) -> None: ...
@@ -255,16 +266,18 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
 @runtime_checkable
 class ContextManager(Protocol[_T_co]):
     def __enter__(self) -> _T_co: ...
-    def __exit__(self, __exc_type: Optional[Type[BaseException]],
-                 __exc_value: Optional[BaseException],
-                 __traceback: Optional[TracebackType]) -> Optional[bool]: ...
+    def __exit__(
+        self,
+        __exc_type: Optional[Type[BaseException]],
+        __exc_value: Optional[BaseException],
+        __traceback: Optional[TracebackType],
+    ) -> Optional[bool]: ...
 
 class Mapping(Iterable[_KT], Container[_KT], Generic[_KT, _VT_co]):
     # TODO: We wish the key type could also be covariant, but that doesn't work,
     # see discussion in https: //github.com/python/typing/pull/273.
     @abstractmethod
-    def __getitem__(self, k: _KT) -> _VT_co:
-        ...
+    def __getitem__(self, k: _KT) -> _VT_co: ...
     # Mixin methods
     @overload
     def get(self, k: _KT) -> Optional[_VT_co]: ...
@@ -286,7 +299,6 @@ class MutableMapping(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def __setitem__(self, k: _KT, v: _VT) -> None: ...
     @abstractmethod
     def __delitem__(self, v: _KT) -> None: ...
-
     def clear(self) -> None: ...
     @overload
     def pop(self, k: _KT) -> _VT: ...
@@ -346,7 +358,6 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     def write(self, s: AnyStr) -> int: ...
     @abstractmethod
     def writelines(self, lines: Iterable[AnyStr]) -> None: ...
-
     @abstractmethod
     def next(self) -> AnyStr: ...
     @abstractmethod
@@ -354,8 +365,9 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     @abstractmethod
     def __enter__(self) -> IO[AnyStr]: ...
     @abstractmethod
-    def __exit__(self, t: Optional[Type[BaseException]], value: Optional[BaseException],
-                 traceback: Optional[TracebackType]) -> Optional[bool]: ...
+    def __exit__(
+        self, t: Optional[Type[BaseException]], value: Optional[BaseException], traceback: Optional[TracebackType]
+    ) -> Optional[bool]: ...
 
 class BinaryIO(IO[str]):
     # TODO readinto
@@ -397,20 +409,15 @@ class Match(Generic[AnyStr]):
     # Can be None if there are no groups or if the last group was unnamed;
     # otherwise matches the type of the pattern.
     lastgroup: Optional[Any]
-
     def expand(self, template: Union[str, Text]) -> Any: ...
-
     @overload
     def group(self, group1: int = ...) -> AnyStr: ...
     @overload
     def group(self, group1: str) -> AnyStr: ...
     @overload
-    def group(self, group1: int, group2: int,
-              *groups: int) -> Tuple[AnyStr, ...]: ...
+    def group(self, group1: int, group2: int, *groups: int) -> Tuple[AnyStr, ...]: ...
     @overload
-    def group(self, group1: str, group2: str,
-              *groups: str) -> Tuple[AnyStr, ...]: ...
-
+    def group(self, group1: str, group2: str, *groups: str) -> Tuple[AnyStr, ...]: ...
     def groups(self, default: AnyStr = ...) -> Tuple[AnyStr, ...]: ...
     def groupdict(self, default: AnyStr = ...) -> Dict[str, AnyStr]: ...
     def start(self, __group: Union[int, str] = ...) -> int: ...
@@ -423,46 +430,34 @@ class Match(Generic[AnyStr]):
 # Pattern is generic over AnyStr (determining the type of its .pattern
 # attribute), but at the same time its methods take either bytes or
 # Text and return the same type, regardless of the type of the pattern.
-_AnyStr2 = TypeVar('_AnyStr2', bytes, Text)
+_AnyStr2 = TypeVar("_AnyStr2", bytes, Text)
 
 class Pattern(Generic[AnyStr]):
     flags: int
     groupindex: Dict[AnyStr, int]
     groups: int
     pattern: AnyStr
-
-    def search(self, string: _AnyStr2, pos: int = ...,
-               endpos: int = ...) -> Optional[Match[_AnyStr2]]: ...
-    def match(self, string: _AnyStr2, pos: int = ...,
-              endpos: int = ...) -> Optional[Match[_AnyStr2]]: ...
+    def search(self, string: _AnyStr2, pos: int = ..., endpos: int = ...) -> Optional[Match[_AnyStr2]]: ...
+    def match(self, string: _AnyStr2, pos: int = ..., endpos: int = ...) -> Optional[Match[_AnyStr2]]: ...
     def split(self, string: _AnyStr2, maxsplit: int = ...) -> List[_AnyStr2]: ...
     # Returns either a list of _AnyStr2 or a list of tuples, depending on
     # whether there are groups in the pattern.
-    def findall(self, string: Union[bytes, Text], pos: int = ...,
-                endpos: int = ...) -> List[Any]: ...
-    def finditer(self, string: _AnyStr2, pos: int = ...,
-                 endpos: int = ...) -> Iterator[Match[_AnyStr2]]: ...
-
+    def findall(self, string: Union[bytes, Text], pos: int = ..., endpos: int = ...) -> List[Any]: ...
+    def finditer(self, string: _AnyStr2, pos: int = ..., endpos: int = ...) -> Iterator[Match[_AnyStr2]]: ...
     @overload
-    def sub(self, repl: _AnyStr2, string: _AnyStr2,
-            count: int = ...) -> _AnyStr2: ...
+    def sub(self, repl: _AnyStr2, string: _AnyStr2, count: int = ...) -> _AnyStr2: ...
     @overload
-    def sub(self, repl: Callable[[Match[_AnyStr2]], _AnyStr2], string: _AnyStr2,
-            count: int = ...) -> _AnyStr2: ...
-
+    def sub(self, repl: Callable[[Match[_AnyStr2]], _AnyStr2], string: _AnyStr2, count: int = ...) -> _AnyStr2: ...
     @overload
-    def subn(self, repl: _AnyStr2, string: _AnyStr2,
-             count: int = ...) -> Tuple[_AnyStr2, int]: ...
+    def subn(self, repl: _AnyStr2, string: _AnyStr2, count: int = ...) -> Tuple[_AnyStr2, int]: ...
     @overload
-    def subn(self, repl: Callable[[Match[_AnyStr2]], _AnyStr2], string: _AnyStr2,
-             count: int = ...) -> Tuple[_AnyStr2, int]: ...
+    def subn(self, repl: Callable[[Match[_AnyStr2]], _AnyStr2], string: _AnyStr2, count: int = ...) -> Tuple[_AnyStr2, int]: ...
 
 # Functions
 
 def get_type_hints(
-    obj: Callable[..., Any], globalns: Optional[Dict[Text, Any]] = ..., localns: Optional[Dict[Text, Any]] = ...,
+    obj: Callable[..., Any], globalns: Optional[Dict[Text, Any]] = ..., localns: Optional[Dict[Text, Any]] = ...
 ) -> None: ...
-
 @overload
 def cast(tp: Type[_T], obj: Any) -> _T: ...
 @overload
@@ -473,13 +468,9 @@ def cast(tp: str, obj: Any) -> Any: ...
 # NamedTuple is special-cased in the type checker
 class NamedTuple(Tuple[Any, ...]):
     _fields: Tuple[str, ...]
-
-    def __init__(self, typename: Text, fields: Iterable[Tuple[Text, Any]] = ...,
-                 **kwargs: Any) -> None: ...
-
+    def __init__(self, typename: Text, fields: Iterable[Tuple[Text, Any]] = ..., **kwargs: Any) -> None: ...
     @classmethod
     def _make(cls: Type[_T], iterable: Iterable[Any]) -> _T: ...
-
     def _asdict(self) -> Dict[str, Any]: ...
     def _replace(self: _T, **kwargs: Any) -> _T: ...
 

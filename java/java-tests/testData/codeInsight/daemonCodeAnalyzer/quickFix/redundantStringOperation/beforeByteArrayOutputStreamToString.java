@@ -13,7 +13,7 @@ class Main {
         String s1 = new String(result1);
 
         ByteArrayOutputStream out2 = new ByteArrayOutputStream();
-        byte[] result2 = out2.toByteArray();
+        byte[] result2 = (((out2.toByteArray()));
         String s2 = new String((result2));
 
         ByteArrayOutputStream out3 = new ByteArrayOutputStream();

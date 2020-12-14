@@ -103,7 +103,7 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
       throws DiffRequestProducerException, ProcessCanceledException {
       List<Change> sourceChanges = myMergedChange.getSourceChanges();
       SimpleDiffRequest request = createRequest(myProject, sourceChanges.get(0), sourceChanges.get(1), context, indicator);
-      request.putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true);
+      request.putUserData(DiffUserDataKeys.THREESIDE_DIFF_COLORS_MODE, DiffUserDataKeys.ThreeSideDiffColors.MERGE_RESULT);
       return request;
     }
 

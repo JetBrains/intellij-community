@@ -1,0 +1,28 @@
+android {
+  lintOptions {
+    abortOnError false
+    absolutePaths true
+    check 'check-id-1', 'check-id-3'
+    checkAllWarnings false
+    checkReleaseBuilds true
+    disable 'disable-id-1', 'disable-id-3'
+    enable 'enable-id-1', 'enable-id-3'
+    error 'error-id-3', 'error-id-2'
+    explainIssues false
+    fatal 'fatal-id-1', 'fatal-id-3'
+    htmlOutput file('other-html.output')
+    htmlReport false
+    ignore 'ignore-id-1', 'ignore-id-3'
+    ignoreWarnings false
+    lintConfig file('other-lint.config')
+    noLines true
+    quiet false
+    showAll true
+    textOutput file('other-text.output')
+    textReport false
+    warning 'warning-id-1', 'warning-id-3'
+    warningsAsErrors true
+    xmlOutput file('other-xml.output')
+    xmlReport false
+  }
+}

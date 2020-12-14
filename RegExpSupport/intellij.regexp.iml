@@ -18,5 +18,6 @@
     <orderEntry type="library" name="Jaxen" level="project" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

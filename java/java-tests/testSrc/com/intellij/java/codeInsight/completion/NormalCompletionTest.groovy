@@ -2218,4 +2218,31 @@ class Abc {
   }
 
   void testNoExceptionsWhenCompletingInapplicableClassNameAfterNew() { doTest('\n') }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test type cast completion"() {
+    myFixture.configureByText("a.java", "class X { StringBuilder[] s = (Stri<caret>)}")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult("class X { StringBuilder[] s = (StringBuilder[]) <caret>}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test type cast completion no closing parenthesis"() {
+    myFixture.configureByText("a.java", "class X { StringBuilder[] s = (Stri<caret>}")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult("class X { StringBuilder[] s = (StringBuilder[]) <caret>}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test type cast completion generic"() {
+    myFixture.configureByText("a.java", "import java.util.*; class X { Map<String, Object> getMap() { return (Ma<caret>)}}")
+    def elements = myFixture.completeBasic()
+    assert elements.length > 0
+    LookupElementPresentation presentation = renderElement(elements[0])
+    assert presentation.getItemText() == "(Map<String, Object>)"
+    myFixture.type('\n')
+    myFixture.checkResult("import java.util.*; class X { Map<String, Object> getMap() { return (Map<String, Object>) <caret>}}")
+  }
 }

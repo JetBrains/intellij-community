@@ -19,8 +19,8 @@ import com.vladsch.flexmark.html.renderer.CoreNodeRenderer
 import com.vladsch.flexmark.html.renderer.NodeRendererContext
 import com.vladsch.flexmark.html.renderer.NodeRenderingHandler
 import com.vladsch.flexmark.parser.Parser
-import com.vladsch.flexmark.util.options.DataHolder
-import com.vladsch.flexmark.util.options.MutableDataSet
+import com.vladsch.flexmark.util.data.DataHolder
+import com.vladsch.flexmark.util.data.MutableDataSet
 import org.junit.ClassRule
 import org.junit.Test
 import java.io.StringWriter
@@ -90,7 +90,7 @@ private class IntelliJNodeRenderer(options: DataHolder, private val htmlStyleMan
   override fun getNodeRenderingHandlers(): MutableSet<NodeRenderingHandler<*>> {
     val set = LinkedHashSet<NodeRenderingHandler<*>>()
     set.add(NodeRenderingHandler(FencedCodeBlock::class.java) { node, context, html -> renderCode(node, context, html) })
-    set.addAll(super.getNodeRenderingHandlers().filter { it.nodeType != FencedCodeBlock::class.java })
+    set.addAll(super.getNodeRenderingHandlers()?.filter { it.nodeType != FencedCodeBlock::class.java } ?: emptyList())
     return set
   }
 

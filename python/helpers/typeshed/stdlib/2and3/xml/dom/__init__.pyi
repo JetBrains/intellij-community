@@ -1,3 +1,5 @@
+from typing import Any
+
 class Node:
     ELEMENT_NODE: int
     ATTRIBUTE_NODE: int
@@ -11,7 +13,6 @@ class Node:
     DOCUMENT_TYPE_NODE: int
     DOCUMENT_FRAGMENT_NODE: int
     NOTATION_NODE: int
-
 
 # ExceptionCode
 INDEX_SIZE_ERR: int
@@ -31,11 +32,9 @@ NAMESPACE_ERR: int
 INVALID_ACCESS_ERR: int
 VALIDATION_ERR: int
 
-
 class DOMException(Exception):
     code: int
-
-    def __init__(self, *args, **kw) -> None: ...
+    def __init__(self, *args: Any, **kw: Any) -> None: ...
     def _get_code(self) -> int: ...
 
 class IndexSizeErr(DOMException): ...

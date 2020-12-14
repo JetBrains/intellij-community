@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -8,7 +8,9 @@ class JavaPluginLayout {
     return PluginLayout.plugin("intellij.java.plugin") {
       directoryName = "java"
       mainJarName = "java-impl.jar"
+
       excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
+
       withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
       withModule("intellij.platform.jps.build", "jps-builders.jar", null)
       withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
@@ -69,10 +71,12 @@ class JavaPluginLayout {
       withArtifact("debugger-agent-storage", "rt")
       withProjectLibrary("Eclipse")
       withProjectLibrary("jgoodies-common")
-      withProjectLibrary("debugger-memory-agent")//todo nik: convert to module-level library instead
       withProjectLibrary("jps-javac-extension")
 
+      withModuleLibrary("debugger-memory-agent", "intellij.java.debugger.memory.agent", "")
+
       withResourceArchive("../jdkAnnotations", "lib/jdkAnnotations.jar")
+
       addition.delegate = delegate
       addition()
     }

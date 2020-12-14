@@ -9,12 +9,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
-  public static final ExtensionPointName<QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.methodReferencesSearch");
+  public static final ExtensionPointName<QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters>> EP_NAME = new ExtensionPointName<>("com.intellij.methodReferencesSearch");
   public static final MethodReferencesSearch INSTANCE = new MethodReferencesSearch();
 
   public static class SearchParameters implements DumbAwareSearchParameters {
@@ -135,6 +134,6 @@ public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiRefe
   }
 
   private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<? extends PsiReference> composite) {
-    return new UniqueResultsQuery<>(composite, ContainerUtil.canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ReferenceDescriptor.MAPPER);
   }
 }

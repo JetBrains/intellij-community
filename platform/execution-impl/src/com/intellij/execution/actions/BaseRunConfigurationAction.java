@@ -210,7 +210,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
         //todo[nik,anna] it's dirty fix. Otherwise wrong configuration will be returned from context.getConfiguration()
         context.setConfiguration(fromContext.get(0).getConfigurationSettings());
       }
-      final String name = suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
+      final String name = suggestRunActionName(configuration.getConfiguration());
       updatePresentation(presentation, existing != null || fromContext.size() <= 1 ? name : "", context);
     }
   }
@@ -221,14 +221,19 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @NotNull
-  public static String suggestRunActionName(@NotNull LocatableConfiguration configuration) {
-    if (configuration instanceof LocatableConfigurationBase && configuration.isGeneratedName()) {
+  public static String suggestRunActionName(@NotNull RunConfiguration configuration) {
+    if (configuration instanceof LocatableConfigurationBase && ((LocatableConfigurationBase<?>)configuration).isGeneratedName()) {
       String actionName = ((LocatableConfigurationBase<?>)configuration).getActionName();
       if (actionName != null) {
         return actionName;
       }
     }
-    return ProgramRunnerUtil.shortenName(configuration.getName(), 0);
+    return ProgramRunnerUtil.shortenName(configuration.getName(), 0); 
+  }
+  
+  @NotNull
+  public static String suggestRunActionName(@NotNull LocatableConfiguration configuration) {
+    return suggestRunActionName((RunConfiguration)configuration);
   }
 
   @NotNull
@@ -244,7 +249,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       }
     }
 
-    return StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configurationFromContext.getConfiguration()));
+    return StringUtil.unquoteString(suggestRunActionName(configurationFromContext.getConfiguration()));
   }
 
   protected abstract void updatePresentation(Presentation presentation, @NotNull String actionText, ConfigurationContext context);

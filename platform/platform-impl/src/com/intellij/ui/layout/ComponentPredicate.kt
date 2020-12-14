@@ -41,6 +41,10 @@ infix fun ComponentPredicate.or(other: ComponentPredicate): ComponentPredicate {
   return OrPredicate(this, other)
 }
 
+fun ComponentPredicate.not() : ComponentPredicate {
+  return NotPredicate(this)
+}
+
 private class AndPredicate(private val lhs: ComponentPredicate, private val rhs: ComponentPredicate) : ComponentPredicate() {
   override fun invoke(): Boolean = lhs.invoke() && rhs.invoke()
 
@@ -58,5 +62,14 @@ private class OrPredicate(private val lhs: ComponentPredicate, private val rhs: 
     val andListener: (Boolean) -> Unit = { listener(lhs.invoke() || rhs.invoke()) }
     lhs.addListener(andListener)
     rhs.addListener(andListener)
+  }
+}
+
+private class NotPredicate(private val that: ComponentPredicate) : ComponentPredicate() {
+  override fun invoke(): Boolean = !that.invoke()
+
+  override fun addListener(listener: (Boolean) -> Unit) {
+    val notListener: (Boolean) -> Unit = { listener(!that.invoke()) }
+    that.addListener(notListener)
   }
 }

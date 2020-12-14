@@ -1,11 +1,10 @@
-from typing import overload, Any, List, Optional, SupportsFloat, TypeVar, Union
 from datetime import date, datetime, timedelta
+from typing import Optional, SupportsFloat, TypeVar, Union, overload
 
 from ._common import weekday
 
-
-_SelfT = TypeVar('_SelfT', bound=relativedelta)
-_DateT = TypeVar('_DateT', date, datetime)
+_SelfT = TypeVar("_SelfT", bound=relativedelta)
+_DateT = TypeVar("_DateT", date, datetime)
 # Work around attribute and type having the same name.
 _weekday = weekday
 
@@ -16,7 +15,6 @@ TH: weekday
 FR: weekday
 SA: weekday
 SU: weekday
-
 
 class relativedelta(object):
     years: int
@@ -35,22 +33,30 @@ class relativedelta(object):
     minute: Optional[int]
     second: Optional[int]
     microsecond: Optional[int]
-    def __init__(self,
-                 dt1: Optional[date] = ...,
-                 dt2: Optional[date] = ...,
-                 years: Optional[int] = ..., months: Optional[int] = ...,
-                 days: Optional[int] = ..., leapdays: Optional[int] = ...,
-                 weeks: Optional[int] = ...,
-                 hours: Optional[int] = ..., minutes: Optional[int] = ...,
-                 seconds: Optional[int] = ..., microseconds: Optional[int] = ...,
-                 year: Optional[int] = ..., month: Optional[int] = ...,
-                 day: Optional[int] = ...,
-                 weekday: Optional[Union[int, _weekday]] = ...,
-                 yearday: Optional[int] = ...,
-                 nlyearday: Optional[int] = ...,
-                 hour: Optional[int] = ..., minute: Optional[int] = ...,
-                 second: Optional[int] = ...,
-                 microsecond: Optional[int] = ...) -> None: ...
+    def __init__(
+        self,
+        dt1: Optional[date] = ...,
+        dt2: Optional[date] = ...,
+        years: Optional[int] = ...,
+        months: Optional[int] = ...,
+        days: Optional[int] = ...,
+        leapdays: Optional[int] = ...,
+        weeks: Optional[int] = ...,
+        hours: Optional[int] = ...,
+        minutes: Optional[int] = ...,
+        seconds: Optional[int] = ...,
+        microseconds: Optional[int] = ...,
+        year: Optional[int] = ...,
+        month: Optional[int] = ...,
+        day: Optional[int] = ...,
+        weekday: Optional[Union[int, _weekday]] = ...,
+        yearday: Optional[int] = ...,
+        nlyearday: Optional[int] = ...,
+        hour: Optional[int] = ...,
+        minute: Optional[int] = ...,
+        second: Optional[int] = ...,
+        microsecond: Optional[int] = ...,
+    ) -> None: ...
     @property
     def weeks(self) -> int: ...
     @weeks.setter

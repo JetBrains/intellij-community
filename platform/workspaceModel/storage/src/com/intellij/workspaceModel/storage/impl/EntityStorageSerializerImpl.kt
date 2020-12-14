@@ -36,7 +36,8 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
-                                  private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
+                                  private val virtualFileManager: VirtualFileUrlManager,
+                                  private val registrationRequired: Boolean) : EntityStorageSerializer {
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   @set:TestOnly
@@ -45,7 +46,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   private fun createKryo(): Kryo {
     val kryo = Kryo()
 
-    kryo.isRegistrationRequired = StrictMode.enabled
+    kryo.isRegistrationRequired = registrationRequired
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
     kryo.register(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
@@ -180,6 +181,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity::class.java)
     kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.RemoveEntity::class.java)
     kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity::class.java)
+    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.ChangeEntitySource::class.java)
     kryo.register(LinkedHashSet::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
@@ -317,9 +319,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
   }
 
-  fun serializeDiffLog(stream: OutputStream, storage: WorkspaceEntityStorageBuilder) {
-    storage as WorkspaceEntityStorageBuilderImpl
-
+  internal fun serializeDiffLog(stream: OutputStream, changeLog: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>) {
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
       val kryo = createKryo()
@@ -327,18 +327,36 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Save version
       output.writeString(serializerDataFormatVersion)
 
-      val changeLog = storage.changeLogImpl
       val entityDataSequence = changeLog.mapNotNull {
         when (it) {
           is WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity<*> -> it.entityData
           is WorkspaceEntityStorageBuilderImpl.ChangeEntry.RemoveEntity -> null
           is WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity<*> -> it.newData
+          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.ChangeEntitySource<*> -> it.newData
         }
       }.asSequence()
 
       collectAndRegisterClasses(kryo, output, entityDataSequence)
 
       kryo.writeClassAndObject(output, changeLog)
+    }
+    finally {
+      output.flush()
+    }
+  }
+
+  fun serializeClassToIntConverter(stream: OutputStream) {
+    val converterMap = ClassToIntConverter.getMap().toMap()
+    val output = Output(stream, KRYO_BUFFER_SIZE)
+    try {
+      val kryo = createKryo()
+
+      // Save version
+      output.writeString(serializerDataFormatVersion)
+
+      val mapData = converterMap.map { (key, value) -> TypeInfo(key.name, typesResolver.getPluginId(key)) to value }
+
+      kryo.writeClassAndObject(output, mapData)
     }
     finally {
       output.flush()
@@ -435,7 +453,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): WorkspaceEntityStorageBuilder? {
     val builder = this.deserializeCache(storeStream) ?: return null
 
-    var log: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry> = emptyList()
+    var log: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>
     Input(diffLogStream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
 
@@ -456,6 +474,24 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     builder.changeLogImpl.addAll(log)
 
     return builder
+  }
+
+  fun deserializeClassToIntConverter(stream: InputStream) {
+    Input(stream, KRYO_BUFFER_SIZE).use { input ->
+      val kryo = createKryo()
+
+      // Read version
+      val cacheVersion = input.readString()
+      if (cacheVersion != serializerDataFormatVersion) {
+        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        return
+      }
+
+      val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
+
+      val map = classes.map { (first, second) -> typesResolver.resolveClass(first.name, first.pluginId) to second }.toMap()
+      ClassToIntConverter.fromMap(map)
+    }
   }
 
   private data class TypeInfo(val name: String, val pluginId: String?)

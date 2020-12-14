@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.intellij.ide.plugins.DynamicPluginsTestUtilKt.loadDescriptorInTest;
+import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadDescriptorInTest;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;

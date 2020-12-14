@@ -1,0 +1,7 @@
+android {
+  buildTypes {
+    xyz {
+      manifestPlaceholders key1: 12345, key2: "value2", key3: true
+    }
+  }
+}

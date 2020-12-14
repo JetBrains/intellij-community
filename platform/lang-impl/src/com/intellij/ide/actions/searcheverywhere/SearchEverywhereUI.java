@@ -996,6 +996,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
   @Override
   @TestOnly
   public Future<List<Object>> findElementsForPattern(String pattern) {
+    clearResults();
     CompletableFuture<List<Object>> future = new CompletableFuture<>();
     mySearchListener.setTestCallback(list -> {
       future.complete(list);
@@ -1009,6 +1010,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
   @TestOnly
   public void clearResults() {
     myListModel.clear();
+    mySearchField.setText("");
   }
 
   private class CompositeCellRenderer implements ListCellRenderer<Object> {

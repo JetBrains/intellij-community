@@ -1,0 +1,19 @@
+android {
+  sourceSets {
+    main {
+      java {
+        srcDir "javaSource1"
+        srcDirs 'javaSource3'
+        include "javaInclude1"
+        include 'javaInclude3'
+        exclude "javaExclude1", 'javaExclude3'
+      }
+      jni {
+        srcDirs = ["jniSource1", 'jniSource3']
+        include "jniInclude1", 'jniInclude3'
+        exclude "jniExclude1"
+        exclude 'jniExclude3'
+      }
+    }
+  }
+}

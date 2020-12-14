@@ -4,6 +4,7 @@ package com.intellij.history.integration.ui.actions;
 
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
@@ -35,7 +36,7 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
     if (selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
-    else {
+    else if (!e.getPlace().equals(ActionPlaces.ACTION_SEARCH)) {
       e.getPresentation().setText(selection.getActionName());
     }
   }

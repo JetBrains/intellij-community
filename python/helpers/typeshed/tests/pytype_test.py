@@ -4,17 +4,15 @@
 Depends on pytype being installed.
 
 If pytype is installed:
-    1. For every pyi, do nothing if it is in pytype_blacklist.txt.
+    1. For every pyi, do nothing if it is in pytype_exclude_list.txt.
     2. Otherwise, call 'pytype.io.parse_pyi'.
 Option two will load the file and all the builtins, typeshed dependencies. This
 will also discover incorrect usage of imported modules.
 """
 
 import argparse
-import itertools
 import os
 import re
-import subprocess
 import traceback
 from typing import List, Match, Optional, Sequence, Tuple
 
@@ -32,13 +30,10 @@ def main() -> None:
     typeshed_location = args.typeshed_location or os.getcwd()
     subdir_paths = [os.path.join(typeshed_location, d) for d in TYPESHED_SUBDIRS]
     check_subdirs_discoverable(subdir_paths)
-    check_python_exes_runnable(python27_exe_arg=args.python27_exe, python36_exe_arg=args.python36_exe)
-    files_to_test = determine_files_to_test(typeshed_location=typeshed_location, subdir_paths=subdir_paths)
+    files_to_test = determine_files_to_test(typeshed_location=typeshed_location, paths=args.files or subdir_paths)
     run_all_tests(
         files_to_test=files_to_test,
         typeshed_location=typeshed_location,
-        python27_exe=args.python27_exe,
-        python36_exe=args.python36_exe,
         print_stderr=args.print_stderr,
         dry_run=args.dry_run,
     )
@@ -53,9 +48,9 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--print-stderr", action="store_true", default=False, help="Print stderr every time an error is encountered."
     )
-    # We need to invoke python2.7 and 3.6.
-    parser.add_argument("--python27-exe", type=str, default="python2.7", help="Path to a python 2.7 interpreter.")
-    parser.add_argument("--python36-exe", type=str, default="python3.6", help="Path to a python 3.6 interpreter.")
+    parser.add_argument(
+        "files", metavar="FILE", type=str, nargs="*", help="Files or directories to check. (Default: Check all files.)",
+    )
     return parser
 
 
@@ -70,8 +65,8 @@ class PathMatcher:
         return self.matcher.search(path)
 
 
-def load_blacklist(typeshed_location: str) -> List[str]:
-    filename = os.path.join(typeshed_location, "tests", "pytype_blacklist.txt")
+def load_exclude_list(typeshed_location: str) -> List[str]:
+    filename = os.path.join(typeshed_location, "tests", "pytype_exclude_list.txt")
     skip_re = re.compile(r"^\s*([^\s#]+)\s*(?:#.*)?$")
     skip = []
 
@@ -84,14 +79,13 @@ def load_blacklist(typeshed_location: str) -> List[str]:
     return skip
 
 
-def run_pytype(*, filename: str, python_version: str, python_exe: str, typeshed_location: str) -> Optional[str]:
+def run_pytype(*, filename: str, python_version: str, typeshed_location: str) -> Optional[str]:
     """Runs pytype, returning the stderr if any."""
     options = pytype_config.Options.create(
         filename,
         module_name=_get_module_name(filename),
         parse_pyi=True,
-        python_version=python_version,
-        python_exe=python_exe)
+        python_version=python_version)
     old_typeshed_home = os.environ.get(TYPESHED_HOME, UNSET)
     os.environ[TYPESHED_HOME] = typeshed_location
     try:
@@ -124,15 +118,6 @@ def _get_module_name(filename: str) -> str:
     return ".".join(_get_relative(filename).split(os.path.sep)[2:]).replace(".pyi", "").replace(".__init__", "")
 
 
-def can_run(exe: str, *, args: List[str]) -> bool:
-    try:
-        subprocess.run([exe] + args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except OSError:
-        return False
-    else:
-        return True
-
-
 def _is_version(path: str, version: str) -> bool:
     return any("{}{}{}".format(d, os.path.sep, version) in path for d in TYPESHED_SUBDIRS)
 
@@ -143,49 +128,44 @@ def check_subdirs_discoverable(subdir_paths: List[str]) -> None:
             raise SystemExit("Cannot find typeshed subdir at {} (specify parent dir via --typeshed-location)".format(p))
 
 
-def check_python_exes_runnable(*, python27_exe_arg: str, python36_exe_arg: str) -> None:
-    for exe, version_str in zip([python27_exe_arg, python36_exe_arg], ["27", "36"]):
-        if can_run(exe, args=["--version"]):
-            continue
-        formatted_version = ".".join(list(version_str))
-        script_arg = "--python{}-exe".format(version_str)
-        raise SystemExit(
-            "Cannot run Python {version}. (point to a valid executable via {arg})".format(
-                version=formatted_version, arg=script_arg
-            )
-        )
-
-
-def determine_files_to_test(*, typeshed_location: str, subdir_paths: Sequence[str]) -> List[Tuple[str, int]]:
-    """Determine all files to test, checking if it's in the blacklist and which Python versions to use.
+def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> List[Tuple[str, int]]:
+    """Determine all files to test, checking if it's in the exclude list and which Python versions to use.
 
     Returns a list of pairs of the file path and Python version as an int."""
-    skipped = PathMatcher(load_blacklist(typeshed_location))
+    skipped = PathMatcher(load_exclude_list(typeshed_location))
+    filenames = find_stubs_in_paths(paths)
     files = []
-    for root, _, filenames in itertools.chain.from_iterable(os.walk(p) for p in subdir_paths):
-        for f in sorted(f for f in filenames if f.endswith(".pyi")):
-            f = os.path.join(root, f)
-            rel = _get_relative(f)
-            if skipped.search(rel):
-                continue
-            if _is_version(f, "2and3"):
-                files.append((f, 2))
-                files.append((f, 3))
-            elif _is_version(f, "2"):
-                files.append((f, 2))
-            elif _is_version(f, "3"):
-                files.append((f, 3))
-            else:
-                print("Unrecognized path: {}".format(f))
+    for f in sorted(filenames):
+        rel = _get_relative(f)
+        if skipped.search(rel):
+            continue
+        if _is_version(f, "2and3"):
+            files.append((f, 2))
+            files.append((f, 3))
+        elif _is_version(f, "2"):
+            files.append((f, 2))
+        elif _is_version(f, "3"):
+            files.append((f, 3))
+        else:
+            print("Unrecognized path: {}".format(f))
     return files
+
+
+def find_stubs_in_paths(paths: Sequence[str]) -> List[str]:
+    filenames = []
+    for path in paths:
+        if os.path.isdir(path):
+            for root, _, fns in os.walk(path):
+                filenames.extend(os.path.join(root, fn) for fn in fns if fn.endswith(".pyi"))
+        else:
+            filenames.append(path)
+    return filenames
 
 
 def run_all_tests(
     *,
     files_to_test: Sequence[Tuple[str, int]],
     typeshed_location: str,
-    python27_exe: str,
-    python36_exe: str,
     print_stderr: bool,
     dry_run: bool
 ) -> None:
@@ -198,7 +178,6 @@ def run_all_tests(
             run_pytype(
                 filename=f,
                 python_version="2.7" if version == 2 else "3.6",
-                python_exe=python27_exe if version == 2 else python36_exe,
                 typeshed_location=typeshed_location,
             )
             if not dry_run

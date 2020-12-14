@@ -8,10 +8,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +33,12 @@ import java.util.List;
 final class SmartCastProvider {
 
   static boolean shouldSuggestCast(CompletionParameters parameters) {
+    PsiElement position = parameters.getPosition();
+    PsiElement parent = getParenthesisOwner(position);
+    return parent instanceof PsiTypeCastExpression || parent instanceof PsiParenthesizedExpression;
+  }
+
+  static boolean inCastContext(CompletionParameters parameters) {
     PsiElement position = parameters.getPosition();
     PsiElement parent = getParenthesisOwner(position);
     if (parent instanceof PsiTypeCastExpression) return true;
@@ -156,6 +159,14 @@ final class SmartCastProvider {
   private static LookupElement createSmartCastElement(final CompletionParameters parameters, final boolean overwrite, final PsiType type) {
     return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<>(
       PsiTypeLookupItem.createLookupItem(type, parameters.getPosition())) {
+      @Override
+      public void renderElement(LookupElementPresentation presentation) {
+        presentation.setItemText("(" + type.getPresentableText() + ")");
+        PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+        if (aClass != null) {
+          presentation.setIcon(aClass.getIcon(0));
+        }
+      }
 
       @Override
       public void handleInsert(@NotNull InsertionContext context) {
@@ -179,7 +190,7 @@ final class SmartCastProvider {
           context.setTailOffset(TailType.insertChar(editor, context.getTailOffset(), ' '));
         }
 
-        if (parameters.getCompletionType() == CompletionType.SMART) {
+        if (parameters.getCompletionType() == CompletionType.SMART || !overwrite) {
           editor.getCaretModel().moveToOffset(context.getTailOffset());
         }
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

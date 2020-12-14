@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import one.util.streamex.LongStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ import java.util.*;
 /**
  * @author peter
  */
-class StateMerger {
+final class StateMerger {
   private static final int COMPLEXITY_LIMIT = 250000;
   private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = new IdentityHashMap<>();
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = new IdentityHashMap<>();
@@ -74,7 +75,7 @@ class StateMerger {
         DfaTypeValue value = fact.comparedToConstant();
         if (value != null) {
           constantVars.computeIfAbsent(value, k -> new HashMap<>())
-            .computeIfAbsent(fact.myVar, k -> ContainerUtil.newIdentityTroveSet()).add(state);
+            .computeIfAbsent(fact.myVar, k -> new ReferenceOpenHashSet<>()).add(state);
         }
       }
     }
@@ -458,7 +459,7 @@ class StateMerger {
 
   private static final class Replacements {
     private final @NotNull List<DfaMemoryStateImpl> myAllStates;
-    private final Set<DfaMemoryStateImpl> myRemovedStates = ContainerUtil.newIdentityTroveSet();
+    private final Set<DfaMemoryStateImpl> myRemovedStates = new ReferenceOpenHashSet<>();
     private final List<DfaMemoryStateImpl> myMerged = new ArrayList<>();
 
     private Replacements(@NotNull List<DfaMemoryStateImpl> allStates) {

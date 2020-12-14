@@ -185,7 +185,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     myTable.setModel(myTableModel);
     myTable.setShowColumns(false);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    myTable.setStriped(true);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent event) {

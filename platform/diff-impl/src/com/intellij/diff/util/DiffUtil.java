@@ -99,6 +99,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.Equality;
 import gnu.trove.TIntFunction;
+import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -122,15 +123,16 @@ public final class DiffUtil {
   @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUIScale.scale(2);
 
-  public static final class Lazy {
-    public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
-  }
+  public static final NotNullLazyValue<List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
+    return Arrays.asList(
+      iconToImage(PlatformDiffImplIcons.Diff_frame32),
+      iconToImage(PlatformDiffImplIcons.Diff_frame64),
+      iconToImage(PlatformDiffImplIcons.Diff_frame128)
+    );
+  });
 
-  @NotNull
-  private static List<Image> loadDiffFrameImages() {
-    return Arrays.asList(ImageLoader.loadFromResource("/vcs/diff_frame32.png"),
-                         ImageLoader.loadFromResource("/vcs/diff_frame64.png"),
-                         ImageLoader.loadFromResource("/vcs/diff_frame128.png"));
+  private static Image iconToImage(@NotNull Icon icon) {
+    return ((IconLoader.CachedImageIcon)icon).getRealIcon().getImage();
   }
 
   //
@@ -1236,16 +1238,17 @@ public final class DiffUtil {
     int newChangeEnd = changeEnd + shift;
 
     if (start >= changeStart && end <= changeEnd) { // fully inside change
-      return greedy ? new UpdatedLineRange(changeStart, newChangeEnd, true) :
-                      new UpdatedLineRange(newChangeEnd, newChangeEnd, true);
+      return greedy ? new UpdatedLineRange(changeStart, newChangeEnd, true)
+                    : new UpdatedLineRange(newChangeEnd, newChangeEnd, true);
     }
 
     if (start < changeStart) { // bottom boundary damaged
-      return greedy ? new UpdatedLineRange(start, newChangeEnd, true) :
-                      new UpdatedLineRange(start, changeStart, true);
-    } else { // top boundary damaged
-      return greedy ? new UpdatedLineRange(changeStart, end + shift, true) :
-                      new UpdatedLineRange(newChangeEnd, end + shift, true);
+      return greedy ? new UpdatedLineRange(start, newChangeEnd, true)
+                    : new UpdatedLineRange(start, changeStart, true);
+    }
+    else { // top boundary damaged
+      return greedy ? new UpdatedLineRange(changeStart, end + shift, true)
+                    : new UpdatedLineRange(newChangeEnd, end + shift, true);
     }
   }
 
@@ -1448,6 +1451,56 @@ public final class DiffUtil {
   private static boolean isWordMergeIntervalEmpty(@NotNull MergeWordFragment fragment, @NotNull ThreeSide side) {
     return fragment.getStartOffset(side) == fragment.getEndOffset(side);
   }
+
+  @NotNull
+  public static MergeConflictType getLineLeftToRightThreeSideDiffType(@NotNull MergeLineFragment fragment,
+                                                                      @NotNull List<? extends CharSequence> sequences,
+                                                                      @NotNull List<? extends LineOffsets> lineOffsets,
+                                                                      @NotNull ComparisonPolicy policy) {
+    return getLeftToRightDiffType((side) -> isLineMergeIntervalEmpty(fragment, side),
+                                  (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2));
+  }
+
+  @NotNull
+  private static MergeConflictType getLeftToRightDiffType(@NotNull Condition<? super ThreeSide> emptiness,
+                                                          @NotNull Equality<? super ThreeSide> equality) {
+    boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
+    boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
+    boolean isRightEmpty = emptiness.value(ThreeSide.RIGHT);
+    assert !isLeftEmpty || !isBaseEmpty || !isRightEmpty;
+
+    if (isBaseEmpty) {
+      if (isLeftEmpty) { // --=
+        return new MergeConflictType(TextDiffType.INSERTED, false, true);
+      }
+      else if (isRightEmpty) { // =--
+        return new MergeConflictType(TextDiffType.DELETED, true, false);
+      }
+      else { // =-=
+        return new MergeConflictType(TextDiffType.MODIFIED, true, true);
+      }
+    }
+    else {
+      if (isLeftEmpty && isRightEmpty) { // -=-
+        return new MergeConflictType(TextDiffType.MODIFIED, true, true);
+      }
+      else { // -==, ==-, ===
+        boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
+        boolean unchangedRight = equality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+        assert !unchangedLeft || !unchangedRight;
+
+        if (unchangedLeft) {
+          return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
+        }
+        if (unchangedRight) {
+          return new MergeConflictType(isLeftEmpty ? TextDiffType.INSERTED : TextDiffType.MODIFIED, true, false);
+        }
+
+        return new MergeConflictType(TextDiffType.MODIFIED, true, true);
+      }
+    }
+  }
+
 
   //
   // Writable

@@ -1,0 +1,5 @@
+ext {
+  prop = "hello"
+  prop1 = prop
+  prop2 = prop1
+}

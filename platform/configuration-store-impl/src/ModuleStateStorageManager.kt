@@ -9,6 +9,7 @@ import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.io.FileNotFoundException
@@ -47,6 +48,10 @@ open class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitu
         LOG.debug(e)
       }
     }
+  }
+
+  override fun clearVirtualFileTracker(virtualFileTracker: StorageVirtualFileTracker) {
+    virtualFileTracker.remove(expandMacro(StoragePathMacros.MODULE_FILE).systemIndependentPath)
   }
 
   override fun pathRenamed(newPath: Path, event: VFileEvent?) {

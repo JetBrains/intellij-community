@@ -147,13 +147,17 @@ public final class MoveClassesOrPackagesUtil {
       }
     }
 
-    return new PsiPackageImpl(aPackage.getManager(), newPackageQualifiedName) {
+    return findPackage(aPackage.getManager(), scope, newPackageQualifiedName);
+  }
+
+  @NotNull
+  private static PsiPackageImpl findPackage(@NotNull PsiManager manager, @NotNull GlobalSearchScope scope, String qName) {
+    return new PsiPackageImpl(manager, qName) {
       @Override
       public boolean isValid() {
         return !getProject().isDisposed() &&
-               PackageIndex.getInstance(getProject()).getDirsByPackageName(newPackageQualifiedName, scope).findFirst() != null;
+               PackageIndex.getInstance(getProject()).getDirsByPackageName(qName, scope).findFirst() != null;
       }
-
     };
   }
 
@@ -248,15 +252,19 @@ public final class MoveClassesOrPackagesUtil {
     }
 
     PsiFile file = aClass.getContainingFile();
-    final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
+    Project project = moveDestination.getProject();
+    VirtualFile dstDir = moveDestination.getVirtualFile();
+    String pkgName = ProjectRootManager.getInstance(project).getFileIndex().getPackageNameByDirectory(dstDir);
+    PsiPackage newPackage = pkgName == null ? null
+                                            : findPackage(moveDestination.getManager(), moveDestination.getResolveScope(), pkgName);
 
     newClass = aClass;
     final PsiDirectory containingDirectory = file.getContainingDirectory();
-    if (!Comparing.equal(moveDestination.getVirtualFile(), containingDirectory != null ? containingDirectory.getVirtualFile() : null)) {
+    if (!Comparing.equal(dstDir, containingDirectory != null ? containingDirectory.getVirtualFile() : null)) {
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
 
       if (ModelBranch.getPsiBranch(moveDestination) == null) {
-        DumbService.getInstance(moveDestination.getProject()).completeJustSubmittedTasks();
+        DumbService.getInstance(project).completeJustSubmittedTasks();
       }
 
       file = moveDestination.findFile(file.getName());

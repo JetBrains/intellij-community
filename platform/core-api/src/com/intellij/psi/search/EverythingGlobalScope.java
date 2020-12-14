@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreBundle;
@@ -19,12 +15,23 @@ import java.util.Collections;
 
 /**
  * The biggest possible scope: every file on the planet belongs to this.
+ * <br>
+ * If one have passed {@link EverythingGlobalScope} as a filter to index query in {@link FileBasedIndex} or {@link StubIndex}
+ * then all indexable project files will be returned. In case when project is not specified an exception will be thrown.
  */
 public class EverythingGlobalScope extends GlobalSearchScope {
+  /**
+   * @deprecated
+   * Use {@link GlobalSearchScope#everythingScope(Project)} instead
+   */
+  @Deprecated
   public EverythingGlobalScope(Project project) {
     super(project);
   }
 
+  /**
+   * Use {@link GlobalSearchScope#everythingScope(Project)} instead to make index query
+   */
   public EverythingGlobalScope() {
   }
 

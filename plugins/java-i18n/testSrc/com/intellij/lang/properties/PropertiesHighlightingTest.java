@@ -40,6 +40,14 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
     doTest(true);
   }
 
+  public void testUnusedFileFilter() {
+    UnusedPropertyInspection inspection = new UnusedPropertyInspection();
+    inspection.fileNameMask = ".*Bundle\\.properties";
+    myFixture.enableInspections(inspection);
+    myFixture.addClass("class C { String s = \"used.prop\"; }");
+    doTest(true);
+  }
+
   public void testPropertyUsedInLibrary() throws IOException {
     myFixture.enableInspections(new UnusedPropertyInspection());
 

@@ -23,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
 public class ResourceBundleFileType extends FakeFileType {
   public static final ResourceBundleFileType INSTANCE = new ResourceBundleFileType();
 
+  private ResourceBundleFileType() {
+  }
+
   @Override
   @NotNull
   public String getName() {

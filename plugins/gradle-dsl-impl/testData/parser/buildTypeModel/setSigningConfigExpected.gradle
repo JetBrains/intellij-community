@@ -1,0 +1,15 @@
+android {
+  signingConfigs {
+    myConfig {
+      storeFile file('config.keystore')
+    }
+    myBetterConfig {
+      storeFile file('betterConfig.keystore')
+    }
+  }
+  buildTypes {
+    xyz {
+      signingConfig signingConfigs.myBetterConfig
+    }
+  }
+}

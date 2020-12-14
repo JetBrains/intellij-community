@@ -7,6 +7,13 @@ class Main {
   public void f() throws <caret>FileNotFoundException {}
 
   {
+    for (int i = 0; i < 10; i++)
+      try {
+        f();
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+      }
+
     try {
       f();
     } catch (FileNotFoundException e) {

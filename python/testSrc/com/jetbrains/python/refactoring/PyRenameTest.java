@@ -43,6 +43,10 @@ public class PyRenameTest extends PyTestCase {
     doTest("qu");
   }
 
+  public void testRenameParameterWithDecorator() { // PY-11858
+    doTest("bar");
+  }
+
   public void testRenameMultipleDefinitionsLocal() {  // PY-727
     doTest("qu");
   }

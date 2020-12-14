@@ -287,7 +287,7 @@ public final class StubIndexImpl extends StubIndexEx {
     PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) ->
       myStubProcessingHelper.processStubsInFile(project, file, list, processor, scope, requiredClass);
 
-    if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : new EverythingGlobalScope(project),
+    if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : GlobalSearchScope.everythingScope(project),
                                                      file -> processInMemoryStubs(indexKey, key, project, stubProcessor, file))) {
       return false;
     }

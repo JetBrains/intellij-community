@@ -366,7 +366,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
     if (context.isPluginDisabled(dependencyId)) {
       if (!isOptional) {
-        markAsIncomplete(context, CoreBundle.messagePointer("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId), dependencyId);
+        markAsIncomplete(context, () -> {
+          return CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId);
+        }, dependencyId);
       }
 
       isDisabledOrBroken = true;

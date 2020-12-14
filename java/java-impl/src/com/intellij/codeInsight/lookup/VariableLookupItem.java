@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -18,8 +18,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +127,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     mySubstitutor = substitutor;
     return this;
   }
-  
+
   @Override
   public void setShouldBeImported(boolean shouldImportStatic) {
     assert myHelper != null;
@@ -169,7 +169,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       myHelper.renderElement(presentation, qualify, true, getSubstitutor());
     }
     if (myColor != null) {
-      presentation.setTypeText("", JBUI.scale(new ColorIcon(12, myColor)));
+      presentation.setTypeText("", JBUIScale.scaleIcon(new ColorIcon(12, myColor)));
     } else {
       presentation.setTypeText(getType().getPresentableText());
     }

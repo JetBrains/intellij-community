@@ -97,6 +97,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
+    table.setShowGrid(false);
 
     JTextField stringCellEditor = new JTextField();
     stringCellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);

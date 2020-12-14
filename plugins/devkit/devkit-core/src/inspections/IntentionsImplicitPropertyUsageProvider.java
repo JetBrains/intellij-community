@@ -5,12 +5,14 @@ import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ipp.base.Intention;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 public class IntentionsImplicitPropertyUsageProvider extends ImplicitPropertyUsageProvider {
@@ -20,8 +22,10 @@ public class IntentionsImplicitPropertyUsageProvider extends ImplicitPropertyUsa
 
   @Override
   protected boolean isUsed(@NotNull Property property) {
-    Project project = property.getContainingFile().getProject();
-    if (PsiUtil.isIdeaProject(project)) {
+    PsiFile containingFile = property.getContainingFile();
+    Project project = containingFile.getProject();
+    if (PsiUtil.isIdeaProject(project) && 
+        containingFile.getName().endsWith(MessageBundleReferenceContributor.BUNDLE_PROPERTIES)) {
       String name = property.getName();
       if (name != null) {
         int length = name.length();
@@ -54,7 +58,7 @@ public class IntentionsImplicitPropertyUsageProvider extends ImplicitPropertyUsa
         }
 
         PsiClass[] classes =
-          PsiShortNamesCache.getInstance(project).getClassesByName(buf.toString(), GlobalSearchScope.projectScope(project));
+          PsiShortNamesCache.getInstance(project).getClassesByName(buf.toString(), GlobalSearchScopes.projectProductionScope(project));
         return ContainerUtil.exists(classes, aClass -> InheritanceUtil.isInheritor(aClass, Intention.class.getName()));
       }
     }

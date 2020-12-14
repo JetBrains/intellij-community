@@ -444,7 +444,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           }
           Icon icon = presentation.getIcon();
           if (icon == null || icon.getIconHeight() != JBUIScale.scale(16) || icon.getIconWidth() != JBUIScale.scale(16)) {
-            icon = icon != null ? IconUtil.scale(icon, null, 16f / icon.getIconWidth()) : JBUI.scale(EmptyIcon.create(16));
+            icon = icon != null ? IconUtil.scale(icon, null, 16f / icon.getIconWidth()) : JBUIScale.scaleIcon(EmptyIcon.create(16));
             icon = IconUtil.colorize(icon, new JBColor(0x6e6e6e, 0xafb1b3));
           }
           action = ActionGroupPanelWrapper.wrapGroups(action, this);

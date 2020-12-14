@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,7 +19,7 @@ public interface PostfixTemplateEditor extends Disposable {
   @NotNull
   JComponent getComponent();
 
-  default String getHelpId() {
+  default @NonNls String getHelpId() {
     return null;
   }
 }

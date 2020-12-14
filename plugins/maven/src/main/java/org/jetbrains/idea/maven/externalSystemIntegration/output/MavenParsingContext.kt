@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -6,8 +6,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Function
 
-class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
+class MavenParsingContext(private val myTaskId: ExternalSystemTaskId,
+                          val targetFileMapper: Function<String, String>) {
 
   lateinit var projectsInReactor: List<String>
   val startedProjects = CopyOnWriteArrayList<String>()

@@ -23,10 +23,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
@@ -283,7 +283,7 @@ public class StackFrameItem {
 
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
-      component.setIcon(JBUI.scale(EmptyIcon.create(6)));
+      component.setIcon(JBUIScale.scaleIcon(EmptyIcon.create(6)));
       component.append(myMethodName + ":" + myLineNumber, getAttributes());
       ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
       if (settings.SHOW_CLASS_NAME) {

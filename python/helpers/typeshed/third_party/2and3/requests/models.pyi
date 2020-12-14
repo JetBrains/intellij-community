@@ -1,24 +1,11 @@
 # Stubs for requests.models (Python 3)
 
-from typing import (Any, Dict, Iterator, List, MutableMapping, Optional, Text,
-                    Union)
 import datetime
-import types
+from typing import Any, Dict, Iterator, List, Optional, Text, Union
 
-from . import hooks
-from . import structures
-from . import auth
-from . import cookies
+from . import auth, cookies, exceptions, hooks, status_codes, structures, utils
 from .cookies import RequestsCookieJar
-from .packages.urllib3 import fields
-from .packages.urllib3 import filepost
-from .packages.urllib3 import util
-from .packages.urllib3 import exceptions as urllib3_exceptions
-from . import exceptions
-from . import utils
-from . import compat
-from . import status_codes
-
+from .packages.urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
 
 default_hooks = hooks.default_hooks
 CaseInsensitiveDict = structures.CaseInsensitiveDict
@@ -76,8 +63,9 @@ class Request(RequestHooksMixin):
     params: Any
     auth: Any
     cookies: Any
-    def __init__(self, method=..., url=..., headers=..., files=..., data=..., params=...,
-                 auth=..., cookies=..., hooks=..., json=...) -> None: ...
+    def __init__(
+        self, method=..., url=..., headers=..., files=..., data=..., params=..., auth=..., cookies=..., hooks=..., json=...
+    ) -> None: ...
     def prepare(self) -> PreparedRequest: ...
 
 class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
@@ -87,8 +75,9 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
     body: Optional[Union[bytes, Text]]
     hooks: Any
     def __init__(self) -> None: ...
-    def prepare(self, method=..., url=..., headers=..., files=..., data=..., params=...,
-                auth=..., cookies=..., hooks=..., json=...) -> None: ...
+    def prepare(
+        self, method=..., url=..., headers=..., files=..., data=..., params=..., auth=..., cookies=..., hooks=..., json=...
+    ) -> None: ...
     def copy(self) -> PreparedRequest: ...
     def prepare_method(self, method) -> None: ...
     def prepare_url(self, url, params) -> None: ...
@@ -101,6 +90,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
 
 class Response:
     __attrs__: Any
+    _content: Optional[bytes]  # undocumented
     status_code: int
     headers: CaseInsensitiveDict[str]
     raw: Any
@@ -127,12 +117,10 @@ class Response:
     def is_permanent_redirect(self) -> bool: ...
     @property
     def apparent_encoding(self) -> str: ...
-    def iter_content(self, chunk_size: Optional[int] = ...,
-                     decode_unicode: bool = ...) -> Iterator[Any]: ...
-    def iter_lines(self,
-                   chunk_size: Optional[int] = ...,
-                   decode_unicode: bool = ...,
-                   delimiter: Union[Text, bytes] = ...) -> Iterator[Any]: ...
+    def iter_content(self, chunk_size: Optional[int] = ..., decode_unicode: bool = ...) -> Iterator[Any]: ...
+    def iter_lines(
+        self, chunk_size: Optional[int] = ..., decode_unicode: bool = ..., delimiter: Union[Text, bytes] = ...
+    ) -> Iterator[Any]: ...
     @property
     def content(self) -> bytes: ...
     @property

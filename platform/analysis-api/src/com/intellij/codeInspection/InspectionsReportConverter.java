@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +39,7 @@ public interface InspectionsReportConverter {
                @NotNull Map<String, Tools> tools,
                @NotNull List<? extends File> inspectionsResults) throws ConversionException;
 
-  default void projectData(@NotNull Project project, @Nullable String outputPath) throws ConversionException {}
+  default void projectData(@NotNull Project project, @NotNull Path outputPath) {}
 
   final class ConversionException extends Exception {
     public ConversionException(String message) {

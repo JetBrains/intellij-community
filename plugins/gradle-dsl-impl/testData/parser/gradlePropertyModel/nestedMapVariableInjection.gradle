@@ -1,0 +1,6 @@
+ext {
+  prop = true
+  def prop1 = ['key1': "value${prop}"]
+  def prop2 = ["key2": prop1]
+  def prop3 = "${prop2["key2"]["key1"]}"
+}

@@ -31,7 +31,7 @@ public class SameParameterValueSlashesTest extends LightJavaCodeInsightFixtureTe
 
   @Parameterized.Parameters(name = "\\{0}")
   public static Object[] data() {
-    return new Object[] { "n", "r", "b", "t", "f", "\"", "'", "\\", "1"};
+    return new Object[] { "n", "r", "b", "t", "f", "\"", "'", "\\", "1", "n\" + \"\\n"};
   }
 
   @Parameterized.Parameter
@@ -61,12 +61,19 @@ public class SameParameterValueSlashesTest extends LightJavaCodeInsightFixtureTe
                      "    String s = f();" +
                      "  }" +
                      "  String f() {" +
-                     "    return \"123\" + \"" + specialSymbol + "\";" +
+                     "    return \"123\" + \"" + afterSymbol(specialSymbol) + "\";" +
                      "  }" +
                      "}";
       myFixture.checkResult(after);
     };
     doTest(runnable);
+  }
+
+  public String afterSymbol(String specialSymbol) {
+    if (specialSymbol.equals("\\n\" + \"\\n")) {
+      return "\\n\\n";//concatenated
+    }
+    return specialSymbol;
   }
 
   private void doTest(Runnable runnable) {

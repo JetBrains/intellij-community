@@ -78,7 +78,7 @@ public final class HighlightControlFlowUtil {
 
   private static @NotNull ControlFlow getControlFlow(@NotNull PsiElement context) throws AnalysisCanceledException {
     LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
-    return ControlFlowFactory.getControlFlow(context, policy, new ControlFlowOptions(true, true));
+    return ControlFlowFactory.getControlFlow(context, policy, ControlFlowOptions.create(true, true, true));
   }
 
   static HighlightInfo checkUnreachableStatement(@Nullable PsiCodeBlock codeBlock) {

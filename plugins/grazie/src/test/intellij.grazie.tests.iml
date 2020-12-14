@@ -57,7 +57,7 @@
             <dependency maven-id="io.grpc:grpc-stub" />
             <dependency maven-id="org.apache.commons:commons-pool2" />
             <dependency maven-id="org.jetbrains.intellij.deps:trove4j" />
-            <dependency maven-id="org.languagetool.languagetool-core" />
+            <dependency maven-id="org.languagetool:languagetool-core" />
             <dependency maven-id="com.gitlab.dumonts:hunspell" />
             <dependency maven-id="com.google.android.tools:dx" />
             <dependency maven-id="com.nativelibs4java:bridj" />
@@ -65,7 +65,6 @@
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.0/language-de-5.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.0/languagetool-core-5.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.1/german-pos-dict-1.2.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.4/jwordsplitter-4.4.jar!/" />

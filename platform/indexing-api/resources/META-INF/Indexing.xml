@@ -11,5 +11,6 @@
     <extensionPoint name="indexingFlavor" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.util.indexing.flavor.FileIndexingFlavorProvider"/>
     </extensionPoint>
+    <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

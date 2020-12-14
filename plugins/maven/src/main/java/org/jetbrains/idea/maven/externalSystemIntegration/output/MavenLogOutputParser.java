@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.events.BuildEvent;
@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenTa
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 
 @ApiStatus.Experimental
@@ -31,12 +32,17 @@ public class MavenLogOutputParser implements BuildOutputParser {
   private final MavenSpyOutputParser mavenSpyOutputParser;
   private final MavenParsingContext myParsingContext;
 
+  public MavenLogOutputParser(@NotNull ExternalSystemTaskId taskId,
+                              @NotNull List<MavenLoggedEventParser> registeredEvents) {
+    this(taskId, Function.identity(), registeredEvents);
+  }
 
-  public MavenLogOutputParser(ExternalSystemTaskId taskId,
-                              List<MavenLoggedEventParser> registeredEvents) {
+  public MavenLogOutputParser(@NotNull ExternalSystemTaskId taskId,
+                              @NotNull Function<String, String> targetFileMapper,
+                              @NotNull List<MavenLoggedEventParser> registeredEvents) {
     myRegisteredEvents = registeredEvents;
     myTaskId = taskId;
-    myParsingContext = new MavenParsingContext(taskId);
+    myParsingContext = new MavenParsingContext(taskId, targetFileMapper);
     mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
   }
 
@@ -81,7 +87,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
         if (!event.supportsType(logLine.myType)) {
           continue;
         }
-        if (event.checkLogLine(myParsingContext.getLastId(), logLine, mavenLogReader, messageConsumer)) {
+        if (event.checkLogLine(myParsingContext.getLastId(), myParsingContext, logLine, mavenLogReader, messageConsumer)) {
           return true;
         }
       }

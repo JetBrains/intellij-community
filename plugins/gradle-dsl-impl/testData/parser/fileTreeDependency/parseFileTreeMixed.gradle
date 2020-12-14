@@ -1,0 +1,4 @@
+dependencies {
+  compile fileTree('libs'), fileTree(dir: 'libs', include: ['*.jar'], exclude: ['*.aar'])
+  implementation (fileTree('libz'), fileTree(dir: 'libz2', include: ['*.jar'], exclude: ['*.aar']))
+}

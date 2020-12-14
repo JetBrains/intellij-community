@@ -1,0 +1,13 @@
+android {
+  sourceSets {
+
+    set4 {
+      setRoot 'newRoot4'
+    }
+    set1 {
+      root = 'newRoot1'
+    }
+    set2.root 'newRoot2'
+  }
+  sourceSets.set3.setRoot 'newRoot3'
+}

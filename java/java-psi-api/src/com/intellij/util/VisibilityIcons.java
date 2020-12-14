@@ -1,31 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.ui.EmptyIcon;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
 public final class VisibilityIcons {
   private VisibilityIcons() {}
-
-  /**
-   * @deprecated use {@link #setVisibilityIcon(PsiModifierList, RowIcon)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void setVisibilityIcon(PsiModifierList modifierList, com.intellij.ui.RowIcon baseIcon) {
-    setVisibilityIcon(modifierList, ((RowIcon)baseIcon));
-  }
 
   public static void setVisibilityIcon(PsiModifierList modifierList, RowIcon baseIcon) {
     if (modifierList != null) {
@@ -42,23 +28,14 @@ public final class VisibilityIcons {
         setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, baseIcon);
       }
       else {
-        Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
+        Icon emptyIcon = IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON);
         baseIcon.setIcon(emptyIcon, 1);
       }
     }
     else if (PlatformIcons.PUBLIC_ICON != null) {
-        Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
+        Icon emptyIcon = IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON);
         baseIcon.setIcon(emptyIcon, 1);
       }
-  }
-
-  /**
-   * @deprecated use {@link #setVisibilityIcon(int, RowIcon)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, com.intellij.ui.RowIcon baseIcon) {
-    setVisibilityIcon(accessLevel, ((RowIcon)baseIcon));
   }
 
   public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, RowIcon baseIcon) {
@@ -78,7 +55,7 @@ public final class VisibilityIcons {
         break;
       default:
         if (PlatformIcons.PUBLIC_ICON != null) {
-          icon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
+          icon = IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON);
         }
         else {
           return;

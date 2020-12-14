@@ -11,25 +11,28 @@ import com.intellij.psi.util.elementsAroundOffsetUp
 
 internal fun fromDirectNavigation(file: PsiFile, offset: Int): GTDActionData? {
   for ((element, _) in file.elementsAroundOffsetUp(offset)) {
-    val directNavigationElement = directNavigationElement(element) ?: continue
-    return DirectNavigationData(element, directNavigationElement)
+    for (provider in DirectNavigationProvider.EP_NAME.extensions) {
+      val navigationElement = provider.getNavigationElement(element)
+      if (navigationElement != null) {
+        return DirectNavigationData(element, navigationElement, provider)
+      }
+    }
   }
   return null
 }
 
-private fun directNavigationElement(element: PsiElement): PsiElement? {
-  for (provider in DirectNavigationProvider.EP_NAME.extensions) {
-    return provider.getNavigationElement(element) ?: continue
-  }
-  return null
-}
-
-private class DirectNavigationData(private val sourceElement: PsiElement, private val targetElement: PsiElement) : GTDActionData {
+private class DirectNavigationData(
+  private val sourceElement: PsiElement,
+  private val targetElement: PsiElement,
+  private val navigationProvider: DirectNavigationProvider
+) : GTDActionData {
 
   override fun ctrlMouseInfo(): CtrlMouseInfo = object : BaseCtrlMouseInfo(listOf(sourceElement.textRange)) {
     override fun getDocInfo(): CtrlMouseDocInfo = CtrlMouseDocInfo.EMPTY
     override fun isValid(): Boolean = true
   }
 
-  override fun result(): GTDActionResult? = psiNavigatable(targetElement)?.let(GTDActionResult::SingleTarget)
+  override fun result(): GTDActionResult? = psiNavigatable(targetElement)?.let { navigatable ->
+    GTDActionResult.SingleTarget(navigatable, navigationProvider)
+  }
 }

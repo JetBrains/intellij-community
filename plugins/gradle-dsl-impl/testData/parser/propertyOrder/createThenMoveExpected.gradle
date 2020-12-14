@@ -1,0 +1,4 @@
+ext {
+  prop2 = 72
+  prop1 = [key: 1, key1: 'two']
+}

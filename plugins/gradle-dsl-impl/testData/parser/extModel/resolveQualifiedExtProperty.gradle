@@ -1,0 +1,6 @@
+ext.constants = [
+  COMPILE_SDK_VERSION: 21
+]
+android {
+  compileSdkVersion constants.COMPILE_SDK_VERSION
+}

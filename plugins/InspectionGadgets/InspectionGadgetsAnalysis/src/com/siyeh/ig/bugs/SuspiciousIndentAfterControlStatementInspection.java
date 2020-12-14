@@ -93,9 +93,9 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
             final String siblingText = statementWhiteSpace.getText();
             final int statementLineBreak = siblingText.lastIndexOf('\n');
             if (statementLineBreak >= 0) {
-              final String indentText = siblingText.substring(statementLineBreak + 1);
-              final int statementIndent = getIndent(indentText);
-              final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
+              final int statementIndent = getIndent(siblingText.substring(statementLineBreak + 1));
+              final String indentText = text.substring(bodyLineBreak + 1);
+              final int bodyIndent = getIndent(indentText);
               if (statementIndent == bodyIndent) {
                 registerErrorAtOffset(bodyWhiteSpace, bodyLineBreak + 1, indentText.length(), statement);
                 return;

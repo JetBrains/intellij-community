@@ -25,7 +25,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import icons.GithubIcons
+import icons.VcsCodeReviewIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -165,8 +165,11 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
   }
 
   private fun createSubmitButton(actionName: String) =
-    InlineIconButton(GithubIcons.Send, GithubIcons.SendHovered, tooltip = actionName,
-                                                                        shortcut = SUBMIT_SHORTCUT_SET).apply {
+    InlineIconButton(
+      VcsCodeReviewIcons.Send, VcsCodeReviewIcons.SendHovered,
+      tooltip = actionName,
+      shortcut = SUBMIT_SHORTCUT_SET
+    ).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 

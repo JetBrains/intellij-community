@@ -1,0 +1,33 @@
+android {
+  sourceSets {
+    main {
+      aidl {
+        srcDir "aidlSource"
+      }
+      assets {
+        srcDir "aseetsSource"
+      }
+      java {
+        srcDir "javaSource"
+      }
+      jni {
+        srcDir "jniSource"
+      }
+      jniLibs {
+        srcDir "jniLibsSource"
+      }
+      manifest {
+        srcFile "manifestSource.xml"
+      }
+      renderscript {
+        srcDir "renderscriptSource"
+      }
+      res {
+        srcDir "resSource"
+      }
+      resources {
+        srcDir "resourcesSource"
+      }
+    }
+  }
+}

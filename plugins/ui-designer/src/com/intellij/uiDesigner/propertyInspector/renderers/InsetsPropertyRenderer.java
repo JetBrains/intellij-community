@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -21,7 +22,7 @@ public final class InsetsPropertyRenderer extends LabelPropertyRenderer<Insets> 
     setText(formatText(value));
   }
 
-  public String formatText(final Insets value) {
+  public @NlsSafe String formatText(final Insets value) {
     myBuffer.setLength(0);
     myBuffer.append('[');
     myBuffer.append(value.top).append(", ");

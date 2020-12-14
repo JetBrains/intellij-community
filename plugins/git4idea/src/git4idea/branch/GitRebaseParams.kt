@@ -10,7 +10,7 @@ import git4idea.rebase.GitRebaseOption
 class GitRebaseParams internal constructor(private val version: GitVersion,
                                            branch: String?,
                                            newBase: String?,
-                                           val upstream: String,
+                                           val upstream: String?,
                                            private val selectedOptions: Set<GitRebaseOption>,
                                            private val autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
                                            val editorHandler: GitRebaseEditorHandler? = null) {
@@ -56,11 +56,10 @@ class GitRebaseParams internal constructor(private val version: GitVersion,
 
   fun asCommandLineArguments(): List<String> = mutableListOf<String>().apply {
     selectedOptions.mapNotNull { option ->
-      if (option == GitRebaseOption.REBASE_MERGES) {
-        handleRebaseMergesOption()
-      }
-      else {
-        option.getOption(version)
+      when (option) {
+        GitRebaseOption.REBASE_MERGES -> handleRebaseMergesOption()
+        GitRebaseOption.ROOT -> null // this option is added to the end of the command line, see below
+        else -> option.getOption(version)
       }
     }.forEach { option -> add(option) }
 
@@ -73,7 +72,20 @@ class GitRebaseParams internal constructor(private val version: GitVersion,
     if (newBase != null) {
       addAll(listOf("--onto", newBase))
     }
-    add(upstream)
+
+    if (!upstream.isNullOrEmpty()) {
+      add(upstream)
+    }
+
+    if (GitRebaseOption.ROOT in selectedOptions) {
+      if (upstream.isNullOrEmpty()) {
+        add(GitRebaseOption.ROOT.getOption(version))
+      }
+      else {
+        LOG.error("Git rebase --root option is incompatible with upstream and will be omitted")
+      }
+    }
+
     if (branch != null) {
       add(branch)
     }
@@ -85,7 +97,7 @@ class GitRebaseParams internal constructor(private val version: GitVersion,
 
   private fun handleRebaseMergesOption(): String? {
     return if (!rebaseMergesAvailable() && isInteractive()) {
-      LOG.warn("Git rebase --preserve-merges option is incompatible with --interactive and will be omitted")
+      LOG.error("Git rebase --preserve-merges option is incompatible with --interactive and will be omitted")
       null
     }
     else

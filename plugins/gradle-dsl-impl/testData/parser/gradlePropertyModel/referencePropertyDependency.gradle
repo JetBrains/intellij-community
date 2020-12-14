@@ -1,0 +1,4 @@
+ext {
+  prop1 = 'value'
+  prop2 = prop1
+}

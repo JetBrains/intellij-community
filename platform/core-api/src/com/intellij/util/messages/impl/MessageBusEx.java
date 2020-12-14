@@ -9,22 +9,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public interface MessageBusEx extends MessageBus {
   void clearPublisherCache();
 
-  void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<ListenerDescriptor> listenerDescriptors);
+  void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<? extends ListenerDescriptor> listenerDescriptors);
 
   /**
    * Must be called only on a root bus.
    */
-  void disconnectPluginConnections(@NotNull Predicate<Class<?>> pluginId);
+  void disconnectPluginConnections(@NotNull Predicate<? super Class<?>> pluginId);
 
   @TestOnly
   void clearAllSubscriberCache();
 
-  void setLazyListeners(@NotNull ConcurrentMap<String, List<ListenerDescriptor>> map);
+  void setLazyListeners(@NotNull Map<String, List<ListenerDescriptor>> map);
 }

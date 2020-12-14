@@ -94,7 +94,7 @@ public final class IndexUpdateRunner {
                                           @NotNull String fileSetName,
                                           @NotNull Collection<VirtualFile> files,
                                           @NotNull ProgressIndicator indicator) throws IndexingInterruptedException {
-    IndexingJobStatistics statistics = new IndexingJobStatistics(fileSetName);
+    IndexingJobStatistics statistics = new IndexingJobStatistics(project, fileSetName);
     long startTime = System.nanoTime();
     try {
       doIndexFiles(project, files, indicator, statistics);

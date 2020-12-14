@@ -6,6 +6,7 @@ import com.intellij.java.refactoring.convertToInstanceMethod.ConvertToInstanceMe
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.roots.RenameModuleTest;
+import com.intellij.uiDesigner.refactoring.MoveFileTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
@@ -34,9 +35,12 @@ public class JavaBranchRefactoringTest {
       MovePackageTest.class,
       MovePackageMultirootTest.class,
 
+      MoveFileTest.class,
+
       MoveMembersTest.class,
       ConvertToInstanceMethodTest.class,
-      ConvertToInstance8MethodTest.class
+      ConvertToInstance8MethodTest.class,
+      MakeMethodStaticTest.class
       );
     for (Class<? extends TestCase> testClass : testsToWrap) {
       suite.addTest(enableBranchRefactoringsInside(testClass));

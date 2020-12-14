@@ -1,0 +1,18 @@
+android {
+  buildTypes {
+    type1 {
+      proguardFiles = ['proguard-android-1.txt', 'proguard-rules-1.txt']
+    }
+    type2 {
+      proguardFiles 'proguard-android-2.txt', 'proguard-rules-2.txt'
+    }
+  }
+  buildTypes.type1 {
+    proguardFiles 'proguard-android-3.txt', 'proguard-rules-3.txt'
+  }
+  buildTypes.type2 {
+  }
+  buildTypes {
+    type2.proguardFile 'proguard-android-4.txt'
+  }
+}

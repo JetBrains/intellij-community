@@ -1,20 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.paint;
 
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferInt;
-
-import static junit.framework.TestCase.assertTrue;
 
 /**
  * @author tav
  */
-public class ImageComparator {
+public final class ImageComparator {
   private final ColorComparator colorComparator;
 
   public interface ColorComparator {
@@ -24,7 +22,7 @@ public class ImageComparator {
   /**
    * Used to smooth difference b/w antialiased images.
    */
-  public static class AASmootherComparator implements ColorComparator {
+  public static final class AASmootherComparator implements ColorComparator {
     private final double backgroundColorsDist;
     private final double inputColorsDist;
     private final int backgroundRGB;
@@ -68,19 +66,19 @@ public class ImageComparator {
       };
     }
 
-    protected static double a(int argb) {
+    private static double a(int argb) {
       return ((argb >> 24) & 0xFF) / 255d;
     }
 
-    protected static double r(int argb) {
+    private static double r(int argb) {
       return ((argb >> 16) & 0xFF) / 255d;
     }
 
-    protected static double g(int argb) {
+    private static double g(int argb) {
       return ((argb >> 8) & 0xFF) / 255d;
     }
 
-    protected static double b(int argb) {
+    private static double b(int argb) {
       return (argb & 0xFF) / 255d;
     }
   }
@@ -97,38 +95,38 @@ public class ImageComparator {
    * BufferedImage.TYPE_INT_ARGB is expected
    */
   public static void compareAndAssert(@Nullable ColorComparator colorComparator,
-                                      @NotNull BufferedImage img1, @NotNull BufferedImage img2,
-                                      @Nullable String errMsgPrefix)
-  {
+                                      @NotNull Image img1, @NotNull Image img2,
+                                      @Nullable String errMsgPrefix) {
     new ImageComparator(colorComparator).compareAndAssert(img1, img2, errMsgPrefix);
   }
 
   /**
    * BufferedImage.TYPE_INT_ARGB is expected
    */
-  public void compareAndAssert(@NotNull BufferedImage img1, @NotNull BufferedImage img2, @Nullable String errMsgPrefix) {
-    StringBuilder sb = new StringBuilder(ObjectUtils.notNull(errMsgPrefix, "images mismatch: "));
-    boolean equal = compare(img1, img2, sb);
-    assertTrue(sb.toString(), equal);
+  public void compareAndAssert(@NotNull Image img1, @NotNull Image img2, @Nullable String errMsgPrefix) {
+    StringBuilder sb = new StringBuilder(errMsgPrefix == null ? "images mismatch: " : errMsgPrefix);
+    if (!compare(img1, img2, sb)) {
+      throw new AssertionError(sb.toString());
+    }
   }
 
   /**
    * BufferedImage.TYPE_INT_ARGB is expected
    */
-  public boolean compare(@NotNull BufferedImage img1, @NotNull BufferedImage img2, @Nullable /*OUT*/StringBuilder reason) {
-    int[] d1 = ((DataBufferInt)img1.getRaster().getDataBuffer()).getData();
-    int[] d2 = ((DataBufferInt)img2.getRaster().getDataBuffer()).getData();
+  public boolean compare(@NotNull Image img1, @NotNull Image img2, @Nullable /*OUT*/StringBuilder reason) {
+    int[] d1 = getArgbData(img1);
+    int[] d2 = getArgbData(img2);
     if  (d1.length != d2.length) {
       if (reason != null) //noinspection StringConcatenationInsideStringBufferAppend
         reason.append("size mismatch: " +
-                      "[" + img1.getWidth() + "x" + img1.getHeight() + "] vs " +
-                      "[" + img2.getWidth() + "x" + img2.getHeight() + "]");
+                      "[" + img1.getWidth(null) + "x" + img1.getHeight(null) + "] vs " +
+                      "[" + img2.getWidth(null) + "x" + img2.getHeight(null) + "]");
       return false;
     }
     for (int i = 0; i < d1.length; i++) {
       if (!colorComparator.compare(d1[i], d2[i])) {
-        int y = i / img1.getWidth();
-        int x = i - y * img1.getWidth();
+        int y = i / img1.getWidth(null);
+        int x = i - y * img1.getWidth(null);
         if (reason != null)  //noinspection StringConcatenationInsideStringBufferAppend
           reason.append("colors differ at [" + x + "," + y + "]; " +
                         "0x" + Integer.toHexString(d1[i]) + " vs 0x" + Integer.toHexString(d2[i]));
@@ -136,5 +134,18 @@ public class ImageComparator {
       }
     }
     return true;
+  }
+
+  private static int[] getArgbData(@NotNull Image image) {
+    DataBuffer buffer = image instanceof BufferedImage ? ((BufferedImage)image).getRaster().getDataBuffer() : null;
+    if (buffer instanceof DataBufferInt) {
+      return ((DataBufferInt)buffer).getData();
+    }
+    else {
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage convertedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+      convertedImage.getGraphics().drawImage(image, 0, 0, null);
+      return getArgbData(convertedImage);
+    }
   }
 }

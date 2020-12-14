@@ -1,0 +1,5 @@
+ext.junit_version = '2.3.1'
+ext.excludes_name = 'bad'
+ext.excludes_group = 'dependency'
+dependencies {
+}

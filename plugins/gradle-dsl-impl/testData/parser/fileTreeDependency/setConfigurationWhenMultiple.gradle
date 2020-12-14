@@ -1,0 +1,4 @@
+dependencies {
+  testCompile(fileTree("abc"), fileTree(dir: "xyz", include: "*.jar"))
+  compile fileTree("klm"), fileTree("libs"), fileTree(dir: "pqr", exclude: ["*.aar", "*.tmp"])
+}

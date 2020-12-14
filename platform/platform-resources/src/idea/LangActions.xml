@@ -451,7 +451,7 @@
     </group>
 
 
-    <group id="NewGroup" popup="true">
+    <group id="NewGroup" popup="true" searchable="false">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
@@ -459,10 +459,11 @@
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
-    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"/>
+    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" searchable="false"/>
     <reference ref="AssociateWithFileType"/>
 
     <group id="RevealGroup">
+      <reference id="OpenInRightSplit" />
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
 
@@ -495,6 +496,19 @@
       <separator/>
       <reference ref="RunAnything"/>
       <reference ref="SearchEverywhere"/>
+    </group>
+
+    <action id="RunDebugControlAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRunDebugControlAction"/>
+
+    <group id="SegmentedRunDebugActionGroup">
+      <action class="com.intellij.execution.segmentedRunDebugWidget.RunDebugLabelAction"/>
+      <action class="com.intellij.execution.segmentedRunDebugWidget.RunDebugBarAction"/>
+    </group>
+
+    <group id="RunDebugActionsBarGroup" popup="false">
+      <reference ref="RunConfiguration"/>
+      <group id="RunDebugConfigRunnerActions"/>
+      <reference ref="Stop"/>
     </group>
 
     <group id="Bookmarks">
@@ -781,6 +795,7 @@
       <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Refresh" use-shortcut-of="Rerun"/>
       <separator/>
       <reference ref="EditSource"/>
+      <reference ref="OpenInRightSplit"/>
       <reference ref="TreeNodeExclusion"/>
       <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
       <separator/>
@@ -891,6 +906,7 @@
 
     <group id="XDebugger.Actions">
       <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction" icon="AllIcons.Debugger.AddToWatch"/>
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
@@ -931,6 +947,7 @@
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
       <reference ref="Debugger.AddToWatch"/>
+      <reference ref="Debugger.AddInlineWatch"/>
       <reference ref="Debugger.EvaluateInConsole"/>
       <separator/>
 
@@ -1014,6 +1031,11 @@
       <reference ref="XDebugger.SwitchWatchesInVariables"/>
     </group>
 
+    <group id="XDebugger.Watches.Inline.Popup" popup="true">
+      <reference ref="XDebugger.SetValue"/>
+    </group>
+
+
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
     </group>
@@ -1086,50 +1108,54 @@
     <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.Settings"/>
 
     <!-- Arrangement rules -->
-    <action id="Arrangement.Rule.Add"
-            use-shortcut-of="NewElement"
-            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
-    <action id="Arrangement.Rule.Section.Add"
-            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
-    <action id="Arrangement.Rule.Remove"
-            use-shortcut-of="$Delete"
-            class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
-    <action id="Arrangement.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction">
-      <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
-    </action>
-    <action id="Arrangement.Rule.Match.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction">
-      <keyboard-shortcut keymap="$default" first-keystroke="alt UP"/>
-    </action>
-    <action id="Arrangement.Rule.Match.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction">
-      <keyboard-shortcut keymap="$default" first-keystroke="alt DOWN"/>
-    </action>
-    <action id="Arrangement.Custom.Token.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.EditRuleAliasesDefinitionAction"/>
-    <action id="Arrangement.Rule.Group.Condition.Move.Up"
-            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"/>
-    <action id="Arrangement.Rule.Group.Condition.Move.Down"
-            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"/>
+    <group id="ArrangementRulesGroup">
+      <action id="Arrangement.Rule.Add"
+              use-shortcut-of="NewElement"
+              class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
+      <action id="Arrangement.Rule.Section.Add"
+              class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementSectionRuleAction"/>
+      <action id="Arrangement.Rule.Remove"
+              use-shortcut-of="$Delete"
+              class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
+      <action id="Arrangement.Rule.Edit"
+              class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      </action>
+      <action id="Arrangement.Rule.Match.Condition.Move.Up"
+              class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleUpAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt UP"/>
+      </action>
+      <action id="Arrangement.Rule.Match.Condition.Move.Down"
+              class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementMatchingRuleDownAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt DOWN"/>
+      </action>
+      <action id="Arrangement.Custom.Token.Rule.Edit"
+              class="com.intellij.application.options.codeStyle.arrangement.action.EditRuleAliasesDefinitionAction"/>
+      <action id="Arrangement.Rule.Group.Condition.Move.Up"
+              use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
+              class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleUpAction"/>
+      <action id="Arrangement.Rule.Group.Condition.Move.Down"
+              use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
+              class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"/>
 
-    <action id="Arrangement.Alias.Rule.Add"
-            use-shortcut-of="NewElement"
-            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.AddArrangementAliasRuleAction"/>
-    <action id="Arrangement.Alias.Rule.Remove"
-            use-shortcut-of="$Delete"
-            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.RemoveArrangementAliasRuleAction"/>
-    <action id="Arrangement.Alias.Rule.Edit"
-            use-shortcut-of="Arrangement.Rule.Edit"
-            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.EditArrangementAliasRuleAction"/>
-    <action id="Arrangement.Alias.Rule.Match.Condition.Move.Up"
-            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
-            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleUpAction"/>
-    <action id="Arrangement.Alias.Rule.Match.Condition.Move.Down"
-            use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
-            class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleDownAction"/>
+      <action id="Arrangement.Alias.Rule.Add"
+              use-shortcut-of="NewElement"
+              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.AddArrangementAliasRuleAction"/>
+      <action id="Arrangement.Alias.Rule.Remove"
+              use-shortcut-of="$Delete"
+              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.RemoveArrangementAliasRuleAction"/>
+      <action id="Arrangement.Alias.Rule.Edit"
+              use-shortcut-of="Arrangement.Rule.Edit"
+              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.EditArrangementAliasRuleAction"/>
+      <action id="Arrangement.Alias.Rule.Match.Condition.Move.Up"
+              use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Up"
+              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleUpAction"/>
+      <action id="Arrangement.Alias.Rule.Match.Condition.Move.Down"
+              use-shortcut-of="Arrangement.Rule.Match.Condition.Move.Down"
+              class="com.intellij.application.options.codeStyle.arrangement.action.tokens.MoveArrangementAliasRuleDownAction"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
 
     <group id="Arrangement.Alias.Rule.ToolBar">
       <reference ref="Arrangement.Alias.Rule.Add"/>
@@ -1246,7 +1272,7 @@
       <reference id="EditSource"/>
       <action id="ServiceView.JumpToServices" class="com.intellij.execution.services.JumpToServicesAction" use-shortcut-of="ShowNavBar"/>
     </group>
-      <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
+    <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
     <group id="RunDashboard.GroupBy" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
       <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
       <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"/>
@@ -1367,5 +1393,6 @@
             icon="AllIcons.General.Locate">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
     </action>
+    
   </actions>
 </idea-plugin>

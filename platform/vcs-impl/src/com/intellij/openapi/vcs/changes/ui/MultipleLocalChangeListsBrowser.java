@@ -86,14 +86,18 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myEnableUnversioned = enableUnversioned;
     myEnablePartialCommit = enablePartialCommit;
 
-    myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    myChangeList = changeListManager.getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
 
     myRollbackDialogAction = new RollbackDialogAction();
     myRollbackDialogAction.registerCustomShortcutSet(this, null);
 
-    if (Registry.is("vcs.skip.single.default.changelist")) {
-      List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
+    if (!changeListManager.areChangeListsEnabled()) {
+      myChangeListChooser.setVisible(false);
+    }
+    else if (Registry.is("vcs.skip.single.default.changelist")) {
+      List<LocalChangeList> allChangeLists = changeListManager.getChangeLists();
       if (allChangeLists.size() == 1 && allChangeLists.get(0).isBlank()) {
         myChangeListChooser.setVisible(false);
       }
@@ -103,7 +107,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     Disposer.register(this, myInclusionModel);
     getViewer().setInclusionModel(myInclusionModel);
 
-    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
+    changeListManager.addChangeListListener(new MyChangeListListener(), this);
     init();
 
     updateDisplayedChangeLists();

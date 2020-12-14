@@ -1,0 +1,8 @@
+android {
+  buildTypes {
+    type1 {
+    }
+    type2 {
+    }
+  }
+}

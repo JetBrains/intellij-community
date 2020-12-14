@@ -1,0 +1,8 @@
+android {
+  sourceSets {
+    main {
+      manifest {
+      }
+    }
+  }
+}

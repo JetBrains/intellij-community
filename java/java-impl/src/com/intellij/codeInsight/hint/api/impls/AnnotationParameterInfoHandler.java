@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
@@ -23,21 +22,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
  */
 public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod>, DumbAware {
-  @Override
-  public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    return null;
-  }
-
-  @Override
-  public boolean couldShowInLookup() {
-    return false;
-  }
 
   @Override
   public PsiAnnotationParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {

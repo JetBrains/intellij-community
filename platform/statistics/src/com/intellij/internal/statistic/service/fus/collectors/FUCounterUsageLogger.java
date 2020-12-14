@@ -59,16 +59,9 @@ import java.util.concurrent.TimeUnit;
  * @see ProjectUsagesCollector
  */
 @ApiStatus.Internal
-public class FUCounterUsageLogger {
+public final class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
-
-  @NonNls
-  private static final String[] GENERAL_GROUPS = new String[]{
-    "event.log", "performance", "ui.dialogs", "ui.settings",
-    "intentions", "run.configuration.exec",
-    "productivity", "completion.postfix", "notifications", "settings.changes"
-  };
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
@@ -82,18 +75,11 @@ public class FUCounterUsageLogger {
   private final Map<String, EventLogGroup> myGroups = new HashMap<>();
 
   public FUCounterUsageLogger() {
-    int version = FeatureUsageLogger.INSTANCE.getConfig().getVersion();
-    for (String group : GENERAL_GROUPS) {
-      // platform groups which record events for all languages,
-      // have the same version as a recorder to simplify further data analysis
-      register(new EventLogGroup(group, version));
-    }
-
     for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
       registerGroupFromEP(ep);
     }
     Extensions.getRootArea().getExtensionPoint(CounterUsageCollectorEP.EP_NAME).addExtensionPointListener(
-      new ExtensionPointListener<CounterUsageCollectorEP>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull CounterUsageCollectorEP extension, @NotNull PluginDescriptor pluginDescriptor) {
           registerGroupFromEP(extension);

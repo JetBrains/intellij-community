@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.lw.IconDescriptor;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -30,6 +31,7 @@ public class IconRenderer extends LabelPropertyRenderer<IconDescriptor> {
   @Override
   protected void customize(@NotNull IconDescriptor value) {
     setIcon(value.getIcon());
-    setText(value.getIconPath());
+    @NlsSafe String path = value.getIconPath();
+    setText(path);
   }
 }

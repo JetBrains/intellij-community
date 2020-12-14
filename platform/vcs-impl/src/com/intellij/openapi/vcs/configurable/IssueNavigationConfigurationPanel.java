@@ -52,6 +52,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     super(new BorderLayout());
     myProject = project;
     myLinkTable = new JBTable();
+    myLinkTable.setShowGrid(false);
     myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
     reset();
     add(new JLabel(

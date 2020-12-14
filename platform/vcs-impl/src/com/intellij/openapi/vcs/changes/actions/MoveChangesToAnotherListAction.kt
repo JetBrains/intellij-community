@@ -23,6 +23,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val enabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
+                  ChangeListManager.getInstance(project).areChangeListsEnabled() &&
                   (!e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY).isEmpty() ||
                    !e.getData(VcsDataKeys.CHANGES).isNullOrEmpty() ||
                    !e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())

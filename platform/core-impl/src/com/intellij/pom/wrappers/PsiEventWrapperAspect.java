@@ -2,6 +2,7 @@
 package com.intellij.pom.wrappers;
 
 import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
@@ -28,7 +29,7 @@ public final class PsiEventWrapperAspect implements PomModelAspect {
 
     ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getSynchronizer().processEvents(changeSet, file);
 
-    if (file.isPhysical()) {
+    if (PomModelImpl.shouldFirePhysicalPsiEvents(file)) {
       changeSet.fireEvents();
     }
     else {

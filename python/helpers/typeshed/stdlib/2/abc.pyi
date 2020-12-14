@@ -1,7 +1,7 @@
-from typing import Any, Callable, Dict, Set, Tuple, Type, TypeVar
 import _weakrefset
+from typing import Any, Callable, Dict, Set, Tuple, Type, TypeVar
 
-_FuncT = TypeVar('_FuncT', bound=Callable[..., Any])
+_FuncT = TypeVar("_FuncT", bound=Callable[..., Any])
 
 # NOTE: mypy has special processing for ABCMeta and abstractmethod.
 

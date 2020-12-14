@@ -1,0 +1,8 @@
+android {
+  defaultConfig {
+    proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    consumerProguardFiles 'proguard-rules.pro'
+    setProguardFiles(['val1', 'val2'])
+    setConsumerProguardFiles(['val3', 'val4'])
+  }
+}

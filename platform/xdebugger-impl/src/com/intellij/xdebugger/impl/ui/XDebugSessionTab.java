@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.Executor;
+import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
@@ -21,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -186,8 +186,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
       variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
-    }
-    else {
+    } else {
       variablesView = new XVariablesView(session);
     }
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
@@ -267,8 +266,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       List<AnAction> additionalRestartActions = session.getRestartActions();
       if (!additionalRestartActions.isEmpty()) {
         leftToolbar.addAll(additionalRestartActions);
-        leftToolbar.addSeparator();
       }
+      leftToolbar.add(new CreateAction());
+      leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
     leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));

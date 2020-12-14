@@ -7,6 +7,8 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -15,7 +17,7 @@ import java.awt.*;
 
 import static com.intellij.ui.RelativeFont.BOLD;
 
-public abstract class GroupedElementsRenderer {
+public abstract class GroupedElementsRenderer implements Accessible {
   protected SeparatorWithText mySeparatorComponent = createSeparator();
 
   protected abstract JComponent createItemComponent();
@@ -178,4 +180,8 @@ public abstract class GroupedElementsRenderer {
     }
   }
 
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    return myRendererComponent.getAccessibleContext();
+  }
 }

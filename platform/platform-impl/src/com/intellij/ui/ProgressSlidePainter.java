@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -16,17 +15,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 final class ProgressSlidePainter {
-  private static final int PREFETCH_PARALLEL_COUNT = 5;
+  private static final int PREFETCH_PARALLEL_COUNT = 4;
   private static final int PREFETCH_BUFFER_SIZE = 15;
-  private static final Logger ourLogger = Logger.getInstance(ProgressSlidePainter.class);
 
   private final List<ProgressSlide> myProgressSlides;
 
   private final AtomicReferenceArray<Slide> myPrefetchedSlides;
   private final AtomicInteger myPrefetchSlideIndex;
   private volatile int myNextSlideIndex = 0;
-
-  private final SplashSlideLoader mySlideLoader;
 
   private static class Slide {
     private static final Slide Empty = new Slide(0, null);
@@ -44,16 +40,11 @@ final class ProgressSlidePainter {
     }
   }
 
-  ProgressSlidePainter(@NotNull ApplicationInfoEx appInfo, SplashSlideLoader slideLoader) {
+  ProgressSlidePainter(@NotNull ApplicationInfoEx appInfo) {
     myProgressSlides = appInfo.getProgressSlides();
     myProgressSlides.sort(Comparator.comparing(it -> it.progressRation));
     myPrefetchedSlides = new AtomicReferenceArray<>(myProgressSlides.size());
     myPrefetchSlideIndex = new AtomicInteger(0);
-    mySlideLoader = slideLoader;
-  }
-
-  private boolean isFinished() {
-    return myNextSlideIndex >= myPrefetchedSlides.length();
   }
 
   public void startPreloading() {
@@ -64,23 +55,16 @@ final class ProgressSlidePainter {
           int slideIndex = myPrefetchSlideIndex.getAndIncrement();
           if (slideIndex >= myProgressSlides.size()) return;
 
-          if (slideIndex < myNextSlideIndex) {
-            // current slide will not be shown
-            myPrefetchedSlides.set(slideIndex, Slide.Empty);
-            continue;
-          }
-
           while (slideIndex > myNextSlideIndex + PREFETCH_BUFFER_SIZE)
             Thread.onSpinWait();
 
           var slide = myProgressSlides.get(slideIndex);
-          var image = mySlideLoader.loadImage(slide.url, false /*to avoid oom*/);
+          var image = SplashSlideLoader.loadImage(slide.url);
           if (image == null) {
-            ourLogger.error("Cannot load slide by url: " + slide.url);
+            Logger.getInstance(ProgressSlidePainter.class).error("Cannot load slide by url: " + slide.url);
             myPrefetchedSlides.set(slideIndex, Slide.Empty);
             continue;
           }
-
           myPrefetchedSlides.compareAndSet(slideIndex, null, new Slide(slide.progressRation, image));
         }
       });
@@ -88,29 +72,31 @@ final class ProgressSlidePainter {
   }
 
   public void paintSlides(@NotNull Graphics g, double currentProgress) {
-    if (isFinished()) return;
-
     do {
-      var newSlide = tryGetNextSlide();
-      if (newSlide == null || newSlide.isEmpty()) return;
+      int index = myNextSlideIndex;
+      if (index >= myPrefetchedSlides.length())
+        return;
+
+      var newSlide = myPrefetchedSlides.get(index);
+      if (newSlide == null || newSlide.isEmpty()) {
+        if (myProgressSlides.get(index).progressRation <= currentProgress) {
+          next(index);
+          continue;
+        }
+        return;
+      }
 
       if (newSlide.progress <= currentProgress) {
         StartupUiUtil.drawImage(g, newSlide.image, 0, 0, null);
+        next(index);
       } else return;
     }
     while (true);
   }
 
-  // on ui thread
-  @Nullable
-  private Slide tryGetNextSlide() {
-    int index = myNextSlideIndex;
-    if (index >= myPrefetchedSlides.length()) return null;
-
-    var slide = myPrefetchedSlides.get(index);
+  private void next(int index) {
     myPrefetchedSlides.set(index, Slide.Empty);
     //noinspection NonAtomicOperationOnVolatileField
     myNextSlideIndex++;
-    return slide;
   }
 }

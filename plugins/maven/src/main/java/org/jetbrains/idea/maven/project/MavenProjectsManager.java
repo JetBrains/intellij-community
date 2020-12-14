@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -63,7 +64,6 @@ import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBr
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
@@ -551,14 +551,17 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    for (Module m : modules) {
-      if (m.isDisposed()) continue;
-      ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
-      // force re-save (since can be stored externally)
-      if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
-        ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+    //todo remove 'mergeRootsChangesDuring' call when 'setMavenized' stop firing rootsChanged events (IDEA-250924)
+    ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+      for (Module m : modules) {
+        if (m.isDisposed()) continue;
+        ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
+        // force re-save (since can be stored externally)
+        if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
+          ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+        }
       }
-    }
+    });
   }
 
   @TestOnly

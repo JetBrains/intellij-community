@@ -1,0 +1,10 @@
+ext {
+  propValue = 'value'
+  prop25 = 25
+  propTrue = true
+  propRef = propValue
+  propInterpolated = "${prop25}"
+  propUnresolved = unresolvedReference
+  propOtherExpression1 = z(1)
+  propOtherExpression2 = 1 + 2
+}

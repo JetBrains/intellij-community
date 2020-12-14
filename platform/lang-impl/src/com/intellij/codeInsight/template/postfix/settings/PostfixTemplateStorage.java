@@ -17,6 +17,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +25,11 @@ import java.util.*;
 
 @State(name = "PostfixTemplates", storages = @Storage("postfixTemplates.xml"))
 public final class PostfixTemplateStorage extends SimpleModificationTracker implements PersistentStateComponent<Element> {
-  private static final String TEMPLATE_TAG = "template";
-  private static final String PROVIDER_ATTR_NAME = "provider";
-  private static final String ID_ATTR_NAME = "id";
-  private static final String KEY_ATTR_NAME = "key";
-  private static final String BUILTIN_ATTR_NAME = "builtin";
+  private static final @NonNls String TEMPLATE_TAG = "template";
+  private static final @NonNls String PROVIDER_ATTR_NAME = "provider";
+  private static final @NonNls String ID_ATTR_NAME = "id";
+  private static final @NonNls String KEY_ATTR_NAME = "key";
+  private static final @NonNls String BUILTIN_ATTR_NAME = "builtin";
 
   private final Map<String, PostfixTemplateProvider> myTemplateProviders;
   private final MultiMap<String, PostfixTemplate> myTemplates = new MultiMap<>();
@@ -95,7 +96,7 @@ public final class PostfixTemplateStorage extends SimpleModificationTracker impl
   }
 
   @Nullable
-  private static PostfixTemplate findBuiltinTemplate(@Nullable String id, @NotNull PostfixTemplateProvider provider) {
+  private static PostfixTemplate findBuiltinTemplate(@Nullable @NonNls String id, @NotNull PostfixTemplateProvider provider) {
     return ContainerUtil.find(provider.getTemplates(), p -> p.getId().equals(id));
   }
 

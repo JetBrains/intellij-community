@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -564,7 +565,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
     if (commonIssueKind == JsonValidationError.FixableIssueKind.MissingProperty) {
       String sets = errors.stream().map(e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData())
-        .map(d -> d.getMessage(false)).collect(Collectors.joining(", or "));
+        .map(d -> d.getMessage(false)).collect(NlsMessages.joiningOr());
       return new JsonValidationError(JsonBundle.message(
         isOneOf ? "schema.validation.one.of.property.sets.required" : "schema.validation.at.least.one.of.property.sets.required", sets),
                                      isOneOf ? JsonValidationError.FixableIssueKind.MissingOneOfProperty : JsonValidationError.FixableIssueKind.MissingAnyOfProperty,

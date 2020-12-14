@@ -34,26 +34,28 @@ object JpsProjectEntitiesLoader {
 
   @TestOnly
   fun loadProject(configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder,
-                  externalStoragePath: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
+                  externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, true, virtualFileManager)
-    data.loadAll(reader, builder)
+    data.loadAll(reader, builder, errorReporter)
     return data
   }
 
-  fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager) {
+  fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder,
+                 errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
     val source = JpsFileEntitySource.FileInDirectory(moduleFile.parent.toVirtualFileUrl(virtualFileManager), configLocation)
-    loadModule(moduleFile, source, configLocation, builder, virtualFileManager)
+    loadModule(moduleFile, source, configLocation, builder, errorReporter, virtualFileManager)
   }
 
   internal fun loadModule(moduleFile: Path,
                           source: JpsFileEntitySource.FileInDirectory,
                           configLocation: JpsProjectConfigLocation,
                           builder: WorkspaceEntityStorageBuilder,
+                          errorReporter: ErrorReporter,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source)
-    serializer.loadEntities(builder, reader, virtualFileManager)
+    serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
   }
 
   private fun createProjectEntitiesSerializers(configLocation: JpsProjectConfigLocation,

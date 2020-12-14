@@ -291,6 +291,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myAllVcss = asList(myVcsManager.getAllSupportedVcss());
 
     myDirectoryMappingTable = new TableView<>();
+    myDirectoryMappingTable.setShowGrid(false);
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
 
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);

@@ -4,7 +4,9 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -30,8 +32,10 @@ public interface IconManager {
     IconManagerHelper.deactivate();
   }
 
-  @NotNull
-  Icon getIcon(@NotNull String path, @NotNull Class aClass);
+  @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
+
+  @ApiStatus.Internal
+  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags);
 
   @NotNull
   default Icon createEmptyIcon(@NotNull Icon icon) {
@@ -51,11 +55,7 @@ public interface IconManager {
     return source;
   }
 
-  @NotNull
-  Icon getAnalyzeIcon();
-
-  @NotNull
-  <T> Icon createDeferredIcon(@NotNull Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
+  @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
 
   @NotNull
   RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
@@ -72,6 +72,10 @@ public interface IconManager {
   RowIcon createRowIcon(Icon @NotNull ... icons);
 
   void registerIconLayer(int flagMask, @NotNull Icon icon);
+
+  @NotNull Icon createOverlayIcon(Icon @NotNull ... icons);
+
+  @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon);
 }
 
 final class IconManagerHelper {
@@ -104,13 +108,12 @@ final class DummyIconManager implements IconManager {
 
   @NotNull
   @Override
-  public Icon getIcon(@NotNull String path, @NotNull Class aClass) {
+  public Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
     return DummyIcon.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public Icon getAnalyzeIcon() {
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
     return DummyIcon.INSTANCE;
   }
 
@@ -124,9 +127,18 @@ final class DummyIconManager implements IconManager {
   public void registerIconLayer(int flagMask, @NotNull Icon icon) {
   }
 
-  @NotNull
   @Override
-  public <T> Icon createDeferredIcon(@NotNull Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
+  public @NotNull Icon createOverlayIcon(Icon @NotNull ... icons) {
+    return new DummyIcon();
+  }
+
+  @Override
+  public @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon) {
+    return new DummyIcon();
+  }
+
+  @Override
+  public @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
     return base;
   }
 
@@ -150,9 +162,6 @@ final class DummyIconManager implements IconManager {
 
   private static class DummyIcon implements Icon {
     static final DummyIcon INSTANCE = new DummyIcon();
-
-    private DummyIcon() {
-    }
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {

@@ -16,13 +16,16 @@
 
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.model.ModelBranch;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.VariableData;
-import java.util.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public final class Settings {
@@ -76,8 +79,18 @@ public final class Settings {
     }
   }
 
-  public Settings(boolean replaceUsages, String classParameterName,
-                  PsiField[] fields, String[] names) {
+  public Settings(boolean replaceUsages,
+                  String classParameterName,
+                  PsiField[] fields,
+                  String[] names) {
+    this(replaceUsages, classParameterName, fields, names, false);
+  }
+
+  private Settings(boolean replaceUsages,
+                   String classParameterName,
+                   PsiField[] fields,
+                   String[] names,
+                   boolean delegate) {
     myReplaceUsages = replaceUsages;
     myMakeClassParameter = classParameterName != null;
     myClassParameterName = classParameterName;
@@ -95,7 +108,15 @@ public final class Settings {
     else {
       myFieldToNameMapping = null;
     }
-    myDelegate = false;
+    myDelegate = delegate;
+  }
+
+  @NotNull Settings obtainBranchCopy(@NotNull ModelBranch branch) {
+    if (myFieldToNameList.isEmpty()) return this; 
+    return new Settings(myReplaceUsages, myClassParameterName,
+                        ContainerUtil.map2Array(myFieldToNameList, PsiField.class, fp -> branch.obtainPsiCopy(fp.field)),
+                        ContainerUtil.map2Array(myFieldToNameList, String.class, fp -> fp.name),
+                        myDelegate);
   }
 
   public boolean isReplaceUsages() {

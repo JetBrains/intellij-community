@@ -77,10 +77,6 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     unsubscribeListeners()
   }
 
-  internal fun fireRootsChanged(isBefore: Boolean) {
-    if (isBefore) myRootsChanged.beforeRootsChanged() else myRootsChanged.rootsChanged()
-  }
-
   private fun unsubscribeListeners() {
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     val globalLibraryTable = libraryTablesRegistrar.libraryTable

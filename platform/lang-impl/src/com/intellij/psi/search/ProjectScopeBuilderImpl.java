@@ -5,14 +5,18 @@ import com.intellij.core.CoreProjectScopeBuilder;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,7 +27,7 @@ import java.util.Objects;
  * @author yole
  */
 public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
-
+  @NotNull
   protected final Project myProject;
 
   public ProjectScopeBuilderImpl(@NotNull Project project) {
@@ -34,8 +38,28 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
   @Override
   public GlobalSearchScope buildEverythingScope() {
     return new EverythingGlobalScope(myProject) {
+      final FileBasedIndexImpl myFileBasedIndex;
+
+      {
+        boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+        FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+        // handle case of EmptyFileBasedIndex
+        myFileBasedIndex = unitTestMode && !(fileBasedIndex instanceof FileBasedIndexImpl)
+                           ? null
+                           : (FileBasedIndexImpl)fileBasedIndex;
+      }
+
       @Override
       public boolean contains(@NotNull VirtualFile file) {
+        if (file instanceof VirtualFileWithId && myFileBasedIndex != null) {
+          for (IndexableFileSet set : myFileBasedIndex.getIndexableSets()) {
+            if (set.isInSet(file) && myFileBasedIndex.containsIndexableSet(set, myProject)) {
+              return true;
+            }
+          }
+          return false;
+        }
+
         RootType rootType = RootType.forFile(file);
         if (rootType != null && (rootType.isHidden() || rootType.isIgnored(myProject, file))) return false;
         return true;
@@ -70,9 +94,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
   @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
-    ProjectRootManager projectRootManager = myProject.isDefault() || LightEdit.owns(myProject)
-                                            ? null : ProjectRootManager.getInstance(myProject);
-    if (projectRootManager == null) {
+    if (myProject.isDefault() || LightEdit.owns(myProject)) {
       return new EverythingGlobalScope(myProject);
     }
 
@@ -92,15 +114,6 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
   @NotNull
   @Override
   public GlobalSearchScope buildProjectScope() {
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-    if (projectRootManager == null) {
-      return new EverythingGlobalScope(myProject) {
-        @Override
-        public boolean isSearchInLibraries() {
-          return false;
-        }
-      };
-    }
     return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
   }
 

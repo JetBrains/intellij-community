@@ -22,7 +22,6 @@ collections.abc.AsyncGenerator.ag_await
 collections.abc.AsyncGenerator.ag_code
 collections.abc.AsyncGenerator.ag_frame
 collections.abc.AsyncGenerator.ag_running
-concurrent.futures.ProcessPoolExecutor.map
 contextvars.Context.__init__
 contextvars.Context.get
 copy.PyStringMap
@@ -31,6 +30,7 @@ dataclasses.Field.__init__
 dataclasses.field
 email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
+hmac.HMAC.__init__
 http.client.HTTPSConnection.__init__
 http.server.SimpleHTTPRequestHandler.__init__
 importlib.metadata
@@ -42,6 +42,8 @@ nntplib._NNTPBase.starttls
 os.utime
 pyexpat.XMLParserType.ExternalEntityParserCreate
 queue.SimpleQueue.__init__
+random.Random.randrange  # missing undocumented arg _int
+random.randrange  # missing undocumented arg _int
 secrets.SystemRandom.getstate
 smtplib.SMTP.sendmail
 sre_constants.RANGE_IGNORE
@@ -56,8 +58,7 @@ typing.NamedTuple._replace
 typing._SpecialForm.__init__
 typing._SpecialForm.__new__
 typing.runtime_checkable
-unittest.async_case
-unittest.case._AssertLogsContext.__init__
+unittest.async_case  # Added in Python 3.8
 urllib.parse.parse_qs
 urllib.parse.parse_qsl
 uuid.UUID.int
@@ -65,7 +66,5 @@ uuid.UUID.is_safe
 uuid.getnode  # undocumented, unused parameter getters that was later removed
 webbrowser.Opera.raise_opts
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
-xml.etree.cElementTree.Element.__bool__
-xml.etree.cElementTree.Element.copy
 xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
 xml.parsers.expat.XMLParserType.ExternalEntityParserCreate

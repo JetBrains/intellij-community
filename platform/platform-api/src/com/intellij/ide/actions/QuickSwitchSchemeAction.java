@@ -18,8 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
-  private final static Condition<? super AnAction> DEFAULT_PRESELECT_ACTION =
-    a -> a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
+  private final static Condition<? super AnAction> DEFAULT_PRESELECT_ACTION = a -> {
+    return a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
+  };
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval

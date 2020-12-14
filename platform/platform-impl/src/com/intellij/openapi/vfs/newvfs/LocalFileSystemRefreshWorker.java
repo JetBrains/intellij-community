@@ -147,11 +147,10 @@ final class LocalFileSystemRefreshWorker {
 
   private void fullDirRefresh(@NotNull VirtualDirectoryImpl dir, @NotNull RefreshContext refreshContext) {
     while (true) {
-      // obtaining directory snapshot
-      Pair<List<String>, List<VirtualFile>> result = getDirectorySnapshot(dir);
-      if (result == null) return;
+      Pair<List<String>, List<VirtualFile>> snapshot = getDirectorySnapshot(dir);
+      if (snapshot == null) return;
 
-      RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, refreshContext, null, result.second);
+      RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, refreshContext, null, snapshot.second);
       refreshingFileVisitor.visit(dir);
       if (myCancelled) {
         addAllEventsFrom(refreshingFileVisitor);
@@ -163,7 +162,7 @@ final class LocalFileSystemRefreshWorker {
         if (ApplicationManager.getApplication().isDisposed()) {
           return true;
         }
-        if (areChildrenOrNamesChanged(dir, result.first, result.second)) {
+        if (areChildrenOrNamesChanged(dir, snapshot.first, snapshot.second)) {
           if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
           return false;
         }
@@ -184,7 +183,7 @@ final class LocalFileSystemRefreshWorker {
         return null;
       }
       VirtualFile[] children = dir.getChildren();
-      return new Pair<>(getNames(children), Arrays.asList(children));
+      return Pair.create(getNames(children), Arrays.asList(children));
     });
   }
 

@@ -46,7 +46,7 @@ internal class SpaceChatIconProvider : FileIconProvider {
   }
 }
 
-private class SpaceChatFileType : FileType {
+private class SpaceChatFileType private constructor(): FileType {
 
   override fun getName(): String = "SpaceChat"
 

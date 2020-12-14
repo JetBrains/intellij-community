@@ -38,6 +38,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,10 +65,12 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
+import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.openapi.application.CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile;
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 
+@ApiStatus.Internal
 public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
@@ -175,7 +178,7 @@ public final class ConfigImportHelper {
           settings.importFinished(newConfigDir);
         }
 
-        System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+        setConfigImportedInThisSession();
       }
       else {
         log.info("No configs imported, starting with clean configs at " + newConfigDir);
@@ -256,7 +259,7 @@ public final class ConfigImportHelper {
   private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log, boolean smartDelete) throws IOException {
     File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
-    FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir);
+    FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.getName()));
 
     deleteCurrentConfigDir(currentConfig, log, smartDelete);
 
@@ -357,7 +360,13 @@ public final class ConfigImportHelper {
     return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
   }
 
-  /** Returns {@code true} when the IDE is launched for the first time, and configs were imported from another installation. */
+  public static void setConfigImportedInThisSession() {
+    System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+  }
+
+  /**
+   * Returns {@code true} when the IDE is launched for the first time, and configs were imported from another installation.
+   */
   public static boolean isConfigImported() {
     return Boolean.getBoolean(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
   }
@@ -978,12 +987,16 @@ public final class ConfigImportHelper {
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir) {
     if (oldConfig.equals(path.getParent())) {
       String name = path.getFileName().toString();
-      return "user.web.token".equals(name) ||
-             name.startsWith("chrome-user-data") ||
+      return shouldSkipFileDuringImport(name) ||
              Files.exists(newConfig.resolve(path.getFileName())) ||
              path.startsWith(oldPluginsDir);
     }
     return false;
+  }
+
+  private static boolean shouldSkipFileDuringImport(@NotNull String fileName) {
+    List<String> filesToSkip = Arrays.asList(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
+    return filesToSkip.contains(fileName) || fileName.startsWith(CHROME_USER_DATA);
   }
 
   private static String defaultConfigPath(String selector) {

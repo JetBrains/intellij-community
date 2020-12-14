@@ -1,11 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -27,8 +31,7 @@ import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -106,36 +109,37 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
 
   private static <T extends PsiNamedElement> void addVariantsFromIndex(@NotNull CompletionResultSet resultSet,
                                                                        @NotNull PsiFile targetFile,
-                                                                       @NotNull StubIndexKey<String, T> key,
+                                                                       @NotNull StubIndexKey<String, T> indexKey,
                                                                        @NotNull InsertHandler<LookupElement> insertHandler,
                                                                        @NotNull Condition<? super T> condition,
                                                                        @NotNull Class<T> elementClass,
                                                                        @NotNull Function<LookupElement, LookupElement> elementHandler) {
     final Project project = targetFile.getProject();
     final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(targetFile);
-    final Map<String, LookupElement> uniqueResults = new HashMap<>();
+    final Set<String> alreadySuggested = new HashSet<>();
 
-    final Collection<String> keys = StubIndex.getInstance().getAllKeys(key, project);
-    for (final String elementName : resultSet.getPrefixMatcher().sortMatching(keys)) {
-      for (T element : StubIndex.getElements(key, elementName, project, scope, elementClass)) {
-        if (condition.value(element)) {
-          final String name = element.getName();
-          final ItemPresentation itemPresentation = ((NavigationItem)element).getPresentation();
-          if (name != null && itemPresentation != null && itemPresentation.getLocationString() != null) {
-            final LookupElementBuilder builder = LookupElementBuilder
-              .createWithSmartPointer(name, element)
-              .withIcon(element.getIcon(0))
-              .withTailText(" " + itemPresentation.getLocationString(), true)
-              .withInsertHandler(insertHandler);
-
-            uniqueResults.put(itemPresentation.getPresentableText() + itemPresentation.getLocationString(), builder);
-          }
+    StubIndex stubIndex = StubIndex.getInstance();
+    final Collection<String> allKeys = stubIndex.getAllKeys(indexKey, project);
+    for (String elementName : resultSet.getPrefixMatcher().sortMatching(allKeys)) {
+      stubIndex.processElements(indexKey, elementName, project, scope, elementClass, (element) -> {
+        ProgressManager.checkCanceled();
+        if (!condition.value(element)) return true;
+        String name = element.getName();
+        ItemPresentation itemPresentation = ((NavigationItem)element).getPresentation();
+        if (name == null || itemPresentation == null) return true;
+        String locationString = itemPresentation.getLocationString();
+        if (locationString == null) return true;
+        String uniquenessKey = name + locationString;
+        if (alreadySuggested.add(uniquenessKey)) {
+          LookupElementBuilder lookupElement = LookupElementBuilder
+            .createWithSmartPointer(name, element)
+            .withIcon(element.getIcon(0))
+            .withTailText(" " + locationString, true)
+            .withInsertHandler(insertHandler);
+          resultSet.addElement(elementHandler.apply(lookupElement));
         }
-      }
+        return true;
+      });
     }
-    // TODO: find whether the element could be resolved and filter if it's not
-    uniqueResults.values().stream()
-                 .map(elementHandler)
-                 .forEach(resultSet::addElement);
   }
 }

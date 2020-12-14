@@ -282,6 +282,12 @@ public final class HighlightClassUtil {
   public static boolean isJavaHashBangScript(@Nullable PsiFile containingFile) {
     if (!(containingFile instanceof PsiJavaFile)) return false;
     PsiElement firstChild = containingFile.getFirstChild();
+    if (firstChild instanceof PsiImportList && firstChild.getTextLength() == 0) {
+      PsiElement sibling = firstChild.getNextSibling();
+      if (sibling instanceof PsiClass) {
+        firstChild = sibling.getFirstChild();
+      }
+    }
     return firstChild instanceof PsiComment && 
            ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT && 
            firstChild.getText().startsWith("#!");

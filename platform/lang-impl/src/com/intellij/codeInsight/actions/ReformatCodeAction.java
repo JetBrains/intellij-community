@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.actions;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.formatting.FormattingModelBuilder;
@@ -145,7 +146,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   private static DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
     LayoutDirectoryDialog dialog = new LayoutDirectoryDialog(
       project,
-      CodeInsightBundle.message("process.reformat.code"),
+      CodeStyleBundle.message("process.reformat.code"),
       CodeInsightBundle.message("process.scope.directory", dir.getVirtualFile().getPath()),
       VcsFacade.getInstance().hasChanges(dir)
     );
@@ -338,7 +339,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                                                : VcsFacade.getInstance().hasChanges(project);
 
     LayoutProjectCodeDialog dialog =
-      new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
+      new LayoutProjectCodeDialog(project, CodeStyleBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
     if (!dialog.showAndGet()) {
       return null;
     }

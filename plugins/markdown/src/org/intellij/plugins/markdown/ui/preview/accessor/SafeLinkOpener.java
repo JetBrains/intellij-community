@@ -44,12 +44,9 @@ import java.util.Set;
 final class SafeLinkOpener {
   private static final Logger LOG = Logger.getInstance(SafeLinkOpener.class);
 
-  private static final Set<String> SCHEMES = ContainerUtil.newTroveSet(
-    "http",
-    "https"
-  );
+  private static final Set<String> SCHEMES = Set.of("http", "https");
 
-  private static final Set<String> SAFE_LOCAL_EXTENSIONS = ContainerUtil.newTroveSet(
+  private static final Set<String> SAFE_LOCAL_EXTENSIONS = Set.of(
     "md",
     "png",
     "gif",
@@ -163,7 +160,7 @@ final class SafeLinkOpener {
 
   private static void showHeadersPopup(@NotNull Collection<PsiElement> headers, @NotNull RelativePoint point) {
     ListPopupStep headersPopup =
-      new BaseListPopupStep<PsiElement>(MarkdownBundle.message("markdown.navigate.to.header"), new ArrayList<>(headers)) {
+      new BaseListPopupStep<>(MarkdownBundle.message("markdown.navigate.to.header"), new ArrayList<>(headers)) {
         @NotNull
         @Override
         public String getTextFor(PsiElement value) {

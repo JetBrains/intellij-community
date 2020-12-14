@@ -1,0 +1,10 @@
+android {
+  buildTypes {
+    create("xyz") {
+      buildConfigField("abcd", "mnop", "qrst")
+      consumerProguardFiles("proguard-android-1.txt", "proguard-rules.pro")
+      proguardFiles("proguard-android-1.txt", "proguard-rules.pro")
+      resValue("mnop", "efgh", "ijkl")
+    }
+  }
+}

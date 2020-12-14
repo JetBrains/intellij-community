@@ -55,7 +55,6 @@ import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -163,11 +162,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
       });
     };
-    EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
+    EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
     myLock = new ReadMostlyRWLock();
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass()));
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass()));
     }
     activity.end();
 
@@ -331,11 +330,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  public final void load(@Nullable Path configPath) {
+  public final void load() {
     @SuppressWarnings("unchecked")
     List<IdeaPluginDescriptorImpl> plugins = (List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins();
     registerComponents(plugins);
-    ApplicationLoader.initConfigurationStore(this, configPath);
+    ApplicationLoader.initConfigurationStore(this);
     Executor executor = ApplicationLoader.createExecutorToPreloadServices();
     preloadServices(plugins, executor, false).getSyncPreloadedServices().join();
     loadComponents(null);

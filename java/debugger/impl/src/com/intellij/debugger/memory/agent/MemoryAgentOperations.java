@@ -9,12 +9,11 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.extractor.ProxyExtractor;
-import com.intellij.debugger.memory.agent.parsers.BooleanParser;
-import com.intellij.debugger.memory.agent.parsers.GcRootsPathsParser;
-import com.intellij.debugger.memory.agent.parsers.LongArrayParser;
-import com.intellij.debugger.memory.agent.parsers.LongValueParser;
+import com.intellij.debugger.memory.agent.parsers.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,10 +26,12 @@ final class MemoryAgentOperations {
   private static final Key<MemoryAgent> MEMORY_AGENT_KEY = Key.create("MEMORY_AGENT_KEY");
   private static final Logger LOG = Logger.getInstance(MemoryAgentOperations.class);
 
-  static long estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference)
+  @NotNull
+  static Pair<Long, ObjectReference[]> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference)
     throws EvaluateException {
     Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECT_SIZE, Collections.singletonList(reference));
-    return LongValueParser.INSTANCE.parse(result);
+    Pair<Long, List<ObjectReference>> pair = SizeAndHeldObjectsParser.INSTANCE.parse(result);
+    return new Pair<>(pair.getFirst(), pair.getSecond().toArray(new ObjectReference[0]));
   }
 
   static long @NotNull [] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
@@ -38,6 +39,30 @@ final class MemoryAgentOperations {
     ArrayReference array = wrapWithArray(evaluationContext, references);
     Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE, Collections.singletonList(array));
     return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+  }
+
+  static long @NotNull [] getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_SIZE_BY_CLASSES, Collections.singletonList(array));
+    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+  }
+
+  static long @NotNull [] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
+    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+  }
+
+  @NotNull
+  static Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_AND_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
+    Pair<List<Long>, List<Long>> pair = ShallowAndRetainedSizeParser.INSTANCE.parse(result);
+    return new Pair<>(pair.getFirst().stream().mapToLong(Long::longValue).toArray(),
+                      pair.getSecond().stream().mapToLong(Long::longValue).toArray());
   }
 
   @NotNull
@@ -83,11 +108,9 @@ final class MemoryAgentOperations {
       return builder
         .setCanEstimateObjectSize(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECT_SIZE))
         .setCanEstimateObjectsSizes(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECTS_SIZES))
-        .setCanFindPathsToClosestGcRoots(
-          checkAgentCapability(
-            context, proxyType, MemoryAgentNames.Methods.CAN_FIND_PATHS_TO_CLOSEST_GC_ROOTS
-          )
-        )
+        .setCanGetShallowSizeByClasses(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_GET_SHALLOW_SIZE_BY_CLASSES))
+        .setCanGetRetainedSizeByClasses(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_GET_RETAINED_SIZE_BY_CLASSES))
+        .setCanFindPathsToClosestGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_PATHS_TO_CLOSEST_GC_ROOTS))
         .buildLoaded();
     }
   }

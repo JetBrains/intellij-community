@@ -125,7 +125,9 @@ public class GradleTestsExecutionConsoleManager
       }
     }
     SMTestProxy.SMRootTestProxy testsRootNode = resultsViewer.getTestsRootNode();
+    testsRootNode.setExecutionId(env.getExecutionId());
     testsRootNode.setSuiteStarted();
+    consoleView.getEventPublisher().onTestingStarted(testsRootNode);
     if (processHandler != null) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override

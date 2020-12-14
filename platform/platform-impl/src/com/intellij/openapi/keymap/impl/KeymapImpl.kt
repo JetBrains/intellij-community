@@ -458,10 +458,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       throw InvalidDataException("unknown element: $keymapElement")
     }
 
-    if (keymapElement.getAttributeValue(VERSION_ATTRIBUTE) == null) {
-      Converter01.convert(keymapElement)
-    }
-
     name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
     unknownParentName = null

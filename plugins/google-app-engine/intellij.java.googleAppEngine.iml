@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.java.remoteServers" />
     <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

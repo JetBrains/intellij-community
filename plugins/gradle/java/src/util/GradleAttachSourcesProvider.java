@@ -134,7 +134,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
 
         String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
         ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
-        settings.setExecutionName("Download sources");
+        settings.setExecutionName(getName());
         settings.setExternalProjectPath(ExternalSystemApiUtil.getExternalRootProjectPath(module));
         settings.setTaskNames(Collections.singletonList(taskName));
         settings.setVmOptions(gradleVmOptions);

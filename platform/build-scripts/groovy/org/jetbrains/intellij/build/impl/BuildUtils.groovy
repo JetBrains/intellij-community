@@ -21,6 +21,11 @@ import java.nio.charset.StandardCharsets
 
 @CompileStatic
 class BuildUtils {
+  static void addUltimateBuildScriptsToClassPath(String home, AntBuilder ant) {
+    addToClassPath("$home/build/groovy", ant)
+    addToClassPath("$home/build/dependencies/groovy", ant)
+  }
+
   static void addToClassPath(String path, AntBuilder ant) {
     addToClassLoaderClassPath(path, ant, BuildUtils.class.classLoader)
   }

@@ -51,7 +51,7 @@ public final class PurityAnalysis {
     }
     EffectQuantum[] quanta = dataInterpreter.effects;
     DataValue returnValue = dataInterpreter.returnValue == null ? DataValue.UnknownDataValue1 : dataInterpreter.returnValue;
-    Set<EffectQuantum> effects = new HashSet<>();
+    List<EffectQuantum> effects = new ArrayList<>();
     for (EffectQuantum effectQuantum : quanta) {
       if (effectQuantum != null) {
         if (effectQuantum == EffectQuantum.TopEffectQuantum) {
@@ -60,7 +60,7 @@ public final class PurityAnalysis {
         effects.add(effectQuantum);
       }
     }
-    return new Equation(key, new Effects(returnValue, effects));
+    return new Equation(key, new Effects(returnValue, Set.copyOf(effects)));
   }
 }
 

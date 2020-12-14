@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter.convertToDeviceSpace
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.ui.ScreenUtil
@@ -19,12 +19,12 @@ internal class FrameInfoHelper {
   companion object {
     @JvmStatic
     fun isFullScreenSupportedInCurrentOs(): Boolean {
-      return SystemInfo.isMac || SystemInfo.isWindows || (SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported())
+      return SystemInfoRt.isMac || SystemInfoRt.isWindows || (SystemInfoRt.isXWindow && X11UiUtil.isFullScreenSupported())
     }
 
     @JvmStatic
     val isFloatingMenuBarSupported: Boolean
-      get() = !SystemInfo.isMac && isFullScreenSupportedInCurrentOs()
+      get() = !SystemInfoRt.isMac && isFullScreenSupportedInCurrentOs()
 
     @JvmStatic
     fun isMaximized(state: Int): Boolean {
@@ -75,9 +75,9 @@ internal class FrameInfoHelper {
 }
 
 private fun updateFrameInfo(frameHelper: ProjectFrameHelper, lastNormalFrameBounds: Rectangle?, oldFrameInfo: FrameInfo?): FrameInfo {
-  val frame = frameHelper.frame
+  val frame = frameHelper.frame!!
   var extendedState = frame.extendedState
-  if (SystemInfo.isMac) {
+  if (SystemInfoRt.isMac) {
     // java 11
     @Suppress("USELESS_CAST")
     val peer = AWTAccessor.getComponentAccessor().getPeer(frame) as ComponentPeer?
@@ -91,7 +91,8 @@ private fun updateFrameInfo(frameHelper: ProjectFrameHelper, lastNormalFrameBoun
   val isMaximized = FrameInfoHelper.isMaximized(extendedState) || isInFullScreen
 
   val oldBounds = oldFrameInfo?.bounds
-  val newBounds = convertToDeviceSpace(frame.graphicsConfiguration, if (isMaximized && lastNormalFrameBounds != null) lastNormalFrameBounds else frame.bounds)
+  val newBounds = convertToDeviceSpace(frame.graphicsConfiguration,
+                                       if (isMaximized && lastNormalFrameBounds != null) lastNormalFrameBounds else frame.bounds)
 
   val usePreviousBounds = lastNormalFrameBounds == null && isMaximized &&
                           oldBounds != null &&

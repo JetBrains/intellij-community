@@ -154,14 +154,11 @@ public class JUnit5ConverterInspection extends BaseInspection {
     }
 
     private static class MyJUnit5MigrationProcessor extends MigrationProcessor {
-
-      private final Project myProject;
       private final Set<? extends PsiFile> myFiles;
 
       MyJUnit5MigrationProcessor(Project project, MigrationMap migrationMap, Set<? extends PsiFile> files) {
         super(project, migrationMap, GlobalSearchScope.filesWithoutLibrariesScope(project, ContainerUtil.map(files, file -> file.getVirtualFile())));
         setPrepareSuccessfulSwingThreadCallback(EmptyRunnable.INSTANCE);
-        myProject = project;
         myFiles = files;
       }
 

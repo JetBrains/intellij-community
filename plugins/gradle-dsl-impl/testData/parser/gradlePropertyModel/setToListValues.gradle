@@ -1,0 +1,9 @@
+ext {
+  def var1 = "hello"
+  prop1 = 5
+  prop2 = var1
+  prop3 = "${prop2}"
+  prop4 = [key: 'val', key1: true]
+  prop5 = ['val']
+  prop6 = [key: 'val']
+}

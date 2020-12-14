@@ -19,5 +19,6 @@
     <orderEntry type="library" name="winp" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
   </component>
 </module>

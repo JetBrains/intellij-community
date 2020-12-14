@@ -19,6 +19,16 @@ public final class CollectionFactory {
   }
 
   @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakValueMap() {
+    return new ConcurrentWeakValueHashMap<>();
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftValueMap() {
+    return new ConcurrentSoftValueHashMap<>();
+  }
+
+  @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakIdentityMap() {
     return new ConcurrentWeakHashMap<>(ContainerUtil.identityStrategy());
   }
@@ -51,6 +61,10 @@ public final class CollectionFactory {
 
   public static @NotNull Set<CharSequence> createCharSequenceSet(boolean caseSensitive, int expectedSize, float loadFactor) {
     return new ObjectOpenCustomHashSet<>(expectedSize, loadFactor, FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
+  }
+
+  public static @NotNull Set<CharSequence> createCharSequenceSet(List<CharSequence> items) {
+    return new ObjectOpenCustomHashSet<>(items, FastUtilHashingStrategies.getCharSequenceStrategy(true));
   }
 
   public static @NotNull Set<CharSequence> createCharSequenceSet(boolean caseSensitive, int expectedSize) {

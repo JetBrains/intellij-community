@@ -303,7 +303,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath, preferredEnvironment);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, null, existingSdks, newProjectPath, preferredSdk);
 
-    PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
+    PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() &&
+                                 !PyCondaSdkCustomizer.Companion.getInstance().getPreferExistingEnvironments() ?
                                  newEnvironmentPanel : existingSdkPanel;
     List<PyAddSdkPanel> panels;
     if (PyCondaSdkCustomizer.Companion.getInstance().getPreferExistingEnvironments()) {

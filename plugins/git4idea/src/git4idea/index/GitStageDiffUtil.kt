@@ -139,7 +139,10 @@ class ThreeSidesProducer(private val project: Project,
                              stagedDiffContent(project, statusNode),
                              localDiffContent(project, statusNode),
                              GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
-                             title).apply { putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true) }
+                             title).apply {
+      putUserData(DiffUserDataKeys.THREESIDE_DIFF_COLORS_MODE,
+                  DiffUserDataKeys.ThreeSideDiffColors.LEFT_TO_RIGHT)
+    }
   }
 }
 

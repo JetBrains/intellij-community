@@ -1,6 +1,7 @@
-from typing import Any, Optional
-from hmac import new as hmac
 from hashlib import sha1 as _default_hash
+from hmac import new as hmac
+from typing import Any, Optional
+
 from werkzeug.contrib.sessions import ModificationTrackingDict
 
 class UnquoteError(Exception): ...
@@ -23,6 +24,16 @@ class SecureCookie(ModificationTrackingDict[Any, Any]):
     def unserialize(cls, string, secret_key): ...
     @classmethod
     def load_cookie(cls, request, key: str = ..., secret_key: Optional[Any] = ...): ...
-    def save_cookie(self, response, key: str = ..., expires: Optional[Any] = ..., session_expires: Optional[Any] = ...,
-                    max_age: Optional[Any] = ..., path: str = ..., domain: Optional[Any] = ..., secure: Optional[Any] = ...,
-                    httponly: bool = ..., force: bool = ...): ...
+    def save_cookie(
+        self,
+        response,
+        key: str = ...,
+        expires: Optional[Any] = ...,
+        session_expires: Optional[Any] = ...,
+        max_age: Optional[Any] = ...,
+        path: str = ...,
+        domain: Optional[Any] = ...,
+        secure: Optional[Any] = ...,
+        httponly: bool = ...,
+        force: bool = ...,
+    ): ...

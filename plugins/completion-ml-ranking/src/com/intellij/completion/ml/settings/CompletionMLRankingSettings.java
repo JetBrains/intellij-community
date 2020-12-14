@@ -7,6 +7,7 @@ import com.intellij.completion.ml.ranker.ExperimentModelProvider;
 import com.intellij.completion.ml.sorting.RankingSupport;
 import com.intellij.internal.ml.completion.RankingModelProvider;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Don't use this class for disabling ML ranking from external plugins. Use {@link com.intellij.completion.ml.CompletionMLPolicy} instead.
+ */
 @State(name = "CompletionMLRankingSettings", storages = @Storage(value = "completionMLRanking.xml", roamingType = RoamingType.DISABLED))
 public final class CompletionMLRankingSettings implements PersistentStateComponent<CompletionMLRankingSettings.State> {
   private static final Logger LOG = Logger.getInstance(CompletionMLRankingSettings.class);
@@ -99,6 +103,11 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     return ExperimentModelProvider.enabledByDefault().contains(rankerId);
   }
 
+  private static boolean isShowDiffEnabledByDefault() {
+    String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
+    return productCode == "PY" || productCode == "PC";
+  }
+
   private void triggerSettingsChanged(boolean enabled) {
     for (String ranker : getEnabledRankers()) {
       MLCompletionSettingsCollector.rankingSettingsChanged(ranker, enabled, isEnabledByDefault(ranker), false);
@@ -114,7 +123,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
   public static final class State {
     public boolean rankingEnabled;
-    public boolean showDiff = false;
+    public boolean showDiff = isShowDiffEnabledByDefault();
     public final Map<String, Boolean> language2state = new HashMap<>();
 
     public State() {

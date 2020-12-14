@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFix;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -289,7 +290,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     UIUtil.dispatchAllInvocationEvents();
 
     ArrayList<String> infos = new ArrayList<>();
-    for (UnknownSdkEditorNotification.SimpleSdkFixInfo notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
+    for (UnknownSdkFix notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
       infos.add("SdkFixInfo:" + notification.toString());
     }
 

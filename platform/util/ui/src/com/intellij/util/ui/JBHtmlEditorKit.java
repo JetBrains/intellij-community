@@ -225,7 +225,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       else if ("icon".equals(elem.getName())) {
         Object src = attrs.getAttribute(HTML.Attribute.SRC);
         if (src instanceof String) {
-          Icon icon = IconLoader.findIcon((String)src, false);
+          Icon icon = IconLoader.findIcon((String)src, JBHtmlEditorKit.class, true, false);
           if (icon == null) {
             icon = myAdditionalIconResolver.apply((String)src);
           }

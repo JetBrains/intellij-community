@@ -1,0 +1,4 @@
+ext {
+  prop1 = '“Come and see!” I looked'
+  prop2 = 'and there before me was a white horse!'
+}

@@ -259,4 +259,8 @@ public class MavenServerCMDState extends CommandLineState {
   public static void setThrowExceptionOnNextServerStart() {
     setupThrowMainClass = true;
   }
+  @TestOnly
+  public static void resetThrowExceptionOnNextServerStart() {
+    setupThrowMainClass = false;
+  }
 }

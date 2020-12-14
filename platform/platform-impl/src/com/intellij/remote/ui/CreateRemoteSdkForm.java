@@ -219,7 +219,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
   private void radioSelected(boolean propagateEvent) {
     CredentialsType selectedType = getSelectedType();
-    saveSelectedRadio(selectedType);
 
     CardLayout layout = (CardLayout)myTypesPanel.getLayout();
     layout.show(myTypesPanel, selectedType.getName());
@@ -308,6 +307,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     //  ArrayUtil.mergeArrays(cases, exCases.toArray(new CredentialsCase[exCases.size()]))
     //}
 
+    saveSelectedRadio(myConnectionType);
     myConnectionType.saveCredentials(
       sdkData,
       new CaseCollector() {

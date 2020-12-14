@@ -21,7 +21,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
@@ -29,84 +29,90 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public abstract class ElementProcessor<T extends PsiElement> implements ResolveUtil.XmlProcessor {
-    private int myInclude;
-    private boolean myIsCyclic;
+  private int myInclude;
+  private boolean myIsCyclic;
 
-    protected final T myRoot;
+  protected final T myRoot;
 
-  private final Set<PsiElement> myHistory = ContainerUtil.newIdentityTroveSet();
+  private final Set<PsiElement> myHistory = new ReferenceOpenHashSet<>();
 
-    public ElementProcessor(T root) {
-        myRoot = root;
+  public ElementProcessor(T root) {
+    myRoot = root;
+  }
+
+  protected abstract void processTemplate(XmlTag tag);
+
+  protected abstract void processVarOrParam(XmlTag tag);
+
+  protected abstract boolean shouldContinue();
+
+  protected abstract boolean followImport();
+
+  protected boolean isInclude() {
+    return myInclude > 0;
+  }
+
+  public boolean isCyclic() {
+    return myIsCyclic;
+  }
+
+  @Override
+  public boolean process(XmlTag tag) {
+    if (myHistory.contains(tag)) {
+      myIsCyclic = true;
+      return false;
     }
+    myHistory.add(tag);
 
-    protected abstract void processTemplate(XmlTag tag);
-    protected abstract void processVarOrParam(XmlTag tag);
-
-    protected abstract boolean shouldContinue();
-    protected abstract boolean followImport();
-
-    protected boolean isInclude() {
-        return myInclude > 0;
+    if (XsltSupport.isVariableOrParam(tag)) {
+      processVarOrParam(tag);
     }
-
-    public boolean isCyclic() {
-        return myIsCyclic;
+    else if (XsltSupport.isTemplate(tag, false)) {
+      processTemplate(tag);
     }
-
-    @Override
-    public boolean process(XmlTag tag) {
-        if (myHistory.contains(tag)) {
-            myIsCyclic = true;
-            return false;
-        }
-        myHistory.add(tag);
-
-        if (XsltSupport.isVariableOrParam(tag)) {
-            processVarOrParam(tag);
-        } else if (XsltSupport.isTemplate(tag, false)) {
-            processTemplate(tag);
-        } else if (XsltSupport.isIncludeOrImport(tag)) {
-            if (XsltSupport.isImport(tag) && !followImport()) {
-                return shouldContinue();
-            }
-            final PsiFile containingFile = tag.getContainingFile();
-            assert containingFile != null;
-            PsiFile file = containingFile.getOriginalFile();
-
-            final PsiFile psiFile = ResolveUtil.resolveFile(tag.getAttribute("href", null), file);
-            if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {
-                processExternalFile(psiFile, tag);
-            }
-        } else {
-          processTag(tag);
-        }
+    else if (XsltSupport.isIncludeOrImport(tag)) {
+      if (XsltSupport.isImport(tag) && !followImport()) {
         return shouldContinue();
+      }
+      final PsiFile containingFile = tag.getContainingFile();
+      assert containingFile != null;
+      PsiFile file = containingFile.getOriginalFile();
+
+      final PsiFile psiFile = ResolveUtil.resolveFile(tag.getAttribute("href", null), file);
+      if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {
+        processExternalFile(psiFile, tag);
+      }
     }
-
-    protected void processTag(XmlTag tag) {
+    else {
+      processTag(tag);
     }
+    return shouldContinue();
+  }
 
-    public void processExternalFile(PsiFile psiFile, XmlTag place) {
-        final XmlDocument document = ((XmlFile)psiFile).getDocument();
-        assert document != null;
+  protected void processTag(XmlTag tag) {
+  }
 
-        final XmlTag rootTag = document.getRootTag();
-        assert rootTag != null;
+  public void processExternalFile(PsiFile psiFile, XmlTag place) {
+    final XmlDocument document = ((XmlFile)psiFile).getDocument();
+    assert document != null;
 
-        myInclude++;
-        try {
-            rootTag.processElements(new PsiElementProcessor() {
-                @Override
-                public boolean execute(@NotNull PsiElement element) {
-                    if (element instanceof XmlTag) {
-                        return process((XmlTag)element);
-                    }
-                    return shouldContinue();
-                }
-            }, place);
-        } finally {
-            myInclude--;
+    final XmlTag rootTag = document.getRootTag();
+    assert rootTag != null;
+
+    myInclude++;
+    try {
+      rootTag.processElements(new PsiElementProcessor() {
+        @Override
+        public boolean execute(@NotNull PsiElement element) {
+          if (element instanceof XmlTag) {
+            return process((XmlTag)element);
+          }
+          return shouldContinue();
         }
+      }, place);
     }
+    finally {
+      myInclude--;
+    }
+  }
 }

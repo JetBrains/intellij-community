@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,7 +85,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
     return "MavenRunConfiguration";
   }
 
-  public static String generateName(Project project, MavenRunnerParameters runnerParameters) {
+  public static @NlsSafe String generateName(Project project, MavenRunnerParameters runnerParameters) {
     StringBuilder stringBuilder = new StringBuilder();
 
     final String name = getMavenProjectName(project, runnerParameters);

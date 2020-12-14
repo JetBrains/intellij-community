@@ -471,9 +471,9 @@ public final class FileSystemUtil {
    * determines case-sensitivity of the directory containing {@code anyChild} by querying its attributes via different names
    */
   @NotNull
-  public static FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull Path anyChild) {
+  public static FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
     // todo call some native API here, instead of slowly querying file attributes
-    Path parent = anyChild.getParent();
+    File parent = anyChild.getParentFile();
     if (parent == null) {
       // assume root always has FS case-sensitivity
       return SystemInfo.isFileSystemCaseSensitive
@@ -481,8 +481,7 @@ public final class FileSystemUtil {
                : FileAttributes.CaseSensitivity.INSENSITIVE;
     }
 
-    File file = anyChild.toFile();
-    String name = file.getName();
+    String name = anyChild.getName();
     String newName = toggleCase(name);
     if (newName.equals(name)) {
       // we have a bad case of "123" file
@@ -503,7 +502,7 @@ public final class FileSystemUtil {
       // if changed-case file found, there is a slim chance that the FS is still case-sensitive but there are two files with different case
       File newCanonicalFile = new File(newPath).getCanonicalFile();
       String newCanonicalName = newCanonicalFile.getName();
-      if (newCanonicalName.equals(name) || newCanonicalName.equals(file.getCanonicalFile().getName())) {
+      if (newCanonicalName.equals(name) || newCanonicalName.equals(anyChild.getCanonicalFile().getName())) {
         // nah, these two are really the same file
         return FileAttributes.CaseSensitivity.INSENSITIVE;
       }
@@ -526,8 +525,8 @@ public final class FileSystemUtil {
     return !toggleCase(name).equals(name);
   }
 
-  private static String findCaseableSiblingName(@NotNull Path dir) {
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+  private static String findCaseableSiblingName(@NotNull File dir) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
         if (!name.toLowerCase().equals(name.toUpperCase())) {

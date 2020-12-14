@@ -17,13 +17,13 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.ide.util.TipDialog
 import com.intellij.idea.IdeaLogger
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -43,7 +44,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
@@ -60,11 +60,13 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.DescriptorToLoad
+import com.intellij.ui.IconDeferrer
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.exists
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
 import org.jetbrains.annotations.NonNls
@@ -83,7 +85,7 @@ import kotlin.collections.component2
 
 object DynamicPlugins {
   private val LOG = logger<DynamicPlugins>()
-  private val GROUP = NotificationGroup("Dynamic plugin installation", NotificationDisplayType.BALLOON, false)
+  private val GROUP_ID = "Dynamic plugin installation"
 
   private val classloadersFromUnloadedPlugins = ContainerUtil.createWeakValueMap<PluginId, PluginClassLoader>()
 
@@ -449,7 +451,10 @@ object DynamicPlugins {
       if (options.save) {
         saveDocumentsAndProjectsAndApp(true)
       }
+      TipDialog.hideForProject(null)
+
       application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
+
       IdeEventQueue.getInstance().flushQueue()
 
       application.runWriteAction {
@@ -469,11 +474,9 @@ object DynamicPlugins {
             true
           }
 
-          if (!pluginDescriptor.isUseIdeaClassLoader) {
-            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
-              IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
-              Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
-            }
+          if (!pluginDescriptor.isUseIdeaClassLoader && loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
+            IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
+            Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
           }
 
           unloadDependencyDescriptors(pluginDescriptor, loadedPluginDescriptor)
@@ -493,6 +496,8 @@ object DynamicPlugins {
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
           MessagePool.getInstance().clearErrors()
           DecodeDefaultsUtil.clearResourceCache()
+
+          serviceIfCreated<IconDeferrer>()?.clearCache()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
           val projectManager = ProjectManagerEx.getInstanceExIfCreated()
@@ -550,7 +555,7 @@ object DynamicPlugins {
             FileUtil.asyncDelete(File(snapshotPath))
             classLoaderUnloaded = true
           }
-          if (Registry.`is`("ide.plugins.analyze.snapshot") && File(snapshotPath).exists()) {
+          if (Registry.`is`("ide.plugins.analyze.snapshot") && Paths.get(snapshotPath).exists()) {
             val analysisResult = analyzeSnapshot(snapshotPath, pluginDescriptor.pluginId)
             if (analysisResult.isEmpty()) {
               LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (no strong references to classloader in .hprof file)")
@@ -595,7 +600,7 @@ object DynamicPlugins {
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    val notification = GROUP.createNotification(text, notificationType)
+    val notification = NotificationGroupManager.getInstance().getNotificationGroup(GROUP_ID).createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)
     }

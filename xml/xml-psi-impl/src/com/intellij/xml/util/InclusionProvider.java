@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
@@ -22,6 +23,7 @@ import java.util.regex.Matcher;
 * @author peter
 */
 final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
+  private static final Logger LOG = Logger.getInstance(InclusionProvider.class);
   private final XmlTag myXincludeTag;
 
   InclusionProvider(XmlTag xincludeTag) {
@@ -30,6 +32,7 @@ final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
 
   public static PsiElement @NotNull [] getIncludedTags(XmlTag xincludeTag) {
     if (!XmlTagImpl.shouldProcessIncludesNow()) {
+      LOG.error("XML include processing is disabled during indexing, please fix callers who insists on enabling it");
       IdempotenceChecker.logTrace("!shouldProcessIncludesNow");
       return PsiElement.EMPTY_ARRAY;
     }

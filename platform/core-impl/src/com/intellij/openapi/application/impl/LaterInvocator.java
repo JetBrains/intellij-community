@@ -19,7 +19,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -425,7 +425,7 @@ public final class LaterInvocator {
     semaphore.down();
     invokeLater(semaphore::up, ModalityState.any(), true);
     while (!semaphore.isUp()) {
-      UIUtil.dispatchAllInvocationEvents();
+      EdtInvocationManager.dispatchAllInvocationEvents();
     }
   }
 }

@@ -1,6 +1,6 @@
-from typing import Any, Dict, Iterable, Iterator, Mapping, MutableMapping, Optional, Tuple, TypeVar, Union, Generic
+from typing import Any, Dict, Generic, Iterable, Iterator, Mapping, MutableMapping, Optional, Tuple, TypeVar, Union
 
-_VT = TypeVar('_VT')
+_VT = TypeVar("_VT")
 
 class CaseInsensitiveDict(MutableMapping[str, _VT], Generic[_VT]):
     def __init__(self, data: Optional[Union[Mapping[str, _VT], Iterable[Tuple[str, _VT]]]] = ..., **kwargs: _VT) -> None: ...

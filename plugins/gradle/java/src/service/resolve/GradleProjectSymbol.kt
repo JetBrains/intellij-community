@@ -2,10 +2,13 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.codeInsight.navigation.PsiElementNavigationTarget
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
 import com.intellij.model.presentation.PresentableSymbol
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
+import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiElement
@@ -13,11 +16,14 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
+import javax.swing.Icon
 
 @Internal
 abstract class GradleProjectSymbol(
   protected val rootProjectPath: String
-) : PresentableSymbol, NavigatableSymbol {
+) : PresentableSymbol,
+    NavigatableSymbol,
+    SearchTarget {
 
   init {
     require(rootProjectPath.isNotBlank())
@@ -44,6 +50,17 @@ abstract class GradleProjectSymbol(
   }
 
   protected abstract fun externalProject(rootProject: ExternalProject): ExternalProject?
+
+  override val usageHandler: UsageHandler<*> get() = UsageHandler.createEmptyUsageHandler(projectName)
+
+  override val presentation: TargetPopupPresentation
+    get() {
+      val presentation = symbolPresentation
+      return object : TargetPopupPresentation {
+        override fun getIcon(): Icon? = presentation.icon
+        override fun getPresentableText(): String = presentation.longDescription
+      }
+    }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

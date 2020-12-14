@@ -13,12 +13,16 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
-                                                       internalEntitySource: JpsFileEntitySource)
-  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource) {
+                                                       internalEntitySource: JpsFileEntitySource,
+                                                       internalModuleListSerializer: JpsModuleListSerializer)
+  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, internalModuleListSerializer) {
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
-  override fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
+  override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
+                            reader: JpsFileContentReader,
+                            errorReporter: ErrorReporter,
+                            virtualFileManager: VirtualFileUrlManager) {
   }
 
   override fun acceptsSource(entitySource: EntitySource): Boolean {
@@ -118,6 +122,6 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
       fileUrl
     }
     val filePath = JpsPathUtil.urlToPath(fileUrl.filePath)
-    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, internalSource)
+    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, internalSource, this)
   }
 }

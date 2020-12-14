@@ -7,7 +7,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -127,7 +126,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    */
   @Contract(pure = true)
   static Simple instanceCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
-    return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.INSTANCE);
+    return new Simple(className, Set.of(methodNames), null, CallType.INSTANCE);
   }
 
   /**
@@ -139,7 +138,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    */
   @Contract(pure = true)
   static Simple exactInstanceCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
-    return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.EXACT_INSTANCE);
+    return new Simple(className, Set.of(methodNames), null, CallType.EXACT_INSTANCE);
   }
 
   /**
@@ -151,7 +150,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    */
   @Contract(pure = true)
   static Simple staticCall(@NotNull @NonNls String className, @NonNls String... methodNames) {
-    return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.STATIC);
+    return new Simple(className, Set.of(methodNames), null, CallType.STATIC);
   }
 
   static Simple enumValues() {
@@ -294,7 +293,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
       if (methodRef == null) return false;
       String name = methodRef.getReferenceName();
-      if (!myNames.contains(name)) return false;
+      if (name == null || !myNames.contains(name)) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
       if (!methodMatches(method)) return false;
       PsiParameterList parameterList = method.getParameterList();

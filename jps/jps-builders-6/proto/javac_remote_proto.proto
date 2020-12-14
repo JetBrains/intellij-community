@@ -90,7 +90,7 @@ message Message {
      optional string output_root = 3;
      optional string relative_path = 4;
      optional string class_name = 5;
-     optional string source_uri = 6;
+     repeated string source_uri = 6;
      optional bytes content = 7;
      optional string location = 8;
     }

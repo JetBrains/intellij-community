@@ -11,6 +11,7 @@ import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -106,4 +107,14 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
   protected abstract void customizeFragments(List<SettingsEditorFragment<T, ?>> fragments,
                                              ModuleClasspathCombo classpathCombo,
                                              CommonParameterFragments<T> commonParameterFragments);
+
+  @Override
+  public void targetChanged(String targetName) {
+    SettingsEditorFragment<T, ?> fragment = ContainerUtil.find(getFragments(), f -> CommonJavaFragments.JRE_PATH == f.getId());
+    if (fragment != null) {
+      if (((JrePathEditor)fragment.component()).updateModel(targetName)) {
+        fragment.resetFrom(getRunConfiguration());
+      }
+    }
+  }
 }

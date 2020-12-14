@@ -96,12 +96,16 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           label(message("combobox.look.and.feel"))
           val theme = comboBox(lafManager.lafComboBoxModel,
                    { lafManager.lookAndFeelReference },
-                   { lafManager.lookAndFeelReference = it },
+                   { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) },
                    lafManager.lookAndFeelCellRenderer).shouldUpdateLaF()
 
-          component(lafManager.settingsToolbar)
-            .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
-            .withLeftGap()
+          val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"),
+                                      { lafManager.autodetect },
+                                      { lafManager.autodetect = it }).withLargeLeftGap().shouldUpdateLaF().
+                              apply { component.isVisible = lafManager.autodetectSupported }
+
+          theme.enableIf(syncCheckBox.selected.not())
+          component(lafManager.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
         }.largeGapAfter()
         fullRow {
           val overrideLaF = checkBox(cdOverrideLaFFont)
@@ -369,6 +373,6 @@ private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleL
       font = Font(scheme.editorFontName, Font.PLAIN, scheme.editorFontSize)
     }
 
-    text = value.toString()
+    text = value.presentableName
   }
 }

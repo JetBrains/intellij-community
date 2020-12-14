@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -30,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
-
   private CopyPasteProviderPanel myPanel;
   private boolean myPasteEnabled = false;
 
@@ -166,8 +163,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     @NotNull
     @Override
     public TableCellEditor getEditor(EnvironmentVariable variable) {
-      StringWithNewLinesCellEditor editor = new StringWithNewLinesCellEditor();
-      return editor;
+      return new StringWithNewLinesCellEditor();
     }
   }
 
@@ -286,7 +282,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         return myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT);
       }
     };
-    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.Menu_paste) {
+    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.MenuPaste) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPanel.performPaste(e.getDataContext());
@@ -334,7 +330,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         while (pos > 0 && pair.charAt(pos - 1) == '\\') {
           pos = pair.indexOf('=', pos + 1);
         }
-        pair = pair.replaceAll("[\\\\]{1}","\\\\\\\\");
+        pair = pair.replaceAll("[\\\\]","\\\\\\\\");
         result.put(StringUtil.unescapeStringCharacters(pair.substring(0, pos)),
           StringUtil.unescapeStringCharacters(pair.substring(pos + 1)));
       }

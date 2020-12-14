@@ -1,0 +1,5 @@
+ext {
+  def var1 = "hello"
+
+  prop1 = "${var1} ${var2}"
+}

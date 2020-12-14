@@ -1,0 +1,2 @@
+ext.COMPILE_SDK_VERSION = 21
+ext.srcDirName = 'src/java'

@@ -85,6 +85,11 @@ public interface FileTemplate extends Cloneable {
   String getText(@NotNull Properties attributes) throws IOException;
 
   @NotNull
+  default String getFileName() { return ""; }
+
+  default void setFileName(@NotNull String fileName) {}
+
+  @NotNull
   String getExtension();
 
   void setExtension(@NotNull String extension);

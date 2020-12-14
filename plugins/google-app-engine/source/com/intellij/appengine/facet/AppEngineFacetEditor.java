@@ -34,8 +34,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private JPanel mySdkEditorPanel;
   private JCheckBox myRunEnhancerOnMakeCheckBox;
   private JPanel myFilesToEnhancePanel;
-  private final JList myFilesList;
-  private JComboBox myPersistenceApiComboBox;
+  private final JList<String> myFilesList;
+  private JComboBox<String> myPersistenceApiComboBox;
   private JPanel myFilesPanel;
   private final AppEngineSdkEditor mySdkEditor;
   private final DefaultListModel<@NlsSafe String> myFilesListModel;
@@ -62,8 +62,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
       }
     });
 
-    myFilesListModel = new DefaultListModel();
-    myFilesList = new JBList(myFilesListModel);
+    myFilesListModel = new DefaultListModel<>();
+    myFilesList = new JBList<>(myFilesListModel);
     myFilesList.setCellRenderer(new FilesListCellRenderer());
     myFilesPanel.add(ToolbarDecorator.createDecorator(myFilesList)
                        .setAddAction(new AnActionButtonRunnable() {
@@ -110,7 +110,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private List<String> getConfiguredFiles() {
     final List<String> files = new ArrayList<>();
     for (int i = 0; i < myFilesListModel.getSize(); i++) {
-      files.add((String)myFilesListModel.getElementAt(i));
+      files.add(myFilesListModel.getElementAt(i));
     }
     return files;
   }

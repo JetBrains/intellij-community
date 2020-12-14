@@ -719,9 +719,9 @@ public final class ExceptionUtil {
   }
 
   public static boolean isGeneralExceptionType(@NotNull final PsiType type) {
-    final String canonicalText = type.getCanonicalText();
-    return CommonClassNames.JAVA_LANG_THROWABLE.equals(canonicalText) ||
-           CommonClassNames.JAVA_LANG_EXCEPTION.equals(canonicalText);
+    return type.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE) ||
+           type.equalsToText(CommonClassNames.JAVA_LANG_EXCEPTION) ||
+           type.equalsToText(CommonClassNames.JAVA_LANG_ERROR);
   }
 
   public static boolean isHandled(@NotNull PsiClassType exceptionType, @NotNull PsiElement throwPlace) {

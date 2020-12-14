@@ -13,6 +13,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
+import git4idea.index.vfs.GitIndexFileSystemRefresher
 import java.io.File
 
 fun performCommit(project: Project, roots: Collection<VirtualFile>, commitMessage: String, amend: Boolean = false,
@@ -44,6 +45,7 @@ class CommitTask(project: Project, private val roots: Collection<VirtualFile>,
       }
     }
     VcsFileUtil.markFilesDirty(project, roots)
+    GitIndexFileSystemRefresher.refreshRoots(project, roots)
   }
 
   override fun onFinished() {

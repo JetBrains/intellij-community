@@ -14,6 +14,7 @@ import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.Language
 import org.languagetool.Languages
 import java.io.InputStream
+import java.net.Authenticator
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
@@ -49,7 +50,8 @@ internal object GrazieDynamic : DynamicPluginListener {
 
   override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
-        if (Lang.isAnyLanguageLoadExceptEnglish()) throw CannotUnloadPluginException("Grazie can unload only English language")
+      if (Lang.isAnyLanguageLoadExceptEnglish()) throw CannotUnloadPluginException("Grazie can unload only English language")
+      if (Authenticator.getDefault()?.javaClass?.classLoader == GraziePlugin.classLoader) Authenticator.setDefault(null)
     }
   }
 

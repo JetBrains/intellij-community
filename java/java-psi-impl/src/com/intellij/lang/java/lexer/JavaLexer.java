@@ -7,28 +7,26 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.psi.PsiKeyword.*;
 
-public class JavaLexer extends LexerBase {
-  private static final Set<String> KEYWORDS = new THashSet<>(Arrays.asList(
+public final class JavaLexer extends LexerBase {
+  private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
     ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
     FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
     RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
     TRUE, FALSE, NULL, NON_SEALED));
 
-  private static final Set<CharSequence> JAVA9_KEYWORDS = new THashSet<>(
-    Arrays.asList(OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH),
-    CharSequenceHashingStrategy.CASE_SENSITIVE);
+  private static final Set<CharSequence> JAVA9_KEYWORDS = CollectionFactory.createCharSequenceSet(Arrays.asList(OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH));
 
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||
@@ -146,8 +144,8 @@ public class JavaLexer extends LexerBase {
           }
         }
         break;
-      
-      case '#' : 
+
+      case '#' :
         if (myBufferIndex == 0 && myBufferIndex + 1 < myBufferEndOffset && charAt(myBufferIndex + 1) == '!') {
           myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
           myTokenEndOffset = getLineTerminator(myBufferIndex + 2);

@@ -74,6 +74,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   private static final Key<Long> HIT_COUNTER = Key.create("HIT_COUNTER");
 
   final XBreakpoint<P> myXBreakpoint;
+  @NotNull
   protected final Project myProject;
 
   @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";

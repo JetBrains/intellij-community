@@ -815,7 +815,17 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     @Override
     protected void focusedComponentChanged(Component component, AWTEvent cause) {
       if (cause instanceof FocusEvent && cause.getID() == FocusEvent.FOCUS_GAINED){
-        myLastFocusGainedTime = System.currentTimeMillis();
+        if (((FocusEvent)cause).getCause() == FocusEvent.Cause.ACTIVATION) {
+          // Window activation mistakenly puts focus to editor as 'last focused component in this window'
+          // even if you activate the window by clicking some other place (e.g. Project View)
+          SwingUtilities.invokeLater(() -> {
+            if (component.isFocusOwner()) {
+              myLastFocusGainedTime = System.currentTimeMillis();
+            }
+          });
+        } else {
+          myLastFocusGainedTime = System.currentTimeMillis();
+        }
       }
 
       EditorWindow newWindow = null;
@@ -1076,6 +1086,29 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return editor.getPreferredFocusedComponent();
     }
     return null;
+  }
+  
+  @Nullable
+  public EditorWindow openInRightSplit(@NotNull VirtualFile file) {
+    EditorWindow window = getCurrentWindow();
+    
+    if (window == null) {
+      return null;
+    }
+    Container parent = window.myPanel.getParent();
+    if (parent instanceof Splitter) {
+      JComponent component = ((Splitter)parent).getSecondComponent();
+      if (component != window.myPanel) {
+        //reuse
+        EditorWindow rightSplitWindow = findWindowWith(component);
+        if (rightSplitWindow != null) {
+          myManager.openFileWithProviders(file, true, rightSplitWindow);
+          return rightSplitWindow;
+        }
+      }
+    }
+    
+    return window.split(SwingConstants.VERTICAL, true, file, true);
   }
 
   public static boolean focusDefaultComponentInSplittersIfPresent(@NotNull Project project) {

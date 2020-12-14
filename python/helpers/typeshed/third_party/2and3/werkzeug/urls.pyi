@@ -50,15 +50,38 @@ def url_unquote_plus(s, charset: Text = ..., errors: Text = ...): ...
 def url_fix(s, charset: Text = ...): ...
 def uri_to_iri(uri, charset: Text = ..., errors: Text = ...): ...
 def iri_to_uri(iri, charset: Text = ..., errors: Text = ..., safe_conversion: bool = ...): ...
-def url_decode(s, charset: Text = ..., decode_keys: bool = ..., include_empty: bool = ..., errors: Text = ...,
-               separator: str = ..., cls: Optional[Any] = ...): ...
-def url_decode_stream(stream, charset: Text = ..., decode_keys: bool = ..., include_empty: bool = ..., errors: Text = ...,
-                      separator: str = ..., cls: Optional[Any] = ..., limit: Optional[Any] = ...,
-                      return_iterator: bool = ...): ...
-def url_encode(obj, charset: Text = ..., encode_keys: bool = ..., sort: bool = ..., key: Optional[Any] = ...,
-               separator: bytes = ...): ...
-def url_encode_stream(obj, stream: Optional[Any] = ..., charset: Text = ..., encode_keys: bool = ..., sort: bool = ...,
-                      key: Optional[Any] = ..., separator: bytes = ...): ...
+def url_decode(
+    s,
+    charset: Text = ...,
+    decode_keys: bool = ...,
+    include_empty: bool = ...,
+    errors: Text = ...,
+    separator: str = ...,
+    cls: Optional[Any] = ...,
+): ...
+def url_decode_stream(
+    stream,
+    charset: Text = ...,
+    decode_keys: bool = ...,
+    include_empty: bool = ...,
+    errors: Text = ...,
+    separator: str = ...,
+    cls: Optional[Any] = ...,
+    limit: Optional[Any] = ...,
+    return_iterator: bool = ...,
+): ...
+def url_encode(
+    obj, charset: Text = ..., encode_keys: bool = ..., sort: bool = ..., key: Optional[Any] = ..., separator: bytes = ...
+): ...
+def url_encode_stream(
+    obj,
+    stream: Optional[Any] = ...,
+    charset: Text = ...,
+    encode_keys: bool = ...,
+    sort: bool = ...,
+    key: Optional[Any] = ...,
+    separator: bytes = ...,
+): ...
 def url_join(base, url, allow_fragments: bool = ...): ...
 
 class Href:

@@ -129,6 +129,24 @@ internal class XmlSerializerCollectionTest {
       </BeanWithArrayWithoutTagName>""".trimIndent(), bean)
   }
 
+  @Test
+  fun java9ImmutableSet() {
+    class Bean {
+      @XCollection
+      var foo = java.util.Set.of("a", "b")
+    }
+
+    val bean = Bean()
+     testSerializer(
+     """
+      <Bean>
+        <option name="foo">
+          <option value="a" />
+          <option value="b" />
+        </option>
+      </Bean>""".trimIndent(), bean)
+  }
+
   @Test fun arrayAnnotationWithElementTag() {
     @Tag("bean") class Bean {
       @AbstractCollection(elementTag = "vValue", elementValueAttribute = "v")

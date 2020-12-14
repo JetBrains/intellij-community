@@ -20,8 +20,8 @@ import java.util.List;
 public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> {
   @NotNull private final String myName;
   @Nullable private final PyType myBound;
-  private boolean myIsDefinition = false;
-  private final PyTargetExpression myTargetExpression;
+  private final boolean myIsDefinition;
+  @Nullable private final PyTargetExpression myTargetExpression;
 
   public PyGenericType(@NotNull String name, @Nullable PyType bound) {
     this(name, bound, false);
@@ -50,12 +50,30 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
+    PyType bound = getBoundPromotedToClassObjectTypesIfNeeded();
+    if (bound != null) {
+      return bound.resolveMember(name, location, direction, resolveContext);
+    }
     return null;
   }
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    PyType bound = getBoundPromotedToClassObjectTypesIfNeeded();
+    if (bound != null) {
+      return bound.getCompletionVariants(completionPrefix, location, context);
+    }
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Nullable
+  private PyType getBoundPromotedToClassObjectTypesIfNeeded() {
+    if (myIsDefinition) {
+      return PyTypeUtil.toStream(myBound)
+        .map(t -> t instanceof PyInstantiableType ? ((PyInstantiableType<?>)t).toClass() : t)
+        .collect(PyTypeUtil.toUnion());
+    }
+    return myBound;
   }
 
   @NotNull

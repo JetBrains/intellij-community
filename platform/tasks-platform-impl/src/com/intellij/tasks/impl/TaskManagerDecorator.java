@@ -9,7 +9,7 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-public class TaskManagerDecorator implements ChangeListDecorator {
+public final class TaskManagerDecorator implements ChangeListDecorator {
   private final Project myProject;
 
   public TaskManagerDecorator(@NotNull Project project) {

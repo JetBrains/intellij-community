@@ -1,0 +1,8 @@
+dependencies {
+  androidTest files("libs")
+  api (files("xyz"))
+  compile (files("klm"))
+  testImplementation(files("a")) {
+    exclude module: 'module1'
+  }
+}

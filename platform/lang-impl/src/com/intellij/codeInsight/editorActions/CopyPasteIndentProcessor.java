@@ -159,4 +159,8 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
     return document.getLineStartOffset(line);
   }
 
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
+  }
 }

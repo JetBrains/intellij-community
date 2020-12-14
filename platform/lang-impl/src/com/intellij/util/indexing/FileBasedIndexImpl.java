@@ -684,6 +684,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (filter == GlobalSearchScope.EMPTY_SCOPE) {
       return false;
     }
+    if (project == null) {
+      LOG.warn("Please provide a GlobalSearchScope with specified project. Otherwise it might lead to performance problems!", new Exception());
+    }
     if (ActionUtil.isDumbMode(project) && getCurrentDumbModeAccessType_NoDumbChecks() == null) {
       handleDumbMode(project);
     }
@@ -1545,15 +1548,25 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return null;
   }
 
-  @NotNull List<IndexableFileSet> getIndexableSets() {
+  @NotNull
+  public List<IndexableFileSet> getIndexableSets() {
     return myIndexableSets;
+  }
+
+  public boolean containsIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
+    return project.equals(myIndexableSetToProjectMap.get(set));
   }
 
   @ApiStatus.Internal
   public void dropNontrivialIndexedStates(int inputId) {
-    for (ID<?, ?> state : IndexingStamp.getNontrivialFileIndexedStates(inputId)) {
-      getIndex(state).invalidateIndexedStateForFile(inputId);
+    for (ID<?, ?> id : IndexingStamp.getNontrivialFileIndexedStates(inputId)) {
+      dropNontrivialIndexedStates(inputId, id);
     }
+  }
+
+  @ApiStatus.Internal
+  public void dropNontrivialIndexedStates(int inputId, ID<?, ?> indexId) {
+    getIndex(indexId).invalidateIndexedStateForFile(inputId);
   }
 
   void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file) {

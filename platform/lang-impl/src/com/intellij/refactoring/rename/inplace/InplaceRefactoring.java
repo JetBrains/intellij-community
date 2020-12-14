@@ -208,7 +208,17 @@ public abstract class InplaceRefactoring {
 
     final List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
     collectAdditionalElementsToRename(stringUsages);
-    return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
+    try {
+      return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
+    }
+    catch (Throwable e) {
+      if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
+        ourRenamersStack.pop();
+      }
+      myEditor.putUserData(INPLACE_RENAMER, null);
+      FinishMarkAction.finish(myProject, myEditor, myMarkAction);
+      throw e;
+    }
   }
 
   protected boolean notSameFile(@Nullable VirtualFile file, @NotNull PsiFile containingFile) {
@@ -252,7 +262,7 @@ public abstract class InplaceRefactoring {
     return new PsiElement[] { myElementToRename.getContainingFile() };
   }
 
-  protected abstract void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages);
+  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {}
 
   protected abstract boolean shouldSelectAll();
 
@@ -287,11 +297,14 @@ public abstract class InplaceRefactoring {
                                           final PsiElement scope,
                                           final PsiFile containingFile) {
     final PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-    myScope = context != null ? context.getContainingFile() : scope;
+    final Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+    //do not change scope if it's injected fragment in separate editor (created by QuickEditAction)
+    //in this case there is no top level editor and there would be no need to adjust ranges
+    myScope = context != null && topLevelEditor != myEditor ? context.getContainingFile() : scope;
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(myScope);
 
     PsiElement nameIdentifier = getNameIdentifier();
-    int offset = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getCaretModel().getOffset();
+    int offset = topLevelEditor.getCaretModel().getOffset();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
     boolean subrefOnPrimaryElement = false;
@@ -346,7 +359,7 @@ public abstract class InplaceRefactoring {
         }
 
         revertState();
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageEditorUtil.getTopLevelEditor(myEditor));
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
         if (templateState != null) {
           templateState.gotoEnd(true);
         }
@@ -490,7 +503,10 @@ public abstract class InplaceRefactoring {
                                         @NlsContexts.Command String commandName) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(oldDocument);
     if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile instanceof VirtualFileWindow) {
+        virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+      }
       if (virtualFile != null) {
         final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
         for (FileEditor editor : editors) {

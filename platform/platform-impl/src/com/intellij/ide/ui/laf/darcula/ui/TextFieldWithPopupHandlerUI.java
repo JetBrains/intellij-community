@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -618,7 +618,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
 
   private final class SearchExtension implements Extension {
-    private final PopupState myPopupState = new PopupState();
+    private final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
     private Rectangle bounds; // should be bound to IconHandler#bounds
 
     @Override
@@ -651,7 +651,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         if (myPopupState.isRecentlyHidden()) return; // do not show new popup
         Rectangle editor = getVisibleEditorRect();
         if (editor != null) {
-          popup.addPopupMenuListener(myPopupState);
+          myPopupState.prepareToShow(popup);
           popup.show(component, bounds.x, editor.y + editor.height);
         }
       };

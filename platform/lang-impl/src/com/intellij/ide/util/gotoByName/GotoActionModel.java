@@ -13,6 +13,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -376,7 +377,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                               @NotNull ActionGroup group,
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
-    AnAction[] actions = group.getChildren(null);
+    AnAction[] actions = group.getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, SimpleDataContext.getProjectContext(myProject)));
 
     boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasMeaningfulChildren) {
@@ -426,19 +427,20 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   protected MatchMode actionMatches(@NotNull String pattern, com.intellij.util.text.Matcher matcher, @NotNull AnAction anAction) {
-    Presentation presentation = anAction.getTemplatePresentation();
+    Presentation presentation = anAction.getTemplatePresentation().clone();
+    anAction.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
     String text = presentation.getText();
     String description = presentation.getDescription();
     if (text != null && matcher.matches(text)) {
       return MatchMode.NAME;
     }
-    else if (description != null && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
-      return MatchMode.DESCRIPTION;
-    }
     for (Supplier<String> synonym : anAction.getSynonyms()) {
       if (matcher.matches(synonym.get())) {
         return MatchMode.SYNONYM;
       }
+    }
+    if (description != null && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
+      return MatchMode.DESCRIPTION;
     }
     if (text == null) {
       return MatchMode.NONE;
@@ -628,6 +630,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     private final DataContext myDataContext;
     private final GotoActionModel myModel;
     private volatile Presentation myPresentation;
+    private final String myActionText;
 
     public ActionWrapper(@NotNull AnAction action,
                          @Nullable GroupMapping groupMapping,
@@ -639,6 +642,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       myGroupMapping = groupMapping;
       myDataContext = dataContext;
       myModel = model;
+
+      Presentation presentation = action.getTemplatePresentation().clone();
+      action.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
+      myActionText = presentation.getText();
+    }
+
+    public String getActionText() {
+      return myActionText;
     }
 
     @NotNull
@@ -656,8 +667,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (compared != 0) return compared;
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
-      String myText = StringUtil.notNullize(myPresentation.getText());
-      String oText = StringUtil.notNullize(oPresentation.getText());
+      String myText = StringUtil.notNullize(myActionText);
+      String oText = StringUtil.notNullize(o.getActionText());
       int byText = StringUtil.compare(StringUtil.trimEnd(myText, "..."), StringUtil.trimEnd(oText, "..."), true);
       if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
@@ -823,12 +834,16 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         }
 
         panel.setToolTipText(presentation.getDescription());
-        Shortcut[] shortcuts = getActiveKeymapShortcuts(ActionManager.getInstance().getId(anAction)).getShortcuts();
+        @NlsSafe String actionId = ActionManager.getInstance().getId(anAction);
+        Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
         String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
         String name = getName(presentation.getText(), groupName, toggle);
         name = cutName(name, shortcutText, list, panel, nameComponent);
 
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
+        if (UISettings.getInstance().getShowInplaceCommentsInternal() && actionId != null) {
+          nameComponent.append(" "+ actionId + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
         if (StringUtil.isNotEmpty(shortcutText)) {
           nameComponent.append(" " + shortcutText,
                                new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD, groupFg));

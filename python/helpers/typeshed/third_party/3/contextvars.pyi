@@ -1,6 +1,6 @@
 from typing import Any, Callable, ClassVar, Generic, Iterator, Mapping, TypeVar
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 class ContextVar(Generic[_T]):
     def __init__(self, name: str, *, default: _T = ...) -> None: ...

@@ -32,8 +32,8 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
     Disposer.register(getDisposable(), editor);
     String initialName = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
     myTemplateNameTextField = new JBTextField(initialName);
-    setTitle(template != null ? CodeInsightBundle.message("dialog.title.edit.0.template", initialName)
-                              : CodeInsightBundle.message("dialog.title.create.new.0.template", templateType));
+    setTitle(template != null ? CodeInsightBundle.message("dialog.title.edit.template", initialName)
+                              : CodeInsightBundle.message("dialog.title.create.new.template", templateType));
     init();
   }
 

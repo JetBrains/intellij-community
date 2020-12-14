@@ -20,6 +20,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -37,38 +38,24 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         if (JavaPsiRecordUtil.isCompactConstructor(method)) {
           checkCompact(method);
         }
-        else if (JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+        else {
           checkCanonical(method);
         }
       }
 
       private void checkCanonical(PsiMethod ctor) {
-        PsiCodeBlock body = ctor.getBody();
-        if (body == null) return;
-        PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
-        if (nameIdentifier == null) return;
-        PsiRecordComponent[] components = Objects.requireNonNull(ctor.getContainingClass()).getRecordComponents();
-        PsiParameter[] parameters = ctor.getParameterList().getParameters();
-        PsiAnnotation.TargetType[] targets = {PsiAnnotation.TargetType.PARAMETER, PsiAnnotation.TargetType.TYPE_USE};
-        if (!EntryStream.zip(components, parameters)
-          .mapKeys(c -> ContainerUtil.filter(c.getAnnotations(), anno -> AnnotationTargetUtil.findAnnotationTarget(anno, targets) != null))
-          .mapValues(p -> Arrays.asList(p.getAnnotations()))
-          .allMatch(List::equals)) {
-          return;
+        ConstructorSimplifier simplifier = createCtorSimplifier(ctor);
+        if (simplifier instanceof CanonicalCtorSimplifier) {
+          PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
+          if (nameIdentifier == null) return;
+          holder.registerProblem(nameIdentifier, JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier.getQuickFix());
         }
-        PsiStatement[] statements = body.getStatements();
-        int assignedCount = getAssignedComponentsCount(components, parameters, statements);
-        if (statements.length == components.length && assignedCount == components.length && 
-            ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
-          holder.registerProblem(nameIdentifier,
-                                 JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(ctor));
-          return;
+        else if (simplifier instanceof CompactCtorSimplifier) {
+          holder.registerProblem(ctor.getParameterList(),
+                                 JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier.getQuickFix());
         }
-        if (PsiUtil.findReturnStatements(body).length > 0) return;
-        if (PsiUtil.getLanguageLevel(ctor) != LanguageLevel.JDK_14_PREVIEW && assignedCount != components.length) return;
-        holder.registerProblem(ctor.getParameterList(), JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ConvertToCompactConstructorFix());
       }
 
       private void checkCompact(PsiMethod ctor) {
@@ -98,6 +85,35 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     };
   }
 
+  @Nullable
+  public static ConstructorSimplifier createCtorSimplifier(@NotNull PsiMethod ctor) {
+    if (!JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) return null;
+    PsiCodeBlock body = ctor.getBody();
+    if (body == null) return null;
+    PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
+    if (nameIdentifier == null) return null;
+    PsiRecordComponent[] components = Objects.requireNonNull(ctor.getContainingClass()).getRecordComponents();
+    PsiParameter[] parameters = ctor.getParameterList().getParameters();
+    PsiAnnotation.TargetType[] targets = {PsiAnnotation.TargetType.PARAMETER, PsiAnnotation.TargetType.TYPE_USE};
+    if (!EntryStream.zip(components, parameters)
+      .mapKeys(c -> ContainerUtil.filter(c.getAnnotations(), anno -> AnnotationTargetUtil.findAnnotationTarget(anno, targets) != null))
+      .mapValues(p -> Arrays.asList(p.getAnnotations()))
+      .allMatch(List::equals)) {
+      return null;
+    }
+    PsiStatement[] statements = body.getStatements();
+    int assignedCount = getAssignedComponentsCount(components, parameters, statements);
+    if (statements.length == components.length && assignedCount == components.length &&
+        ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
+      return new CanonicalCtorSimplifier(ctor);
+    }
+    if (PsiUtil.findReturnStatements(body).length > 0) return null;
+    if (PsiUtil.getLanguageLevel(ctor) != LanguageLevel.JDK_14_PREVIEW && assignedCount != components.length) {
+      return null;
+    }
+    return new CompactCtorSimplifier();
+  }
+
   private static int getAssignedComponentsCount(PsiRecordComponent @NotNull [] components,
                                                 PsiParameter @NotNull [] parameters,
                                                 PsiStatement @NotNull [] statements) {
@@ -112,7 +128,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
       if (lValue == null || !ExpressionUtil.isEffectivelyUnqualified(lValue)) break;
       PsiField field = ObjectUtils.tryCast(lValue.resolve(), PsiField.class);
       if (field == null) break;
-      PsiRecordComponent component = JavaPsiRecordUtil.getComponentForField(field); 
+      PsiRecordComponent component = JavaPsiRecordUtil.getComponentForField(field);
       if (component == null || !unprocessed.contains(component)) break;
       PsiParameter parameter = parameters[ArrayUtil.indexOf(components, component)];
       if (!parameter.getName().equals(component.getName())) break;
@@ -125,7 +141,32 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     return components.length - unprocessed.size();
   }
 
-  private static class ConvertToCompactConstructorFix implements LocalQuickFix {
+  public interface ConstructorSimplifier {
+    void simplify(@NotNull PsiMethod ctor);
+
+    LocalQuickFix getQuickFix();
+  }
+
+  private static class CanonicalCtorSimplifier implements ConstructorSimplifier {
+    private final PsiMethod myCtor;
+
+    private CanonicalCtorSimplifier(@NotNull PsiMethod ctor) {
+      myCtor = ctor;
+    }
+
+    @Override
+    public void simplify(@NotNull PsiMethod ctor) {
+      DeleteElementFix.deleteElement(myCtor);
+    }
+
+    @Override
+    public LocalQuickFix getQuickFix() {
+      return new DeleteElementFix(myCtor);
+    }
+  }
+
+  private static class CompactCtorSimplifier implements LocalQuickFix, ConstructorSimplifier {
+
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     public @NotNull String getFamilyName() {
@@ -135,7 +176,14 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiMethod ctor = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethod.class);
-      if (ctor == null || !JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) return;
+      if (ctor != null) {
+        simplify(ctor);
+      }
+    }
+
+    @Override
+    public void simplify(@NotNull PsiMethod ctor) {
+      if (!JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) return;
       PsiClass record = ctor.getContainingClass();
       if (record == null) return;
       PsiCodeBlock body = ctor.getBody();
@@ -164,9 +212,14 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         }
         resultText.append(child.getText());
       }
-      PsiMethod compactCtor = JavaPsiFacade.getElementFactory(project).createMethodFromText(resultText.toString(), ctor);
+      PsiMethod compactCtor = JavaPsiFacade.getElementFactory(record.getProject()).createMethodFromText(resultText.toString(), ctor);
       PsiMethod result = (PsiMethod)ctor.replace(compactCtor);
       ct.insertCommentsBefore(Objects.requireNonNull(Objects.requireNonNull(result.getBody()).getRBrace()));
+    }
+
+    @Override
+    public LocalQuickFix getQuickFix() {
+      return this;
     }
   }
 }

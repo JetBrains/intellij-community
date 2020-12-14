@@ -1,5 +1,5 @@
-from typing import AnyStr, Generic, Tuple
 from _typeshed import SupportsWrite
+from typing import AnyStr, Generic, Tuple
 
 from ..middleware.profiler import *
 

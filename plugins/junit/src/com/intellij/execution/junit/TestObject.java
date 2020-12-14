@@ -339,7 +339,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                          ? jupiterVersion
                          : "4.12." + StringUtil.getShortName(launcherVersion);
         downloadDependenciesWhenRequired(project, additionalDependencies,
-                                         new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
+                                         //don't include potentially incompatible hamcrest/junit dependency
+                                         new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version, false, ContainerUtil.emptyList()));
       }
     }
 

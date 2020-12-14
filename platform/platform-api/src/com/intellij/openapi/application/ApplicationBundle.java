@@ -3,7 +3,9 @@ package com.intellij.openapi.application;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeDeprecatedMessagesBundle;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 

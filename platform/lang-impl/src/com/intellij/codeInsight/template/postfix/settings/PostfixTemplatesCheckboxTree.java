@@ -117,7 +117,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
         else {
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         }
-        getTextRenderer().append(StringUtil.notNullize(value.toString()),
+        getTextRenderer().append(StringUtil.notNullize(value.toString()), //NON-NLS
                                  new SimpleTextAttributes(background, attributes.getFgColor(), JBColor.RED, attributes.getStyle()));
 
         if (templateNode != null) {

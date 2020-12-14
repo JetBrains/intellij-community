@@ -1,0 +1,8 @@
+ext.deps = [:]
+def deps = [:]
+def support = [:]
+support.app_compat = "com.android.support:appcompat-v7:1.0"
+deps.support = support
+
+ext.deps = deps
+ext.value = ext.deps.support.app_compat

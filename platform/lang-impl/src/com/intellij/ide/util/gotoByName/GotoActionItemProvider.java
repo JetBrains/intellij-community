@@ -232,6 +232,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     }
 
     JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
+      if (action instanceof ActionGroup && !((ActionGroup) action).isSearchable()) return null;
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
       return new ActionWrapper(action, myModel.getGroupMapping(action), mode, dataContext, myModel);
@@ -308,8 +309,16 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   @Nls
   public static String getActionText(Object value) {
     if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
-    if (value instanceof AnAction) return ((AnAction)value).getTemplatePresentation().getText();
-    if (value instanceof ActionWrapper) return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
+    if (value instanceof AnAction) return getAnActionText((AnAction)value);
+    if (value instanceof ActionWrapper) return getAnActionText(((ActionWrapper)value).getAction());
     return null;
+  }
+
+  @Nullable
+  @Nls
+  private static String getAnActionText(AnAction value) {
+    Presentation presentation = value.getTemplatePresentation().clone();
+    value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
+    return presentation.getText();
   }
 }

@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * <p>To record IDE events (e.g. invoked action, opened dialog) use {@link FUCounterUsageLogger}</p>
  */
-public class FUStateUsagesLogger implements UsagesCollectorConsumer {
+public final class FUStateUsagesLogger implements UsagesCollectorConsumer {
   private static final Logger LOG = Logger.getInstance(FUStateUsagesLogger.class);
   private static final Object LOCK = new Object();
 

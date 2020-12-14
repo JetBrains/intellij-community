@@ -1,0 +1,22 @@
+android {
+  buildTypes {
+    type1 {
+      applicationIdSuffix "suffix1"
+      proguardFiles 'proguard-android-1.txt', 'proguard-rules-1.txt'
+    }
+    type2 {
+      applicationIdSuffix = "suffix2"
+      proguardFiles 'proguard-android-2.txt', 'proguard-rules-2.txt'
+    }
+  }
+  buildTypes.type1 {
+    applicationIdSuffix = "suffix1-1"
+  }
+  buildTypes.type2 {
+    proguardFiles = ['proguard-android-4.txt', 'proguard-rules-4.txt']
+  }
+  buildTypes {
+    type2.applicationIdSuffix = "suffix2-1"
+  }
+}
+android.buildTypes.type1.proguardFiles = ['proguard-android-3.txt', 'proguard-rules-3.txt']

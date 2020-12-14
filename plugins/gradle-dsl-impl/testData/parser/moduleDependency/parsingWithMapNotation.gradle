@@ -1,0 +1,5 @@
+dependencies {
+  compile project(path: ':androidlib1', configuration: 'flavor1Release')
+  compile project(path: ':androidlib2', configuration: 'flavor2Release')
+  runtime project(path: ':javalib2')
+}

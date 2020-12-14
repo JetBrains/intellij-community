@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
 
-public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
+public abstract class Configuration implements JDOMExternalizable {
   @NonNls public static final String CONTEXT_VAR_NAME = "__context__";
 
   public static final Configuration[] EMPTY_ARRAY = {};
@@ -81,6 +81,9 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     }
     name = value;
   }
+
+  @NonNls
+  public abstract String getTailText();
 
   @NotNull
   public String getCategory() {
@@ -229,12 +232,6 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
 
   public void setCurrentVariableName(String variableName) {
     myCurrentVariableName = variableName;
-  }
-
-  @Override
-  public int compareTo(Configuration other) {
-    final int result = StringUtil.naturalCompare(getCategory(), other.getCategory());
-    return result != 0 ? result : StringUtil.naturalCompare(getName(), other.getName());
   }
 
   public boolean equals(Object configuration) {

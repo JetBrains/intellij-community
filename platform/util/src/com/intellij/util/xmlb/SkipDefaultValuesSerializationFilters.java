@@ -8,14 +8,14 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Please use {@link SkipDefaultsSerializationFilter} if state class doesn't implement "equals" (in Kotlin use {@link com.intellij.openapi.components.BaseState})
  */
 public class SkipDefaultValuesSerializationFilters extends SerializationFilterBase {
-  private final Map<Class<?>, Object> myDefaultBeans = new HashMap<>();
+  private final Map<Class<?>, Object> myDefaultBeans = new WeakHashMap<>();
 
   /**
    * @deprecated Use {@link com.intellij.configurationStore.XmlSerializer#serialize(Object)} instead of creating own filter.

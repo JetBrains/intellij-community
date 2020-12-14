@@ -1,12 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PySdkProvider;
@@ -21,7 +22,7 @@ import java.util.Optional;
 /**
  * @author yole
  */
-public class PyPackageManagersImpl extends PyPackageManagers implements Disposable {
+public class PyPackageManagersImpl extends PyPackageManagers {
   private final Map<String, PyPackageManager> myStandardManagers = new HashMap<>();
   private final Map<String, PyPackageManager> myProvidedManagers = new HashMap<>();
 
@@ -87,17 +88,21 @@ public class PyPackageManagersImpl extends PyPackageManagers implements Disposab
 
   @Override
   public synchronized void clearCache(@NotNull Sdk sdk) {
-    final String key = PythonSdkType.getSdkKey(sdk);
-    myStandardManagers.remove(key);
-    myProvidedManagers.remove(key);
+    String sdkKey = PythonSdkType.getSdkKey(sdk);
+    removeCachedManager(myStandardManagers, sdkKey);
+    removeCachedManager(myProvidedManagers, sdkKey);
   }
 
   private synchronized void clearProvidedManagersCache() {
-    myProvidedManagers.clear();
+    for (String key : ArrayUtil.toStringArray(myProvidedManagers.keySet())) {
+      removeCachedManager(myProvidedManagers, key);
+    }
   }
 
-  @Override
-  public void dispose() {
-    // Needed to dispose PyPackageManagerProvider EP listener
+  private static void removeCachedManager(@NotNull Map<String, PyPackageManager> cache, @NotNull String key) {
+    PyPackageManager removed = cache.remove(key);
+    if (removed != null) {
+      Disposer.dispose(removed);
+    }
   }
 }

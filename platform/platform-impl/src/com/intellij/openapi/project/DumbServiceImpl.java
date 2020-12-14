@@ -8,6 +8,9 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -80,7 +83,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   //used from EDT
   private final DumbServiceBalloon myBalloon;
 
-  public DumbServiceImpl(Project project) {
+  public DumbServiceImpl(@NotNull Project project) {
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
@@ -94,6 +97,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
+
+    project.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        myRunWhenSmartQueue.removeIf(runnable -> {
+          ClassLoader classLoader = runnable.getClass().getClassLoader();
+          return classLoader instanceof PluginAwareClassLoader &&
+                 ((PluginAwareClassLoader)classLoader).getPluginId().equals(pluginDescriptor.getPluginId());
+        });
+      }
+    });
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
@@ -438,7 +452,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public JComponent wrapWithSpoiler(@NotNull JComponent dumbAwareContent, @NotNull Runnable updateRunnable, @NotNull Disposable parentDisposable) {
     //TODO replace with a proper mockup implementation
-    DeprecationStripePanel stripePanel = new DeprecationStripePanel(IdeBundle.message("dumb.mode.spoiler.wrapper.text"), AllIcons.General.Warning)
+    DeprecationStripePanel stripePanel = new DeprecationStripePanel(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AllIcons.General.Warning)
       .withAlternativeAction(IdeBundle.message("dumb.mode.spoiler.wrapper.reload.text"), new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

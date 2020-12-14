@@ -39,7 +39,7 @@ public class JarFileReferenceHelper extends FileReferenceHelper {
   @Override
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
-    return PsiFileReferenceHelper.getContextsForModule(module, "", null);
+    return PsiFileReferenceHelper.getContextsForScope(module.getProject(), "", module.getModuleWithDependenciesScope());
   }
 
   @Override

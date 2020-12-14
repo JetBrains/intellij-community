@@ -23,7 +23,7 @@ public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   }
 
   public XHtmlHighlightingLexer(Lexer baseLexer) {
-    super(baseLexer,false, FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
+    super(baseLexer, false, FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
   }
 
   @Override

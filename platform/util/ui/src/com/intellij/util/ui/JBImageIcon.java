@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +19,7 @@ public class JBImageIcon extends ImageIcon {
 
   @Override
   public synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-    final ImageObserver observer = getImageObserver();
-
+    ImageObserver observer = getImageObserver();
     StartupUiUtil.drawImage(g, getImage(), x, y, observer == null ? c : observer);
   }
 }

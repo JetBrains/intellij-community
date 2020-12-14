@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
@@ -34,7 +34,7 @@ public abstract class BareTestFixtureTestCase {
 
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createBareFixture();
     myFixture.setUp();
-    Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
+    Disposer.register(getTestRootDisposable(), () -> ApplicationInfoImpl.setInStressTest(false));
   }
 
   @After
@@ -45,13 +45,11 @@ public abstract class BareTestFixtureTestCase {
     }
   }
 
-  @NotNull
-  protected final String getTestName(boolean lowercaseFirstLetter) {
+  protected final @NotNull String getTestName(boolean lowercaseFirstLetter) {
     return PlatformTestUtil.getTestName(myNameRule.getMethodName(), lowercaseFirstLetter);
   }
 
-  @NotNull
-  public final Disposable getTestRootDisposable() {
+  public final @NotNull Disposable getTestRootDisposable() {
     return myFixture.getTestRootDisposable();
   }
 

@@ -416,6 +416,10 @@ public final class HardcodedContracts {
           .skip(1)
           .takeWhile(e -> !(e instanceof PsiStatement) && !(e instanceof PsiMember))
           .filter(PsiMethodCallExpression.class)
+          .takeWhile(c -> {
+            String name = c.getMethodExpression().getReferenceName();
+            return name != null && (name.startsWith("is") || name.equals("describedAs"));
+          })
           .filterMap(c -> constraintFromAssertJMatcher(type, c))
           .toList();
       }

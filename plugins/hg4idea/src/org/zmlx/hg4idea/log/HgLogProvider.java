@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.Disposable;
@@ -104,11 +104,10 @@ public final class HgLogProvider implements VcsLogProvider {
                           });
   }
 
-  @NotNull
   @Override
-  public List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes)
+  public void readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
-    return HgHistoryUtil.readCommitMetadata(myProject, root, hashes);
+    HgHistoryUtil.readCommitMetadata(myProject, root, hashes, consumer);
   }
 
   @NotNull

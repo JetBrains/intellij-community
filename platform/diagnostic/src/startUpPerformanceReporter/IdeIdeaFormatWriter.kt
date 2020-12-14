@@ -88,9 +88,9 @@ private fun writeIcons(writer: JsonGenerator) {
   writer.array("icons") {
     for (stat in IconLoadMeasurer.getStats()) {
       writer.obj {
-        writer.writeStringField("name", stat.type)
-        writer.writeNumberField("count", stat.counter)
-        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.totalTime))
+        writer.writeStringField("name", stat.name)
+        writer.writeNumberField("count", stat.count)
+        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.totalDuration))
       }
     }
   }

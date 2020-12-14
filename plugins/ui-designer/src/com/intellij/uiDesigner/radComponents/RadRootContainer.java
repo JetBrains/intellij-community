@@ -154,7 +154,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     return myButtonGroups.toArray(new RadButtonGroup[0]);
   }
 
-  public String suggestGroupName() {
+  public @NlsSafe String suggestGroupName() {
     int groupNumber = 1;
     group: while(true) {
       @NonNls String suggestedName = "buttonGroup" + groupNumber;

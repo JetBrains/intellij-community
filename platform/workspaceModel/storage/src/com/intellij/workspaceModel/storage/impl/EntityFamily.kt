@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.assert
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 
@@ -16,7 +19,7 @@ internal class ImmutableEntityFamily<E : WorkspaceEntity>(
 
   override fun familyCheck() {
     val emptySlotsCounter = entities.count { it == null }
-    assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
+    thisLogger().assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
   }
 }
 
@@ -40,7 +43,11 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
   private val copiedToModify: IntSet = IntOpenHashSet()
 
   fun remove(id: Int) {
-    if (availableSlots.contains(id)) error("id $id is already removed")
+    if (availableSlots.contains(id)) {
+      thisLogger().error("id $id is already removed")
+      return
+    }
+
     startWrite()
 
     copiedToModify.remove(id)
@@ -69,7 +76,11 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
 
   fun replaceById(entity: WorkspaceEntityData<E>) {
     val id = entity.id
-    if (entities[id] == null) error("Nothing to replace. EntityData: $entity")
+    if (entities[id] == null) {
+      thisLogger().error("Nothing to replace. EntityData: $entity")
+      return
+    }
+
     startWrite()
 
     entities[id] = entity
@@ -157,10 +168,14 @@ internal sealed class EntityFamily<E : WorkspaceEntity> {
   inline fun assertConsistency(entityAssertion: (WorkspaceEntityData<E>) -> Unit = {}) {
     entities.forEachIndexed { idx, entity ->
       if (entity != null) {
-        assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
+        LOG.assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
         entityAssertion(entity)
       }
     }
     familyCheck()
+  }
+
+  companion object {
+    private val LOG = logger<EntityFamily<*>>()
   }
 }

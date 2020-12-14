@@ -34,6 +34,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     myExtensionsManager = extensionsManager;
   }
 
+  public Settings getRunConfiguration() {
+    return myRunConfiguration;
+  }
+
   protected Project getProject() {
     return myRunConfiguration.getProject();
   }
@@ -127,4 +131,6 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
                                                 ? (RunConfigurationEditorFragment<?,?>)fragment
                                                 : null);
   }
+
+  public void targetChanged(String targetName) {}
 }

@@ -392,7 +392,7 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link HashSet}
+   * @deprecated Use {@link Set#of(Object[])}
    */
   @SafeVarargs
   @Deprecated
@@ -551,17 +551,38 @@ public class ContainerUtil {
     }
   }
 
+  /**
+   * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code array} elements.
+   * When contents of {@code array} changes (e.g. via {@code array[0] = null}, this collection contents changes accordingly.
+   * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
+   * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
+   * (Subject to change in subsequent JDKs).
+   * Otherwise, please prefer {@link Collections#unmodifiableList(List)}.
+   */
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <E> ImmutableList<E> immutableList(E @NotNull ... array) {
     return new ImmutableListBackedByArray<>(array);
   }
 
+  /**
+   * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code element}.
+   * This collection doesn't contain {@code modCount} field, unlike the {@link Collections#singletonList(Object)}, so it might be useful in extremely space-conscious places.
+   * Otherwise, please prefer {@link Collections#singletonList(Object)}.
+   */
   @Contract(pure = true)
   public static @NotNull <E> ImmutableList<E> immutableSingletonList(final E element) {
     return ImmutableList.singleton(element);
   }
 
+  /**
+   * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code list} elements.
+   * When contents of {@code list} changes (e.g. via {@code list.set(0, null)}, this collection contents changes accordingly.
+   * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
+   * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
+   * (Subject to change in subsequent JDKs).
+   * Otherwise, please prefer {@link Collections#unmodifiableList(List)}.
+   */
   @Contract(pure = true)
   public static @NotNull <E> ImmutableList<E> immutableList(@NotNull List<? extends E> list) {
     return new ImmutableListBackedByList<>(list);
@@ -3050,16 +3071,17 @@ public class ContainerUtil {
   }
 
   /**
-   * Create an immutable copy of the {@code list}.
+   * Creates an immutable copy of the {@code list},
+   * or returns {@link Collections#emptyList} if the {@code list} is empty.
    * Modifications of the {@code list} have no effect on the returned copy.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <T> List<T> freeze(@NotNull List<? extends T> list) {
+  public static @NotNull <T> List<T> immutableCopy(@NotNull List<? extends T> list) {
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
     if (list.size() == 1) {
-      return immutableSingletonList(list.get(0));
+      return Collections.singletonList(list.get(0));
     }
     //noinspection unchecked
     return immutableList((T[])list.toArray());

@@ -14,7 +14,7 @@ import java.util.List;
 */
 public class SetupTask implements ChooseByNameItem {
   private final @NlsSafe String name;
-  private String description;
+  private @NlsSafe String description;
   private final List<Option> options = new ArrayList<>();
 
   SetupTask(@NotNull @NlsSafe String name) {
@@ -23,7 +23,7 @@ public class SetupTask implements ChooseByNameItem {
   }
 
   @Override
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return description;
   }
 

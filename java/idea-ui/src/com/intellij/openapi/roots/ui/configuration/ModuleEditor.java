@@ -158,6 +158,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   public boolean isModified() {
+    if (!myModule.getName().equals(myName)) {
+      return true;
+    }
     for (ModuleConfigurationEditor moduleElementsEditor : myEditors) {
       if (moduleElementsEditor.isModified()) {
         return true;

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -9,11 +10,12 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Pointer;
-import java.awt.Dimension;
-import java.util.Objects;
-import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.Objects;
 
 class TBItemButton extends TBItem {
   protected final @Nullable TouchBarStats.AnActionStats myActionStats;
@@ -71,7 +73,7 @@ class TBItemButton extends TBItem {
     if (hasArrowIcon != myHasArrowIcon) {
       myHasArrowIcon = hasArrowIcon;
       if (myNativePeer != ID.NIL) {
-        final Icon ic = myHasArrowIcon ? IconLoader.getIcon("/mac/touchbar/popoverArrow_dark.svg") : null;
+        final Icon ic = myHasArrowIcon ? AllIcons.Mac.Touchbar.PopoverArrow : null;
         NST.setArrowImage(myNativePeer, ic);
       }
     }
@@ -242,7 +244,7 @@ class TBItemButton extends TBItem {
     }
     final ID result = NST.createButton(getUid(), myLayoutBits, _validateFlags(), myText, icon, myNativeCallback);
     if (myHasArrowIcon) {
-      final Icon ic = IconLoader.getIcon("/mac/touchbar/popoverArrow_dark.svg");
+      final Icon ic = AllIcons.Mac.Touchbar.PopoverArrow;
       NST.setArrowImage(result, ic);
     }
 

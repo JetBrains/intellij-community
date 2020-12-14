@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.actions;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.lang.Language;
@@ -177,6 +178,6 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public static @NlsContexts.Command String getCommandName() {
-    return CodeInsightBundle.message("process.reformat.code");
+    return CodeStyleBundle.message("process.reformat.code");
   }
 }

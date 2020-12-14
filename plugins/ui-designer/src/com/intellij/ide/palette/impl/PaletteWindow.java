@@ -8,6 +8,7 @@ import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -148,7 +149,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
         remove(myScrollPane);
         add(myTabbedPane);
       }
-      for (String tabName : tabNames) {
+      for (@NlsSafe String tabName : tabNames) {
         PaletteContentWindow contentWindow = new PaletteContentWindow();
         JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contentWindow);
         scrollPane.addMouseListener(new MyScrollPanePopupHandler());

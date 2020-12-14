@@ -1,5 +1,5 @@
-from typing import List, Union
 from _typeshed import FileDescriptorLike
+from typing import List, Union
 
 _Attr = List[Union[int, List[bytes]]]
 

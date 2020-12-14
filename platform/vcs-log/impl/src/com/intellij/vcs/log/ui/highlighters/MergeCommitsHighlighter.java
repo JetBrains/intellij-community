@@ -27,16 +27,11 @@ import static com.intellij.ui.JBColor.namedColor;
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
   public static final JBColor MERGE_COMMIT_FOREGROUND = namedColor("VersionControl.Log.Commit.unmatchedForeground",
                                                                    new JBColor(Gray._128, Gray._96));
-  @NotNull private final VcsLogUi myLogUi;
-
-  public MergeCommitsHighlighter(@NotNull VcsLogUi logUi) {
-    myLogUi = logUi;
-  }
 
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, boolean isSelected) {
-    if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
+    if (isSelected) return VcsCommitStyle.DEFAULT;
     if (details.getParents().size() >= 2) return VcsCommitStyleFactory.foreground(MERGE_COMMIT_FOREGROUND);
     return VcsCommitStyle.DEFAULT;
   }
@@ -51,7 +46,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
-      return new MergeCommitsHighlighter(logUi);
+      return new MergeCommitsHighlighter();
     }
 
     @NotNull

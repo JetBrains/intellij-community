@@ -471,7 +471,7 @@ public abstract class DesignerEditorPanel extends JPanel
     myProgressPanel.setOpaque(false);
   }
 
-  protected final void showProgress(String message) {
+  protected final void showProgress(@Nls String message) {
     myProgressMessage.setText(message);
     if (myProgressPanel.getParent() == null) {
       myGlassLayer.setEnabled(false);
@@ -714,7 +714,7 @@ public abstract class DesignerEditorPanel extends JPanel
    * Returns a suitable version label from the version attribute from a {@link PaletteItem} version
    */
   @NotNull
-  public String getVersionLabel(@Nullable String version) {
+  public @NlsSafe String getVersionLabel(@Nullable String version) {
     return StringUtil.notNullize(version);
   }
 

@@ -204,11 +204,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   private void checkNotTooLarge(@Nullable Object requestor) throws FileTooBigException {
-    if (!(requestor instanceof LargeFileWriteRequestor) && isTooLarge()) throw new FileTooBigException(getPath());
-  }
-
-  private boolean isTooLarge() {
-    return FileUtilRt.isTooLarge(getLength());
+    if (!(requestor instanceof LargeFileWriteRequestor) && FileUtilRt.isTooLarge(getLength())) throw new FileTooBigException(getPath());
   }
 
   @Override

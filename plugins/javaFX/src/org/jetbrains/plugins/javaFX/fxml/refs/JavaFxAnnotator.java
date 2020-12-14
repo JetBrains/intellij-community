@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -19,9 +19,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
@@ -125,7 +125,7 @@ public class JavaFxAnnotator implements Annotator {
         }
       }
       if (color != null) {
-        final ColorIcon icon = JBUI.scale(new ColorIcon(8, color));
+        final ColorIcon icon = JBUIScale.scaleIcon(new ColorIcon(8, color));
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION).gutterIconRenderer(new ColorIconRenderer(icon, element)).create();
       }
     }

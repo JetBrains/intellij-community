@@ -61,7 +61,7 @@ public final class MacKeymapUtil {
 
   @NotNull
   public static String getKeyText(int code) {
-    if (!Registry.is("ide.macos.disable.native.shortcut.symbols")) {
+    if (!Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
       switch (code) {
         case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
         case KeyEvent.VK_ESCAPE:         return get(ESCAPE, "Escape");
@@ -111,7 +111,7 @@ public final class MacKeymapUtil {
 
   @NotNull
   private static String get(@NotNull String value, @NotNull String replacement) {
-    if (Registry.is("ide.macos.disable.native.shortcut.symbols")) {
+    if (Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
       return replacement;
     }
     Font font = UIUtil.getLabelFont();

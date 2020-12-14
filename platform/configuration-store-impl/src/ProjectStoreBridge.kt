@@ -1,14 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.StateSplitterEx
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.ModulePathMacroManager
+import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.io.systemIndependentPath
@@ -16,6 +18,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Supplier
 
 class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
   override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
@@ -54,6 +57,16 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
       else {
         producer?.setState(null, componentName, componentTag)
       }
+    }
+  }
+
+  override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
+    val filePath = JpsPathUtil.urlToPath(fileUrl)
+    return if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
+      ModulePathMacroManager.createInstance(Supplier { filePath }).replacePathMap
+    }
+    else {
+      ProjectPathMacroManager.getInstance(project).replacePathMap
     }
   }
 }
@@ -113,13 +126,14 @@ internal class StorageJpsConfigurationReader(private val project: Project,
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
+    if (componentName == "") {
+      //this is currently used for loading Eclipse project configuration from .classpath file
+      val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
+      return file?.inputStream?.use { JDOMUtil.load(it) }
+    }
     if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
       //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
-      val reader = fileContentCachingReader ?: CachingJpsFileContentReader(baseDirUrl)
-      if (fileContentCachingReader == null) {
-        fileContentCachingReader = reader
-      }
-      return reader.loadComponent(fileUrl, componentName, customModuleFilePath)
+      return getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
     }
     else {
       val storage = getProjectStateStorage(filePath, project.stateStore, project) ?: return null
@@ -136,6 +150,24 @@ internal class StorageJpsConfigurationReader(private val project: Project,
       else {
         stateMap.getElement(componentName)
       }
+    }
+  }
+
+  private fun getCachingReader(): CachingJpsFileContentReader {
+    val reader = fileContentCachingReader ?: CachingJpsFileContentReader(baseDirUrl)
+    if (fileContentCachingReader == null) {
+      fileContentCachingReader = reader
+    }
+    return reader
+  }
+
+  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
+    val filePath = JpsPathUtil.urlToPath(fileUrl)
+    if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
+      return getCachingReader().getExpandMacroMap(fileUrl)
+    }
+    else {
+      return PathMacroManager.getInstance(project).expandMacroMap
     }
   }
 

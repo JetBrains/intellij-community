@@ -15,4 +15,8 @@ class FileTypePanel {
   JPanel myOpenWithLightEditPanel;
   JTextField myLightEditPatternsField;
   JBLabel myLightEditHintLabel;
+  JButton myAssociateButton;
+  JPanel myAssociatePanel;
+  JPanel myRightPanel;
+  JBLabel myAssociateMessageLabel;
 }

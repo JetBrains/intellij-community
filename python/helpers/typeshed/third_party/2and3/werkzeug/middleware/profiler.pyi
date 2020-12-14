@@ -1,5 +1,5 @@
-from typing import IO, Iterable, List, Optional, Text, Tuple, Union
 from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
+from typing import IO, Iterable, List, Optional, Text, Tuple, Union
 
 class ProfilerMiddleware(object):
     def __init__(

@@ -29,6 +29,7 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Objects;
 
 public class JBTextField extends JTextField implements ComponentWithEmptyText, TextAccessor {
   private TextComponentEmptyText myEmptyText;
@@ -82,6 +83,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
 
   @Override
   public void setText(String t) {
+    if (Objects.equals(t, getText())) return;
     super.setText(t);
     UIUtil.resetUndoRedoActions(this);
   }

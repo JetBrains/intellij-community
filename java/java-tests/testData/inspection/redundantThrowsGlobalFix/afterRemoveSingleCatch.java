@@ -5,9 +5,9 @@ class Main {
   public void f() {}
 
   {
-      try {
-          f();
-      } catch (Exception e) {
-      }
+    try {
+      f();
+    } catch (Exception e) {
+    }
   }
 }

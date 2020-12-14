@@ -1,0 +1,2 @@
+rootProject.ext.greetings = "goodbye"
+rootProject.ext.dep = "good:dep:${version}"

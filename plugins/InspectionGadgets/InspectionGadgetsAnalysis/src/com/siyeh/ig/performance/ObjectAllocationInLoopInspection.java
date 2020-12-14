@@ -39,7 +39,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ObjectAllocationInLoopInspection extends BaseInspection {
+public final class ObjectAllocationInLoopInspection extends BaseInspection {
   enum Kind {
     NEW_OPERATOR("object.allocation.in.loop.new.descriptor"),
     METHOD_CALL("object.allocation.in.loop.problem.call.descriptor"),

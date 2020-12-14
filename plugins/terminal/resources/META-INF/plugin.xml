@@ -70,6 +70,11 @@
     <action id="Terminal.SmartCommandExecution.Debug" class="org.jetbrains.plugins.terminal.shellCommandRunner.TerminalDebugSmartCommandAction">
       <keyboard-shortcut first-keystroke="control shift ENTER" keymap="$default"/>
     </action>
+    <action id="Terminal.ClearBuffer" class="org.jetbrains.plugins.terminal.action.TerminalClearBufferAction">
+      <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
+    </action>
   </actions>
 
 </idea-plugin>

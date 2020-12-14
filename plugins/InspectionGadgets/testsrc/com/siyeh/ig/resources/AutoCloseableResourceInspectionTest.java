@@ -249,6 +249,23 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "}");
   }
 
+  public void testCallThenClose() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  @Override\n" +
+           "  public void close() {}\n" +
+           "\n" +
+           "  private static void example() {\n" +
+           "    final X x = <warning descr=\"'X' used without 'try'-with-resources statement\">getX</warning>();\n" +
+           "    x.close();\n" +
+           "  " +
+           "}\n" +
+           "  \n" +
+           "  private static native X getX();\n" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();

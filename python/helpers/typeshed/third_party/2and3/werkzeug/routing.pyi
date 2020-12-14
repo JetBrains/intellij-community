@@ -1,4 +1,5 @@
 from typing import Any, Optional, Text
+
 from werkzeug.exceptions import HTTPException
 
 def parse_converter_args(argstr): ...
@@ -76,9 +77,19 @@ class Rule(RuleFactory):
     endpoint: Any
     redirect_to: Any
     arguments: Any
-    def __init__(self, string, defaults: Optional[Any] = ..., subdomain: Optional[Any] = ..., methods: Optional[Any] = ...,
-                 build_only: bool = ..., endpoint: Optional[Any] = ..., strict_slashes: Optional[Any] = ...,
-                 redirect_to: Optional[Any] = ..., alias: bool = ..., host: Optional[Any] = ...): ...
+    def __init__(
+        self,
+        string,
+        defaults: Optional[Any] = ...,
+        subdomain: Optional[Any] = ...,
+        methods: Optional[Any] = ...,
+        build_only: bool = ...,
+        endpoint: Optional[Any] = ...,
+        strict_slashes: Optional[Any] = ...,
+        redirect_to: Optional[Any] = ...,
+        alias: bool = ...,
+        host: Optional[Any] = ...,
+    ): ...
     def empty(self): ...
     def get_empty_kwargs(self): ...
     def get_rules(self, map): ...
@@ -151,15 +162,32 @@ class Map:
     converters: Any
     sort_parameters: Any
     sort_key: Any
-    def __init__(self, rules: Optional[Any] = ..., default_subdomain: str = ..., charset: Text = ...,
-                 strict_slashes: bool = ..., redirect_defaults: bool = ..., converters: Optional[Any] = ...,
-                 sort_parameters: bool = ..., sort_key: Optional[Any] = ..., encoding_errors: Text = ...,
-                 host_matching: bool = ...): ...
+    def __init__(
+        self,
+        rules: Optional[Any] = ...,
+        default_subdomain: str = ...,
+        charset: Text = ...,
+        strict_slashes: bool = ...,
+        redirect_defaults: bool = ...,
+        converters: Optional[Any] = ...,
+        sort_parameters: bool = ...,
+        sort_key: Optional[Any] = ...,
+        encoding_errors: Text = ...,
+        host_matching: bool = ...,
+    ): ...
     def is_endpoint_expecting(self, endpoint, *arguments): ...
     def iter_rules(self, endpoint: Optional[Any] = ...): ...
     def add(self, rulefactory): ...
-    def bind(self, server_name, script_name: Optional[Any] = ..., subdomain: Optional[Any] = ..., url_scheme: str = ...,
-             default_method: str = ..., path_info: Optional[Any] = ..., query_args: Optional[Any] = ...): ...
+    def bind(
+        self,
+        server_name,
+        script_name: Optional[Any] = ...,
+        subdomain: Optional[Any] = ...,
+        url_scheme: str = ...,
+        default_method: str = ...,
+        path_info: Optional[Any] = ...,
+        query_args: Optional[Any] = ...,
+    ): ...
     def bind_to_environ(self, environ, server_name: Optional[Any] = ..., subdomain: Optional[Any] = ...): ...
     def update(self): ...
 
@@ -172,12 +200,19 @@ class MapAdapter:
     path_info: Any
     default_method: Any
     query_args: Any
-    def __init__(self, map, server_name, script_name, subdomain, url_scheme, path_info, default_method,
-                 query_args: Optional[Any] = ...): ...
-    def dispatch(self, view_func, path_info: Optional[Any] = ..., method: Optional[Any] = ...,
-                 catch_http_exceptions: bool = ...): ...
-    def match(self, path_info: Optional[Any] = ..., method: Optional[Any] = ..., return_rule: bool = ...,
-              query_args: Optional[Any] = ...): ...
+    def __init__(
+        self, map, server_name, script_name, subdomain, url_scheme, path_info, default_method, query_args: Optional[Any] = ...
+    ): ...
+    def dispatch(
+        self, view_func, path_info: Optional[Any] = ..., method: Optional[Any] = ..., catch_http_exceptions: bool = ...
+    ): ...
+    def match(
+        self,
+        path_info: Optional[Any] = ...,
+        method: Optional[Any] = ...,
+        return_rule: bool = ...,
+        query_args: Optional[Any] = ...,
+    ): ...
     def test(self, path_info: Optional[Any] = ..., method: Optional[Any] = ...): ...
     def allowed_methods(self, path_info: Optional[Any] = ...): ...
     def get_host(self, domain_part): ...
@@ -185,5 +220,11 @@ class MapAdapter:
     def encode_query_args(self, query_args): ...
     def make_redirect_url(self, path_info, query_args: Optional[Any] = ..., domain_part: Optional[Any] = ...): ...
     def make_alias_redirect_url(self, path, endpoint, values, method, query_args): ...
-    def build(self, endpoint, values: Optional[Any] = ..., method: Optional[Any] = ..., force_external: bool = ...,
-              append_unknown: bool = ...): ...
+    def build(
+        self,
+        endpoint,
+        values: Optional[Any] = ...,
+        method: Optional[Any] = ...,
+        force_external: bool = ...,
+        append_unknown: bool = ...,
+    ): ...

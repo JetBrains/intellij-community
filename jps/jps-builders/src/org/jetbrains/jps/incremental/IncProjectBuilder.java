@@ -1076,9 +1076,7 @@ public final class IncProjectBuilder {
     return false;
   }
 
-  private boolean runBuildersForChunk(final CompileContext context,
-                                      final BuildTargetChunk chunk,
-                                      BuildProgress buildProgress) throws ProjectBuildException, IOException {
+  private boolean runBuildersForChunk(final CompileContext context, final BuildTargetChunk chunk, BuildProgress buildProgress) throws ProjectBuildException, IOException {
     Set<? extends BuildTarget<?>> targets = chunk.getTargets();
     if (targets.size() > 1) {
       Set<ModuleBuildTarget> moduleTargets = new LinkedHashSet<>();
@@ -1087,12 +1085,9 @@ public final class IncProjectBuilder {
           moduleTargets.add((ModuleBuildTarget)target);
         }
         else {
-          String targetsString = StringUtil.join(targets,
-                                                 (Function<BuildTarget<?>, String>)target1 -> StringUtil.decapitalize(target1.getPresentableName()), ", ");
-          context.processMessage(new CompilerMessage(
-            "", BuildMessage.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.build.0.because.it.is.included.into.a.circular.dependency.1",
-                                                                StringUtil.decapitalize(target.getPresentableName()), targetsString))
-          );
+          final String targetsString = StringUtil.join(targets, (Function<BuildTarget<?>, String>)target1 -> StringUtil.decapitalize(target1.getPresentableName()), ", ");
+          final String message = JpsBuildBundle.message("build.message.cannot.build.0.because.it.is.included.into.a.circular.dependency.1", StringUtil.decapitalize(target.getPresentableName()), targetsString);
+          context.processMessage(new CompilerMessage("", BuildMessage.Kind.ERROR, message));
           return false;
         }
       }
@@ -1104,6 +1099,8 @@ public final class IncProjectBuilder {
     if (target instanceof ModuleBuildTarget) {
       return runModuleLevelBuilders(context, new ModuleChunk(Collections.singleton((ModuleBuildTarget)target)), buildProgress);
     }
+
+    completeRecompiledSourcesSet(context, (Collection<? extends BuildTarget<BuildRootDescriptor>>)targets);
 
     // In general the set of files corresponding to changed source file may be different
     // Need this for example, to keep up with case changes in file names  for case-insensitive OSes:
@@ -1118,6 +1115,57 @@ public final class IncProjectBuilder {
       buildProgress.updateProgress(target, ((double)builderCount)/builders.size(), context);
     }
     return true;
+  }
+
+  /**
+     if an output file is generated from multiple sources, make sure all of them are added for recompilation
+   */
+  private static <T extends BuildTarget<R>, R extends BuildRootDescriptor> void completeRecompiledSourcesSet(CompileContext context, Collection<T> targets) throws IOException {
+    final CompileScope scope = context.getScope();
+    for (T target : targets) {
+      if (scope.isBuildForced(target)) {
+        return; // assuming build is either forced for all targets in a chunk or for none of them
+      }
+    }
+
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final Set<String> affectedOutputs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> affectedSources = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+
+    final List<SourceToOutputMapping> mappings = new ArrayList<>();
+    for (T target : targets) {
+      final SourceToOutputMapping srcToOut = pd.dataManager.getSourceToOutputMap(target);
+      mappings.add(srcToOut);
+      pd.fsState.processFilesToRecompile(context, target, new FileProcessor<R, T>() {
+        @Override
+        public boolean apply(T target, File file, R root) throws IOException {
+          final String src = FileUtil.toSystemIndependentName(file.getPath());
+          if (affectedSources.add(src)) {
+            final Collection<String> outs = srcToOut.getOutputs(src);
+            if (outs != null) {
+              affectedOutputs.addAll(outs);
+            }
+          }
+          return true;
+        }
+      });
+    }
+
+    if (!affectedOutputs.isEmpty()) {
+      for (SourceToOutputMapping srcToOut : mappings) {
+        for (String src : srcToOut.getSources()) {
+          if (!affectedSources.contains(src)) {
+            for (Iterator<String> it = srcToOut.getOutputsIterator(src); it.hasNext(); ) {
+              if (affectedOutputs.contains(it.next())) {
+                FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, new File(src));
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
   }
 
   private <R extends BuildRootDescriptor, T extends BuildTarget<R>>
@@ -1139,8 +1187,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  private static <T extends BuildRootDescriptor>
-  void cleanOldOutputs(final CompileContext context, final BuildTarget<T> target) throws ProjectBuildException, IOException {
+  private static <T extends BuildRootDescriptor> void cleanOldOutputs(final CompileContext context, final BuildTarget<T> target) throws ProjectBuildException{
     if (!context.getScope().isBuildForced(target)) {
       BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, new DirtyFilesHolderBase<T, BuildTarget<T>>(context) {
         @Override
@@ -1233,42 +1280,6 @@ public final class IncProjectBuilder {
   private void sendBuildingTargetMessages(@NotNull Set<? extends BuildTarget<?>> targets, @NotNull BuildingTargetProgressMessage.Event event) {
     myMessageDispatcher.processMessage(new BuildingTargetProgressMessage(targets, event));
   }
-
-  //private static void createClasspathIndex(final BuildTargetChunk chunk) {
-  //  final Set<File> outputDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-  //  for (BuildTarget<?> target : chunk.getTargets()) {
-  //    if (target instanceof ModuleBuildTarget) {
-  //      File outputDir = ((ModuleBuildTarget)target).getOutputDir();
-  //      if (outputDir != null && outputDirs.add(outputDir)) {
-  //        try {
-  //          BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputDir, CLASSPATH_INDEX_FILE_NAME)));
-  //          try {
-  //            writeIndex(writer, outputDir, "");
-  //          }
-  //          finally {
-  //            writer.close();
-  //          }
-  //        }
-  //        catch (IOException e) {
-  //          // Ignore. Failed to create optional classpath index
-  //        }
-  //      }
-  //    }
-  //  }
-  //}
-
-  //private static void writeIndex(final BufferedWriter writer, final File file, final String path) throws IOException {
-  //  writer.write(path);
-  //  writer.write('\n');
-  //  final File[] files = file.listFiles();
-  //  if (files != null) {
-  //    for (File child : files) {
-  //      final String _path = path.isEmpty() ? child.getName() : path + "/" + child.getName();
-  //      writeIndex(writer, child, _path);
-  //    }
-  //  }
-  //}
-
 
   private boolean processDeletedPaths(CompileContext context, final Set<? extends BuildTarget<?>> targets) throws ProjectBuildException {
     boolean doneSomething = false;
@@ -1364,14 +1375,14 @@ public final class IncProjectBuilder {
   }
 
   // return true if changed something, false otherwise
-  private boolean runModuleLevelBuilders(final CompileContext context,
-                                         final ModuleChunk chunk,
-                                         BuildProgress buildProgress) throws ProjectBuildException, IOException {
+  private boolean runModuleLevelBuilders(final CompileContext context, final ModuleChunk chunk, BuildProgress buildProgress) throws ProjectBuildException, IOException {
     for (BuilderCategory category : BuilderCategory.values()) {
       for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
         builder.chunkBuildStarted(context, chunk);
       }
     }
+
+    completeRecompiledSourcesSet(context, chunk.getTargets());
 
     boolean doneSomething = false;
     boolean rebuildFromScratchRequested = false;
@@ -1391,8 +1402,7 @@ public final class IncProjectBuilder {
             }
           };
         if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-          final Map<ModuleBuildTarget, Set<File>> cleanedSources = BuildOperations
-            .cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder);
+          final Map<ModuleBuildTarget, Set<File>> cleanedSources = BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder);
           for (Map.Entry<ModuleBuildTarget, Set<File>> entry : cleanedSources.entrySet()) {
             final ModuleBuildTarget target = entry.getKey();
             final Set<File> files = entry.getValue();

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.Application;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ScrollingUtil;
@@ -1893,5 +1895,78 @@ public final class TreeUtil {
     List<T> list = new ArrayList<>(count);
     visitVisibleRows(tree, path -> filter.test(path) ? mapper.apply(path) : null, list::add);
     return list;
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param path      a starting tree path
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if next visible path cannot be found
+   */
+  public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, TreePath path, @NotNull Predicate<TreePath> predicate) {
+    return nextVisiblePath(tree, tree.getRowForPath(path), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if next visible path cannot be found
+   */
+  public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, int row, @NotNull Predicate<TreePath> predicate) {
+    assert EventQueue.isDispatchThread();
+    if (row < 0) return null; // ignore illegal row
+    int count = tree.getRowCount();
+    if (count <= row) return null; // ignore illegal row
+    int stop = row;
+    while (true) {
+      row++; // NB!: increase row before checking for cycle scrolling
+      if (row == count && isCyclicScrollingAllowed()) row = 0;
+      if (row == count) return null; // stop scrolling on last node if no cyclic scrolling
+      if (row == stop) return null; // stop scrolling when cyclic scrolling is done
+      TreePath path = tree.getPathForRow(row);
+      if (path != null && predicate.test(path)) return path;
+    }
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param path      a starting tree path
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if previous visible path cannot be found
+   */
+  public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, TreePath path, @NotNull Predicate<TreePath> predicate) {
+    return previousVisiblePath(tree, tree.getRowForPath(path), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if previous visible path cannot be found
+   */
+  public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, int row, @NotNull Predicate<TreePath> predicate) {
+    assert EventQueue.isDispatchThread();
+    if (row < 0) return null; // ignore illegal row
+    int count = tree.getRowCount();
+    if (count <= row) return null; // ignore illegal row
+    int stop = row;
+    while (true) {
+      if (row == 0 && isCyclicScrollingAllowed()) row = count;
+      if (row == 0) return null; // stop scrolling on first node if no cyclic scrolling
+      row--; // NB!: decrease row after checking for cyclic scrolling
+      if (row == stop) return null; // stop scrolling when cyclic scrolling is done
+      TreePath path = tree.getPathForRow(row);
+      if (path != null && predicate.test(path)) return path;
+    }
+  }
+
+  /**
+   * @return {@code true} if cyclic scrolling in trees is allowed, {@code false} otherwise
+   */
+  public static boolean isCyclicScrollingAllowed() {
+    if (!Registry.is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
+    UISettings settings = UISettings.getInstanceOrNull();
+    return settings != null && settings.getCycleScrolling();
   }
 }

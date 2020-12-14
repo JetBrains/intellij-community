@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -215,7 +216,7 @@ public class Mappings {
 
   @Nullable
   private ClassFileRepr getReprByName(@Nullable File source, int qName) {
-    final Collection<File> sources = source != null? Collections.singleton(source) : classToSourceFileGet(qName);
+    final Iterable<File> sources = source != null? Collections.singleton(source) : classToSourceFileGet(qName);
     if (sources != null) {
       for (File src : sources) {
         final Collection<ClassFileRepr> reprs = sourceFileToClassesGet(src);
@@ -242,9 +243,9 @@ public class Mappings {
   }
 
   @Nullable
-  private Collection<File> classToSourceFileGet(int qName) {
+  private Iterable<File> classToSourceFileGet(int qName) {
     Collection<String> get = myClassToRelativeSourceFilePath.get(qName);
-    return get == null ? null : ContainerUtil.map(get, s -> toFull(s));
+    return get == null ? null : Iterators.map(get, s -> toFull(s));
   }
 
   @NotNull
@@ -277,8 +278,8 @@ public class Mappings {
     if (deleted != null) {
       for (Pair<ClassFileRepr, File> pair : deleted) {
         final int deletedClassName = pair.first.name;
-        final Collection<File> sources = classToSourceFileGet(deletedClassName);
-        if (sources == null || sources.isEmpty()) { // if really deleted and not e.g. moved
+        final Iterable<File> sources = classToSourceFileGet(deletedClassName);
+        if (sources == null || Iterators.isEmpty(sources)) { // if really deleted and not e.g. moved
           myChangedClasses.remove(deletedClassName);
         }
       }
@@ -666,8 +667,8 @@ public class Mappings {
                           TIntHashSet visitedClasses) {
       debug("Affecting subclasses of class: ", className);
 
-      final Collection<File> allSources = classToSourceFileGet(className);
-      if (allSources == null || allSources.isEmpty()) {
+      final Iterable<File> allSources = classToSourceFileGet(className);
+      if (allSources == null || Iterators.isEmpty(allSources)) {
         debug("No source file detected for class ", className);
         debug("End of affectSubclasses");
         return;
@@ -776,13 +777,13 @@ public class Mappings {
     }
 
     void affectModule(ModuleRepr m, final Collection<? super File> affectedFiles) {
-      Collection<File> depFiles = myMappings != null ? myMappings.classToSourceFileGet(m.name) : null;
+      Iterable<File> depFiles = myMappings != null ? myMappings.classToSourceFileGet(m.name) : null;
       if (depFiles == null) {
         depFiles = classToSourceFileGet(m.name);
       }
       if (depFiles != null) {
         debug("Affecting module ", m.name);
-        affectedFiles.addAll(depFiles);
+        ContainerUtil.addAll(affectedFiles, depFiles);
       }
     }
 
@@ -831,8 +832,8 @@ public class Mappings {
 
       @Override
       public boolean checkResidence(int residence) {
-        final Collection<File> fNames = classToSourceFileGet(residence);
-        if (fNames == null || fNames.isEmpty()) {
+        final Iterable<File> fNames = classToSourceFileGet(residence);
+        if (fNames == null || Iterators.isEmpty(fNames)) {
           return true;
         }
         for (File fName : fNames) {
@@ -881,8 +882,8 @@ public class Mappings {
     final TIntHashSet dependants = myClassToClassDependency.get(className);
     if (dependants != null) {
       dependants.forEach(depClass -> {
-        final Collection<File> allSources = classToSourceFileGet(depClass);
-        if (allSources == null || allSources.isEmpty()) {
+        final Iterable<File> allSources = classToSourceFileGet(depClass);
+        if (allSources == null || Iterators.isEmpty(allSources)) {
           return true;
         }
 
@@ -963,12 +964,14 @@ public class Mappings {
 
       final TIntHashSet propagated = self.propagateFieldAccess(isField ? member.name : myEmptyName, owner);
       propagated.forEach(className -> {
-        final Collection<File> fileNames = classToSourceFileGet(className);
+        final Iterable<File> fileNames = classToSourceFileGet(className);
         if (fileNames != null) {
-          for (File fileName : fileNames) {
-            debug("Adding ", fileName);
+          if (myDebugS.isDebugEnabled()) {
+            for (File fileName : fileNames) {
+              debug("Adding ", fileName);
+            }
           }
-          toRecompile.addAll(fileNames);
+          ContainerUtil.addAll(toRecompile, fileNames);
         }
         return true;
       });
@@ -1214,11 +1217,13 @@ public class Mappings {
             if (overrides.satisfy(method) && isInheritor) {
               debug("Current method overrides that found");
 
-              final Collection<File> files = classToSourceFileGet(methodClass.name);
+              final Iterable<File> files = classToSourceFileGet(methodClass.name);
               if (files != null) {
-                myAffectedFiles.addAll(files);
-                for (File file : files) {
-                  debug("Affecting file ", file);
+                ContainerUtil.addAll(myAffectedFiles, files);
+                if (myDebugS.isDebugEnabled()) {
+                  for (File file : files) {
+                    debug("Affecting file ", file);
+                  }
                 }
               }
 
@@ -1244,13 +1249,13 @@ public class Mappings {
             if (r == null) {
               return true;
             }
-            final Collection<File> sourceFileNames = classToSourceFileGet(subClass);
-            if (sourceFileNames != null && !myCompiledFiles.containsAll(sourceFileNames)) {
+            final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
+            if (sourceFileNames != null && !containsAll(myCompiledFiles, sourceFileNames)) {
               final int outerClass = r.getOuterClassName();
               if (!isEmpty(outerClass)) {
                 final ClassRepr outerClassRepr = myFuture.classReprByName(outerClass);
                 if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, m) || myFuture.extendsLibraryClass(outerClassRepr, null))) {
-                  myAffectedFiles.addAll(sourceFileNames);
+                  ContainerUtil.addAll(myAffectedFiles, sourceFileNames);
                   for (File sourceFileName : sourceFileNames) {
                     debug("Affecting file due to local overriding: ", sourceFileName);
                   }
@@ -1314,11 +1319,13 @@ public class Mappings {
         myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
-          final Collection<File> fNames = classToSourceFileGet(p.second.name);
+          final Iterable<File> fNames = classToSourceFileGet(p.second.name);
           if (fNames != null) {
-            myAffectedFiles.addAll(fNames);
-            for (File fName : fNames) {
-              debug("Affecting file by overriding: ", fName);
+            ContainerUtil.addAll(myAffectedFiles, fNames);
+            if (myDebugS.isDebugEnabled()) {
+              for (File fName : fNames) {
+                debug("Affecting file by overriding: ", fName);
+              }
             }
           }
         }
@@ -1357,10 +1364,10 @@ public class Mappings {
                 }
 
                 if (allAbstract && visited) {
-                  final Collection<File> sources = classToSourceFileGet(p);
+                  final Iterable<File> sources = classToSourceFileGet(p);
 
-                  if (sources != null && !myCompiledFiles.containsAll(sources)) {
-                    myAffectedFiles.addAll(sources);
+                  if (sources != null && !containsAll(myCompiledFiles, sources)) {
+                    ContainerUtil.addAll(myAffectedFiles, sources);
                     debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", p);
                     for (File source : sources) {
                       debug("Affecting subclass source file ", source);
@@ -1437,9 +1444,9 @@ public class Mappings {
                 final ClassRepr aClass = p.getSecond();
 
                 if (aClass != MOCK_CLASS) {
-                  final Collection<File> fileNames = classToSourceFileGet(aClass.name);
+                  final Iterable<File> fileNames = classToSourceFileGet(aClass.name);
                   if (fileNames != null) {
-                    myAffectedFiles.addAll(fileNames);
+                    ContainerUtil.addAll(myAffectedFiles, fileNames);
                   }
                 }
               }
@@ -1563,21 +1570,21 @@ public class Mappings {
           subClasses.forEach(subClass -> {
             final ClassRepr r = myFuture.classReprByName(subClass);
             if (r != null) {
-              final Collection<File> sourceFileNames = classToSourceFileGet(subClass);
-              if (sourceFileNames != null && !myCompiledFiles.containsAll(sourceFileNames)) {
+              final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
+              if (sourceFileNames != null && !containsAll(myCompiledFiles, sourceFileNames)) {
                 if (r.isLocal()) {
                   for (File sourceFileName : sourceFileNames) {
                     debug("Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ", sourceFileName);
+                    myAffectedFiles.add(sourceFileName);
                   }
-                  myAffectedFiles.addAll(sourceFileNames);
                 }
                 else {
                   final int outerClass = r.getOuterClassName();
                   if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, f)) {
                     for (File sourceFileName : sourceFileNames) {
                       debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
+                      myAffectedFiles.add(sourceFileName);
                     }
-                    myAffectedFiles.addAll(sourceFileNames);
                   }
                 }
               }
@@ -2080,14 +2087,14 @@ public class Mappings {
         for (ClassRepr c : addedClasses) {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
             final Set<File> candidates = FileCollectionFactory.createCanonicalFileSet();
-            final Collection<File> currentlyMapped = classToSourceFileGet(c.name);
+            final Iterable<File> currentlyMapped = classToSourceFileGet(c.name);
             if (currentlyMapped != null) {
-              candidates.addAll(currentlyMapped);
+              ContainerUtil.addAll(candidates, currentlyMapped);
             }
             candidates.removeAll(myCompiledFiles);
-            final Collection<File> newSources = myDelta.classToSourceFileGet(c.name);
+            final Iterable<File> newSources = myDelta.classToSourceFileGet(c.name);
             if (newSources != null) {
-              candidates.removeAll(newSources);
+              removeAll(candidates, newSources);
             }
             final Set<File> nonExistentOrOutOfScope = FileCollectionFactory.createCanonicalFileSet();
             for (final File candidate : candidates) {
@@ -2102,10 +2109,10 @@ public class Mappings {
               // Schedule for recompilation both to make possible 'duplicate sources' error evident
               candidates.clear(); // just reusing the container
               if (currentlyMapped != null) {
-                candidates.addAll(currentlyMapped);
+                ContainerUtil.addAll(candidates, currentlyMapped);
               }
               if (newSources != null) {
-                candidates.addAll(newSources);
+                ContainerUtil.addAll(candidates, newSources);
               }
               candidates.removeAll(nonExistentOrOutOfScope);
 
@@ -2158,7 +2165,7 @@ public class Mappings {
       assert myAffectedFiles != null;
 
       toAffect.forEach(depClass -> {
-        final Collection<File> fNames = classToSourceFileGet(depClass);
+        final Iterable<File> fNames = classToSourceFileGet(depClass);
         if (fNames != null) {
           for (File fName : fNames) {
             if (myFilter == null || myFilter.accept(fName)) {
@@ -2179,7 +2186,7 @@ public class Mappings {
       state.myDependants.forEach(new TIntProcedure() {
         @Override
         public boolean execute(final int depClass) {
-          final Collection<File> depFiles = classToSourceFileGet(depClass);
+          final Iterable<File> depFiles = classToSourceFileGet(depClass);
           if (depFiles != null) {
             for (File depFile : depFiles) {
               processDependentFile(depClass, depFile);
@@ -2513,8 +2520,12 @@ public class Mappings {
     final int className = cr.name;
 
     // it is safe to cleanup class information if it is mapped to non-existing files only
-    final Collection<File> currentlyMapped = classToSourceFileGet(className);
-    if (currentlyMapped == null || currentlyMapped.isEmpty()) {
+    final Iterable<File> _currentlyMapped = classToSourceFileGet(className);
+    if (_currentlyMapped == null) {
+      return;
+    }
+    final Collection<File> currentlyMapped = ContainerUtil.collect(_currentlyMapped.iterator());
+    if (currentlyMapped.isEmpty()) {
       return;
     }
     if (currentlyMapped.size() == 1) {
@@ -2891,7 +2902,8 @@ public class Mappings {
   @Nullable
   public Collection<File> getClassSources(int className) {
     synchronized (myLock) {
-      return classToSourceFileGet(className);
+      final Iterable<File> files = classToSourceFileGet(className);
+      return files == null? Collections.emptyList() : ContainerUtil.collect(files.iterator());
     }
   }
 
@@ -3015,10 +3027,10 @@ public class Mappings {
     assert (myChangedClasses != null && myChangedFiles != null);
     myChangedClasses.add(it);
 
-    final Collection<File> files = classToSourceFileGet(it);
+    final Iterable<File> files = classToSourceFileGet(it);
 
     if (files != null) {
-      myChangedFiles.addAll(files);
+      ContainerUtil.addAll(myChangedFiles, files);
     }
   }
 
@@ -3085,6 +3097,21 @@ public class Mappings {
 
       stream.print("End Of ");
       stream.println(info[i]);
+    }
+  }
+
+  private static <T> boolean containsAll(final Collection<? extends T> collection, Iterable<? extends T> it) {
+    for (T file : it) {
+      if (!collection.contains(file)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  private static <T> void removeAll(final Collection<? extends T> collection, Iterable<? extends T> it) {
+    for (T file : it) {
+      collection.remove(file);
     }
   }
 

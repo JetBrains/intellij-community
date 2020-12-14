@@ -7,7 +7,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -48,7 +47,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
 
   private final EncapsulateFieldHelper myHelper;
 
-  private final Project myProject;
   private final PsiClass myClass;
 
   private final PsiField[] myFields;
@@ -92,7 +90,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
 
   public EncapsulateFieldsDialog(Project project, PsiClass aClass, final Set preselectedFields, EncapsulateFieldHelper helper) {
     super(project, true);
-    myProject = project;
     myClass = aClass;
     myHelper = helper;
 

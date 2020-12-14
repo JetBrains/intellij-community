@@ -77,7 +77,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     binding.visit(new ExtensionPointBinding.BindingVisitor() {
 
       @Override
-      public void visitAttribute(@NotNull PsiField field, @NotNull @NonNls String attributeName, boolean required) {
+      public void visitAttribute(@NotNull PsiField field, @NotNull @NonNls String attributeName, RequiredFlag required) {
         final With withElement = findWithElement(elements, field);
         final PsiType fieldType = field.getType();
         Class<?> clazz = String.class;
@@ -122,7 +122,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       }
 
       @Override
-      public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, boolean required) {
+      public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, RequiredFlag required) {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class)
             .setDeclaringElement(field);
@@ -139,7 +139,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       public void visitXCollection(@NotNull PsiField field,
                                    @Nullable String tagName,
                                    @NotNull PsiAnnotation collectionAnnotation,
-                                   boolean required) {
+                                   RequiredFlag required) {
         if (tagName == null) {
           registerCollectionBinding(field, registrar, collectionAnnotation, required);
           return;
@@ -181,14 +181,19 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static void markAsRequired(DomExtension extension, boolean required) {
-    if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+  private static void markAsRequired(DomExtension extension, ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
+    if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED) {
+      extension.addCustomAnnotation(MyRequired.INSTANCE);
+    }
+    else if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED_ALLOW_EMPTY) {
+      extension.addCustomAnnotation(MyRequiredCanBeEmpty.INSTANCE);
+    }
   }
 
   private static void registerCollectionBinding(PsiField field,
                                                 DomExtensionsRegistrar registrar,
                                                 PsiAnnotation collectionAnnotation,
-                                                boolean required) {
+                                                ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
     final boolean surroundWithTag = PsiUtil.getAnnotationBooleanAttribute(collectionAnnotation, "surroundWithTag");
     if (surroundWithTag) return; // todo Set, List, Array
 
@@ -279,6 +284,32 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     @Override
     public boolean nonEmpty() {
       return true;
+    }
+
+    @Override
+    public boolean identifier() {
+      return false;
+    }
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      return Required.class;
+    }
+  }
+
+  @SuppressWarnings("ClassExplicitlyAnnotation")
+  private static class MyRequiredCanBeEmpty implements Required {
+
+    private static final MyRequiredCanBeEmpty INSTANCE = new MyRequiredCanBeEmpty();
+
+    @Override
+    public boolean value() {
+      return true;
+    }
+
+    @Override
+    public boolean nonEmpty() {
+      return false;
     }
 
     @Override

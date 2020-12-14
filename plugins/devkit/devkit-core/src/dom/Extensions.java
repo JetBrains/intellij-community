@@ -53,4 +53,11 @@ public interface Extensions extends DomElement {
 
   @NotNull @NlsSafe
   String getEpPrefix();
+
+  
+  /**
+   * Special marker for extension that cannot be resolved using current dependencies.
+   */
+  interface UnresolvedExtension extends DomElement {
+  }
 }

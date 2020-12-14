@@ -13,6 +13,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.lang.CompoundRuntimeException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.function.Consumer
@@ -81,8 +82,8 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       }
     }
 
-    // SchemeManager (old settingsSavingComponent) must be saved before saving components (component state uses scheme manager in an ipr project, so, we must save it before)
-    // so, call sequentially it, not inside coroutineScope
+    // SchemeManager (asyncSettingsSavingComponent) must be saved before saving components (component state uses scheme manager in an ipr project, so, we must save it before)
+    // so, call it sequentially, not inside coroutineScope
     commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionProducerManager)
   }
 
@@ -115,6 +116,10 @@ private inline fun <T> runAndCollectException(errors: MutableList<Throwable>, ru
   }
   catch (e: ProcessCanceledException) {
     throw e
+  }
+  catch (e: CompoundRuntimeException) {
+    errors.addAll(e.exceptions)
+    return null
   }
   catch (e: Throwable) {
     errors.add(e)

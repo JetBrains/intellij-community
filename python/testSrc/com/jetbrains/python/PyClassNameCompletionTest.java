@@ -17,6 +17,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -146,7 +147,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestCompletionOrder("main.path", "first.foo.path", "sys.path", "_second.bar.path")
+      (__) -> doTestCompletionOrder("combinedOrdering.path", "first.foo.path", "sys.path", "_second.bar.path")
     );
   }
 
@@ -155,27 +156,36 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doTestCompletionOrder("c.foo", "b._foo", "a.__foo__");
   }
 
+  // PY-44586
+  public void testNoDuplicatesForStubsAndOverloads() {
+    doExtendedCompletion();
+    List<String> allVariants = myFixture.getLookupElementStrings();
+    assertNotNull(allVariants);
+    assertEquals(1, Collections.frequency(allVariants, "my_func"));
+  }
+
   private void doTest() {
-    final String path = "/completion/className/" + getTestName(true);
-    myFixture.copyDirectoryToProject(path, "");
-    myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
-    myFixture.complete(CompletionType.BASIC, 2);
-    if (myFixture.getLookupElements() != null) {
+    LookupElement[] lookupElements = doExtendedCompletion();
+    if (lookupElements != null) {
       myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     }
-    myFixture.checkResultByFile(path + "/" + getTestName(true) + ".after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "/" + getTestName(true) + ".after.py", true);
   }
 
   private void doTestCompletionOrder(String @NotNull ... expected) {
-    myFixture.copyDirectoryToProject("/completion/className/" + getTestName(true), "");
-    myFixture.configureByFile("main.py");
-    myFixture.complete(CompletionType.BASIC, 2);
-    List<String> qNames = StreamEx.of(myFixture.getLookupElements())
+    LookupElement[] lookupElements = doExtendedCompletion();
+    List<String> qNames = StreamEx.of(lookupElements)
       .map(LookupElement::getPsiElement)
       .nonNull()
       .map(PyClassNameCompletionTest::extractQualifiedName)
       .toList();
     assertContainsInRelativeOrder(qNames, expected);
+  }
+
+  private LookupElement @Nullable [] doExtendedCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
+    return myFixture.complete(CompletionType.BASIC, 2);
   }
 
   @Nullable
@@ -195,5 +205,10 @@ public class PyClassNameCompletionTest extends PyTestCase {
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/completion/className/";
   }
 }

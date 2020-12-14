@@ -302,6 +302,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
       };
 
       myExcludedTable = new JBTable(dataModel);
+      myExcludedTable.setShowGrid(false);
       myExcludedTable.setEnableAntialiasing(true);
 
       myExcludedTable.getEmptyText().setText(JavaCompilerBundle.message("no.excludes"));

@@ -14,11 +14,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.ui.CoreAwareIconManager;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -26,8 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
@@ -41,8 +44,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile boolean myStopped;
 
   private volatile boolean myIndeterminate = Registry.is("ide.progress.indeterminate.by.default", true);
-  private volatile MacUtil.Activity myMacActivity;
-  private volatile boolean myShouldStartActivity = true;
+  private volatile Runnable myMacActivity;
+  // false by default - do not attempt to use such a relatively heavy code on start-up
+  private volatile boolean myShouldStartActivity = SystemInfoRt.isMac && Registry.is("idea.mac.prevent.app.nap", false);
 
   private Stack<@NlsContexts.ProgressText String> myTextStack; // guarded by this
   private DoubleArrayList myFractionStack; // guarded by this
@@ -70,12 +74,21 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
       myText = "";
       myFraction = 0;
       myText2 = "";
-      startSystemActivity();
+
+      if (myShouldStartActivity) {
+        IconManager iconManager = IconManager.getInstance();
+        if (iconManager instanceof CoreAwareIconManager) {
+          myMacActivity = ((CoreAwareIconManager)iconManager).wakeUpNeo(this);
+        }
+      }
+      else {
+        myMacActivity = null;
+      }
       myRunning = true;
     }
   }
 
-  private static final Set<Class<?>> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<?>> ourReportedReuseExceptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   protected boolean isReuseable() {
     return false;
@@ -91,14 +104,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private void startSystemActivity() {
-    myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(this) : null;
-  }
-
   void stopSystemActivity() {
-    MacUtil.Activity macActivity = myMacActivity;
+    Runnable macActivity = myMacActivity;
     if (macActivity != null) {
-      macActivity.matrixHasYou();
+      macActivity.run();
       myMacActivity = null;
     }
   }

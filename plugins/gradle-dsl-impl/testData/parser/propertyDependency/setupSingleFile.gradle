@@ -1,0 +1,22 @@
+ext {
+  N0 = 24
+  N1 = 25
+  O = 27
+  def versions = [N0, N1, O]
+  def files = [key: 'proguard.txt', key2: 'coolguard.txt', passwordFile: "passwordFile.pass"]
+  prop1 = versions
+  prop2 = files
+}
+
+android {
+  defaultConfig {
+    maxSdkVersion versions[1]
+    minSdkVersion android.defaultConfig.maxSdkVersion
+  }
+  signingConfigs {
+    myConfig {
+      storeFile file(prop2['passwordFile'])
+      storePassword prop2['key3']
+    }
+  }
+}

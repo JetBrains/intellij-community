@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateCheckContributor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.JavaSyntheticLibrary
 import com.intellij.openapi.roots.OrderRootType
@@ -19,7 +20,7 @@ import com.intellij.ui.AppUIUtil
 
 class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
   override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
-    return getAdditionalProjectJdks(project)
+    return getAdditionalProjectJdksToIndex(project)
       .map { createSdkLibrary(it) }
       .toList()
   }
@@ -44,18 +45,26 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
     }
 
     @JvmStatic
-    fun getAdditionalProjectJdks(project: Project): List<Sdk> {
+    fun getAdditionalProjectJdksToIndex(project: Project): List<Sdk> {
       if (shouldIndexAlternativeJre()) {
-        return RunManager.getInstance(project).allConfigurationsList
-          .asSequence()
-          .filterIsInstance(ConfigurationWithAlternativeJre::class.java)
-          .filter { it.isAlternativeJrePathEnabled }
-          .mapNotNull { it.alternativeJrePath }
-          .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
-          .distinct()
-          .toList()
+        return getAdditionalProjectJdks(project)
       }
       return emptyList()
+    }
+
+    /**
+     * Returns all [Sdk] that are used in Run configurations
+     */
+    @JvmStatic
+    fun getAdditionalProjectJdks(project: Project): List<Sdk> {
+      return RunManager.getInstance(project).allConfigurationsList
+        .asSequence()
+        .filterIsInstance(ConfigurationWithAlternativeJre::class.java)
+        .filter { it.isAlternativeJrePathEnabled }
+        .mapNotNull { it.alternativeJrePath }
+        .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
+        .distinct()
+        .toList()
     }
 
     @JvmStatic
@@ -78,5 +87,11 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
         }
       }
     }
+  }
+}
+
+class AlternativeSdkRootsProviderForJdkUpdate : JdkUpdateCheckContributor {
+  override fun contributeJdks(project: Project): List<Sdk> {
+    return AlternativeSdkRootsProvider.getAdditionalProjectJdks(project)
   }
 }

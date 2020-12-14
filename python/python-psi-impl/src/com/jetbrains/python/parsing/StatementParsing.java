@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.Set;
 
-
 /**
  * @author yole
  */
@@ -228,7 +227,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           builder.error(PyPsiBundle.message("PARSE.expected.expression"));
         }
       }
-      else if (atToken(PyTokenTypes.EQ) || (atToken(PyTokenTypes.COLON) && checkLanguageLevel && myContext.getLanguageLevel().isPy3K())) {
+      else if (atToken(PyTokenTypes.EQ) || (atToken(PyTokenTypes.COLON) && (!checkLanguageLevel || myContext.getLanguageLevel().isPy3K()))) {
         exprStatement.rollbackTo();
         exprStatement = builder.mark();
         getExpressionParser().parseExpression(false, true);

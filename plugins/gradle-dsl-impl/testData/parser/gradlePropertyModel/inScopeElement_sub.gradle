@@ -1,0 +1,13 @@
+ext {
+  def var6 = "swan" // No
+  prop2 = "kite" // Yes
+}
+def var3 = "goldeneye" // Yes
+android {
+  def var4 = "wallaby" // Yes
+  defaultConfig {
+    def var5 = "curlew" // Yes
+    targetSdkVersion 14 // No
+    minSdkVersion 12 // No
+  }
+}

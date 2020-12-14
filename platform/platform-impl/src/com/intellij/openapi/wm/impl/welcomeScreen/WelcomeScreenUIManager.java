@@ -31,7 +31,6 @@ public class WelcomeScreenUIManager {
 
   @NotNull
   private static Font loadFont() {
-    @SuppressWarnings("SpellCheckingInspection")
     @NonNls String fontPath = "/fonts/Roboto-Light.ttf";
     URL url = AppUIUtil.class.getResource(fontPath);
     if (url == null) {
@@ -53,7 +52,7 @@ public class WelcomeScreenUIManager {
   }
 
   public static Color getMainTabListBackground() {
-    return JBColor.namedColor("WelcomeScreen.List.background", new JBColor(0xF2F2F2, 0x393939));
+    return JBColor.namedColor("WelcomeScreen.SidePanel.background", new JBColor(0xF2F2F2, 0x3C3F41));
   }
 
   public static Color getProjectsBackground() {
@@ -70,7 +69,8 @@ public class WelcomeScreenUIManager {
   }
 
   public static Color getMainAssociatedComponentBackground() {
-    return JBColor.namedColor("WelcomeScreen.AssociatedComponent.background", JBColor.WHITE);
+    //noinspection UseJBColor
+    return JBColor.namedColor("WelcomeScreen.Details.background", new JBColor(Color.white, new Color(0x313335)));
   }
 
   public static Color getLinkNormalColor() {

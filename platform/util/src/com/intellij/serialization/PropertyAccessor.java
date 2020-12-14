@@ -102,7 +102,7 @@ public final class PropertyAccessor implements MutableAccessor {
     catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
       // see KotlinXmlSerializerTest.nullInMap
-      if (cause instanceof IllegalArgumentException &&
+      if (cause instanceof NullPointerException &&
           myGenericType instanceof Class &&
           ((Class<?>)myGenericType).isEnum() &&
           cause.getMessage().contains("Parameter specified as non-null is null:")) {

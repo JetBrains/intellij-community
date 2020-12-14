@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
 import com.intellij.openapi.vcs.changes.patch.UnshelvePatchDefaultExecutor;
@@ -69,20 +70,24 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                                                         @NotNull List<ShelvedChangeList> changeLists,
                                                         @NotNull List<ShelvedBinaryFile> binaryFiles,
                                                         @NotNull List<ShelvedChange> changes) {
-    String suggestedName = changeLists.get(0).DESCRIPTION;
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    final ChangeListChooser chooser =
-      new ChangeListChooser(project, changeListManager.getChangeListsCopy(), changeListManager.getDefaultChangeList(),
-                            VcsBundle.message("unshelve.changelist.chooser.title"), suggestedName) {
+    LocalChangeList targetList;
+    if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+      String suggestedName = changeLists.get(0).DESCRIPTION;
+      ChangeListChooser chooser = new ChangeListChooser(project, null, null,
+                                                        VcsBundle.message("unshelve.changelist.chooser.title"), suggestedName) {
         @Override
         protected JComponent createDoNotAskCheckbox() {
           return createRemoveFilesStrategyCheckbox(project);
         }
       };
+      if (!chooser.showAndGet()) return;
 
-    if (!chooser.showAndGet()) return;
-    ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, binaryFiles,
-                                                                             chooser.getSelectedList());
+      targetList = chooser.getSelectedList();
+    }
+    else {
+      targetList = null;
+    }
+    ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, binaryFiles, targetList);
   }
 
   private static boolean hasNotAllSelectedChanges(@NotNull ShelvedChangeList list, Change @Nullable [] changes) {

@@ -128,6 +128,7 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
     public void visitClass(@NotNull PsiClass aClass) {
       if (aClass.isInterface() ||
           aClass.isAnnotationType() ||
+          aClass.isRecord() ||
           aClass instanceof PsiTypeParameter ||
           !SerializationUtils.isSerializable(aClass) ||
           isIgnoredSubclass(aClass)) {

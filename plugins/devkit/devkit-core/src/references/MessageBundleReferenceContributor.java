@@ -34,7 +34,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -52,7 +55,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
   @NonNls private static final String DESCRIPTION = ".description";
-  @NonNls private static final String BUNDLE_PROPERTIES = "Bundle.properties";
+  @NonNls public static final String BUNDLE_PROPERTIES = "Bundle.properties";
 
   @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
   @NonNls private static final String EXPORTABLE_PREFIX = "exportable.";
@@ -112,7 +115,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
         private PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
           if (!isPluginDescriptionKey(text)) return null;
 
-          String id = StringUtil.substringAfter(StringUtil.substringBefore(text, DESCRIPTION), PLUGIN);
+          String id = StringUtil.substringAfter(StringUtil.notNullize(StringUtil.substringBefore(text, DESCRIPTION)), PLUGIN);
           return new PluginIdReference(element, id);
         }
       });
@@ -203,34 +206,37 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
       CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
       if (myIsAction) {
         IdeaPluginRegistrationIndex.processAction(project, myId, scope, processor);
-
-        // action.ActionId.<override-text@place>.text
-        if (processor.getResults().isEmpty()) {
-          String place = StringUtil.substringAfterLast(myId, ".");
-          if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
-
-          String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
-
-          IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
-
-          boolean foundOverrideText = false;
-          for (ActionOrGroup result : processor.getResults()) {
-            Action action = (Action)result;
-            for (OverrideText overrideText : action.getOverrideTexts()) {
-              if (place.equals(overrideText.getPlace().getStringValue())) {
-                foundOverrideText = true;
-                break;
-              }
-            }
-          }
-
-          if (!foundOverrideText) {
-            return ResolveResult.EMPTY_ARRAY;
-          }
-        }
       }
       else {
         IdeaPluginRegistrationIndex.processGroup(project, myId, scope, processor);
+      }
+
+      // action|group.ActionId.<override-text@place>.text
+      if (processor.getResults().isEmpty()) {
+        String place = StringUtil.substringAfterLast(myId, ".");
+        if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
+
+        String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
+
+        if (myIsAction) {
+          IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
+        } else {
+          IdeaPluginRegistrationIndex.processGroup(project, idWithoutPlaceSuffix, scope, processor);
+        }
+
+        boolean foundOverrideText = false;
+        for (ActionOrGroup result : processor.getResults()) {
+          for (OverrideText overrideText : result.getOverrideTexts()) {
+            if (place.equals(overrideText.getPlace().getStringValue())) {
+              foundOverrideText = true;
+              break;
+            }
+          }
+        }
+
+        if (!foundOverrideText) {
+          return ResolveResult.EMPTY_ARRAY;
+        }
       }
 
       final List<PsiElement> psiElements =

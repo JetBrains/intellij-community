@@ -60,7 +60,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
                        "}", "/** No comments */\n" +
                             "\n" +
                             "/**\n" +
-                            " * Created by Vasya Pupkin on " + DateFormatUtil.formatDate(TEST_DATE) + ".\n" +
+                            " * Created by " + SystemProperties.getUserName() + " on " + DateFormatUtil.formatDate(TEST_DATE) + ".\n" +
                             " */\n" +
                             "\n" +
                             "package foo;\n" +
@@ -79,7 +79,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
                          "}", "/** No comments */\n" +
                               "\n" +
                               "/**\n" +
-                              " * Created by Vasya Pupkin on " + DateFormatUtil.formatDate(TEST_DATE) + ".\n" +
+                              " * Created by " + SystemProperties.getUserName() + " on " + DateFormatUtil.formatDate(TEST_DATE) + ".\n" +
                               " */\n" +
                               "\n" +
                               "package foo;\n" +
@@ -87,7 +87,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
                               "}");
   }
 
-  private void doTest(boolean shouldEscape, boolean replaceParameters, String initialText, String expected) throws IOException {
+  private void doTest(boolean shouldEscape, boolean replaceParameters, @SuppressWarnings("SameParameterValue") String initialText, String expected) throws IOException {
     assertThat(ProjectKt.getStateStore(getProject()).getStorageScheme()).isEqualTo(StorageScheme.DIRECTORY_BASED);
     VirtualFile root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0];
     Path rootFile = root.toNioPath().resolve(FOO_BAR_JAVA);
@@ -123,7 +123,6 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    SystemProperties.setTestUserName("Vasya Pupkin");
     ((FileTemplateManagerImpl)FileTemplateManager.getDefaultInstance()).setTestDate(TEST_DATE);
     PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE);
     PlatformTestUtil.setLongMeaninglessFileIncludeTemplateTemporarilyFor(getProject(), getProject());
@@ -132,7 +131,6 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      SystemProperties.setTestUserName(null);
       ((FileTemplateManagerImpl)FileTemplateManager.getDefaultInstance()).setTestDate(null);
       PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE);
     }

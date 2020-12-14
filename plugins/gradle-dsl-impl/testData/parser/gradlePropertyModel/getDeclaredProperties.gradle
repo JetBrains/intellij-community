@@ -1,0 +1,13 @@
+android {
+  def outerVar = "Spooky"
+  buildTypes {
+    debug {
+      def var = sneaky
+      minifyEnabled true
+    }
+  }
+}
+ext {
+  prop1 = "property"
+  def var = "value"
+}

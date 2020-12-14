@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +132,7 @@ public class ThreeStateCheckBox extends JCheckBox {
         icon = UIManager.getIcon("CheckBox.icon");
       }
       if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-        icon = JBUI.scale(EmptyIcon.create(20, 18));
+        icon = JBUIScale.scaleIcon(EmptyIcon.create(20, 18));
       }
       if (icon != null) {
         final Insets i = getInsets();

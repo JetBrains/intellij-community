@@ -31,7 +31,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  private final JPanel myComponent;
+  protected JPanel myComponent;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());

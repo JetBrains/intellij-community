@@ -1,0 +1,3 @@
+dependencies {
+  compile "${property}:$other:2.0"
+}

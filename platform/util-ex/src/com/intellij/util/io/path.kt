@@ -8,7 +8,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
-import java.nio.CharBuffer
 import java.nio.channels.Channels
 import java.nio.charset.Charset
 import java.nio.file.*
@@ -197,7 +196,7 @@ val Path.parentSystemIndependentPath: String
 fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 
 @Throws(IOException::class)
-fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
+fun Path.readText(): String = Files.readString(this)
 
 fun Path.readChars(): CharSequence {
   // channel is used to avoid Files.size() call
@@ -223,21 +222,11 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
 }
 
 @JvmOverloads
-fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
-  if (data is String) {
-    if (createParentDirs) {
-      parent?.createDirectories()
-    }
-    Files.write(this, data.toByteArray())
+fun Path.write(data: CharSequence, charset: Charset = Charsets.UTF_8, createParentDirs: Boolean = true): Path {
+  if (createParentDirs) {
+    parent?.createDirectories()
   }
-  else {
-    write(Charsets.UTF_8.encode(CharBuffer.wrap(data)), createParentDirs)
-  }
-  return this
-}
-
-fun Path.write(data: CharSequence, charset: Charset): Path {
-  write(charset.encode(CharBuffer.wrap(data)), createParentDirs = true)
+  Files.writeString(this, data, charset)
   return this
 }
 
@@ -356,4 +345,4 @@ fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
   return attributes != null && attributes.isSymbolicLink
 }
 
-fun Path.isAncestor(child: Path) : Boolean = child.startsWith(this)
+fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)

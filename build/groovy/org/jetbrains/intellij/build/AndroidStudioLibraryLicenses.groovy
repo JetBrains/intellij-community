@@ -180,9 +180,5 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Instant run version", libraryName: "libjava_version.jar",
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "R8", libraryName: "r8.jar", license: "BSD"),
-    // remove LibraryLicense for xml-apis when it appears in CommunityLibraryLicenses
-    new LibraryLicense(name: "xml-apis", libraryName: "xml-apis", license: "Apache 2.0",
-                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
-                       url: "http://xerces.apache.org/xml-commons/components/external"),
   ] as List<LibraryLicense>
 }

@@ -15,5 +15,6 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
   </component>
 </module>

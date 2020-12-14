@@ -1,0 +1,7 @@
+apply from: "a.gradle"
+
+def goodbye = "goodbye"
+
+ext {
+  prop5 = 5
+}

@@ -2,6 +2,7 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
+import com.intellij.analysis.problemsView.HighlightingDuplicate
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsListener
@@ -57,8 +58,13 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   })
 
   private fun process(problem: FileProblem, create: Boolean, function: (MutableSet<FileProblem>) -> SetUpdateState): SetUpdateState {
+    val file = problem.file
+    if (create && problem is HighlightingDuplicate) {
+      if (project.isDisposed || HighlightingErrorsProvider.getInstance(project).isFileWatched(file)) {
+        return SetUpdateState.IGNORED
+      }
+    }
     synchronized(fileProblems) {
-      val file = problem.file
       val set = when (create) {
         true -> fileProblems.computeIfAbsent(file) { mutableSetOf() }
         else -> fileProblems[file] ?: return SetUpdateState.IGNORED

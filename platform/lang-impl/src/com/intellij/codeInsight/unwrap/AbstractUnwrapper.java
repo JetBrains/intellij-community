@@ -18,6 +18,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,10 +26,9 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractContext> implements Unwrapper {
-  @NotNull
-  private final String myDescription;
+  private final @NotNull @Nls String myDescription;
 
-  public AbstractUnwrapper(@NotNull String description) {
+  public AbstractUnwrapper(@NotNull @Nls String description) {
     myDescription = description;
   }
 
@@ -41,7 +41,7 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
 
   @NotNull
   @Override
-  public String getDescription(@NotNull PsiElement e) {
+  public @Nls String getDescription(@NotNull PsiElement e) {
     return myDescription;
   }
 

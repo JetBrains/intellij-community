@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import static javax.swing.SwingConstants.*;
@@ -137,7 +138,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       if (provider != null) {
         window = EditorWindow.DATA_KEY.getData(provider);
       }
-      if (window != null && dropSide != -1) {
+      if (window != null && dropSide != -1 && dropSide != CENTER) {
         window.split(dropSide == BOTTOM || dropSide == TOP ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT,
                      true, file, false, dropSide != LEFT && dropSide != TOP);
         return;
@@ -148,17 +149,28 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       window = mySplitters.getOrCreateCurrentWindow(file);
     }
 
-
+    Boolean dropInBetweenPinnedTabs = null;
     if (myCurrentOver != null) {
+
       int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
+      if (index >= 0 && index < myCurrentOver.getTabCount() - 1) {
+        dropInBetweenPinnedTabs = myCurrentOver.getTabAt(index).isPinned();
+      }
       file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
+      Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
+      Integer dragStartLocation = file.getUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY);
+      boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && dragStartLocation != null &&
+                                         dragStartLocation == System.identityHashCode(myCurrentOver);
+      if (!isDroppedToOriginalPlace) {
+        file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, dropInBetweenPinnedTabs);
+      }
     }
 
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
-    window.setFilePinned(file, dockableEditor.isPinned());
+    window.setFilePinned(file, Objects.requireNonNullElseGet(dropInBetweenPinnedTabs, dockableEditor::isPinned));
   }
 
-  @MagicConstant(intValues = {TOP, LEFT, BOTTOM, RIGHT, -1})
+  @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1})
   public int getCurrentDropSide() {
     return myCurrentOver instanceof JBTabsEx ? ((JBTabsEx)myCurrentOver).getDropSide() : -1;
   }
@@ -257,7 +269,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   private class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
-    private final Color myColor = JBColor.namedColor("dropArea.base", 0x4f4fff, 0x5081c0);
+    private final Color myColor = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57);
 
     @Override
     public boolean needsRepaint() {
@@ -268,10 +280,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(ColorUtil.toAlpha(myColor, 200));
-      g.setStroke(new BasicStroke(2));
-      g.draw(myBoundingBox);
-      g.setColor(ColorUtil.toAlpha(myColor, 40));
+      g.setColor(ColorUtil.withAlpha(myColor, .2));
       g.fill(myBoundingBox);
     }
 

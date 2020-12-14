@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -12,8 +13,8 @@ public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExp
 
   @NotNull protected final PostfixTemplatePsiInfo myPsiInfo;
 
-  protected SurroundPostfixTemplateBase(@NotNull String name,
-                                        @NotNull String descr,
+  protected SurroundPostfixTemplateBase(@NotNull @NlsSafe String name,
+                                        @NotNull @NlsSafe String descr,
                                         @NotNull PostfixTemplatePsiInfo psiInfo,
                                         @NotNull PostfixTemplateExpressionSelector selector) {
     super(name, descr, selector);
@@ -48,12 +49,12 @@ public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExp
   }
 
   @NotNull
-  protected String getHead() {
+  protected @NlsSafe String getHead() {
     return "";
   }
 
   @NotNull
-  protected String getTail() {
+  protected @NlsSafe String getTail() {
     return "";
   }
 

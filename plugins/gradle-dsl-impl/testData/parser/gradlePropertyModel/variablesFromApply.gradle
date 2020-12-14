@@ -1,0 +1,4 @@
+apply from: "vars.gradle"
+ext {
+  prop4 = "${prop1} : ${prop2} : ${prop3}"
+}

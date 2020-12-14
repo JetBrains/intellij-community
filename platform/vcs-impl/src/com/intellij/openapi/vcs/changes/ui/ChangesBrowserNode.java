@@ -340,6 +340,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     myAttributes = attributes;
   }
 
+  @NotNull
+  protected SimpleTextAttributes getAttributes() {
+    return myAttributes;
+  }
+
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
     if (parentPath != null) {
       appendParentPath(renderer, parentPath.getPresentableUrl());

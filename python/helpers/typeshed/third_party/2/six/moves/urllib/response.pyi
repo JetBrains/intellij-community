@@ -1,5 +1,2 @@
 # Stubs for six.moves.urllib.response
-from urllib import addbase as addbase
-from urllib import addclosehook as addclosehook
-from urllib import addinfo as addinfo
-from urllib import addinfourl as addinfourl
+from urllib import addbase as addbase, addclosehook as addclosehook, addinfo as addinfo, addinfourl as addinfourl

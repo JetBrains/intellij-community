@@ -20,10 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -42,7 +39,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
@@ -55,6 +51,7 @@ import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -65,12 +62,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  private static final int VERSION = 17;
+  private static final int VERSION = 18;
   private static final ThreadLocal<Pair<VirtualFile, FileType>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<>();
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
+  static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
 
   private final Set<FileType> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
   private final FileTypeDetectionService myDetectionService;
@@ -193,7 +190,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       @Override
       public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         if (extension.implementationClass != null) {
-          final FileType fileType = findFileTypeByName(extension.name);
+          FileType fileType = findFileTypeByName(extension.name);
           if (fileType == null) return;
           unregisterFileType(fileType);
         }
@@ -238,18 +235,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       @Override
-      public void consume(@NotNull final FileType fileType, String semicolonDelimitedExtensions) {
+      public void consume(@NotNull FileType fileType, @NotNull String semicolonDelimitedExtensions) {
         register(fileType, parse(semicolonDelimitedExtensions));
       }
 
       @Override
-      public void consume(@NotNull final FileType fileType, final FileNameMatcher @NotNull ... matchers) {
+      public void consume(@NotNull FileType fileType, FileNameMatcher @NotNull ... matchers) {
         register(fileType, Arrays.asList(matchers));
       }
 
       @Override
-      public FileType getStandardFileTypeByName(@NotNull final String name) {
-        final StandardFileType type = myStandardFileTypes.get(name);
+      public FileType getStandardFileTypeByName(@NotNull String name) {
+        StandardFileType type = myStandardFileTypes.get(name);
         return type != null ? type.fileType : null;
       }
 
@@ -266,11 +263,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
 
         StandardFileType type = myStandardFileTypes.get(fileType.getName());
-        if (type != null) {
-          type.matchers.addAll(fileNameMatchers);
+        if (type == null) {
+          myStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, fileNameMatchers));
         }
         else {
-          myStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, fileNameMatchers));
+          type.matchers.addAll(fileNameMatchers);
         }
       }
     };
@@ -328,7 +325,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void loadFileTypeBeans() {
-    final List<FileTypeBean> fileTypeBeans = EP_NAME.getExtensionList();
+    List<FileTypeBean> fileTypeBeans = EP_NAME.getExtensionList();
 
     for (FileTypeBean bean : fileTypeBeans) {
       initializeMatchers(bean);
@@ -364,15 +361,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private static void initializeMatchers(@NotNull FileTypeBean bean) {
-    bean.addMatchers(ContainerUtil.concat(
-      parse(bean.extensions),
-      parse(bean.fileNames, token -> new ExactFileNameMatcher(token)),
-      parse(bean.fileNamesCaseInsensitive, token -> new ExactFileNameMatcher(token, true)),
-      parse(bean.patterns, token -> FileNameMatcherFactory.getInstance().createMatcher(token))));
+    bean.addMatchers(parse(StringUtil.notNullize(bean.extensions)));
+    bean.addMatchers(parse(StringUtil.notNullize(bean.fileNames), token -> new ExactFileNameMatcher(token)));
+    bean.addMatchers(parse(StringUtil.notNullize(bean.fileNamesCaseInsensitive), token -> new ExactFileNameMatcher(token, true)));
+    bean.addMatchers(parse(StringUtil.notNullize(bean.patterns), token -> FileNameMatcherFactory.getInstance().createMatcher(token)));
   }
 
   private void instantiatePendingFileTypes() {
-    final Collection<FileTypeBean> fileTypes = new ArrayList<>(withReadLock(() -> myPendingFileTypes.values()));
+    Collection<FileTypeBean> fileTypes = new ArrayList<>(withReadLock(() -> myPendingFileTypes.values()));
     for (FileTypeBean fileTypeBean : fileTypes) {
       mergeOrInstantiateFileTypeBean(fileTypeBean);
     }
@@ -429,7 +425,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
                                       pluginId));
       }
       if (fileType instanceof LanguageFileType) {
-        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        LanguageFileType languageFileType = (LanguageFileType)fileType;
         String expectedLanguage = languageFileType.isSecondary() ? null : languageFileType.getLanguage().getID();
         if (!Objects.equals(bean.language, expectedLanguage)) {
           LOG.error(new PluginException("Incorrect language specified in <fileType> for " +
@@ -441,7 +437,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
 
-      final StandardFileType standardFileType = new StandardFileType(fileType, bean.getMatchers());
+      StandardFileType standardFileType = new StandardFileType(fileType, bean.getMatchers());
       myStandardFileTypes.put(bean.name, standardFileType);
       List<String> hashBangs = bean.hashBangs == null ? Collections.emptyList() : StringUtil.split(bean.hashBangs, ";");
       registerFileTypeWithoutNotification(fileType, standardFileType.matchers, hashBangs, true);
@@ -461,12 +457,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  static volatile boolean toLog = SystemProperties.is("trace.file.type.manager");
-  static boolean toLog() {
+  boolean toLog;
+  boolean toLog() {
     return toLog;
   }
-
-  static void log(@NonNls String message) {
+  void log(@NonNls String message) {
     LOG.debug(message + " - " + Thread.currentThread());
   }
 
@@ -495,7 +490,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void instantiatePendingFileTypeByName(@NonNls @NotNull String name) {
-    final FileTypeBean bean = withReadLock(() -> myPendingFileTypes.get(name));
+    FileTypeBean bean = withReadLock(() -> myPendingFileTypes.get(name));
     if (bean != null) {
       instantiateFileTypeBean(bean);
     }
@@ -631,7 +626,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     FileType fileType = getFileTypeByFileName(file.getNameSequence());
-    if (fileType == UnknownFileType.INSTANCE) {
+    if (fileType == UnknownFileType.INSTANCE || fileType == DetectedByContentFileType.INSTANCE) {
       fileType = null;
     }
     if (toLog()) {
@@ -677,7 +672,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getFileTypeByExtension(@NotNull String extension) {
-    final FileTypeBean pendingFileType = withReadLock(() -> myPendingAssociations.findByExtension(extension));
+    FileTypeBean pendingFileType = withReadLock(() -> myPendingAssociations.findByExtension(extension));
     if (pendingFileType != null) {
       return ObjectUtils.notNull(instantiateFileTypeBean(pendingFileType), UnknownFileType.INSTANCE);
     }
@@ -692,7 +687,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public void registerFileType(@NotNull final FileType type, @NotNull final List<? extends FileNameMatcher> defaultAssociations) {
+  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations) {
     DeprecatedMethodException.report("Use fileType extension instead.");
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
@@ -702,7 +697,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public void unregisterFileType(@NotNull final FileType fileType) {
+  public void unregisterFileType(@NotNull FileType fileType) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       unregisterFileTypeWithoutNotification(fileType);
@@ -719,7 +714,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myInitialAssociations.removeAllAssociations(fileType);
     mySchemeManager.removeScheme(fileType);
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
-      final FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
+      FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
       mySpecialFileTypes = ArrayUtil.remove(mySpecialFileTypes, fakeFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
   }
@@ -815,18 +810,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
   }
 
-  private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<>();
-
+  private final Map<FileTypeListener, MessageBusConnection> myAdapters = new ConcurrentHashMap<>();
   @Override
   public void addFileTypeListener(@NotNull FileTypeListener listener) {
-    final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(TOPIC, listener);
     myAdapters.put(listener, connection);
   }
 
   @Override
   public void removeFileTypeListener(@NotNull FileTypeListener listener) {
-    final MessageBusConnection connection = myAdapters.remove(listener);
+    MessageBusConnection connection = myAdapters.remove(listener);
     if (connection != null) {
       connection.disconnect();
     }
@@ -837,8 +831,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     int savedVersion = StringUtilRt.parseInt(state.getAttributeValue(ATTRIBUTE_VERSION), 0);
 
     for (Element element : state.getChildren()) {
-      if (element.getName().equals(ELEMENT_IGNORE_FILES)) {
-        myIgnoredPatterns.setIgnoreMasks(element.getAttributeValue(ATTRIBUTE_LIST));
+      if (ELEMENT_IGNORE_FILES.equals(element.getName())) {
+        myIgnoredPatterns.setIgnoreMasks(StringUtil.notNullize(element.getAttributeValue(ATTRIBUTE_LIST)));
       }
       else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(element.getName())) {
         readGlobalMappings(element, false);
@@ -865,10 +859,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       addIgnore("*.pyc");
       addIgnore("*.pyo");
       addIgnore(".git");
-    }
-
-    if (savedVersion < 5) {
-      addIgnore("*.hprof");
     }
 
     if (savedVersion < 6) {
@@ -909,14 +899,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (savedVersion < 17) {
       addIgnore("*.rbc");
     }
+
+    if (savedVersion < 18) {
+      // we want .hprof back, we can open it in our profiler
+      unignoreMask("*.hprof");
+    }
   }
 
-  private void unignoreMask(@NonNls @NotNull final String maskToRemove) {
-    final Set<String> masks = new LinkedHashSet<>(myIgnoredPatterns.getIgnoreMasks());
+  private void unignoreMask(@NonNls @NotNull String maskToRemove) {
+    Set<String> masks = new LinkedHashSet<>(myIgnoredPatterns.getIgnoreMasks());
     masks.remove(maskToRemove);
 
     myIgnoredPatterns.clearPatterns();
-    for (final String each : masks) {
+    for (String each : masks) {
       myIgnoredPatterns.addIgnoreMask(each);
     }
   }
@@ -924,14 +919,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private void readGlobalMappings(@NotNull Element e, boolean isAddToInit) {
     for (Pair<FileNameMatcher, String> association : AbstractFileType.readAssociations(e)) {
       String fileTypeName = association.getSecond();
-      FileType type = getFileTypeByName(fileTypeName);
       FileNameMatcher matcher = association.getFirst();
-      final FileTypeBean pendingFileTypeBean = myPendingAssociations.findAssociatedFileType(matcher);
+      FileType type = getFileTypeByName(fileTypeName);
+      FileTypeBean pendingFileTypeBean = myPendingAssociations.findAssociatedFileType(matcher);
       if (pendingFileTypeBean != null) {
         instantiateFileTypeBean(pendingFileTypeBean);
       }
 
-      if (type != null) {
+      if (type == null) {
+        myUnresolvedMappings.put(matcher, fileTypeName);
+      }
+      else {
         if (PlainTextFileType.INSTANCE.equals(type)) {
           FileType newFileType = myPatternsTable.findAssociatedFileType(matcher);
           if (newFileType != null && newFileType != PlainTextFileType.INSTANCE && newFileType != UnknownFileType.INSTANCE) {
@@ -942,9 +940,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (isAddToInit) {
           myInitialAssociations.addAssociation(matcher, type);
         }
-      }
-      else {
-        myUnresolvedMappings.put(matcher, fileTypeName);
       }
     }
 
@@ -984,8 +979,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void restoreStandardFileExtensions() {
-    for (final String name : FILE_TYPES_WITH_PREDEFINED_EXTENSIONS) {
-      final StandardFileType stdFileType = myStandardFileTypes.get(name);
+    for (String name : FILE_TYPES_WITH_PREDEFINED_EXTENSIONS) {
+      StandardFileType stdFileType = myStandardFileTypes.get(name);
       if (stdFileType != null) {
         FileType fileType = stdFileType.fileType;
         for (FileNameMatcher matcher : myPatternsTable.getAssociations(fileType)) {
@@ -1068,7 +1063,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private void writeExtensionsMap(@NotNull Element map, @NotNull FileType type, boolean specifyTypeName) {
     List<FileNameMatcher> associations = myPatternsTable.getAssociations(type);
-    Set<FileNameMatcher> defaultAssociations = CollectionFactory.createSmallMemoryFootprintSet(myInitialAssociations.getAssociations(type));
+    Set<FileNameMatcher> defaultAssociations = new HashSet<>(myInitialAssociations.getAssociations(type));
 
     for (FileNameMatcher matcher : associations) {
       boolean isDefaultAssociationContains = defaultAssociations.remove(matcher);
@@ -1105,13 +1100,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimitedExtensions) {
+  private static List<FileNameMatcher> parse(@NotNull String semicolonDelimitedExtensions) {
     return parse(semicolonDelimitedExtensions, ext -> new ExtensionFileNameMatcher(ext));
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimitedExtensions, @NotNull Function<? super String, ? extends FileNameMatcher> matcherFactory) {
-    if (semicolonDelimitedExtensions == null) {
+  private static List<FileNameMatcher> parse(@NotNull String semicolonDelimitedExtensions, @NotNull Function<? super String, ? extends FileNameMatcher> matcherFactory) {
+    if (semicolonDelimitedExtensions.isEmpty()) {
       return Collections.emptyList();
     }
 
@@ -1149,7 +1144,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void bindUnresolvedMappings(@NotNull FileType fileType) {
-    for (FileNameMatcher matcher : CollectionFactory.createSmallMemoryFootprintSet(myUnresolvedMappings.keySet())) {
+    for (FileNameMatcher matcher : new ArrayList<>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(matcher);
       if (fileType.getName().equals(name)) {
         myPatternsTable.addAssociation(matcher, fileType);
@@ -1165,11 +1160,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private FileType loadFileType(@NotNull Element typeElement, boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
-    @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
-    String iconPath = typeElement.getAttributeValue("icon");
 
-    String extensionsStr = StringUtil.nullize(typeElement.getAttributeValue("extensions"));
-    if (isDefault && extensionsStr != null) {
+    String extensionsStr = StringUtil.notNullize(typeElement.getAttributeValue("extensions"));
+    if (isDefault && !extensionsStr.isEmpty()) {
       // todo support wildcards
       extensionsStr = filterAlreadyRegisteredExtensions(extensionsStr);
     }
@@ -1181,7 +1174,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
     if (element == null) {
-      type = new UserBinaryFileType();
+      type = UserBinaryFileType.INSTANCE;
     }
     else {
       SyntaxTable table = AbstractFileType.readSyntaxTable(element);
@@ -1189,6 +1182,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       ((AbstractFileType)type).initSupport();
     }
 
+    @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
+    String iconPath = typeElement.getAttributeValue("icon");
     setFileTypeAttributes((UserFileType<?>)type, fileTypeName, fileTypeDescr, iconPath);
     registerFileTypeWithoutNotification(type, parse(extensionsStr), Collections.emptyList(), isDefault);
 
@@ -1213,7 +1208,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return type;
   }
 
-  @Nullable
+  @NotNull
   private String filterAlreadyRegisteredExtensions(@NotNull String semicolonDelimited) {
     StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, FileTypeConsumer.EXTENSION_DELIMITER, false);
     StringBuilder builder = null;
@@ -1229,7 +1224,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         builder.append(extension);
       }
     }
-    return builder == null ? null : builder.toString();
+    return builder == null ? "" : builder.toString();
   }
 
   private static void setFileTypeAttributes(@NotNull UserFileType<?> fileType, @Nullable String name, @Nullable @NlsContexts.Label String description, @Nullable String iconPath) {
@@ -1277,7 +1272,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myPatternsTable = assocTable.copy();
     fireFileTypesChanged();
 
-    myRemovedMappingTracker.removeMatching((matcher, fileTypeName) -> {
+    myRemovedMappingTracker.removeIf((matcher, fileTypeName) -> {
       FileType fileType = getFileTypeByName(fileTypeName);
       return fileType != null && assocTable.isAssociatedWith(fileType, matcher);
     });

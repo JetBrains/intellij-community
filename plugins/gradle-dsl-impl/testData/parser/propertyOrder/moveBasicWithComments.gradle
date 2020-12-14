@@ -1,0 +1,5 @@
+ext {
+  prop1 = value1 // This is a comment
+  prop2 = 'hello' /* this is also a comment */
+  prop3 = "Boo" // This is another comment
+}

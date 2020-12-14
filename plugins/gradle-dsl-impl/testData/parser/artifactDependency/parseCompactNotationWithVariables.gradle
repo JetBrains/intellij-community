@@ -1,0 +1,8 @@
+ext {
+  appcompat = 'com.android.support:appcompat-v7:22.1.1'
+  guavaVersion = '18.0'
+}
+dependencies {
+  compile appcompat
+  runtime "com.google.guava:guava:$guavaVersion"
+}

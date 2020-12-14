@@ -5,12 +5,14 @@ import com.intellij.psi.stubs.*
 
 object IndexDataPresenter {
 
-  fun <V> getPresentableIndexValue(value: V): String {
+  fun <K> getPresentableIndexKey(key: K): String = key.toString()
+
+  fun <V> getPresentableIndexValue(value: V?): String {
     return if (value is SerializedStubTree) {
       getPresentableSerializedStubTree(value)
     }
     else {
-      value.toString()
+      value?.toString() ?: "<no value>"
     }
   }
 
@@ -43,7 +45,7 @@ object IndexDataPresenter {
     }
     return buildString {
       for ((key, value) in keyValueMap) {
-        appendln(key)
+        appendln(getPresentableIndexKey(key))
         appendln(getPresentableIndexValue(value).withIndent("  "))
       }
     }

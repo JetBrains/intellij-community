@@ -29,10 +29,7 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -79,8 +76,8 @@ import java.util.function.Predicate;
 import static com.intellij.openapi.application.impl.InvocationUtil.*;
 
 public final class IdeEventQueue extends EventQueue {
-  private static final Set<Class<? extends Runnable>> ourRunnablesWoWrite = ContainerUtil.set(REPAINT_PROCESSING_CLASS);
-  private static final Set<Class<? extends Runnable>> ourRunnablesWithWrite = ContainerUtil.set(FLUSH_NOW_CLASS);
+  private static final Set<Class<? extends Runnable>> ourRunnablesWoWrite = Set.of(REPAINT_PROCESSING_CLASS);
+  private static final Set<Class<? extends Runnable>> ourRunnablesWithWrite = Set.of(FLUSH_NOW_CLASS);
   private static final boolean ourDefaultEventWithWrite = true;
 
   private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
@@ -898,6 +895,9 @@ public final class IdeEventQueue extends EventQueue {
 
   private void dispatchMouseEvent(@NotNull AWTEvent e) {
     MouseEvent me = (MouseEvent)e;
+
+    if (me.getClickCount() > 10) LOG.warn(String.format("Too many mouse clicks (%d)!!!", me.getClickCount()));
+
     if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0) {
       resetGlobalMouseEventTarget(me);
     }
@@ -955,7 +955,7 @@ public final class IdeEventQueue extends EventQueue {
     }
 
     for (ProjectFrameHelper frameHelper : ((WindowManagerEx)windowManager).getProjectFrameHelpers()) {
-      if (frame == frameHelper.getFrameOrNullIfDisposed()) {
+      if (frame == frameHelper.getFrame()) {
         IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
         if (focusManager instanceof FocusManagerImpl) {
           ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation((Window)frame, focusOwnerInDeactivatedWindow);
@@ -979,10 +979,10 @@ public final class IdeEventQueue extends EventQueue {
           FeatureUsageData data = null;
           if (modifiers == InputEvent.ALT_DOWN_MASK) {
             if (IdeKeyEventDispatcher.hasMnemonicInWindow(ke.getComponent(), ke)) {
-              data = new FeatureUsageData().addData("type", SystemInfo.isMac ? "mac.alt.based" : "regular");
+              data = new FeatureUsageData().addData("type", SystemInfoRt.isMac ? "mac.alt.based" : "regular");
             }
           }
-          else if (SystemInfo.isMac && modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
+          else if (SystemInfoRt.isMac && modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
             if (IdeKeyEventDispatcher.hasMnemonicInWindow(ke.getComponent(), ke)) {
               data = new FeatureUsageData().addData("type", "mac.regular");
             }

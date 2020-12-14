@@ -21,7 +21,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class VcsLogFileType : FileType {
+class VcsLogFileType private constructor() : FileType {
   override fun getName(): String = "VcsLog"
   override fun getDescription(): String = VcsLogBundle.message("vcs.log.file.type.description")
   override fun getDefaultExtension(): String = ""

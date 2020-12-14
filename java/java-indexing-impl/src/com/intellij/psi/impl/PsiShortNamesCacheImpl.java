@@ -28,9 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
+  @NotNull
   private final Project myProject;
 
-  public PsiShortNamesCacheImpl(Project project) {
+  public PsiShortNamesCacheImpl(@NotNull Project project) {
     myProject = project;
   }
 

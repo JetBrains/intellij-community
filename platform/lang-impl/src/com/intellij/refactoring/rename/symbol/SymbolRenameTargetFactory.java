@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.symbol;
 
+import com.intellij.find.usages.symbol.SymbolSearchTargetFactory;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,7 @@ import static org.jetbrains.annotations.ApiStatus.Internal;
  * <li>implement {@link RenameTarget} in a Symbol</li>
  * </ul>
  *
- * @see com.intellij.find.usages.SymbolSearchTargetFactory
+ * @see SymbolSearchTargetFactory
  */
 public interface SymbolRenameTargetFactory {
 
@@ -28,7 +29,7 @@ public interface SymbolRenameTargetFactory {
 
   /**
    * @return target to be renamed when rename is invoked on a given {@code symbol}
-   * @see com.intellij.find.usages.SymbolSearchTargetFactory#createTarget
+   * @see SymbolSearchTargetFactory#createTarget
    */
   @Nullable RenameTarget renameTarget(@NotNull Project project, @NotNull Symbol symbol);
 }

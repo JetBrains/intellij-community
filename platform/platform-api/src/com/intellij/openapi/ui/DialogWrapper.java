@@ -1460,9 +1460,14 @@ public abstract class DialogWrapper {
     myPeer.pack();
   }
 
+  /**
+   * Override to set default initial size of the window
+   *
+   * @return initial window size
+   */
   @Nullable
   public Dimension getInitialSize() {
-    return null;
+    return new Dimension(400, 0);
   }
 
   public Dimension getPreferredSize() {

@@ -11,10 +11,12 @@ import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.CompletionStatsPolicy
 import kotlin.random.Random
 
-internal class CompletionLoggerInitializer(private val actionListener: LookupActionsListener) : LookupTracker() {
+class CompletionLoggerInitializer(project: Project) : LookupTracker() {
   companion object {
     fun shouldInitialize(): Boolean =
       (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()) || ApplicationManager.getApplication().isUnitTestMode
@@ -32,6 +34,13 @@ internal class CompletionLoggerInitializer(private val actionListener: LookupAct
       "go" to 0.4
     )
   }
+  private val actionListener: LookupActionsListener = LookupActionsListener()
+
+  init {
+    if (shouldInitialize()) {
+      project.messageBus.connect().subscribe(AnActionListener.TOPIC, actionListener)
+    }
+  }
 
   override fun lookupClosed() {
     actionListener.listener = CompletionPopupListener.Adapter()
@@ -39,7 +48,7 @@ internal class CompletionLoggerInitializer(private val actionListener: LookupAct
 
   override fun lookupCreated(lookup: LookupImpl,
                              storage: MutableLookupStorage) {
-    if (ApplicationManager.getApplication().isUnitTestMode && !CompletionTrackerInitializer.isEnabledInTests) return
+    if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)
     if (sessionShouldBeLogged(experimentInfo, storage.language)) {

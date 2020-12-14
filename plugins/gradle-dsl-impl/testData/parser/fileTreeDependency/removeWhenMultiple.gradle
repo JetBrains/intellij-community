@@ -1,0 +1,3 @@
+dependencies {
+  compile fileTree("xyz"), fileTree(dir: 'libs', include: '*.jar'), fileTree('abc')
+}

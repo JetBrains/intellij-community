@@ -20,13 +20,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElsePart;
 import com.jetbrains.python.psi.PyIfStatement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
 public abstract class PyElseUnwrapperBase extends PyUnwrapper {
-  public PyElseUnwrapperBase(String description) {
+  public PyElseUnwrapperBase(@Nls String description) {
     super(description);
   }
 

@@ -13,7 +13,7 @@ import javax.swing.*;
 public class QtUIFileType extends QtFileType implements FileType {
   public static final QtUIFileType INSTANCE = new QtUIFileType();
 
-  protected QtUIFileType() {
+  private QtUIFileType() {
     super("Qt UI file", PyBundle.message("qt.ui.designer.form.filetype.description"), "ui");
   }
 

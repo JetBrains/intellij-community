@@ -2,17 +2,24 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.lightEdit.LightEditFilePatterns;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -20,16 +27,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
@@ -61,6 +73,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myFileTypePanel.myIgnorePanel.setBorder(
       IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.ignore.group"), false, TITLE_INSETS).setShowLine(false));
     myRecognizedFileType = new RecognizedFileTypes(myFileTypePanel.myRecognizedFileTypesPanel);
+    myFileTypePanel.myRightPanel.setPreferredSize(
+      new Dimension(JBUIScale.scale(300), myFileTypePanel.myRightPanel.getHeight())
+    );
     myPatterns = new PatternsPanel(myFileTypePanel.myPatternsPanel);
     myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
@@ -69,7 +84,62 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.light.edit.group"), false, TITLE_INSETS).setShowLine(false));
     myFileTypePanel.myLightEditHintLabel.setForeground(JBColor.GRAY);
     myFileTypePanel.myLightEditHintLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    myFileTypePanel.myAssociatePanel.setVisible(OSAssociateFileTypesUtil.isAvailable());
+    myFileTypePanel.myAssociateButton.setText(
+      FileTypesBundle.message("filetype.associate.button", ApplicationNamesInfo.getInstance().getFullProductName()));
+    myFileTypePanel.myAssociateButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        OSAssociateFileTypesUtil.chooseAndAssociate(
+          new OSAssociateFileTypesUtil.Callback() {
+            @Override
+            public void beforeStart() {
+              myFileTypePanel.myAssociateButton.setEnabled(false);
+              updateAssociateMessageLabel(
+                FileTypesBundle.message("filetype.associate.message.updating"), null);
+            }
+
+            @Override
+            public void onSuccess(boolean isOsRestartRequired) {
+              myFileTypePanel.myAssociateButton.setEnabled(true);
+              if (isOsRestartRequired) {
+                updateAssociateMessageLabel(
+                  FileTypesBundle.message("filetype.associate.message.os.restart"), AllIcons.General.Warning);
+              }
+              else {
+                updateAssociateMessageLabel("", null);
+              }
+              showAssociationBalloon(
+                FileTypesBundle.message("filetype.associate.success.message", ApplicationInfo.getInstance().getFullApplicationName()),
+                HintUtil.getInformationColor());
+            }
+
+            @Override
+            public void onFailure(@NotNull @Nls String errorMessage) {
+              myFileTypePanel.myAssociateButton.setEnabled(true);
+              updateAssociateMessageLabel("", null);
+              showAssociationBalloon(errorMessage, HintUtil.getErrorColor());
+            }
+          }
+        );
+      }
+    });
     return myFileTypePanel.myWholePanel;
+  }
+
+  private void updateAssociateMessageLabel(@NotNull @Nls String message, @Nullable Icon icon) {
+    myFileTypePanel.myAssociateMessageLabel.setText(message);
+    myFileTypePanel.myAssociateMessageLabel.setIcon(icon);
+  }
+
+  private void showAssociationBalloon(@NotNull @Nls String message, @NotNull Color color) {
+    Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(message))
+      .setFillColor(color)
+      .setHideOnKeyOutside(true)
+      .createBalloon();
+    JComponent component = myFileTypePanel.myAssociateButton;
+    RelativePoint relativePoint = new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight() - JBUI.scale(10)));
+    balloon.show(relativePoint, Balloon.Position.below);
   }
 
   private void updateFileTypeList() {
@@ -441,8 +511,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myFileTypesList.getSelectedValue();
     }
 
-    @SuppressWarnings("DuplicatedCode")
-    void setFileTypes(Iterable<FileType> types) {
+    void setFileTypes(@NotNull Iterable<? extends FileType> types) {
       DefaultListModel<FileType> listModel = (DefaultListModel<FileType>)myFileTypesList.getModel();
       listModel.clear();
       for (FileType type : types) {
@@ -516,10 +585,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myList.getSelectedValue();
     }
 
-    private void refill(List<FileNameMatcher> matchers) {
+    private void refill(@NotNull List<? extends FileNameMatcher> matchers) {
       clearList();
       List<FileNameMatcher> copy = new ArrayList<>(matchers);
-      Collections.sort(copy, Comparator.comparing(FileNameMatcher::getPresentableString));
+      copy.sort(Comparator.comparing(FileNameMatcher::getPresentableString));
       DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
       for (FileNameMatcher matcher : copy) {
         model.addElement(matcher.getPresentableString());
@@ -546,7 +615,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
           return component;
         }
       });
-      myList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
+      myList.setEmptyText(FileTypesBundle.message("filetype.settings.no.patterns"));
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
         .setAddAction(__ -> editHashBang(null))
@@ -556,7 +625,6 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         .disableUpDownActions();
 
       panel.add(decorator.createPanel(), BorderLayout.CENTER);
-
       panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
     }
 
@@ -580,7 +648,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myList.getSelectedValue();
     }
 
-    private void refill(List<String> patterns) {
+    private void refill(@NotNull List<String> patterns) {
       clearList();
       Collections.sort(patterns);
       DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();

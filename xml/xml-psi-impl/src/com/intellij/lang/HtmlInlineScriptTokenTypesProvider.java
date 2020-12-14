@@ -15,9 +15,17 @@
  */
 package com.intellij.lang;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentSupport;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 
+
+/**
+ * @deprecated in favor of {@link HtmlEmbeddedContentSupport} API
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public interface HtmlInlineScriptTokenTypesProvider {
   IElementType getElementType();
 

@@ -135,6 +135,7 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
         textEditor.setOpaque(false);
         textEditor.setBorder(JBUI.Borders.empty());
         textEditor.getEmptyText().setText(IdeBundle.message("welcome.screen.search.projects.empty.text"));
+        textEditor.getAccessibleContext().setAccessibleName(IdeBundle.message("welcome.screen.search.projects.empty.text"));
         projectSearch.getTextEditor()
           .putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)editor -> editor.getText().isEmpty());
         return projectSearch;

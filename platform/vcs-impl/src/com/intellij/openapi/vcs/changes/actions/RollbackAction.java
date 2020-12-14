@@ -109,8 +109,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
       RollbackChangesDialog.rollbackChanges(project, changes);
     }
     else if (!hasChanges) {
-      LocalChangeList currentChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
-      RollbackChangesDialog.rollbackChanges(project, currentChangeList);
+      RollbackChangesDialog.rollbackChanges(project);
     }
   }
 

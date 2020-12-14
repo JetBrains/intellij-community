@@ -48,8 +48,16 @@ GAEMemcachedCache: Any
 
 class RedisCache(BaseCache):
     key_prefix: Any
-    def __init__(self, host: str = ..., port: int = ..., password: Optional[Any] = ..., db: int = ...,
-                 default_timeout: float = ..., key_prefix: Optional[Any] = ..., **kwargs): ...
+    def __init__(
+        self,
+        host: str = ...,
+        port: int = ...,
+        password: Optional[Any] = ...,
+        db: int = ...,
+        default_timeout: float = ...,
+        key_prefix: Optional[Any] = ...,
+        **kwargs,
+    ): ...
     def dump_object(self, value): ...
     def load_object(self, value): ...
     def get(self, key): ...

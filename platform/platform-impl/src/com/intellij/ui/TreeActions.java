@@ -149,4 +149,20 @@ public abstract class TreeActions extends SwingActionDelegate {
       super(ID);
     }
   }
+
+  public static final class NextSibling extends TreeActions {
+    @NonNls public static final String ID = "selectNextSibling";
+
+    public NextSibling() {
+      super(ID);
+    }
+  }
+
+  public static final class PreviousSibling extends TreeActions {
+    @NonNls public static final String ID = "selectPreviousSibling";
+
+    public PreviousSibling() {
+      super(ID);
+    }
+  }
 }

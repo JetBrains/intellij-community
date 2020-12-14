@@ -1,0 +1,4 @@
+ext {
+  COMPILE_SDK_VERSION = 21
+  srcDirName = 'src/java'
+}

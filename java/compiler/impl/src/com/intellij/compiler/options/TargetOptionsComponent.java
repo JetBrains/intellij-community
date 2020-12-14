@@ -59,6 +59,7 @@ public class TargetOptionsComponent extends JPanel {
     myCbProjectTargetLevel = createTargetOptionsCombo();
 
     myTable = new JBTable(new ModuleOptionsTableModel());
+    myTable.setShowGrid(false);
     myTable.setRowHeight(JBUIScale.scale(22));
     myTable.getEmptyText().setText(JavaCompilerBundle.message("settings.all.modules.will.be.compiled.with.project.bytecode.version"));
 

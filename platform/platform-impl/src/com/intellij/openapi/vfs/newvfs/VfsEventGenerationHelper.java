@@ -77,15 +77,13 @@ final class VfsEventGenerationHelper {
       LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
     }
     ChildInfo[] children = null;
-    Path childPath = null;
     if (attributes.isDirectory() && parent.getFileSystem() instanceof LocalFileSystem && !attributes.isSymLink()) {
       try {
-        Path cp = getChildPath(parent.getPath(), childName);
-        childPath = cp;
+        Path childPath = getChildPath(parent.getPath(), childName);
         if (childPath != null && shouldScanDirectory(parent, childPath, childName)) {
           List<Path> relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(), url -> {
             Path path = Paths.get(VirtualFileManager.extractPath(url));
-            return path.startsWith(cp) ? path : null;
+            return path.startsWith(childPath) ? path : null;
           });
           children = scanChildren(childPath, relevantExcluded, checkCanceled);
         }
@@ -95,7 +93,7 @@ final class VfsEventGenerationHelper {
       }
     }
     myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
-    VFileEvent event = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, childName, childPath);
+    VFileEvent event = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, childName);
     if (event != null) {
       myEvents.add(event);
     }
@@ -104,7 +102,7 @@ final class VfsEventGenerationHelper {
   private static boolean shouldScanDirectory(@NotNull VirtualFile parent, @NotNull Path child, @NotNull String childName) {
     if (FileTypeManager.getInstance().isFileIgnored(childName)) return false;
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
-      if (ReadAction.compute(()->ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent))) {
+      if (ReadAction.compute(() -> ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent))) {
         return false;
       }
       String projectRootPath = openProject.getBasePath();

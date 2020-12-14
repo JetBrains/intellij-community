@@ -34,7 +34,10 @@ public final class EclipseJDOMUtil {
   }
 
   public static void output(@NotNull Element element, @NotNull @NonNls Writer writer, @NotNull Project project) throws IOException {
-    String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
+    output(element, writer, CodeStyle.getSettings(project).getLineSeparator());
+  }
+
+  public static void output(@NotNull Element element, @NonNls @NotNull Writer writer, String lineSeparator) throws IOException {
     writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     writer.write(lineSeparator);
     createOutputter(lineSeparator).output(element, writer);

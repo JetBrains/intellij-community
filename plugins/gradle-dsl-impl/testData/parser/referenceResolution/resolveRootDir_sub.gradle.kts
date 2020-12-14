@@ -1,0 +1,6 @@
+val rpd by extra(rootDir)
+val rpd1 by extra(project.rootDir)
+val rpd2 by extra(parent.rootDir)
+val rpd3 by extra(rootProject.rootDir)
+val rpd4 by extra(project(":<SUB_MODULE_NAME>").rootDir)
+val rpd5 by extra(project(":").rootDir)

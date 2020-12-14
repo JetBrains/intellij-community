@@ -16,7 +16,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
-import com.intellij.ui.popup.util.PopupState
+import com.intellij.ui.popup.PopupState
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.*
@@ -92,7 +92,7 @@ abstract class ToolWindowHeader internal constructor(
     westPanel.addMouseListener(
       object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
-          toolWindow.fireActivated()
+          toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
         }
       }
     )
@@ -107,14 +107,14 @@ abstract class ToolWindowHeader internal constructor(
 
           if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
             if (e.isAltDown) {
-              toolWindow.fireHidden()
+              toolWindow.fireHidden(ToolWindowEventSource.ToolWindowHeaderAltClick)
             }
             else {
-              toolWindow.fireHiddenSide()
+              toolWindow.fireHiddenSide(ToolWindowEventSource.ToolWindowHeader)
             }
           }
           else {
-            toolWindow.fireActivated()
+            toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
           }
         }
       }
@@ -251,7 +251,7 @@ abstract class ToolWindowHeader internal constructor(
   }
 
   private inner class ShowOptionsAction : DumbAwareAction() {
-    val myPopupState = PopupState()
+    val myPopupState = PopupState.forPopupMenu()
     override fun actionPerformed(e: AnActionEvent) {
       if (myPopupState.isRecentlyHidden) return // do not show new popup
       val inputEvent = e.inputEvent
@@ -262,7 +262,7 @@ abstract class ToolWindowHeader internal constructor(
         x = inputEvent.x
         y = inputEvent.y
       }
-      popupMenu.component.addPopupMenuListener(myPopupState)
+      myPopupState.prepareToShow(popupMenu.component)
       popupMenu.component.show(inputEvent.component, x, y)
     }
 

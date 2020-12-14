@@ -105,6 +105,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String KEY_ATTR_NAME = "key";
   private static final String POPUP_ATTR_NAME = "popup";
   private static final String COMPACT_ATTR_NAME = "compact";
+  private static final String SEARCHABLE_ATTR_NAME = "searchable";
   private static final String SEPARATOR_ELEMENT_NAME = "separator";
   private static final String REFERENCE_ELEMENT_NAME = "reference";
   private static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
@@ -304,6 +305,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
                                        @NotNull PluginDescriptor pluginDescriptor,
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
+    //noinspection deprecation
     presentation.setIcon(new IconLoader.LazyIcon() {
       @NotNull
       @Override
@@ -678,7 +680,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         processAbbreviationNode(e, id);
       }
       else if (OVERRIDE_TEXT_ELEMENT_NAME.equals(e.getName())) {
-        processOverrideTextNode(stub, e, plugin.getPluginId(), bundle);
+        processOverrideTextNode(stub, stub.getId(), e, plugin.getPluginId(), bundle);
       }
       else if (SYNONYM_ELEMENT_NAME.equals(e.getName())) {
         processSynonymNode(stub, e, plugin.getPluginId(), bundle);
@@ -819,6 +821,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           ((ActionGroupStub)group).setPopupDefinedInXml(true);
         }
       }
+
+      String searchable = element.getAttributeValue(SEARCHABLE_ATTR_NAME);
+      if (searchable != null) {
+        group.setSearchable(Boolean.parseBoolean(searchable));
+      }
+
       String shortcutOfActionId = element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME);
       if (customClass && shortcutOfActionId != null) {
         KeymapManagerEx.getInstanceEx().bindShortcuts(shortcutOfActionId, id);
@@ -850,6 +858,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           if (action != null) {
             addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
+        }
+        else if (OVERRIDE_TEXT_ELEMENT_NAME.equals(name)) {
+          processOverrideTextNode(group, id, child, plugin.getPluginId(), bundle);
         }
         else {
           reportActionError(plugin.getPluginId(), "unexpected name of element \"" + name + "\n");
@@ -940,7 +951,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return (DefaultActionGroup)parentGroup;
   }
 
-  private static void processOverrideTextNode(ActionStub stub, Element element, PluginId pluginId,
+  private static void processOverrideTextNode(AnAction action, String id, Element element, PluginId pluginId,
                                               @Nullable ResourceBundle bundle) {
     if (!OVERRIDE_TEXT_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
@@ -948,21 +959,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     String place = element.getAttributeValue(PLACE_ATTR_NAME);
     if (place == null) {
-      reportActionError(pluginId, stub.getId() + ": override-text specified without place");
+      reportActionError(pluginId, id + ": override-text specified without place");
       return;
     }
     String useTextOfPlace = element.getAttributeValue(USE_TEXT_OF_PLACE_ATTR_NAME);
     if (useTextOfPlace != null) {
-      stub.copyActionTextOverride(useTextOfPlace, place);
+      action.copyActionTextOverride(useTextOfPlace, place);
     }
     else {
       String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
       if (text.isEmpty() && bundle != null) {
-        String key = "action." + stub.getId() + "." + place + ".text";
-        stub.addActionTextOverride(place, () -> BundleBase.message(bundle, key));
+        String prefix = action instanceof ActionGroup ? "group" : "action";
+        String key = prefix + "." + id + "." + place + ".text";
+        action.addTextOverride(place, () -> BundleBase.message(bundle, key));
       }
       else {
-        stub.addActionTextOverride(place, () -> text);
+        action.addTextOverride(place, () -> text);
       }
     }
   }
@@ -1465,6 +1477,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
    */
   public AnAction getBaseAction(OverridingAction overridingAction) {
     return myBaseActions.get(overridingAction);
+  }
+
+  public Collection<String> getParentGroupIds(String actionId) {
+    return myId2GroupId.get(actionId);
   }
 
   @Override

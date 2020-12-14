@@ -334,20 +334,21 @@ public abstract class PluginManagerMain {
   }
 
   public interface PluginEnabler {
-    void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled);
-    void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled);
+    void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins);
+
+    void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins);
 
     boolean isDisabled(@NotNull PluginId pluginId);
 
     class HEADLESS implements PluginEnabler {
       @Override
-      public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-        DisabledPluginsState.enablePlugins(disabled, true);
+      public void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
+        DisabledPluginsState.enablePlugins(plugins, true);
       }
 
       @Override
-      public void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-        for (IdeaPluginDescriptor descriptor : disabled) {
+      public void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
+        for (IdeaPluginDescriptor descriptor : plugins) {
           PluginManagerCore.disablePlugin(descriptor.getPluginId());
         }
       }
@@ -362,8 +363,7 @@ public abstract class PluginManagerMain {
   public static void notifyPluginsUpdated(@Nullable Project project) {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    String action = IdeBundle.message("ide.restart.required.notification",
-                                      IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action"));
+    String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
     Notification notification = UpdateChecker.getNotificationGroup().createNotification(title, "", NotificationType.INFORMATION, null, "plugins.updated.suggest.restart");
     notification.addAction(new NotificationAction(action) {
       @Override

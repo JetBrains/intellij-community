@@ -172,4 +172,8 @@ public final class HtmlDescriptorsTable {
   public static HtmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
     return ourAttributeTable.get(attributeName);
   }
+
+  public static boolean isKnownAttributeDescriptor(String attributeName) {
+    return getAttributeDescriptor(attributeName) != null;
+  }
 }

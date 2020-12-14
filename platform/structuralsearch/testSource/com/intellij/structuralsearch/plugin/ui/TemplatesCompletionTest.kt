@@ -26,8 +26,8 @@ class TemplatesCompletionTest : LightJavaCodeInsightFixtureTestCase() {
     customTemplate.isPredefined = false
     ConfigurationManager.getInstance(project).addConfiguration(customTemplate)
     val elements = renderedLookupElementTexts()
-    assert("all fields of a class (java search template)" in elements)
-    assert("all fields of a class (java search template, user defined)" in elements)
+    assert("all fields of a class(java search template)" in elements)
+    assert("all fields of a class(java search template, user defined)" in elements)
   }
 
 }

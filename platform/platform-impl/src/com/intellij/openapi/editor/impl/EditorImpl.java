@@ -387,8 +387,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
 
     ErrorStripeMarkersModel errorStripeMarkersModel = myMarkupModel.getErrorStripeMarkersModel();
-    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel);
-    myMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel);
+    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel.createMarkupListener(true));
+    myMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel.createMarkupListener(false));
     myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
       @Override
       public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
@@ -3454,7 +3454,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDropHandler = dropHandler;
   }
 
-  public void setHighlightingFilter(@Nullable Predicate<? super RangeHighlighter> filter) {
+  /**
+   * @deprecated use {@link #setHighlightingPredicate(Predicate)} instead
+   */
+  @Deprecated
+  public void setHighlightingFilter(@Nullable Condition<? super RangeHighlighter> filter) {
+    setHighlightingPredicate(filter == null ? null : highlighter -> filter.value(highlighter));
+    DeprecatedMethodException.report("Use setHighlightingPredicate() instead");
+  }
+  public void setHighlightingPredicate(@Nullable Predicate<? super RangeHighlighter> filter) {
     if (myHighlightingFilter == filter) return;
     Predicate<? super RangeHighlighter> oldFilter = myHighlightingFilter;
     myHighlightingFilter = filter;
@@ -3464,11 +3472,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       boolean newAvailable = filter == null || filter.test(highlighter);
       if (oldAvailable != newAvailable) {
         boolean styleOrColorChanged = EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme()));
-        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
-                                                styleOrColorChanged);
-        myMarkupModel.getErrorStripeMarkersModel().attributesChanged(
-          (RangeHighlighterEx)highlighter, true,
-          styleOrColorChanged);
+        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true, styleOrColorChanged);
+        myMarkupModel.getErrorStripeMarkersModel().attributesChanged((RangeHighlighterEx)highlighter, true);
       }
     }
   }

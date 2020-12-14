@@ -17,10 +17,11 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class CodeStyleSettingsProvider {
+public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettingsFactory {
   public static final ExtensionPointName<CodeStyleSettingsProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeStyleSettingsProvider");
 
 
+  @Override
   @Nullable
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
     return null;

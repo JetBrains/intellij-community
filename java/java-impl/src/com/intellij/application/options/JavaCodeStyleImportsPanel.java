@@ -99,6 +99,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     panel.setPreferredSize(new Dimension(100, 150));
     doNotInsertInnerListModel = new ListTableModel<>(INNER_CLASS_COLUMNS);
     mydoNotInsertInnerTable = new TableView<>(doNotInsertInnerListModel);
+    mydoNotInsertInnerTable.setShowGrid(false);
     mydoNotInsertInnerTable.getEmptyText().setText(JavaBundle.message("do.not.import.inner.classes.no.classes"));
     myCbInsertInnerClassImports.addChangeListener(new ChangeListener() {
       @Override

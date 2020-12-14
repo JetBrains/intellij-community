@@ -11,18 +11,24 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 
 fun subscribeForGitHistoryTraverserCreation(project: Project, listener: GitHistoryTraverserListener, disposable: Disposable) {
   var logData: VcsLogData? = VcsProjectLog.getInstance(project).dataManager
+  var traverser: GitHistoryTraverser? = null
 
   fun notifyTraverserCreated() {
     logData?.let {
-      val traverser = getTraverser(project, it)
+      traverser = getTraverser(project, it)
       if (traverser != null) {
-        listener.traverserCreated(traverser)
+        listener.traverserCreated(traverser!!)
       }
     }
   }
 
   val dataPackChangeListener = DataPackChangeListener {
-    listener.graphUpdated()
+    if (traverser != null) {
+      listener.graphUpdated()
+    }
+    else {
+      notifyTraverserCreated()
+    }
   }
 
   val projectLogListener = object : VcsProjectLog.ProjectLogListener {
@@ -35,9 +41,10 @@ fun subscribeForGitHistoryTraverserCreation(project: Project, listener: GitHisto
     }
 
     override fun logDisposed(manager: VcsLogManager) {
-      logData = null
       logData?.removeDataPackChangeListener(dataPackChangeListener)
-      listener.traverserBecomeInvalid()
+      logData = null
+      traverser = null
+      listener.traverserDisposed()
     }
   }
 
@@ -67,5 +74,5 @@ interface GitHistoryTraverserListener {
 
   fun graphUpdated()
 
-  fun traverserBecomeInvalid()
+  fun traverserDisposed()
 }

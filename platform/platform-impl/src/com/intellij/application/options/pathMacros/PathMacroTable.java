@@ -41,6 +41,7 @@ public final class PathMacroTable extends JBTable {
 
   public PathMacroTable(Collection<String> undefinedMacroNames) {
     myUndefinedMacroNames = undefinedMacroNames;
+    setShowGrid(false);
     setModel(myTableModel);
     TableColumn column = getColumnModel().getColumn(NAME_COLUMN);
     column.setCellRenderer(new DefaultTableCellRenderer() {

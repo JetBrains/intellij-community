@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class SurroundWithLogger {
@@ -18,7 +19,7 @@ public final class SurroundWithLogger {
     log("surrounder", surrounder.getClass(), language, project);
   }
 
-  private static void log(@NotNull String type,
+  private static void log(@NotNull @NonNls String type,
                           @NotNull Class<?> elementClass,
                           @NotNull Language language,
                           @NotNull Project project) {

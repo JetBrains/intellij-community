@@ -185,7 +185,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
       if (value == null) {
-        append("Local machine");
+        append(ExecutionBundle.message("local.machine"));
         setIcon(AllIcons.Nodes.HomeFolder);
       }
       else {

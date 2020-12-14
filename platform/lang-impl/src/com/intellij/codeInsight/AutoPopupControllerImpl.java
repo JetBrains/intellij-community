@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorActivityManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -117,7 +116,6 @@ public class AutoPopupControllerImpl extends AutoPopupController {
 
   @Override
   public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod){
-    if (DumbService.isDumb(myProject)) return;
     if (PowerSaveMode.isEnabled()) return;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -133,14 +131,14 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       }
 
       Runnable request = () -> {
-        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() &&
+        if (!myProject.isDisposed() && !editor.isDisposed() &&
             (EditorActivityManager.getInstance().isVisible(editor))) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
             if (file1 != null) {
               ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
-                                              true, null, e -> { });
+                                              true, null);
             }
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm

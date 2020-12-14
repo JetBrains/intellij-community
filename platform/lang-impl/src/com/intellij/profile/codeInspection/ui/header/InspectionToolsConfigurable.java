@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -210,7 +210,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
   @Override
   public void selectProfile(InspectionProfileImpl profile) {
     final InspectionProfileModifiableModel modifiableModel = myAbstractSchemesPanel.getModel().getModifiableModelFor(profile);
-    showProfile(modifiableModel);
+    if (modifiableModel != null) showProfile(modifiableModel);
   }
 
   @Override
@@ -247,7 +247,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     return myAbstractSchemesPanel.getModel().getProfilePanel(inspectionProfile);
   }
 
-  private void showProfile(InspectionProfileModifiableModel profile) {
+  private void showProfile(@NotNull InspectionProfileModifiableModel profile) {
     final SingleInspectionProfilePanel panel = myAbstractSchemesPanel.getModel().getProfilePanel(profile);
     if (myAbstractSchemesPanel.getModel().getProfilePanels().contains(panel)) {
       myProfilePanelHolder.add(panel);

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyDocstringFileType extends PythonFileType {
   public static final PythonFileType INSTANCE = new PyDocstringFileType();
 
-  protected PyDocstringFileType() {
+  private PyDocstringFileType() {
     super(new PyDocstringLanguageDialect());
   }
 

@@ -7,14 +7,16 @@ class Main {
   public void f() {}
 
   {
-      try {
-          f();
-      } finally {
-      }
+    for (int i = 0; i < 10; i++)
+        f();
 
-      try () {
-          f();
-      }
+      try {
+      f();
+    } finally { }
+
+    try () {
+      f();
+    }
 
       try {
         f();
@@ -37,21 +39,21 @@ class Main {
       new Main().f();
 
       try {
-          new Main().f();
-      } catch (IndexOutOfBoundsException e) {
-          e.printStackTrace();
-      }
+      new Main().f();
+    } catch (IndexOutOfBoundsException e) {
+      e.printStackTrace();
+    }
 
-      try {
-          new Main().f();
-      } catch (IndexOutOfBoundsException e) {
-          e.printStackTrace();
-      }
+    try {
+      new Main().f();
+    } catch (IndexOutOfBoundsException e) {
+      e.printStackTrace();
+    }
 
-      try {
-          new Main().f();
-      } catch (IndexOutOfBoundsException | NullPointerException e) {
-          e.printStackTrace();
-      }
+    try {
+      new Main().f();
+    } catch (IndexOutOfBoundsException | NullPointerException e) {
+      e.printStackTrace();
+    }
   }
 }

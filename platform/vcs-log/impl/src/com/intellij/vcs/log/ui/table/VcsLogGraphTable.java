@@ -97,7 +97,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final Map<VcsLogColumn<?>, TableColumn> myTableColumns = new HashMap<>();
   @NotNull private final Set<VcsLogColumn<?>> myInitializedColumns = new HashSet<>();
 
-  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new LinkedHashSet<>();
 
   @Nullable private Selection mySelection = null;
 
@@ -558,6 +558,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
     myHighlighters.add(highlighter);
+    highlighter.update(getModel().getVisiblePack(), true);
   }
 
   public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {
@@ -607,16 +608,27 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
-
-    VcsCommitStyle defaultStyle = createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
-                                              baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+    VcsCommitStyle style = createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
+                                       baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
     int commitId = rowInfo.getCommit();
     VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
-    if (details == null) return defaultStyle;
+    if (details != null) {
+      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, selected));
+      style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
+    }
 
-    List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, selected));
-    return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
+    if (!selected && myLightSelectionRow == row) {
+      VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(UIUtil.getTableLightSelectionBackground());
+      style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));
+    }
+
+    return style;
+  }
+
+  @Override
+  protected void setRendererBackground(int row, int column, JComponent renderer, Color color, Object property) {
+    // do not overwrite renderer background
   }
 
   public void viewportSet(JViewport viewport) {

@@ -469,7 +469,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
       myPropagateParamChangesButton.setEnabled(false);
       myPropagateParamChangesButton.setVisible(false);
-      myParametersTable.setStriped(true);
 
       myParametersTableModel.addTableModelListener(mySignatureUpdater);
 

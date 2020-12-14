@@ -27,8 +27,6 @@ public class SequentialModalProgressTask extends Task.Modal {
    */
   private long myMinIterationTime = DEFAULT_MIN_ITERATION_MIN_TIME;
 
-  private final String myTitle;
-
   private ProgressIndicator myIndicator;
   private SequentialTask myTask;
 
@@ -38,7 +36,6 @@ public class SequentialModalProgressTask extends Task.Modal {
 
   public SequentialModalProgressTask(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, boolean canBeCancelled) {
     super(project, title, canBeCancelled);
-    myTitle = title;
   }
 
   @Override

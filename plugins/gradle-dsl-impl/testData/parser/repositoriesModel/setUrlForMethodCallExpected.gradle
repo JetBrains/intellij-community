@@ -1,0 +1,5 @@
+repositories {
+  jcenter() {
+    url 'good.url'
+  }
+}

@@ -1,0 +1,6 @@
+repositories {
+  maven {
+    name "myRepoName"
+    url "http://repo.mycompany.com/maven2"
+  }
+}

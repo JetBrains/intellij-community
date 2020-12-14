@@ -41,7 +41,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.PresentableEnum;
+import com.intellij.util.ui.PresentableEnumUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -403,7 +403,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   protected abstract void resetImpl(final CodeStyleSettings settings);
 
   protected static void fillWrappingCombo(@NotNull JComboBox<CodeStyleSettings.WrapStyle> wrapCombo) {
-    PresentableEnum.fill(wrapCombo, CodeStyleSettings.WrapStyle.class);
+    PresentableEnumUtil.fill(wrapCombo, CodeStyleSettings.WrapStyle.class);
   }
 
   public static String readFromFile(@NotNull Class<?> resourceContainerClass, @NonNls @NotNull String fileName) {

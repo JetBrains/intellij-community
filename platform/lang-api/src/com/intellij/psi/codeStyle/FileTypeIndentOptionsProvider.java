@@ -28,11 +28,13 @@ import org.jetbrains.annotations.NonNls;
  * @see LanguageCodeStyleSettingsProvider
  * @see CodeStyleSettings#getIndentOptions(FileType)
  */
-public interface FileTypeIndentOptionsProvider {
+public interface FileTypeIndentOptionsProvider extends FileTypeIndentOptionsFactory {
   ExtensionPointName<FileTypeIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeIndentOptionsProvider");
-  
+
+  @Override
   CommonCodeStyleSettings.IndentOptions createIndentOptions();
 
+  @Override
   FileType getFileType();
 
   IndentOptionsEditor createOptionsEditor();

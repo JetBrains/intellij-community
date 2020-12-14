@@ -1,0 +1,18 @@
+android {
+  buildTypes {
+    xyz {
+      buildConfigField "abcd", "efgh", "ijkl"
+      proguardFiles 'pro-1.txt', 'pro-2.txt'
+      resValue "mnop", "qrst", "uvwx"
+    }
+  }
+}
+android.buildTypes.xyz {
+  buildConfigField "cdef", "ghij", "klmn"
+  manifestPlaceholders activityLabel1: "defaultName1", activityLabel2: "defaultName2"
+  proguardFile 'pro-3.txt'
+  resValue "opqr", "stuv", "wxyz"
+}
+android.buildTypes.xyz.manifestPlaceholders['activityLabel3'] = "defaultName3"
+android.buildTypes.xyz.manifestPlaceholders.activityLabel4 = "defaultName4"
+android.buildTypes.xyz.proguardFiles 'pro-4.txt', 'pro-5.txt'

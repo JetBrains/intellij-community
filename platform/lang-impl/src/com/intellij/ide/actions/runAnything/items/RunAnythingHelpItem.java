@@ -16,13 +16,11 @@ import java.awt.*;
 public class RunAnythingHelpItem extends RunAnythingItemBase {
   @NotNull @Nls private final String myPlaceholder;
   @Nullable private final @NlsContexts.DetailedDescription String myDescription;
-  @Nullable private final Icon myIcon;
 
   public RunAnythingHelpItem(@NotNull @Nls String placeholder, @NotNull String command, @Nullable @NlsContexts.DetailedDescription String description, @Nullable Icon icon) {
     super(command, icon);
     myPlaceholder = placeholder;
     myDescription = description;
-    myIcon = icon;
   }
 
   @NotNull

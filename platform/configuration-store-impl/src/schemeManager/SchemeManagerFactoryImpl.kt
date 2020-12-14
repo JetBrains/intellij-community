@@ -26,7 +26,7 @@ import java.nio.file.Paths
 
 internal typealias FileChangeSubscriber = (schemeManager: SchemeManagerImpl<*, *>) -> Unit
 
-sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.openapi.components.SettingsSavingComponent {
+sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, Scheme>>()
 
   protected open val componentManager: ComponentManager? = null
@@ -89,14 +89,16 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
     }
   }
 
-  final override fun save() {
+  final override suspend fun save() {
     val errors = SmartList<Throwable>()
-    for (registeredManager in managers) {
-      try {
-        registeredManager.save(errors)
-      }
-      catch (e: Throwable) {
-        errors.add(e)
+    withEdtContext(componentManager) {
+      for (registeredManager in managers) {
+        try {
+          registeredManager.save(errors)
+        }
+        catch (e: Throwable) {
+          errors.add(e)
+        }
       }
     }
     throwIfNotEmpty(errors)

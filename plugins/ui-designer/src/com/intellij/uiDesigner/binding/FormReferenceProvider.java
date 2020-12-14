@@ -6,8 +6,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -272,9 +270,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     if (valueAttribute != null) {
       PsiReference reference = ReadAction.compute(() -> {
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
-        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-        if (module == null) return null;
-        final GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
+        GlobalSearchScope scope = file.getResolveScope();
         PsiClass psiClass = psiFacade.findClass(className, scope);
         if (psiClass != null) {
           PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, tag.getName(), false, true);

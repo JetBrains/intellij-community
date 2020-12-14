@@ -6,6 +6,7 @@ import com.intellij.facet.*
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
@@ -70,7 +71,10 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
 
   override fun getAllFacets(): Array<Facet<*>> {
     val moduleEntity = moduleBridge.entityStorage.current.resolve(moduleBridge.moduleEntityId)
-                       ?: error("Cannot resolve module entity ${moduleBridge.moduleEntityId}")
+    if (moduleEntity == null) {
+      LOG.error("Cannot resolve module entity ${moduleBridge.moduleEntityId}")
+      return emptyArray()
+    }
     val facetEntities = moduleEntity.facets
     return facetEntities.mapNotNull { facetMapping().getDataByEntity(it) }.toList().toTypedArray()
   }
@@ -178,6 +182,7 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
 
   companion object {
     private const val FACET_EXTERNAL_MAPPING_ID = "FACET_EXTERNAL_MAPPING_ID"
+    private val LOG = logger<FacetModelBridge>()
 
     internal fun WorkspaceEntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
       return this.getExternalMapping(FACET_EXTERNAL_MAPPING_ID)

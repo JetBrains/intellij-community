@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -92,7 +92,7 @@ abstract class ImageResourcesTestBase {
                         ignoreSkipTag: Boolean = false): List<Array<Any?>> {
       val model = loadProjectModel(root)
       val modules = collectModules(root, model)
-      val checker = MySanityChecker(File(PathManager.getHomePath()), ignoreSkipTag)
+      val checker = MySanityChecker(Paths.get(PathManager.getHomePath()), ignoreSkipTag)
       modules.forEach {
         checker.check(it)
       }
@@ -117,7 +117,7 @@ abstract class ImageResourcesTestBase {
     fun collectNonRegeneratedIconClasses(root: TestRoot): List<Array<Any?>> {
       val model = loadProjectModel(root)
       val modules = collectModules(root, model)
-      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), model.project.modules)
+      val checker = MyIconClassFileChecker(Paths.get(PathManager.getHomePath()), model.project.modules)
       modules.forEach {
         checker.checkIconClasses(it)
       }
@@ -165,8 +165,8 @@ abstract class ImageResourcesTestBase {
   }
 }
 
-private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
-  val failures = ArrayList<FailedTest>()
+private class MySanityChecker(projectHome: Path, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
+  val failures: MutableList<FailedTest> = ArrayList()
 
   override fun log(severity: Severity,
                    message: String,
@@ -194,7 +194,7 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
   }
 }
 
-private class MyIconClassFileChecker(val projectHome: File, val modules: List<JpsModule>) {
+private class MyIconClassFileChecker(val projectHome: Path, val modules: List<JpsModule>) {
   val failures = ArrayList<FailedTest>()
 
   fun checkIconClasses(module: JpsModule) {
@@ -207,7 +207,7 @@ private class MyIconClassFileChecker(val projectHome: File, val modules: List<Jp
   }
 }
 
-class FailedTest internal constructor(val module: String, val message: String, val id: String, val details: String) {
+class FailedTest internal constructor(val module: String, val message: String, val id: String, private val details: String) {
   internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File) :
     this(module.name, message, image.id, file.absolutePath)
 

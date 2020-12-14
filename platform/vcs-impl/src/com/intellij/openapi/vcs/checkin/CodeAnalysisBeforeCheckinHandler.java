@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.checkin;
 
@@ -44,7 +44,7 @@ import java.util.Set;
  *
  * @author lesya
  */
-public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
+public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler implements CommitCheck {
 
   private final Project myProject;
   private final CheckinProjectPanel myCheckinPanel;
@@ -53,6 +53,11 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
   public CodeAnalysisBeforeCheckinHandler(final Project project, CheckinProjectPanel panel) {
     myProject = project;
     myCheckinPanel = panel;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT;
   }
 
   @Override
@@ -106,37 +111,35 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   @Override
   public ReturnResult beforeCheckin(CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-    if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
-      if (DumbService.getInstance(myProject).isDumb()) {
-        if (Messages.showOkCancelDialog(myProject, VcsBundle.message("code.smells.error.indexing.message",
-                                                                     ApplicationNamesInfo.getInstance().getProductName()),
-                                        VcsBundle.message("code.smells.error.indexing"),
-                                        VcsBundle.message("checkin.wait"), VcsBundle.message("checkin.commit"), null) == Messages.OK) {
-          return ReturnResult.CANCEL;
-        }
+    if (!isEnabled()) return ReturnResult.COMMIT;
+
+    if (DumbService.getInstance(myProject).isDumb()) {
+      if (Messages.showOkCancelDialog(myProject, VcsBundle.message("code.smells.error.indexing.message",
+                                                                   ApplicationNamesInfo.getInstance().getProductName()),
+                                      VcsBundle.message("code.smells.error.indexing"),
+                                      VcsBundle.message("checkin.wait"), VcsBundle.message("checkin.commit"), null) == Messages.OK) {
+        return ReturnResult.CANCEL;
+      }
+      return ReturnResult.COMMIT;
+    }
+
+    try {
+      return runCodeAnalysis(executor);
+    }
+    catch (ProcessCanceledException e) {
+      return ReturnResult.CANCEL;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      if (Messages.showOkCancelDialog(myProject,
+                                      VcsBundle
+                                        .message("checkin.code.analysis.failed.with.exception.name.message", e.getClass().getName(),
+                                                 e.getMessage()),
+                                      VcsBundle.message("checkin.code.analysis.failed"), VcsBundle.message("checkin.commit"),
+                                      VcsBundle.message("checkin.cancel"), null) == Messages.OK) {
         return ReturnResult.COMMIT;
       }
-
-      try {
-        return runCodeAnalysis(executor);
-      }
-      catch (ProcessCanceledException e) {
-        return ReturnResult.CANCEL;
-      } catch (Exception e) {
-        LOG.error(e);
-        if (Messages.showOkCancelDialog(myProject,
-                                        VcsBundle
-                                          .message("checkin.code.analysis.failed.with.exception.name.message", e.getClass().getName(),
-                                                   e.getMessage()),
-                                        VcsBundle.message("checkin.code.analysis.failed"), VcsBundle.message("checkin.commit"),
-                                        VcsBundle.message("checkin.cancel"), null) == Messages.OK) {
-          return ReturnResult.COMMIT;
-        }
-        return ReturnResult.CANCEL;
-      }
-    }
-    else {
-      return ReturnResult.COMMIT;
+      return ReturnResult.CANCEL;
     }
   }
 

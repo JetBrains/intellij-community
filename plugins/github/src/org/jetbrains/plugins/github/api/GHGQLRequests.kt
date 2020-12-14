@@ -50,6 +50,20 @@ object GHGQLRequests {
                                               GHRepositoryPermission::class.java,
                                               "repository")
     }
+
+    fun getProtectionRules(repository: GHRepositoryCoordinates,
+                           pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHBranchProtectionRule>> {
+      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.getProtectionRules,
+                                      mapOf("repoOwner" to repository.repositoryPath.owner,
+                                            "repoName" to repository.repositoryPath.repository,
+                                            "pageSize" to pagination?.pageSize,
+                                            "cursor" to pagination?.afterCursor),
+                                      ProtectedRulesConnection::class.java,
+                                      "repository", "branchProtectionRules")
+    }
+
+    private class ProtectedRulesConnection(pageInfo: GHGQLPageInfo, nodes: List<GHBranchProtectionRule>)
+      : GHConnection<GHBranchProtectionRule>(pageInfo, nodes)
   }
 
   object Comment {

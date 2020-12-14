@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
@@ -36,14 +36,9 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  fun deleteProfile(profile: InspectionProfileImpl) {
-    if (schemeManager.removeScheme(profile)) {
-      schemeRemoved(profile)
-    }
-  }
+  fun deleteProfile(profile: InspectionProfileImpl) = deleteProfile(profile.name)
 
-  protected open fun schemeRemoved(scheme: InspectionProfileImpl) {
-  }
+  protected open fun schemeRemoved(scheme: InspectionProfileImpl) {}
 
   abstract fun fireProfileChanged(profile: InspectionProfileImpl)
 }

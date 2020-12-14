@@ -51,8 +51,14 @@ public final class ClassUtil {
       return false;
     }
     else if (object instanceof Collection) {
-      String simpleName = object.getClass().getSimpleName();
-      return !simpleName.equals("EmptyList") && !simpleName.startsWith("Unmodifiable") && !simpleName.equals("EmptySet");
+      Class<?> aClass = object.getClass();
+      String simpleName = aClass.getSimpleName();
+      if (simpleName.equals("EmptyList") || simpleName.startsWith("Unmodifiable") || simpleName.equals("EmptySet")) {
+        return false;
+      }
+
+      Class<?> declaringClass = aClass.getDeclaringClass();
+      return declaringClass == null || !"ImmutableCollections".equals(declaringClass.getSimpleName());
     }
     else {
       return false;

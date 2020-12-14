@@ -731,8 +731,15 @@ public class StringUtil extends StringUtilRt {
     if (escaped) buffer.append('\\');
   }
 
+  /**
+   * Pluralize English word. Could be used when e.g. generating collection name by element type.
+   * Do not use this method in localized context, as it works for English language only.
+   * 
+   * @param word word to pluralize
+   * @return word in plural form
+   */
   @Contract(pure = true)
-  public static @NotNull String pluralize(@NotNull String word) {
+  public static @NotNull @NonNls String pluralize(@NotNull @NonNls String word) {
     return Strings.pluralize(word);
   }
 
@@ -1438,39 +1445,47 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatFileSize(fileSize, unitSeparator);
   }
 
-  /** Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}). */
+  /** 
+   * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}).
+   * This method is intended to be used in non-localized contexts (primarily in log output).
+   * See com.intellij.ide.nls.NlsMessages for localized output.
+   */
   @Contract(pure = true)
-  public static @NotNull String formatDuration(long duration) {
+  public static @NotNull @NonNls String formatDuration(long duration) {
     return Formats.formatDuration(duration);
   }
 
-  /** Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds) */
+  /** 
+   * Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds)
+   * This method is intended to be used in non-localized contexts (primarily in log output).
+   * See com.intellij.ide.nls.NlsMessages for localized output.
+   */
   @Contract(pure = true)
-  public static @NotNull String formatDuration(@NotNull Duration duration) {
+  public static @NotNull @NonNls String formatDuration(@NotNull Duration duration) {
     return Formats.formatDuration(duration);
   }
 
   /** Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
   @Contract(pure = true)
-  public static @NotNull String formatDuration(long duration, @NotNull String unitSeparator) {
+  public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
     return Formats.formatDuration(duration, unitSeparator);
   }
 
   /**
-   * Formats duration given in milliseconds as a sum of padded time units, except the most significant unit
-   * E.g. 234523598 padded as "2 d 03 h 11 min 04 sec 004 ms" accordingly with zeros except "days" here.
+   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
    */
   @Contract(pure = true)
-  public static @NotNull String formatDurationPadded(long millis, @NotNull String unitSeparator) {
+  @Deprecated
+  public static @NotNull @NonNls String formatDurationPadded(long millis, @NotNull String unitSeparator) {
     return Formats.formatDurationPadded(millis, unitSeparator);
   }
 
   /**
-   * Formats duration given in milliseconds as a sum of time units with at most two units
-   * (example: {@code formatDuration(123456) = "2 m 3 s"}).
+   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
    */
   @Contract(pure = true)
-  public static @NotNull String formatDurationApproximate(long duration) {
+  @Deprecated
+  public static @NotNull @NonNls String formatDurationApproximate(long duration) {
     return Formats.formatDurationApproximate(duration);
   }
 
@@ -2771,7 +2786,7 @@ public class StringUtil extends StringUtilRt {
     final int textLength = text.length();
     if (textLength > maxLength) {
       final int prefixLength = maxLength - suffixLength - symbol.length();
-      assert prefixLength > 0;
+      assert prefixLength >= 0;
       return text.substring(0, prefixLength) + symbol + text.substring(textLength - suffixLength);
     }
     else {
@@ -3071,9 +3086,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String toHexString(byte @NotNull [] bytes) {
-    @SuppressWarnings("SpellCheckingInspection") String digits = "0123456789abcdef";
+    @SuppressWarnings("SpellCheckingInspection")
+    String digits = "0123456789abcdef";
     StringBuilder sb = new StringBuilder(2 * bytes.length);
-    for (byte b : bytes) sb.append(digits.charAt((b >> 4) & 0xf)).append(digits.charAt(b & 0xf));
+    for (byte b : bytes) {
+      sb.append(digits.charAt((b >> 4) & 0xf)).append(digits.charAt(b & 0xf));
+    }
     return sb.toString();
   }
 

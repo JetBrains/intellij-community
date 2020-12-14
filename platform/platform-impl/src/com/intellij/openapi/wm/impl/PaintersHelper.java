@@ -218,7 +218,7 @@ final class PaintersHelper implements Painter.Listener {
           boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-            Image m = ImageLoader.loadFromUrl(url, true, true, new ImageFilter[]{flipFilter}, ScaleContext.create());
+            Image m = ImageLoader.loadFromUrl(url, true, true, Collections.singletonList(flipFilter), ScaleContext.create());
             ApplicationManager.getApplication().invokeLater(() -> resetImage(propertyValue, m, newAlpha, newFillType, newAnchor), modalityState);
           });
         }

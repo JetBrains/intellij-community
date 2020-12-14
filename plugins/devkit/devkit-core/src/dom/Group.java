@@ -18,6 +18,9 @@ public interface Group extends ActionContainer, ActionOrGroup {
   GenericAttributeValue<Boolean> getCompact();
 
   @NotNull
+  GenericAttributeValue<Boolean> getSearchable();
+
+  @NotNull
   @Attribute("class")
   @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
     allowAbstract = false, allowInterface = false)

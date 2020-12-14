@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
@@ -135,7 +136,10 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     library as LibraryBridge
 
     val libraryEntity = modifiableModel.diff.findLibraryEntity(library)
-                        ?: error("Cannot find entity for library ${library.name}")
+    if (libraryEntity == null) {
+      LOG.error("Cannot find entity for library ${library.name}")
+      return
+    }
 
     val libraryId = libraryEntity.persistentId()
     modifiableModel.updateDependencies { dependencies ->
@@ -167,4 +171,8 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
   override val module: Module
     get() = modifiableModel.module
+
+  companion object {
+    private val LOG = logger<ModifiableModuleLibraryTableBridge>()
+  }
 }

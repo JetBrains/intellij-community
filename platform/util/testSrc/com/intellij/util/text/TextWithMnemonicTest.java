@@ -58,6 +58,27 @@ public class TextWithMnemonicTest {
     assertEquals('H', hello2.getMnemonic());
     assertEquals(7, hello2.getMnemonicIndex());
   }
+
+  @Test
+  public void parseJapaneseEllipsis() {
+    TextWithMnemonic hello = TextWithMnemonic.parse("hello(&H)...");
+    assertEquals("hello...", hello.getText());
+    assertEquals("hello(_H)...", hello.toString());
+    assertEquals('H', hello.getMnemonic());
+    assertEquals(6, hello.getMnemonicIndex());
+
+    TextWithMnemonic hello2 = TextWithMnemonic.parse("hello (&H)…");
+    assertEquals("hello…", hello2.getText());
+    assertEquals("hello (_H)…", hello2.toString());
+    assertEquals('H', hello2.getMnemonic());
+    assertEquals(7, hello2.getMnemonicIndex());
+
+    TextWithMnemonic fromPlain = TextWithMnemonic.fromPlainText("hello...", 'x');
+    assertEquals("hello...", fromPlain.getText());
+    assertEquals("hello(_X)...", fromPlain.toString());
+    assertEquals('X', fromPlain.getMnemonic());
+    assertEquals(6, fromPlain.getMnemonicIndex());
+  }
   
   @Test
   public void append() {

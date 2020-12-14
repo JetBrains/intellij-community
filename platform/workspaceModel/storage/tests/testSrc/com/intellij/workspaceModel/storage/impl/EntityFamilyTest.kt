@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.storage.entities.SampleEntityData
 import org.junit.Test
 
 class EntityFamilyTest {
-  @Test(expected = IllegalStateException::class)
+  @Test(expected = AssertionError::class)
   fun `remove and replace`() {
     // Initialize family
     val family: MutableEntityFamily<SampleEntity> = MutableEntityFamily.createEmptyMutable()

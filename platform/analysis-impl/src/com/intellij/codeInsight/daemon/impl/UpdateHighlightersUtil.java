@@ -159,7 +159,9 @@ public final class UpdateHighlightersUtil {
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-    codeAnalyzer.cleanFileLevelHighlights(project, group, psiFile);
+    if (psiFile != null) {
+      codeAnalyzer.cleanFileLevelHighlights(project, group, psiFile);
+    }
 
     assertMarkupConsistent(markup, project);
 

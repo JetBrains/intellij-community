@@ -95,7 +95,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     public String myModule;
     public String myJdk;
 
-    private String mySuggestedName;
+    private @Nullable @NlsActions.ActionText String mySuggestedName;
 
     public XsltRunConfiguration(Project project, ConfigurationFactory factory) {
         super(project, factory, NAME);

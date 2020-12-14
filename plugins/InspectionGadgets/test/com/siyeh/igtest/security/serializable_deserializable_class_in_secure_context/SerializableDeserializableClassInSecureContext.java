@@ -31,6 +31,11 @@ class <warning descr="Class 'SerializableClass' may be deserialized, compromisin
     throw new Error();
   }
 }
+record R(int a) implements Serializable {
+  private void readObject(ObjectInputStream in) {
+    throw new Error();
+  }
+}
 
 interface Event extends Serializable {
   int sensitive = 736326;
@@ -45,3 +50,4 @@ class YourException extends Exception {
 enum E {
   A, B, C
 }
+

@@ -1,0 +1,6 @@
+ext {
+  lamb = 'Lamb'
+  seven = 'sêvĕn'
+  def prop1 = 'Value1'
+  prop2 = 'Value2'
+}

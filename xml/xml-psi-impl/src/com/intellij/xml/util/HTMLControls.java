@@ -7,15 +7,11 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
-import com.intellij.util.xmlb.Converter;
-import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -55,54 +51,41 @@ public final class HTMLControls {
       LOG.error("HTMLControls storage is broken");
       return new Control[0];
     }
-    return XmlSerializer.deserialize(element, Control[].class);
+    return deserialize(element);
+  }
+
+  private static Control[] deserialize(Element element) {
+    ArrayList<Control> controls = new ArrayList<>();
+    for (Element child : element.getChildren()) {
+      if ("control".equals(child.getName())) {
+        Control control = new Control();
+        control.name = child.getAttributeValue("name");
+        control.startTag = TagState.valueOf(StringUtil.toUpperCase(child.getAttributeValue("startTag")));
+        control.endTag = TagState.valueOf(StringUtil.toUpperCase(child.getAttributeValue("endTag")));
+        control.emptyAllowed = "true".equalsIgnoreCase(child.getAttributeValue("emptyAllowed"));
+        control.autoClosedBy = autoClosed(child.getAttributeValue("autoClosedBy"));
+        controls.add(control);
+      }
+    }
+    return controls.toArray(new Control[0]);
+  }
+
+  private static Set<String> autoClosed(@Nullable String value) {
+    if (value == null) return Collections.emptySet();
+    Set<String> result = new HashSet<>();
+    for (String closingTag : StringUtil.split(value, ",")) {
+      result.add(StringUtil.toLowerCase(closingTag.trim()));
+    }
+    return result;
   }
 
   public enum TagState { REQUIRED, OPTIONAL, FORBIDDEN }
 
-  @Tag("control")
   public static class Control {
-    @Attribute("name")
     public String name;
-    @Attribute(value = "startTag", converter = TagStateConverter.class)
     public TagState startTag;
-    @Attribute(value = "endTag", converter = TagStateConverter.class)
     public TagState endTag;
-    @Attribute("emptyAllowed")
     public boolean emptyAllowed;
-    @Attribute(value = "autoClosedBy", converter = AutoCloseConverter.class)
     public Set<String> autoClosedBy = Collections.emptySet();
-  }
-
-  private static class TagStateConverter extends Converter<TagState> {
-    @Nullable
-    @Override
-    public TagState fromString(@NotNull String value) {
-      return TagState.valueOf(StringUtil.toUpperCase(value));
-    }
-
-    @NotNull
-    @Override
-    public String toString(@NotNull TagState state) {
-      return StringUtil.toLowerCase(state.name());
-    }
-  }
-
-  private static class AutoCloseConverter extends Converter<Set<String>> {
-    @Nullable
-    @Override
-    public Set<String> fromString(@NotNull String value) {
-      Set<String> result = new HashSet<>();
-      for (String closingTag : StringUtil.split(value, ",")) {
-        result.add(StringUtil.toLowerCase(closingTag.trim()));
-      }
-      return result;
-    }
-
-    @NotNull
-    @Override
-    public String toString(@NotNull Set<String> o) {
-      return StringUtil.join(o, ", ");
-    }
   }
 }

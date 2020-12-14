@@ -3,6 +3,7 @@ package com.intellij.serialization;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.BitUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -13,12 +14,11 @@ import java.awt.*;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Internal
 public class PropertyCollector {
-  private final ConcurrentMap<Class<?>, List<MutableAccessor>> classToOwnFields = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<?>, List<MutableAccessor>> classToOwnFields = CollectionFactory.createConcurrentWeakMap();
 
   private final boolean collectAccessors;
   private final boolean collectPrivateFields;

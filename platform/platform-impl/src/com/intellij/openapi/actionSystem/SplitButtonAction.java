@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -33,9 +34,6 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     myActionGroup = actionGroup;
     setPopup(true);
   }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {}
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -200,25 +198,23 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
       ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
         @Override
-        protected void processPresentation(Presentation presentation) {
+        protected void processPresentation(@NotNull Presentation presentation) {
           super.processPresentation(presentation);
-          if (presentation != null &&
-              StringUtil.defaultIfEmpty(presentation.getText(), "").equals(myPresentation.getText()) &&
+          if (StringUtil.defaultIfEmpty(presentation.getText(), "").equals(myPresentation.getText()) &&
               StringUtil.defaultIfEmpty(presentation.getDescription(), "").equals(myPresentation.getDescription())) {
             presentation.setEnabled(selectedActionEnabled());
-            //presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY));
           }
         }
       });
       popupMenu.setTargetComponent(this);
 
       JPopupMenu menu = popupMenu.getComponent();
-      menu.addPopupMenuListener(myPopupState);
+      myPopupState.prepareToShow(menu);
       if (event.isFromActionToolbar()) {
         menu.show(this, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + getInsets().left, getHeight());
       }
       else {
-        menu.show(this, getWidth(), 0);
+        JBPopupMenu.showAtRight(this, menu);
       }
 
       HelpTooltip.setMasterPopupOpenCondition(this, () -> !menu.isVisible());

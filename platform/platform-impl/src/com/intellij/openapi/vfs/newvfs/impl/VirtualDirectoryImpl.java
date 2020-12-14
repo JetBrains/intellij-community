@@ -298,7 +298,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
     VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, symlinkTarget, true, children);
     RefreshQueue.getInstance().processSingleEvent(event);
-    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(this, realName, null);
+    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(this, realName);
     if (caseSensitivityEvent != null) {
       RefreshQueue.getInstance().processSingleEvent(caseSensitivityEvent);
     }
@@ -795,14 +795,25 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public boolean isCaseSensitive() {
-    if (!isChildrenCaseSensitivityKnown()) {
-      return super.isCaseSensitive();
-    }
-    return getFlagInt(VfsDataFlags.CHILDREN_CASE_SENSITIVE);
+    return isChildrenCaseSensitivityKnown() ? getFlagInt(VfsDataFlags.CHILDREN_CASE_SENSITIVE) : super.isCaseSensitive();
   }
 
+  /**
+   * @return value of CHILDREN_CASE_SENSITIVITY_CACHED bit
+   */
   @ApiStatus.Internal
-  public boolean isChildrenCaseSensitivityKnown() {
+  private boolean isChildrenCaseSensitivityKnown() {
     return getFlagInt(VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED);
+  }
+
+  /**
+   * @return value of CHILDREN_CASE_SENSITIVE bit, if CHILDREN_CASE_SENSITIVITY_CACHED bit is set or UNKNOWN otherwise
+   */
+  @ApiStatus.Internal
+  @NotNull
+  public FileAttributes.CaseSensitivity getChildrenCaseSensitivity() {
+    return isChildrenCaseSensitivityKnown() ?
+           isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE
+           : FileAttributes.CaseSensitivity.UNKNOWN;
   }
 }

@@ -23,8 +23,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk.raw
-import com.intellij.openapi.util.text.HtmlChunk.tag
+import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -142,9 +141,9 @@ private class PySdkToInstallOnWindows(name: String,
     return HtmlBuilder()
       .append(PyBundle.message("python.sdk.executable.not.found.header"))
       .append(tag("ul").children(
-        tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.specify.path", tag("strong").addText("...")))),
+        tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.specify.path", text("...").bold()))),
         tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.download.and.install",
-                                                tag("strong").addText(defaultButtonName), fileSize)))
+                                                text(defaultButtonName).bold(), fileSize)))
       )).toString()
   }
 

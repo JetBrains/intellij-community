@@ -78,11 +78,13 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
   override fun getCommandName(): String = "buildEventsScheme"
 
   override fun main(args: List<String>) {
-    logInstalledPlugins()
+    val outputFile = args.getOrNull(1)
+    val pluginsFile = args.getOrNull(2)
     val groups = EventsSchemeBuilder.buildEventsScheme()
     val text = GsonBuilder().setPrettyPrinting().create().toJson(groups)
-    if (args.size == 2) {
-      FileUtil.writeToFile(File(args[1]), text)
+    logEnabledPlugins(pluginsFile)
+    if (outputFile != null) {
+      FileUtil.writeToFile(File(outputFile), text)
     }
     else {
       println(text)
@@ -90,18 +92,20 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
     exitProcess(0)
   }
 
-  private fun logInstalledPlugins() {
-    println("Disabled plugins:")
-    for (id in DisabledPluginsState.disabledPlugins()) {
-      println(id.toString())
-    }
-
-    println("\nEnabled plugins:")
-    for (descriptor in PluginManagerCore.getLoadedPlugins()) {
-      val bundled = descriptor.isBundled
-      if (descriptor.isEnabled) {
-        println("${descriptor.name} (bundled=$bundled)")
+  private fun logEnabledPlugins(pluginsFile: String?) {
+    val text = buildString {
+      for (descriptor in PluginManagerCore.getLoadedPlugins()) {
+        if (descriptor.isEnabled) {
+          appendLine(descriptor.name)
+        }
       }
+    }
+    if (pluginsFile != null) {
+      FileUtil.writeToFile(File(pluginsFile), text)
+    }
+    else {
+      println("Enabled plugins:")
+      println(text)
     }
   }
 }

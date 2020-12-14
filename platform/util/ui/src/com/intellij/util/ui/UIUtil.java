@@ -15,7 +15,6 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +33,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
@@ -66,7 +66,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -101,7 +100,7 @@ public final class UIUtil {
   }
 
   public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<? super Runnable> onDispose) {
-    if (!SystemInfo.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+    if (!SystemInfoRt.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
       return;
     }
 
@@ -234,7 +233,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
-    return SystemInfo.isMac && ColorUtil.isDark(backgroundColor) ?
+    return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
@@ -360,7 +359,9 @@ public final class UIUtil {
   }
 
   public static void fixOSXEditorBackground(@NotNull JTable table) {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfoRt.isMac) {
+      return;
+    }
 
     if (table.isEditing()) {
       int column = table.getEditingColumn();
@@ -408,7 +409,7 @@ public final class UIUtil {
    */
   public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
 
-  private static final AbstractAction REDO_ACTION = new AbstractAction() {
+  private static final Action REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
@@ -417,7 +418,7 @@ public final class UIUtil {
       }
     }
   };
-  private static final AbstractAction UNDO_ACTION = new AbstractAction() {
+  private static final Action UNDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
@@ -1659,18 +1660,6 @@ public final class UIUtil {
   }
 
   /**
-   * @see #createImage(GraphicsConfiguration, double, double, int, RoundingMode)
-   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
-   */
-  public static @NotNull BufferedImage createImage(ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
-    if (StartupUiUtil.isJreHiDPI(ctx)) {
-      return RetinaImage.create(ctx, width, height, type, rm);
-    }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(rm.round(width), rm.round(height), type);
-  }
-
-  /**
    * @deprecated Use {@link ImageUtil#createImage(Graphics, int, int, int)}
    */
   @Deprecated
@@ -1679,17 +1668,9 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link ImageUtil#createImage(Graphics, double, double, int, RoundingMode)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull RoundingMode rm) {
-    return ImageUtil.createImage(g, width, height, type, rm);
-  }
-
-  /**
    * Creates a HiDPI-aware BufferedImage in the component scale.
    *
-   * @param comp the component associated with the target graphics device
+   * @param component the component associated with the target graphics device
    * @param width the width in user coordinate space
    * @param height the height in user coordinate space
    * @param type the type of the image
@@ -1697,10 +1678,8 @@ public final class UIUtil {
    * @return a HiDPI-aware BufferedImage in the component scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  public static @NotNull BufferedImage createImage(Component comp, int width, int height, int type) {
-    return comp != null ?
-           ImageUtil.createImage(comp.getGraphicsConfiguration(), width, height, type) :
-           ImageUtil.createImage(width, height, type);
+  public static @NotNull BufferedImage createImage(@Nullable Component component, int width, int height, int type) {
+    return ImageUtil.createImage(component == null ? null : component.getGraphicsConfiguration(), width, height, type);
   }
 
   /**
@@ -1723,8 +1702,6 @@ public final class UIUtil {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
-  private static final Method dispatchEventMethod =
-    Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(EventQueue.class, "dispatchEvent", AWTEvent.class));
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
@@ -1732,41 +1709,7 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    for (int i = 1; ; i++) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      try {
-        event = eventQueue.getNextEvent();
-        if (event instanceof InvocationEvent) {
-          dispatchEventMethod.invoke(eventQueue, event);
-        }
-      }
-      catch (InvocationTargetException e) {
-        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
-      }
-      catch (Exception e) {
-        ExceptionUtil.rethrow(e);
-      }
-
-      if (i % 10000 == 0) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
-      }
-    }
-  }
-
-  private static @NotNull Thread getEventQueueThread() {
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    try {
-      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
-      //noinspection ConstantConditions
-      return (Thread)method.invoke(eventQueue);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    EdtInvocationManager.dispatchAllInvocationEvents();
   }
 
   public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
@@ -2112,7 +2055,7 @@ public final class UIUtil {
   }
 
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
-    private final HTMLFactory myFactory = new HTMLFactory() {
+    private final ViewFactory myFactory = new HTMLFactory() {
       @Override
       public View create(Element e) {
         View view = super.create(e);
@@ -2248,13 +2191,7 @@ public final class UIUtil {
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager edtInvocationManager = EdtInvocationManager.getInstance();
-    if (edtInvocationManager.isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      edtInvocationManager.invokeLater(runnable);
-    }
+    EdtInvocationManager.invokeLaterIfNeeded(runnable);
   }
 
   /**
@@ -2270,7 +2207,7 @@ public final class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
+    EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
   }
 
   /**
@@ -2518,7 +2455,7 @@ public final class UIUtil {
   }
 
   public static @NotNull <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
-    final ArrayList<T> result = new ArrayList<>();
+    List<T> result = new ArrayList<>();
     findComponentsOfType(parent, cls, result);
     return result;
   }
@@ -2919,7 +2856,7 @@ public final class UIUtil {
     }
   }
 
-  private static final DocumentAdapter SET_TEXT_CHECKER = new DocumentAdapter() {
+  private static final DocumentListener SET_TEXT_CHECKER = new DocumentAdapter() {
     @Override
     protected void textChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
@@ -2945,14 +2882,15 @@ public final class UIUtil {
     if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
       return;
     }
+
     UndoManager undoManager = new UndoManager();
     textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
     textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
+    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfoRt.isMac ? Event.META_MASK : Event.CTRL_MASK), "undoKeystroke");
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac
-                                                                           ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
+                                                                           ? Event.META_MASK : Event.CTRL_MASK) | Event.SHIFT_MASK), "redoKeystroke");
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
 
@@ -3203,6 +3141,7 @@ public final class UIUtil {
   private static final Color LIST_BACKGROUND = JBColor.namedColor("List.background", BACKGROUND);
   private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.background", BACKGROUND);
   private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.background", BACKGROUND);
+  private static final Color TABLE_LIGHT_BACKGROUND = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
 
   private static final class FocusedSelection {
     private static final Color BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
@@ -3377,6 +3316,10 @@ public final class UIUtil {
 
   public static @NotNull Color getTableBackground(boolean selected, boolean focused) {
     return !selected ? getTableBackground() : getTableSelectionBackground(focused);
+  }
+
+  public static @NotNull Color getTableLightSelectionBackground() {
+    return TABLE_LIGHT_BACKGROUND;
   }
 
   /**

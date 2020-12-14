@@ -2,6 +2,7 @@
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.completion.network.service.RequestService
 import com.intellij.stats.completion.network.service.ResponseData
@@ -33,12 +34,11 @@ class Test {
         super.setUp()
         val container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
         pathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
-        CompletionTrackerInitializer.isEnabledInTests = true
+        project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer(project))
     }
 
     override fun tearDown() {
         try {
-            CompletionTrackerInitializer.isEnabledInTests = false
             CompletionLoggerProvider.getInstance().dispose()
             val statsDir = pathProvider.getStatsDataDirectory()
             statsDir.deleteRecursively()

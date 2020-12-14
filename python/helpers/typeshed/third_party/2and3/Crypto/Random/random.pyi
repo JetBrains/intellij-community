@@ -1,6 +1,6 @@
 from typing import Any, List, Optional, Sequence, TypeVar
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 class StrongRandom:
     def __init__(self, rng: Optional[Any] = ..., randfunc: Optional[Any] = ...) -> None: ...

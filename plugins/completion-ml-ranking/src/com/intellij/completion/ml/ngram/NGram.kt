@@ -2,7 +2,7 @@
 package com.intellij.completion.ml.ngram
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.completion.ml.CompletionMLPolicy
+import com.intellij.completion.ml.features.CompletionFeaturesPolicy
 import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
 import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner
 import com.intellij.lang.Language
@@ -66,7 +66,7 @@ object NGram {
   }
 
   internal fun isSupported(language: Language): Boolean = language.id.toLowerCase() in SUPPORTED_LANGUAGES
-                                                          || CompletionMLPolicy.useNgramModel(language)
+                                                          || CompletionFeaturesPolicy.useNgramModel(language)
 
   fun getNGramPrefix(parameters: CompletionParameters, order: Int): Array<String> {
     val precedingTokens = SyntaxTraverser.revPsiTraverser()

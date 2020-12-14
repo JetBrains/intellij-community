@@ -25,7 +25,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 
 public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
-  private final Project myProject;
   private final String[] myNameSuggestions;
 
   private final JCheckBox myMakeClassParameter = new JCheckBox();
@@ -43,7 +42,6 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
                                        String[] nameSuggestions,
                                        InternalUsageInfo[] internalUsages) {
     super(project, member);
-    myProject = project;
     myNameSuggestions = nameSuggestions;
 
     String type = UsageViewUtil.getType(myMember);

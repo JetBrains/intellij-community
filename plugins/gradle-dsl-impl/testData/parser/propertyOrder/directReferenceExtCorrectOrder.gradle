@@ -1,0 +1,10 @@
+ext {
+  prop1 = 10
+  prop1 = 20
+}
+
+android {
+  defaultConfig {
+    minSdkVersion prop1
+  }
+}

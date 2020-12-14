@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
@@ -43,6 +44,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
@@ -79,6 +81,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.RecentFiles;
+import static com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode.*;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -411,7 +414,7 @@ public final class Switcher extends AnAction implements DumbAware {
       }
       twModel.add(RECENT_LOCATIONS);
 
-      toolWindows = createList(twModel, getNamer(), mySpeedSearch, pinned);
+      toolWindows = new JBList<>(createModel(twModel, getNamer(), mySpeedSearch, pinned));
       toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
       toolWindows.setPreferredSize(new Dimension(JBUI.scale(200), toolWindows.getPreferredSize().height));
 
@@ -527,7 +530,8 @@ public final class Switcher extends AnAction implements DumbAware {
           }
         }
       };
-      files = createList(filesModel, FileInfo::getNameForRendering, mySpeedSearch, pinned);
+      files = JBListWithOpenInRightSplit
+        .createListWithOpenInRightSplitter(createModel(filesModel, FileInfo::getNameForRendering, mySpeedSearch, pinned), null);
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getSelectionModel().addListSelectionListener(e -> {
         if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
@@ -701,11 +705,10 @@ public final class Switcher extends AnAction implements DumbAware {
       myHint = null;
     }
 
-    @NotNull
-    private static <T> JBList<T> createList(CollectionListModel<T> baseModel,
-                                            Function<? super T, String> namer,
-                                            SwitcherSpeedSearch speedSearch,
-                                            boolean pinned) {
+    private static <T> ListModel<T> createModel(CollectionListModel<T> baseModel,
+                                                Function<? super T, String> namer,
+                                                SwitcherPanel.SwitcherSpeedSearch speedSearch,
+                                                boolean pinned) {
       ListModel<T> listModel;
       if (pinned) {
         listModel = new NameFilteringListModel<>(baseModel, namer, s -> !speedSearch.isPopupActive()
@@ -716,7 +719,7 @@ public final class Switcher extends AnAction implements DumbAware {
       else {
         listModel = baseModel;
       }
-      return new JBList<>(listModel);
+      return listModel;
     }
 
     private static void fromListToList(JBList from, JBList to) {
@@ -1024,7 +1027,7 @@ public final class Switcher extends AnAction implements DumbAware {
         else if (value instanceof ToolWindow) {
           final ToolWindow toolWindow = (ToolWindow)value;
           if (toolWindowManager instanceof ToolWindowManagerImpl) {
-            ((ToolWindowManagerImpl)toolWindowManager).hideToolWindow(toolWindow.getId(), false, false);
+            ((ToolWindowManagerImpl)toolWindowManager).hideToolWindow(toolWindow.getId(), false, false, ToolWindowEventSource.CloseFromSwitcher);
           }
           else {
             toolWindow.hide(null);
@@ -1134,7 +1137,7 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     void navigate(final InputEvent e) {
-      boolean openInNewWindow = e != null && e.isShiftDown() && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == VK_ENTER;
+      FileEditorManagerImpl.OpenMode mode = e != null ? FileEditorManagerImpl.getOpenMode(e) : DEFAULT;
       List<?> values = getSelectedList().getSelectedValuesList();
       String searchQuery = mySpeedSearch != null ? mySpeedSearch.getEnteredPrefix() : null;
       myPopup.cancel(null);
@@ -1146,8 +1149,12 @@ public final class Switcher extends AnAction implements DumbAware {
 
       } else if (values.get(0) instanceof ToolWindow) {
         ToolWindow toolWindow = (ToolWindow)values.get(0);
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> toolWindow.activate(null, true, true),
-                                                                    ModalityState.current());
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+          () -> {
+            ToolWindowEventSource source = mySpeedSearch != null && mySpeedSearch.isPopupActive() ? ToolWindowEventSource.SwitcherSearch : ToolWindowEventSource.Switcher;
+            ((ToolWindowManagerImpl) toolWindowManager).activateToolWindow(toolWindow.getId(), null, true, source);
+          },
+          ModalityState.current());
       }
       else {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
@@ -1157,7 +1164,10 @@ public final class Switcher extends AnAction implements DumbAware {
               final FileInfo info = (FileInfo)value;
 
               VirtualFile file = info.first;
-              if (openInNewWindow) {
+              if (mode == RIGHT_SPLIT) {
+                OpenInRightSplitAction.Companion.openInRightSplit(project, file, null);
+              }
+              if (mode == NEW_WINDOW) {
                 manager.openFileInNewWindow(file);
               }
               else if (info.second != null) {

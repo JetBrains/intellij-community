@@ -125,7 +125,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     Processor<String> processor = Processors.cancelableCollectProcessor(result);
     fbi.processAllKeys(XmlNamespaceIndex.NAME, processor, tag.getProject());
 
-    final GlobalSearchScope scope = new EverythingGlobalScope(tag.getProject());
+    final GlobalSearchScope scope = GlobalSearchScope.everythingScope(tag.getProject());
     for (final String ns : result) {
       if (ns.isEmpty()) continue;
       fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<XsdNamespaceBuilder>() {

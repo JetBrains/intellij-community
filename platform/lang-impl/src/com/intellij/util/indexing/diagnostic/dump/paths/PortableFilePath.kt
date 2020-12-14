@@ -81,4 +81,5 @@ sealed class PortableFilePath {
       get() = root.presentablePath.trimEnd('/') + '/' + relativePath
   }
 
+  override fun toString() = presentablePath
 }

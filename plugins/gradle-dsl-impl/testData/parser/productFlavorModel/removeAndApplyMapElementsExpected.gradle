@@ -1,0 +1,6 @@
+android {
+  defaultConfig {
+    manifestPlaceholders activityLabel2: "defaultName2"
+    testInstrumentationRunnerArguments foo: "bar"
+  }
+}

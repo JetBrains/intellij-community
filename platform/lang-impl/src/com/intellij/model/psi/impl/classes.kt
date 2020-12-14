@@ -13,12 +13,14 @@ internal data class DeclaredReferencedData(
   val referencedData: TargetData?
 )
 
+internal data class SymbolWithProvider(val symbol: Symbol, val navigationProvider: Any?)
+
 internal sealed class TargetData {
 
-  abstract val targets: List<Symbol>
+  abstract val targets: List<SymbolWithProvider>
 
   class Declared(val declaration: PsiSymbolDeclaration) : TargetData() {
-    override val targets: List<Symbol> get() = listOf(declaration.symbol)
+    override val targets: List<SymbolWithProvider> get() = listOf(SymbolWithProvider(declaration.symbol, null))
   }
 
   class Referenced(val references: List<PsiSymbolReference>) : TargetData() {
@@ -27,11 +29,9 @@ internal sealed class TargetData {
       require(references.isNotEmpty())
     }
 
-    override val targets: List<Symbol>
+    override val targets: List<SymbolWithProvider>
       get() = references.flatMap { reference ->
-        reference.resolveReference()
-      }.map { resolveResult ->
-        resolveResult.target
+        reference.resolveReference().map { SymbolWithProvider(it.target, reference) }
       }
   }
 
@@ -41,7 +41,10 @@ internal sealed class TargetData {
       require(targetElements.isNotEmpty())
     }
 
-    override val targets: List<Symbol> get() = targetElements.map(PsiSymbolService.getInstance()::asSymbol)
+    override val targets: List<SymbolWithProvider>
+      get() = targetElements.map {
+        SymbolWithProvider(PsiSymbolService.getInstance().asSymbol(it), (origin as? PsiOrigin.Reference)?.reference)
+      }
   }
 }
 

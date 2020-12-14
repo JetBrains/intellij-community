@@ -79,6 +79,7 @@ public final class SemServiceImpl extends SemService {
     return map;
   }
 
+  @NotNull
   @Override
   public <T extends SemElement> List<T> getSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
     SemCacheChunk chunk = myCVManager.getCachedValue((UserDataHolder)psi, () ->

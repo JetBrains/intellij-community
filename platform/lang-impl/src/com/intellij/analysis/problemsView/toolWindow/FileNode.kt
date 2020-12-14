@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,6 +19,10 @@ internal class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
   override fun getLeafState() = if (parentDescriptor is Root) LeafState.NEVER else LeafState.DEFAULT
 
   override fun getName() = file.presentableName ?: file.name
+
+  override fun getVirtualFile() = file
+
+  override fun getDescriptor() = project?.let { OpenFileDescriptor(it, file) }
 
   override fun update(project: Project, presentation: PresentationData) {
     presentation.addText(name, REGULAR_ATTRIBUTES)

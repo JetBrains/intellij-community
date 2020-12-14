@@ -4,10 +4,10 @@ package com.intellij.ide.util;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public final class JavaAnonymousClassesHelper {
   private static final Key<ParameterizedCachedValue<Map<PsiAnonymousClass, String>, PsiClass>> ANONYMOUS_CLASS_NAME = Key.create("ANONYMOUS_CLASS_NAME");
-  public static final AnonClassProvider ANON_CLASS_PROVIDER = new AnonClassProvider();
+  private static final AnonClassProvider ANON_CLASS_PROVIDER = new AnonClassProvider();
 
   @Nullable
   public static String getName(@NotNull PsiAnonymousClass cls) {
@@ -31,10 +31,10 @@ public final class JavaAnonymousClassesHelper {
     return value.getValue(upper).get(cls);
   }
 
-  private static class AnonClassProvider implements ParameterizedCachedValueProvider<Map<PsiAnonymousClass, String>, PsiClass> {
+  private static final class AnonClassProvider implements ParameterizedCachedValueProvider<Map<PsiAnonymousClass, String>, PsiClass> {
     @Override
     public CachedValueProvider.Result<Map<PsiAnonymousClass, String>> compute(final PsiClass upper) {
-      final Map<PsiAnonymousClass, String> map = new THashMap<>();
+      final Map<PsiAnonymousClass, String> map = new HashMap<>();
       upper.accept(new JavaRecursiveElementWalkingVisitor() {
         int index;
 

@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
@@ -52,7 +51,8 @@ final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   }
 
   ConcurrentWeakHashMap(float loadFactor) {
-    this(DEFAULT_CAPACITY, loadFactor, DEFAULT_CONCURRENCY_LEVEL, ContainerUtil.canonicalStrategy());
+    //noinspection unchecked
+    super(DEFAULT_CAPACITY, loadFactor, DEFAULT_CONCURRENCY_LEVEL, TObjectHashingStrategy.CANONICAL);
   }
 
   ConcurrentWeakHashMap(int initialCapacity,

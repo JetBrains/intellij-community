@@ -43,7 +43,7 @@ internal object UpdateInfoPanel {
   private val REPORTING_LISTENER = object : BrowserHyperlinkListener() {
     override fun hyperlinkActivated(e: HyperlinkEvent) {
       FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog", "link.clicked", FeatureUsageData().addData("url", e.url.toString()))
-      super.hyperlinkUpdate(e)
+      super.hyperlinkActivated(e)
     }
   }
 

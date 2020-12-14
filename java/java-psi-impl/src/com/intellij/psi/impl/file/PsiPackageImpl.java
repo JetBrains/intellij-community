@@ -190,7 +190,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-    classes = findAllClasses(name, new EverythingGlobalScope(getProject()));
+    classes = findAllClasses(name, GlobalSearchScope.everythingScope(getProject()));
     if (stamp.mayCacheNow()) {
       map.put(name, classes);
     }
@@ -262,7 +262,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public boolean containsClassNamed(@NotNull String name) {
-    return getCachedClassesByName(name, new EverythingGlobalScope(getProject())).length > 0;
+    return getCachedClassesByName(name, GlobalSearchScope.everythingScope(getProject())).length > 0;
   }
 
   @Override

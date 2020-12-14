@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(PropertiesComponentImpl.class);
 
-  private final Map<String, String> myMap = new ConcurrentHashMap<>();
+  private final Map<@NonNls String, @NonNls String> myMap = new ConcurrentHashMap<>();
 
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";

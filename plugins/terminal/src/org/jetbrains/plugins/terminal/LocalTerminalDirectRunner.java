@@ -78,12 +78,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Nullable
   private static String findRCFile(@NotNull String shellName) {
     String rcfile = null;
-    //noinspection IfCanBeSwitch
     if (BASH_NAME.equals(shellName) || SH_NAME.equals(shellName)) {
       rcfile = "jediterm-bash.in";
     }
     else if (ZSH_NAME.equals(shellName)) {
-      rcfile = ".zshrc";
+      rcfile = ".zshenv";
     }
     else if (FISH_NAME.equals(shellName)) {
       rcfile = "fish/config.fish";
@@ -169,7 +168,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
 
-    String[] command = ArrayUtil.toStringArray(getCommands(envs));
+    String[] command = ArrayUtil.toStringArray(getInitialCommand(envs));
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       try {
@@ -237,19 +236,32 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return "Local Terminal";
   }
 
+  /**
+   * @param envs environment variables
+   * @return initial command. The result command to execute is calculated by applying
+   *         {@link LocalTerminalCustomizer#customizeCommandAndEnvironment} to it.
+   */
+  public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
+    return getCommands(envs);
+  }
 
   /**
-   * @deprecated use {@link #getCommands(Map)} instead
+   * @deprecated use {@link #getInitialCommand(Map)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated
+  public @NotNull List<String> getCommands(@NotNull Map<String, String> envs) {
+    return Arrays.asList(getCommand(envs));
+  }
+
+  /**
+   * @deprecated use {@link #getInitialCommand(Map)} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public String[] getCommand(Map<String, String> envs) {
-    return ArrayUtil.toStringArray(getCommands(envs));
-  }
-
-  public @NotNull List<String> getCommands(@NotNull Map<String, String> envs) {
     String shellPath = getShellPath();
-    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
+    return ArrayUtil.toStringArray(getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration()));
   }
 
   private @NotNull String getShellPath() {
@@ -292,15 +304,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         setLoginShellEnv(envs, loginShell);
       }
       else if (shellName.equals(ZSH_NAME)) {
-        String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
+        String zdotdir = envs.get(ZDOTDIR);
         if (StringUtil.isNotEmpty(zdotdir)) {
-          envs.put("_OLD_ZDOTDIR", zdotdir);
-          File zshRc = new File(FileUtil.expandUserHome(zdotdir), ".zshrc");
-          if (zshRc.exists()) {
-            envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
-          }
+          envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
-        envs.put(ZDOTDIR, new File(rcFilePath).getParent());
+        envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
       }
       else if (shellName.equals(FISH_NAME)) {
         String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);

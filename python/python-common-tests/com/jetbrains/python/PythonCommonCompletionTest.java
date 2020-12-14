@@ -1856,6 +1856,28 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     );
   }
 
+  // PY-25832
+  public void testTypeVarBoundAttributes() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-25832
+  public void testTypeVarConstraintsAttributes() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      List<String> variants = doTestByFile();
+      assertContainsElements(variants, "upper", "bit_length");
+    });
+  }
+
+  // PY-25832
+  public void testTypeVarClassObjectBoundAttributes() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      List<String> variants = doTestByFile();
+      assertContainsElements(variants, "class_attr");
+      assertDoesntContain(variants, "inst_attr");
+    });
+  }
+
   private void doTestHasattrContributor(String[] inList, String[] notInList) {
     doTestHasattrContributor("hasattrCompletion/" + getTestName(true) + ".py", inList, notInList);
   }

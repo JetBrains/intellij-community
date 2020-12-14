@@ -1,0 +1,6 @@
+android {
+  productFlavors {
+    create("x") {
+    }
+  }
+}

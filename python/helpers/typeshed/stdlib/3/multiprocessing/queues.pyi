@@ -1,8 +1,7 @@
+import queue
 from typing import Any, Generic, Optional, TypeVar
 
-import queue
-
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 class Queue(queue.Queue[_T]):
     # FIXME: `ctx` is a circular dependency and it's not actually optional.

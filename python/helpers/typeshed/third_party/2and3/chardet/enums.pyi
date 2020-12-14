@@ -28,7 +28,6 @@ class SequenceLikelihood(object):
     UNLIKELY: int
     LIKELY: int
     POSITIVE: int
-
     @classmethod
     def get_num_categories(cls) -> int: ...
 

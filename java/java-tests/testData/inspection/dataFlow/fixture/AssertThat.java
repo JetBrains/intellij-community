@@ -83,7 +83,12 @@ class Contracts {
     id = obtainOptional();
     Assertions.assertThat(id).isPresent();
     if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+    id = obtainOptional();
+    Assertions.assertThat(id).isPresent().map(this::convert).isEmpty();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
   }
+  
+  native @Nullable String convert(String s);
 
   native Optional<String> obtainOptional();
 

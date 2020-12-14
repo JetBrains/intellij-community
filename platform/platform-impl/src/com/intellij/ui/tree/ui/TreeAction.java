@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.TreeActions;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +15,6 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.util.registry.Registry.is;
-import static com.intellij.util.ui.tree.TreeUtil.scrollToVisible;
 import static java.awt.event.KeyEvent.*;
 import static java.util.Arrays.asList;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -56,7 +54,10 @@ final class TreeAction extends AbstractAction implements UIResource {
 
     new TreeAction(TreeAction::scrollDownChangeSelection, TreeActions.PageDown.ID, getKeyStroke(VK_PAGE_DOWN, 0)),
     new TreeAction(TreeAction::scrollDownChangeLead, "scrollDownChangeLead"),
-    new TreeAction(TreeAction::scrollDownExtendSelection, TreeActions.ShiftPageDown.ID)
+    new TreeAction(TreeAction::scrollDownExtendSelection, TreeActions.ShiftPageDown.ID),
+
+    new TreeAction(TreeAction::selectNextSibling, TreeActions.NextSibling.ID),
+    new TreeAction(TreeAction::selectPreviousSibling, TreeActions.PreviousSibling.ID)
   );
   private final String name;
   private final Consumer<JTree> action;
@@ -87,10 +88,7 @@ final class TreeAction extends AbstractAction implements UIResource {
   }
 
   private static boolean isCycleScrollingAllowed(@NotNull MoveType type) {
-    if (type == MoveType.ExtendSelection) return false;
-    if (!is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
-    UISettings settings = UISettings.getInstanceOrNull();
-    return settings != null && settings.getCycleScrolling();
+    return type != MoveType.ExtendSelection && TreeUtil.isCyclicScrollingAllowed();
   }
 
   private static boolean isLeaf(@NotNull JTree tree, @NotNull TreePath path) {
@@ -177,7 +175,7 @@ final class TreeAction extends AbstractAction implements UIResource {
     else {
       tree.setSelectionPath(path);
     }
-    scrollToVisible(tree, path, false);
+    TreeUtil.scrollToVisible(tree, path, false);
   }
 
   private static void selectChild(@NotNull MoveType type, @NotNull JTree tree) {
@@ -224,6 +222,27 @@ final class TreeAction extends AbstractAction implements UIResource {
     }
   }
 
+  private static void selectNextSibling(@NotNull JTree tree) {
+    TreePath lead = tree.getLeadSelectionPath();
+    if (lead == null) return; // nothing is selected
+    TreePath parent = lead.getParentPath();
+    if (parent == null) return; // root node has no siblings
+    TreePath found = TreeUtil.nextVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
+    if (found == null) return; // next sibling is not found
+    tree.setSelectionPath(found);
+    TreeUtil.scrollToVisible(tree, found, false);
+  }
+
+  private static void selectPreviousSibling(@NotNull JTree tree) {
+    TreePath lead = tree.getLeadSelectionPath();
+    if (lead == null) return; // nothing is selected
+    TreePath parent = lead.getParentPath();
+    if (parent == null) return; // root node has no siblings
+    TreePath found = TreeUtil.previousVisiblePath(tree, lead, path -> parent.equals(path.getParentPath()));
+    if (found == null) return; // previous sibling is not found
+    tree.setSelectionPath(found);
+    TreeUtil.scrollToVisible(tree, found, false);
+  }
 
   // NB!: the following method names correspond Tree.focusInputMap in BasicLookAndFeel and Actions in BasicTreeUI
 

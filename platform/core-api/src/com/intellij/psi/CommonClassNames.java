@@ -107,6 +107,8 @@ public interface CommonClassNames {
 
   String JAVA_LANG_NULL_POINTER_EXCEPTION = "java.lang.NullPointerException";
 
+  String JAVA_NIO_CHARSET_CHARSET = "java.nio.charset.Charset";
+
   String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
   String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
   String JAVA_UTIL_CONCURRENT_COMPLETABLE_FUTURE = "java.util.concurrent.CompletableFuture";

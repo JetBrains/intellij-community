@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveType;
@@ -6,22 +6,17 @@ import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Represents primitive types of Java language.
  */
-public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
-
-  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<>();
+public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
+  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new HashMap<>();
 
   private final JvmPrimitiveTypeKind myKind;
   private final String myName;
