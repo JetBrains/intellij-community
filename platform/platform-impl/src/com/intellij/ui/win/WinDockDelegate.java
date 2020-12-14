@@ -9,12 +9,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.SystemDock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -55,8 +54,8 @@ public final class WinDockDelegate implements SystemDock.Delegate {
 
 
   private static @NotNull Task @NotNull [] convertToJumpTasks(final @NotNull List<AnAction> actions) {
-    final String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
-    final String launcherPath = PathManager.getBinPath() + File.separator + name + (SystemInfo.is64Bit ? "64" : "") + ".exe";
+    final String launcherFileName = ApplicationNamesInfo.getInstance().getScriptName() + (SystemInfo.is64Bit ? "64" : "") + ".exe";
+    final String launcherPath = Paths.get(PathManager.getBinPath(), launcherFileName).toString();
 
     final Task[] result = new Task[actions.size()];
 
