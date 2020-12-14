@@ -3,6 +3,7 @@ package com.intellij.application.options.editor
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.documentation.render.DocRenderManager
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
@@ -15,8 +16,12 @@ import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.UIUtil
+import javax.swing.event.HyperlinkListener
 
 // @formatter:off
 private val model = EditorSettingsExternalizable.getInstance()
@@ -92,7 +97,24 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
         checkBox(myCodeLensCheckBox)
       }
       row {
+        val readerModeLabel =
+          HyperlinkLabel().apply {
+            setTextWithHyperlink(IdeBundle.message("checkbox.show.rendered.doc.comments.reader.mode"))
+            setFontSize(UIUtil.FontSize.SMALL)
+            foreground = UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER)
+            addHyperlinkListener(HyperlinkListener {
+              DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+                context?.let { dataContext ->
+                  Settings.KEY.getData(dataContext)?.let { settings ->
+                    settings.select(settings.find("editor.reader.mode"))
+                  }
+                }
+              }
+            })
+          }
+
         checkBox(myRenderedDocCheckBox)
+        component(readerModeLabel).withLargeLeftGap()
       }
 
       for (configurable in configurables) {
