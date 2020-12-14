@@ -126,7 +126,7 @@ private class JdkVersionVendorCombobox(private val hasMultipleArchs : Boolean): 
         if (jdkVersion != value.parent?.jdkVersion) {
           append(" $jdkVersion", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
           if (hasMultipleArchs) {
-            append(" ${value.item.arch}", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
+            append("  ${value.item.arch}", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
           }
         }
       }
