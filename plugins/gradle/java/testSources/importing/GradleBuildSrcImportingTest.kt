@@ -132,30 +132,6 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
   }
 
-  @Test
-  fun `import project with existing fake module`() {
-    // After first opening of the project, IJ creates a fake module at the project root
-
-    edt<Throwable> {
-      ApplicationManager.getApplication().runWriteAction {
-        val module = ModuleManager.getInstance(myProject).newModule(projectPath + "/" + "project" + ModuleFileType.DOT_DEFAULT_EXTENSION,
-                                                                    StdModuleTypes.JAVA.id)
-        ModuleRootManager.getInstance(module).modifiableModel.also {
-          it.addContentEntry(myProjectRoot)
-          it.inheritSdk()
-          it.commit()
-        }
-      }
-    }
-
-    val module = ModuleManager.getInstance(myProject).findModuleByName("project")!!
-    assertFalse(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module))
-
-    assertNoThrowable { importProject() }
-
-    val moduleAfter = ModuleManager.getInstance(myProject).findModuleByName("project")!!
-    assertTrue(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, moduleAfter))
-  }
 
   private fun assertBuildScriptClassPathContains(moduleName: String, expectedEntries: Collection<VirtualFile>) {
     val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
