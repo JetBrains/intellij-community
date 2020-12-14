@@ -146,9 +146,9 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
 
   private static class StringBufferReplaceableByStringBuilderVisitor extends BaseInspectionVisitor {
 
-    private static final Set<String> EXCLUDES = ContainerUtil.newHashSet(CommonClassNames.JAVA_LANG_STRING_BUILDER,
-                                                                         CommonClassNames.JAVA_LANG_STRING_BUFFER,
-                                                                         CommonClassNames.JAVA_LANG_STRING);
+    private static final Set<String> SAFE_CLASSES = ContainerUtil.newHashSet(CommonClassNames.JAVA_LANG_STRING_BUILDER,
+                                                                             CommonClassNames.JAVA_LANG_STRING_BUFFER,
+                                                                             CommonClassNames.JAVA_LANG_STRING);
 
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
@@ -204,12 +204,51 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
           return false;
         }
         final PsiClass aClass = method.getContainingClass();
-        return aClass != null && EXCLUDES.contains(aClass.getQualifiedName());
+        if (aClass == null) {
+          return false;
+        }
+        final String fqName = aClass.getQualifiedName();
+        if ("java.util.regex.Matcher".equals(fqName)) {
+          if (!PsiUtil.isLanguageLevel9OrHigher(call)) {
+            return false;
+          }
+          final String methodName = method.getName();
+          if ("appendTail".equals(methodName)) {
+            return call instanceof PsiExpression && isSafeStringBufferUsage((PsiExpression)call);
+          }
+          else if ("appendReplacement".equals(methodName)){
+            return true;
+          }
+        }
+        return SAFE_CLASSES.contains(fqName);
       };
       if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context, true, processor)) {
         return false;
       }
       return true;
+    }
+
+    private static boolean isSafeStringBufferUsage(PsiExpression expression) {
+      if (expression == null) {
+        return false;
+      }
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpressionStatement) {
+        return true;
+      }
+      else if (parent instanceof PsiReferenceExpression) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiMethodCallExpression) {
+          final String methodName = ((PsiReferenceExpression)parent).getReferenceName();
+          if ("toString".equals(methodName)) {
+            return true;
+          }
+          else if ("append".equals(methodName) || "appendCodePoint".equals(methodName) || "insert".equals(methodName)) {
+            return isSafeStringBufferUsage((PsiExpression)grandParent);
+          }
+        }
+      }
+      return false;
     }
   }
 }

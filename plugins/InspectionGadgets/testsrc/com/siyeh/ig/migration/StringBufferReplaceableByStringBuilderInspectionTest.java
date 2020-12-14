@@ -2,7 +2,9 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class StringBufferReplaceableByStringBuilderInspectionTest extends LightJavaInspectionTestCase {
@@ -21,5 +23,10 @@ public class StringBufferReplaceableByStringBuilderInspectionTest extends LightJ
   @Override
   protected InspectionProfileEntry getInspection() {
     return new StringBufferReplaceableByStringBuilderInspection();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_11;
   }
 }

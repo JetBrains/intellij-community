@@ -1,6 +1,9 @@
 package com.siyeh.igtest.migration.string_buffer_replaceable_by_string_builder;
 
+import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StringBufferReplaceableByStringBuilder {
 
@@ -54,5 +57,21 @@ public class StringBufferReplaceableByStringBuilder {
     int i = rnd.nextInt('Z' - 'A');
     char c = (char) ('A' + i);
     return c;
+  }
+
+
+  Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{(\\w[-\\w]*)\\}");
+
+  String substitute(Map<String, String> lookup, String s) {
+    StringBuffer <warning descr="'StringBuffer sb' may be declared as 'StringBuilder'">sb</warning> = new StringBuffer();
+    Matcher m = PLACEHOLDER_PATTERN.matcher(s);
+    while (m.find()) {
+      String name = m.group(1);
+      String replacement = lookup.get(name);
+      assert replacement != null;
+      m.appendReplacement(sb, replacement);
+    }
+    m.appendTail(sb).append("end");
+    return m.appendTail(sb).toString();
   }
 }
