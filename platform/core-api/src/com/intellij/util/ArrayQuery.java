@@ -30,9 +30,4 @@ public class ArrayQuery<T> implements Query<T> {
   public boolean forEach(@NotNull final Processor<? super T> consumer) {
     return ContainerUtil.process(myArray, consumer);
   }
-
-  @Override
-  public T @NotNull [] toArray(final T @NotNull [] a) {
-    return myArray;
-  }
 }

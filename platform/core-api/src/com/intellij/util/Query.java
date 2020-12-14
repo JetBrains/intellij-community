@@ -49,7 +49,9 @@ public interface Query<Result> extends Iterable<Result> {
     return AsyncUtil.wrapBoolean(forEach(consumer));
   }
 
-  Result @NotNull [] toArray(Result @NotNull [] a);
+  default Result @NotNull [] toArray(Result @NotNull [] a) {
+    return findAll().toArray(a);
+  }
 
   /**
    * Checks whether predicate is satisfied for every result of this query.

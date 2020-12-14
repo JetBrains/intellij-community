@@ -25,11 +25,6 @@ public class EmptyQuery<R> implements Query<R> {
     return true;
   }
 
-  @Override
-  public R @NotNull [] toArray(R @NotNull [] a) {
-    return findAll().toArray(a);
-  }
-
   public static <T> Query<T> getEmptyQuery() {
     @SuppressWarnings("unchecked") Query<T> instance = (Query<T>)EMPTY_QUERY_INSTANCE;
     return instance;

@@ -52,14 +52,6 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     assert myIsProcessing.get() == null : "Operation is not allowed while query is being processed";
   }
 
-  @Override
-  public Result @NotNull [] toArray(Result @NotNull [] a) {
-    assertNotProcessing();
-
-    final Collection<Result> all = findAll();
-    return all.toArray(a);
-  }
-
   @NotNull
   @Override
   public Query<Result> allowParallelProcessing() {
