@@ -534,6 +534,10 @@ public abstract class UsefulTestCase extends TestCase {
         testRunnable.run();
         success = true;
       }
+      catch (AssumptionViolatedException e) {
+        success = true;
+        throw e;
+      }
       finally {
         TestLoggerFactory.onTestFinished(success);
       }
