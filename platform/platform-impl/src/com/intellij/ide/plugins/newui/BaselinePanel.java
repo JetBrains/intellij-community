@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
@@ -127,7 +128,12 @@ public class BaselinePanel extends NonOpaquePanel {
       }
 
       private void setBaselineBounds(int x, int y, @NotNull Component component, @NotNull Dimension prefSize, int width, int height) {
-        component.setBounds(x, y - component.getBaseline(prefSize.width, prefSize.height), width, height);
+        if (component instanceof ActionToolbar) {
+          component.setBounds(x, getInsets().top - JBUI.scale(1), width, height);
+        }
+        else {
+          component.setBounds(x, y - component.getBaseline(prefSize.width, prefSize.height), width, height);
+        }
       }
     });
   }

@@ -164,15 +164,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myIconLabel.setOpaque(false);
     header.add(myIconLabel, BorderLayout.WEST);
 
-    myGearButton = SelectionBasedPluginModelAction.createGearButton(
-      this::createEnableDisableAction,
-      () -> createUninstallAction()
-    );
-    myGearButton.setBorder(JBUI.Borders.emptyLeft(5));
-    myGearButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
-    myGearButton.setOpaque(false);
-    header.add(myGearButton, BorderLayout.EAST);
-
     return header;
   }
 
@@ -246,6 +237,13 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myInstallButton
       .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
 
+    myGearButton = SelectionBasedPluginModelAction.createGearButton(
+      this::createEnableDisableAction,
+      () -> createUninstallAction()
+    );
+    myGearButton.setOpaque(false);
+    myNameAndButtons.addButtonComponent(myGearButton);
+
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     }
@@ -253,7 +251,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public void setOnlyUpdateMode() {
     myNameAndButtons.removeButtons();
-    myGearButton.getParent().remove(myGearButton);
     myEnabledForProject.getParent().remove(myEnabledForProject);
     myPanel.setBorder(JBUI.Borders.empty(15, 20, 0, 0));
     myEmptyPanel.setBorder(null);
