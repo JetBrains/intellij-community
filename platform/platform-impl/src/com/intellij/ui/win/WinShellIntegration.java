@@ -155,8 +155,7 @@ final class WinShellIntegration implements Disposable {
     native private void setRecentTasksListNative(@NotNull Task @NotNull [] recentTasks);
 
     static {
-      //noinspection SpellCheckingInspection
-      NativeLibraryLoader.loadPlatformLibrary("winshellintegrationbridge");
+      NativeLibraryLoader.loadPlatformLibrary("WinShellIntegrationBridge");
     }
   }
 

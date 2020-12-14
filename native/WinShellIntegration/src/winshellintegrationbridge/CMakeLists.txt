@@ -6,9 +6,9 @@ endif()
 
 # output binary name
 if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
-    set(WSIBRIDGE_BINARY_NAME "winshellintegrationbridge64")
+    set(WSIBRIDGE_BINARY_NAME "WinShellIntegrationBridge64")
 else()
-    set(WSIBRIDGE_BINARY_NAME "winshellintegrationbridge")
+    set(WSIBRIDGE_BINARY_NAME "WinShellIntegrationBridge")
 endif()
 
 configure_file("resources.rc.in" "${CMAKE_CURRENT_BINARY_DIR}/resources.rc" @ONLY)
