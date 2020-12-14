@@ -72,6 +72,14 @@ public class PyIntentionTest extends PyTestCase {
     myFixture.checkResultByFile(filesPathPrefix + ".py", filesPathPrefix + "_after.py", false);
   }
 
+  private void doTestNoIntention(@NotNull String hint, LanguageLevel level) {
+    runWithLanguageLevel(level, () -> {
+      PsiFile file = myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
+      assertEmpty(myFixture.filterAvailableIntentions(hint));
+      assertSdkRootsNotParsed(file);
+    });
+  }
+
   /**
    * Ensures that intention with given hint <i>is not</i> active.
    *
@@ -474,6 +482,11 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testParamTypeInDocstringNotSuggestedForSelf() {
     doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.docstring"));
+  }
+
+  // PY-31369
+  public void testTypeCommentNotAffectSpecifyTypeInDocstringIntention() {
+    doTest(PyPsiBundle.message("INTN.specify.type.in.docstring"), LanguageLevel.getLatest());
   }
 
   public void testParamTypeInAnnotationNotSuggestedForSelf() {
