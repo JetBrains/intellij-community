@@ -87,7 +87,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
           }
         } else {
           // key is deleted, just properly skip bytes (used while index update)
-          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey for " + requestedIndex + " in " + this.getClass().getName();
+          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey";
           skipIndexValue(in);
         }
       }
