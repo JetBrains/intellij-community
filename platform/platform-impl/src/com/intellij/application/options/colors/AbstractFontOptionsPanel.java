@@ -4,12 +4,14 @@ package com.intellij.application.options.colors;
 import com.intellij.Patches;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -157,6 +159,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     c.insets.bottom = BASE_INSET;
     fontPanel.add(panel, c);
 
+    c.gridx = 0;
+    c.gridy ++;
+    fontPanel.add(createReaderModeHyperLink(), c);
+
     mySecondaryCombo.setEnabled(false);
 
     if (myPrimaryCombo.isMonospacedOnlySupported()) {
@@ -245,6 +251,24 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       }
     });
     return fontPanel;
+  }
+
+  @NotNull
+  private static HyperlinkLabel createReaderModeHyperLink() {
+    HyperlinkLabel hyperlinkLabel = new HyperlinkLabel();
+    hyperlinkLabel.setTextWithHyperlink(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"));
+    hyperlinkLabel.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
+    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, hyperlinkLabel);
+
+    hyperlinkLabel.addHyperlinkListener(e -> {
+      DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
+        if (context == null) return;
+        Settings settings = Settings.KEY.getData(context);
+        if (settings == null) return;
+        settings.select(settings.find("editor.reader.mode"));
+      });
+    });
+    return hyperlinkLabel;
   }
 
   protected final void createSecondaryFontComboAndLabel(@NotNull JPanel target, @NotNull GridBagConstraints c) {
