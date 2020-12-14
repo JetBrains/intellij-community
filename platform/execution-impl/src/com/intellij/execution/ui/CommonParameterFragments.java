@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,6 +145,6 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   }
 
   public static void setMonospaced(Component field) {
-    field.setFont(EditorUtil.getEditorFont());
+    field.setFont(EditorUtil.getEditorFont().deriveFont(Font.PLAIN, JBUI.Fonts.label().getSize()));
   }
 }
