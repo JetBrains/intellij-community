@@ -5,6 +5,7 @@ import com.intellij.configurationStore.checkUnknownMacros
 import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -98,30 +99,14 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
       LOG.debug("FW/roots waiting finished")
       val manualWatchRoots = watcher.manualWatchRoots
       var pctNonWatched = 0
-      if (!manualWatchRoots.isEmpty()) {
-        var nonWatched: MutableList<String>? = null
-        for (root in roots) {
-          if (root.fileSystem !is LocalFileSystem) {
-            continue
-          }
-
-          val rootPath = root.path
-          for (manualWatchRoot in manualWatchRoots) {
-            if (VfsUtilCore.isAncestorOrSelf(manualWatchRoot, root)) {
-              if (nonWatched == null) {
-                nonWatched = mutableListOf()
-              }
-              nonWatched.add(rootPath)
-            }
-          }
-        }
-
-        if (nonWatched != null) {
-          val message = ApplicationBundle.message("watcher.non.watchable.project")
+      if (manualWatchRoots.isNotEmpty()) {
+        val unwatched = roots.filter { root -> root.isInLocalFileSystem && manualWatchRoots.any { VfsUtilCore.isAncestorOrSelf(it, root) } }
+        if (unwatched.isNotEmpty()) {
+          val message = ApplicationBundle.message("watcher.non.watchable.project", ApplicationNamesInfo.getInstance().fullProductName)
           watcher.notifyOnFailure(message, null)
-          LOG.info("unwatched roots: $nonWatched")
-          LOG.info("manual watches: $manualWatchRoots")
-          pctNonWatched = (100.0 * nonWatched.size / roots.size).toInt()
+          LOG.info("unwatched roots: ${unwatched.map { it.presentableUrl }}")
+          LOG.info("manual watches: ${manualWatchRoots}")
+          pctNonWatched = (100.0 * unwatched.size / roots.size).toInt()
         }
       }
       ProjectFsStatsCollector.watchedRoots(project, pctNonWatched)
