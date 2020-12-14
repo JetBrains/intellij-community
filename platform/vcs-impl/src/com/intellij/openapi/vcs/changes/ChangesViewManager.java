@@ -80,7 +80,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getT
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.openapi.vcs.actions.CommonCheckinProjectActionKt.isToggleCommitUi;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 
@@ -409,20 +408,6 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       });
 
-      isToggleCommitUi().addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          if (myCommitWorkflowHandler == null) return;
-
-          if (value.asBoolean()) {
-            myCommitWorkflowHandler.deactivate(false);
-          }
-          else {
-            myCommitWorkflowHandler.activate();
-          }
-        }
-      }, this);
-
       busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
       busConnection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
         @Override
@@ -589,7 +574,6 @@ public class ChangesViewManager implements ChangesViewEx,
         if (myCommitPanel == null) {
           myCommitPanel = new ChangesViewCommitPanel(myChangesPanel, this);
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
-          if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate(false);
           Disposer.register(this, myCommitPanel);
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
 

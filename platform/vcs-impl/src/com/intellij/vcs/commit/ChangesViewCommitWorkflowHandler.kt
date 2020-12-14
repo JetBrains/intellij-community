@@ -8,10 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
-import com.intellij.openapi.vcs.actions.isToggleCommitUi
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.EventDispatcher
@@ -78,6 +79,18 @@ internal class ChangesViewCommitWorkflowHandler(
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
     currentChangeList = workflow.getAffectedChangeList(emptySet())
+
+    if (isToggleMode()) deactivate(false)
+    isToggleCommitUi.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        if (isToggleMode()) {
+          deactivate(false)
+        }
+        else {
+          activate()
+        }
+      }
+    }, this)
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
@@ -203,8 +216,12 @@ internal class ChangesViewCommitWorkflowHandler(
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
 
-      if (isToggleCommitUi.asBoolean()) deactivate(true)
+      if (isToggleMode()) deactivate(true)
     }
+  }
+
+  private fun isToggleMode(): Boolean {
+    return isToggleCommitUi.asBoolean()
   }
 
   override fun updateWorkflow() {

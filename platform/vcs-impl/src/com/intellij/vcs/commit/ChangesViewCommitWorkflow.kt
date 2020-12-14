@@ -12,8 +12,8 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
 class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(project) {
-  private val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
+  private val vcsManager get() = ProjectLevelVcsManager.getInstance(project)
+  private val changeListManager get() = ChangeListManagerEx.getInstanceEx(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
