@@ -16,7 +16,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
@@ -24,7 +23,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -44,6 +42,8 @@ import java.util.Map;
  */
 public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtureTestCase {
 
+  private PsiClass sourceClass;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -52,6 +52,7 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
                                                    getClass().getClassLoader()));
     //bug? Test seems to use stale data.
     LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(new File(getTestDataPath())), false, true, null);
+    sourceClass = myFixture.findClass("TestSrcInterface");
   }
 
   @Override
@@ -66,7 +67,6 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
 
   @Test
   public void testSearchFromScourceLooksInLibrary() {
-    PsiClass sourceClass = myFixture.findClass("TestSrcInterface");
     PsiClass libImpl = myFixture.findClass("TestInterfaceImpl");
     Collection<PsiClass> classInheritors = ClassInheritorsSearch.search(sourceClass).findAll();
 
@@ -75,8 +75,6 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
 
   @Test
   public void testLineMarkersUseEnlarger() {
-    PsiClass sourceClass = myFixture.findClass("TestSrcInterface");
-
     myFixture.openFileInEditor(sourceClass.getContainingFile().getVirtualFile());
     myFixture.doHighlighting();
     Document document = myFixture.getDocument(sourceClass.getContainingFile());
@@ -90,11 +88,18 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
 
   @Test
   public void testOverridingMethodSearcherUsesEnlarger() {
-    PsiClass sourceClass = myFixture.findClass("TestSrcInterface");
     PsiMethod testMethod = PsiTreeUtil.findChildOfType(sourceClass, PsiMethod.class);
 
     Collection<PsiMethod> methods = OverridingMethodsSearch.search(testMethod, GlobalSearchScope.allScope(getProject()), false).findAll();
     assertSize(1, methods);
+  }
+
+  @Test
+  public void testFunctionalSearcherUsesEnlarger() {
+    PsiMethod testMethod = PsiTreeUtil.findChildOfType(sourceClass, PsiMethod.class);
+
+    Collection<PsiFunctionalExpression> functionalExpressions = FunctionalExpressionSearch.search(testMethod, GlobalSearchScope.allScope(getProject())).findAll();
+    assertSize(1, functionalExpressions);
   }
 
   @Override
