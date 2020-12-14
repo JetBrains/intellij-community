@@ -49,14 +49,12 @@ public final class WinDockDelegate implements SystemDock.Delegate {
   }
 
 
-  private WinDockDelegate(@NotNull final WinShellIntegration wsi)
-  {
+  private WinDockDelegate(@NotNull final WinShellIntegration wsi) {
     this.wsi = wsi;
   }
 
 
-  private static @NotNull Task @NotNull[] convertToJumpTasks(final @NotNull List<AnAction> actions)
-  {
+  private static @NotNull Task @NotNull [] convertToJumpTasks(final @NotNull List<AnAction> actions) {
     final String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
     final String launcherPath = PathManager.getBinPath() + File.separator + name + (SystemInfo.is64Bit ? "64" : "") + ".exe";
 
@@ -65,8 +63,9 @@ public final class WinDockDelegate implements SystemDock.Delegate {
     int i = 0;
     for (; i < actions.size(); i++) {
       final var action = actions.get(i);
-      if (!(action instanceof ReopenProjectAction))
+      if (!(action instanceof ReopenProjectAction)) {
         continue;
+      }
 
       final ReopenProjectAction reopenProjectAction = (ReopenProjectAction)action;
 
@@ -75,8 +74,9 @@ public final class WinDockDelegate implements SystemDock.Delegate {
       result[i] = new Task(launcherPath, reopenProjectActionPath, reopenProjectAction.getTemplatePresentation().getText());
     }
 
-    if (i < result.length)
+    if (i < result.length) {
       return Arrays.copyOf(result, i);
+    }
 
     return result;
   }
@@ -87,7 +87,6 @@ public final class WinDockDelegate implements SystemDock.Delegate {
 
   private static final Logger LOG = Logger.getInstance(WinDockDelegate.class);
   private static final @Nullable WinDockDelegate instance;
-
 
   static {
     @Nullable WinDockDelegate instanceInitializer = null;

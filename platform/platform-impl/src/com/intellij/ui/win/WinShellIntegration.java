@@ -163,7 +163,6 @@ final class WinShellIntegration implements Disposable {
 
   private final @NotNull Bridge bridge;
 
-
   static {
     final boolean ideIsLaunchedViaDLL = Boolean.getBoolean("ide.native.launcher");
 

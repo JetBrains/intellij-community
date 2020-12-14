@@ -24,7 +24,8 @@ public final class SystemDock {
       if (ourDelegate != null) {
         ourDelegate.updateRecentProjectsMenu();
       }
-    } catch (Throwable err) {
+    }
+    catch (Throwable err) {
       log.error(err);
     }
   }
@@ -32,7 +33,6 @@ public final class SystemDock {
 
   private static final Logger log = Logger.getInstance(SystemDock.class);
   private static final @Nullable Delegate ourDelegate;
-
 
   static {
     SystemDock.Delegate delegate = null;
