@@ -112,8 +112,7 @@ class CodeFragmentParameterAnalyzer(
                 var processed = false
 
                 val extensionReceiver = resolvedCall.extensionReceiver
-                val substitutedReceiversTypes = expression.getSubstitutedReceiversTypes()
-                if (extensionReceiver is ImplicitReceiver && extensionReceiver.type !in substitutedReceiversTypes) {
+                if (extensionReceiver is ImplicitReceiver) {
                     val descriptor = extensionReceiver.declarationDescriptor
                     val parameter = processReceiver(extensionReceiver)
                     checkBounds(descriptor, expression, parameter)
@@ -121,7 +120,7 @@ class CodeFragmentParameterAnalyzer(
                 }
 
                 val dispatchReceiver = resolvedCall.dispatchReceiver
-                if (dispatchReceiver is ImplicitReceiver && dispatchReceiver.type !in substitutedReceiversTypes) {
+                if (dispatchReceiver is ImplicitReceiver) {
                     val descriptor = dispatchReceiver.declarationDescriptor
                     val parameter = processReceiver(dispatchReceiver)
                     if (parameter != null) {
@@ -146,14 +145,6 @@ class CodeFragmentParameterAnalyzer(
                     checkBounds(descriptor, expression, parameter)
                 }
             }
-
-            private fun KtExpression.getSubstitutedReceiversTypes() =
-                parentsOfType<KtLambdaExpression>()
-                    .asSequence()
-                    .mapNotNull { it.getType(bindingContext) }
-                    .filter { it.isExtensionFunctionType }
-                    .map { it.arguments[0].type }
-                    .toSet()
 
             private fun processDescriptor(descriptor: DeclarationDescriptor, expression: KtSimpleNameExpression): Smart? {
                 return processDebugLabel(descriptor)
@@ -223,6 +214,10 @@ class CodeFragmentParameterAnalyzer(
     }
 
     private fun processReceiver(receiver: ImplicitReceiver): Smart? {
+        if (isCodeFragmentDeclaration(receiver.declarationDescriptor)) {
+            return null
+        }
+
         return when (receiver) {
             is ImplicitClassReceiver -> processDispatchReceiver(receiver.classDescriptor)
             is ExtensionReceiver -> processExtensionReceiver(receiver.declarationDescriptor, receiver.type, null)

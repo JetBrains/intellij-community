@@ -177,7 +177,6 @@ class VariableFinder(val context: ExecutionContext) {
     }
 
     private fun findExtensionThis(kind: VariableKind.ExtensionThis): Result? {
-        // Try to evaluate without the receiver
         val variables = frameProxy.safeVisibleVariables()
 
         // Local variables – direct search
