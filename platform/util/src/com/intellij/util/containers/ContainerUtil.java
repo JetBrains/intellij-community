@@ -2619,7 +2619,7 @@ public class ContainerUtil {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakValueMap() {
-    return new ConcurrentWeakValueHashMap<>();
+    return CollectionFactory.createConcurrentWeakValueMap();
   }
 
   @Contract(value = "_,_,_,_ -> new", pure = true)
@@ -2655,7 +2655,7 @@ public class ContainerUtil {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
-    return new ConcurrentSoftValueHashMap<>();
+    return CollectionFactory.createConcurrentSoftValueMap();
   }
 
   @Contract(value = " -> new", pure = true)
@@ -2665,7 +2665,7 @@ public class ContainerUtil {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
-    return new ConcurrentWeakHashMap<>(0.75f);
+    return CollectionFactory.createConcurrentWeakMap();
   }
 
   @ApiStatus.Internal
