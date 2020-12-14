@@ -35,7 +35,10 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.function.Consumer
+import java.util.function.Function
+import java.util.function.Predicate
 import java.util.stream.Collectors
+import java.util.stream.Stream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -278,7 +281,7 @@ final class DistributionJARsBuilder {
     platform.includedArtifacts.keySet() + getPluginsByModules(buildContext, getEnabledPluginModules()).collectMany {it.includedArtifacts.keySet()}
   }
 
-  void buildJARs() {
+  void buildJARs(boolean isUpdateFromSources = false) {
     validateModuleStructure()
 
     BuildTasksImpl.runInParallel(List.<BuildTaskRunnable<Void>>of(
@@ -303,8 +306,10 @@ final class DistributionJARsBuilder {
 
     reorderJars(buildContext)
 
-    buildNonBundledPlugins()
-    buildNonBundledPluginsBlockMaps()
+    buildNonBundledPlugins(!isUpdateFromSources)
+    if (!isUpdateFromSources) {
+      buildNonBundledPluginsBlockMaps()
+    }
   }
 
   static void reorderJars(@NotNull BuildContext buildContext) {
@@ -594,14 +599,12 @@ final class DistributionJARsBuilder {
     }
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  void buildNonBundledPlugins() {
+  void buildNonBundledPlugins(boolean compressPluginArchive) {
     if (pluginsToPublish.isEmpty()) {
       return
     }
 
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
-    AntBuilder ant = buildContext.ant
     LayoutBuilder layoutBuilder = createLayoutBuilder()
     buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
       Path pluginsToPublishDir = buildContext.paths.tempDir.resolve("${buildContext.applicationInfo.productCode}-plugins-to-publish")
@@ -611,7 +614,7 @@ final class DistributionJARsBuilder {
         ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
         : buildContext.buildNumber
       String pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
-      String nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
+      Path nonBundledPluginsArtifacts = Paths.get(buildContext.paths.artifacts, pluginsDirectoryName)
       List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
       Set<String> whiteList = Files.lines(buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload-whitelist.txt"))
         .withCloseable { Stream<String> lines ->
@@ -620,12 +623,13 @@ final class DistributionJARsBuilder {
             .collect(Collectors.toSet())
         }
 
+      Path autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
       for (plugin in pluginsToPublish) {
         String directory = getActualPluginDirectoryName(plugin, buildContext)
-        String targetDirectory = whiteList.contains(plugin.mainModule)
-          ? "$nonBundledPluginsArtifacts/auto-uploading"
+        Path targetDirectory = whiteList.contains(plugin.mainModule)
+          ? nonBundledPluginsArtifacts.resolve("auto-uploading")
           : nonBundledPluginsArtifacts
-        String destFile = "$targetDirectory/$directory-${pluginVersion}.zip"
+        Path destFile = targetDirectory.resolve("$directory-${pluginVersion}.zip")
 
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
           Path pluginXml = buildContext.paths.tempDir.resolve("patched-plugin-xml/$plugin.mainModule/META-INF/plugin.xml")
@@ -635,13 +639,11 @@ final class DistributionJARsBuilder {
           pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXml.toString()))
         }
 
-        ant.zip(destfile: destFile) {
-          zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
-        }
-        buildContext.notifyArtifactBuilt(destFile)
+        BuildHelper.jarWithPrefix(buildContext, destFile, pluginsToPublishDir.resolve(directory), directory, compressPluginArchive)
+        buildContext.notifyArtifactBuilt(destFile.toString())
       }
 
-      for (PluginRepositorySpec item in KeymapPluginsBuilder.buildKeymapPlugins(buildContext, "$nonBundledPluginsArtifacts/auto-uploading")) {
+      for (PluginRepositorySpec item in KeymapPluginsBuilder.buildKeymapPlugins(buildContext, autoUploadingDir)) {
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
           pluginsToIncludeInCustomRepository.add(item)
         }
@@ -649,15 +651,15 @@ final class DistributionJARsBuilder {
 
       PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext, pluginVersion)
       if (helpPlugin != null) {
-        PluginRepositorySpec spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, "$nonBundledPluginsArtifacts/auto-uploading", layoutBuilder)
+        PluginRepositorySpec spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, autoUploadingDir.toString(), layoutBuilder)
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
           pluginsToIncludeInCustomRepository.add(spec)
         }
       }
 
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)
-        buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
+        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts.toString())
+        buildContext.notifyArtifactBuilt(nonBundledPluginsArtifacts.resolve("plugins.xml").toString())
       }
     }
   }
@@ -675,7 +677,7 @@ final class DistributionJARsBuilder {
     }
 
     Files.walk(path)
-      .filter({ it -> (it.toString().endsWith(".zip") && Files.isRegularFile(it)) })
+      .filter({ it -> it.toString().endsWith(".zip") && Files.isRegularFile(it) })
       .forEach { Path file ->
         Path blockMapFile = file.parent.resolve("${file.fileName}.blockmap.zip")
         Path hashFile = file.parent.resolve("${file.fileName}.hash.json")

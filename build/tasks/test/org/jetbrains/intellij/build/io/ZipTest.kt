@@ -28,7 +28,7 @@ class ZipTest {
     }
 
     val archiveFile = fsRule.fs.getPath("/archive.zip")
-    zipForWindows(archiveFile, listOf(dir))
+    zip(archiveFile, mapOf(dir to ""))
 
     val zipFile = ImmutableZipFile.load(archiveFile)
     for (entry in fileDescriptors) {
@@ -52,11 +52,33 @@ class ZipTest {
     }
 
     val archiveFile = fsRule.fs.getPath("/archive.zip")
-    zipForWindows(archiveFile, listOf(dir))
+    zip(archiveFile, mapOf(dir to ""))
 
     val zipFile = ImmutableZipFile.load(archiveFile)
     for (name in list) {
       assertThat(zipFile.getEntry(name)).isNotNull()
+    }
+  }
+
+  @Test
+  fun `custom prefix`() {
+    val random = Random(42)
+
+    val dir = fsRule.fs.getPath("/dir")
+    Files.createDirectories(dir)
+    val list = mutableListOf<String>()
+    for (i in 0..10) {
+      val name = "entry-item${random.nextInt()}-$i"
+      list.add(name)
+      Files.write(dir.resolve(name), random.nextBytes(random.nextInt(128)))
+    }
+
+    val archiveFile = fsRule.fs.getPath("/archive.zip")
+    zip(archiveFile, mapOf(dir to "test"))
+
+    val zipFile = ImmutableZipFile.load(archiveFile)
+    for (name in list) {
+      assertThat(zipFile.getEntry("test/$name")).isNotNull()
     }
   }
 }

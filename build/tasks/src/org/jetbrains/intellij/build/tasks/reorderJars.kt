@@ -4,14 +4,8 @@ package org.jetbrains.intellij.build.tasks
 import com.google.common.hash.HashFunction
 import com.google.common.hash.Hashing
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import org.apache.commons.compress.archivers.zip.ParallelScatterZipCreator
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
-import org.apache.commons.compress.parallel.InputStreamSupplier
-import org.jetbrains.intellij.build.io.deleteDir
-import org.jetbrains.intellij.build.io.info
-import org.jetbrains.intellij.build.io.runJava
+import org.jetbrains.intellij.build.io.*
 import java.io.ByteArrayInputStream
 import java.lang.System.Logger
 import java.nio.ByteBuffer
@@ -247,6 +241,7 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
     for (entry in entries) {
       val name = entry.name
       if (!entry.isDirectory && !name.endsWith(".class") && !name.endsWith("/package.html") && name != "META-INF/MANIFEST.MF") {
+        @Suppress("DuplicatedCode")
         var slashIndex = name.lastIndexOf('/')
         if (slashIndex != -1) {
           while (dirSetWithoutClassFiles.add(name.substring(0, slashIndex))) {
@@ -259,7 +254,7 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
       }
     }
 
-    val zipCreator = ParallelScatterZipCreator(Executors.newWorkStealingPool(2))
+    val zipCreator = ParallelScatterZipCreator(Executors.newWorkStealingPool(2), compress = false)
     addSizeEntry(orderedNames, zipCreator)
     for (originalEntry in entries) {
       val name = originalEntry.name
@@ -271,12 +266,12 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
 
       // by intention not the whole original ZipArchiveEntry is copied,
       // but only name, method and size are copied - that's enough and should be enough
-      val entry = ZipArchiveEntry(name)
-      entry.method = originalEntry.method
+      val entry = ZipEntry(name)
+      entry.method = ZipEntry.STORED
       entry.size = originalEntry.size
-      zipCreator.addArchiveEntry(entry, InputStreamSupplier {
+      zipCreator.addEntry(entry) {
         zipFile.getInputStream(originalEntry)
-      })
+      }
 
       packageHashSet.add(getPackageNameHash(name, hasher))
     }
@@ -284,38 +279,14 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
     Files.createDirectories(resultJarFile.parent)
     (Files.newByteChannel(tempJarFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ,
                                                   StandardOpenOption.CREATE_NEW)) as FileChannel).use { outChannel ->
+      val comment = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN)
+      comment.putInt(1759251304)
+      comment.putShort(orderedNames.size.toShort())
+      comment.flip()
+
       val stream = ZipArchiveOutputStream(outChannel)
       zipCreator.writeTo(stream)
-      stream.finish()
-      stream.flush()
-
-      // apache doesn't allow to set comment as raw bytes - write on own
-      val size = outChannel.size()
-      val buffer = ByteBuffer.allocate(32).order(ByteOrder.LITTLE_ENDIAN)
-      buffer.limit(22)
-      if (outChannel.read(buffer, size - buffer.limit()) != buffer.limit()) {
-        throw IllegalStateException()
-      }
-
-      if (buffer.getInt(0) != 101010256) {
-        throw IllegalStateException("Expected end of central directory signature")
-      }
-      if (buffer.getShort(20) != 0.toShort()) {
-        throw IllegalStateException("Comment length expected to be 0")
-      }
-
-      buffer.position(0)
-      buffer.putShort((Int.SIZE_BYTES + Short.SIZE_BYTES).toShort())
-      buffer.putInt(1759251304)
-      buffer.putShort(orderedNames.size.toShort())
-      buffer.flip()
-
-      do {
-        outChannel.write(buffer, (size - Short.SIZE_BYTES) + buffer.position())
-      }
-      while (buffer.hasRemaining())
-
-      stream.close()
+      stream.finish(comment)
     }
   }
 
@@ -341,15 +312,14 @@ private fun getPackageNameHash(name: String, hasher: HashFunction): Int {
 }
 
 private fun addSizeEntry(orderedNames: List<String>, zipCreator: ParallelScatterZipCreator) {
-  val entry = ZipArchiveEntry(SIZE_ENTRY)
-  val data = intToLittleEndian(orderedNames.size)
-  entry.method = ZipEntry.STORED
-  entry.size = data.size.toLong()
-  zipCreator.addArchiveEntry(entry, InputStreamSupplier {
-    ByteArrayInputStream(data)
-  })
-}
+  val entry = ZipEntry(SIZE_ENTRY)
+  val buffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN)
+  buffer.putShort((orderedNames.size and 0xffff).toShort())
+  buffer.flip()
 
-private fun intToLittleEndian(value: Int): ByteArray {
-  return byteArrayOf((value and 0xFF).toByte(), ((value and 0xFF00) shr 8).toByte())
+  entry.method = ZipEntry.STORED
+  entry.size = 2
+  zipCreator.addEntry(entry) {
+    ByteArrayInputStream(buffer.array())
+  }
 }

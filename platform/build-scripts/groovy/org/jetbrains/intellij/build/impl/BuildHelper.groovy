@@ -20,7 +20,7 @@ final class BuildHelper {
   private static final MethodHandles.Lookup lookup = MethodHandles.lookup()
 
   private final UrlClassLoader helperClassLoader
-  private final MethodHandle zipForWindows
+  private final MethodHandle zipHandle
   private final MethodHandle runJavaHandle
   final MethodHandle brokenPluginsTask
   final MethodHandle reorderJars
@@ -33,14 +33,15 @@ final class BuildHelper {
     Class<?> voidClass = void.class as Class<?>
     Class<?> logger = System.Logger.class as Class<?>
     Class<?> path = Path.class as Class<?>
+    Class<?> bool = boolean.class as Class<?>
 
     copyDirHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.FileKt"),
                                       "copyDir",
                                       MethodType.methodType(voidClass, path, path))
 
-    zipForWindows = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ZipKt"),
-                                      "zipForWindows",
-                                      MethodType.methodType(voidClass, path, iterable))
+    zipHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ZipKt"),
+                                  "zip",
+                                  MethodType.methodType(voidClass, path, Map.class as Class<?>, bool, bool, logger))
 
     runJavaHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ProcessKt"),
                                       "runJava", MethodType.methodType(voidClass, String.class as Class<?>, iterable, iterable, iterable,
@@ -49,7 +50,7 @@ final class BuildHelper {
     brokenPluginsTask = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.BrokenPluginsKt"),
                                           "buildBrokenPlugins",
                                           MethodType.methodType(voidClass,
-                                                                path, String.class as Class<?>, boolean.class as Class<?>, logger))
+                                                                path, String.class as Class<?>, bool, logger))
 
     reorderJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
                                                      "reorderJars",
@@ -68,9 +69,22 @@ final class BuildHelper {
     Files.move(source, target)
   }
 
-  static void zipForWindows(@NotNull BuildContext buildContext, @NotNull Path targetFile, Iterable<Path> dirs) {
+  static void zip(@NotNull BuildContext buildContext, @NotNull Path targetFile, List<Path> dirs) {
+    Map<Path, String> map = new LinkedHashMap<>(dirs.size())
+    for (Path dir : dirs) {
+      map.put(dir, "")
+    }
     // invoke cannot be called reflectively (as Groovy does)
-    getInstance(buildContext).zipForWindows.invokeWithArguments(targetFile, dirs)
+    getInstance(buildContext).zipHandle.invokeWithArguments(targetFile, map, true, false, buildContext.messages)
+  }
+
+  /**
+   * JAR differs from ZIP in our case - for ZIP directory entries are never created,
+   * for JAR directory entries are created, including parent directories, if there is at least one resource file in it.
+   */
+  static void jarWithPrefix(@NotNull BuildContext buildContext, @NotNull Path targetFile, Path dir, String prefix, boolean compress) {
+    getInstance(buildContext).zipHandle
+      .invokeWithArguments(targetFile, Collections.singletonMap(dir, prefix), compress, true, buildContext.messages)
   }
 
   /**

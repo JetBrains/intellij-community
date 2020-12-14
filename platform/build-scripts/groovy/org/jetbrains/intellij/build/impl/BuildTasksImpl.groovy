@@ -405,7 +405,7 @@ idea.fatal.error.notification=disabled
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
         DistributionJARsBuilder.reorderJars(buildContext)
         DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
-        distributionJARsBuilder.buildNonBundledPlugins()
+        distributionJARsBuilder.buildNonBundledPlugins(true)
       }
     }
 
@@ -497,7 +497,7 @@ idea.fatal.error.notification=disabled
       DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
     def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
     DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
-    distributionJARsBuilder.buildNonBundledPlugins()
+    distributionJARsBuilder.buildNonBundledPlugins(true)
   }
 
   @Override
@@ -896,7 +896,7 @@ idea.fatal.error.notification=disabled
 
     setupBundledMaven()
     Path patchedApplicationInfo = patchApplicationInfo()
-    compileModulesForDistribution(patchedApplicationInfo).buildJARs()
+    compileModulesForDistribution(patchedApplicationInfo).buildJARs(true)
     if (includeBinAndRuntime) {
       JvmArchitecture arch = SystemInfo.isArm64 ? JvmArchitecture.aarch64 : SystemInfo.is64Bit ? JvmArchitecture.x64 : JvmArchitecture.x32
       setupJBre(arch.name())

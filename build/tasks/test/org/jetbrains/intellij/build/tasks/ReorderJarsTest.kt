@@ -10,7 +10,7 @@ import com.intellij.util.lang.JdkZipResourceFile
 import com.intellij.util.lang.ZipResourceFile
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.intellij.build.io.zipForWindows
+import org.jetbrains.intellij.build.io.zip
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
@@ -46,7 +46,7 @@ class ReorderJarsTest {
     Files.write(dir2.resolve("resource2.txt"), random.nextBytes(random.nextInt(128)))
 
     val archiveFile = fsRule.fs.getPath("/dir/archive.jar")
-    zipForWindows(archiveFile, listOf(rootDir), addDirEntries = true)
+    zip(archiveFile, mapOf(rootDir to ""), addDirEntries = true)
 
     doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent, TaskTest.logger)
     ZipFile(Files.newByteChannel(archiveFile)).use { zipFile ->
@@ -94,21 +94,19 @@ class ReorderJarsTest {
   }
 
   private fun testOldJarResourceImpl(file: Path, data: ByteArray) {
-    val loader = JdkZipResourceFile(file, true, false).preload(file, null)
+    val loader = JdkZipResourceFile(file, true, false).preload(file)
     assertThat(loader).isNotNull()
-    val resource = loader!!.getResource("org/jetbrains/annotations/Nullable.class")
-    assertThat(resource).isNotNull()
-    val bytes = resource!!.getBytes()
+    val bytes = loader!!.getBytes("org/jetbrains/annotations/Nullable.class")
+    assertThat(bytes).isNotNull()
     assertThat(bytes).hasSize(548)
     assertThat(data.contentEquals(bytes)).isTrue()
   }
 
   private fun testNewJarResourceImpl(file: Path, data: ByteArray) {
-    val loader = ZipResourceFile(file).preload(file, null)
+    val loader = ZipResourceFile(file).preload(file)
     assertThat(loader).isNotNull()
-    val resource = loader!!.getResource("org/jetbrains/annotations/Nullable.class")
-    assertThat(resource).isNotNull()
-    val bytes = resource!!.getBytes()
+    val bytes = loader!!.getBytes("org/jetbrains/annotations/Nullable.class")
+    assertThat(bytes).isNotNull()
     assertThat(bytes).hasSize(548)
     assertThat(data.contentEquals(bytes)).isTrue()
   }
