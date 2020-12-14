@@ -36,8 +36,7 @@ class GrStringStyleViolationInspection : BaseInspection() {
     DOLLAR_SLASHY_QUOTED;
 
     @Nls
-    override fun toString(): String {
-      return when (this) {
+    fun representation(): String = when (this) {
         UNDEFINED -> GroovyBundle.message("string.option.do.not.handle.specifically")
         DOUBLE_QUOTED -> GroovyBundle.message("string.option.double.quoted.string")
         SINGLE_QUOTED -> GroovyBundle.message("string.option.single.quoted.string")
@@ -45,7 +44,6 @@ class GrStringStyleViolationInspection : BaseInspection() {
         TRIPLE_QUOTED -> GroovyBundle.message("string.option.triple.quoted.string")
         TRIPLE_DOUBLE_QUOTED -> GroovyBundle.message("string.option.triple.double.quoted.string")
         DOLLAR_SLASHY_QUOTED -> GroovyBundle.message("string.option.dollar.slashy.string")
-      }
     }
   }
 
@@ -80,7 +78,7 @@ class GrStringStyleViolationInspection : BaseInspection() {
     constraints.gridx = 0
     add(JLabel(description), constraints)
     val comboBox: JComboBox<InspectionStringKind> = ComboBox(values)
-    comboBox.renderer = SimpleListCellRenderer.create("") { it.toString() }
+    comboBox.renderer = SimpleListCellRenderer.create("") { it.representation() }
 
     comboBox.selectedItem = field.getter.call()
 
