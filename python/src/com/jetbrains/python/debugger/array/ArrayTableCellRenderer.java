@@ -8,6 +8,7 @@ import com.jetbrains.python.debugger.dataframe.DataViewCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author amarch
@@ -37,16 +38,18 @@ class ArrayTableCellRenderer extends DataViewCellRenderer implements ColoredCell
 
   @Override
   protected void colorize(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    Color background = null;
     if (myMax != myMin) {
       if (myColored && value != null) {
         try {
           double rangedValue = PyNumericViewUtil.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
-          this.setBackground(PyNumericViewUtil.rangedValueToColor(rangedValue));
+          background = PyNumericViewUtil.rangedValueToColor(rangedValue);
         }
         catch (NumberFormatException ignored) {
         }
       }
     }
+    this.setBackground(background);
   }
 
   public void setMin(double min) {
