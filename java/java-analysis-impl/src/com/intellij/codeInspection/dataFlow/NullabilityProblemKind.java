@@ -230,8 +230,10 @@ public final class NullabilityProblemKind<T extends PsiElement> {
         parent instanceof PsiSynchronizedStatement) {
       return fieldAccessNPE.problem(context, expression);
     }
-    if (parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() == context) {
-      return innerClassNPE.problem((PsiNewExpression)parent, expression);
+    if (parent instanceof PsiNewExpression) {
+      return ((PsiNewExpression)parent).getQualifier() == context ?
+             innerClassNPE.problem((PsiNewExpression)parent, expression) :
+             createUnboxingProblem(context, expression); // Array dimension
     }
     if (parent instanceof PsiPolyadicExpression) {
       PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;

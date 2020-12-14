@@ -8,4 +8,9 @@ class InnerClassTest {
 
     System.out.println(test.new <warning descr="Inner class construction may produce 'NullPointerException'">Inner</warning>());
   }
+  
+  void dimensionNotInnerClass() {
+    Integer x = null;
+    int[] data = new int[<warning descr="Unboxing of 'x' may produce 'NullPointerException'">x</warning>];
+  }
 }
