@@ -11,7 +11,9 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 
 internal val isToggleCommitUi = Registry.get("vcs.non.modal.commit.toggle.ui")
@@ -73,6 +75,9 @@ class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
     else {
       e.getProjectCommitWorkflowHandler()!!.deactivate(false)
     }
+
+  private fun AnActionEvent.getProjectCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler? =
+    project?.let { ChangesViewManager.getInstanceEx(it).commitWorkflowHandler }
 }
 
 @Suppress("ComponentNotRegistered")

@@ -16,8 +16,8 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitWorkflowHandler
+import com.intellij.vcs.commit.CommitWorkflowManager
 import com.intellij.vcs.commit.removeEllipsisSuffix
 
 private val LOG = logger<AbstractCommonCheckinAction>()
@@ -27,10 +27,9 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
   return roots.flatMap { manager.getChangesIn(it) }.toSet()
 }
 
-internal fun Project.getNonModalCommitWorkflowHandler() = ChangesViewManager.getInstanceEx(this).commitWorkflowHandler
+internal fun AnActionEvent.isProjectUsesNonModalCommit() =
+  project?.let { CommitWorkflowManager.getInstance(it).isNonModal() } ?: CommitWorkflowManager.isNonModalInSettings()
 
-internal fun AnActionEvent.isProjectUsesNonModalCommit() = getProjectCommitWorkflowHandler() != null
-internal fun AnActionEvent.getProjectCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler? = project?.getNonModalCommitWorkflowHandler()
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
@@ -120,7 +119,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
 
     val executor = getExecutor(project)
-    val workflowHandler = project.getNonModalCommitWorkflowHandler()
+    val workflowHandler = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
       workflowHandler.run {
         setCommitState(initialChangeList, included, isForceUpdateCommitStateFromContext())
