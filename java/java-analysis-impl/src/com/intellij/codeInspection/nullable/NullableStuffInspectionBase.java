@@ -455,7 +455,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       if (PropertyUtil.getFieldOfGetter(getter) == field) {
         LocalQuickFix getterAnnoFix = new AddAnnotationPsiFix(anno, getter, ArrayUtilRt.toStringArray(annoToRemove));
         if (REPORT_NOT_ANNOTATED_GETTER) {
-          if (!manager.hasNullability(getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
+          if (!hasNullability(manager, getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
             holder.registerProblem(nameIdentifier, JavaAnalysisBundle
                                      .message("inspection.nullable.problems.annotated.field.getter.not.annotated", getPresentableAnnoName(field)),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
@@ -478,7 +478,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       final PsiParameter parameter = parameters[0];
       LOG.assertTrue(parameter != null, setter.getText());
       AddAnnotationPsiFix addAnnoFix = createAddAnnotationFix(anno, annoToRemove, parameter);
-      if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+      if (REPORT_NOT_ANNOTATED_GETTER && !hasNullability(manager, parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
         final PsiIdentifier parameterName = parameter.getNameIdentifier();
         assertValidElement(setter, parameter, parameterName);
         holder.registerProblem(parameterName,
@@ -528,7 +528,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         PsiElement target = ((PsiReferenceExpression)rhs).resolve();
         if (isConstructorParameter(target) && target.isPhysical()) {
           PsiParameter parameter = (PsiParameter)target;
-          if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+          if (REPORT_NOT_ANNOTATED_GETTER && !hasNullability(manager, parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
             final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
             if (nameIdentifier != null && nameIdentifier.isPhysical()) {
               holder.registerProblem(
@@ -579,6 +579,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   public static String getPresentableAnnoName(@NotNull PsiAnnotation annotation) {
     return StringUtil.getShortName(StringUtil.notNullize(annotation.getQualifiedName(), "???"));
+  }
+
+  /**
+   * @return if owner has a @NotNull or @Nullable annotation, 
+   * or is in scope of @ParametersAreNullableByDefault or ParametersAreNonnullByDefault
+   */
+  private static boolean hasNullability(NullableNotNullManager manager, @NotNull PsiModifierListOwner owner) {
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
+    return info != null && info.getNullability() != Nullability.UNKNOWN && info.getInheritedFrom() == null;
   }
 
   private static final class Annotated {
@@ -826,7 +835,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private PsiParameter findNotNullSuperForNonAnnotatedParameter(NullableNotNullManager nullableManager,
                                                                 PsiParameter parameter,
                                                                 List<? extends PsiParameter> superParameters) {
-    return REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL && !nullableManager.hasNullability(parameter)
+    return REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL && !hasNullability(nullableManager, parameter)
            ? ContainerUtil.find(superParameters,
                                 sp -> isNotNullNotInferred(sp, false, IGNORE_EXTERNAL_SUPER_NOTNULL) && !hasInheritableNotNull(sp))
            : null;
@@ -845,7 +854,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (!REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED) return false;
     NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
     return info != null && info.getNullability() == Nullability.NOT_NULL && !info.isInferred() &&
-           ContainerUtil.exists(superParameters, sp -> !nullableManager.hasNullability(sp));
+           ContainerUtil.exists(superParameters, sp -> !hasNullability(nullableManager, sp));
   }
 
   private void checkNullLiteralArgumentOfNotNullParameterUsages(PsiMethod method,
@@ -970,22 +979,19 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private static boolean isNotNullNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean skipExternal) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    if (DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullability.NOT_NULL) return true;
-    if (!manager.isNotNull(owner, checkBases)) return false;
-
-    PsiAnnotation anno = manager.getNotNullAnnotation(owner, checkBases);
-    if (anno == null || AnnotationUtil.isInferredAnnotation(anno)) return false;
-    if (skipExternal && AnnotationUtil.isExternalAnnotation(anno)) return false;
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
+    if (info == null || info.isInferred() || info.getNullability() != Nullability.NOT_NULL) return false;
+    if (!checkBases && info.getInheritedFrom() != null) return false;
+    if (skipExternal && info.isExternal()) return false;
     return true;
   }
 
   public static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    PsiAnnotation anno = manager.getNullableAnnotation(owner, checkBases);
-    if (anno == null) return false;
-
-    return DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullability.NULLABLE || !AnnotationUtil.isInferredAnnotation(anno);
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
+    return info != null && !info.isInferred() && info.getNullability() == Nullability.NULLABLE &&
+           (checkBases || info.getInheritedFrom() == null);
   }
 
   private static PsiType getMemberType(@NotNull PsiModifierListOwner owner) {
