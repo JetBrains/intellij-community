@@ -29,6 +29,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -44,7 +45,15 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !getElements(editor, file, true).isEmpty();
+    List<PsiElement> elements = getElements(editor, file, true);
+    if (elements.isEmpty()) return false;
+    return isClassWithExtends(PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false));
+  }
+
+  private static boolean isClassWithExtends(@Nullable PsiClass psiClass){
+    if (psiClass == null) return false;
+    PsiReferenceList extendsList = psiClass.getExtendsList();
+    return extendsList != null && extendsList.getReferenceElements().length > 0;
   }
 
   @Override
