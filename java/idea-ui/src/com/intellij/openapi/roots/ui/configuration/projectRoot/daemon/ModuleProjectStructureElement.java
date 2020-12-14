@@ -51,9 +51,8 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
   public void check(ProjectStructureProblemsHolder problemsHolder) {
     checkModulesNames(problemsHolder);
 
-    ModuleEditor moduleEditor = myContext.getModulesConfigurator().getModuleEditor(myModule);
-    if (moduleEditor == null) return; //already disposed
-    final ModuleRootModel rootModel = moduleEditor.getRootModel();
+    final ModuleRootModel rootModel = getRootModel();
+    if (rootModel == null) return; //already disposed
     final OrderEntry[] entries = rootModel.getOrderEntries();
     for (OrderEntry entry : entries) {
       if (!entry.isValid()){
@@ -72,6 +71,12 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     }
   }
 
+  private ModuleRootModel getRootModel() {
+    ModuleEditor moduleEditor = myContext.getModulesConfigurator().getModuleEditor(myModule);
+    if (moduleEditor == null) return ModuleRootManager.getInstance(myModule);
+    return moduleEditor.getRootModel();
+  }
+
   private PlaceInProjectStructure createPlace() {
     final Project project = myContext.getProject();
     return new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulePlace(myModule), this);
@@ -84,9 +89,9 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
   @Override
   public List<ProjectStructureElementUsage> getUsagesInElement() {
     final List<ProjectStructureElementUsage> usages = new ArrayList<>();
-    final ModuleEditor moduleEditor = myContext.getModulesConfigurator().getModuleEditor(myModule);
-    if (moduleEditor != null) {
-      for (OrderEntry entry : moduleEditor.getOrderEntries()) {
+    final ModuleRootModel rootModel = getRootModel();
+    if (rootModel != null) {
+      for (OrderEntry entry : rootModel.getOrderEntries()) {
         if (entry instanceof ModuleOrderEntry) {
           ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
           final Module module = moduleOrderEntry.getModule();
