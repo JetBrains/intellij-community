@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,7 +11,6 @@ import junit.framework.AssertionFailedError
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 
 class GradleBuildSrcImportingTest : GradleImportingTestCase() {
@@ -132,6 +129,53 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
   }
 
+  @TargetVersions("6.7+")
+  @Test
+  fun `test buildSrc project dependencies on projects of build included from the main build`() {
+    createProjectSubFile("buildSrc/build.gradle", "plugins { id 'java' }\n" +
+                                                  "dependencies {\n" +
+                                                  "    implementation 'test:greeter'\n" +
+                                                  "}")
+    createProjectSubFile("buildSrc/settings.gradle", "")
+    createProjectSubFile("buildSrc/src/main/java/my/GreetingTask.java", "package my;\n" +
+                                                                        "import com.example.greeter.Greeter;\n" +
+                                                                        "import org.gradle.api.DefaultTask;\n" +
+                                                                        "import org.gradle.api.tasks.TaskAction;\n" +
+                                                                        "import org.gradle.api.tasks.Input;\n" +
+                                                                        "import org.gradle.api.provider.Property;\n" +
+                                                                        "public abstract class GreetingTask extends DefaultTask {\n" +
+                                                                        "    @Input\n" +
+                                                                        "    public abstract Property<String> getGreeting();\n" +
+                                                                        "    @TaskAction\n" +
+                                                                        "    public void greet() {\n" +
+                                                                        "        Greeter.greet(getGreeting().get());\n" +
+                                                                        "    }\n" +
+                                                                        "}\n")
+
+    createProjectSubFile("another-build/settings.gradle", "rootProject.name = 'greeter'")
+    createProjectSubFile("another-build/build.gradle", "plugins { id 'java' }\n" +
+                                                       "group = 'test'")
+    createProjectSubFile("another-build/src/main/java/com/example/greeter/Greeter.java", "package com.example.greeter;\n" +
+                                                                        "\n" +
+                                                                        "public class Greeter {\n" +
+                                                                        "    public static void greet(String greeting) {\n" +
+                                                                        "        System.out.println(greeting);\n" +
+                                                                        "    }\n" +
+                                                                        "}\n")
+
+    createSettingsFile("rootProject.name = 'buildSrc-composite-dependency'\n" +
+                       "includeBuild 'another-build'")
+    importProject("import my.GreetingTask\n" +
+                  "tasks.create('greet', GreetingTask) {\n" +
+                  "    greeting.set(\"Hello\")\n" +
+                  "}")
+    assertModules("buildSrc-composite-dependency",
+                  "buildSrc-composite-dependency.buildSrc", "buildSrc-composite-dependency.buildSrc.main", "buildSrc-composite-dependency.buildSrc.test",
+                  "greeter", "greeter.main", "greeter.test")
+
+    assertModuleModuleDeps("buildSrc-composite-dependency.buildSrc.main", "greeter.main")
+    assertModuleModuleDepScope("buildSrc-composite-dependency.buildSrc.main", "greeter.main", DependencyScope.COMPILE)
+  }
 
   private fun assertBuildScriptClassPathContains(moduleName: String, expectedEntries: Collection<VirtualFile>) {
     val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
