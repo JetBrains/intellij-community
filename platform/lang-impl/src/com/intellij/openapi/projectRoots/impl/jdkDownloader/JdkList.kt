@@ -73,6 +73,7 @@ data class JdkItem(
   val suggestedSdkName: String,
 
   val os: String,
+  @NlsSafe
   val arch: String,
   val packageType: JdkPackageType,
   val url: String,
