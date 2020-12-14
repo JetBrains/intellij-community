@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.impl.ui.Hyperlink;
 import com.intellij.openapi.keymap.impl.ui.KeymapListener;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;

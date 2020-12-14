@@ -428,6 +428,7 @@
     </pluginDescriptor>
 
     <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.LocalMavenRemoteProcessSupportFactory"/>
+    <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.wsl.WslMavenRemoteProcessSupportFactory"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>

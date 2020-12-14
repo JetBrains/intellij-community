@@ -76,7 +76,8 @@ public class MavenServerConnector implements @NotNull Disposable {
         System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
       }
 
-      mySupport = getSupportFactory(project).create(myJdk, myVmOptions, myDistribution, project, myDebugPort);
+      MavenRemoteProcessSupportFactory factory = getSupportFactory(project);
+      mySupport = factory.create(myJdk, myVmOptions, myDistribution, project, myDebugPort);
 
       myMavenServer = mySupport.acquire(this, "");
       myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;

@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LocalMavenServerRemoteProcessSupport extends MavenServerRemoteProcessSupport {
+public class LocalMavenServerRemoteProcessSupport extends AbstractMavenServerRemoteProcessSupport {
   public LocalMavenServerRemoteProcessSupport(@NotNull Sdk jdk,
                                               @Nullable String vmOptions,
                                               @Nullable MavenDistribution mavenDistribution,

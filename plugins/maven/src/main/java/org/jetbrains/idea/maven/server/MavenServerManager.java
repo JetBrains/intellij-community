@@ -386,6 +386,7 @@ public final class MavenServerManager implements Disposable {
   /*
   Made public for external systems integration
    */
+  //TODO: WSL
   public static List<File> collectClassPathAndLibsFolder(@NotNull String mavenVersion, @NotNull File mavenHome) {
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final String root = pluginFileOrDir.getParent();

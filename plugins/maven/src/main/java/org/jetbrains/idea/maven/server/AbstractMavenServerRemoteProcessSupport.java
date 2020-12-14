@@ -19,15 +19,15 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
-public abstract class MavenServerRemoteProcessSupport extends MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport {
+public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport {
   protected final Sdk myJdk;
   protected final String myOptions;
   protected final MavenDistribution myDistribution;
   protected final Project myProject;
   protected final Integer myDebugPort;
 
-  public MavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @Nullable MavenDistribution mavenDistribution,
-                                         @NotNull Project project, @Nullable Integer debugPort) {
+  public AbstractMavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @Nullable MavenDistribution mavenDistribution,
+                                                 @NotNull Project project, @Nullable Integer debugPort) {
     super(MavenServer.class);
     myJdk = jdk;
     myOptions = vmOptions;

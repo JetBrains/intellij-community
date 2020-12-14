@@ -82,20 +82,13 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.setJdk(myJdk);
 
-    params.setWorkingDirectory(PathManager.getBinPath());
+    params.setWorkingDirectory(getWorkingDirectory());
 
 
     Map<String, String> defs = new THashMap<>();
-    defs.putAll(MavenUtil.getPropertiesFromMavenOpts());
+    defs.putAll(getMavenOpts());
 
-    // pass ssl-related options
-    for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
-      Object key = each.getKey();
-      Object value = each.getValue();
-      if (key instanceof String && value instanceof String && ((String)key).startsWith("javax.net.ssl")) {
-        defs.put((String)key, (String)value);
-      }
-    }
+    configureSslRelatedOptions(defs);
 
     defs.put("java.awt.headless", "true");
     for (Map.Entry<String, String> each : defs.entrySet()) {
@@ -135,7 +128,7 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
 
-    final List<String> classPath = collectClassPath(mavenVersion);
+    final List<String> classPath = collectRTLibraries(mavenVersion);
     params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
     params.getClassPath().addAll(classPath);
     params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(mavenVersion, mavenHome));
@@ -161,8 +154,28 @@ public class MavenServerCMDState extends CommandLineState {
       params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
     }
 
-    MavenUtil.addEventListener(mavenVersion, params);
+    //TODO: WSL
+    //MavenUtil.addEventListener(mavenVersion, params);
     return params;
+  }
+
+  private void configureSslRelatedOptions(Map<String, String> defs) {
+    for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
+      Object key = each.getKey();
+      Object value = each.getValue();
+      if (key instanceof String && value instanceof String && ((String)key).startsWith("javax.net.ssl")) {
+        defs.put((String)key, (String)value);
+      }
+    }
+  }
+
+  protected Map<String, String> getMavenOpts() {
+    return MavenUtil.getPropertiesFromMavenOpts();
+  }
+
+  @NotNull
+  protected String getWorkingDirectory() {
+    return PathManager.getBinPath();
   }
 
   protected Pair<File, String> getHomeAndVersion(MavenDistribution distribution) {
@@ -191,7 +204,7 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
   @NotNull
-  protected List<String> collectClassPath(String mavenVersion) {
+  protected List<String> collectRTLibraries(String mavenVersion) {
     final List<String> classPath = new ArrayList<>();
     classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
@@ -230,7 +243,7 @@ public class MavenServerCMDState extends CommandLineState {
 
   @Override
   @NotNull
-  protected OSProcessHandler startProcess() throws ExecutionException {
+  protected ProcessHandler startProcess() throws ExecutionException {
     SimpleJavaParameters params = createJavaParameters();
     GeneralCommandLine commandLine = params.toCommandLine();
     OSProcessHandler processHandler = new OSProcessHandler.Silent(commandLine);
@@ -251,6 +264,7 @@ public class MavenServerCMDState extends CommandLineState {
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", message, NotificationType.WARNING, listener).notify(myProject);
   }
 
+  //TODO: Remove project and notificcations out of there IDEA-257466
   @BuildEventsNls.Message
   private static String invalidHomeMessageToShow(@Nullable MavenDistribution mavenDistribution,
                                                  @NlsSafe String substitutedVersion,

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
+import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
@@ -29,6 +30,20 @@ class LocalMavenDistribution(override val mavenHome: File, override val name: St
   override val version = MavenUtil.getMavenVersion(mavenHome)
   override fun compatibleWith(distribution: MavenDistribution): Boolean {
     return distribution == this || FileUtil.filesEqual(distribution.mavenHome, mavenHome)
+  }
+  override fun isValid() = version != null
+  override fun toString(): String {
+    return name + "(" + mavenHome + ") v " + version
+  }
+}
+
+class WslMavenDistribution(private val wslDistribution: WSLDistribution, val pathToMaven: String, override val name: String): MavenDistribution {
+  override val version = MavenUtil.getMavenVersion(wslDistribution.getWindowsPath(pathToMaven))
+  override val mavenHome = File(pathToMaven)
+  override fun compatibleWith(mavenDistribution: MavenDistribution): Boolean {
+    if(mavenDistribution == this) return true
+    val another = mavenDistribution as? WslMavenDistribution?: return false;
+    return another.wslDistribution == wslDistribution && another.pathToMaven == pathToMaven
   }
   override fun isValid() = version != null
   override fun toString(): String {

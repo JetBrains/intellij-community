@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.notification.Notification;
@@ -135,20 +136,19 @@ public class MavenUtil {
   public static Map<String, String> getPropertiesFromMavenOpts() {
     Map<String, String> res = ourPropertiesFromMvnOpts;
     if (res == null) {
-      String mavenOpts = System.getenv("MAVEN_OPTS");
-      if (mavenOpts != null) {
-        ParametersList mavenOptsList = new ParametersList();
-        mavenOptsList.addParametersString(mavenOpts);
-        res = mavenOptsList.getProperties();
-      }
-      else {
-        res = Collections.emptyMap();
-      }
-
+      res = parseMavenProperties(System.getenv("MAVEN_OPTS"));
       ourPropertiesFromMvnOpts = res;
     }
-
     return res;
+  }
+
+  public static @NotNull Map<String, String> parseMavenProperties(@Nullable String mavenOpts) {
+    if (mavenOpts != null) {
+      ParametersList mavenOptsList = new ParametersList();
+      mavenOptsList.addParametersString(mavenOpts);
+      return mavenOptsList.getProperties();
+    }
+    return Collections.emptyMap();
   }
 
 
