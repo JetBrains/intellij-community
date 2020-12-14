@@ -67,6 +67,14 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     return null;
   }
 
+  @NotNull
+  public static JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
+    if (SystemInfo.isMac) {
+      return MacMainFrameDecorator._wrapRootPaneNorthSide(rootPane, northComponent);
+    }
+    return northComponent;
+  }
+
   protected void notifyFrameComponents(boolean state) {
     myFrame.getRootPane().putClientProperty(FULL_SCREEN, state);
     JMenuBar menuBar = myFrame.getJMenuBar();

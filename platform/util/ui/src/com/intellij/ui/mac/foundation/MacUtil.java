@@ -142,23 +142,41 @@ public final class MacUtil {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.KEY_EVENT_MASK);
   }
 
-  public static ID findWindowFromJavaWindow(final Window w) {
-    if (SystemInfo.isJetBrainsJvm && Registry.is("skip.untitled.windows.for.mac.messages")) {
+  @NotNull
+  public static ID getWindowFromJavaWindow(@Nullable Window w) {
+    if (w == null) {
+      return ID.NIL;
+    }
+    if (SystemInfo.isJetBrainsJvm) {
       try {
         Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
         Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
         Method getPeer = componentAccessor.getClass().getMethod("getPeer", Component.class);
         getPeer.setAccessible(true);
         Object peer = getPeer.invoke(componentAccessor, w);
-        Class<?> cWindowPeerClass  = peer.getClass();
-        Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
-        Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
-        Field ptr = cPlatformWindow.getClass().getSuperclass().getDeclaredField("ptr");
-        ptr.setAccessible(true);
-        return new ID(ptr.getLong(cPlatformWindow));
+        if (peer != null) {
+          Class<?> cWindowPeerClass  = peer.getClass();
+          Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
+          Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
+          if (cPlatformWindow != null) {
+            Field ptr = cPlatformWindow.getClass().getSuperclass().getDeclaredField("ptr");
+            ptr.setAccessible(true);
+            return new ID(ptr.getLong(cPlatformWindow));
+          }
+        }
       }
       catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchFieldException e) {
         LOG.debug(e);
+      }
+    }
+    return ID.NIL;
+  }
+
+  public static ID findWindowFromJavaWindow(final Window w) {
+    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
+      ID window = getWindowFromJavaWindow(w);
+      if (!ID.NIL.equals(window)) {
+        return window;
       }
     }
     return findWindowForTitle(getWindowTitle(w));

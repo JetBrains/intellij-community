@@ -3,22 +3,34 @@ package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
 import com.intellij.ide.ActiveWindowsWatcher;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeRootPane;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
@@ -57,6 +69,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     myInFullScreen = true;
     storeFullScreenStateIfNeeded();
     myFullScreenQueue.runFromQueue();
+
+    updateTabBar(myFrame, 0);
   }
 
   private void exitFullScreen() {
@@ -66,6 +80,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
     myFullScreenQueue.runFromQueue();
+
+    updateTabBarOnExitFromFullScreen();
   }
 
   private void storeFullScreenStateIfNeeded() {
@@ -104,8 +120,48 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private boolean myInFullScreen;
 
+  private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
+
+  private static int DEFAULT_WIN_TAB_HEIGHT() {
+    return Registry.intValue("ide.mac.bigsur.window.with.tabs.height", 28);
+  }
+
+  @NotNull
+  public static JComponent _wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
+    if (!JdkEx.isTabbingModeAvailable()) {
+      return northComponent;
+    }
+
+    NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
+
+    NonOpaquePanel filler = new NonOpaquePanel();
+    filler.setVisible(false);
+
+    panel.add(filler, BorderLayout.NORTH);
+    panel.add(northComponent);
+    rootPane.putClientProperty(WIN_TAB_FILLER, filler);
+    return panel;
+  }
+
   public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     super(frame);
+
+    if (JdkEx.setTabbingMode(frame, () -> updateTabBars(null))) {
+      // update tab logic only after call [NSWindow makeKeyAndOrderFront]
+      frame.addPropertyChangeListener("focusableWindowState", new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          myFrame.removePropertyChangeListener("focusableWindowState", this);
+          updateTabBars(myFrame);
+        }
+      });
+      Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
+        @Override
+        public void dispose() {
+          updateTabBars(null);
+        }
+      });
+    }
 
     if (leaveFullScreenMethod != null || toggleFullScreenMethod != null) {
       FullScreenUtilities.setWindowCanFullScreen(frame, true);
@@ -140,6 +196,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
             rootPane.setBorder(null);
           }
+          updateTabBar(myFrame, 0);
         }
 
         @Override
@@ -167,6 +224,115 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         }
       });
     }
+  }
+
+  private static void updateTabBars(@Nullable JFrame newFrame) {
+    if (!JdkEx.isTabbingModeAvailable()) {
+      return;
+    }
+
+    IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
+
+    if (frames.length < 2) {
+      if (frames.length == 1) {
+        updateTabBar(frames[0], 0);
+      }
+      return;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Integer[] visibleAndHeights = new Integer[frames.length];
+      boolean callInAppkit = false;
+      int newIndex = -1;
+
+      for (int i = 0; i < frames.length; i++) {
+        ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
+        if (newFrame == helper.getFrame()) {
+          //boolean visible = Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 1; // NSWindowUserTabbingPreferenceAlways = 1
+          //visibleAndHeights[i] = visible ? DEFAULT_WIN_TAB_HEIGHT : 0;
+          newIndex = i;
+        }
+        else if (helper.isInFullScreen()) {
+          visibleAndHeights[i] = 0;
+        }
+        else {
+          callInAppkit = true;
+        }
+      }
+
+      if (callInAppkit) {
+        // call only for shown window and only in Appkit
+        Foundation.executeOnMainThread(true, false, () -> {
+          for (int i = 0; i < frames.length; i++) {
+            if (visibleAndHeights[i] == null) {
+              ID window = MacUtil.getWindowFromJavaWindow(((ProjectFrameHelper)frames[i]).getFrame());
+              visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
+              if (visibleAndHeights[i] == -1) {
+                visibleAndHeights[i] = DEFAULT_WIN_TAB_HEIGHT();
+              }
+            }
+          }
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            for (int i = 0; i < frames.length; i++) {
+              updateTabBar(frames[i], visibleAndHeights[i]);
+            }
+          });
+        });
+      }
+      else {
+        if (newIndex != -1) {
+          visibleAndHeights[newIndex] = 0;
+        }
+
+        for (int i = 0; i < frames.length; i++) {
+          updateTabBar(frames[i], visibleAndHeights[i]);
+        }
+      }
+    });
+  }
+
+  private void updateTabBarOnExitFromFullScreen() {
+    if (!JdkEx.isTabbingModeAvailable()) {
+      return;
+    }
+
+    Foundation.executeOnMainThread(true, false, () -> {
+      ID window = MacUtil.getWindowFromJavaWindow(myFrame);
+      int visibleAndHeight = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
+      ApplicationManager.getApplication()
+        .invokeLater(() -> updateTabBar(myFrame, visibleAndHeight == -1 ? DEFAULT_WIN_TAB_HEIGHT() : visibleAndHeight));
+    });
+  }
+
+  private static void updateTabBar(@NotNull Object frameObject, int height) {
+    JFrame frame = null;
+    if (frameObject instanceof JFrame) {
+      frame = (JFrame)frameObject;
+    }
+    else if (frameObject instanceof ProjectFrameHelper) {
+      frame = ((ProjectFrameHelper)frameObject).getFrame();
+    }
+    if (frame == null) {
+      return;
+    }
+
+    JComponent filler = (JComponent)frame.getRootPane().getClientProperty(WIN_TAB_FILLER);
+    if (filler == null) {
+      return;
+    }
+    boolean visible = height > 0;
+    boolean oldVisible = filler.isVisible();
+    filler.setVisible(visible);
+    filler.setPreferredSize(new JBDimension(-1, height));
+
+    Container parent = filler.getParent();
+    if (parent == null || oldVisible == visible) {
+      return;
+    }
+    parent.doLayout();
+    parent.revalidate();
+    parent.repaint();
   }
 
   @Override
