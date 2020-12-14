@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.ResourcesGenerator
 
 import java.nio.file.Path
 import java.util.function.BiFunction
+import java.util.function.BiPredicate
 
 /**
  * Describes layout of a plugin in the product distribution
@@ -22,7 +23,7 @@ final class PluginLayout extends BaseLayout {
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
   Collection<String> pathsToScramble = []
-  BiFunction<BuildContext, File, Boolean> scrambleClasspathFilter = { context, file -> return true } as BiFunction<BuildContext, File, Boolean>
+  BiPredicate<BuildContext, File> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, File>
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -193,7 +194,7 @@ final class PluginLayout extends BaseLayout {
      * Allows control over classpath entries that will be used by the scrambler to resolve references from jars being scrambled.
      * By default all platform jars are added to the 'scramble classpath'
      */
-    void filterScrambleClasspath(BiFunction<BuildContext, File, Boolean> filter) {
+    void filterScrambleClasspath(BiPredicate<BuildContext, File> filter) {
       layout.scrambleClasspathFilter = filter
     }
   }

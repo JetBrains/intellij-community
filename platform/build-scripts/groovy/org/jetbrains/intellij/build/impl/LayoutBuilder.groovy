@@ -112,8 +112,8 @@ final class LayoutBuilder {
      */
     @CompileStatic(TypeCheckingMode.SKIP)
     void jar(String relativePath, boolean preserveDuplicates = false, boolean mergeManifests = true, Closure body) {
-      def directory = PathUtilRt.getParentPath(relativePath)
-      if (directory == "") {
+      String directory = PathUtilRt.getParentPath(relativePath)
+      if (directory.isEmpty()) {
         currentPath.push(relativePath)
         if (copyFiles) {
           ant.jar(name: relativePath, compress: compressJars, duplicate: preserveDuplicates ? "preserve" : "fail",

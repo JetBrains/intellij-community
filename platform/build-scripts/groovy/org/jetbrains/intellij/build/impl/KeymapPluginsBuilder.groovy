@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.BuildContext
 @CompileStatic
 final class KeymapPluginsBuilder {
   static List<PluginRepositorySpec> buildKeymapPlugins(BuildContext buildContext, String targetDir) {
-    return [
+    return List.of(
       keymapPlugin(["Mac OS X", "Mac OS X 10.5+"], buildContext, targetDir),
       keymapPlugin(["Default for GNOME"], buildContext, targetDir),
       keymapPlugin(["Default for KDE"], buildContext, targetDir),
@@ -23,7 +23,7 @@ final class KeymapPluginsBuilder {
       keymapPlugin(["VSCode", "VSCode OSX"], buildContext, targetDir),
       keymapPlugin(["Visual Studio for Mac"], buildContext, targetDir),
       keymapPlugin(["Xcode"], buildContext, targetDir)
-    ]
+    )
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)

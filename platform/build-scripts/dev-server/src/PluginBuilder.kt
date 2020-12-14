@@ -136,7 +136,7 @@ private fun buildPlugin(plugin: BuildItem,
   }
 
   val mapping = ProjectStructureMapping()
-  builder.processLayout(layoutBuilder, plugin.layout, plugin.dir.toString(), mapping, true, plugin.layout.moduleJars, generatedResources)
+  builder.processLayout(layoutBuilder, plugin.layout, plugin.dir, mapping, true, plugin.layout.moduleJars, generatedResources)
 }
 
 private fun getGeneratedResources(plugin: PluginLayout, buildContext: BuildContext): List<Pair<File, String>> {
