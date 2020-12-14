@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.auth.PluginAuthService.addAuthHeadersIfTheyExist
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.Chunk
@@ -76,24 +75,20 @@ class PluginChunkDataSource(
 
   private fun getRange(range: String): MutableList<ByteArray> {
     val result = ArrayList<ByteArray>()
-    HttpRequests
-      .requestWithRange(newPluginUrl, range)
-      .tuner { connection -> addAuthHeadersIfTheyExist(connection, newPluginUrl) }
-      .productNameAsUserAgent()
-      .connect { request ->
-        val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
-        request.inputStream.buffered().use { input ->
-          if (chunkSequences.size > 1) {
-            for (sequence in chunkSequences) {
-              parseHttpMultirangeHeaders(input, boundary)
-              parseHttpRangeBody(input, sequence, result)
-            }
-          }
-          else {
-            parseHttpRangeBody(input, chunkSequences[0], result)
+    HttpRequests.requestWithRange(newPluginUrl, range).productNameAsUserAgent().connect { request ->
+      val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
+      request.inputStream.buffered().use { input ->
+        if (chunkSequences.size > 1) {
+          for (sequence in chunkSequences) {
+            parseHttpMultirangeHeaders(input, boundary)
+            parseHttpRangeBody(input, sequence, result)
           }
         }
+        else {
+          parseHttpRangeBody(input, chunkSequences[0], result)
+        }
       }
+    }
     return result
   }
 
