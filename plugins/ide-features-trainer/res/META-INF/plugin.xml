@@ -94,5 +94,9 @@
                  description="Turn on it to preview incomplete lessons"
                  defaultValue="FALSE"
                  restartRequired="false"/>
+    <registryKey key="ift.default.restore.delay"
+                 description="Specified default delay in milliseconds before previous task will be restored if something went wrong."
+                 defaultValue="500"
+                 restartRequired="false"/>
   </extensions>
 </idea-plugin>

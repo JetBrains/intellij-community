@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
@@ -225,6 +226,9 @@ fun TaskRuntimeContext.lineWithBreakpoints(): Set<Int> {
     it.sourcePosition?.line
   }.toSet()
 }
+
+val defaultRestoreDelay: Int
+  get() = Registry.intValue("ift.default.restore.delay")
 
 /**
  * @param [restoreId] where to restore, `null` means the previous task

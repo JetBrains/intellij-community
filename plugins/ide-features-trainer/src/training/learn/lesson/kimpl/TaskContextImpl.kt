@@ -65,7 +65,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   override fun showWarning(text: String, warningRequired: TaskRuntimeContext.() -> Boolean) {
-    restoreState(delayMillis = 50) {
+    restoreState(delayMillis = defaultRestoreDelay) {
       val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
         if (warningRequired()) RestoreNotification(text) {} else null
       }
