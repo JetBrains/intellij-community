@@ -220,7 +220,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static void setChildrenCached(int id) {
     int flags = FSRecords.getFlags(id);
-    FSRecords.setFlags(id, flags | Flags.CHILDREN_CACHED, true);
+    FSRecords.setFlags(id, flags | Flags.CHILDREN_CACHED);
   }
 
   @Override
@@ -1608,7 +1608,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int flags = value ? oldFlags | mask : oldFlags & ~mask;
 
     if (oldFlags != flags) {
-      FSRecords.setFlags(id, flags, true);
+      FSRecords.setFlags(id, flags);
     }
   }
 

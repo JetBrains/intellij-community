@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -31,8 +30,6 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage.RECORD_SIZE;
-
 @ApiStatus.Internal
 public final class FSRecords {
   private static final Logger LOG = Logger.getInstance(FSRecords.class);
@@ -49,6 +46,7 @@ public final class FSRecords {
   static volatile PersistentFSContentAccessor ourContentAccessor;
   static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
   static volatile PersistentFSTreeAccessor ourTreeAccessor;
+  static volatile PersistentFSRecordAccessor ourRecordAccessor;
 
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
@@ -76,18 +74,10 @@ public final class FSRecords {
                                      nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
                                      nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP,0)))))))))));
 
-  private static final IntList ourNewFreeRecords = new IntArrayList();
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   static final ReentrantReadWriteLock lock;
   private static final ReentrantReadWriteLock.ReadLock r;
   private static final ReentrantReadWriteLock.WriteLock w;
-
-
-  static final int FREE_RECORD_FLAG = 0x400;
-  static {
-    assert (PersistentFS.Flags.ALL_VALID_FLAGS & FREE_RECORD_FLAG) == 0 : PersistentFS.Flags.ALL_VALID_FLAGS;
-  }
-  private static final int ALL_VALID_FLAGS = PersistentFS.Flags.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
 
   static {
     lock = new ReentrantReadWriteLock();
@@ -103,7 +93,7 @@ public final class FSRecords {
       setTimestamp(id, attributes.lastModified);
       setLength(id, attributes.isDirectory() ? -1L : attributes.length);
 
-      setFlags(id, PersistentFSImpl.fileAttributesToFlags(attributes), true);
+      setFlags(id, PersistentFSImpl.fileAttributesToFlags(attributes));
       setParent(id, parentId);
       return nameId;
     });
@@ -138,6 +128,7 @@ public final class FSRecords {
     ourContentAccessor = new PersistentFSContentAccessor(useContentHashes);
     ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes);
     ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourStoreRootsSeparately);
+    ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor);
     try {
       ourTreeAccessor.ensureLoaded(ourConnection);
     }
@@ -157,28 +148,7 @@ public final class FSRecords {
 
   // todo: Address  / capacity store in records table, size store with payload
   public static int createRecord() {
-    return writeAndHandleErrors(() -> {
-      ourConnection.markDirty();
-
-      final int free = ourConnection.getFreeRecord();
-      if (free == 0) {
-        final int fileLength = length();
-        LOG.assertTrue(fileLength % RECORD_SIZE == 0);
-        int newRecord = fileLength / RECORD_SIZE;
-        ourConnection.getRecords().cleanRecord(newRecord);
-        assert fileLength + RECORD_SIZE == length();
-        return newRecord;
-      }
-      else {
-        deleteContentAndAttributes(free);
-        ourConnection.getRecords().cleanRecord(free);
-        return free;
-      }
-    });
-  }
-
-  private static int length() {
-    return (int)ourConnection.getRecords().length();
+    return writeAndHandleErrors(() -> ourRecordAccessor.createRecord(ourConnection));
   }
 
   static void deleteRecordRecursively(int id) {
@@ -192,29 +162,9 @@ public final class FSRecords {
     for (int subRecord : listIds(id)) {
       markAsDeletedRecursively(subRecord);
     }
-    markAsDeleted(id);
-  }
 
-  private static void markAsDeleted(final int id) {
-    writeAndHandleErrors(() -> {
-      ourConnection.markDirty();
-      addToFreeRecordsList(id);
-    });
+    writeAndHandleErrors(() -> ourRecordAccessor.addToFreeRecordsList(id, ourConnection));
   }
-
-  private static void deleteContentAndAttributes(int id) throws IOException {
-    ourContentAccessor.deleteContent(id, ourConnection);
-    ourAttributeAccessor.deleteAttributes(id, ourConnection);
-  }
-
-  private static void addToFreeRecordsList(int id) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourNewFreeRecords.add(id);
-    }
-    // DbConnection.addFreeRecord(id); // important! Do not add fileId to free list until restart
-    setFlags(id, FREE_RECORD_FLAG, false);
-  }
-
 
   @TestOnly
   static int @NotNull [] listRoots() {
@@ -518,7 +468,7 @@ public final class FSRecords {
   @ApiStatus.Internal
   @NotNull
   public static IntList getNewFreeRecords() {
-    return readAndHandleErrors(() -> new IntArrayList(ourNewFreeRecords));
+    return readAndHandleErrors(() -> new IntArrayList(ourRecordAccessor.getNewFreeRecords()));
   }
 
   static void setParent(int id, int parentId) {
@@ -572,11 +522,9 @@ public final class FSRecords {
     });
   }
 
-  static void setFlags(int id, @PersistentFS.Attributes int flags, final boolean markAsChange) {
+  static void setFlags(int id, @PersistentFS.Attributes int flags) {
     writeAndHandleErrors(() -> {
-      if (markAsChange) {
-        incModCount(id);
-      }
+      incModCount(id);
       ourConnection.getRecords().setFlags(id, flags);
     });
   }
@@ -745,6 +693,7 @@ public final class FSRecords {
         ourContentAccessor = null;
         ourAttributeAccessor = null;
         ourTreeAccessor = null;
+        ourRecordAccessor = null;
       }
     });
   }
@@ -754,57 +703,10 @@ public final class FSRecords {
   }
 
   static void checkSanity() {
-    long t = System.currentTimeMillis();
-
-    int recordCount=
-    readAndHandleErrors(() -> {
-      final int fileLength = length();
-      assert fileLength % RECORD_SIZE == 0;
-      return fileLength / RECORD_SIZE;
-    });
-
-    IntList usedAttributeRecordIds = new IntArrayList();
-    IntList validAttributeIds = new IntArrayList();
-    for (int id = 2; id < recordCount; id++) {
-      int flags = getFlags(id);
-      LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
-      int currentId = id;
-      boolean isFreeRecord = readAndHandleErrors(() -> ourConnection.getFreeRecords().contains(currentId));
-      if (BitUtil.isSet(flags, FREE_RECORD_FLAG)) {
-        LOG.assertTrue(isFreeRecord, "Record, marked free, not in free list: " + id);
-      }
-      else {
-        LOG.assertTrue(!isFreeRecord, "Record, not marked free, in free list: " + id);
-        checkRecordSanity(id, recordCount, usedAttributeRecordIds, validAttributeIds);
-      }
-    }
-
-    t = System.currentTimeMillis() - t;
-    LOG.info("Sanity check took " + t + " ms");
-  }
-
-  private static void checkRecordSanity(int id,
-                                        int recordCount,
-                                        @NotNull IntList usedAttributeRecordIds,
-                                        @NotNull IntList validAttributeIds) {
-    int parentId = getParent(id);
-    assert parentId >= 0 && parentId < recordCount;
-    if (parentId > 0 && getParent(parentId) > 0) {
-      int parentFlags = getFlags(parentId);
-      assert !BitUtil.isSet(parentFlags, FREE_RECORD_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
-      assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
-    }
-
-    CharSequence name = getNameSequence(id);
-    LOG.assertTrue(parentId == 0 || name.length()!=0, "File with empty name found under " + getNameSequence(parentId) + ", id=" + id);
-
     writeAndHandleErrors(() -> {
-      ourContentAccessor.checkContentsStorageSanity(id, ourConnection);
-      ourAttributeAccessor.checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds, ourConnection);
+      ourRecordAccessor.checkSanity(ourConnection);
+      return null;
     });
-
-    long length = getLength(id);
-    assert length >= -1 : "Invalid file length found for " + name + ": " + length;
   }
 
   @Contract("_->fail")

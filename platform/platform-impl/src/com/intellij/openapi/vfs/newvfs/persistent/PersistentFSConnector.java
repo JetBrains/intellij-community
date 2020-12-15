@@ -194,7 +194,7 @@ class PersistentFSConnector {
 
     int count = fileLength / PersistentFSRecordsStorage.RECORD_SIZE;
     for (int n = 2; n < count; n++) {
-      if (BitUtil.isSet(records.doGetFlags(n), FSRecords.FREE_RECORD_FLAG)) {
+      if (BitUtil.isSet(records.doGetFlags(n), PersistentFSRecordAccessor.FREE_RECORD_FLAG)) {
         freeRecords.add(n);
       }
     }
