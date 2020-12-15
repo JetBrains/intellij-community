@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
@@ -510,7 +509,11 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @ApiStatus.Internal
   public final void attachParent(@NotNull ClassLoader classLoader) {
-    parents = ArrayUtil.append(parents, classLoader);
+    int length = parents.length;
+    ClassLoader[] result = new ClassLoader[length + 1];
+    System.arraycopy(parents, 0, result, 0, length);
+    result[length] = classLoader;
+    parents = result;
     parentListCacheIdCounter.incrementAndGet();
   }
 
@@ -519,10 +522,20 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
    */
   @ApiStatus.Internal
   public final boolean detachParent(@NotNull ClassLoader classLoader) {
-    int oldSize = parents.length;
-    parents = ArrayUtil.remove(parents, classLoader);
-    parentListCacheIdCounter.incrementAndGet();
-    return parents.length == oldSize - 1;
+    for (int i = 0; i < parents.length; i++) {
+      if (classLoader != parents[i]) {
+        continue;
+      }
+
+      int length = parents.length;
+      ClassLoader[] result = new ClassLoader[length - 1];
+      System.arraycopy(parents, 0, result, 0, i);
+      System.arraycopy(parents, i + 1, result, i, length - i - 1);
+      parents = result;
+      parentListCacheIdCounter.incrementAndGet();
+      return true;
+    }
+    return false;
   }
 
   @Override
