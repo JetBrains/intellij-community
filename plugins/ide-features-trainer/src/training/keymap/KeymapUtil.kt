@@ -22,7 +22,7 @@ object KeymapUtil {
     actionId ?: return null
 
     fun KeyboardShortcut.isConflicting(): Boolean {
-      return KeymapManager.getInstance().activeKeymap.getConflicts(actionId, this).isEmpty()
+      return KeymapManager.getInstance().activeKeymap.getConflicts(actionId, this).isNotEmpty()
     }
 
     val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(actionId)
