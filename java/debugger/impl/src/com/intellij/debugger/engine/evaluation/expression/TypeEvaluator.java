@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class TypeEvaluator
@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ReferenceType;
@@ -19,7 +20,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 
+import static com.intellij.util.containers.ContainerUtil.*;
+
 public class TypeEvaluator implements Evaluator {
+  private static final Logger LOG = Logger.getInstance(TypeEvaluator.class);
+
   private final JVMName myTypeName;
 
   private WeakReference<ReferenceType> myLastResult;
@@ -45,7 +50,22 @@ public class TypeEvaluator implements Evaluator {
     }
     DebugProcessImpl debugProcess = context.getDebugProcess();
     String typeName = myTypeName.getName(debugProcess);
-    ReferenceType type = debugProcess.findClass(context, typeName, classLoader);
+    ReferenceType type;
+    try {
+      type = debugProcess.findClass(context, typeName, classLoader);
+    }
+    catch (EvaluateException e) {
+      ReferenceType singleLoadedClass =
+        getOnlyItem(filter(debugProcess.getVirtualMachineProxy().classesByName(typeName), ReferenceType::isPrepared));
+      if (singleLoadedClass == null) {
+        throw e;
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Unable to find or load class " + typeName + " in the requested classloader " + classLoader +
+                  ", will use the single loaded class " + singleLoadedClass + " from " + singleLoadedClass.classLoader());
+      }
+      type = singleLoadedClass;
+    }
     if (type == null) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.class.not.loaded", typeName));
     }
