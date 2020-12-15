@@ -70,6 +70,9 @@ data class JdkItem(
   private val jdkVendorVersion: String?,
   val suggestedSdkName: String,
 
+  /**
+   * @see presentableArchIfNeeded
+   */
   @NlsSafe
   val arch: String,
   val packageType: JdkPackageType,
@@ -164,8 +167,14 @@ data class JdkItem(
   val downloadSizePresentationText: String
     get() = StringUtil.formatFileSize(archiveSize)
 
-  val fullPresentationText: String
-    get() = product.packagePresentationText + " " + jdkVersion + (if (arch != "x86_64") " ($arch)" else "")
+  /**
+   * returns Arch if it's expected to be shown, `null` othersise
+   */
+  val presentableArchIfNeeded: @NlsSafe String?
+    get() = if (arch != "x86_64") arch else null
+
+  val fullPresentationText: @NlsSafe String
+    get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
