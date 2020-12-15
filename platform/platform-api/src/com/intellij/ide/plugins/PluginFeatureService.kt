@@ -14,7 +14,8 @@ class PluginFeatureService : PersistentStateComponent<PluginFeatureService.State
   class FeaturePluginData(
     @Attribute("displayName") val displayName: String = "",
     @Attribute("pluginName") val pluginName: String = "",
-    @Attribute("pluginId") val pluginId: String = ""
+    @Attribute("pluginId") val pluginId: String = "",
+    @Attribute("bundled") val bundled: Boolean = false
   )
 
   class FeaturePluginsList {
@@ -46,7 +47,7 @@ class PluginFeatureService : PersistentStateComponent<PluginFeatureService.State
       val id = idMapping(ext)
       val displayName = displayNameMapping(ext)
       pluginsList.featureMap[id] = FeaturePluginData(
-        displayName, pluginDescriptor.name, pluginDescriptor.pluginId.idString)
+        displayName, pluginDescriptor.name, pluginDescriptor.pluginId.idString, pluginDescriptor.isBundled)
     }
   }
 

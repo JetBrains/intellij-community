@@ -60,13 +60,13 @@ open class PluginAdvertiserService {
         val ids = mutableMapOf<PluginId, PluginsAdvertiser.Plugin>()
         unknownFeatures.forEach { feature ->
             ProgressManager.checkCanceled()
-            val bundledPlugin = PluginFeatureService.getInstance().getPluginForFeature(
+            val installedPlugin = PluginFeatureService.getInstance().getPluginForFeature(
                 feature.featureType,
                 feature.implementationName
             )
-            if (bundledPlugin != null) {
-                val id = PluginId.getId(bundledPlugin.pluginId)
-                ids[id] = PluginsAdvertiser.Plugin(bundledPlugin.pluginId, bundledPlugin.pluginName, true)
+            if (installedPlugin != null) {
+                val id = PluginId.getId(installedPlugin.pluginId)
+                ids[id] = PluginsAdvertiser.Plugin(installedPlugin.pluginId, installedPlugin.pluginName, installedPlugin.bundled)
                 features.putValue(id, feature)
             } else {
                 val pluginId = PluginsAdvertiser.retrieve(feature)
