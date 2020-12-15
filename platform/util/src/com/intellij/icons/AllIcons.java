@@ -447,6 +447,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Inline_edit_hovered = load("general/inline_edit_hovered.svg", 2988137314589454029L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineAdd = load("general/inlineAdd.svg", 8489137059451859895L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineAddHover = load("general/inlineAddHover.svg", -5542594245343678718L, 0);
+    /** 16x16 */ public static final @NotNull Icon InlineCopy = load("general/inlineCopy.svg", -4855094318175728694L, 0);
+    /** 16x16 */ public static final @NotNull Icon InlineCopyHover = load("general/inlineCopyHover.svg", -2988721819466634227L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineVariables = load("general/inlineVariables.svg", 8073845700601085490L, 0);
     /** 16x16 */ public static final @NotNull Icon InlineVariablesHover = load("general/inlineVariablesHover.svg", -8704262145129771018L, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsError = load("general/inspectionsError.svg", -3535121862077461586L, 0);
