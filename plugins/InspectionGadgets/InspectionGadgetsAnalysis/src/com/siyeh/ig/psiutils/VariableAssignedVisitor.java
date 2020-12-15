@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Predicate;
 
 public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   @NotNull private final Collection<? extends PsiVariable> variables;
   private final boolean recurseIntoClasses;
   private final boolean checkUnaryExpressions;
+  private final Predicate<? super PsiExpression> mySafeExpression;
   private boolean assigned = false;
   private PsiElement excludedElement = null;
 
@@ -35,17 +37,22 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     this.variables = variables;
     checkUnaryExpressions = true;
     this.recurseIntoClasses = recurseIntoClasses;
+    mySafeExpression = null;
   }
 
   public VariableAssignedVisitor(@NotNull PsiVariable variable, boolean recurseIntoClasses) {
-    variables = Collections.singleton(variable);
-    final PsiType type = variable.getType();
-    checkUnaryExpressions = TypeConversionUtil.isNumericType(type);
-    this.recurseIntoClasses = recurseIntoClasses;
+    this(variable, null, recurseIntoClasses);
   }
 
   public VariableAssignedVisitor(@NotNull PsiVariable variable) {
     this(variable, true);
+  }
+
+  public VariableAssignedVisitor(PsiVariable variable, Predicate<? super PsiExpression> safeExpression, boolean recurseIntoClasses) {
+    variables = Collections.singleton(variable);
+    checkUnaryExpressions = TypeConversionUtil.isNumericType(variable.getType());
+    this.recurseIntoClasses = recurseIntoClasses;
+    mySafeExpression = safeExpression;
   }
 
   public void setExcludedElement(PsiElement excludedElement) {
@@ -69,8 +76,11 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     final PsiExpression lhs = assignment.getLExpression();
     for (PsiVariable variable : variables) {
       if (ExpressionUtils.isReferenceTo(lhs, variable)) {
-        assigned = true;
-        break;
+        final PsiExpression rhs = assignment.getRExpression();
+        if (mySafeExpression == null || !mySafeExpression.test(rhs)) {
+          assigned = true;
+          break;
+        }
       }
     }
   }

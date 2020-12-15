@@ -30,6 +30,13 @@ public class StringBufferReplaceableByStringBuilder {
         return stringBuffer.append("asdf");
     }
 
+    String x() {
+      StringBuffer buffer;
+      buffer = foo2();
+      buffer.append("x");
+      return buffer.toString();
+    }
+
     void argument(StringBuffer buffer) {}
     void caller() {
         final StringBuffer sb = new StringBuffer();
@@ -60,6 +67,19 @@ public class StringBufferReplaceableByStringBuilder {
     return c;
   }
 
+  private String doSome() {
+    StringBuffer <warning descr="'StringBuffer sb' may be declared as 'StringBuilder'">sb</warning>;
+    String str = "bla";
+    (sb) = (new StringBuffer());
+    sb.append(str);
+    return sb.toString();
+  }
+
+  private String chained() {
+    StringBuffer <warning descr="'StringBuffer b' may be declared as 'StringBuilder'">b</warning> = null;
+    b = new StringBuffer().append("one").insert(0, "two").appendCodePoint(17);
+    return b.toString();
+  }
 
   Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{(\\w[-\\w]*)\\}");
 

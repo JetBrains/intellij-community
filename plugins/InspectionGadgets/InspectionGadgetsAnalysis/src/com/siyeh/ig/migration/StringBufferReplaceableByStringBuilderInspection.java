@@ -19,6 +19,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -27,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class StringBufferReplaceableByStringBuilderInspection extends BaseInspection {
 
@@ -60,22 +63,20 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
   }
 
   @Nullable
-  private static PsiNewExpression getNewStringBuffer(PsiExpression expression) {
+  private static PsiExpression getNewStringBuffer(PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return null;
     }
-    else if (expression instanceof PsiNewExpression) {
-      return (PsiNewExpression)expression;
+    else if (expression instanceof PsiNewExpression || ExpressionUtils.isNullLiteral(expression)) {
+      return expression;
     }
     else if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
       @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!"append".equals(methodName)) {
-        return null;
+      if ("append".equals(methodName) || "appendCodePoint".equals(methodName) || "insert".equals(methodName)) {
+        return getNewStringBuffer(methodExpression.getQualifierExpression());
       }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      return getNewStringBuffer(qualifier);
     }
     return null;
   }
@@ -109,7 +110,28 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
         if (!(declaredElement instanceof PsiVariable)) {
           continue;
         }
-        replaceWithStringBuilder(stringBuilderClassReference, (PsiVariable)declaredElement);
+        final PsiVariable variable = (PsiVariable)declaredElement;
+        replaceWithStringBuilder(stringBuilderClassReference, variable);
+        replaceAssignmentsWithStringBuilder(variable, stringBuilderClassReference);
+      }
+    }
+
+    private static void replaceAssignmentsWithStringBuilder(PsiVariable variable, PsiJavaCodeReferenceElement stringBuilderClassReference) {
+      for (PsiReference reference : ReferencesSearch.search(variable, variable.getUseScope())) {
+        final PsiElement referenceElement = PsiUtil.skipParenthesizedExprUp(reference.getElement().getParent());
+        if (referenceElement instanceof PsiAssignmentExpression) {
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)referenceElement;
+          final PsiExpression rhs = assignmentExpression.getRExpression();
+          final PsiExpression newExpression = getNewStringBuffer(rhs);
+          if (!(newExpression instanceof PsiNewExpression)) {
+            continue;
+          }
+          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)newExpression).getClassReference();
+          if (classReference == null) {
+            continue;
+          }
+          classReference.replace(stringBuilderClassReference);
+        }
       }
     }
 
@@ -123,11 +145,12 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
         return;
       }
       oldReferenceElement.replace(newClassReference);
-      final PsiNewExpression newExpression = getNewStringBuffer(variable.getInitializer());
-      if (newExpression == null) {
+      final PsiExpression newExpression = getNewStringBuffer(variable.getInitializer());
+      if (!(newExpression instanceof PsiNewExpression)) {
         return;
       }
-      final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference(); // no anonymous classes because StringBuffer is final
+      // no need to handle anonymous classes because StringBuffer is final
+      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)newExpression).getClassReference();
       if (classReference == null) {
         return;
       }
@@ -181,13 +204,11 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
         return false;
       }
       final PsiExpression initializer = variable.getInitializer();
-      if (initializer == null) {
+      if (initializer != null && getNewStringBuffer(initializer) == null) {
         return false;
       }
-      if (getNewStringBuffer(initializer) == null) {
-        return false;
-      }
-      if (VariableAccessUtils.variableIsAssigned(variable, context)) {
+      final Predicate<PsiExpression> safeExpression = e -> getNewStringBuffer(e) != null;
+      if (VariableAccessUtils.variableIsAssigned(variable, safeExpression, context)) {
         return false;
       }
       if (VariableAccessUtils.variableIsAssignedFrom(variable, context)) {
