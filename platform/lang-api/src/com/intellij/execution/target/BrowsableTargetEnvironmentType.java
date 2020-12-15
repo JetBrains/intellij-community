@@ -17,4 +17,15 @@ public interface BrowsableTargetEnvironmentType {
                                                               @NotNull TextComponentAccessor<T> textComponentAccessor,
                                                               @NotNull T component,
                                                               @NotNull Supplier<TargetEnvironmentConfiguration> configurationSupplier);
+
+  /**
+   * When configurable contains both connection parameters and components using them (text fields with browsing in this case),
+   * those components need to have current connection settings available, not the last applied to with [Configurable.apply].
+   *
+   * This interface displays ability and provides API to get connection settings, which are shown in UI. See IDEA-255466.
+   */
+  interface ConfigurableCurrentConfigurationProvider {
+    @NotNull
+    TargetEnvironmentConfiguration getCurrentConfiguration();
+  }
 }
