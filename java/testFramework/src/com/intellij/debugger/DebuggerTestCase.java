@@ -188,7 +188,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .runProfile(new MockConfiguration())
+      .runProfile(new MockConfiguration(myProject))
       .build();
     myRunnableState = new JavaCommandLineState(environment) {
       @Override
@@ -208,7 +208,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-          .runProfile(new MockConfiguration())
+          .runProfile(new MockConfiguration(myProject))
           .build();
         DefaultDebugEnvironment debugEnvironment =
           new DefaultDebugEnvironment(myExecutionEnvironment, myRunnableState, debugParameters, false);
@@ -256,7 +256,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
-      .runProfile(new MockConfiguration())
+      .runProfile(new MockConfiguration(myProject))
       .build();
     myRunnableState = new JavaCommandLineState(myExecutionEnvironment) {
       @Override
@@ -336,7 +336,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         debuggerSession[0] = attachVirtualMachine(remoteState, new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-          .runProfile(new MockConfiguration())
+          .runProfile(new MockConfiguration(myProject))
           .build(), remoteConnection, pollConnection);
       }
       catch (ExecutionException e) {
@@ -522,6 +522,21 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   public class MockConfiguration implements ModuleRunConfiguration {
+    private final Project project;
+
+    /**
+     * @deprecated
+     * Use MockConfiguration(Project) instead.
+     */
+    @Deprecated
+    public MockConfiguration() {
+      this.project = null;
+    }
+
+    public MockConfiguration(Project project) {
+      this.project = project;
+    }
+
     @Override
     public Module @NotNull [] getModules() {
       return myModule == null ? Module.EMPTY_ARRAY : new Module[]{myModule};
@@ -548,7 +563,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public Project getProject() {
-      return null;
+      return project;
     }
 
     @Override
