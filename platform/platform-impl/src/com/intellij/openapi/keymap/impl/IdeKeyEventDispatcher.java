@@ -860,6 +860,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private void addAction(AnAction action, @NotNull Shortcut sc) {
+    Presentation presentation = myPresentationFactory.getPresentation(action);
+    AnActionEvent actionEvent = myActionProcessor.createEvent(
+      myContext.getInputEvent(), myContext.getDataContext(), ActionPlaces.KEYBOARD_SHORTCUT, presentation, ActionManager.getInstance());
+    ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, false);
+    if (!presentation.isEnabled()) {
+      return;
+    }
     for (Shortcut each : action.getShortcutSet().getShortcuts()) {
       if (each == null) {
         throw new NullPointerException("unexpected shortcut of action: " + action);
