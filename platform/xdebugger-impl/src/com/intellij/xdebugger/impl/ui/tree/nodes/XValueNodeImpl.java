@@ -3,20 +3,14 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XDebugSession;
@@ -25,14 +19,12 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
-import com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup;
-import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
-import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
+import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
+import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopUtilKt;
 import com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -45,15 +37,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.function.Consumer;
+import java.util.List;
 
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   private static final int MAX_NAME_LENGTH = 100;
+  protected final List<Inlay<InlineDebugRenderer>> myInlays = new ArrayList<>();
 
   @NlsSafe
   private final String myName;
@@ -115,6 +108,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myTree.nodeLoaded(this, myName);
   }
 
+  public void inlayCreated(Inlay<InlineDebugRenderer> inlay) {
+    myInlays.add(inlay);
+  }
+
   public void updateInlineDebuggerData(boolean refresh) {
     try {
       XDebugSession session = XDebugView.getSession(getTree());
@@ -125,6 +122,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
       if (refresh) {
         myTree.updateEditor();
+        myInlays.forEach(inlay -> inlay.getRenderer().refreshData());
       }
       else {
         final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {

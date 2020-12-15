@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
@@ -15,14 +16,22 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.ui.ColorUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XNamedValue;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
+import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
@@ -32,35 +41,63 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
-import java.util.function.Consumer;
 
 import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
+import static com.intellij.xdebugger.XSourcePosition.isOnTheSameLine;
 
-final class InlineDebugRenderer implements EditorCustomElementRenderer {
-  private final SimpleColoredText myText;
+public final class InlineDebugRenderer implements EditorCustomElementRenderer {
+  public static final String NAME_VALUE_SEPARATION = XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
+  public static final String INDENT = "  ";
+  boolean myPopupIsShown = false;
   private final boolean myCustomNode;
+  private final XDebugSession mySession;
   private final XValueNodeImpl myValueNode;
-  private final XWatchesView myView;
-  private final Producer<Boolean> myIsInExecutionPointHighlight;
-  private @Nullable final Consumer<Inlay> myOnClick;
+  private final Editor myEditor;
+  private final XDebuggerTreeCreator myTreeCreator;
   private boolean isHovered = false;
   private int myRemoveXCoordinate = Integer.MAX_VALUE;
   private int myTextStartXCoordinate;
-  public static final String INDENT = "  ";
-  public static final String NAME_VALUE_SEPARATION = XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
-  boolean myPopupIsShown = false;
+  private SimpleColoredText myText;
+  private XSourcePosition myPosition;
 
-  InlineDebugRenderer(SimpleColoredText text,
-                      XValueNodeImpl valueNode,
-                      XWatchesView view,
-                      Producer<Boolean> isInExecutionPointHighlight,
-                      @Nullable Consumer<Inlay> onClick) {
-    myText = text;
+  InlineDebugRenderer(XValueNodeImpl valueNode,
+                      @NotNull XSourcePosition position,
+                      @NotNull XDebugSession session,
+                      Editor editor) {
+    myPosition = position;
+    mySession = session;
+    myText = computeText(valueNode);
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
-    myView = view;
-    myIsInExecutionPointHighlight = isInExecutionPointHighlight;
-    myOnClick = onClick;
+    myEditor = editor;
+    myTreeCreator = new XDebuggerTreeCreator(session.getProject(),
+                                             session.getDebugProcess().getEditorsProvider(),
+                                             session.getCurrentPosition(),
+                                             ((XDebugSessionImpl)session).getValueMarkers());
+  }
+
+  private SimpleColoredText computeText(XValueNodeImpl valueNode) {
+    TextAttributes attributes = XDebuggerEditorLinePainter.getAttributes(myPosition.getLine(), myPosition.getFile(), mySession);
+    SimpleColoredText valuePresentation = XDebuggerEditorLinePainter.createPresentation(valueNode);
+    return XDebuggerEditorLinePainter
+      .computeVariablePresentationWithChanges(valueNode, valueNode.getName(), valuePresentation, attributes, myPosition.getLine(),
+                                              mySession.getProject());
+  }
+
+
+  private boolean isInExecutionPointHighlight() {
+    XSourcePosition debuggerPosition = mySession.getCurrentPosition();
+    if (debuggerPosition != null) {
+      XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject());
+
+      return isOnTheSameLine(myPosition, debuggerPosition)
+             && debuggerManager.isFullLineHighlighter();
+    }
+    return false;
+  }
+
+  public void refreshData() {
+    myText = computeText(myValueNode);
   }
 
   private static Font getFont(@NotNull Editor editor) {
@@ -73,24 +110,52 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
   public void onClick(Inlay inlay, @NotNull EditorMouseEvent event) {
     int x = event.getMouseEvent().getX();
-    if (myCustomNode && x >= myRemoveXCoordinate) {
-      myView.removeWatches(Collections.singletonList(myValueNode));
+    boolean isRemoveIconClick = myCustomNode && x >= myRemoveXCoordinate;
+    if (isRemoveIconClick) {
+      XDebugSessionTab tab = ((XDebugSessionImpl)mySession).getSessionTab();
+      if (tab != null) {
+        tab.getWatchesView().removeWatches(Collections.singletonList(myValueNode));
+      }
       inlay.update();
-    } else if (myOnClick != null && x >= myTextStartXCoordinate) {
-      myOnClick.accept(inlay);
     }
+    else if (x >= myTextStartXCoordinate) {
+      handleClick(inlay);
+    }
+  }
+
+  private void handleClick(Inlay inlay) {
+    InlineDebugRenderer inlayRenderer = (InlineDebugRenderer)inlay.getRenderer();
+    if (inlayRenderer.myPopupIsShown) {
+      return;
+    }
+    String name = "valueName";
+    XValue container = myValueNode.getValueContainer();
+    if (container instanceof XNamedValue) {
+      name = ((XNamedValue)container).getName();
+    }
+    Pair<XValue, String> descriptor = Pair.create(container, name);
+    Rectangle bounds = inlay.getBounds();
+    Point point = new Point(bounds.x, bounds.y + bounds.height);
+
+    inlayRenderer.myPopupIsShown = true;
+    XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, myEditor, point, myPosition, mySession, () -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        inlayRenderer.myPopupIsShown = false;
+      });
+    });
   }
 
 
   public void onMouseExit(Inlay inlay, @NotNull EditorMouseEvent event) {
-   setHovered(false, inlay, (EditorEx)event.getEditor());
+    setHovered(false, inlay, (EditorEx)event.getEditor());
   }
 
   public void onMouseMove(Inlay inlay, @NotNull EditorMouseEvent event) {
     EditorEx editorEx = (EditorEx)event.getEditor();
     if (event.getMouseEvent().getX() >= myTextStartXCoordinate) {
       setHovered(true, inlay, editorEx);
-    } else {
+    }
+    else {
       setHovered(false, inlay, editorEx);
     }
   }
@@ -125,7 +190,8 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
     String text;
     if (isErrorMessage()) {
       text = myText.getTexts().get(0);
-    } else {
+    }
+    else {
       text = myText.toString() + NAME_VALUE_SEPARATION;
     }
     return getFontMetrics(font, inlay.getEditor()).stringWidth(text + INDENT);
@@ -140,7 +206,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
 
   private static int getIconY(Icon icon, Rectangle r) {
-    return r.y + r.height / 2 - icon.getIconHeight() / 2 ;
+    return r.y + r.height / 2 - icon.getIconHeight() / 2;
   }
 
   @Override
@@ -194,7 +260,8 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
       if (myCustomNode) {
         icon = AllIcons.Actions.Close;
         myRemoveXCoordinate = curX;
-      } else {
+      }
+      else {
         icon = AllIcons.General.LinkDropTriangle;
       }
       icon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(icon, r));
@@ -240,7 +307,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
   private TextAttributes getAttributes(Editor editor) {
-    TextAttributesKey key = myIsInExecutionPointHighlight.produce() ? DebuggerColors.INLINED_VALUES_EXECUTION_LINE : DebuggerColors.INLINED_VALUES;
+    TextAttributesKey key = isInExecutionPointHighlight() ? DebuggerColors.INLINED_VALUES_EXECUTION_LINE : DebuggerColors.INLINED_VALUES;
     EditorColorsScheme scheme = editor.getColorsScheme();
     TextAttributes inlinedAttributes = scheme.getAttributes(key);
 
@@ -248,14 +315,8 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
       TextAttributes hoveredInlineAttr = new TextAttributes();
       hoveredInlineAttr.copyFrom(inlinedAttributes);
 
-      boolean isDarkEditorTheme = ColorUtil.isDark(scheme.getDefaultBackground());
-
-      Color executionPointForeground = scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES).getForegroundColor();
-
-      Color hoveredAndSelectedColor = isDarkEditorTheme
-                                         ? scheme.getDefaultForeground()
-                                         : executionPointForeground;
-      Color foregroundColor = myIsInExecutionPointHighlight.produce()
+      Color hoveredAndSelectedColor = scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES).getForegroundColor();
+      Color foregroundColor = isInExecutionPointHighlight()
                               ? hoveredAndSelectedColor
                               : scheme.getAttributes(REFERENCE_HYPERLINK_COLOR).getForegroundColor();
 
