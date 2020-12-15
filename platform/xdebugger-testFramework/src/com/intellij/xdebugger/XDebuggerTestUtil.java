@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertNotNull;
@@ -100,13 +99,9 @@ public class XDebuggerTestUtil {
   }
 
   public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session) {
-    return collectThreadsWithErrors(session, XDebuggerTestUtil::waitFor);
-  }
-
-  public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session, @NotNull BiFunction<? super Semaphore, ? super Long, Boolean> waitFunction) {
     XTestExecutionStackContainer container = new XTestExecutionStackContainer();
     session.getSuspendContext().computeExecutionStacks(container);
-    return container.waitFor(TIMEOUT_MS, waitFunction);
+    return container.waitFor(TIMEOUT_MS);
   }
 
   public static List<XStackFrame> collectFrames(@NotNull XDebugSession session) {
@@ -128,21 +123,13 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XStackFrame> collectFrames(XExecutionStack thread, long timeout) {
-    return collectFrames(thread, timeout, XDebuggerTestUtil::waitFor);
-  }
-
-  public static List<XStackFrame> collectFrames(XExecutionStack thread, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    return collectFramesWithError(thread, timeout, waitFunction).first;
+    return collectFramesWithError(thread, timeout).first;
   }
 
   public static Pair<List<XStackFrame>, String> collectFramesWithError(XExecutionStack thread, long timeout) {
-    return collectFramesWithError(thread, timeout, XDebuggerTestUtil::waitFor);
-  }
-
-  public static Pair<List<XStackFrame>, String> collectFramesWithError(XExecutionStack thread, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
-    return container.waitFor(timeout, waitFunction);
+    return container.waitFor(timeout);
   }
 
   public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(@NotNull XDebugSession session, long timeout) {
@@ -150,15 +137,9 @@ public class XDebuggerTestUtil {
   }
 
   public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(XExecutionStack thread, long timeout) {
-    return collectFramesWithSelected(thread, timeout, XDebuggerTestUtil::waitFor);
-  }
-
-  public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(XExecutionStack thread,
-                                                                               long timeout,
-                                                                               BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
-    List<XStackFrame> all = container.waitFor(timeout, waitFunction).first;
+    List<XStackFrame> all = container.waitFor(timeout).first;
     return Pair.create(all, container.frameToSelect);
   }
 
@@ -173,12 +154,7 @@ public class XDebuggerTestUtil {
 
   @NotNull
   public static List<XValue> collectChildren(XValueContainer value) {
-    return collectChildren(value, XDebuggerTestUtil::waitFor);
-  }
-
-  @NotNull
-  public static List<XValue> collectChildren(XValueContainer value, BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    final Pair<List<XValue>, String> childrenWithError = collectChildrenWithError(value, waitFunction);
+    final Pair<List<XValue>, String> childrenWithError = collectChildrenWithError(value);
     final String error = childrenWithError.second;
     assertNull("Error getting children: " + error, error);
     return childrenWithError.first;
@@ -186,54 +162,32 @@ public class XDebuggerTestUtil {
 
   @NotNull
   public static Pair<List<XValue>, String> collectChildrenWithError(XValueContainer value) {
-    return collectChildrenWithError(value, XDebuggerTestUtil::waitFor);
-  }
-
-  @NotNull
-  public static Pair<List<XValue>, String> collectChildrenWithError(XValueContainer value,
-                                                                    BiFunction<Semaphore, Long, Boolean> waitFunction) {
     XTestCompositeNode container = new XTestCompositeNode();
     value.computeChildren(container);
 
-    return container.waitFor(TIMEOUT_MS, waitFunction);
+    return container.waitFor(TIMEOUT_MS);
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression) {
     return evaluate(session, expression, TIMEOUT_MS);
   }
 
-  public static Pair<XValue, String> evaluate(XDebugSession session,
-                                              XExpression expression,
-                                              BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    return evaluate(session, expression, TIMEOUT_MS, waitFunction);
-  }
-
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression) {
-    return evaluate(session, expression, XDebuggerTestUtil::waitFor);
-  }
-  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT_MS, waitFunction);
+    return evaluate(session, XExpressionImpl.fromText(expression), TIMEOUT_MS);
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout) {
-    return evaluate(session, expression, timeout, XDebuggerTestUtil::waitFor);
-  }
-  public static Pair<XValue, String> evaluate(XDebugSession session, String expression, long timeout, BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    return evaluate(session, XExpressionImpl.fromText(expression), timeout, waitFunction);
+    return evaluate(session, XExpressionImpl.fromText(expression), timeout);
   }
 
   private static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, long timeout) {
-    return evaluate(session, expression, timeout, XDebuggerTestUtil::waitFor);
-  }
-
-  private static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, long timeout, BiFunction<? super Semaphore, ? super Long, Boolean> waitFunction) {
     XStackFrame frame = session.getCurrentStackFrame();
     assertNotNull(frame);
     XDebuggerEvaluator evaluator = frame.getEvaluator();
     assertNotNull(evaluator);
     XTestEvaluationCallback callback = new XTestEvaluationCallback();
     evaluator.evaluate(expression, callback, session.getCurrentPosition());
-    return callback.waitFor(timeout, waitFunction);
+    return callback.waitFor(timeout);
   }
 
   public static void waitForSwing() throws InterruptedException {
@@ -260,23 +214,16 @@ public class XDebuggerTestUtil {
   }
 
   public static XTestValueNode computePresentation(@NotNull XValue value) {
-
-    return computePresentation(value, XDebuggerTestUtil::waitFor);
-  }
-  public static XTestValueNode computePresentation(@NotNull XValue value, BiFunction<? super Semaphore, ? super Long, Boolean> waitFunction) {
-    return computePresentation(value, TIMEOUT_MS, waitFunction);
+    return computePresentation(value, TIMEOUT_MS);
   }
 
   public static XTestValueNode computePresentation(XValue value, long timeout) {
-    return computePresentation(value, timeout, XDebuggerTestUtil::waitFor);
-  }
-  public static XTestValueNode computePresentation(XValue value, long timeout, BiFunction<? super Semaphore, ? super Long, Boolean> waitFunction) {
     XTestValueNode node = new XTestValueNode();
     if (value instanceof XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
     }
     value.computePresentation(node, XValuePlace.TREE);
-    node.waitFor(timeout, waitFunction);
+    node.waitFor(timeout);
     return node;
   }
 
