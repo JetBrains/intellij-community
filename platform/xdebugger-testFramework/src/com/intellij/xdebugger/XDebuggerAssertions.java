@@ -29,9 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 
 import static org.junit.Assert.*;
 
@@ -152,17 +150,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
                                     @Nullable String value,
                                     @Nullable Boolean hasChildren,
                                     @Nullable Icon icon) {
-    assertVariable(var, name, type, value, hasChildren, icon, XDebuggerTestUtil::waitFor);
-  }
-
-  public static void assertVariable(@NotNull XValue var,
-                                    @Nullable String name,
-                                    @Nullable String type,
-                                    @Nullable String value,
-                                    @Nullable Boolean hasChildren,
-                                    @Nullable Icon icon,
-                                    @NotNull BiFunction<? super Semaphore, ? super Long, Boolean> waitFunction) {
-    XTestValueNode node = computePresentation(var, waitFunction);
+    XTestValueNode node = computePresentation(var);
     assertVariable(node, name, type, value, hasChildren, icon);
   }
 
@@ -253,17 +241,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
                                                 @Nullable @RegExp String valuePattern,
                                                 @Nullable Boolean hasChildren,
                                                 @Nullable Icon icon) {
-    assertVariableValueMatches(var, name, type, valuePattern, hasChildren, icon, XDebuggerTestUtil::waitFor);
-  }
-
-  public static void assertVariableValueMatches(@NotNull XValue var,
-                                                @Nullable String name,
-                                                @Nullable String type,
-                                                @Nullable @RegExp String valuePattern,
-                                                @Nullable Boolean hasChildren,
-                                                @Nullable Icon icon,
-                                                @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    XTestValueNode node = computePresentation(var, waitFunction);
+    XTestValueNode node = computePresentation(var);
     assertVariable(node, name, type, null, hasChildren, icon);
     if (valuePattern != null) {
       assertTrue("Expected value: " + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
@@ -294,7 +272,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
                                                @Nullable @RegExp String typePattern,
                                                @Nullable String value,
                                                @Nullable Boolean hasChildren) {
-    assertVariableTypeMatches(var, name, typePattern, value, hasChildren, null, XDebuggerTestUtil::waitFor);
+    assertVariableTypeMatches(var, name, typePattern, value, hasChildren, null);
   }
 
   public static void assertVariableTypeMatches(@NotNull XValue var,
@@ -302,9 +280,8 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
                                                @Nullable @RegExp String typePattern,
                                                @Nullable String value,
                                                @Nullable Boolean hasChildren,
-                                               @Nullable Icon icon,
-                                               @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    XTestValueNode node = computePresentation(var, waitFunction);
+                                               @Nullable Icon icon) {
+    XTestValueNode node = computePresentation(var);
     assertVariable(node, name, null, value, hasChildren, icon);
     if (typePattern != null) {
       assertTrue("Expected type: " + typePattern + " Actual type: " + node.myType,
@@ -314,13 +291,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
 
   public static void assertVariableFullValue(@NotNull XValue var,
                                              @Nullable String value) throws Exception {
-    assertVariableFullValue(var, value, XDebuggerTestUtil::waitFor);
-  }
-
-  public static void assertVariableFullValue(@NotNull XValue var,
-                                             @Nullable String value,
-                                             @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) throws Exception {
-    XTestValueNode node = computePresentation(var, waitFunction);
+    XTestValueNode node = computePresentation(var);
 
     if (value == null) {
       assertNull("full value evaluator should be null", node.myFullValueEvaluator);
