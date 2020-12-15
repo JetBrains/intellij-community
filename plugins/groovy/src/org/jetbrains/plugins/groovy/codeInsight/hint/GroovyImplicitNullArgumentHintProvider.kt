@@ -8,22 +8,21 @@ import com.intellij.ui.layout.*
 import org.jetbrains.plugins.groovy.GroovyBundle
 import javax.swing.JPanel
 
-class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<GroovyImplicitNullArgumentHintProvider.Settings> {
-  class Settings
+class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<NoSettings> {
 
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector {
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector {
     return GroovyImplicitNullArgumentCollector(editor)
   }
 
   companion object {
-    val ourKey = SettingsKey<Settings>("groovy.implicit.null.argument.hint")
+    val ourKey = SettingsKey<NoSettings>("groovy.implicit.null.argument.hint")
   }
 
-  override fun createSettings(): Settings = Settings()
+  override fun createSettings(): NoSettings = NoSettings()
 
   override val name: String
     get() = GroovyBundle.message("settings.inlay.implicit.null.argument")
-  override val key: SettingsKey<Settings> = ourKey
+  override val key: SettingsKey<NoSettings> = ourKey
   override val previewText: String
     get() = """
       def foo(a) {}
@@ -31,7 +30,7 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<GroovyImplicit
       foo()
     """.trimIndent()
 
-  override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
+  override fun createConfigurable(settings: NoSettings): ImmediateConfigurable = object : ImmediateConfigurable {
     override fun createComponent(listener: ChangeListener): JPanel = panel {}
 
     override val mainCheckboxText: String = GroovyBundle.message("settings.inlay.show.hints.for.implicit.null.argument")

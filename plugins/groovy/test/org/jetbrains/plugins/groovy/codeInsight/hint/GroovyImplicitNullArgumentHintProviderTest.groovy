@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
+import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import groovy.transform.CompileStatic
@@ -15,7 +16,7 @@ class GroovyImplicitNullArgumentHintProviderTest extends InlayHintsProviderTestC
   }
 
   def doTest(String text) {
-    testProvider("test.groovy", text, new GroovyImplicitNullArgumentHintProvider(), new GroovyImplicitNullArgumentHintProvider.Settings())
+    testProvider("test.groovy", text, new GroovyImplicitNullArgumentHintProvider(), new NoSettings())
   }
 
   void 'test call with implicit null argument'() {
