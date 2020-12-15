@@ -43,6 +43,7 @@ import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Type;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -242,7 +243,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public abstract static class JavaFullValueEvaluator extends XFullValueEvaluator {
     protected final EvaluationContextImpl myEvaluationContext;
 
-    public JavaFullValueEvaluator(@NotNull String linkText, EvaluationContextImpl evaluationContext) {
+    public JavaFullValueEvaluator(@NotNull @Nls String linkText, EvaluationContextImpl evaluationContext) {
       super(linkText);
       myEvaluationContext = evaluationContext;
     }
