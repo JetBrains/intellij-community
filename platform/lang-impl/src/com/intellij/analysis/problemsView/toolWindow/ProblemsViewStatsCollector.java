@@ -13,6 +13,7 @@ import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 final class ProblemsViewStatsCollector extends CounterUsagesCollector {
   private static final String UNKNOWN = "unknown";
@@ -65,12 +66,12 @@ final class ProblemsViewStatsCollector extends CounterUsagesCollector {
                   PREVIEW_ENABLED.with(previewEnabled(panel)));
   }
 
-  static void tabHidden(@NotNull ProblemsViewPanel panel, long ms) {
+  static void tabHidden(@NotNull ProblemsViewPanel panel, long nano) {
     TAB_HIDDEN.log(panel.getProject(),
                    TAB_NAME.with(tabName(panel)),
                    PROBLEMS_COUNT.with(problemsCount(panel)),
                    PREVIEW_ENABLED.with(previewEnabled(panel)),
-                   DURATION.with(ms / 1000));
+                   DURATION.with(TimeUnit.NANOSECONDS.toSeconds(nano)));
   }
 
   static void problemSelected(@NotNull ProblemsViewPanel panel, @NotNull Problem problem) {

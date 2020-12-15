@@ -296,12 +296,12 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
 
   void visibilityChangedTo(boolean visible) {
     if (visible) {
-      myShowTime.set(System.currentTimeMillis());
+      myShowTime.set(System.nanoTime());
       ProblemsViewStatsCollector.tabShown(this);
     }
     else {
       Long time = myShowTime.getAndSet(null);
-      if (time != null) ProblemsViewStatsCollector.tabHidden(this, System.currentTimeMillis() - time);
+      if (time != null) ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
       IntentionsUI.getInstance(getProject()).hide();
     }
   }
