@@ -64,7 +64,7 @@ internal class TargetEnvironmentDetailsConfigurable(
     panel.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
 
     val targetSupplier: Supplier<TargetEnvironmentConfiguration>
-    if (targetConfigurable is TargetEnvironmentType.ConfigurableCurrentConfigurationProvider)
+    if (targetConfigurable is BrowsableTargetEnvironmentType.ConfigurableCurrentConfigurationProvider)
       targetSupplier = Supplier<TargetEnvironmentConfiguration>(targetConfigurable::getCurrentConfiguration)
     else {
       targetSupplier = Supplier<TargetEnvironmentConfiguration> { config }
