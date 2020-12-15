@@ -21,7 +21,8 @@ import java.security.MessageDigest;
 
 @ApiStatus.Internal
 public final class IndexedHashesSupport {
-  private static final boolean SKIP_CONTENT_DEPENDENT_CHARSETS = SystemProperties.is("idea.index.hash.skip.content.dependent.charset");
+  private static final boolean SKIP_CONTENT_DEPENDENT_CHARSETS =
+    SystemProperties.getBooleanProperty("idea.index.hash.skip.content.dependent.charset", true);
   // TODO replace with sha-256
   private static final HashFunction INDEXED_FILE_CONTENT_HASHER = Hashing.sha1();
 
@@ -41,13 +42,7 @@ public final class IndexedHashesSupport {
   }
 
   public static byte @NotNull [] getBinaryContentHash(byte @NotNull [] content) {
-    // TODO: simplify to calculating content hash of only the content[].
-    // Shared Indexes that are already available on CDN will have their hashes invalidated after it.
-    MessageDigest digest = DigestUtil.sha1();
-    digest.update(String.valueOf(content.length).getBytes(StandardCharsets.UTF_8));
-    digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
-    digest.update(content);
-    return digest.digest();
+    return INDEXED_FILE_CONTENT_HASHER.hashBytes(content).asBytes();
   }
 
   public static byte @NotNull [] calculateIndexedHash(@NotNull IndexedFile indexedFile, byte @NotNull [] contentHash) {
