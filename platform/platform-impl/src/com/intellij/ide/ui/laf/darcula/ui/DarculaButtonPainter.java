@@ -62,7 +62,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       g2.translate(r.x, r.y);
 
       if (!isSmallComboButton) {
-        if (c.isFocusable() && c.hasFocus()) {
+        if (c.hasFocus()) {
           if (UIUtil.isHelpButton(c)) {
             paintFocusOval(g2, (r.width - diam) / 2.0f, (r.height - diam) / 2.0f, diam, diam);
           }
