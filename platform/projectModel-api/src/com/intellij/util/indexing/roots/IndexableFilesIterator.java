@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see ModuleIndexableFilesIterator
  * @see LibraryIndexableFilesIterator
- * @see SyntheticLibraryIndexableFilesIterator
- * @see SdkIndexableFilesIterator
+ * @see SyntheticLibraryIndexableFilesIteratorImpl
+ * @see SdkIndexableFilesIteratorImpl
  * @see IndexableSetContributorFilesIterator
  */
 @Debug.Renderer(text = "getClass().getName() + \":\" + getDebugName()")

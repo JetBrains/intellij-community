@@ -13,12 +13,13 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
-internal class ModuleIndexableFilesIterator(val module: Module, val root: VirtualFile) : IndexableFilesIterator {
+internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
+                                                private val root: VirtualFile) : ModuleIndexableFilesIterator {
   companion object {
     @JvmStatic
-    fun getModuleIterators(module: Module): Collection<ModuleIndexableFilesIterator> {
+    fun getModuleIterators(module: Module): Collection<ModuleIndexableFilesIteratorImpl> {
       val fileIndex = ModuleRootManager.getInstance(module).fileIndex as ModuleFileIndexImpl
-      return fileIndex.moduleRootsToIterate.map { ModuleIndexableFilesIterator(module, it) }
+      return fileIndex.moduleRootsToIterate.map { ModuleIndexableFilesIteratorImpl(module, it) }
     }
   }
 
@@ -39,5 +40,13 @@ internal class ModuleIndexableFilesIterator(val module: Module, val root: Virtua
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
     val filter = VirtualFileFilter { file -> file is VirtualFileWithId && file.id > 0 && !visitedFileSet.set(file.id) }
     return ModuleRootManager.getInstance(module).fileIndex.iterateContent(fileIterator, filter)
+  }
+
+  override fun getModule(): Module {
+    return module
+  }
+
+  override fun getRoot(): VirtualFile {
+    return root
   }
 }

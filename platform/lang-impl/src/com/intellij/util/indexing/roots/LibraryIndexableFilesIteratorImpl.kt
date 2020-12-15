@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
-class LibraryIndexableFilesIterator(val library: Library) : IndexableFilesIterator {
+class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryIndexableFilesIterator {
   override fun getDebugName() = "Library ${library.presentableName}"
 
   override fun getIndexingProgressText(): String = IndexingBundle.message("indexable.files.provider.indexing.library.name", library.presentableName)
@@ -37,5 +37,9 @@ class LibraryIndexableFilesIterator(val library: Library) : IndexableFilesIterat
     }
 
     return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, visitedFileSet)
+  }
+
+  override fun getLibrary(): Library {
+    return library
   }
 }

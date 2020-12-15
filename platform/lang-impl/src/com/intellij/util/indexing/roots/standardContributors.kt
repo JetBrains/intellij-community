@@ -22,7 +22,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
 
     val providers: MutableList<IndexableFilesIterator> = mutableListOf()
     for (module in modules) {
-      providers.addAll(ModuleIndexableFilesIterator.getModuleIterators(module))
+      providers.addAll(ModuleIndexableFilesIteratorImpl.getModuleIterators(module))
 
       val orderEntries = ModuleRootManager.getInstance(module).orderEntries
       for (orderEntry in orderEntries) {
@@ -30,13 +30,13 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
           is LibraryOrderEntry -> {
             val library = orderEntry.library
             if (library != null && seenLibraries.add(library)) {
-              providers.add(LibraryIndexableFilesIterator(library))
+              providers.add(LibraryIndexableFilesIteratorImpl(library))
             }
           }
           is JdkOrderEntry -> {
             val sdk = orderEntry.jdk
             if (sdk != null && seenSdks.add(sdk)) {
-              providers.add(SdkIndexableFilesIterator(sdk))
+              providers.add(SdkIndexableFilesIteratorImpl(sdk))
             }
           }
         }
@@ -79,7 +79,7 @@ internal class AdditionalLibraryRootsContributor : IndexableFilesContributor {
     return AdditionalLibraryRootsProvider.EP_NAME
       .extensionList
       .flatMap { it.getAdditionalProjectLibraries(project) }
-      .map { SyntheticLibraryIndexableFilesIterator(it) }
+      .map { SyntheticLibraryIndexableFilesIteratorImpl(it) }
   }
 
   override fun getOwnFilePredicate(project: Project): Predicate<VirtualFile> {

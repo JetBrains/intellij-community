@@ -12,7 +12,7 @@ import com.intellij.util.indexing.IndexingBundle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SdkIndexableFilesIterator(val sdk: Sdk) : IndexableFilesIterator {
+class SdkIndexableFilesIteratorImpl(val sdk: Sdk) : IndexableFilesIterator {
   override fun getDebugName() = "$sdkPresentableName ${sdk.name}"
 
   private val sdkPresentableName: String

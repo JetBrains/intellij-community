@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
-class ProjectIndexableFilesIterator(private val fileOrDir: VirtualFile): IndexableFilesIterator {
+class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile): ProjectIndexableFilesIterator {
   override fun getDebugName(): String = "Files under `${fileOrDir.path}`"
 
   override fun getIndexingProgressText(): String {
@@ -21,5 +21,9 @@ class ProjectIndexableFilesIterator(private val fileOrDir: VirtualFile): Indexab
 
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
     return ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, fileIterator)
+  }
+
+  override fun getFileOrDir(): VirtualFile {
+    return fileOrDir
   }
 }

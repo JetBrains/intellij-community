@@ -6,12 +6,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.roots.SyntheticLibraryIndexableFilesIterator
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
-internal class SyntheticLibraryIndexableFilesIterator(
-  private val syntheticLibrary: SyntheticLibrary
-) : IndexableFilesIterator {
+internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticLibrary: SyntheticLibrary) : SyntheticLibraryIndexableFilesIterator {
 
   private fun getName() = (syntheticLibrary as? ItemPresentation)?.presentableText
 
@@ -38,4 +37,6 @@ internal class SyntheticLibraryIndexableFilesIterator(
     val roots = runReadAction { syntheticLibrary.allRoots }
     return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, visitedFileSet)
   }
+
+  override fun getSyntheticLibrary(): SyntheticLibrary = syntheticLibrary
 }

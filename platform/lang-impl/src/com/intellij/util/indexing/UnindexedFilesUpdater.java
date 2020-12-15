@@ -4,13 +4,16 @@ package com.intellij.util.indexing;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.IndexableFileScanner;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Key;
@@ -30,7 +33,7 @@ import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.SdkIndexableFilesIterator;
+import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -264,11 +267,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     List<IndexableFilesIterator> orderedProviders = new ArrayList<>();
     originalOrderedProviders.stream()
-      .filter(p -> !(p instanceof SdkIndexableFilesIterator))
+      .filter(p -> !(p instanceof SdkIndexableFilesIteratorImpl))
       .collect(Collectors.toCollection(() -> orderedProviders));
 
     originalOrderedProviders.stream()
-      .filter(p -> p instanceof SdkIndexableFilesIterator)
+      .filter(p -> p instanceof SdkIndexableFilesIteratorImpl)
       .collect(Collectors.toCollection(() -> orderedProviders));
 
     return orderedProviders;
@@ -284,7 +287,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     if (providers.isEmpty()) {
       return Collections.emptyMap();
     }
-    UnindexedFilesFinder unindexedFileFilter = new UnindexedFilesFinder(project, myIndex, myRunExtensionsForFilesMarkedAsIndexed);
+    List<IndexableFileScanner.ScanSession> sessions =
+      ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
+    UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex, myRunExtensionsForFilesMarkedAsIndexed);
+
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
     ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
 
@@ -299,14 +305,20 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       List<VirtualFile> files = new ArrayList<>();
       ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
       providerToFiles.put(provider, files);
+      List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors =
+        ContainerUtil.mapNotNull(sessions, s -> s.createVisitor(provider));
+
       ContentIterator collectingIterator = fileOrDir -> {
         if (subTaskIndicator.isCanceled()) {
           return false;
         }
+
+        PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
+
         UnindexedFileStatus status;
         long statusTime = System.nanoTime();
         try {
-          status = ourTestMode == TestMode.PUSHING ? null : unindexedFileFilter.getFileStatus(fileOrDir);
+          status = ourTestMode == TestMode.PUSHING ? null : unindexedFileFinder.getFileStatus(fileOrDir);
         }
         finally {
           statusTime = System.nanoTime() - statusTime;
