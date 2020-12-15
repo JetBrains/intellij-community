@@ -3,8 +3,8 @@
 class Foo {
   void test() {
     String colors = """
-   <caret>	 red
-			green
+   	 red
+<caret>			green
         blue""";
   }
 }

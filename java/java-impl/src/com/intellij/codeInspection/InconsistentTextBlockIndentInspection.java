@@ -8,7 +8,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -16,8 +15,8 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -32,18 +31,18 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
         if (lines == null) return;
         int tabSize = CodeStyle.getSettings(expression.getProject()).getTabSize(JavaFileType.INSTANCE);
         if (tabSize == 1) return;
-        MixedIndentModel indentModel = MixedIndentModel.create(lines);
-        if (indentModel == null) return;
-        int desiredIndent = indentModel.findDesiredIndent(tabSize);
-        int indexToReport = indentModel.findFirstInconsistentCharIdx(desiredIndent, tabSize);
-        if (indexToReport == -1) return;
-        List<LocalQuickFix> fixes = new SmartList<>(new MakeIndentConsistentFix(IndentType.SPACES),
-                                                    new MakeIndentConsistentFix(IndentType.TABS));
-        indentModel.findAvailableIndentTypes(desiredIndent, tabSize)
-          .forEach(type -> fixes.add(new MakeIndentConsistentFix(tabSize, type)));
         int start = expression.getText().indexOf('\n');
         if (start == -1) return;
         start++;
+        MixedIndentModel indentModel = MixedIndentModel.create(lines);
+        if (indentModel == null) return;
+        int indexToReport = indentModel.myInconsistencyIdx;
+        List<LocalQuickFix> fixes = new SmartList<>(new MakeIndentConsistentFix(IndentType.SPACES),
+                                                    new MakeIndentConsistentFix(IndentType.TABS),
+                                                    new MakeIndentConsistentFix(tabSize, IndentType.SPACES));
+        if (indentModel.canReplaceWithTabs(tabSize)) {
+          fixes.add(new MakeIndentConsistentFix(tabSize, IndentType.TABS));
+        }
         holder.registerProblem(expression,
                                new TextRange(start + indexToReport, start + indexToReport + 1),
                                JavaBundle.message("inspection.inconsistent.text.block.indent.message"),
@@ -54,13 +53,7 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
 
   private enum IndentType {
     SPACES,
-    TABS;
-
-    private static @Nullable IndentType of(char c) {
-      if (c == ' ') return SPACES;
-      if (c == '\t') return TABS;
-      return null;
-    }
+    TABS
   }
 
   private static class MakeIndentConsistentFix implements LocalQuickFix {
@@ -102,139 +95,94 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
       if (lines == null) return;
       MixedIndentModel indentModel = MixedIndentModel.create(lines);
       if (indentModel == null) return;
-      int desiredIndent = indentModel.findDesiredIndent(myTabSize);
-      if (desiredIndent == -1) return;
-      String indentText = myDesiredIndentType == IndentType.SPACES ? " ".repeat(desiredIndent) : "\t".repeat(desiredIndent / myTabSize);
-      String newTextBlock = TrailingWhitespacesInTextBlockInspection
-        .transformTextBlockLines(lines, (l, i) -> isContentPart(lines, i, l), contentLine -> {
-        int lineIndent = MixedIndentModel.findLineIndent(contentLine, desiredIndent, myTabSize, myDesiredIndentType);
-        if (lineIndent == -1) return null;
-        return StringUtil.replaceSubSequence(contentLine, 0, lineIndent, indentText);
-      });
+      String newTextBlock = indentModel.indentWith(myDesiredIndentType, myTabSize);
       if (newTextBlock == null) return;
-      TrailingWhitespacesInTextBlockInspection.replaceTextBlock(project, literalExpression, newTextBlock);
+      TrailingWhitespacesInTextBlockInspection.replaceTextBlock(project, literalExpression, "\"\"\"\n" + newTextBlock + "\"\"\"");
     }
   }
 
   private static class MixedIndentModel {
-    private final String @NotNull [] myLines;
 
-    private MixedIndentModel(String @NotNull [] lines) {
+    private final String[] myLines;
+    private final int[] mySpaces;
+    private final int[] myTabs;
+    private final int myInconsistencyIdx;
+
+    private MixedIndentModel(String[] lines, int[] spaces, int[] tabs, int inconsistencyIdx) {
       myLines = lines;
+      mySpaces = spaces;
+      myTabs = tabs;
+      myInconsistencyIdx = inconsistencyIdx;
     }
 
-    private int findDesiredIndent(int tabSize) {
-      int desiredIndent = Integer.MAX_VALUE;
+    private boolean canReplaceWithTabs(int tabSize) {
+      return Arrays.stream(mySpaces).allMatch(nSpaces -> nSpaces == -1 || nSpaces % tabSize == 0);
+    }
+
+    private @Nullable String indentWith(@NotNull IndentType indentType, int tabSize) {
+      StringBuilder indented = new StringBuilder();
       for (int i = 0; i < myLines.length; i++) {
+        if (i != 0) indented.append('\n');
         String line = myLines[i];
-        if (!isContentPart(myLines, i, line)) continue;
-        int lineIndent = 0;
-        for (int j = 0; j < line.length(); j++) {
-          char c = line.charAt(j);
-          if (c == ' ') lineIndent++;
-          else if (c == '\t') lineIndent += tabSize;
-          else break;
+        int nSpaces = mySpaces[i];
+        if (nSpaces == -1) {
+          indented.append(line);
+          continue;
         }
-        if (lineIndent < desiredIndent) desiredIndent = lineIndent;
+        int nTabs = myTabs[i];
+        String indent = createIndent(nSpaces, nTabs, indentType, tabSize);
+        if (indent == null) return null;
+        indented.append(indent);
+        indented.append(line, nSpaces + nTabs, line.length());
       }
-      return desiredIndent;
+      return indented.toString();
     }
 
-    private int findFirstInconsistentCharIdx(int desiredIndent, int tabSize) {
+    private static @Nullable String createIndent(int nSpaces, int nTabs, @NotNull IndentType indentType, int tabSize) {
+      if (indentType == IndentType.SPACES) return " ".repeat(nSpaces + nTabs * tabSize);
+      if (nSpaces % tabSize != 0) return null;
+      return "\t".repeat(nTabs + nSpaces / tabSize);
+    }
+
+    private static @Nullable MixedIndentModel create(String[] lines) {
+      int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, false);
+      if (indent <= 0) return null;
+      int[] spaces = new int[lines.length];
+      int[] tabs = new int[lines.length];
+      Character expectedIndentChar = null;
+      int inconsistencyIdx = -1;
       int pos = 0;
-      IndentType indentType = null;
-      for (int i = 0; i < myLines.length; i++) {
+      for (int i = 0; i < lines.length; i++) {
         if (i != 0) pos++;
-        String line = myLines[i];
-        if (!isContentPart(myLines, i, line)) {
+        String line = lines[i];
+        boolean isContentPart = !line.isBlank() || i == lines.length - 1;
+        if (!isContentPart) {
+          spaces[i] = -1;
+          tabs[i] = -1;
           pos += line.length();
           continue;
         }
-        int indentToSee = desiredIndent;
+        if (expectedIndentChar == null) expectedIndentChar = line.charAt(0);
         for (int j = 0; j < line.length(); j++) {
-          if (indentToSee <= 0) break;
           char c = line.charAt(j);
-          if (c == ' ') indentToSee--;
-          else if (c == '\t') indentToSee -= tabSize;
-          else return -1;
-          IndentType curIndentType = Objects.requireNonNull(IndentType.of(c));
-          if (indentType == null) {
-            indentType = curIndentType;
+          if (c != ' ' && c != '\t') break;
+          if (j < indent) inconsistencyIdx = getInconsistencyIndex(inconsistencyIdx, c, pos, j, expectedIndentChar);
+          if (c == ' ') {
+            spaces[i]++;
           }
-          else if (indentType != curIndentType) {
-            return pos + j;
+          else {
+            tabs[i]++;
           }
         }
         pos += line.length();
       }
-      return -1;
+      return inconsistencyIdx == -1 ? null : new MixedIndentModel(lines, spaces, tabs, inconsistencyIdx);
     }
 
-    private @NotNull List<IndentType> findAvailableIndentTypes(int desiredIndent, int tabSize) {
-      List<IndentType> indentTypes = new SmartList<>(IndentType.SPACES, IndentType.TABS);
-      for (int i = 0; i < myLines.length; i++) {
-        String line = myLines[i];
-        if (!isContentPart(myLines, i, line)) continue;
-        int indentToSee = desiredIndent;
-        int nSpaces = 0;
-        for (int j = 0; j < line.length(); j++) {
-          char c = line.charAt(j);
-          if (c == ' ') {
-            indentToSee--;
-            nSpaces++;
-          }
-          else if (c == '\t') {
-            indentToSee -= tabSize;
-          }
-          if (indentToSee <= 0) break;
-        }
-        if (nSpaces % tabSize != 0) indentTypes.remove(IndentType.TABS);
-        if (indentToSee < 0) indentTypes.remove(IndentType.SPACES);
-      }
-      return indentTypes;
+    private static int getInconsistencyIndex(int inconsistencyIdx, char c, int pos, int idx, @NotNull Character expectedIndentChar) {
+      if (inconsistencyIdx != -1) return inconsistencyIdx;
+      if (expectedIndentChar == c) return -1;
+      return pos + idx;
     }
-
-    private static int findLineIndent(@NotNull String line, int desiredIndent, int tabSize, @NotNull IndentType desiredIndentType) {
-      int i;
-      int nSpaces = 0;
-      for (i = 0; i < line.length(); i++) {
-        char c = line.charAt(i);
-        if (c == ' ') {
-          nSpaces++;
-          desiredIndent--;
-        }
-        else if (c == '\t') {
-          desiredIndent -= tabSize;
-        }
-        if (desiredIndent <= 0) break;
-      }
-      if (desiredIndentType == IndentType.TABS && nSpaces % tabSize != 0) return -1;
-      return desiredIndent == 0 ? i + 1 : -1;
-    }
-
-    private static @Nullable MixedIndentModel create(String @NotNull [] lines) {
-      int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, false);
-      if (indent <= 0) return null;
-      IndentType indentType = null;
-      for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        if (!isContentPart(lines, i, line)) continue;
-        for (int j = 0; j < indent; j++) {
-          IndentType curIndentType = IndentType.of(line.charAt(j));
-          if (indentType == null) {
-            indentType = curIndentType;
-            continue;
-          }
-          if (curIndentType != indentType) {
-            return new MixedIndentModel(lines);
-          }
-        }
-      }
-      return null;
-    }
-  }
-
-  private static boolean isContentPart(String @NotNull [] lines, int i, String line) {
-    return !line.isBlank() || i == lines.length - 1;
   }
 }
