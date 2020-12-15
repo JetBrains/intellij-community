@@ -1110,6 +1110,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (pattern.isEmpty()) return;
       emptyStatus.appendLine(getNotFoundText());
 
+      if (myHeader.getSelectedTab().canClearFilter()) {
+        ActionListener clearFiltersAction = e -> {
+          myHeader.getSelectedTab().clearFilter();
+          scheduleRebuildList();
+        };
+        emptyStatus.appendLine(IdeBundle.message("searcheverywhere.reset.filters"),
+                               SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, clearFiltersAction);
+      }
+
       Optional.ofNullable(myProject)
         .map(project -> FindInProjectManager.getInstance(project))
         .filter(manager -> manager.isEnabled())
@@ -1119,18 +1128,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
           String findInFilesText = IdeBundle.message("searcheverywhere.try.to.find.in.files");
           String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
-          emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_ATTRIBUTES, findInFilesAction)
-            .appendText(" (" + findInFilesShortcut + ")");
+          emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction)
+            .appendText(" " + findInFilesShortcut);
         });
-
-      if (myHeader.getSelectedTab().canClearFilter()) {
-        ActionListener clearFiltersAction = e -> {
-          myHeader.getSelectedTab().clearFilter();
-          scheduleRebuildList();
-        };
-        emptyStatus.appendLine(IdeBundle.message("searcheverywhere.reset.filters"),
-                               SimpleTextAttributes.LINK_ATTRIBUTES, clearFiltersAction);
-      }
     }
 
     @TestOnly
