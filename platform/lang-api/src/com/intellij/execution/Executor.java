@@ -124,6 +124,14 @@ public abstract class Executor {
   }
 
   /**
+   * @return whether the executor can be run on targets or not.
+   */
+  @ApiStatus.Experimental
+  public boolean isSupportedOnTarget() {
+    return false;
+  }
+
+  /**
    * Too long names don't fit into UI controls and have to be trimmed
    */
   @Contract(pure = true)

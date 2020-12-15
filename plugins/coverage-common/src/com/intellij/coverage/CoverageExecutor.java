@@ -76,4 +76,9 @@ public class CoverageExecutor extends Executor {
   public String getHelpId() {
     return null;//todo
   }
+
+  @Override
+  public boolean isSupportedOnTarget() {
+    return EXECUTOR_ID.equalsIgnoreCase(getId());
+  }
 }

@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots
 
-import com.intellij.execution.*
+import com.intellij.execution.CantRunException
+import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
@@ -29,6 +32,7 @@ import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.THashMap
 import io.netty.bootstrap.com.intellij.execution.configurations.ParameterTargetValuePart
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -46,7 +50,6 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
@@ -77,7 +80,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
                                       uploadPathIsFile: Boolean? = null): TargetValue<String> {
 
     val uploadPath = Paths.get(FileUtil.toSystemDependentName(uploadPathString))
-    val isDir = uploadPathIsFile ?: uploadPath.isDirectory()
+    val isDir = uploadPathIsFile?.not() ?: uploadPath.isDirectory()
     val localRootPath =
       if (isDir) uploadPath
       else (uploadPath.parent ?: Paths.get("."))  // Normally, paths should be absolute, but there are tests that check relative paths.
@@ -96,6 +99,44 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
         val resolvedTargetPath = volume.resolveTargetPath(relativePath)
         uploads.add(Upload(volume, relativePath))
         result.resolve(resolvedTargetPath)
+      }
+      catch (t: Throwable) {
+        LOG.warn(t)
+        targetProgressIndicator.stopWithErrorMessage(LangBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
+                                                                        t.localizedMessage))
+        result.resolveFailure(t)
+      }
+    }
+    return result
+  }
+
+  @Suppress("SameParameterValue")
+  @Deprecated("Temporary solution, while real download does not exist")
+  @ApiStatus.ScheduledForRemoval
+  private fun requestDownloadFromTarget(downloadPathString: String,
+                                        downloadPathIsFile: Boolean? = null): TargetValue<String> {
+    val downloadPath = Paths.get(FileUtil.toSystemDependentName(downloadPathString))
+    val isDir = downloadPathIsFile?.not() ?: downloadPath.isDirectory()
+    val localRootPath =
+      if (isDir) downloadPath
+      else (downloadPath.parent ?: Paths.get("."))  // Normally, paths should be absolute, but there are tests that check relative paths.
+
+    val downloadRoot = TargetEnvironment.DownloadRoot(localRootPath = localRootPath,
+                                                      targetRootPath = TargetEnvironment.TargetPath.Temporary())
+    request.downloadVolumes += downloadRoot
+    val result = DeferredTargetValue(downloadPathString)
+    dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
+      if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
+        result.stopProceeding()
+        return@then
+      }
+      val volume = environment.downloadVolumes.getValue(downloadRoot)
+      try {
+        val relativePath = if (isDir) "." else downloadPath.fileName.toString()
+        if (volume is TargetEnvironment.UploadableVolume) {
+          val resolvedTargetPath = volume.resolveTargetPath(relativePath)
+          result.resolve(resolvedTargetPath)
+        }
       }
       catch (t: Throwable) {
         LOG.warn(t)
@@ -278,7 +319,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
 
       if (!dynamicVMOptions) { // dynamic options will be handled later by ArgFile
-        appendVmParameters(vmParameters)
+        appendVmParameters(javaParameters, vmParameters)
       }
 
       appendEncoding(javaParameters, vmParameters)
@@ -320,7 +361,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
         jarFile.addToManifest("VM-Options", ParametersListUtil.join(properties))
       }
       else {
-        appendVmParameters(vmParameters)
+        appendVmParameters(javaParameters, vmParameters)
       }
 
       appendEncoding(javaParameters, vmParameters)
@@ -383,7 +424,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
         }
       }
       else {
-        appendVmParameters(vmParameters)
+        appendVmParameters(javaParameters, vmParameters)
       }
 
       appendEncoding(javaParameters, vmParameters)
@@ -489,9 +530,17 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
   }
 
-  private fun appendVmParameters(vmParameters: ParametersList) {
+  private fun appendVmParameters(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
     vmParameters.list.forEach {
       appendVmParameter(it)
+    }
+    javaParameters.targetDependentParameters.asTargetParameters().forEach {
+      val value = it.apply(request)
+      value.resolvePaths(
+        uploadPathsResolver = { path -> requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path, true) },
+        downloadPathsResolver = { path -> requestDownloadFromTarget(path, true) }
+      )
+      commandLine.addParameter(value.parameter)
     }
   }
 
@@ -556,7 +605,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   }
 
   private fun appendParamsEncodingClasspath(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
-    appendVmParameters(vmParameters)
+    appendVmParameters(javaParameters, vmParameters)
     appendEncoding(javaParameters, vmParameters)
 
     val classPath = javaParameters.classPath
