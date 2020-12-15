@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -65,12 +64,6 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     };
   }
 
-  private static boolean isContentLineEndsWithWhitespace(@NotNull String line) {
-    if (line.isBlank()) return false;
-    char lastChar = line.charAt(line.length() - 1);
-    return lastChar == ' ' || lastChar == '\t';
-  }
-
   private static @NotNull String replaceWhitespacesWithEscapes(@NotNull String contentLine) {
     int j;
     int len = contentLine.length();
@@ -101,27 +94,6 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     return contentLine.substring(0, j + 1);
   }
 
-  static @Nullable String transformTextBlockLines(String @NotNull [] lines,
-                                                  @NotNull BiPredicate<String, Integer> linePredicate,
-                                                  @NotNull Function<String, @Nullable CharSequence> lineTransformation) {
-    StringBuilder newTextBlock = new StringBuilder();
-    newTextBlock.append("\"\"\"\n");
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      if (i != 0) newTextBlock.append('\n');
-      if (!linePredicate.test(line, i)) {
-        newTextBlock.append(line);
-        continue;
-      }
-      CharSequence transformed = lineTransformation.apply(line);
-      if (transformed == null) return null;
-      newTextBlock.append(transformed);
-    }
-    newTextBlock.append("\"\"\"");
-
-    return newTextBlock.toString();
-  }
-
   static void replaceTextBlock(@NotNull Project project, @NotNull PsiLiteralExpression toReplace, @NotNull String newTextBlock) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiExpression replacement = elementFactory.createExpressionFromText(newTextBlock, toReplace);
@@ -150,9 +122,35 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
       if (expression == null || !expression.isTextBlock()) return;
       String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
       if (lines == null) return;
-      String newTextBlock = transformTextBlockLines(lines, (l, __) -> isContentLineEndsWithWhitespace(l), myTransformation);
+      String newTextBlock = transformTextBlockLines(lines, myTransformation);
       if (newTextBlock == null) return;
       replaceTextBlock(project, expression, newTextBlock);
+    }
+
+    private static @Nullable String transformTextBlockLines(String @NotNull [] lines,
+                                                            @NotNull Function<String, @Nullable CharSequence> lineTransformation) {
+      StringBuilder newTextBlock = new StringBuilder();
+      newTextBlock.append("\"\"\"\n");
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i];
+        if (i != 0) newTextBlock.append('\n');
+        if (!isContentLineEndsWithWhitespace(line)) {
+          newTextBlock.append(line);
+          continue;
+        }
+        CharSequence transformed = lineTransformation.apply(line);
+        if (transformed == null) return null;
+        newTextBlock.append(transformed);
+      }
+      newTextBlock.append("\"\"\"");
+
+      return newTextBlock.toString();
+    }
+
+    private static boolean isContentLineEndsWithWhitespace(@NotNull String line) {
+      if (line.isBlank()) return false;
+      char lastChar = line.charAt(line.length() - 1);
+      return lastChar == ' ' || lastChar == '\t';
     }
   }
 }
