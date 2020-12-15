@@ -172,7 +172,9 @@ internal object OpenLessonActivities {
 
     //open next lesson if current is passed
     LOG.debug("${project.name}: Set lesson view")
-    LearningUiManager.activeToolWindow?.setLearnPanel()
+    LearningUiManager.activeToolWindow = LearnToolWindowFactory.learnWindowPerProject[project]?.also {
+      it.setLearnPanel()
+    }
     LOG.debug("${project.name}: XmlLesson onStart()")
     lesson.onStart()
 
@@ -276,9 +278,9 @@ internal object OpenLessonActivities {
       val learnToolWindow = toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
       if (learnToolWindow != null) {
         val runnable = if (lesson.properties.showLearnToolwindowAtStart) null else Runnable { learnToolWindow.hide() }
-        learnToolWindow.show(runnable)
         DumbService.getInstance(myLearnProject).runWhenSmart {
-          // Try to fix PyChar double startup indexing :(
+          learnToolWindow.show(runnable)
+          // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
             DumbService.getInstance(myLearnProject).runWhenSmart {
               openLessonForPreparedProject(myLearnProject, lesson)
