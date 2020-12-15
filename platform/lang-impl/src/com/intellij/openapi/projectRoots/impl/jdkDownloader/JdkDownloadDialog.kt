@@ -32,7 +32,6 @@ class JdkDownloaderModel(
   val defaultItem: JdkItem,
   val defaultVersion: JdkVersionItem,
   val defaultVersionVendor: JdkVersionVendorItem,
-  val hasMultipleArchs: Boolean
 )
 
 class JdkVersionItem(
@@ -73,7 +72,7 @@ class JdkVersionVendorItem(
   val canBeSelected: Boolean get() = parent == null
 }
 
-private class JdkVersionVendorCombobox(private val hasMultipleArchs : Boolean): ComboBox<JdkVersionVendorElement>() {
+private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
   private val myActionItemSelectedListeners = mutableListOf<(item: JdkVersionVendorItem) -> Unit>()
 
   override fun setSelectedItem(anObject: Any?) {
@@ -126,9 +125,10 @@ private class JdkVersionVendorCombobox(private val hasMultipleArchs : Boolean): 
         val jdkVersion = value.item.jdkVersion
         if (jdkVersion != value.parent?.jdkVersion) {
           append(" $jdkVersion", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
-          if (hasMultipleArchs) {
-            append("  ${value.item.arch}", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
-          }
+        }
+
+        value.item.presentableArchIfNeeded?.let { archIfNeeded ->
+          append("  $archIfNeeded", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
         }
       }
     }
@@ -199,7 +199,6 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel {
     defaultItem = defaultItem,
     defaultVersion = defaultJdkVersionItem,
     defaultVersionVendor = defaultVersionVendor,
-    hasMultipleArchs = allItems.mapTo(HashSet()) { it.arch }.size > 1
   )
 }
 
@@ -240,7 +239,7 @@ internal class JdkDownloadDialog(
     versionComboBox.renderer = jdkVersionItemRenderer
     versionComboBox.isSwingPopup = false
 
-    vendorComboBox = JdkVersionVendorCombobox(model.hasMultipleArchs)
+    vendorComboBox = JdkVersionVendorCombobox()
 
     if (WslDistributionManager.getInstance().installedDistributions.isNotEmpty()) {
       installDirCombo = ComboBox<String>()
