@@ -39,12 +39,6 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
 
   override fun createConfigurable(project: Project,
                                   config: JavaLanguageRuntimeConfiguration,
-                                  target: TargetEnvironmentConfiguration): Configurable {
-    return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target, project)
-  }
-
-  override fun createConfigurable(project: Project,
-                                  config: JavaLanguageRuntimeConfiguration,
                                   targetEnvironmentType: TargetEnvironmentType<*>,
                                   targetSupplier: Supplier<TargetEnvironmentConfiguration>): Configurable {
     return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, targetEnvironmentType,
