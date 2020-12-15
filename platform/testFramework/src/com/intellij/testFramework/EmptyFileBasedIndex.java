@@ -22,6 +22,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 public class EmptyFileBasedIndex extends FileBasedIndexEx {
+  @Override
+  public void registerProjectFileSets(@NotNull Project project) {
+  }
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {

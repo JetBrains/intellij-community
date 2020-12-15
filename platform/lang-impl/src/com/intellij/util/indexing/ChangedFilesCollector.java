@@ -225,12 +225,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
         Runnable startDumbMode = () -> {
           for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-            DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
-            DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(project);
-
-            if (task != null) {
-              dumbService.queueTask(task);
-            }
+            FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
           }
         };
 

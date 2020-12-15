@@ -32,11 +32,8 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
       project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void exitDumbMode() {
-          LOG.info("Has changed files: " +
-                   (FileBasedIndexProjectHandler
-                      .createChangedFilesIndexingTask(project) != null) +
-                   "; project=" +
-                   project);
+          LOG.info("Has changed files: " + FileBasedIndexProjectHandler.mightHaveManyChangedFilesInProject(project) +
+                   "; project=" + project);
         }
       });
     }

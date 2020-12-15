@@ -246,12 +246,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   }
 
   private void scheduleDumbModeReindexingIfNeeded() {
-    if (myProject.isDisposed()) return;
-
-    DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
-    if (task != null) {
-      DumbService.getInstance(myProject).queueTask(task);
-    }
+    FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(myProject);
   }
 
   @Override

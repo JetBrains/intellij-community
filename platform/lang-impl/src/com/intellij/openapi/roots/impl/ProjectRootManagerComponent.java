@@ -174,11 +174,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
       LOG.debug("refresh");
     }
-    DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
-    DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
-    if (task != null) {
-      dumbService.queueTask(task);
-    }
+    FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(myProject);
   }
 
   @Override
