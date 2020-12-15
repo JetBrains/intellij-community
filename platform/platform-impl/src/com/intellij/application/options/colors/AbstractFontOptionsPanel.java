@@ -276,17 +276,17 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     mySecondaryFontLabel = new JLabel(ApplicationBundle.message("secondary.font"));
     mySecondaryFontLabel.setLabelFor(mySecondaryCombo);
     target.add(mySecondaryFontLabel, c);
+    c.insets = getInsets(0, 0);
     c.gridx = 1;
     target.add(mySecondaryCombo, c);
     c.gridy ++;
-    c.insets = getInsets(0, BASE_INSET);
     JBLabel fallbackLabel = new JBLabel(ApplicationBundle.message("label.fallback.fonts.list.description"));
     fallbackLabel.setFont(JBUI.Fonts.smallFont());
     fallbackLabel.setForeground(UIUtil.getContextHelpForeground());
     target.add(fallbackLabel, c);
   }
 
-  private static Insets getInsets(int extraTopSpacing, int extraLeftSpacing) {
+  protected static Insets getInsets(int extraTopSpacing, int extraLeftSpacing) {
     return JBUI.insets(BASE_INSET + extraTopSpacing, BASE_INSET + extraLeftSpacing, 0, 0);
   }
 

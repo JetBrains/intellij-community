@@ -27,20 +27,29 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.AbstractFontCombo;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   private final AppEditorFontPanel myMainPanel;
@@ -48,6 +57,8 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   private JPanel myWarningPanel;
   private JLabel myEditorFontLabel;
   private final FontPreferences myDefaultPreferences;
+  private FontWeightCombo myRegularWeightCombo;
+  private FontWeightCombo myBoldWeightCombo;
 
   protected AppEditorFontOptionsPanel(@NotNull AppEditorFontPanel mainPanel, EditorColorsScheme scheme) {
     myMainPanel = mainPanel;
@@ -77,6 +88,12 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
       public void fontChanged() {
+        if (myRegularWeightCombo != null) {
+          myRegularWeightCombo.update(getFontPreferences());
+        }
+        if (myBoldWeightCombo != null) {
+          myBoldWeightCombo.update(getFontPreferences());
+        }
         updateWarning();
         updateRestoreButtonState();
       }
@@ -88,11 +105,61 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     JPanel typographyPanel = new JPanel(new GridBagLayout());
     typographyPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.editor.font.typography.settings")));
     GridBagConstraints c = new GridBagConstraints();
-    c.insets = JBUI.insets(BASE_INSET, 0);
+    c.insets = getInsets(0, 0);
     c.gridx = 0;
     c.gridy = 0;
+    c.anchor = GridBagConstraints.LINE_START;
+    if (isAdvancedFontFamiliesUI()) {
+      typographyPanel.add(new JLabel(ApplicationBundle.message("settings.editor.font.main.weight")), c);
+      c.gridx = 1;
+      myRegularWeightCombo = new MyRegularFontWeightCombo();
+      myRegularWeightCombo.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          changeFontPreferences(
+            preferences -> {
+              String newSubFamily = myRegularWeightCombo.getSelectedSubFamily();
+              if (!Objects.equals(preferences.getRegularSubFamily(), newSubFamily)) {
+                preferences.setBoldSubFamily(null); // Reset bold subfamily for a different regular
+              }
+              preferences.setRegularSubFamily(newSubFamily);
+            });
+        }
+      });
+      typographyPanel.add(myRegularWeightCombo, getWeightComboConstraints(c));
+      c.gridy ++;
+      c.gridx = 0;
+      typographyPanel.add(new JLabel(ApplicationBundle.message("settings.editor.font.bold.weight")), c);
+      c.gridx = 1;
+      myBoldWeightCombo = new MyBoldFontWeightCombo();
+      myBoldWeightCombo.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          changeFontPreferences(
+            preferences -> preferences.setBoldSubFamily(myBoldWeightCombo.getSelectedSubFamily()));
+        }
+      });
+      typographyPanel.add(myBoldWeightCombo, getWeightComboConstraints(c));
+      c.gridy ++;
+      JLabel boldHintLabel = new JLabel(ApplicationBundle.message("settings.editor.font.bold.weight.hint"));
+      boldHintLabel.setFont(JBUI.Fonts.smallFont());
+      boldHintLabel.setForeground(UIUtil.getContextHelpForeground());
+      typographyPanel.add(boldHintLabel, c);
+      c.gridy ++;
+    }
+    c.gridx = 0;
     createSecondaryFontComboAndLabel(typographyPanel, c);
     return typographyPanel;
+  }
+
+  private static GridBagConstraints getWeightComboConstraints(GridBagConstraints currConstraints) {
+    GridBagConstraints c = new GridBagConstraints();
+    c.anchor = GridBagConstraints.LINE_START;
+    c.gridx = currConstraints.gridx;
+    c.gridy = currConstraints.gridy;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.insets = JBUI.insets(BASE_INSET, BASE_INSET, 0, JBUIScale.scale(50));
+    return c;
   }
 
   void restoreDefaults() {
@@ -146,6 +213,13 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   @Override
   protected FontPreferences getFontPreferences() {
     return myScheme.getFontPreferences();
+  }
+
+  private void changeFontPreferences(Consumer<ModifiableFontPreferences> consumer) {
+    FontPreferences preferences = getFontPreferences();
+    assert preferences instanceof ModifiableFontPreferences;
+    consumer.accept((ModifiableFontPreferences)preferences);
+    fireFontChanged();
   }
 
   @Override
@@ -213,5 +287,42 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
 
   private static boolean isAdvancedFontFamiliesUI() {
     return SystemProperties.is("new.editor.font.selector");
+  }
+
+
+  private static class MyRegularFontWeightCombo extends FontWeightCombo {
+    MyRegularFontWeightCombo() {
+      super(false);
+    }
+
+    @Override
+    @Nullable String getSubFamily(@NotNull FontPreferences preferences) {
+      return preferences.getRegularSubFamily();
+    }
+
+    @Override
+    @NotNull String getRecommendedSubFamily(@NotNull String family) {
+      return FontFamilyService.getRecommendedSubFamily(family);
+    }
+  }
+
+
+  private class MyBoldFontWeightCombo extends FontWeightCombo {
+    MyBoldFontWeightCombo() {
+      super(true);
+    }
+
+    @Override
+    @Nullable String getSubFamily(@NotNull FontPreferences preferences) {
+      return preferences.getBoldSubFamily();
+    }
+
+    @Override
+    @NotNull String getRecommendedSubFamily(@NotNull String family) {
+      return FontFamilyService.getRecommendedBoldSubFamily(
+        family,
+        ObjectUtils.notNull(myRegularWeightCombo.getSelectedSubFamily(),
+                            FontFamilyService.getRecommendedSubFamily(family)));
+    }
   }
 }
