@@ -7,6 +7,7 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.runChild
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
+import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
@@ -23,6 +24,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -181,17 +183,34 @@ open class IdeStarter : ApplicationStarter {
     }
     //do not show Customize IDE Wizard [IDEA-249516]
     if (System.getProperty("idea.show.customize.ide.wizard")?.toBoolean() == true) {
+      val stepsDialogName = if (System.getProperty("idea.temp.change.ide.wizard") != null) {
+        System.getProperty("idea.temp.change.ide.wizard") // temporary until 211 release
+      }
+      else {
+        ApplicationInfoImpl.getShadowInstance().customizeIDEWizardDialog
+      }
       wizardStepProvider?.let { wizardStepProvider ->
         var done = false
         runInEdt {
-          val wizardDialog = object : CustomizeIDEWizardDialog(wizardStepProvider, null, false, true) {
-            override fun doOKAction() {
-              super.doOKAction()
-              showWelcomeFrame?.run()
+          val wizardDialog = if (!stepsDialogName.isNullOrBlank()) {
+            try {
+              val dialogClass = Class.forName(stepsDialogName)
+              val constr = dialogClass.getConstructor(StartupUtil.AppStarter::class.java)
+              (constr.newInstance(null) as CommonCustomizeIDEWizardDialog)
+            } catch (e: Throwable) {
+              Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
+              done = false
+              null
             }
           }
+          else {
+            CustomizeIDEWizardDialog(wizardStepProvider, null, false, true)
+          }
+          wizardDialog?.setRunAfterOKAction {
+            showWelcomeFrame?.run()
+          }
 
-          if (wizardDialog.showIfNeeded()) {
+          if (wizardDialog?.showIfNeeded() == true || wizardDialog == null) {
             done = true
           }
         }
