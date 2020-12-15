@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -141,7 +142,7 @@ public final class GradleBuildSrcProjectsResolver {
         else {
           buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false);
         }
-        includeRootBuildIncludedBuildsIfNeeded(buildSrcProjectSettings, compositeBuildData);
+        includeRootBuildIncludedBuildsIfNeeded(buildSrcProjectSettings, compositeBuildData, buildPath);
       }
       else {
         buildSrcProjectSettings = myMainBuildExecutionSettings;
@@ -166,7 +167,8 @@ public final class GradleBuildSrcProjectsResolver {
   }
 
   private void includeRootBuildIncludedBuildsIfNeeded(@NotNull GradleExecutionSettings buildSrcProjectSettings,
-                                                      @Nullable CompositeBuildData compositeBuildData) {
+                                                      @Nullable CompositeBuildData compositeBuildData,
+                                                      @NotNull String mainBuildPath) {
     if (compositeBuildData == null) return;
     String projectGradleVersion = myResolverContext.getProjectGradleVersion();
     GradleVersion gradleBaseVersion = projectGradleVersion == null ? null : GradleVersion.version(projectGradleVersion).getBaseVersion();
@@ -179,7 +181,9 @@ public final class GradleBuildSrcProjectsResolver {
     // It can be improved in the future Gradle releases.
     if (gradleBaseVersion.compareTo(GradleVersion.version("6.7")) < 0) return;
     for (BuildParticipant buildParticipant : compositeBuildData.getCompositeParticipants()) {
-      buildSrcProjectSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getRootPath());
+      if (!FileUtil.pathsEqual(mainBuildPath, buildParticipant.getRootPath())) {
+        buildSrcProjectSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getRootPath());
+      }
     }
   }
 

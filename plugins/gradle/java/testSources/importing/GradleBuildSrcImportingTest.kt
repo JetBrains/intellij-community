@@ -177,6 +177,26 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     assertModuleModuleDepScope("buildSrc-composite-dependency.buildSrc.main", "greeter.main", DependencyScope.COMPILE)
   }
 
+  @Test
+  @TargetVersions("3.3+")
+  fun `test buildSrc with included projects name duplication`() {
+    createSettingsFile("""
+      includeBuild('build1')
+      includeBuild('build2')
+      """.trimIndent())
+
+    createProjectSubFile("build1/settings.gradle", "include('app')")
+
+    createProjectSubFile("build2/settings.gradle", "include('app')")
+    createProjectSubFile("build2/buildSrc/build.gradle")
+
+    importProject("")
+    assertModules("project",
+                  "build1", "build1.app",
+                  "build2", "build2.app",
+                  "build2.buildSrc", "build2.buildSrc.main", "build2.buildSrc.test")
+  }
+
   private fun assertBuildScriptClassPathContains(moduleName: String, expectedEntries: Collection<VirtualFile>) {
     val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
     val modulePath = ExternalSystemApiUtil.getExternalProjectPath(module)
