@@ -465,7 +465,7 @@ sealed class LibraryTableId : Serializable {
 }
 
 @Suppress("unused")
-class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable, WithAssertableConsistency {
+class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable {
   lateinit var tableId: LibraryTableId
   lateinit var name: String
   lateinit var roots: List<LibraryRoot>
@@ -491,14 +491,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
-
-  override fun assertConsistency(storage: WorkspaceEntityStorage) {
-    val thisTableId = tableId
-    if (thisTableId is LibraryTableId.ModuleLibraryTableId) {
-      val moduleId = thisTableId.moduleId
-      assert(storage.resolve(moduleId) != null) { "Module isn't found.\nPersistent id: $moduleId\nLibrary: $this" }
-    }
-  }
 }
 
 open class LibraryEntity(
