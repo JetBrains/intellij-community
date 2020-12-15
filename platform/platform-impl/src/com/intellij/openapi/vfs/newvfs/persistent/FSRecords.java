@@ -143,7 +143,7 @@ public final class FSRecords {
   }
 
   public static long getCreationTimestamp() {
-    return readAndHandleErrors(FSRecords::getTimestamp);
+    return readAndHandleErrors(() -> ourConnection.getTimestamp());
   }
 
   // todo: Address  / capacity store in records table, size store with payload
@@ -179,10 +179,6 @@ public final class FSRecords {
   @TestOnly
   static boolean isDirty() {
     return readAndHandleErrors(ourConnection::isDirty);
-  }
-
-  static long getTimestamp() {
-    return ourConnection.getTimestamp();
   }
 
   @PersistentFS.Attributes
