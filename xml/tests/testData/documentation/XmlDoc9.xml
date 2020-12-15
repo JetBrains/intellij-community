@@ -1,0 +1,3 @@
+<test xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="XmlDoc9.xsd"
+      en<caret>um="enumValue1">Test
+</test>

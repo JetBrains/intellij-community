@@ -120,6 +120,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         XmlTag declaration = getComplexOrSimpleTypeDefinition(element, originalElement);
 
         if (declaration != null) {
+          processor.ignoreEnumerations = true;
           XmlUtil.processXmlElements(declaration,processor, true);
           name = declaration.getAttributeValue(NAME_ATTR_NAME);
           typeName = XmlBundle.message("xml.javadoc.complex.type.message");
@@ -449,18 +450,22 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static class MyPsiElementProcessor implements PsiElementProcessor {
-    String result;
-    String version;
-    String url;
-    @NonNls public static final String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
+  private static class MyPsiElementProcessor implements PsiElementProcessor<PsiElement> {
+
+    public @NonNls static final String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
     private @NonNls static final String CDATA_PREFIX = "<![CDATA[";
     private @NonNls static final String CDATA_SUFFIX = "]]>";
+
+    private String result;
+    private String version;
+    private String url;
+    private boolean ignoreEnumerations;
 
     @Override
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof XmlTag &&
-          ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
+          ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME) &&
+          (!ignoreEnumerations || !isChildOfEnumeration((XmlTag)element))
       ) {
         final XmlTag tag = ((XmlTag)element);
         result = tag.getValue().getText().trim();
@@ -491,6 +496,17 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       }
       return true;
     }
+  }
+
+  private static boolean isChildOfEnumeration(XmlTag tag) {
+    XmlTag current = tag;
+    int maxDepth = 2;
+    while ((current = current.getParentTag()) != null && maxDepth-- > 0) {
+      if (XmlUtil.ENUMERATION_TAG_NAME.equals(current.getLocalName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static String escapeDocumentationTextText(@NotNull String result) {
