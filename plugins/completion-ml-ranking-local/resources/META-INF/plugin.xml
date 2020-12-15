@@ -1,0 +1,26 @@
+<idea-plugin>
+  <id>com.intellij.completion.ml.ranking.local</id>
+  <name>Machine Learning Code Completion Local Models</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+
+  <description><![CDATA[
+      <p>The plugin contains logic for training local models for code completion based on machine learning.</p>
+    ]]></description>
+
+  <actions>
+    <action id="TrainLocalModelsAction" class="com.intellij.completion.ml.local.actions.TrainLocalModelsAction"/>
+  </actions>
+
+  <resource-bundle>messages.CompletionRankingLocalBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.completion.ml.local.models.frequency.FrequencyLocalModel"/>
+
+    <completion.ml.contextFeatures language="JAVA" implementationClass="com.intellij.completion.ml.local.features.LocalModelsContextFeatureProvider"/>
+    <completion.ml.elementFeatures language="JAVA" implementationClass="com.intellij.completion.ml.local.features.LocalModelsElementFeatureProvider"/>
+  </extensions>
+
+  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.completion.ml.ranking</depends>
+</idea-plugin>
