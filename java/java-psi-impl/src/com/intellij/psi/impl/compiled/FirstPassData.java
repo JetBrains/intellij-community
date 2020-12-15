@@ -36,19 +36,20 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
     }
   }
 
-  private static final FirstPassData EMPTY = new FirstPassData(null, null, Collections.emptySet());
-  private final @Nullable Map<String, InnerClassEntry> myMap;
+  private static final FirstPassData NO_DATA = new FirstPassData(Collections.emptyMap(), null, Collections.emptySet());
+  private static final FirstPassData EMPTY = new FirstPassData(Collections.emptyMap(), null, Collections.emptySet());
+  private final @NotNull Map<String, InnerClassEntry> myMap;
   private final @NotNull Set<String> myNonStatic;
   private final @NotNull Set<ObjectMethod> mySyntheticMethods;
   private final @Nullable String myVarArgRecordComponent;
 
-  private FirstPassData(@Nullable Map<String, InnerClassEntry> map,
+  private FirstPassData(@NotNull Map<String, InnerClassEntry> map,
                         @Nullable String component,
                         @NotNull Set<ObjectMethod> syntheticMethods) {
     myMap = map;
     myVarArgRecordComponent = component;
     mySyntheticMethods = syntheticMethods;
-    if (map != null) {
+    if (!map.isEmpty()) {
       List<String> jvmNames = EntryStream.of(map).filterValues(e -> !e.myStatic).keys().toList();
       myNonStatic = ContainerUtil.map2Set(jvmNames, this::mapJvmClassNameToJava);
     }
@@ -94,12 +95,12 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
 
   /**
    * @param jvmNames array JVM type names (e.g. throws list, implements list)
-   * @return list of TypeInfo objects that correspond to given types
+   * @return list of TypeInfo objects that correspond to given types. GUESSING_MAPPER is not used.
    */
   @Contract("null -> null; !null -> !null")
   public List<TypeInfo> createTypes(String @Nullable [] jvmNames) {
     return jvmNames == null ? null :
-           ContainerUtil.map(jvmNames, jvmName -> new TypeInfo(mapJvmClassNameToJava(jvmName)));
+           ContainerUtil.map(jvmNames, jvmName -> new TypeInfo(mapJvmClassNameToJava(jvmName, false)));
   }
 
   /**
@@ -107,20 +108,29 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
    * @return Java class name like java.util.Map.Entry
    */
   public @NotNull String mapJvmClassNameToJava(@NotNull String jvmName) {
-    if (myMap == null) {
-      return StubBuildingVisitor.GUESSING_MAPPER.fun(jvmName);
-    }
+    return mapJvmClassNameToJava(jvmName, true);
+  }
+
+  /**
+   * @param jvmName JVM class name like java/util/Map$Entry
+   * @param useGuesser if true, {@link StubBuildingVisitor#GUESSING_MAPPER} will be used in case if the entry was absent in
+   *                   InnerClasses table.
+   * @return Java class name like java.util.Map.Entry
+   */
+  public @NotNull String mapJvmClassNameToJava(@NotNull String jvmName, boolean useGuesser) {
     String className = jvmName;
 
     if (className.indexOf('$') >= 0) {
       InnerClassEntry p = myMap.get(className);
-      if (p == null) {
-        return StubBuildingVisitor.GUESSING_MAPPER.fun(className);
+      if (p != null) {
+        className = p.myOuterName;
+        if (p.myInnerName != null) {
+          className = mapJvmClassNameToJava(p.myOuterName) + '.' + p.myInnerName;
+          myMap.put(className, new InnerClassEntry(className, null, true));
+        }
       }
-      className = p.myOuterName;
-      if (p.myInnerName != null) {
-        className = mapJvmClassNameToJava(p.myOuterName) + '.' + p.myInnerName;
-        myMap.put(className, new InnerClassEntry(className, null, true));
+      else if (useGuesser) {
+        return StubBuildingVisitor.GUESSING_MAPPER.fun(jvmName);
       }
     }
 
@@ -144,7 +154,7 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
       return fromClassBytes(bytes);
     }
 
-    return EMPTY;
+    return NO_DATA;
   }
 
   private static @NotNull FirstPassData fromClassBytes(byte[] classBytes) {

@@ -170,7 +170,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private ClassInfo parseClassDescription(String superClass, String[] superInterfaces) {
     ClassInfo result = new ClassInfo();
     result.typeParameters = TypeParametersDeclaration.EMPTY;
-    result.superType = superClass != null ? new TypeInfo(myFirstPassData.mapJvmClassNameToJava(superClass)) : null;
+    result.superType = superClass != null ? new TypeInfo(myFirstPassData.mapJvmClassNameToJava(superClass, false)) : null;
     result.interfaces = myFirstPassData.createTypes(superInterfaces);
     return result;
   }
