@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.lang
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -25,7 +26,9 @@ abstract class AbstractLangSupport : LangSupport {
   override fun installAndOpenLearningProject(projectPath: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
-    ProjectUtils.simpleInstallAndOpenLearningProject(projectPath, projectToClose, this, postInitCallback)
+    ProjectUtils.simpleInstallAndOpenLearningProject(projectPath, this,
+                                                     OpenProjectTask(projectToClose = projectToClose),
+                                                     postInitCallback)
   }
 
   override fun getSdkForProject(project: Project): Sdk? {
