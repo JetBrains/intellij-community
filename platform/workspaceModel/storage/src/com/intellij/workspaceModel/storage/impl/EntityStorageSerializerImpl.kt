@@ -412,49 +412,53 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   }
 
   override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
-    Input(stream, KRYO_BUFFER_SIZE).use { input ->
+    return Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
 
-      // Read version
-      val cacheVersion = input.readString()
-      if (cacheVersion != serializerDataFormatVersion) {
-        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
-        return null
+      try { // Read version
+        val cacheVersion = input.readString()
+        if (cacheVersion != serializerDataFormatVersion) {
+          logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+          return null
+        }
+
+        readAndRegisterClasses(input, kryo)
+
+        // Read and register persistent ids
+        val persistentIdCount = input.readVarInt(true)
+        repeat(persistentIdCount) {
+          val objectClass = kryo.readClassAndObject(input) as TypeInfo
+          kryo.register(typesResolver.resolveClass(objectClass.name, objectClass.pluginId))
+        }
+
+        // Read entity data and references
+        val entitiesBarrel = kryo.readClassAndObject(input) as ImmutableEntitiesBarrel
+        val refsTable = kryo.readClassAndObject(input) as RefsTable
+
+        // Read indexes
+        val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
+
+        val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableSet<VirtualFileIndex.VirtualFileUrlInfo>>
+        val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableSet<VirtualFileIndex.VirtualFileUrlInfo>>
+        val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
+
+        val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
+        val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
+        val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
+
+
+        val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
+        val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
+
+        builder.entitiesByType.entityFamilies.forEach { family ->
+          family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
+        }
+
+        builder
       }
-
-      readAndRegisterClasses(input, kryo)
-
-      // Read and register persistent ids
-      val persistentIdCount = input.readVarInt(true)
-      repeat(persistentIdCount) {
-        val objectClass = kryo.readClassAndObject(input) as TypeInfo
-        kryo.register(typesResolver.resolveClass(objectClass.name, objectClass.pluginId))
+      catch (e: Exception) {
+        null
       }
-
-      // Read entity data and references
-      val entitiesBarrel = kryo.readClassAndObject(input) as ImmutableEntitiesBarrel
-      val refsTable = kryo.readClassAndObject(input) as RefsTable
-
-      // Read indexes
-      val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
-
-      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableSet<VirtualFileIndex.VirtualFileUrlInfo>>
-      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableSet<VirtualFileIndex.VirtualFileUrlInfo>>
-      val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
-
-      val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
-      val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
-      val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
-
-
-      val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
-      val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
-
-      builder.entitiesByType.entityFamilies.forEach { family ->
-        family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
-      }
-
-      return builder
     }
   }
 
