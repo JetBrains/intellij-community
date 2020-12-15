@@ -13,14 +13,19 @@ fun assertHasNotification(type: NotificationType,
                           content: String,
                           actions: List<String>?,
                           notifications: Collection<Notification>): Notification {
-  val notification = notifications.find { type == it.type && title == it.title } ?: notifications.lastOrNull()
+  val cleanupForAssertionContent = cleanupForAssertion(content)
+  val notification = notifications.find {
+    type == it.type && title == it.title && cleanupForAssertionContent == cleanupForAssertion(it.content)
+  } ?: notifications.lastOrNull()
+
   try {
     if (notification == null) {
       throw AssertionError("No $type notification '${title}|${content}' was shown")
     }
     assertEquals("Incorrect notification type: " + tos(notification), type, notification.type)
     assertEquals("Incorrect notification title: " + tos(notification), title, notification.title)
-    assertEquals("Incorrect notification content: " + tos(notification), cleanupForAssertion(content), cleanupForAssertion(notification.content))
+    assertEquals("Incorrect notification content: " + tos(notification),
+                 cleanupForAssertionContent, cleanupForAssertion(notification.content))
     if (actions != null) {
       assertOrderedEquals("Incorrect notification actions", notification.actions.map { it.templatePresentation.text }, actions)
     }
