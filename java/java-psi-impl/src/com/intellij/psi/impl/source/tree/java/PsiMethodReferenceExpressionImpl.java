@@ -88,17 +88,23 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
         final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
         final int parametersCount = ((PsiMethod)element).getParameterList().getParametersCount();
         if (qualifierResolveResult.isReferenceTypeQualified() && getReferenceNameElement() instanceof PsiIdentifier) {
-          if (parametersCount == interfaceArity && isStatic) {
+          int offset = isStatic ? 0 : 1;
+          if (parametersCount == interfaceArity - offset) {
             return true;
           }
-          if (parametersCount == interfaceArity - 1 && !isStatic) {
-            return true;
+          if (((PsiMethod)element).isVarArgs()) {
+            if (interfaceMethod.isVarArgs()) {
+              return true;
+            }
+            return interfaceArity >= parametersCount + offset - 1;
           }
-          if (((PsiMethod)element).isVarArgs()) return true;
         }
         else if (!isStatic) {
-          if (parametersCount == interfaceArity || ((PsiMethod)element).isVarArgs()) {
+          if (parametersCount == interfaceArity) {
             return true;
+          }
+          if (((PsiMethod)element).isVarArgs()) {
+            return interfaceMethod.isVarArgs() || interfaceArity >= parametersCount - 1 ;
           }
         }
       } else if (element instanceof PsiClass) {
