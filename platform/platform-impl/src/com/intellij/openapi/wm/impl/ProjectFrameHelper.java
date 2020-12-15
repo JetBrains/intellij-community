@@ -378,6 +378,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
         selfie = null;
       });
     }
+
+    if (myFrameDecorator != null) {
+      myFrameDecorator.setProject();
+    }
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {

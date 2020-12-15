@@ -37,6 +37,8 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   @Override
   public abstract boolean isInFullScreen();
 
+  public void setProject() {
+  }
   /**
    * Returns applied state or rejected promise if cannot be applied.
    */

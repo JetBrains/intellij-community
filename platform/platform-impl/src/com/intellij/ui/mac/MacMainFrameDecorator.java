@@ -117,6 +117,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private final FullScreenQueue myFullScreenQueue = new FullScreenQueue();
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private boolean myInFullScreen;
+  private boolean myShowFrame;
+  private boolean myInitFrame;
 
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
 
@@ -218,8 +220,23 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   @Override
   public void frameShow() {
-    // update tab logic only after call [NSWindow makeKeyAndOrderFront]
-    updateTabBars(myFrame);
+    myShowFrame = true;
+    if (myInitFrame) {
+      initUpdateTabBars(myFrame);
+    }
+  }
+
+  @Override
+  public void setProject() {
+    myInitFrame = true;
+    if (myShowFrame) {
+      initUpdateTabBars(myFrame);
+    }
+  }
+
+  private void initUpdateTabBars(@Nullable JFrame newFrame) {
+    // update tab logic only after call [NSWindow makeKeyAndOrderFront] and after add frame to window manager
+    ApplicationManager.getApplication().invokeLater(() -> updateTabBars(myFrame));
   }
 
   private static void updateTabBars(@Nullable JFrame newFrame) {
