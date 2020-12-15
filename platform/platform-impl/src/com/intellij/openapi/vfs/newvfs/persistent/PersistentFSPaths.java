@@ -31,8 +31,8 @@ class PersistentFSPaths {
     return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX + enumName + VFS_FILES_EXTENSION);
   }
 
-  @NotNull Path getRootsFile() {
-    assert FSRecords.ourStoreRootsSeparately;
-    return new File(myCachesDir).getAbsoluteFile().toPath().resolve("roots" + VFS_FILES_EXTENSION);
+  Path getRootsFile() {
+    if (FSRecords.ourStoreRootsSeparately) return new File(myCachesDir).getAbsoluteFile().toPath().resolve("roots" + VFS_FILES_EXTENSION);
+    else return null;
   }
 }
