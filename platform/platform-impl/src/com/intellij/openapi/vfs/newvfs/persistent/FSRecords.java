@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
@@ -28,8 +27,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -51,6 +48,7 @@ public final class FSRecords {
   static volatile PersistentFSConnection ourConnection;
   static volatile PersistentFSContentAccessor ourContentAccessor;
   static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
+  static volatile PersistentFSTreeAccessor ourTreeAccessor;
 
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
@@ -79,7 +77,6 @@ public final class FSRecords {
                                      nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP,0)))))))))));
 
   private static final IntList ourNewFreeRecords = new IntArrayList();
-  static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   static final ReentrantReadWriteLock lock;
   private static final ReentrantReadWriteLock.ReadLock r;
@@ -140,8 +137,9 @@ public final class FSRecords {
     ourConnection = PersistentFSConnector.connect(getCachesDir(), getVersion(), useContentHashes);
     ourContentAccessor = new PersistentFSContentAccessor(useContentHashes);
     ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes);
+    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourStoreRootsSeparately);
     try {
-      ourConnection.getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action
+      ourTreeAccessor.ensureLoaded(ourConnection);
     }
     catch (IOException e) {
       handleError(e);
@@ -217,38 +215,10 @@ public final class FSRecords {
     setFlags(id, FREE_RECORD_FLAG, false);
   }
 
-  private static final int ROOT_RECORD_ID = 1;
 
   @TestOnly
   static int @NotNull [] listRoots() {
-    return readAndHandleErrors(() -> {
-      if (ourStoreRootsSeparately) {
-        IntList result = new IntArrayList();
-
-        try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(ourConnection.getPersistentFSPaths().getRootsFile()))) {
-          String str;
-          while ((str = stream.readLine()) != null) {
-            int index = str.indexOf(' ');
-            int id = Integer.parseInt(str.substring(0, index));
-            result.add(id);
-          }
-        }
-        catch (FileNotFoundException ignored) { }
-        return result.toIntArray();
-      }
-
-      try (DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
-        final int count = DataInputOutputUtil.readINT(input);
-        int[] result = ArrayUtil.newIntArray(count);
-        int prevId = 0;
-        for (int i = 0; i < count; i++) {
-          DataInputOutputUtil.readINT(input); // Name
-          prevId = result[i] = DataInputOutputUtil.readINT(input) + prevId; // Id
-        }
-        return result;
-      }
-    });
+    return readAndHandleErrors(() -> ourTreeAccessor.listRoots(ourConnection));
   }
 
   @TestOnly
@@ -270,163 +240,20 @@ public final class FSRecords {
     return readAndHandleErrors(() -> ourConnection.getRecords().doGetFlags(id));
   }
 
-  private static void saveNameIdSequenceWithDeltas(int[] names, int[] ids, DataOutputStream output) throws IOException {
-    DataInputOutputUtil.writeINT(output, names.length);
-    int prevId = 0;
-    int prevNameId = 0;
-    for (int i = 0; i < names.length; i++) {
-      DataInputOutputUtil.writeINT(output, names[i] - prevNameId);
-      DataInputOutputUtil.writeINT(output, ids[i] - prevId);
-      prevId = ids[i];
-      prevNameId = names[i];
-    }
-  }
-
   static int findRootRecord(@NotNull String rootUrl) {
-    return writeAndHandleErrors(() -> {
-      if (ourStoreRootsSeparately) {
-        try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(ourConnection.getPersistentFSPaths().getRootsFile()))) {
-          String str;
-          while((str = stream.readLine()) != null) {
-            int index = str.indexOf(' ');
-
-            if (str.substring(index + 1).equals(rootUrl)) {
-              return Integer.parseInt(str.substring(0, index));
-            }
-          }
-        }
-        catch (FileNotFoundException ignored) {}
-
-        ourConnection.markDirty();
-        try (Writer stream = Files.newBufferedWriter(ourConnection.getPersistentFSPaths().getRootsFile(), StandardOpenOption.APPEND)) {
-          int id = createRecord();
-          stream.write(id + " " + rootUrl + "\n");
-          return id;
-        }
-      }
-
-      int root = ourConnection.getNames().tryEnumerate(rootUrl);
-
-      int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;
-      int[] ids = ArrayUtilRt.EMPTY_INT_ARRAY;
-      try (final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        if (input != null) {
-          final int count = DataInputOutputUtil.readINT(input);
-          names = ArrayUtil.newIntArray(count);
-          ids = ArrayUtil.newIntArray(count);
-          int prevId = 0;
-          int prevNameId = 0;
-
-          for (int i = 0; i < count; i++) {
-            final int name = DataInputOutputUtil.readINT(input) + prevNameId;
-            final int id = DataInputOutputUtil.readINT(input) + prevId;
-            if (name == root) {
-              return id;
-            }
-
-            prevNameId = names[i] = name;
-            prevId = ids[i] = id;
-          }
-        }
-      }
-
-      ourConnection.markDirty();
-      root = ourConnection.getNames().enumerate(rootUrl);
-
-      int id;
-      try (DataOutputStream output = writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        id = createRecord();
-
-        int index = Arrays.binarySearch(ids, id);
-        ids = ArrayUtil.insert(ids, -index - 1, id);
-        names = ArrayUtil.insert(names, -index - 1, root);
-
-        saveNameIdSequenceWithDeltas(names, ids, output);
-      }
-
-      return id;
-    });
+    return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, ourConnection, () -> createRecord()));
   }
 
   static void deleteRootRecord(int id) {
-    writeAndHandleErrors(() -> {
-      ourConnection.markDirty();
-      if (ourStoreRootsSeparately) {
-        List<String> rootsThatLeft = new ArrayList<>();
-        try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(ourConnection.getPersistentFSPaths().getRootsFile()))) {
-          String str;
-          while((str = stream.readLine()) != null) {
-            int index = str.indexOf(' ');
-            int rootId = Integer.parseInt(str.substring(0, index));
-            if (rootId != id) {
-              rootsThatLeft.add(str);
-            }
-          }
-        }
-        catch (FileNotFoundException ignored) {}
-
-        try (Writer stream = Files.newBufferedWriter(ourConnection.getPersistentFSPaths().getRootsFile())) {
-          for (String line : rootsThatLeft) {
-            stream.write(line);
-            stream.write("\n");
-          }
-        }
-        return;
-      }
-
-      int[] names;
-      int[] ids;
-      try (final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        assert input != null;
-        int count = DataInputOutputUtil.readINT(input);
-
-        names = ArrayUtil.newIntArray(count);
-        ids = ArrayUtil.newIntArray(count);
-        int prevId = 0;
-        int prevNameId = 0;
-        for (int i = 0; i < count; i++) {
-          names[i] = DataInputOutputUtil.readINT(input) + prevNameId;
-          ids[i] = DataInputOutputUtil.readINT(input) + prevId;
-          prevId = ids[i];
-          prevNameId = names[i];
-        }
-      }
-
-      final int index = ArrayUtil.find(ids, id);
-      assert index >= 0;
-
-      names = ArrayUtil.remove(names, index);
-      ids = ArrayUtil.remove(ids, index);
-
-      try (DataOutputStream output = writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        saveNameIdSequenceWithDeltas(names, ids, output);
-      }
-    });
+    writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(id, ourConnection));
   }
 
   static int @NotNull [] listIds(int id) {
-    return readAndHandleErrors(() -> {
-      try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
-        if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
-        final int count = DataInputOutputUtil.readINT(input);
-        final int[] result = ArrayUtil.newIntArray(count);
-        int prevId = id;
-        for (int i = 0; i < count; i++) {
-          prevId = result[i] = DataInputOutputUtil.readINT(input) + prevId;
-        }
-        return result;
-      }
-    });
+    return readAndHandleErrors(() -> ourTreeAccessor.listIds(id, ourConnection));
   }
 
   static boolean mayHaveChildren(int id) {
-    return readAndHandleErrors(() -> {
-      try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
-        if (input == null) return true;
-        final int count = DataInputOutputUtil.readINT(input);
-        return count != 0;
-      }
-    });
+    return readAndHandleErrors(() -> ourTreeAccessor.mayHaveChildren(id, ourConnection));
   }
 
   // returns child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
@@ -442,27 +269,13 @@ public final class FSRecords {
 
   @NotNull
   private static ListResult doLoadChildren(int parentId) throws IOException {
-    assert parentId > 0 : parentId;
-    try (DataInputStream input = readAttribute(parentId, ourChildrenAttr)) {
-      int count = input == null ? 0 : DataInputOutputUtil.readINT(input);
-      List<ChildInfo> result = count == 0 ? Collections.emptyList() : new ArrayList<>(count);
-      int prevId = parentId;
-      for (int i = 0; i < count; i++) {
-        int id = DataInputOutputUtil.readINT(input) + prevId;
-        prevId = id;
-        int nameId = ourConnection.getRecords().getNameId(id);
-        ChildInfo child = new ChildInfoImpl(id, nameId, null, null, null);
-        result.add(child);
-      }
-      return new ListResult(result);
-    }
+    checkFileIsValid(parentId);
+    return ourTreeAccessor.doLoadChildren(parentId, ourConnection);
   }
 
   static boolean wereChildrenAccessed(int id) {
     checkFileIsValid(id);
-    return readAndHandleErrors(() -> {
-      return ourAttributeAccessor.hasAttributePage(id, ourChildrenAttr, ourConnection);
-    });
+    return readAndHandleErrors(() -> ourTreeAccessor.wereChildrenAccessed(id, ourConnection));
   }
 
   static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ?> action) {
@@ -545,7 +358,7 @@ public final class FSRecords {
       // then do not save them back again unnecessarily
       if (!toSave.equals(children)) {
         updateSymlinksForNewChildren(parentId, children, toSave);
-        doSaveChildren(parentId, toSave);
+        ourTreeAccessor.doSaveChildren(parentId, toSave, ourConnection);
       }
       return toSave;
     }
@@ -586,32 +399,6 @@ public final class FSRecords {
         assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
         String linkPath = parent.getPath() + '/' + name;
         ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, name, linkPath, symlinkTarget);
-      }
-    }
-  }
-
-  private static void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
-    ourConnection.markDirty();
-    try (DataOutputStream record = writeAttribute(parentId, ourChildrenAttr)) {
-      DataInputOutputUtil.writeINT(record, toSave.children.size());
-
-      int prevId = parentId;
-      for (ChildInfo childInfo : toSave.children) {
-        int childId = childInfo.getId();
-        if (childId <= 0) {
-          throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; childInfo: "+childInfo+"; list: "+toSave);
-        }
-        if (childId == parentId) {
-          LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+toSave);
-        }
-        else {
-          int delta = childId - prevId;
-          if (prevId != parentId && delta <= 0) {
-            throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " + parentId  + "; delta: " + delta+"; childInfo: "+childInfo+"; prevId: "+prevId+"; toSave: "+toSave);
-          }
-          DataInputOutputUtil.writeINT(record, delta);
-          prevId = childId;
-        }
       }
     }
   }
@@ -957,6 +744,7 @@ public final class FSRecords {
         ourConnection = null;
         ourContentAccessor = null;
         ourAttributeAccessor = null;
+        ourTreeAccessor = null;
       }
     });
   }
