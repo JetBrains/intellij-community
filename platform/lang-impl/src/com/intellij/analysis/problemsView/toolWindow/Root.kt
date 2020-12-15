@@ -13,7 +13,7 @@ import com.intellij.ui.tree.LeafState
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.TreePath
 
-internal abstract class Root(val panel: ProblemsViewPanel)
+abstract class Root(val panel: ProblemsViewPanel)
   : Node(panel.project), ProblemsCollector, Disposable {
 
   private val nodes = mutableMapOf<VirtualFile, FileNode>()
@@ -91,7 +91,7 @@ internal abstract class Root(val panel: ProblemsViewPanel)
     }
   }
 
-  private fun structureChanged(path: TreePath? = null) {
+  open fun structureChanged(path: TreePath? = null) {
     panel.updateToolWindowContent()
     panel.treeModel.structureChanged(path)
   }
