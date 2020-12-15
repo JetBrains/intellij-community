@@ -86,7 +86,6 @@ public class PersistentFSContentAccessor {
         page = contentStorage.acquireNewRecord();
         connection.getRecords().setContentRecordId(fileId, page);
       }
-      modified = true;
     }
 
     ByteArraySequence newBytes;

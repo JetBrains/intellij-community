@@ -51,13 +51,13 @@ final class PersistentFSConnection {
   private boolean myCorrupted;
 
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
-                         PersistentFSRecordsStorage records,
+                         @NotNull PersistentFSRecordsStorage records,
                          @NotNull PersistentStringEnumerator names,
                          @NotNull Storage attributes,
                          @NotNull RefCountingStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull IntList freeRecords,
-                         boolean markDirty) throws IOException {
+                         boolean markDirty) {
     myRecords = records;
     myNames = names;
     myAttributes = attributes;
