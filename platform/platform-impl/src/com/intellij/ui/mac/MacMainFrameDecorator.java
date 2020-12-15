@@ -222,7 +222,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   public void frameShow() {
     myShowFrame = true;
     if (myInitFrame) {
-      initUpdateTabBars(myFrame);
+      initUpdateTabBars();
     }
   }
 
@@ -230,11 +230,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   public void setProject() {
     myInitFrame = true;
     if (myShowFrame) {
-      initUpdateTabBars(myFrame);
+      initUpdateTabBars();
     }
   }
 
-  private void initUpdateTabBars(@Nullable JFrame newFrame) {
+  private void initUpdateTabBars() {
     // update tab logic only after call [NSWindow makeKeyAndOrderFront] and after add frame to window manager
     ApplicationManager.getApplication().invokeLater(() -> updateTabBars(myFrame));
   }
