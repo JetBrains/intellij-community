@@ -89,6 +89,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       String name = tag.getAttributeValue(NAME_ATTR_NAME);
       String typeName = null;
+      boolean correctTagFound = false;
 
       if (originalElement != null && originalElement.getParent() instanceof XmlAttributeValue) {
         XmlAttributeValue value = (XmlAttributeValue)originalElement.getParent();
@@ -104,6 +105,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         }
 
         if (enumerationTag != null) {
+          correctTagFound = true;
           XmlUtil.processXmlElements(enumerationTag,processor, true);
 
           if (processor.result != null) {
@@ -112,9 +114,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         }
       }
 
-      if (processor.result == null) XmlUtil.processXmlElements(tag,processor, true);
+      if (processor.result == null && !correctTagFound) XmlUtil.processXmlElements(tag,processor, true);
 
-      if (processor.result == null) {
+      if (processor.result == null && !correctTagFound) {
         XmlTag declaration = getComplexOrSimpleTypeDefinition(element, originalElement);
 
         if (declaration != null) {
