@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.util
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -119,17 +120,17 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     serverManager.loadMetadata(server).successOnEdt {
       LOG.debug("Found GHE server at $server")
       serversFromDiscovery.add(server)
-      doUpdateRepositories()
+      invokeLater(runnable = ::doUpdateRepositories)
     }.errorOnEdt {
       serverManager.loadMetadata(serverHttp).successOnEdt {
         LOG.debug("Found GHE server at $serverHttp")
         serversFromDiscovery.add(serverHttp)
-        doUpdateRepositories()
+        invokeLater(runnable = ::doUpdateRepositories)
       }.errorOnEdt {
         serverManager.loadMetadata(server8080).successOnEdt {
           LOG.debug("Found GHE server at $server8080")
           serversFromDiscovery.add(server8080)
-          doUpdateRepositories()
+          invokeLater(runnable = ::doUpdateRepositories)
         }
       }
     }
