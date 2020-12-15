@@ -266,6 +266,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
         Settings settings = Settings.KEY.getData(context);
         if (settings == null) return;
         settings.select(settings.find("editor.reader.mode"));
+        ReaderModeStatsCollector.INSTANCE.getSEE_ALSO_EVENT().log(1);
       });
     });
     return hyperlinkLabel;

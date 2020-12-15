@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions
 
+import com.intellij.application.options.colors.ReaderModeStatsCollector.SEE_ALSO_EVENT
 import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.applyReaderMode
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
 import com.intellij.ide.DataManager
@@ -55,6 +56,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
           context?.let { dataContext ->
             Settings.KEY.getData(dataContext)?.let { settings ->
               settings.select(settings.find("editor.reader.mode"))
+              SEE_ALSO_EVENT.log(1)
             }
           }
         }
