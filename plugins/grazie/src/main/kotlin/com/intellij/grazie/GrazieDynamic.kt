@@ -21,7 +21,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
-
 internal object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
     val oldFiles = Files.walk(dynamicFolder).filter { file ->
@@ -51,7 +50,9 @@ internal object GrazieDynamic : DynamicPluginListener {
 
   override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
-      if (Lang.isAnyLanguageLoadExceptEnglish()) throw CannotUnloadPluginException("Grazie can unload only English language")
+      if (Lang.isAnyLanguageLoadExceptEnglish()) {
+        throw CannotUnloadPluginException("Grazie can unload only English language")
+      }
     }
   }
 
@@ -78,51 +79,47 @@ internal object GrazieDynamic : DynamicPluginListener {
     return Languages.get().find { it::class.java.simpleName == lang.className }
   }
 
-  fun loadClass(className: String): Class<*>? = forClassLoader {
-    try {
-      Class.forName(className, true, it)
-    }
-    catch (e: ClassNotFoundException) {
-      null
+  fun loadClass(className: String): Class<*>? {
+    return forClassLoader {
+      try {
+        Class.forName(className, true, it)
+      }
+      catch (e: ClassNotFoundException) {
+        null
+      }
     }
   }
 
   fun getResourceAsStream(path: String): InputStream? {
-    return forClassLoader { it.getResourceAsStream(path) }
-           ?: if (path.startsWith("/")) forClassLoader { it.getResourceAsStream(path.drop(1)) } else null
+    return forClassLoader { it.getResourceAsStream(path.removePrefix("/")) }
   }
 
   fun getResource(path: String): URL? {
-    return forClassLoader { it.getResource(path) }
-           ?: if (path.startsWith("/")) forClassLoader { it.getResource(path.drop(1)) } else null
+    return forClassLoader { it.getResource(path.removePrefix("/")) }
   }
 
   fun getResources(path: String): List<URL> {
-    var result = forClassLoader { loader ->
-      loader.getResources(path).toList().takeIf { it.isNotEmpty() }
-    }
-
-    if (result == null && path.startsWith("/")) {
-      result = forClassLoader { loader ->
-        loader.getResources(path.drop(1)).toList().takeIf { it.isNotEmpty() }
-      }
-    }
-
-    return result.orEmpty()
+    return forClassLoader { loader ->
+      loader.getResources(path.removePrefix("/")).toList().takeIf<List<URL>> { it.isNotEmpty<URL?>() }
+    }.orEmpty()
   }
 
-  fun getResourceBundle(baseName: String, locale: Locale) = forClassLoader {
-    try {
-      ResourceBundle.getBundle(baseName, locale, it).takeIf { bundle -> bundle.locale.language == locale.language }
-    }
-    catch (e: MissingResourceException) {
-      null
-    }
-  } ?: throw MissingResourceException("Missing resource bundle for $baseName with locale $locale", GrazieDynamic.javaClass.name, baseName)
+  fun getResourceBundle(baseName: String, locale: Locale): ResourceBundle {
+    return forClassLoader {
+      try {
+        ResourceBundle.getBundle(baseName, locale, it).takeIf { bundle -> bundle.locale.language == locale.language }
+      }
+      catch (e: MissingResourceException) {
+        null
+      }
+    } ?: throw MissingResourceException("Missing resource bundle for $baseName with locale $locale", GrazieDynamic.javaClass.name, baseName)
+  }
 
-  private fun <T : Any> forClassLoader(body: (ClassLoader) -> T?): T? = body(GraziePlugin.classLoader) ?: dynClassLoaders
-    .asSequence()
-    .mapNotNull {
-      body(it)
-    }.firstOrNull()
+  private inline fun <T : Any> forClassLoader(crossinline body: (ClassLoader) -> T?): T? {
+    return body(GraziePlugin.classLoader) ?: dynClassLoaders
+      .asSequence()
+      .mapNotNull {
+        body(it)
+      }.firstOrNull()
+  }
 }
