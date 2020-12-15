@@ -285,6 +285,7 @@ object GHGQLRequests {
                                        "pullRequestId" to pullRequestId,
                                        "pullRequestReviewId" to reviewId,
                                        "side" to side.name,
+                                       "startSide" to side.name,
                                        "startLine" to startLine),
                                  GHPullRequestReviewThread::class.java,
                                  "addPullRequestReviewThread", "thread")

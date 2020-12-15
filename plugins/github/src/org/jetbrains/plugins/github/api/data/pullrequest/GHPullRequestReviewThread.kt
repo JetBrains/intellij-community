@@ -6,8 +6,7 @@ import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.GHNodes
 
-class
-GHPullRequestReviewThread(id: String,
+class GHPullRequestReviewThread(id: String,
                                 val isOutdated: Boolean,
                                 val isResolved: Boolean,
                                 val line: Int,
