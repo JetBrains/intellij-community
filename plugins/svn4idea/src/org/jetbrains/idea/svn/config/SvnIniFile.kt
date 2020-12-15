@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn.config
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.io.FileSystemUtil.lastModified
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil.union
 import org.apache.oro.text.GlobCompiler
@@ -22,6 +21,7 @@ import org.jetbrains.idea.svn.config.ServersFileKeys.SERVER_GROUPS_SECTION
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.Writer
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -57,7 +57,10 @@ class SvnIniFile(private val myPath: Path) {
 
   @JvmOverloads
   fun updateGroups(force: Boolean = false) {
-    val lastModified = lastModified(myPath.toFile())
+    val lastModified = try {
+      Files.getLastModifiedTime(myPath).toMillis()
+    }
+    catch (e: IOException) { 0 }
 
     if (force || myLatestUpdate != lastModified) {
       _configFile.clear()
