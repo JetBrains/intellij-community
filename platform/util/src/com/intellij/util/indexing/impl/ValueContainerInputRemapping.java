@@ -16,5 +16,6 @@ import org.jetbrains.annotations.NotNull;
 public interface ValueContainerInputRemapping {
   ValueContainerInputRemapping IDENTITY = inputId -> new int[]{inputId};
 
-  int @NotNull[] remap(int inputId);
+  // one of: int or int[]. Object is being used here to avoid additional allocations
+  @NotNull Object remap(int inputId);
 }

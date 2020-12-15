@@ -463,14 +463,25 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       final int valueCount = DataInputOutputUtil.readINT(stream);
       if (valueCount < 0) {
         // ChangeTrackingValueContainer marked inputId as invalidated, see ChangeTrackingValueContainer.saveTo
-        final int[] inputIds = remapping.remap(-valueCount);
+        @NotNull Object inputIds = remapping.remap(-valueCount);
 
         if (mapping == null && size() > NUMBER_OF_VALUES_THRESHOLD) { // avoid O(NumberOfValues)
           mapping = new FileId2ValueMapping<>(this);
         }
 
         boolean doCompact = false;
-        for (int inputId : inputIds) {
+        if (inputIds instanceof int[]) {
+          for (int inputId : (int[])inputIds) {
+            if(mapping != null) {
+              if (mapping.removeFileId(inputId)) doCompact = true;
+            } else {
+              removeAssociatedValue(inputId);
+              doCompact = true;
+            }
+          }
+        }
+        else {
+          int inputId = (int)inputIds;
           if(mapping != null) {
             if (mapping.removeFileId(inputId)) doCompact = true;
           } else {
@@ -487,8 +498,16 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
           int idCountOrSingleValue = DataInputOutputUtil.readINT(stream);
 
           if (idCountOrSingleValue > 0) {
-            int[] inputIds = remapping.remap(idCountOrSingleValue);
-            for (int inputId : inputIds) {
+            @NotNull Object inputIds = remapping.remap(idCountOrSingleValue);
+
+            if (inputIds instanceof int[]) {
+              for (int inputId : (int[])inputIds) {
+                addValue(inputId, value);
+                if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+              }
+            }
+            else {
+              int inputId = (int)inputIds;
               addValue(inputId, value);
               if (mapping != null) mapping.associateFileIdToValue(inputId, value);
             }
@@ -500,8 +519,17 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
 
             for (int i = 0; i < idCountOrSingleValue; i++) {
               final int id = DataInputOutputUtil.readINT(stream);
-              int[] inputIds = remapping.remap(prev + id);
-              for (int inputId : inputIds) {
+              @NotNull Object inputIds = remapping.remap(prev + id);
+
+              if (inputIds instanceof int[]) {
+                for (int inputId : (int[])inputIds) {
+                  if (changeBufferingList != null) changeBufferingList.add(inputId);
+                  else addValue(inputId, value);
+                  if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+                }
+              }
+              else {
+                int inputId = (int)inputIds;
                 if (changeBufferingList != null) changeBufferingList.add(inputId);
                 else addValue(inputId, value);
                 if (mapping != null) mapping.associateFileIdToValue(inputId, value);
