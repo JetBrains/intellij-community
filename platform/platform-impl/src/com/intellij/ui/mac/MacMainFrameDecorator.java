@@ -29,8 +29,6 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
@@ -147,14 +145,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     super(frame);
 
     if (JdkEx.setTabbingMode(frame, () -> updateTabBars(null))) {
-      // update tab logic only after call [NSWindow makeKeyAndOrderFront]
-      frame.addPropertyChangeListener("focusableWindowState", new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          myFrame.removePropertyChangeListener("focusableWindowState", this);
-          updateTabBars(myFrame);
-        }
-      });
       Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
         @Override
         public void dispose() {
@@ -226,6 +216,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }
   }
 
+  @Override
+  public void frameShow() {
+    // update tab logic only after call [NSWindow makeKeyAndOrderFront]
+    updateTabBars(myFrame);
+  }
+
   private static void updateTabBars(@Nullable JFrame newFrame) {
     if (!JdkEx.isTabbingModeAvailable()) {
       return;
@@ -248,8 +244,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       for (int i = 0; i < frames.length; i++) {
         ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
         if (newFrame == helper.getFrame()) {
-          //boolean visible = Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 1; // NSWindowUserTabbingPreferenceAlways = 1
-          //visibleAndHeights[i] = visible ? DEFAULT_WIN_TAB_HEIGHT : 0;
           newIndex = i;
         }
         else if (helper.isInFullScreen()) {

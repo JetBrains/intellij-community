@@ -69,6 +69,9 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   interface FrameDecorator {
     boolean isInFullScreen();
+
+    default void frameShow() {
+    }
   }
 
   // expose setRootPane
@@ -126,7 +129,12 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @SuppressWarnings({"SSBasedInspection", "deprecation"})
   public void show() {
     super.show();
-    SwingUtilities.invokeLater(() -> setFocusableWindowState(true));
+    SwingUtilities.invokeLater(() -> {
+      setFocusableWindowState(true);
+      if (myFrameDecorator != null) {
+        myFrameDecorator.frameShow();
+      }
+    });
   }
 
   @NotNull
