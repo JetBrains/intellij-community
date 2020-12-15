@@ -23,8 +23,8 @@ import training.ui.UISettings
 import training.util.createBalloon
 import java.awt.Color
 import java.awt.Cursor
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.event.MouseListener
 import javax.swing.JLabel
 import javax.swing.JPanel
 
@@ -121,8 +121,10 @@ class LearningItems : JPanel() {
     }
     result.add(modulePanel)
 
-    result.addMouseListener(object : MouseListener {
-      override fun mouseClicked(e: MouseEvent) {
+    result.addMouseListener(object : MouseAdapter() {
+      override fun mouseReleased(e: MouseEvent) {
+        if (!result.visibleRect.contains(e.point)) return
+
         if (expanded.contains(module)) {
           expanded.remove(module)
         }
@@ -131,12 +133,6 @@ class LearningItems : JPanel() {
           expanded.add(module)
         }
         updateItems()
-      }
-
-      override fun mousePressed(e: MouseEvent) {
-      }
-
-      override fun mouseReleased(e: MouseEvent) {
       }
 
       override fun mouseEntered(e: MouseEvent) {
