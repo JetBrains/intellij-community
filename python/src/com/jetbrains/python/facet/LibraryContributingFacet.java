@@ -16,6 +16,7 @@
 package com.jetbrains.python.facet;
 
 import com.intellij.facet.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
@@ -37,14 +38,14 @@ public abstract class LibraryContributingFacet<T extends FacetConfiguration> ext
       @Override
       public void beforeFacetRemoved(@NotNull Facet facet) {
         if (facet == LibraryContributingFacet.this) {
-          ((LibraryContributingFacet) facet).removeLibrary();
+          ApplicationManager.getApplication().invokeLater(() -> ((LibraryContributingFacet<?>)facet).removeLibrary());
         }
       }
 
       @Override
       public void facetConfigurationChanged(@NotNull Facet facet) {
         if (facet == LibraryContributingFacet.this) {
-          ((LibraryContributingFacet) facet).updateLibrary();
+          ApplicationManager.getApplication().invokeLater(() -> ((LibraryContributingFacet<?>) facet).updateLibrary());
         }
       }
     });
