@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.SyntheticLibrary
-import com.intellij.openapi.roots.SyntheticLibraryIndexableFilesIterator
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 

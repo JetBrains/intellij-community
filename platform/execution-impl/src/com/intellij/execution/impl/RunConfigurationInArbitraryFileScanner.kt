@@ -2,7 +2,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.impl.IndexableFileScanner
+import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
