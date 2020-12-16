@@ -10,6 +10,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.util.LayeredTextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -196,11 +199,11 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
                                            @NotNull Collection<? super HighlightInfo> outInfos) {
     if (injectedFiles.isEmpty()) return true;
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
-    TextAttributes injectedAttributes = myGlobalScheme.getAttributes(createInjectedLanguageFragmentKey(myFile.getLanguage()));
+    TextAttributesKey fragmentKey = createInjectedLanguageFragmentKey(myFile.getLanguage());
 
     return JobLauncher.getInstance()
       .invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), progress,
-                                       injectedPsi -> addInjectedPsiHighlights(injectedPsi, injectedAttributes, outInfos,
+                                       injectedPsi -> addInjectedPsiHighlights(injectedPsi, fragmentKey, outInfos,
                                                                                injectedLanguageManager));
   }
 
@@ -211,7 +214,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
   }
 
   private boolean addInjectedPsiHighlights(@NotNull PsiFile injectedPsi,
-                                           @Nullable TextAttributes injectedAttributes,
+                                           TextAttributesKey attributesKey,
                                            @NotNull Collection<? super HighlightInfo> outInfos,
                                            @NotNull InjectedLanguageManager injectedLanguageManager) {
     DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
@@ -224,8 +227,8 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       TextRange textRange = place.getRangeInsideHost().shiftRight(host.getTextRange().getStartOffset());
       if (textRange.isEmpty()) continue;
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND).range(textRange);
-      if (injectedAttributes != null && InjectedLanguageUtil.isHighlightInjectionBackground(host)) {
-        builder.textAttributes(injectedAttributes);
+      if (attributesKey != null && InjectedLanguageUtil.isHighlightInjectionBackground(host)) {
+        builder.textAttributes(attributesKey);
       }
       if (addTooltips) {
         String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
@@ -376,8 +379,6 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
     List<InjectedLanguageUtil.TokenInfo> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
     if (tokens == null) return;
 
-    TextAttributes defaultAttrs = myGlobalScheme.getAttributes(HighlighterColors.TEXT);
-
     Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);
     int shredIndex = -1;
     int injectionHostTextRangeStart = -1;
@@ -392,31 +393,44 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
         if (host == null) return;
         injectionHostTextRangeStart = host.getTextRange().getStartOffset();
       }
-      TextRange annRange = range.shiftRight(injectionHostTextRangeStart);
+      TextRange shiftedRange = range.shiftRight(injectionHostTextRangeStart);
 
-      // force attribute colors to override host' ones
-      TextAttributes attributes = token.attributes;
-      TextAttributes forcedAttributes;
-      if (attributes == null || attributes.isEmpty() || attributes.equals(defaultAttrs)) {
-        forcedAttributes = TextAttributes.ERASE_MARKER;
-      }
-      else {
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).range(annRange).textAttributes(
-          TextAttributes.ERASE_MARKER).createUnconditionally();
-        holder.add(info);
-
-        forcedAttributes = new TextAttributes(attributes.getForegroundColor(), attributes.getBackgroundColor(),
-                                              attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
-      }
-
-      HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).range(annRange).textAttributes(forcedAttributes)
-          .createUnconditionally();
-      holder.add(info);
+      holder.addAll(overrideDefaultHighlights(myGlobalScheme, shiftedRange, token.textAttributesKeys));
     }
   }
 
   @Override
   protected void applyInformationWithProgress() {
+  }
+
+  @NotNull
+  public static List<HighlightInfo> overrideDefaultHighlights(@NotNull EditorColorsScheme scheme,
+                                                              @NotNull TextRange range,
+                                                              TextAttributesKey @NotNull [] keys) {
+    List<HighlightInfo> result = new ArrayList<>();
+
+    if (range.isEmpty()) {
+      return result;
+    }
+    // erase marker to override hosts colors
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT)
+      .range(range)
+      .textAttributes(TextAttributes.ERASE_MARKER)
+      .createUnconditionally();
+    result.add(info);
+
+    LayeredTextAttributes injectedAttributes = LayeredTextAttributes.create(scheme, keys);
+    if (injectedAttributes.isEmpty() || keys.length == 1 && keys[0] == HighlighterColors.TEXT) {
+      // nothing to add
+      return result;
+    }
+
+    HighlightInfo injectedInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT)
+      .range(range)
+      .textAttributes(injectedAttributes)
+      .createUnconditionally();
+    result.add(injectedInfo);
+
+    return result;
   }
 }

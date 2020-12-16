@@ -829,7 +829,8 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
             prevHostEndOffset = shredEndOffset;
           }
           ProperTextRange rangeInHost = new ProperTextRange(start, end);
-          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum, iterator.getTextAttributes()));
+          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum, iterator.getTextAttributes(),
+                                                            iterator.getTextAttributesKeys()));
         }
         range = spilled;
       }

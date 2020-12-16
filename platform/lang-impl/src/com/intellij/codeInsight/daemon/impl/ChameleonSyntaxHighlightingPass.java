@@ -6,11 +6,9 @@ import com.intellij.codeHighlighting.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -104,47 +102,18 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
                                  @NotNull List<? super HighlightInfo> outside,
                                  @NotNull ProperTextRange priorityRange) {
     EditorColorsScheme scheme = ObjectUtils.notNull(getColorsScheme(), EditorColorsManager.getInstance().getGlobalScheme());
-    TextAttributes defaultAttrs = scheme.getAttributes(HighlighterColors.TEXT);
 
     Language language = ILazyParseableElementType.LANGUAGE_KEY.get(element.getNode());
     if (language == null) return;
 
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, myProject, myFile.getVirtualFile());
     for (PsiElement token : SyntaxTraverser.psiTraverser(element).traverse(TreeTraversal.LEAVES_DFS)) {
-      TextRange tr = token.getTextRange();
-      if (tr.isEmpty()) continue;
+      TextRange tokenRange = token.getTextRange();
+      if (tokenRange.isEmpty()) continue;
       IElementType type = PsiUtilCore.getElementType(token);
+      List<? super HighlightInfo> result = priorityRange.contains(tokenRange) ? inside : outside;
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(type);
-
-      // force attribute colors to override host' ones
-      TextAttributes attributes = null;
-      for (TextAttributesKey key : keys) {
-        TextAttributes attrs2 = scheme.getAttributes(key);
-        if (attrs2 != null) {
-          attributes = attributes == null ? attrs2 : TextAttributes.merge(attributes, attrs2);
-        }
-      }
-      TextAttributes forcedAttributes;
-      List<? super HighlightInfo> result = priorityRange.contains(tr) ? inside : outside;
-      if (attributes == null || attributes.isEmpty() || attributes.equals(defaultAttrs)) {
-        forcedAttributes = TextAttributes.ERASE_MARKER;
-      }
-      else {
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).
-          range(tr).
-          textAttributes(TextAttributes.ERASE_MARKER).
-          createUnconditionally();
-        result.add(info);
-
-        forcedAttributes = new TextAttributes(attributes.getForegroundColor(), attributes.getBackgroundColor(),
-                                              attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
-      }
-
-      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).
-        range(tr).
-        textAttributes(forcedAttributes).
-        createUnconditionally();
-      result.add(info);
+      result.addAll(InjectedGeneralHighlightingPass.overrideDefaultHighlights(scheme, tokenRange, keys));
     }
   }
 

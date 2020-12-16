@@ -9,6 +9,7 @@ import com.intellij.model.ModelBranch;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -65,16 +66,24 @@ public class InjectedLanguageUtilBase {
     @NotNull public final IElementType type;
     @NotNull public final ProperTextRange rangeInsideInjectionHost;
     public final int shredIndex;
+    /**
+     * @deprecated Use textAttributesKeys
+     */
+    @Deprecated
     public final TextAttributes attributes;
+    public final TextAttributesKey @NotNull [] textAttributesKeys;
 
     public TokenInfo(@NotNull IElementType type,
                      @NotNull ProperTextRange rangeInsideInjectionHost,
                      int shredIndex,
-                     @NotNull TextAttributes attributes) {
+                     @NotNull TextAttributes attributes,
+                     TextAttributesKey @NotNull [] textAttributesKeys
+    ) {
       this.type = type;
       this.rangeInsideInjectionHost = rangeInsideInjectionHost;
       this.shredIndex = shredIndex;
       this.attributes = attributes;
+      this.textAttributesKeys = textAttributesKeys;
     }
   }
   static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<TokenInfo> tokens) {
