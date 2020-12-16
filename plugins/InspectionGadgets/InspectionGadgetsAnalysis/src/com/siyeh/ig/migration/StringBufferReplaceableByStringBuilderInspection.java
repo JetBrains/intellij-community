@@ -19,7 +19,6 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -117,7 +117,9 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     }
 
     private static void replaceAssignmentsWithStringBuilder(PsiVariable variable, PsiJavaCodeReferenceElement stringBuilderClassReference) {
-      for (PsiReference reference : ReferencesSearch.search(variable, variable.getUseScope())) {
+      final List<PsiReferenceExpression> references =
+        VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
+      for (PsiReference reference : references) {
         final PsiElement referenceElement = PsiUtil.skipParenthesizedExprUp(reference.getElement().getParent());
         if (referenceElement instanceof PsiAssignmentExpression) {
           final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)referenceElement;
