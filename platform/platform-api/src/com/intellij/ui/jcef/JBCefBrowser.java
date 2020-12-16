@@ -4,11 +4,15 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.browser.CefBrowser;
@@ -22,6 +26,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -74,6 +83,21 @@ public class JBCefBrowser implements JBCefDisposable {
   private JDialog myDevtoolsFrame = null;
   protected CefContextMenuHandler myDefaultContextMenuHandler;
   private final ReentrantLock myCookieManagerLock = new ReentrantLock();
+
+  private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
+    new LazyInitializer.NotNullValue<>() {
+      @Override
+      public @NotNull String initialize() {
+        try {
+          URL url = JBCefApp.class.getResource("resources/load_error.html");
+          if (url != null) return Files.readString(Paths.get(url.toURI()));
+        }
+        catch (IOException | URISyntaxException ex) {
+          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", ex);
+        }
+        return "";
+      }
+    };
 
   private static final class LoadDeferrer {
     @Nullable private final String myHtml;
@@ -226,6 +250,13 @@ public class JBCefBrowser implements JBCefDisposable {
     });
 
     if (cefBrowser == null) {
+      myCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
+          @Override
+          public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+            UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
+          }
+        }, myCefBrowser);
+
       myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
           @Override
           public void onAfterCreated(CefBrowser browser) {
@@ -496,6 +527,31 @@ public class JBCefBrowser implements JBCefDisposable {
    */
   public static void removeOnBrowserMoveResizeCallback(@NotNull Consumer<? super JBCefBrowser> callback) {
     ourOnBrowserMoveResizeCallbacks.remove(callback);
+  }
+
+  private void loadErrorPage(@NotNull String errorText, @NotNull String failedUrl) {
+    int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
+    int headerFontSize = fontSize + JBUIScale.scale(3);
+    int headerPaddingTop = headerFontSize / 5;
+    int lineHeight = headerFontSize * 2;
+    int iconPaddingRight = JBUIScale.scale(12);
+    Color bgColor = JBColor.background();
+    String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
+    Color fgColor = JBColor.foreground();
+    String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
+
+    String html = ERROR_PAGE_READER.get();
+    html = html.replace("${lineHeight}", String.valueOf(lineHeight));
+    html = html.replace("${iconPaddingRight}", String.valueOf(iconPaddingRight));
+    html = html.replace("${fontSize}", String.valueOf(fontSize));
+    html = html.replace("${headerFontSize}", String.valueOf(headerFontSize));
+    html = html.replace("${headerPaddingTop}", String.valueOf(headerPaddingTop));
+    html = html.replace("${bgWebColor}", bgWebColor);
+    html = html.replace("${fgWebColor}", fgWebColor);
+    html = html.replace("${errorText}", errorText);
+    html = html.replace("${failedUrl}", failedUrl);
+
+    loadHTML(html);
   }
 
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
