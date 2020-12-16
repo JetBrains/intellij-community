@@ -8411,6 +8411,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantSemicolon/startOfLine2.kt");
         }
 
+        @TestMetadata("startOfLineBeforeFunctionReference.kt")
+        public void testStartOfLineBeforeFunctionReference() throws Exception {
+            runTest("testData/inspectionsLocal/redundantSemicolon/startOfLineBeforeFunctionReference.kt");
+        }
+
         @TestMetadata("startOfLineBeforeLambda.kt")
         public void testStartOfLineBeforeLambda() throws Exception {
             runTest("testData/inspectionsLocal/redundantSemicolon/startOfLineBeforeLambda.kt");
