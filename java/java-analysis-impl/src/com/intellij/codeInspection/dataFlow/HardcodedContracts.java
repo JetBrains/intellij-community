@@ -443,9 +443,15 @@ public final class HardcodedContracts {
       case "isEmpty":
         return emptyCheck(type, true);
       case "isTrue":
-        return new StandardMethodContract(new ValueConstraint[]{FALSE_VALUE}, fail());
+        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
+          return new StandardMethodContract(new ValueConstraint[]{FALSE_VALUE}, fail());
+        }
+        return null;
       case "isFalse":
-        return new StandardMethodContract(new ValueConstraint[]{TRUE_VALUE}, fail());
+        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
+          return new StandardMethodContract(new ValueConstraint[]{TRUE_VALUE}, fail());
+        }
+        return null;
     }
     return null;
   }
