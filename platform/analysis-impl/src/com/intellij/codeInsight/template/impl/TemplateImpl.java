@@ -180,7 +180,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
       }
     }
     for (Variable variable : another.myVariables) {
-      addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
+      myVariables.add(new Variable(variable));
     }
   }
 
