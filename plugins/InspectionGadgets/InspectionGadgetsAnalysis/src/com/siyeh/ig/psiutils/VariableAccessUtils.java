@@ -110,33 +110,51 @@ public final class VariableAccessUtils {
     return variableIsAssigned(variable, context);
   }
 
+  /**
+   * Returns true if the specified variable is assigned in the specified context.
+   * @param variable  the variable to check
+   * @param context  the context to check for assignments
+   * @return true, if the specified variable was assigned in the specified context, false otherwise
+   */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }
-    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, true);
+    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable);
     context.accept(visitor);
     return visitor.isAssigned();
   }
 
-  public static boolean variableIsAssigned(@NotNull PsiVariable variable, @NotNull Predicate<? super PsiExpression> safeExpression,
+  /**
+   * Returns true if the specified variable is assigned in the specified context.
+   * Certain assignment can be excluded from consideration using the skipFilter.
+   * @param variable  the variable to check
+   * @param skipFilter  when the predicate evaluates to true, then the assignment is ignored
+   * @param context  the context to check for assignments
+   * @return true, if the variable was assigned and the right hand side expression was not filtered out, false otherwise
+   */
+  public static boolean variableIsAssigned(@NotNull PsiVariable variable, @NotNull Predicate<? super PsiAssignmentExpression> skipFilter,
                                            @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }
-    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, safeExpression, true);
+    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, skipFilter, true);
     context.accept(visitor);
     return visitor.isAssigned();
   }
 
-  public static boolean variableIsAssigned(
-    @NotNull PsiVariable variable, @Nullable PsiElement context,
-    boolean recurseIntoClasses) {
+  /**
+   * Returns true if the specified variable is assigned in the specified context.
+   * @param variable  the variable to check
+   * @param context  the context to check for assignments
+   * @param recurseIntoClasses
+   * @return true, if the specified variable was assigned in the specified context, false otherwise
+   */
+  public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context, boolean recurseIntoClasses) {
     if (context == null) {
       return false;
     }
-    final VariableAssignedVisitor visitor =
-      new VariableAssignedVisitor(variable, recurseIntoClasses);
+    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, recurseIntoClasses);
     context.accept(visitor);
     return visitor.isAssigned();
   }

@@ -209,8 +209,8 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       if (initializer != null && getNewStringBuffer(initializer) == null) {
         return false;
       }
-      final Predicate<PsiExpression> safeExpression = e -> getNewStringBuffer(e) != null;
-      if (VariableAccessUtils.variableIsAssigned(variable, safeExpression, context)) {
+      final Predicate<PsiAssignmentExpression> skipFilter = e -> getNewStringBuffer(e.getRExpression()) != null;
+      if (VariableAccessUtils.variableIsAssigned(variable, skipFilter, context)) {
         return false;
       }
       if (VariableAccessUtils.variableIsAssignedFrom(variable, context)) {

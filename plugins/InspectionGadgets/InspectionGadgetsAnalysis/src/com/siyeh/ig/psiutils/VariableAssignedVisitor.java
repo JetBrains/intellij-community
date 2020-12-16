@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +30,7 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
   @NotNull private final Collection<? extends PsiVariable> variables;
   private final boolean recurseIntoClasses;
   private final boolean checkUnaryExpressions;
-  private final Predicate<? super PsiExpression> mySafeExpression;
+  private final Predicate<? super PsiAssignmentExpression> mySkipFilter;
   private boolean assigned = false;
   private PsiElement excludedElement = null;
 
@@ -37,7 +38,7 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     this.variables = variables;
     checkUnaryExpressions = true;
     this.recurseIntoClasses = recurseIntoClasses;
-    mySafeExpression = null;
+    mySkipFilter = null;
   }
 
   public VariableAssignedVisitor(@NotNull PsiVariable variable, boolean recurseIntoClasses) {
@@ -48,11 +49,12 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     this(variable, true);
   }
 
-  public VariableAssignedVisitor(PsiVariable variable, Predicate<? super PsiExpression> safeExpression, boolean recurseIntoClasses) {
+  public VariableAssignedVisitor(@NotNull PsiVariable variable, @Nullable Predicate<? super PsiAssignmentExpression> skipFilter,
+                                 boolean recurseIntoClasses) {
     variables = Collections.singleton(variable);
     checkUnaryExpressions = TypeConversionUtil.isNumericType(variable.getType());
     this.recurseIntoClasses = recurseIntoClasses;
-    mySafeExpression = safeExpression;
+    mySkipFilter = skipFilter;
   }
 
   public void setExcludedElement(PsiElement excludedElement) {
@@ -76,8 +78,7 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     final PsiExpression lhs = assignment.getLExpression();
     for (PsiVariable variable : variables) {
       if (ExpressionUtils.isReferenceTo(lhs, variable)) {
-        final PsiExpression rhs = assignment.getRExpression();
-        if (mySafeExpression == null || !mySafeExpression.test(rhs)) {
+        if (mySkipFilter == null || !mySkipFilter.test(assignment)) {
           assigned = true;
           break;
         }
