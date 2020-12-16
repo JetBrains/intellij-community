@@ -853,7 +853,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   // is 1 more than their parent.
   private static void printNode(XDebuggerTreeNode node, StringBuilder builder, int level, int numIndentSpaces) {
     if (builder.length() > 0) {
-      builder.append(System.getProperty("line.separator"));
+      builder.append(System.lineSeparator());
     }
     for (int i = 0; i < level * numIndentSpaces; ++i) {
       builder.append(' ');
