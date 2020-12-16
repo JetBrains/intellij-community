@@ -30,7 +30,6 @@ import training.util.featureTrainerVersion
 import java.io.File
 import java.io.FileFilter
 import java.io.PrintWriter
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -122,14 +121,13 @@ object ProjectUtils {
     }
   }
 
-  fun copyLearningProjectFiles(newProjectDirectory: Path, langSupport: LangSupport): Boolean {
+  private fun copyLearningProjectFiles(newProjectDirectory: Path, langSupport: LangSupport): Boolean {
     var targetDirectory = newProjectDirectory
-    val inputUrl: URL = learningProjectUrl(langSupport)
-    if (!FileUtils.copyResourcesRecursively(inputUrl, targetDirectory.toFile())) {
+    if (!langSupport.copyLearningProjectFiles(targetDirectory.toFile())) {
       targetDirectory = invokeAndWaitIfNeeded {
         chooseParentDirectoryForLearningProject(langSupport)
       } ?: return false
-      if (!FileUtils.copyResourcesRecursively(inputUrl, targetDirectory.toFile())) {
+      if (!langSupport.copyLearningProjectFiles(targetDirectory.toFile())) {
         invokeLater {
           Messages.showInfoMessage(LearnBundle.message("learn.project.initializing.cannot.create.message"),
                                    LearnBundle.message("learn.project.initializing.cannot.create.title"))
@@ -141,7 +139,7 @@ object ProjectUtils {
     return true
   }
 
-  private fun learningProjectUrl(langSupport: LangSupport) =
+  fun learningProjectUrl(langSupport: LangSupport) =
     langSupport.javaClass.classLoader.getResource(langSupport.projectResourcePath)
     ?: throw IllegalArgumentException("No project ${langSupport.projectResourcePath} in resources for ${langSupport.primaryLanguage} IDE learning course")
 
@@ -168,7 +166,7 @@ object ProjectUtils {
     FileUtils.copyResourcesRecursively(iconUrl, ideaDir)
   }
 
-  fun createVersionFile(newProjectDirectory: Path) {
+  private fun createVersionFile(newProjectDirectory: Path) {
     PrintWriter(newProjectDirectory.resolve(FEATURE_TRAINER_VERSION).toFile(), "UTF-8").use {
       it.println(featureTrainerVersion)
     }
@@ -235,9 +233,8 @@ object ProjectUtils {
       modified = true
     }
 
-    val inputUrl: URL = learningProjectUrl(languageSupport)
     val pathname = project.basePath ?: throw IllegalStateException("No Base Path in Learning project")
-    FileUtils.copyResourcesRecursively(inputUrl, File(pathname), FileFilter {
+    languageSupport.copyLearningProjectFiles(File(pathname), FileFilter {
       val path = it.toPath()
       val needCopy = needReplace.contains(path) || !validContent.contains(path)
       modified = needCopy || modified
