@@ -5,9 +5,10 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.codeInspection.style.GrStringStyleViolationInspection.InspectionStringKind
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind
 
-import static org.jetbrains.plugins.groovy.codeInspection.style.GrStringStyleViolationInspection.InspectionStringKind.*
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.*
 
 @CompileStatic
 class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
@@ -64,12 +65,12 @@ cde"""
     doTest '"ab\\"c"', /'ab"c'/, plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED
   }
 
-  void "test leave plain string if escaping can't be minimized"() {
-    doTest(/"ab\"'c"/, /'''ab"'c'''/, plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED)
+  void "test escaping minimization 2"() {
+    doTest(/"ab\"'c"/, '''$/ab"'c/$''', plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED)
   }
 
   void "test consider slashes for slashy strings"() {
-    doTest($/"ab//\"c"/$, $/'''ab//"c'''/$, plain: DOUBLE_QUOTED, escape: SLASHY)
+    doTest($/"ab//\"c"/$, '''$/ab//"c/$''', plain: DOUBLE_QUOTED, escape: SLASHY)
   }
 
   void "test complex minimization"() {
@@ -80,12 +81,12 @@ cde"""
     doTest '\'abc$de\'', '$/abc$$de/$', plain: DOLLAR_SLASHY_QUOTED, escape: UNDEFINED
   }
 
-  private void doTest(Map<String, InspectionStringKind> map = [:], String before, String after = null) {
+  private void doTest(Map<String, InspectionStringQuotationKind> map = [:], String before, String after = null) {
     inspection.with {
-      plainVersion$intellij_groovy_psi = map.plain ?: SINGLE_QUOTED
-      escapeVersion$intellij_groovy_psi = map.escape ?: UNDEFINED
-      interpolationVersion$intellij_groovy_psi = map.interpolation ?: UNDEFINED
-      multilineVersion$intellij_groovy_psi = map.multiline ?: TRIPLE_QUOTED
+      plainStringQuotation$intellij_groovy_psi = map.plain ?: SINGLE_QUOTED
+      escapedStringQuotation$intellij_groovy_psi = map.escape ?: UNDEFINED
+      interpolatedStringQuotation$intellij_groovy_psi = map.interpolation ?: UNDEFINED
+      multilineStringQuotation$intellij_groovy_psi = map.multiline ?: TRIPLE_QUOTED
     }
     fixture.with {
       enableInspections inspection

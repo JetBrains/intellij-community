@@ -1084,7 +1084,7 @@
                      level="WEAK WARNING"
                      groupKey="inspection.style"
                      enabledByDefault="false"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrStringStyleViolationInspection"/>
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.duplicate.switch.branch"
                      groupKey="inspection.validity"
                      enabledByDefault="true"
