@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines the implementation of a parser for a custom language.
@@ -33,6 +34,7 @@ public interface ParserDefinition {
    * @param project the project to which the parser is connected.
    * @return the parser instance.
    */
+  @NotNull
   PsiParser createParser(Project project);
 
   /**
@@ -40,6 +42,7 @@ public interface ParserDefinition {
    *
    * @return the file node element type.
    */
+  @NotNull
   IFileElementType getFileNodeType();
 
   /**
@@ -104,7 +107,8 @@ public interface ParserDefinition {
    * @param viewProvider virtual file.
    * @return the PSI file element.
    */
-  PsiFile createFile(FileViewProvider viewProvider);
+  @NotNull
+  PsiFile createFile(@NotNull FileViewProvider viewProvider);
 
   /**
    * Checks if the specified two token types need to be separated by a space according to the language grammar.
@@ -115,7 +119,7 @@ public interface ParserDefinition {
    * @param right the second token to check.
    * @return the spacing requirements.
    */
-  default SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  default @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     //noinspection deprecation
     return spaceExistanceTypeBetweenTokens(left, right);
   }
@@ -124,7 +128,7 @@ public interface ParserDefinition {
    * @deprecated Override {@link ParserDefinition#spaceExistenceTypeBetweenTokens(ASTNode, ASTNode)} instead
    */
   @Deprecated
-  default SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  default @NotNull SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 
@@ -138,7 +142,7 @@ public interface ParserDefinition {
    * @see com.intellij.lang.ASTFactory#leaf(com.intellij.psi.tree.IElementType, CharSequence)
    */
   @ApiStatus.Experimental
-  default ASTNode reparseSpace(@NotNull ASTNode originalSpaceNode, @NotNull CharSequence newWhiteSpaceSequence) {
+  default @Nullable ASTNode reparseSpace(@NotNull ASTNode originalSpaceNode, @NotNull CharSequence newWhiteSpaceSequence) {
     return null;
   }
 

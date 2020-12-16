@@ -42,12 +42,12 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new GroovyParser();
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return GROOVY_FILE;
   }
 
@@ -70,12 +70,12 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new GroovyFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final IElementType lType = left.getElementType();
     final IElementType rType = right.getElementType();
 

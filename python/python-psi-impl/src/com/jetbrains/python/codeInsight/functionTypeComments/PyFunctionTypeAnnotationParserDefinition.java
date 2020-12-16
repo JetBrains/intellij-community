@@ -37,12 +37,12 @@ public class PyFunctionTypeAnnotationParserDefinition extends PythonParserDefini
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new PyFunctionTypeAnnotationFile(viewProvider);
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return PyFunctionTypeAnnotationFileElementType.INSTANCE;
   }
 

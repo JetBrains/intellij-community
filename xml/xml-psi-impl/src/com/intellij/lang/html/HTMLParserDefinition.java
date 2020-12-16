@@ -30,7 +30,7 @@ public class HTMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return XmlElementType.HTML_FILE;
   }
 
@@ -75,12 +75,12 @@ public class HTMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new HtmlFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return XMLParserDefinition.canStickTokensTogether(left, right);
   }
 }

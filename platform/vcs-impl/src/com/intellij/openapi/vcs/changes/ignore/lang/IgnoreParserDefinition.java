@@ -92,7 +92,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the parser instance.
    */
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new IgnoreParser();
   }
 
@@ -102,7 +102,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the file node element type.
    */
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE;
   }
 
@@ -167,7 +167,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the PSI file element.
    */
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     if (viewProvider.getBaseLanguage() instanceof IgnoreLanguage) {
       return ((IgnoreLanguage)viewProvider.getBaseLanguage()).createFile(viewProvider);
     }

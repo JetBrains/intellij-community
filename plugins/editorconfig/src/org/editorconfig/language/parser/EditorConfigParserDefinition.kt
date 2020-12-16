@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.parser
 
 import com.intellij.lang.ASTNode
@@ -13,9 +13,9 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
 import org.editorconfig.language.EditorConfigLanguage
-import org.editorconfig.language.lexer.EditorConfigLexerAdapter
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
+import org.jetbrains.annotations.NotNull
 
 class EditorConfigParserDefinition : ParserDefinition {
   override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter();
@@ -26,7 +26,7 @@ class EditorConfigParserDefinition : ParserDefinition {
   override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
   override fun getFileNodeType() = FILE
 
-  override fun createFile(viewProvider: FileViewProvider): PsiFile = EditorConfigPsiFile(viewProvider)
+  override fun createFile(viewProvider: @NotNull FileViewProvider): @NotNull PsiFile = EditorConfigPsiFile(viewProvider)
   override fun createElement(node: ASTNode): PsiElement = EditorConfigElementTypes.Factory.createElement(node)
 
   private companion object {

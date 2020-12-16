@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json;
 
 import com.intellij.json.psi.impl.JsonFileImpl;
@@ -38,12 +39,12 @@ public class JsonParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new JsonParser();
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE;
   }
 
@@ -72,12 +73,12 @@ public class JsonParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider fileViewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider fileViewProvider) {
     return new JsonFileImpl(fileViewProvider, JsonLanguage.INSTANCE);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode astNode, ASTNode astNode2) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode astNode, ASTNode astNode2) {
     return SpaceRequirements.MAY;
   }
 }

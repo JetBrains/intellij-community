@@ -38,12 +38,12 @@ public class PyDocstringParserDefinition extends PythonParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return PYTHON_DOCSTRING_FILE;
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new PyDocstringFile(viewProvider);
   }
 }
