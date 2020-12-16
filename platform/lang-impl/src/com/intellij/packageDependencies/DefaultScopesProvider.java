@@ -3,6 +3,7 @@ package com.intellij.packageDependencies;
 
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.scope.GeneratedFilesScope;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
@@ -28,7 +29,8 @@ public final class DefaultScopesProvider extends CustomScopesProviderEx {
     myScopes = Arrays.asList(ProjectFilesScope.INSTANCE,
                              getAllScope(),
                              NonProjectFilesScope.INSTANCE,
-                             new ScratchesNamedScope());
+                             new ScratchesNamedScope(),
+                             GeneratedFilesScope.INSTANCE);
   }
 
   @Override
