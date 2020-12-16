@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * This extension point allows to contribute content to the following IDE features:
+ * Contributes content to the following IDE features:
  * <ul>
  *   <li>Quick Documentation (invoked via explicit action or shown on mouse hover)</li>
  *   <li>Navigation info (shown in editor on Ctrl/Cmd+mouse hover)</li>
@@ -29,6 +29,10 @@ import java.util.function.Consumer;
  * </ul>
  * <p>
  * Extend {@link AbstractDocumentationProvider}.
+ * <p>
+ * Language-specific instance should be registered in {@code com.intellij.lang.documentationProvider} extension point; otherwise use
+ * {@code com.intellij.documentationProvider}.
+ * </p>
  *
  * @see com.intellij.lang.LanguageDocumentation
  * @see DocumentationProviderEx
@@ -38,7 +42,7 @@ import java.util.function.Consumer;
 public interface DocumentationProvider {
 
   /**
-   * Please use {@link com.intellij.lang.LanguageDocumentation} instead of this for language-specific documentation
+   * Please use {@code com.intellij.lang.documentationProvider} instead of this for language-specific documentation.
    */
   ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
 
