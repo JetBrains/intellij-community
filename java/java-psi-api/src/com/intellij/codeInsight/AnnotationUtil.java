@@ -233,9 +233,9 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  static AnnotationAndOwner findAnnotationAndOwnerInHierarchy(@NotNull final PsiModifierListOwner listOwner,
-                                                                                     @NotNull Set<String> annotationNames,
-                                                                                     boolean skipExternal) {
+  static AnnotationAndOwner findAnnotationAndOwnerInHierarchy(@NotNull PsiModifierListOwner listOwner,
+                                                              @NotNull Set<String> annotationNames,
+                                                              boolean skipExternal) {
     PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames, skipExternal);
     if (directAnnotation != null) return new AnnotationAndOwner(listOwner, directAnnotation);
 

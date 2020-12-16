@@ -73,7 +73,7 @@ public class NullabilityAnnotationInfo {
     return myInheritedFrom;
   }
 
-  NullabilityAnnotationInfo withInheritedFrom(PsiModifierListOwner owner) {
+  @NotNull NullabilityAnnotationInfo withInheritedFrom(@Nullable PsiModifierListOwner owner) {
     return new NullabilityAnnotationInfo(myAnnotation, myNullability, owner, myContainer);
   }
 

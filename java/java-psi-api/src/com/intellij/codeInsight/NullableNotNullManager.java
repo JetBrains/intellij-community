@@ -198,10 +198,8 @@ public abstract class NullableNotNullManager {
 
     if (!lambdaParameter) {
       // For lambda parameter, inherited annotation overrides the default one
-      NullabilityAnnotationInfo defaultInfo = findNullityDefaultInHierarchy(owner);
-      if (defaultInfo != null && (defaultInfo.getNullability() == Nullability.NULLABLE || !hasHardcodedContracts(owner))) {
-        return defaultInfo;
-      }
+      NullabilityAnnotationInfo defaultInfo = findNullityDefaultFiltered(owner);
+      if (defaultInfo != null) return defaultInfo;
     }
 
     if (owner instanceof PsiParameter) {
@@ -221,10 +219,15 @@ public abstract class NullableNotNullManager {
     }
 
     if (lambdaParameter) {
-      NullabilityAnnotationInfo defaultInfo = findNullityDefaultInHierarchy(owner);
-      if (defaultInfo != null && (defaultInfo.getNullability() == Nullability.NULLABLE || !hasHardcodedContracts(owner))) {
-        return defaultInfo;
-      }
+      return findNullityDefaultFiltered(owner);
+    }
+    return null;
+  }
+
+  private @Nullable NullabilityAnnotationInfo findNullityDefaultFiltered(@NotNull PsiModifierListOwner owner) {
+    NullabilityAnnotationInfo defaultInfo = findNullityDefaultInHierarchy(owner);
+    if (defaultInfo != null && (defaultInfo.getNullability() == Nullability.NULLABLE || !hasHardcodedContracts(owner))) {
+      return defaultInfo;
     }
     return null;
   }

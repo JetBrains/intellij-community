@@ -582,10 +582,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   /**
-   * @return if owner has a @NotNull or @Nullable annotation, 
+   * @return true if owner has a @NotNull or @Nullable annotation, 
    * or is in scope of @ParametersAreNullableByDefault or ParametersAreNonnullByDefault
    */
-  private static boolean hasNullability(NullableNotNullManager manager, @NotNull PsiModifierListOwner owner) {
+  private static boolean hasNullability(@NotNull NullableNotNullManager manager, @NotNull PsiModifierListOwner owner) {
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
     return info != null && info.getNullability() != Nullability.UNKNOWN && info.getInheritedFrom() == null;
   }
