@@ -420,6 +420,16 @@ class ExternalSystemStorageTest {
     }
   }
 
+  @Test
+  fun `clean up external_build_system at saving data at idea folder`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("singleModuleWithLibrariesInInternalStorage", "singleModuleWithLibrariesInInternalStorage") { project ->
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
+      runBlocking { project.stateStore.save() }
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+    }
+  }
+
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
@@ -526,17 +536,5 @@ class ExternalSystemStorageTest {
     }
   }
 
-  private fun isFolderWithoutFiles(root: File): Boolean {
-    val dirs: Queue<File> = LinkedList()
-    var listFiles = root.listFiles()
-    if (listFiles == null) return true
-    dirs.addAll(listFiles)
-    while (!dirs.isEmpty()) {
-      val currentFile = dirs.poll()
-      if (currentFile.isFile) return false
-      listFiles = currentFile.listFiles()
-      if (listFiles != null) dirs.addAll(listFiles)
-    }
-    return true;
-  }
+  private fun isFolderWithoutFiles(root: File): Boolean = root.walk().none { it.isFile }
 }

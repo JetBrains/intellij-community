@@ -137,8 +137,13 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
     return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, virtualFileManager, internalSource, this)
   }
 
+  // Component DeprecatedModuleOptionManager removed by ModuleStateStorageManager.beforeElementSaved from .iml files
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
     super.deleteObsoleteFile(fileUrl, writer)
-    writer.saveComponent(fileUrl, "ExternalFacetManager", null)
+    if (FileUtil.extensionEquals(fileUrl, "xml")) {
+      writer.saveComponent(fileUrl, "ExternalSystem", null)
+      writer.saveComponent(fileUrl, "ExternalFacetManager", null)
+      writer.saveComponent(fileUrl, "DeprecatedModuleOptionManager", null)
+    }
   }
 }
