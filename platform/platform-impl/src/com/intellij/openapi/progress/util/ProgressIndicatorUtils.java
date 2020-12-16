@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -332,11 +333,11 @@ public final class ProgressIndicatorUtils {
   }
 
   public static void awaitWithCheckCanceled(@NotNull Condition condition) {
-    awaitWithCheckCanceled(() -> condition.await(10, TimeUnit.MILLISECONDS));
+    awaitWithCheckCanceled(() -> condition.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
   }
 
   public static void awaitWithCheckCanceled(@NotNull CountDownLatch waiter) {
-    awaitWithCheckCanceled(() -> waiter.await(10, TimeUnit.MILLISECONDS));
+    awaitWithCheckCanceled(() -> waiter.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
   }
 
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future) {
@@ -348,7 +349,7 @@ public final class ProgressIndicatorUtils {
     while (true) {
       checkCancelledEvenWithPCEDisabled(indicator);
       try {
-        return future.get(10, TimeUnit.MILLISECONDS);
+        return future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException | RejectedExecutionException ignore) {
       }
@@ -399,7 +400,7 @@ public final class ProgressIndicatorUtils {
   }
 
   public static void awaitWithCheckCanceled(@NotNull Semaphore semaphore, @Nullable ProgressIndicator indicator) {
-    while (!semaphore.waitFor(10)) {
+    while (!semaphore.waitFor(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)) {
       checkCancelledEvenWithPCEDisabled(indicator);
     }
   }
