@@ -294,7 +294,7 @@ public final class StubIndexImpl extends StubIndexEx {
         if (!accessibleFileFilter.test(id)) {
           continue;
         }
-        VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+        VirtualFile file = fs.findFileByIdIfCached(id);
         if (file == null) {
           continue;
         }

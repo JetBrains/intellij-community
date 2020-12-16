@@ -1837,7 +1837,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public VirtualFile findFileById(Project project, int id) {
-    return IndexInfrastructure.findFileById((PersistentFS)ManagingFS.getInstance(), id);
+    return ManagingFS.getInstance().findFileById(id);
   }
 
   @Nullable

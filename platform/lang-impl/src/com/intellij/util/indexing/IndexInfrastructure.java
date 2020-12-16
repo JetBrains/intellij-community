@@ -97,11 +97,10 @@ public final class IndexInfrastructure {
     return indexDir;
   }
 
-  @Nullable
-  public static VirtualFile findFileById(@NotNull PersistentFS fs, final int id) {
-    return fs.findFileById(id);
-  }
-
+  /**
+   * @deprecated use {@link PersistentFS#findFileByIdIfCached(int)} directly.
+   */
+  @Deprecated
   @Nullable
   public static VirtualFile findFileByIdIfCached(@NotNull PersistentFS fs, final int id) {
     return fs.findFileByIdIfCached(id);

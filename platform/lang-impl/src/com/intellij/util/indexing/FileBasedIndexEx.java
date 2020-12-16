@@ -306,7 +306,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
           final int id = inputIdsIterator.next();
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) continue;
-          VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+          VirtualFile file = fs.findFileByIdIfCached(id);
           if (file != null) {
             for (VirtualFile eachFile : filesInScopeWithBranches(scope, file)) {
               if (!processor.process(eachFile, value)) {
@@ -501,7 +501,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     for (IntIterator iterator = sortedIds.iterator(); iterator.hasNext(); ) {
       ProgressManager.checkCanceled();
       int id = iterator.nextInt();
-      VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+      VirtualFile file = fs.findFileByIdIfCached(id);
       if (file != null) {
         for (VirtualFile fileInBranch : filesInScopeWithBranches(filter, file)) {
           boolean processNext = processor.process(fileInBranch);
