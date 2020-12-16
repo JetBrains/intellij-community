@@ -25,7 +25,7 @@ class GetterDescriptor(
     project: Project
 ) : ValueDescriptorImpl(project), DescriptorWithParentObject {
     companion object {
-        val getterPrefixes = arrayOf("get", "is")
+        val GETTER_PREFIXES = arrayOf("get", "is")
 
         private val defaultGetterOnDemandPresentationProvider = OnDemandPresentationProvider { node ->
             node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(KotlinDebuggerCoreBundle.message("message.variables.property.get")))
@@ -44,6 +44,7 @@ class GetterDescriptor(
         if (startsWith("get")) {
             return drop(3)
         }
+        // For properties starting with 'is' leave the name unmodified
         return this
     }
 

@@ -13,7 +13,7 @@ import java.util.function.Function
 class KotlinClassRendererProvider : CompoundRendererProvider() {
     private val classRenderer = KotlinClassRenderer()
 
-    override fun getName() = "KotlinClass"
+    override fun getName() = "Kotlin class"
 
     override fun getClassName() = "kotlin.Any?"
 

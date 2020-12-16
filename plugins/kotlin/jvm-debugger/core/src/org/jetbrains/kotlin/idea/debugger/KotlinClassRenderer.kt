@@ -58,7 +58,8 @@ class KotlinClassRenderer : ClassRenderer() {
         val added = BooleanArray(getterNodes.size)
         for (fieldNode in fieldNodes) {
             result.add(fieldNode)
-            namesToIndex[fieldNode.descriptor.name]?.let { index ->
+            val name = fieldNode.descriptor.name.removeSuffix("\$delegate")
+            namesToIndex[name]?.let { index ->
                 result.add(getterNodes[index])
                 added[index] = true
             }
@@ -70,7 +71,7 @@ class KotlinClassRenderer : ClassRenderer() {
 
     private fun List<Method>.getters() =
         filter { method ->
-            GetterDescriptor.getterPrefixes.any { method.name().startsWith(it) } && method.name() != "getClass" &&
+            GetterDescriptor.GETTER_PREFIXES.any { method.name().startsWith(it) } && method.name() != "getClass" &&
             method.argumentTypeNames().isEmpty() && !DebuggerUtils.isSimpleGetter(method)
         }
         .distinctBy { it.name() }
