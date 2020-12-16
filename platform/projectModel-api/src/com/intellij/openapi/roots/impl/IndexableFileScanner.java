@@ -38,6 +38,9 @@ public interface IndexableFileScanner {
      * One can use {@code fileSet} to determine scanned file origins: module, library, sdk, etc. {@see IndexableFilesIterator} for details.
      *
      * @param fileSet the file set being scanned
+     *
+     * @return a visitor is being used for {@code fileSet} scanning or
+     * {@code null} if the indexable file set should not be processed by a {@link IndexableFileScanner}.
      */
     @Nullable
     IndexableFileVisitor createVisitor(@NotNull IndexableFilesIterator fileSet);
