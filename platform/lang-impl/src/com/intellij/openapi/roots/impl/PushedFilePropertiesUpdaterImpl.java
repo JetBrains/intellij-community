@@ -196,7 +196,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
                                  @NotNull List<IndexableFileScanner> scanners,
                                  @NotNull IndexableFilesIterator indexableFilesIterator) {
     List<IndexableFileScanner.IndexableFileVisitor> sessions =
-      ContainerUtil.map(scanners, visitor -> visitor.startSession(myProject).createVisitor(indexableFilesIterator));
+      ContainerUtil.mapNotNull(scanners, visitor -> visitor.startSession(myProject).createVisitor(indexableFilesIterator));
     indexableFilesIterator.iterateFiles(myProject, fileOrDir -> {
       applyPushersToFile(fileOrDir, pushers, null);
       applyScannersToFile(fileOrDir, sessions);
