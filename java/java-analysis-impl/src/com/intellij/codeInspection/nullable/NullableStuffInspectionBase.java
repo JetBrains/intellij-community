@@ -30,6 +30,8 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -854,7 +856,22 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (!REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED) return false;
     NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
     return info != null && info.getNullability() == Nullability.NOT_NULL && !info.isInferred() &&
-           ContainerUtil.exists(superParameters, sp -> !hasNullability(nullableManager, sp));
+           ContainerUtil.exists(superParameters, sp -> isSuperNotAnnotated(nullableManager, parameter, sp));
+  }
+
+  private static boolean isSuperNotAnnotated(NullableNotNullManager nullableManager, PsiParameter parameter, PsiParameter superParameter) {
+    if (hasNullability(nullableManager, superParameter)) return false;
+    PsiType type = superParameter.getType();
+    if (TypeUtils.isTypeParameter(type)) {
+      PsiClass childClass = ClassUtils.getContainingClass(parameter);
+      PsiClass superClass = ClassUtils.getContainingClass(superParameter);
+      if (superClass != null && childClass != null) {
+        PsiType substituted =
+          TypeConversionUtil.getSuperClassSubstitutor(superClass, childClass, PsiSubstitutor.EMPTY).substitute(type);
+        return DfaPsiUtil.getTypeNullability(substituted) == Nullability.UNKNOWN;
+      }
+    }
+    return true;
   }
 
   private void checkNullLiteralArgumentOfNotNullParameterUsages(PsiMethod method,
