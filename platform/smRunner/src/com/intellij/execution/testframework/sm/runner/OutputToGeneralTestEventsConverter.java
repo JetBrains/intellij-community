@@ -121,9 +121,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  protected boolean processServiceMessages(final String text,
-                                           final Key<?> outputType,
-                                           final ServiceMessageVisitor visitor) throws ParseException {
+  protected boolean processServiceMessages(@NotNull String text,
+                                           @NotNull Key<?> outputType,
+                                           @NotNull ServiceMessageVisitor visitor) throws ParseException {
     ServiceMessage message = ServiceMessageUtil.parse(text.trim(), myValidateServiceMessagesAttributes, true, myTestFrameworkName);
     if (message != null) {
       message.visit(visitor);
