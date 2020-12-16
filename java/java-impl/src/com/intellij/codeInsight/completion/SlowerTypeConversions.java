@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,8 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
  * @author peter
  */
 final class SlowerTypeConversions {
+  private static final CallMatcher CLONE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "clone").parameterCount(0);
+  
   static void addChainedSuggestions(CompletionParameters parameters,
                                     CompletionResultSet result,
                                     Set<ExpectedTypeInfo> expectedInfos,
@@ -95,6 +98,8 @@ final class SlowerTypeConversions {
       final PsiMethod method = (PsiMethod)o;
       final PsiType type = method.getReturnType();
       if (PsiType.VOID.equals(type) || PsiType.NULL.equals(type)) return null;
+      // clone() is excluded to avoid weird chains suggestions like arr.stream<caret> -> Arrays.stream(arr.clone())
+      if (CLONE.methodMatches(method)) return null;
       if (!method.getParameterList().isEmpty()) return null;
       return method.getName() + "(" +
              getSpace(CodeStyle.getLanguageSettings(file).SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES) + ")";
