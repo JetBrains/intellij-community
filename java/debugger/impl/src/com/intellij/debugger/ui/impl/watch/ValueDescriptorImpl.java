@@ -74,10 +74,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   private boolean myShowIdLabel = true;
 
-  private OnDemandPresentationProvider myOnDemandPresentationProvider = node -> {
+  private static final OnDemandPresentationProvider ourDefaultOnDemandPresentationProvider = node -> {
     node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(JavaDebuggerBundle.message("message.node.evaluate")));
     node.setPresentation(AllIcons.Debugger.Db_watch, new XRegularValuePresentation("", null, ""), false);
   };
+
+  private OnDemandPresentationProvider myOnDemandPresentationProvider = ourDefaultOnDemandPresentationProvider;
 
   protected ValueDescriptorImpl(Project project, Value value) {
     myProject = project;
