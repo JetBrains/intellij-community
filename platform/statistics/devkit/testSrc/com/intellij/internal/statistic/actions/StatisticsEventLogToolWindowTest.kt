@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventAction
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
+import com.intellij.internal.statistic.toolwindow.StatisticsEventLogFilter.Companion.LOG_PATTERN
 import com.intellij.internal.statistic.toolwindow.StatisticsEventLogMessageBuilder
 import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow
 import com.intellij.internal.statistic.toolwindow.StatisticsLogFilterModel
@@ -92,6 +93,31 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
 
     val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
     assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" (count=${count}) {}", actual)
+  }
+
+  @Test
+  fun testLogLineWithCountMatchesRegexpPattern() {
+    val action = LogEventAction(eventId, false, 2)
+
+    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
+    val matcher = LOG_PATTERN.matcher(logLineWithCount)
+    assertTrue(matcher.find())
+    assertEquals(eventGroup, matcher.group("groupId"))
+    assertEquals(eventId, matcher.group("event"))
+    assertEquals("{}", matcher.group("eventData"))
+  }
+
+  @Test
+  fun testLogLineMatchesRegexpPattern() {
+    val action = LogEventAction(eventId, true)
+    action.addData("plugin_type", "PLATFORM")
+
+    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
+    val matcher = LOG_PATTERN.matcher(logLineWithCount)
+    assertTrue(matcher.find())
+    assertEquals(eventGroup, matcher.group("groupId"))
+    assertEquals(eventId, matcher.group("event"))
+    assertEquals("{\"plugin_type\":\"PLATFORM\"}", matcher.group("eventData"))
   }
 
   private fun doTestCountCollector(expectedEventDataPart: String, action: LogEventAction) {
