@@ -373,8 +373,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        final MockPrinter printer = new MockPrinter();
-        runner.findTestByName("[test]").printOn(printer);
+       var printer = MockPrinter.fillPrinter(runner.findTestByName("[test]"));
         assertThat(printer.getStdErr())
           .describedAs("Subtest assertEquals broken")
           .contains("AssertionError: 'D' != 'a'");
