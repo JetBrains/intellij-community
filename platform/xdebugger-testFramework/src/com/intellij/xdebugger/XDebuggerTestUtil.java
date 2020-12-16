@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.breakpoints.*;
@@ -29,14 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 public class XDebuggerTestUtil {
   public static final int TIMEOUT_MS = 25_000;
@@ -155,18 +152,12 @@ public class XDebuggerTestUtil {
 
   @NotNull
   public static List<XValue> collectChildren(XValueContainer value) {
-    final Pair<List<XValue>, String> childrenWithError = collectChildrenWithError(value);
-    final String error = childrenWithError.second;
-    assertNull("Error getting children: " + error, error);
-    return childrenWithError.first;
+    return new XTestCompositeNode(value).collectChildren();
   }
 
   @NotNull
   public static Pair<List<XValue>, String> collectChildrenWithError(XValueContainer value) {
-    XTestCompositeNode container = new XTestCompositeNode();
-    value.computeChildren(container);
-
-    return container.waitFor(TIMEOUT_MS);
+    return new XTestCompositeNode(value).collectChildrenWithError();
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression) {
@@ -228,16 +219,35 @@ public class XDebuggerTestUtil {
     return node;
   }
 
-  public static boolean waitFor(Semaphore semaphore, long timeoutInMillis) {
+  public static <T> @Nullable T waitFor(@NotNull Future<T> future, long timeoutInMillis) {
+    return waitFor(remaining -> {
+      try {
+        return future.get(remaining, TimeUnit.MILLISECONDS);
+      }
+      catch (TimeoutException e) {
+        return null;
+      }
+      catch (ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+    }, timeoutInMillis);
+  }
+
+  public static boolean waitFor(@NotNull Semaphore semaphore, long timeoutInMillis) {
+    return waitFor(remaining -> semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS) ? Boolean.TRUE : null,
+                   timeoutInMillis) == Boolean.TRUE;
+  }
+
+  private static <T> @Nullable T waitFor(@NotNull ThrowableConvertor<? super Long, T, ? extends InterruptedException> waitFunction,
+                                         long timeoutInMillis) {
     long end = System.currentTimeMillis() + timeoutInMillis;
     flushEventQueue();
     for (long remaining = timeoutInMillis; remaining > 0; remaining = end - System.currentTimeMillis()) {
       try {
         // 10ms is the sleep interval used by ProgressIndicatorUtils for busy-waiting.
-        long timeout = Math.min(10, remaining);
-        boolean acquired = semaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
-        if (acquired) {
-          return true;
+        T result = waitFunction.convert(Math.min(10, remaining));
+        if (result != null) {
+          return result;
         }
       }
       catch (InterruptedException ignored) {
@@ -246,7 +256,7 @@ public class XDebuggerTestUtil {
         flushEventQueue();
       }
     }
-    return false;
+    return null;
   }
 
   // Rider needs this in order to be able to receive messages from the backend when waiting on the EDT.
