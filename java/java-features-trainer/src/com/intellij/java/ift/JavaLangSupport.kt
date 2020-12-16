@@ -20,6 +20,7 @@ import com.intellij.util.lang.JavaVersion
 import training.lang.AbstractLangSupport
 import training.learn.LearnBundle
 import training.project.ProjectUtils
+import training.project.ReadMeCreator
 import java.nio.file.Path
 
 class JavaLangSupport : AbstractLangSupport() {
@@ -33,6 +34,11 @@ class JavaLangSupport : AbstractLangSupport() {
   override val filename: String = "Learning.java"
 
   override val projectSandboxRelativePath: String = "Sample.java"
+
+  override val readMeCreator: ReadMeCreator = object : ReadMeCreator() {
+    private val sharedIndexesRemark: String = JavaLessonsBundle.message("readme.shared.indexes.remark")
+    override val indexingDescription = "${super.indexingDescription}\n\n$sharedIndexesRemark"
+  }
 
   override fun installAndOpenLearningProject(projectPath: Path,
                                              projectToClose: Project?,
