@@ -76,6 +76,10 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
     }
   }
 
+  fun selectAll() {
+    myEditableComponent?.selectAll()
+  }
+
   private fun initEditor() {
     val editableComponent = createEditableComponent()
 

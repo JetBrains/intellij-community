@@ -240,6 +240,7 @@ class GitMergeDialog(private val project: Project,
     }
 
     branchField.item = branchToSelect
+    branchField.selectAll()
   }
 
   private fun splitAndSortBranches(branches: List<@NlsSafe String>): List<@NlsSafe String> {
