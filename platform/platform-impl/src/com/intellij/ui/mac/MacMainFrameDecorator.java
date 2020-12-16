@@ -263,7 +263,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         if (newFrame == helper.getFrame()) {
           newIndex = i;
         }
-        else if (helper.isInFullScreen()) {
+        if (helper.isInFullScreen()) {
           visibleAndHeights[i] = 0;
         }
         else {
@@ -277,9 +277,15 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           for (int i = 0; i < frames.length; i++) {
             if (visibleAndHeights[i] == null) {
               ID window = MacUtil.getWindowFromJavaWindow(((ProjectFrameHelper)frames[i]).getFrame());
-              visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
-              if (visibleAndHeights[i] == -1) {
-                visibleAndHeights[i] = DEFAULT_WIN_TAB_HEIGHT();
+              int styleMask = Foundation.invoke(window, "styleMask").intValue();
+              if ((styleMask & (1 << 14)) != 0) { // NSWindowStyleMaskFullScreen
+                visibleAndHeights[i] = 0;
+              }
+              else {
+                visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
+                if (visibleAndHeights[i] == -1) {
+                  visibleAndHeights[i] = DEFAULT_WIN_TAB_HEIGHT();
+                }
               }
             }
           }
