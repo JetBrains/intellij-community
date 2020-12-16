@@ -860,13 +860,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private void addAction(AnAction action, @NotNull Shortcut sc) {
-    Presentation presentation = myPresentationFactory.getPresentation(action);
-    AnActionEvent actionEvent = myActionProcessor.createEvent(
-      myContext.getInputEvent(), myContext.getDataContext(), ActionPlaces.KEYBOARD_SHORTCUT, presentation, ActionManager.getInstance());
-    ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, false);
-    if (!presentation.isEnabled()) {
-      return;
-    }
     for (Shortcut each : action.getShortcutSet().getShortcuts()) {
       if (each == null) {
         throw new NullPointerException("unexpected shortcut of action: " + action);
@@ -876,12 +869,23 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
 
       if (each.startsWith(sc)) {
+        if (each instanceof KeyboardShortcut && ((KeyboardShortcut)each).getSecondKeyStroke() != null) {
+          long startedAt = System.currentTimeMillis();
+
+          Presentation presentation = myPresentationFactory.getPresentation(action);
+          AnActionEvent actionEvent = myActionProcessor.createEvent(
+            myContext.getInputEvent(), myContext.getDataContext(), ActionPlaces.KEYBOARD_SHORTCUT, presentation,
+            ActionManager.getInstance());
+          ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, false);
+
+          logTimeMillis(startedAt, action);
+          if (!presentation.isEnabled()) {
+            continue;
+          }
+          myContext.setHasSecondStroke(true);
+        }
         if (!myContext.getActions().contains(action)) {
           myContext.getActions().add(action);
-        }
-
-        if (each instanceof KeyboardShortcut && ((KeyboardShortcut)each).getSecondKeyStroke() != null) {
-          myContext.setHasSecondStroke(true);
         }
       }
     }

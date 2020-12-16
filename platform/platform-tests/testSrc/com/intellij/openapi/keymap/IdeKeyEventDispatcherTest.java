@@ -63,7 +63,7 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
     Keymap activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
 
     for (String actionId : activeKeymap.getActionIdList()) {
-      if (ACTION_EMPTY.equals(actionId)) {
+      if (ACTION_EMPTY.equals(actionId) || ACTION_DISABLED_EMPTY.equals(actionId)) {
         continue;
       }
       Shortcut[] shortcuts = activeKeymap.getShortcuts(actionId);
