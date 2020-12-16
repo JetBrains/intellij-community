@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.testFramework.*
+import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
 import com.intellij.util.CommonProcessors
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
@@ -102,14 +103,7 @@ class ReloadProjectTest {
   }
 
   private suspend fun copyFilesAndReload(project: Project, relativePath: String) {
-    val base = Paths.get(project.basePath!!)
-    val projectDir = VfsUtil.findFile(base, true)!!
-    //process all files to ensure that they all are loaded in VFS and we'll get events when they are changed
-    VfsUtil.processFilesRecursively(projectDir, CommonProcessors.alwaysTrue())
-
-    FileUtil.copyDir(testDataRoot.resolve(relativePath).toFile(), base.toFile())
-    VfsUtil.markDirtyAndRefresh(false, true, true, projectDir)
-    StoreReloadManager.getInstance().reloadChangedStorageFiles()
+    copyFilesAndReloadProject(project, testDataRoot.resolve(relativePath))
   }
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
