@@ -909,12 +909,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @RequiresEdt
-  public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes) {
+  public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes, boolean rollbackChanges) {
     final List<ShelvedChangeList> result = new ArrayList<>();
     new Task.Backgroundable(myProject, VcsBundle.getString("shelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        result.addAll(shelveChangesInSeparatedLists(changes));
+        result.addAll(shelveChangesInSeparatedLists(changes, rollbackChanges));
       }
 
       @Override
@@ -944,7 +944,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
-  private List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes) {
+  private List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes, boolean rollbackChanges) {
     List<String> failedChangeLists = new ArrayList<>();
     List<ShelvedChangeList> result = new ArrayList<>();
     List<Change> shelvedChanges = new ArrayList<>();
@@ -995,7 +995,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       notifyStateChanged();
     }
 
-    rollbackChangesAfterShelve(shelvedChanges, false);
+    if (rollbackChanges) {
+      rollbackChangesAfterShelve(shelvedChanges, false);
+    }
 
     if (!failedChangeLists.isEmpty()) {
       VcsNotifier.getInstance(myProject).notifyError(

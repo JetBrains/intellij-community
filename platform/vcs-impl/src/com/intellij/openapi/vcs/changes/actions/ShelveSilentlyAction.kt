@@ -8,7 +8,10 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 
-class ShelveSilentlyAction : DumbAwareAction() {
+class ShelveSilentlyAction : ShelveSilentlyActionBase(rollbackChanges = true)
+class SaveToShelveAction : ShelveSilentlyActionBase(rollbackChanges = false)
+
+abstract class ShelveSilentlyActionBase(val rollbackChanges: Boolean) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val changes = e.getData(VcsDataKeys.CHANGES)
@@ -22,6 +25,6 @@ class ShelveSilentlyAction : DumbAwareAction() {
     val changes = e.getData(VcsDataKeys.CHANGES)!!
 
     FileDocumentManager.getInstance().saveAllDocuments()
-    ShelveChangesManager.getInstance(project).shelveSilentlyUnderProgress(changes.toList())
+    ShelveChangesManager.getInstance(project).shelveSilentlyUnderProgress(changes.toList(), rollbackChanges)
   }
 }
