@@ -242,10 +242,18 @@ internal object OpenLessonActivities {
       lesson.addLessonListener(statLessonListener)
   }
 
+  private fun openReadme(project: Project) {
+    val manager = ProjectRootManager.getInstance(project)
+    val root = manager.contentRoots[0]
+    val readme = root?.findFileByRelativePath("README.md") ?: return
+    FileEditorManager.getInstance(project).openFile(readme, true, true)
+  }
+
   fun openLearnProjectFromWelcomeScreen() {
     initLearnProject(null) { project ->
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
+          openReadme(project)
           hideOtherViews(project)
           showModules(project)
           CourseManager.instance.unfoldModuleOnInit = null

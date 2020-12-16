@@ -26,6 +26,7 @@ import training.learn.LearnBundle
 import training.learn.exceptons.NoSdkException
 import training.learn.lesson.kimpl.LessonUtil
 import training.project.ProjectUtils
+import training.project.ReadMeCreator
 import java.nio.file.Path
 
 class PythonLangSupport : AbstractLangSupport() {
@@ -38,6 +39,8 @@ class PythonLangSupport : AbstractLangSupport() {
   private val sourcesDirectoryName: String = "src"
 
   override val filename: String = "Learning.py"
+
+  override val readMeCreator = ReadMeCreator()
 
   override fun applyToProjectAfterConfigure(): (Project) -> Unit = { project ->
     // mark src directory as sources root
