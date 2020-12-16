@@ -25,7 +25,6 @@ class JavaPluginLayout {
 
       ["intellij.java.compiler.antTasks",
        "intellij.java.guiForms.compiler",
-       "intellij.java.guiForms.rt",
        "intellij.java.compiler.instrumentationUtil",
        "intellij.java.compiler.instrumentationUtil.java8"
       ].each {
