@@ -19,7 +19,7 @@ import java.util.function.Function;
  */
 @ApiStatus.Internal
 public final class DiskQueryRelay<Param, Result> {
-  private final @NotNull Function<? super Param, ? extends Result> myFunction;
+  private final Function<? super Param, ? extends Result> myFunction;
 
   /**
    * We remember the submitted tasks in "myTasks" until they're finished, to avoid creating many-many similar threads
