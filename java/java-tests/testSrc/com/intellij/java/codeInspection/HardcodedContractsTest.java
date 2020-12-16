@@ -58,6 +58,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
 
     myFixture.addClass("package org.assertj.core.api; public class Assertions { " +
                        "public static <T> Assert<?, T> assertThat(Object actual) {}\n" +
+                       "public static <T> Assert<?, T> assertThat(java.util.concurrent.atomic.AtomicBoolean actual) {}\n" +
                        "public static <T> Assert<?, T> assertThat(boolean actual) {}\n" +
                        "}");
     myFixture.addClass("package org.assertj.core.api; public class Assert<S extends Assert<S, A>, A> {" +
