@@ -26,7 +26,7 @@ plugins {
 }
 
 wrapper {
-    gradleVersion = '5.6.2'
+    gradleVersion = '6.7.1'
 }
 
 
@@ -35,14 +35,14 @@ group = 'de.thomasrosenau'
 sourceCompatibility = 1.8
 
 // version of this plugin
-version = '2.1.5-SNAPSHOT'
+version = '2.1.6-SNAPSHOT'
 
-// IDE version that will be used for compilation and for :runIde task
-intellij.version = '202.6397.94'
+// IDE version that will be used for compilation, unit tests, and for :runIde task
+intellij.version = '203.5981.155'
 
 patchPluginXml {
     sinceBuild = '201'
-    untilBuild = '202.*'
+    untilBuild = '203.*'
 
     // language=HTML prefix=<body> suffix=</body>
     pluginDescription = '''
@@ -66,6 +66,12 @@ patchPluginXml {
 
     // language=HTML prefix=<body> suffix=</body>
     changeNotes = '''
+        <h5>2.1.6</h5>
+        <ul>
+          <li>Switch to Java 11</li>
+          <li>Update compatibility for 2020.3 product line</li>
+          <li>Replace deprecated icon loader call</li>
+        </ul>
         <h5>2.1.5</h5>
         <ul>
           <li>Update compatibility for 2020.2 product line</li>

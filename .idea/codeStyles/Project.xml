@@ -23,12 +23,6 @@
         <package name="" withSubpackages="true" static="false" />
       </value>
     </option>
-    <option name="HTML_ALIGN_ATTRIBUTES" value="false" />
-    <option name="HTML_ALIGN_TEXT" value="true" />
-    <option name="HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE" value="body,p,form,h1,h2,h3" />
-    <option name="HTML_DO_NOT_INDENT_CHILDREN_OF" value="html,thead,tbody,tfoot" />
-    <option name="HTML_KEEP_WHITESPACES_INSIDE" value="pre,textarea,code" />
-    <option name="HTML_ENFORCE_QUOTES" value="true" />
     <CssCodeStyleSettings>
       <option name="HEX_COLOR_LOWER_CASE" value="true" />
     </CssCodeStyleSettings>

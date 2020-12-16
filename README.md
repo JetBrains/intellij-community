@@ -11,12 +11,12 @@ Syntax highlighting for .diff and .patch files in IntelliJ IDEA and [other JetBr
 
 ## Development
 
-This project was built using Java 8 and Gradle 5.6.2.
+This project was built using Java 11 and Gradle 6.7.1.
 
 In order to open this project in IntelliJ IDEA, follow these steps:
 
-1. Install [Java 8 JDK](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
-1. [Define](https://www.jetbrains.com/help/idea/sdk.html#define-sdk) a project SDK named *1.8*. If you have a Java 8 SDK already, you may choose to rename or clone it.
+1. Install [Java 11 JDK](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html)
+1. [Define](https://www.jetbrains.com/help/idea/sdk.html#define-sdk) a project SDK named *11*. If you have a Java 11 SDK already, you may choose to rename or clone it.
 1. Open the project and wait for IntelliJ to download the required libraries.  
   (This may take a long time, because several hundred MBs are downloaded.)
 

@@ -32,7 +32,7 @@ abstract class DiffParserTestBase extends ParsingTestCase {
     }
 
     DiffParserTestBase(String dataPath) {
-        super("",dataPath, new DiffParserDefinition());
+        super("", dataPath, new DiffParserDefinition());
     }
 
     @Override

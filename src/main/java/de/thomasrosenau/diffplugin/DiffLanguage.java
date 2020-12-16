@@ -19,7 +19,25 @@ package de.thomasrosenau.diffplugin;
 import com.intellij.lang.Language;
 
 public class DiffLanguage extends Language {
+    /*
     public static final DiffLanguage INSTANCE = new DiffLanguage();
+    // This throws an exception in the folding tests
+    */
+
+    // Workaround for the above
+    public static final DiffLanguage INSTANCE;
+
+    static {
+        DiffLanguage instance;
+        try {
+            instance = new DiffLanguage();
+        } catch (RuntimeException e) {
+            instance = findInstance(DiffLanguage.class);
+        }
+        INSTANCE = instance;
+    }
+    // end Workaround
+
 
     private DiffLanguage() {
         super("Diff");

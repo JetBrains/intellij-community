@@ -40,9 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class DiffFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
-    @NotNull
     @Override
-    public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
+    public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
         ArrayList<FoldingDescriptor> result = new ArrayList<>();
         buildFileFoldingRegions(root, result);
         buildHunkFoldingRegions(root, result);
