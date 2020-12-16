@@ -77,7 +77,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   }
 
   @Override
-  public RunProfile getConfiguration() {
+  public @NotNull RunProfile getConfiguration() {
     return myConfiguration;
   }
 
