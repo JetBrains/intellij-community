@@ -108,7 +108,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
     //val context = if (module != null) SimpleDataContext.getSimpleContext(OpenLearnPanel.LEARNING_MODULE_KEY.name, module)
     //else DataContext.EMPTY_CONTEXT
 
-    CourseManager.instance.unfoldModuleOnInit = module
+    CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
 
     val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
     ActionUtil.performActionDumbAware(action, anActionEvent)
