@@ -13,7 +13,7 @@ import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
 import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 
 class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel: GHPRReviewProcessModel,
@@ -52,7 +52,7 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
 
     private inner class FocusInlayAction : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {
-        if (inlay?.let { GithubUIUtil.focusPanel(it.first) } != null) return
+        if (inlay?.let { GHUIUtil.focusPanel(it.first) } != null) return
       }
     }
 
@@ -73,7 +73,7 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
       : DumbAwareAction(actionName) {
 
       override fun actionPerformed(e: AnActionEvent) {
-        if (inlay?.let { GithubUIUtil.focusPanel(it.first) } != null) return
+        if (inlay?.let { GHUIUtil.focusPanel(it.first) } != null) return
 
         val (side, line, startLine, realEditorLine) = lineLocationCalculator(editorLine) ?: return
 
@@ -88,7 +88,7 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
           createComponent(side, line, line, hideCallback)
 
         val disposable = inlaysManager.insertAfter(realEditorLine, component) ?: return
-        GithubUIUtil.focusPanel(component)
+        GHUIUtil.focusPanel(component)
         inlay = component to disposable
       }
 

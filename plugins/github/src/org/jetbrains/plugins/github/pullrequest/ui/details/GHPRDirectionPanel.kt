@@ -24,7 +24,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
@@ -207,7 +207,7 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
 
   companion object {
     private fun createLabel() = JBLabel(GithubIcons.Branch).also {
-      GithubUIUtil.overrideUIDependentProperty(it) {
+      GHUIUtil.overrideUIDependentProperty(it) {
         foreground = CurrentBranchComponent.TEXT_COLOR
         background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
       }

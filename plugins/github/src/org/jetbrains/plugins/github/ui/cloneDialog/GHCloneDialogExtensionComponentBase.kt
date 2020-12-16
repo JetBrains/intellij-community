@@ -57,7 +57,8 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.*
 import java.awt.FlowLayout
 import java.awt.event.MouseAdapter
@@ -256,7 +257,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
                               executor: GithubApiRequestExecutor.WithTokenAuth) {
     progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       lateinit var user: GithubAuthenticatedUser
-      lateinit var iconProvider: CachingGithubAvatarIconsProvider
+      lateinit var iconProvider: GHAvatarIconsProvider
 
       override fun run(indicator: ProgressIndicator) {
         user = accountInformationProvider.getInformation(executor, indicator, account)

@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.avatars
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.ui.avatars
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -20,11 +20,11 @@ import javax.swing.Icon
 /**
  * @param component which will be repainted when icons are loaded
  */
-class CachingGithubAvatarIconsProvider(private val avatarsLoader: CachingGithubUserAvatarLoader,
-                                       private val imagesResizer: GithubImageResizer,
-                                       private val requestExecutor: GithubApiRequestExecutor,
-                                       private val iconSize: JBValue,
-                                       private val component: Component) : GHAvatarIconsProvider {
+class CachingGithubAvatarIconsProvider private constructor(private val avatarsLoader: CachingGithubUserAvatarLoader,
+                                                           private val imagesResizer: GithubImageResizer,
+                                                           private val requestExecutor: GithubApiRequestExecutor,
+                                                           private val iconSize: JBValue,
+                                                           private val component: Component) : GHAvatarIconsProvider {
 
   private val scaleContext = ScaleContext.create(component)
   private var defaultIcon = createDefaultIcon(iconSize.get())
@@ -77,8 +77,8 @@ class CachingGithubAvatarIconsProvider(private val avatarsLoader: CachingGithubU
   // helper to avoid passing all the services to clients
   class Factory(private val avatarsLoader: CachingGithubUserAvatarLoader,
                 private val imagesResizer: GithubImageResizer,
-                private val requestExecutor: GithubApiRequestExecutor) {
-    fun create(iconSize: JBValue, component: Component) = CachingGithubAvatarIconsProvider(avatarsLoader, imagesResizer,
-                                                                                           requestExecutor, iconSize, component)
+                private val requestExecutor: GithubApiRequestExecutor) : GHAvatarIconProviderFactory {
+    override fun create(iconSize: JBValue, component: Component) = CachingGithubAvatarIconsProvider(avatarsLoader, imagesResizer,
+                                                                                                    requestExecutor, iconSize, component)
   }
 }

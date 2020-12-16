@@ -32,15 +32,15 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Dimension
 import java.util.*
@@ -238,7 +238,7 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
   companion object {
     private val NOT_DEFINED_SIZE = Dimension(-1, -1)
 
-    fun getDefaultSize() = Dimension(GithubUIUtil.getPRTimelineWidth(), -1)
+    fun getDefaultSize() = Dimension(GHUIUtil.getPRTimelineWidth(), -1)
 
     fun userAvatar(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): JLabel {
       return LinkLabel<Any>("", avatarIconsProvider.getIcon(user?.avatarUrl), LinkListener { _, _ ->
@@ -257,7 +257,7 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
 
     fun actionTitle(actor: GHActor?, actionHTML: String, date: Date): JComponent {
       //language=HTML
-      val text = """<a href='${actor?.url}'>${actor?.login ?: "unknown"}</a> $actionHTML ${GithubUIUtil.formatActionDate(date)}"""
+      val text = """<a href='${actor?.url}'>${actor?.login ?: "unknown"}</a> $actionHTML ${GHUIUtil.formatActionDate(date)}"""
 
       return HtmlEditorPane(text).apply {
         foreground = UIUtil.getContextHelpForeground()

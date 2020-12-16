@@ -13,7 +13,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.JComponent

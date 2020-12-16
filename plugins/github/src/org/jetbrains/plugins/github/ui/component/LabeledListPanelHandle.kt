@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui.details
+package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WrapLayout
 import com.intellij.util.ui.codereview.InlineIconButton
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.util.getEDTExecutor
@@ -45,7 +46,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
   val panel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
 
   private val editButton = InlineIconButton(AllIcons.General.Inline_edit,
-                                                                                               AllIcons.General.Inline_edit_hovered).apply {
+                                            AllIcons.General.Inline_edit_hovered).apply {
     border = JBUI.Borders.empty(6, 0)
     actionListener = ActionListener { editList() }
   }

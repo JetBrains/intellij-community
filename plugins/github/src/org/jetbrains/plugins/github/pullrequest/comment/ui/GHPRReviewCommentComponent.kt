@@ -16,12 +16,12 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -90,7 +90,7 @@ object GHPRReviewCommentComponent {
     }
   }
 
-  private fun getMaxWidth() = GithubUIUtil.getPRTimelineWidth() - GithubUIUtil.avatarSize.get() + AllIcons.Actions.Close.iconWidth
+  private fun getMaxWidth() = GHUIUtil.getPRTimelineWidth() - GHUIUtil.avatarSize.get() + AllIcons.Actions.Close.iconWidth
 
   private class Controller(private val model: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,
@@ -120,7 +120,7 @@ object GHPRReviewCommentComponent {
         GHPullRequestReviewCommentState.SUBMITTED -> {
           pendingLabel.isVisible = false
           titlePane.setBody(GithubBundle.message("pull.request.review.commented", authorLink,
-                                                 GithubUIUtil.formatActionDate(model.dateCreated)))
+                                                 GHUIUtil.formatActionDate(model.dateCreated)))
         }
       }
 

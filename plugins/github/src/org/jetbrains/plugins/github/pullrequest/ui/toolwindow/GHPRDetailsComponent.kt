@@ -14,12 +14,12 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDirectionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconProviderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -27,7 +27,7 @@ internal object GHPRDetailsComponent {
 
   fun create(detailsModel: GHPRDetailsModel,
              branchesModel: GHPRBranchesModel,
-             avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
+             avatarIconsProviderFactory: GHAvatarIconProviderFactory): JComponent {
 
     val metaPanel = createPanel(detailsModel, branchesModel, avatarIconsProviderFactory).apply {
       border = JBUI.Borders.empty(8)
@@ -50,7 +50,7 @@ internal object GHPRDetailsComponent {
 
   private fun createPanel(detailsModel: GHPRDetailsModel,
                           branchesModel: GHPRBranchesModel,
-                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
+                          avatarIconsProviderFactory: GHAvatarIconProviderFactory): JComponent {
     val panel = JPanel(VerticalLayout(UI.scale(8))).apply {
       isOpaque = false
     }

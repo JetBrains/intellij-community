@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.history.VcsDiffUtil
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
@@ -34,12 +33,13 @@ import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThr
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconProviderFactory
 import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.concurrent.CompletableFuture
 
 class GHPRChangesDiffHelperImpl(private val project: Project,
                                 private val dataProvider: GHPRDataProvider,
-                                private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                private val avatarIconsProviderFactory: GHAvatarIconProviderFactory,
                                 private val currentUser: GHUser)
   : GHPRChangesDiffHelper {
 

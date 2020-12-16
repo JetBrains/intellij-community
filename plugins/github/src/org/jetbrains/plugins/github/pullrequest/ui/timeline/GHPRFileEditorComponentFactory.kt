@@ -25,7 +25,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -35,10 +34,11 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
-import org.jetbrains.plugins.github.ui.GHHandledErrorPanelModel
-import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
+import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import javax.swing.BorderFactory
 import javax.swing.JComponent
@@ -102,7 +102,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   fun create(): JComponent {
     val mainPanel = Wrapper()
 
-    val avatarIconsProvider = editor.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
+    val avatarIconsProvider = editor.avatarIconsProviderFactory.create(GHUIUtil.avatarSize, mainPanel)
 
     val header = GHPRTitleComponent.create(detailsModel, editor.detailsData)
 
@@ -128,7 +128,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       isOpaque = false
       border = JBUI.Borders.empty(24, 20)
 
-      val maxWidth = GithubUIUtil.getPRTimelineWidth()
+      val maxWidth = GHUIUtil.getPRTimelineWidth()
 
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
@@ -139,7 +139,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       add(header, CC().growX().maxWidth("$maxWidth"))
       add(timeline, CC().growX().minWidth(""))
 
-      val fullTimelineWidth = GithubUIUtil.avatarSize.get() + maxWidth
+      val fullTimelineWidth = GHUIUtil.avatarSize.get() + maxWidth
 
       add(errorPanel, CC().hideMode(2).width("$fullTimelineWidth"))
       add(loadingIcon, CC().hideMode(2).width("$fullTimelineWidth"))

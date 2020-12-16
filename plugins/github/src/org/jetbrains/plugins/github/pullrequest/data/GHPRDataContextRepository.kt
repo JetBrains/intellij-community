@@ -23,9 +23,9 @@ import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolderImpl
+import org.jetbrains.plugins.github.ui.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.*
 import java.io.IOException
 import java.util.concurrent.CompletableFuture

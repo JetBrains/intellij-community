@@ -15,7 +15,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -49,7 +49,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
   private fun createContent(): JComponent {
     return doCreateContent().also {
-      GithubUIUtil.overrideUIDependentProperty(it) {
+      GHUIUtil.overrideUIDependentProperty(it) {
         isOpaque = true
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }

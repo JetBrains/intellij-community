@@ -6,10 +6,10 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconProviderFactory
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
 internal class GHPRDataContext(val parsedRepositoryCoordinates: GHRepositoryCoordinates,
@@ -20,7 +20,7 @@ internal class GHPRDataContext(val parsedRepositoryCoordinates: GHRepositoryCoor
                                val dataProviderRepository: GHPRDataProviderRepository,
                                val securityService: GHPRSecurityService,
                                val repositoryDataService: GHPRRepositoryDataService,
-                               val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                               val avatarIconsProviderFactory: GHAvatarIconProviderFactory,
                                val filesManager: GHPRFilesManager) : Disposable {
 
   private val listenersDisposable = Disposer.newDisposable("GH PR context listeners disposable")

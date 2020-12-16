@@ -30,8 +30,8 @@ import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
-import org.jetbrains.plugins.github.ui.GHSimpleErrorPanelModel
+import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.component.GHSimpleErrorPanelModel
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.FlowLayout

@@ -22,12 +22,12 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Cursor
@@ -231,7 +231,7 @@ object GHPRReviewThreadComponent {
     return JPanel().apply {
       isOpaque = false
       layout = MigLayout(LC().insets("0"))
-      add(content, CC().width("${GithubUIUtil.getPRTimelineWidth() + GithubUIUtil.avatarSize.get()}"))
+      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + GHUIUtil.avatarSize.get()}"))
     }
   }
 

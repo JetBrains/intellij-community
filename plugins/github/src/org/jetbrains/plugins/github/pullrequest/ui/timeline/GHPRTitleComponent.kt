@@ -17,9 +17,9 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -34,7 +34,7 @@ internal object GHPRTitleComponent {
     }
 
     model.addAndInvokeValueChangedListener {
-      icon.icon = GithubUIUtil.getPullRequestStateIcon(model.value.state, model.value.isDraft)
+      icon.icon = GHUIUtil.getPullRequestStateIcon(model.value.state, model.value.isDraft)
       title.setBody(getTitleBody(model.value.title, model.value.number.toString()))
     }
 
@@ -67,7 +67,7 @@ internal object GHPRTitleComponent {
     }
 
     detailsModel.addAndInvokeDetailsChangedListener {
-      icon.icon = GithubUIUtil.getPullRequestStateIcon(detailsModel.state, detailsModel.isDraft)
+      icon.icon = GHUIUtil.getPullRequestStateIcon(detailsModel.state, detailsModel.isDraft)
       title.setBody(getTitleBody(detailsModel.title, detailsModel.number))
     }
 

@@ -8,8 +8,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.UI
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingSubmittableTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -46,7 +46,7 @@ internal open class GHEditableHtmlPaneHandle(private val editorPane: HtmlEditorP
       panel.repaint()
     }
 
-    editor?.let { GithubUIUtil.focusPanel(it) }
+    editor?.let { GHUIUtil.focusPanel(it) }
   }
 
   private fun hideEditor() {

@@ -30,8 +30,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -119,7 +119,7 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
     }
 
     private fun showLoginPanel() {
-      setCenteredContent(GithubUIUtil.createNoteWithAction(::requestNewAccount).apply {
+      setCenteredContent(GHUIUtil.createNoteWithAction(::requestNewAccount).apply {
         append(GithubBundle.message("login.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, Runnable { requestNewAccount() })
         append(" ")
         append(GithubBundle.message("pull.request.account.to.view.prs.suffix"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
@@ -129,11 +129,11 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
     private fun requestNewAccount() {
       GithubAuthenticationManager.getInstance().requestNewAccountForServer(repository.serverPath, project)
       update()
-      GithubUIUtil.focusPanel(panel)
+      GHUIUtil.focusPanel(panel)
     }
 
     private fun showChooseAccountPanel(accounts: List<GithubAccount>) {
-      setCenteredContent(GithubUIUtil.createNoteWithAction { chooseAccount(accounts) }.apply {
+      setCenteredContent(GHUIUtil.createNoteWithAction { chooseAccount(accounts) }.apply {
         append(GithubBundle.message("account.choose.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                Runnable { chooseAccount(accounts) })
         append(" ")
@@ -147,12 +147,12 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
         selectedAccount = dialog.account
         if (dialog.setDefault) project.service<GithubProjectDefaultAccountHolder>().account = dialog.account
         update()
-        GithubUIUtil.focusPanel(panel)
+        GHUIUtil.focusPanel(panel)
       }
     }
 
     private fun showCreateRequestExecutorPanel(account: GithubAccount) {
-      setCenteredContent(GithubUIUtil.createNoteWithAction { createRequestExecutorWithUserInput(account) }.apply {
+      setCenteredContent(GHUIUtil.createNoteWithAction { createRequestExecutorWithUserInput(account) }.apply {
         append(GithubBundle.message("login.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                Runnable { createRequestExecutorWithUserInput(account) })
         append(" ")
@@ -163,7 +163,7 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
     private fun createRequestExecutorWithUserInput(account: GithubAccount) {
       requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project)
       update()
-      GithubUIUtil.focusPanel(panel)
+      GHUIUtil.focusPanel(panel)
     }
 
     private fun setCenteredContent(component: JComponent) {
@@ -289,7 +289,7 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
         wrapper.setContent(pullRequestComponent)
         wrapper.repaint()
       }
-      if (onShown == null) GithubUIUtil.focusPanel(wrapper.targetComponent)
+      if (onShown == null) GHUIUtil.focusPanel(wrapper.targetComponent)
       else onShown(UIUtil.getClientProperty(wrapper.targetComponent, GHPRViewComponentController.KEY))
     }
 

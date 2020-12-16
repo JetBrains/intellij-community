@@ -10,23 +10,23 @@ import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconProviderFactory
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
 import javax.swing.JComponent
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
-                     private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                     private val avatarIconsProviderFactory: GHAvatarIconProviderFactory,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
     wrapComponentUsingRoundedPanel { wrapper ->
-      val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
+      val avatarIconsProvider = avatarIconsProviderFactory.create(GHUIUtil.avatarSize, wrapper)
       GHPRReviewThreadComponent.create(thread, reviewDataProvider, avatarIconsProvider, currentUser).apply {
         border = JBUI.Borders.empty(8, 8)
       }
@@ -99,7 +99,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
     @NlsActions.ActionText actionName: String,
     hideCallback: () -> Unit
   ): JComponent = wrapComponentUsingRoundedPanel { wrapper ->
-    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
+    val avatarIconsProvider = avatarIconsProviderFactory.create(GHUIUtil.avatarSize, wrapper)
 
     GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser, actionName) {
       hideCallback()
