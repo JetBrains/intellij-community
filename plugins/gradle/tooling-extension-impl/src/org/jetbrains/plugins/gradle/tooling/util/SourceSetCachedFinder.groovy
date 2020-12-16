@@ -25,6 +25,7 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.composite.internal.DefaultIncludedBuild
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
@@ -40,14 +41,14 @@ class SourceSetCachedFinder {
   private static final DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER = new DataProvider<ArtifactsMap>() {
     @NotNull
     @Override
-    ArtifactsMap create(@NotNull Gradle gradle) {
+    ArtifactsMap create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
       return createArtifactsMap(gradle)
     }
   }
   private static final DataProvider<Map<String, Set<File>>> SOURCES_DATA_KEY = new DataProvider<Map<String, Set<File>>>() {
     @NotNull
     @Override
-    Map<String, Set<File>> create(@NotNull Gradle gradle) {
+    Map<String, Set<File>> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
       return new HashMap<String, Set<File>>()
     }
   }

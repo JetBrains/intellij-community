@@ -15,17 +15,26 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.DefaultTaskContainer;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.tooling.MessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
 import java.util.*;
 
 public class TasksFactory {
   private final Map<Project, Set<Task>> allTasks = new HashMap<Project, Set<Task>>();
   private final Set<Project> processedRootProjects = new HashSet<Project>();
+  @NotNull private final MessageReporter myMessageReporter;
+
+  public TasksFactory(@NotNull MessageReporter messageReporter) {
+    myMessageReporter = messageReporter;
+  }
 
   private void collectTasks(Project root) {
     // Refresh tasks
@@ -39,7 +48,27 @@ public class TasksFactory {
         }
       }
     }
-    allTasks.putAll(root.getAllTasks(true));
+    allTasks.putAll(getAllTasks(root));
+  }
+
+  @NotNull
+  private Map<Project, Set<Task>> getAllTasks(@NotNull Project root) {
+    final Map<Project, Set<Task>> foundTargets = new TreeMap<Project, Set<Task>>();
+    Action<Project> action = new Action<Project>() {
+      @Override
+      public void execute(@NotNull Project project) {
+        try {
+          TaskContainer projectTasks = project.getTasks();
+          foundTargets.put(project, new TreeSet<Task>(projectTasks));
+        }
+        catch (Exception e) {
+          String title = "Can not load tasks for " + project;
+          myMessageReporter.report(project, MessageBuilder.create(title, title).warning().withException(e).build());
+        }
+      }
+    };
+    root.allprojects(action);
+    return foundTargets;
   }
 
   public Set<Task> getTasks(Project project) {
@@ -59,7 +88,8 @@ public class TasksFactory {
     Set<Task> tasks = allTasks.get(project);
     if (tasks != null) {
       return tasks;
-    } else {
+    }
+    else {
       return Collections.emptySet();
     }
   }

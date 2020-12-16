@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Vladislav.Soroka
  */
-public interface ModelBuilderContext {
+public interface ModelBuilderContext extends MessageReporter {
   /**
    * @return root Gradle instance
    */
@@ -29,11 +29,8 @@ public interface ModelBuilderContext {
   @NotNull
   <T> T getData(@NotNull DataProvider<T> provider);
 
-  @ApiStatus.Experimental
-  void report(@NotNull Project project, @NotNull Message message);
-
   interface DataProvider<T> {
     @NotNull
-    T create(@NotNull Gradle gradle);
+    T create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter);
   }
 }

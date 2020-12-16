@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
@@ -47,7 +48,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   static final DataProvider<Map<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<Map<Project, ExternalProject>>() {
     @NotNull
     @Override
-    Map<Project, ExternalProject> create(@NotNull Gradle gradle) {
+    Map<Project, ExternalProject> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
       return new HashMap<Project, ExternalProject>()
     }
   }

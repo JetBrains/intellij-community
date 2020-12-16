@@ -200,7 +200,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     public <T> T getData(@NotNull DataProvider<T> provider) {
       Object data = myMap.get(provider);
       if (data == null) {
-        T value = provider.create(myGradle);
+        T value = provider.create(myGradle, this);
         myMap.put(provider, value);
         return value;
       }
