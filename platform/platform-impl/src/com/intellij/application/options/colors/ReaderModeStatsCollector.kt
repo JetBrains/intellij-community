@@ -2,8 +2,16 @@
 package com.intellij.application.options.colors
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-object ReaderModeStatsCollector {
-  val SEE_ALSO_EVENT = EventLogGroup("reader.mode", 1).registerEvent("see.also.navigation", EventFields.Count)
+class ReaderModeStatsCollector : CounterUsagesCollector() {
+  override fun getGroup() = GROUP
+
+  companion object {
+    private val GROUP = EventLogGroup("reader.mode", 1)
+    private val seeAlsoNavigation = GROUP.registerEvent("see.also.navigation")
+
+    @JvmStatic
+    fun logSeeAlsoNavigation() = seeAlsoNavigation.log()
+  }
 }
