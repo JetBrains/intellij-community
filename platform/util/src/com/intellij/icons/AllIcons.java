@@ -998,6 +998,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon RemoteDebug = load("runConfigurations/remoteDebug.svg", 2931940180745308475L, 2);
     /** 16x16 */ public static final @NotNull Icon RerunFailedTests = load("runConfigurations/rerunFailedTests.svg", -6426507070384423641L, 2);
     /** 16x16 */ public static final @NotNull Icon Scroll_down = load("runConfigurations/scroll_down.svg", -3639196916339524370L, 2);
+    /** 16x16 */ public static final @NotNull Icon Scroll_up = load("runConfigurations/scroll_up.svg", 7903704837301127306L, 2);
     /** 16x16 */ public static final @NotNull Icon ShowIgnored = load("runConfigurations/showIgnored.svg", -4002920975740649796L, 2);
     /** 16x16 */ public static final @NotNull Icon ShowPassed = load("runConfigurations/showPassed.svg", -6720194468316776230L, 2);
     /** 16x16 */ public static final @NotNull Icon SortbyDuration = load("runConfigurations/sortbyDuration.svg", 7949917760534896820L, 2);
