@@ -133,7 +133,6 @@ object DebuggerUtils {
             override fun visitInsn(opcode: Int) = visitOpcode(opcode)
         }, false)
 
-        result = result && processedOpcodes == 3
-        return result
+        return result && processedOpcodes == 3
     }
 }
