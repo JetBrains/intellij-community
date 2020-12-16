@@ -1,4 +1,23 @@
+import java.util.stream.Stream;
 
+class Order {
+  interface I { }
+  interface I2 { }
+
+  class Holder {
+    public void registerProblem(I i1,
+                                String s,
+                                I2 ... i2s) { }
+
+    public void registerProblem(Foo problemDescriptor) { }
+  }
+  class Foo {
+    void f(Stream<Foo> stream, Holder holder) {
+      stream.forEach(holder::registerProblem);
+    }
+  }
+
+}
 interface I {
   void foo(String s, Object... params);
 }

@@ -92,19 +92,16 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
           if (parametersCount == interfaceArity - offset) {
             return true;
           }
-          if (((PsiMethod)element).isVarArgs()) {
-            if (interfaceMethod.isVarArgs()) {
-              return true;
-            }
-            return interfaceArity >= parametersCount + offset - 1;
+          if (((PsiMethod)element).isVarArgs() && (interfaceMethod.isVarArgs() || interfaceArity >= parametersCount + offset - 1)) {
+            return true;
           }
         }
         else if (!isStatic) {
           if (parametersCount == interfaceArity) {
             return true;
           }
-          if (((PsiMethod)element).isVarArgs()) {
-            return interfaceMethod.isVarArgs() || interfaceArity >= parametersCount - 1 ;
+          if (((PsiMethod)element).isVarArgs() && (interfaceMethod.isVarArgs() || interfaceArity >= parametersCount - 1)) {
+            return true;
           }
         }
       } else if (element instanceof PsiClass) {
