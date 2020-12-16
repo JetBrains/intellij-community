@@ -22,8 +22,14 @@ class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurab
 ) {
   override fun createPanel(): DialogPanel {
     val vcsConfig = VcsConfiguration.getInstance(project)
+    val shelveManager = ShelveChangesManager.getInstance(project)
+
     val shelfLocation = ComponentPanelBuilder.createCommentComponent(createPresentableShelfLocation(), true, -1, false)
     return panel {
+      row {
+        checkBox(VcsBundle.message("shelve.remove.successfully.applied.files.checkbox"),
+                 { shelveManager.isRemoveFilesFromShelf }, { shelveManager.isRemoveFilesFromShelf = it })
+      }
       row {
         checkBox(VcsBundle.message("vcs.shelf.store.base.content"), vcsConfig::INCLUDE_TEXT_INTO_SHELF,
                  VcsBundle.message("settings.shelf.content.larger", VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000))
