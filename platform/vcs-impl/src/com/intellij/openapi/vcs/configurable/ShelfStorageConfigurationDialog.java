@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
-import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurationPanel.getDefaultShelfPresentationPath;
+import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurable.getDefaultShelfPresentationPath;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.*;
 
