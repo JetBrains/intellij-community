@@ -1085,7 +1085,7 @@ final class DistributionJARsBuilder {
               ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
       def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
       text = text.replaceFirst(
-              "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"([^/]*)/>", //we leave element unclosed to allow other attributes
+              "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"([^/]*)/>",
               !toPublish ? "" :
               "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\" $eapAttribute \$2 />")
       buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parent.parent.fileName} <product-descriptor/>")
