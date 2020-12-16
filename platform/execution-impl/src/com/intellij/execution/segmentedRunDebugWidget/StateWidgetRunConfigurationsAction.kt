@@ -40,7 +40,7 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
 
     val popup = StateActionGroupPopup(myPopupTitle, group, context, false,
                                       shouldShowDisabledActions(), false, false,
-                                      disposeCallback, maxRows, preselectCondition, null) { action ->
+                                      disposeCallback, maxRows, preselectCondition, null, false) { action ->
       if (action is FinalActionGroup) {
         StateWidgetManager.getInstance(action.project)
           .getActiveProcessesBySettings(action.configuration)

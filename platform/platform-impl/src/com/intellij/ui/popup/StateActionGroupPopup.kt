@@ -30,13 +30,14 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
                                  maxRowCount: Int,
                                  preselectActionCondition: Condition<AnAction>?,
                                  actionPlace: String?,
+                                 autoSelection: Boolean,
                                  val getState: (AnAction) -> String?) :
   PopupFactoryImpl.ActionGroupPopup(title, actionGroup, dataContext, showNumbers,
                                     useAlphaAsNumbers,
                                     showDisabledActions, honorActionMnemonics,
                                     disposeCallback, maxRowCount,
                                     preselectActionCondition,
-                                    actionPlace) {
+                                    actionPlace, autoSelection) {
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
     return if (step is ListPopupStep<*>) {
