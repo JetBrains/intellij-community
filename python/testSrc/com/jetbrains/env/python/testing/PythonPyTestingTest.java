@@ -320,6 +320,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   /**
    * Each node must contain "raise Exception" only once and no "Assertion Failed" message
    */
+  @EnvTestTagsRequired(tags = "python3")
   @Test
   public void testAssertionFailedNotDuplicated() {
     runPythonTest(

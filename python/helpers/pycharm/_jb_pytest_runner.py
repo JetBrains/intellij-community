@@ -23,7 +23,10 @@ if __name__ == '__main__':
         if "pytest-teamcity" not in map(lambda e: e.name, iter_entry_points(group='pytest11', name=None)):
             plugins_to_load.append(pytest_plugin)
 
-    args = sys.argv[1:] + ["--no-header", "--no-summary", "-q"]
+    args = sys.argv[1:]
+    if sys.version_info > (3,0):
+        args += ["--no-header", "--no-summary", "-q"]
+
     if JB_DISABLE_BUFFERING and "-s" not in args:
       args += ["-s"]
 
