@@ -68,8 +68,8 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
         if (autoPopupAfterOpeningBrace) {
           return;
         }
-        boolean impossibleReferencePrefix = !completionPrefix.isEmpty() && !PyNames.isIdentifier(completionPrefix);
-        if (impossibleReferencePrefix) {
+        boolean prefixCannotStartReference = !completionPrefix.isEmpty() && !PyNames.isIdentifier(completionPrefix);
+        if (prefixCannotStartReference) {
           return;
         }
         PyExpression fString = PyUtil.createExpressionFromFragment("f" + stringElemText, stringLiteral.getParent());
