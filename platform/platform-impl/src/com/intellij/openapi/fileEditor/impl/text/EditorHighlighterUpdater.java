@@ -137,7 +137,8 @@ public class EditorHighlighterUpdater {
   protected EditorHighlighter createHighlighter(boolean forceEmpty) {
     EditorHighlighter highlighter = myFile != null && !forceEmpty
                                     ? EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile)
-                                    : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT));
+                                    : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(),
+                                                                 HighlighterColors.TEXT);
     highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
     return highlighter;
   }
