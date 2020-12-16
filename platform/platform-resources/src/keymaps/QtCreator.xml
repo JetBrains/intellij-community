@@ -2,10 +2,13 @@
   <action id="OpenFile">
     <keyboard-shortcut first-keystroke="control O"/>
   </action>
+  <action id="NewFile">
+    <keyboard-shortcut first-keystroke="control N"/>
+  </action>
   <action id="GotoClass"/>
   <action id="GotoChangedFile"/>
   <action id="CPP.CreateCMakeProject">
-    <keyboard-shortcut first-keystroke="control N"/>
+    <keyboard-shortcut first-keystroke="control shift N"/>
   </action>
   <action id="$SelectAll">
     <keyboard-shortcut first-keystroke="control A"/>
@@ -91,7 +94,7 @@
     <keyboard-shortcut first-keystroke="control I"/>
   </action>
   <action id="ReformatCode">
-    <keyboard-shortcut first-keystroke="control I"/>
+    <keyboard-shortcut first-keystroke="control SEMICOLON"/>
   </action>
   <action id="CollapseRegion">
     <keyboard-shortcut first-keystroke="control shift COMMA"/>
@@ -197,7 +200,7 @@
   </action>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="F2"/>
-    <mouse-shortcut keystroke="ctrl button1"/>
+    <mouse-shortcut keystroke="control button1"/>
   </action>
   <action id="ReplaceInPath"/>
   <action id="RenameElement">
@@ -239,6 +242,9 @@
   <action id="Resume">
     <keyboard-shortcut first-keystroke="F5"/>
   </action>
+  <action id="Pause">
+    <keyboard-shortcut first-keystroke="F5"/>
+  </action>
   <action id="Debug">
     <keyboard-shortcut first-keystroke="F5"/>
   </action>
@@ -266,7 +272,7 @@
   </action>
   <action id="GotoTypeDeclaration"/>
   <action id="BuildProfile">
-    <keyboard-shortcut first-keystroke="control shift b" />
+    <keyboard-shortcut first-keystroke="control shift B" />
   </action>
   <action id="Compile">
     <keyboard-shortcut first-keystroke="control alt B"/>
@@ -288,6 +294,7 @@
     <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt C"/>
   </action>
   <action id="Compare.SameVersion">
+    <keyboard-shortcut first-keystroke="control H"/>
     <keyboard-shortcut first-keystroke="alt G" second-keystroke="alt D"/>
   </action>
   <action id="Annotate">
