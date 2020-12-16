@@ -117,12 +117,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
 
-    //for compatibility with generated Ant build.xml files which refer to this file
-    productLayout.additionalPlatformJars.
-      putAll("javac2.jar",
-             ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt",
-              "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
-
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
