@@ -304,19 +304,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             public void testWhenBeforeTopLevelPropertyInitializer() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/afterUnmatchedBrace/WhenBeforeTopLevelPropertyInitializer.after.kt");
             }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/afterUnmatchedBrace/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/afterUnmatchedBrace/Users/vladimir.after.kt");
-                }
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -329,19 +316,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             @TestMetadata("listAccess.after.kt")
             public void testListAccess() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/arrayAccess/listAccess.after.kt");
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/arrayAccess/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/arrayAccess/Users/vladimir.after.kt");
-                }
             }
         }
 
@@ -597,18 +571,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
                 runTest("../idea/testData/indentationOnNewline/controlFlowConstructions/WhileWithoutCondition.after.kt");
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/controlFlowConstructions/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/controlFlowConstructions/Users/vladimir.after.kt");
-                }
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -641,19 +603,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             @TestMetadata("BeforeElvisInBinaryExpression.after.kt")
             public void testBeforeElvisInBinaryExpression() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/elvis/BeforeElvisInBinaryExpression.after.kt");
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/elvis/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/elvis/Users/vladimir.after.kt");
-                }
             }
         }
 
@@ -707,19 +656,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             @TestMetadata("FunctionBodyInsideClass2.after.kt")
             public void testFunctionBodyInsideClass2() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/emptyBraces/FunctionBodyInsideClass2.after.kt");
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/emptyBraces/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/emptyBraces/Users/vladimir.after.kt");
-                }
             }
         }
 
@@ -1014,19 +950,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             public void testEmptyParameters2() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/emptyParameters/EmptyParameters2.after.kt");
             }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/emptyParameters/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/emptyParameters/Users/vladimir.after.kt");
-                }
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -1104,19 +1027,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             @TestMetadata("IsExpressionAfterIs.after.kt")
             public void testIsExpressionAfterIs() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/IsExpressionAfterIs.after.kt");
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/emptyParenthesisInBinaryExpression/Users/vladimir.after.kt");
-                }
             }
         }
 
@@ -1216,19 +1126,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             public void testPropertyWithTypeParameterReceiver() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/expressionBody/PropertyWithTypeParameterReceiver.after.kt");
             }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/expressionBody/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/expressionBody/Users/vladimir.after.kt");
-                }
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -1266,19 +1163,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             @TestMetadata("ScriptInsideFun.after.kts")
             public void testScriptInsideFun() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/script/ScriptInsideFun.after.kts");
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/script/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kts")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/script/Users/vladimir.after.kts");
-                }
             }
         }
 
@@ -1402,32 +1286,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             @TestMetadata("TemplateEntryOpenWithoutContent5.after.kt")
             public void testTemplateEntryOpenWithoutContent5() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent5.after.kt");
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("../idea/testData/indentationOnNewline/templates/Users")
-            public static class Users extends AbstractPerformanceTypingIndentationTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("vladimir.after.kt")
-                public void testVladimir() throws Exception {
-                    runTest("../idea/testData/indentationOnNewline/templates/Users/vladimir.after.kt");
-                }
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../idea/testData/indentationOnNewline/Users")
-        public static class Users extends AbstractPerformanceTypingIndentationTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("vladimir.after.kt")
-            public void testVladimir() throws Exception {
-                runTest("../idea/testData/indentationOnNewline/Users/vladimir.after.kt");
             }
         }
     }
