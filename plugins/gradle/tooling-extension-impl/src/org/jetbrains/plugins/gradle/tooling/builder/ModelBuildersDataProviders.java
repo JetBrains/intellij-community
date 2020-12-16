@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.invocation.Gradle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
@@ -26,8 +27,8 @@ public interface ModelBuildersDataProviders {
   DataProvider<TasksFactory> TASKS_PROVIDER = new DataProvider<TasksFactory>() {
     @NotNull
     @Override
-    public TasksFactory create(@NotNull Gradle gradle) {
-      return new TasksFactory();
+    public TasksFactory create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
+      return new TasksFactory(messageReporter);
     }
   };
 }

@@ -56,7 +56,13 @@ public final class ErrorMessageBuilder {
   public Message buildMessage() {
     String message = myDescription != null ? myDescription : "";
     String projectDisplayName = getDisplayName(myProject);
-    String title = myException != null ? getRootCauseMessage(myException) : myDescription != null ? myDescription : myGroup;
+    String title = null;
+    if (myException != null) {
+      title = getRootCauseMessage(myException);
+    }
+    if (title == null) {
+      title = myDescription != null ? myDescription : myGroup;
+    }
     title = projectDisplayName + ": " + title;
     return MessageBuilder.create(title, message)
       .warning() // custom model builders failures often not so critical to the import results and reported as warnings to avoid useless distraction
@@ -89,10 +95,14 @@ public final class ErrorMessageBuilder {
     return projectDisplayName;
   }
 
-  @NotNull
-  private static String getRootCauseMessage(@NotNull Throwable e) {
+  @Nullable
+  private static String getRootCauseMessage(@NotNull Throwable t) {
+    Throwable e = t;
     while (true) {
-      if (e.getCause() == null) return e.getMessage();
+      if (e.getCause() == null) {
+        String message = e.getMessage();
+        return message == null ? t.getMessage() : message;
+      }
       e = e.getCause();
     }
   }
