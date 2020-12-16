@@ -2,6 +2,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -229,16 +230,33 @@ public class XDebuggerTestUtil {
 
   public static boolean waitFor(Semaphore semaphore, long timeoutInMillis) {
     long end = System.currentTimeMillis() + timeoutInMillis;
-    long remaining = timeoutInMillis;
-    do {
+    flushEventQueue();
+    for (long remaining = timeoutInMillis; remaining > 0; remaining = end - System.currentTimeMillis()) {
       try {
-        return semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS);
+        // 10ms is the sleep interval used by ProgressIndicatorUtils for busy-waiting.
+        long timeout = Math.min(10, remaining);
+        boolean acquired = semaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+        if (acquired) {
+          return true;
+        }
       }
       catch (InterruptedException ignored) {
-        remaining = end - System.currentTimeMillis();
       }
-    } while (remaining > 0);
+      finally {
+        flushEventQueue();
+      }
+    }
     return false;
+  }
+
+  // Rider needs this in order to be able to receive messages from the backend when waiting on the EDT.
+  private static void flushEventQueue() {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      IdeEventQueue.getInstance().flushQueue();
+    }
+    else {
+      UIUtil.pump();
+    }
   }
 
   @NotNull
