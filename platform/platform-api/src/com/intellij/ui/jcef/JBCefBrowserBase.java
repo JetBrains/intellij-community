@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Base for offscreen and regular browsers
+ * Base class for windowed and offscreen browsers.
  */
 public abstract class JBCefBrowserBase implements JBCefDisposable {
 

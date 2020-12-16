@@ -57,11 +57,12 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
  * A wrapper over {@link CefBrowser}.
  * <p>
  * Use {@link #getComponent()} as the browser's UI component.
+ * <p>
  * Use {@link #loadURL(String)} or {@link #loadHTML(String)} for loading.
+ * <p>
+ * Use {@link JBCefOsrHandlerBrowser} to render offscreen via a custom {@link CefRenderHandler}.
  *
- * If you need to render output using your own handler, see {@link JBCefOsrHandlerBrowser}
  * @see JBCefOsrHandlerBrowser
- *
  * @author tav
  */
 public class JBCefBrowser extends JBCefBrowserBase {
