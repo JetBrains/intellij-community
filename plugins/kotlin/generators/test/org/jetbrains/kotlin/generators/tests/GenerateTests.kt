@@ -1339,7 +1339,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractPerformanceTypingIndentationTest> {
-            model("indentationOnNewline", testMethodName = "doPerfTest", pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model("indentationOnNewline", pattern = """^([^\.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
+            model("indentationOnNewline", pattern = """^([^\.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
         }
     }
 

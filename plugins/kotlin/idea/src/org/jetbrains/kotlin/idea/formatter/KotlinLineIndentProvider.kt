@@ -39,6 +39,6 @@ class KotlinLineIndentProvider : KotlinLangLineIndentProvider() {
     companion object {
         @get:TestOnly
         @set:TestOnly
-        internal var useFormatter: Boolean = false
+        var useFormatter: Boolean = false
     }
 }

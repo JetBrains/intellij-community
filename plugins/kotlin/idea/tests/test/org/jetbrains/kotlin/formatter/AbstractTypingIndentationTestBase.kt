@@ -27,10 +27,12 @@ abstract class AbstractTypingIndentationTestBase : KotlinLightPlatformCodeInsigh
 
     @JvmOverloads
     fun doNewlineTest(afterFilePath: String, inverted: Boolean = false) {
-        val testFileName = afterFilePath.substring(0, afterFilePath.indexOf("."))
-        val testFileExtension = afterFilePath.substring(afterFilePath.lastIndexOf("."))
-        val originFilePath = testFileName + testFileExtension
-        val originalFileText = FileUtil.loadFile(File(originFilePath), true)
+        val afterFile = File(afterFilePath)
+        val testFileName = afterFile.name.substring(0, afterFile.name.indexOf("."))
+        val testFileExtension = afterFile.name.substring(afterFile.name.lastIndexOf("."))
+        val originFileName = testFileName + testFileExtension
+        val originalFile = File(afterFile.parent, originFileName)
+        val originalFileText = FileUtil.loadFile(originalFile, true)
         val withoutCustomLineIndentProvider = InTextDirectivesUtils.findStringWithPrefixes(
             originalFileText,
             "// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER"
@@ -58,7 +60,7 @@ abstract class AbstractTypingIndentationTestBase : KotlinLightPlatformCodeInsigh
             },
             body = {
                 doNewlineTest(
-                    originFilePath, afterFilePath,
+                    originalFile.path, afterFilePath,
                     withoutCustomLineIndentProvider = withoutCustomLineIndentProvider,
                     ignoreFormatter = ignoreFormatter
                 )

@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />

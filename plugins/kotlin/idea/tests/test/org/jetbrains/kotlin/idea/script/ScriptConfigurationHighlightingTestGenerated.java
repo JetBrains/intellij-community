@@ -98,6 +98,11 @@ public class ScriptConfigurationHighlightingTestGenerated extends AbstractScript
             runTest("testData/script/definition/highlighting/implicitReceiver/");
         }
 
+        @TestMetadata("mainModule")
+        public void testMainModule() throws Exception {
+            runTest("testData/script/definition/highlighting/mainModule/");
+        }
+
         @TestMetadata("multiModule")
         public void testMultiModule() throws Exception {
             runTest("testData/script/definition/highlighting/multiModule/");
