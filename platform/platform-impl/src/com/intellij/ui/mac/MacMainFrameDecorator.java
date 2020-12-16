@@ -21,6 +21,8 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
+import com.sun.jna.Callback;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -124,6 +126,35 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   private static int DEFAULT_WIN_TAB_HEIGHT() {
     return Registry.intValue("ide.mac.bigsur.window.with.tabs.height", 28);
+  }
+
+  @SuppressWarnings("FieldCanBeLocal")
+  private static Callback myObserverCallback; // don't convert to local var
+  private static ID myObserverDelegate;
+
+  private static void initTabObserver(@NotNull ID window) {
+    ID tabBar = Foundation.invoke(window, "tabGroup");
+    if (!ID.NIL.equals(Foundation.invoke(tabBar, "observationInfo"))) {
+      return;
+    }
+
+    if (myObserverDelegate == null) {
+      myObserverCallback = new Callback() {
+        @SuppressWarnings("unused")
+        public void callback(ID self, Pointer selector, ID ofObject, ID change, Pointer context) {
+          ApplicationManager.getApplication().invokeLater(() -> updateTabBars(null));
+        }
+      };
+
+      ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "MyWindowTabGroupObserver");
+      Foundation.addMethod(delegateClass, Foundation.createSelector("observeValueForKeyPath:ofObject:change:context:"),
+                           myObserverCallback, "v*");
+      Foundation.registerObjcClassPair(delegateClass);
+
+      myObserverDelegate = Foundation.invoke("MyWindowTabGroupObserver", "new");
+    }
+
+    Foundation.invoke(tabBar, "addObserver:forKeyPath:options:context:", myObserverDelegate, Foundation.nsString("windows"), 0, ID.NIL);
   }
 
   @NotNull
@@ -249,6 +280,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     if (frames.length < 2) {
       if (frames.length == 1) {
         updateTabBar(frames[0], 0);
+
+        if (newFrame != null) {
+          Foundation.executeOnMainThread(true, false, () -> {
+            initTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
+          });
+        }
       }
       return;
     }
@@ -274,6 +311,10 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       if (callInAppkit) {
         // call only for shown window and only in Appkit
         Foundation.executeOnMainThread(true, false, () -> {
+          if (newFrame != null) {
+            initTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
+          }
+
           for (int i = 0; i < frames.length; i++) {
             if (visibleAndHeights[i] == null) {
               ID window = MacUtil.getWindowFromJavaWindow(((ProjectFrameHelper)frames[i]).getFrame());
@@ -298,6 +339,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         });
       }
       else {
+        if (newFrame != null) {
+          Foundation.executeOnMainThread(true, false, () -> {
+            initTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
+          });
+        }
+
         if (newIndex != -1) {
           visibleAndHeights[newIndex] = 0;
         }
