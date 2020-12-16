@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,8 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
       getRequiredMethodArguments(methodCall.getMethodExpression().getQualifierExpression(), argumentOffset, methodPredicate);
     if (requiredTypes != null) {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
-      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset, true);
+      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset, 
+                                                                 MethodCallUtils.isVarArgCall(methodCall));
       if (actualArguments != null) {
         if (requiredTypes.size() != actualArguments.expressions.length) {
           if (actualArguments.varargAsArray) {
@@ -126,14 +128,15 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
   }
 
   @Nullable
-  static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean allowVarargAsArray) {
-    if (allowVarargAsArray && arguments.length == argumentOffset + 1) {
-      final List<PsiExpression> expressions = getVarargs(arguments[argumentOffset]);
-      if (expressions != null) {
-        return new Arguments(expressions.toArray(PsiExpression.EMPTY_ARRAY), true);
+  static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean isVarArgCall) {
+    if (!isVarArgCall) {
+      if (arguments.length == argumentOffset + 1) {
+        final List<PsiExpression> expressions = getVarargs(arguments[argumentOffset]);
+        if (expressions != null) {
+          return new Arguments(expressions.toArray(PsiExpression.EMPTY_ARRAY), true);
+        }
       }
-    }
-    if (arguments.length >= argumentOffset) {
+    } else if (arguments.length >= argumentOffset) {
       final PsiExpression[] expressions = argumentOffset != 0 ? Arrays.copyOfRange(arguments, argumentOffset, arguments.length) : arguments;
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression castOperand = unwrapDisambiguatingCastToObject(expressions[i]);
