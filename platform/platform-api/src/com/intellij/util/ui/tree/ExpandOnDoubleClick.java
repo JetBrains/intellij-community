@@ -25,8 +25,6 @@ public enum ExpandOnDoubleClick {
     if (NEVER.name().equalsIgnoreCase(option)) return NEVER;
     if (ALWAYS.name().equalsIgnoreCase(option)) return ALWAYS;
     if (NAVIGATABLE.name().equalsIgnoreCase(option)) return NAVIGATABLE;
-    if (Registry.is("ide.tree.expand.on.double.click.disabled", false)) return NEVER;
-    if (!Registry.is("ide.tree.expand.navigatable.on.double.click.disabled", true)) return NAVIGATABLE;
     return DEFAULT;
   }
 }
