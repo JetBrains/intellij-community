@@ -65,7 +65,8 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
       return new MarkdownCssSettings(false,
                                      "",
                                      myState.myCssSettings.isTextEnabled(),
-                                     myState.myCssSettings.getCustomStylesheetText());
+                                     myState.myCssSettings.getCustomStylesheetText(),
+                                     myState.myCssSettings.getFontSize());
     }
 
     return myState.myCssSettings;

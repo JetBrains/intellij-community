@@ -202,6 +202,10 @@ Includes the following features:</p>
     </action>
 
     <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+      <action class="org.intellij.plugins.markdown.settings.MarkdownFontSettingsAction"
+              id="org.intellij.plugins.markdown.settings.fontSettings.MarkdownFontFamilyAction">
+      </action>
+      <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"
               id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"
               icon="AllIcons.General.LayoutEditorOnly">
