@@ -36,6 +36,10 @@ public final class ImmutableZipEntry {
     this.method = method;
   }
 
+  void setDataOffset(int dataOffset) {
+    this.dataOffset = dataOffset;
+  }
+
   public int getHeaderOffset() {
     return headerOffset;
   }
@@ -46,28 +50,26 @@ public final class ImmutableZipEntry {
 
   /**
    * Get the name of the entry.
-   *
-   * @return the entry name
    */
   public String getName() {
     return name;
   }
 
   /**
-   * Returns the size of the compressed entry data, or -1 if not known.
+   * Returns the size of the compressed entry data.
    * In the case of a stored entry, the compressed size will be the same
    * as the uncompressed size of the entry.
-   *
-   * @return the size of the compressed entry data, or -1 if not known
    */
   public int getCompressedSize() {
     return compressedSize;
   }
 
+  public int getUncompressedSize() {
+    return uncompressedSize;
+  }
+
   /**
-   * Returns the compression method of the entry, or -1 if not specified.
-   *
-   * @return the compression method of the entry, or -1 if not specified
+   * Returns the compression method of the entry.
    */
   public int getMethod() {
     return method;
@@ -75,8 +77,6 @@ public final class ImmutableZipEntry {
 
   /**
    * Is this entry a directory?
-   *
-   * @return true if the entry is a directory
    */
   public boolean isDirectory() {
     return uncompressedSize == -2;
@@ -87,7 +87,7 @@ public final class ImmutableZipEntry {
   }
 
   public byte[] getData(@NotNull ImmutableZipFile file) throws IOException {
-    if (uncompressedSize == -1) {
+    if (uncompressedSize < 0) {
       throw new IOException("no data");
     }
 
@@ -117,8 +117,8 @@ public final class ImmutableZipEntry {
 
           Inflater inflater = new Inflater(true);
           inflater.setInput(inputBuffer);
-          byte[] result = new byte[uncompressedSize];
           int count = uncompressedSize;
+          byte[] result = new byte[count];
           int offset = 0;
           while (count > 0) {
             int n = inflater.inflate(result, offset, count);
@@ -129,6 +129,52 @@ public final class ImmutableZipEntry {
             offset += n;
             count -= n;
           }
+          return result;
+        }
+        catch (DataFormatException e) {
+          String s = e.getMessage();
+          throw new ZipException(s == null ? "Invalid ZLIB data format" : s);
+        }
+        finally {
+          if (inputBuffer != null) {
+            DirectByteBufferPool.DEFAULT_POOL.release(inputBuffer);
+          }
+        }
+      }
+
+      default:
+        throw new ZipException("Found unsupported compression method " + getMethod());
+    }
+  }
+
+  public ByteBuffer getByteBuffer(@NotNull ImmutableZipFile file) throws IOException {
+    if (uncompressedSize < 0) {
+      throw new IOException("no data");
+    }
+
+    if (file.fileSize < (dataOffset + compressedSize)) {
+      throw new EOFException();
+    }
+
+    switch (getMethod()) {
+      case ZipEntry.STORED: {
+        return computeDataOffsetIfNeededAndReadInputBuffer(file.fileChannel, file.fileSize);
+      }
+      case ZipEntry.DEFLATED: {
+        ByteBuffer inputBuffer = null;
+        try {
+          inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.fileChannel, file.fileSize);
+
+          Inflater inflater = new Inflater(true);
+          inflater.setInput(inputBuffer);
+          ByteBuffer result;
+          result = DirectByteBufferPool.DEFAULT_POOL.allocate(uncompressedSize);
+          while (result.hasRemaining()) {
+            if (inflater.inflate(result) == 0) {
+              throw new IllegalStateException("Inflater wants input, but input was already set");
+            }
+          }
+          result.rewind();
           return result;
         }
         catch (DataFormatException e) {

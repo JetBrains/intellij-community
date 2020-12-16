@@ -157,11 +157,11 @@ public final class ClasspathCache {
     }
   }
 
-  private Object getLoadersByName(@NotNull String resourcePath) {
+  Object getLoadersByName(@NotNull String resourcePath) {
     lock.readLock().lock();
     Object o;
     try {
-      IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ? classPackageCache : resourcePackageCache;
+      IntObjectHashMap map = resourcePath.endsWith(ClassPath.CLASS_EXTENSION) ? classPackageCache : resourcePackageCache;
       o = map.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
     }
     finally {
@@ -239,11 +239,17 @@ public final class ClasspathCache {
     int nameEnd = name.charAt(name.length() - 1) == '/' ? name.length() - 1 : name.length();
     name = name.substring(name.lastIndexOf('/', nameEnd - 1) + 1, nameEnd);
 
-    if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+    if (name.endsWith(ClassPath.CLASS_EXTENSION)) {
       int $ = name.indexOf('$');
       return name.substring(0, $ == -1 ? name.lastIndexOf('.') : $);
     }
     return name;
+  }
+
+  static @NotNull String transformClassName(@NotNull String name) {
+    int startIndex = name.lastIndexOf('.') + 1;
+    int $ = name.indexOf('$', startIndex);
+    return name.substring(startIndex, $ == -1 ? name.length() : $);
   }
 
   static final class NameFilter extends BloomFilterBase implements Predicate<String> {

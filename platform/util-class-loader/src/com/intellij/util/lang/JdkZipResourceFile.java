@@ -15,7 +15,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.security.ProtectionDomain;
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -37,6 +36,18 @@ public final class JdkZipResourceFile implements ResourceFile {
     this.lockJars = lockJars;
     this.file = path.toFile();
     this.isSecureLoader = isSecureLoader;
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  private static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    byte[] bytes = new byte[length];
+    int count = 0;
+    while (count < length) {
+      int n = stream.read(bytes, count, length - count);
+      if (n <= 0) break;
+      count += n;
+    }
+    return bytes;
   }
 
   @NotNull ZipFile getZipFile() throws IOException {
@@ -80,6 +91,35 @@ public final class JdkZipResourceFile implements ResourceFile {
   }
 
   @Override
+  public @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
+    throws IOException {
+    ZipFile zipFile = getZipFile();
+    ZipEntry entry = zipFile.getEntry(fileName);
+    if (entry == null) {
+      return null;
+    }
+
+    byte[] bytes;
+    try (InputStream stream = zipFile.getInputStream(entry)) {
+      bytes = loadBytes(stream, (int)entry.getSize());
+    }
+    finally {
+      if (!lockJars) {
+        close();
+      }
+    }
+
+    ProtectionDomain protectionDomain;
+    if (jarLoader instanceof SecureJarLoader) {
+      protectionDomain = ((SecureJarLoader)jarLoader).getProtectionDomain((JarEntry)entry, new URL(jarLoader.url, entry.getName()));
+    }
+    else {
+      protectionDomain = null;
+    }
+    return classConsumer.consumeClassData(className, bytes, jarLoader, protectionDomain);
+  }
+
+  @Override
   public @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) throws IOException {
     try {
       ZipEntry entry = getZipFile().getEntry(name);
@@ -101,7 +141,7 @@ public final class JdkZipResourceFile implements ResourceFile {
   }
 
   @Override
-  public @Nullable JarMemoryLoader preload(@NotNull Path basePath, @Nullable JarLoader jarLoader) throws IOException {
+  public @Nullable JarMemoryLoader preload(@NotNull Path basePath) throws IOException {
     ZipFile zipFile = getZipFile();
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     if (!entries.hasMoreElements()) {
@@ -113,10 +153,8 @@ public final class JdkZipResourceFile implements ResourceFile {
       return null;
     }
 
-    byte[] bytes = Resource.loadBytes(zipFile.getInputStream(sizeEntry), 2);
+    byte[] bytes = loadBytes(zipFile.getInputStream(sizeEntry), 2);
     int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
-
-    Map<Resource.Attribute, String> attributes = jarLoader == null ? null : jarLoader.loadManifestAttributes(this);
 
     Object[] table = new Object[((size * 4) + 1) & ~1];
     String baseUrl = JarLoader.fileToUri(basePath).toString();
@@ -130,12 +168,12 @@ public final class JdkZipResourceFile implements ResourceFile {
       else {
         byte[] content;
         try (InputStream stream = zipFile.getInputStream(entry)) {
-          content = Resource.loadBytes(stream, (int)entry.getSize());
+          content = loadBytes(stream, (int)entry.getSize());
         }
 
         int dest = -(index + 1);
         table[dest] = name;
-        table[dest + 1] = new MemoryResource(baseUrl, content, name, attributes);
+        table[dest + 1] = new MemoryResource(baseUrl, content, name);
       }
     }
     return new JarMemoryLoader(table);
@@ -165,7 +203,7 @@ public final class JdkZipResourceFile implements ResourceFile {
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         String name = entry.getName();
-        if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+        if (name.endsWith(ClassPath.CLASS_EXTENSION)) {
           builder.addClassPackageFromName(name);
           builder.transformClassNameAndAddPossiblyDuplicateNameEntry(name, name.lastIndexOf('/') + 1);
         }
@@ -188,7 +226,7 @@ public final class JdkZipResourceFile implements ResourceFile {
     }
   }
 
-  private static class ZipFileResource extends Resource {
+  private static class ZipFileResource implements Resource {
     protected final URL baseUrl;
     private URL url;
     protected final ZipEntry entry;
@@ -198,6 +236,11 @@ public final class JdkZipResourceFile implements ResourceFile {
       this.baseUrl = baseUrl;
       this.entry = entry;
       this.jarLoader = jarLoader;
+    }
+
+    @Override
+    public String toString() {
+      return url.toString();
     }
 
     @Override
@@ -224,16 +267,11 @@ public final class JdkZipResourceFile implements ResourceFile {
     public byte @NotNull [] getBytes() throws IOException {
       JdkZipResourceFile file = (JdkZipResourceFile)jarLoader.zipFile;
       try (InputStream stream = file.getZipFile().getInputStream(entry)) {
-        return Resource.loadBytes(stream, (int)entry.getSize());
+        return loadBytes(stream, (int)entry.getSize());
       }
       finally {
         jarLoader.releaseZipFile(file);
       }
-    }
-
-    @Override
-    public Map<Attribute, String> getAttributes() throws IOException {
-      return jarLoader.loadManifestAttributes(jarLoader.zipFile);
     }
   }
 
@@ -246,16 +284,11 @@ public final class JdkZipResourceFile implements ResourceFile {
     public byte @NotNull [] getBytes() throws IOException {
       JdkZipResourceFile resourceFile = (JdkZipResourceFile)jarLoader.zipFile;
       try (InputStream stream = resourceFile.getZipFile().getInputStream(entry)) {
-        return Resource.loadBytes(stream, (int)entry.getSize());
+        return loadBytes(stream, (int)entry.getSize());
       }
       finally {
         jarLoader.releaseZipFile(resourceFile);
       }
-    }
-
-    @Override
-    public ProtectionDomain getProtectionDomain() {
-      return ((SecureJarLoader)jarLoader).getProtectionDomain((JarEntry)entry, getURL());
     }
   }
 }

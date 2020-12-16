@@ -10,11 +10,14 @@ import java.nio.file.Path;
 import java.util.jar.Attributes;
 
 public interface ResourceFile extends Closeable {
-  @Nullable JarMemoryLoader preload(@NotNull Path basePath, @Nullable JarLoader attributeProvider) throws IOException;
+  @Nullable JarMemoryLoader preload(@NotNull Path basePath) throws IOException;
 
   @Nullable Attributes loadManifestAttributes() throws IOException;
 
   @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() throws IOException;
 
   @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) throws IOException;
+
+  @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
+    throws IOException;
 }

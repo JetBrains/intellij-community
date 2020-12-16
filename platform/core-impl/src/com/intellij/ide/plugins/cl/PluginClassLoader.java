@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.lang.ClassPath;
+import com.intellij.util.lang.Resource;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.*;
@@ -312,7 +313,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
       Writer logStream = PluginClassLoader.logStream;
       try {
-        c = _findClass(name);
+        c = classPath.findClass(name);
       }
       catch (LinkageError e) {
         if (logStream != null) {
@@ -380,17 +381,19 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @Override
   public final InputStream getResourceAsStream(String name) {
-    InputStream stream = getOwnResourceAsStream(name);
+    String canonicalPath = toCanonicalPath(name);
+
+    InputStream stream = getOwnResourceAsStreamByCanonicalPath(canonicalPath);
     if (stream != null) {
       return stream;
     }
 
     for (ClassLoader classloader : getAllParents()) {
       if (classloader instanceof PluginClassLoader) {
-        stream = ((PluginClassLoader)classloader).getOwnResourceAsStream(name);
+        stream = ((PluginClassLoader)classloader).getOwnResourceAsStreamByCanonicalPath(canonicalPath);
       }
       else {
-        stream = classloader.getResourceAsStream(name);
+        stream = classloader.getResourceAsStream(canonicalPath);
       }
 
       if (stream != null) {
@@ -401,8 +404,17 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     return null;
   }
 
-  private @Nullable InputStream getOwnResourceAsStream(String name) {
-    return super.getResourceAsStream(name);
+  private @Nullable InputStream getOwnResourceAsStreamByCanonicalPath(String canonicalPath) {
+    try {
+      Resource resource = classPath.getResource(canonicalPath);
+      if (resource == null && canonicalPath.startsWith("/")) {
+        throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash");
+      }
+      return resource == null ? null : resource.getInputStream();
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   @Override

@@ -37,19 +37,22 @@ final class FileLoader extends Loader {
   private static final Boolean doFsActivityLogging = false;
   private static final short ourVersion = 22;
 
-  private final Path rootDir;
   private final int rootDirAbsolutePathLength;
-  private final ClassPath configuration;
+  private final boolean isClassPathIndexEnabled;
 
   private static final BlockingDeque<Map.Entry<ClasspathCache.LoaderData, Path>> loaderDataToSave = new LinkedBlockingDeque<>();
   private static final AtomicBoolean isSaveThreadStarted = new AtomicBoolean();
 
-  FileLoader(@NotNull Path path, @NotNull ClassPath configuration) {
+  FileLoader(@NotNull Path path, boolean isClassPathIndexEnabled) {
     super(path);
 
-    rootDir = path;
-    rootDirAbsolutePathLength = rootDir.toString().length();
-    this.configuration = configuration;
+    rootDirAbsolutePathLength = path.toString().length();
+    this.isClassPathIndexEnabled = isClassPathIndexEnabled;
+  }
+
+  @Override
+  public @Nullable Map<Loader.Attribute, String> getAttributes() throws IOException {
+    return null;
   }
 
   private void buildPackageCache(@NotNull Path startDir, @NotNull ClasspathCache.LoaderDataBuilder context) {
@@ -64,7 +67,7 @@ final class FileLoader extends Loader {
         boolean containsResources = false;
         for (Path file : dirStream) {
           String path = file.toString();
-          if (path.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+          if (path.endsWith(ClassPath.CLASS_EXTENSION)) {
             context.transformClassNameAndAddPossiblyDuplicateNameEntry(path, path.lastIndexOf(File.separatorChar) + 1);
             containsClasses = true;
           }
@@ -105,8 +108,21 @@ final class FileLoader extends Loader {
 
   @Override
   @Nullable Resource getResource(@NotNull String name) {
-    Path file = rootDir.resolve(name);
+    Path file = path.resolve(name);
     return Files.exists(file) ? new FileResource(file) : null;
+  }
+
+  @Override
+  @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException {
+    Path file = path.resolve(fileName);
+    byte[] data;
+    try {
+      data = Files.readAllBytes(file);
+    }
+    catch (NoSuchFileException e) {
+      return null;
+    }
+    return classConsumer.consumeClassData(className, data, this, null);
   }
 
   private static ClasspathCache.LoaderData readFromIndex(Path index) {
@@ -210,13 +226,13 @@ final class FileLoader extends Loader {
   }
 
   private Path getIndexFileFile() {
-    return rootDir.resolve("classpath.index");
+    return path.resolve("classpath.index");
   }
 
   @Override
   public @NotNull ClasspathCache.IndexRegistrar buildData() {
     ClasspathCache.LoaderData loaderData = null;
-    Path indexFile = configuration.isClassPathIndexEnabled ? getIndexFileFile() : null;
+    Path indexFile = isClassPathIndexEnabled ? getIndexFileFile() : null;
     if (indexFile != null) {
       loaderData = readFromIndex(indexFile);
     }
@@ -228,13 +244,13 @@ final class FileLoader extends Loader {
       long started = System.nanoTime();
 
       ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder(true);
-      buildPackageCache(rootDir, loaderDataBuilder);
+      buildPackageCache(path, loaderDataBuilder);
       loaderData = loaderDataBuilder.build();
       long doneNanos = System.nanoTime() - started;
       currentScanningTime = totalScanning.addAndGet(doneNanos);
       if (doFsActivityLogging) {
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("Scanned: " + rootDir + " for " + (doneNanos / nsMsFactor) + "ms");
+        System.out.println("Scanned: " + path + " for " + (doneNanos / nsMsFactor) + "ms");
       }
 
       if (indexFile != null) {
@@ -289,7 +305,7 @@ final class FileLoader extends Loader {
     }, 10, TimeUnit.SECONDS);
   }
 
-  private static final class FileResource extends Resource {
+  private static final class FileResource implements Resource {
     private URL url;
     private final Path file;
 
@@ -330,6 +346,6 @@ final class FileLoader extends Loader {
 
   @Override
   public String toString() {
-    return "FileLoader [" + rootDir + "]";
+    return "FileLoader(path=" + path + ')';
   }
 }

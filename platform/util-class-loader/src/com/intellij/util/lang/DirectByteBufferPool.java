@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class DirectByteBufferPool {
   public static final DirectByteBufferPool DEFAULT_POOL = new DirectByteBufferPool();
 
-  private static final int MIN_SIZE = 4096;
+  private static final int MIN_SIZE = 2048;
   private static final int MAX_POOL_SIZE = 32;
 
   private final ConcurrentSkipListMap<Integer, ByteBuffer> pool = new ConcurrentSkipListMap<>();
@@ -33,6 +33,7 @@ public final class DirectByteBufferPool {
 
     ByteBuffer result;
     if (entry == null) {
+
       result = ByteBuffer.allocateDirect(size);
     }
     else {

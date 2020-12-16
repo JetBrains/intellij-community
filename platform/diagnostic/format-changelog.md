@@ -1,3 +1,8 @@
+# 27
+
+ * `classLoading` changed — `time` includes class define time, `defineTime` and `searchTime` added. `searchTime` it is property that computed for convenience, — not measured but computed as `time - defineTime`. 
+ * `resourceLoading` with the same schema as `classLoading` added (except `searchTime`).
+
 # 26
 
 * `stats.loadedClasses` map (plugin id to class count) is removed.

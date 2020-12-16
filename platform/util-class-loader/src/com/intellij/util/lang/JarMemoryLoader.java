@@ -3,6 +3,7 @@ package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public final class JarMemoryLoader {
@@ -20,6 +21,16 @@ public final class JarMemoryLoader {
     if (i >= 0) {
       resources.set(i, null);
       return (Resource)resources.getAndSet(i + 1, null);
+    }
+    return null;
+  }
+
+  public byte[] getBytes(@NotNull String entryName) throws IOException {
+    int i = probe(entryName, resources);
+    if (i >= 0) {
+      resources.set(i, null);
+      MemoryResource resource = (MemoryResource)resources.getAndSet(i + 1, null);
+      return resource == null ? null : resource.getBytes();
     }
     return null;
   }

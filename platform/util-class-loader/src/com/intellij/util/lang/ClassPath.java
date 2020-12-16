@@ -8,19 +8,23 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
-import java.util.jar.Attributes;
 
 public final class ClassPath {
+  static final String CLASS_EXTENSION = ".class";
+
   private static final Loader[] EMPTY_LOADERS = new Loader[0];
 
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
@@ -31,9 +35,10 @@ public final class ClassPath {
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
 
   private static final Collection<Map.Entry<String, Path>> loadedClasses;
-  private static final AtomicLong ourTotalTime = new AtomicLong();
-  private static final AtomicInteger ourTotalRequests = new AtomicInteger();
-  private static final ThreadLocal<Boolean> doingTiming = new ThreadLocal<>();
+
+  private static final Measurer classLoading = new Measurer();
+  private static final Measurer resourceLoading = new Measurer();
+  private static final AtomicLong classDefineTotalTime = new AtomicLong();
 
   private final List<Path> files;
   private final @Nullable ResourceFileFactory resourceFileFactory;
@@ -55,6 +60,8 @@ public final class ClassPath {
   private final @Nullable Predicate<Path> cachingCondition;
   final boolean errorOnMissingJar;
 
+  private final @NotNull ClassPath.ClassDataConsumer classDataConsumer;
+
   static {
     // insertion order must be preserved
     loadedClasses = recordLoadingInfo ? new ConcurrentLinkedQueue<>() : null;
@@ -62,17 +69,30 @@ public final class ClassPath {
     if (logLoadingInfo) {
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("Classloading requests: " + ClassPath.class.getClassLoader() + "," +
-                           ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
+        System.out.println("Classloading requests: " + ClassPath.class.getClassLoader() +
+                           ", class=" + classLoading + ", resource=" + resourceLoading);
 
       }, "Shutdown hook for tracing classloading information"));
     }
   }
 
+  interface ClassDataConsumer {
+    boolean isByteBufferSupported(String name, @Nullable ProtectionDomain protectionDomain);
+
+    Class<?> consumeClassData(String name, byte[] data, Loader loader, @Nullable ProtectionDomain protectionDomain) throws IOException;
+
+    Class<?> consumeClassData(String name, ByteBuffer data, Loader loader, @Nullable ProtectionDomain protectionDomain) throws IOException;
+  }
+
+  public @Nullable ResourceFileFactory getResourceFileFactory() {
+    return resourceFileFactory;
+  }
+
   ClassPath(@NotNull List<Path> files,
             @NotNull Set<Path> filesWithProtectionDomain,
             @NotNull UrlClassLoader.Builder configuration,
-            @Nullable ResourceFileFactory resourceFileFactory) {
+            @Nullable ResourceFileFactory resourceFileFactory,
+            @NotNull ClassPath.ClassDataConsumer classDataConsumer) {
     lockJars = configuration.lockJars;
     useCache = configuration.useCache;
     preloadJarContents = configuration.preloadJarContents;
@@ -82,6 +102,8 @@ public final class ClassPath {
     errorOnMissingJar = configuration.errorOnMissingJar;
     this.filesWithProtectionDomain = filesWithProtectionDomain;
 
+    this.classDataConsumer = recordLoadingTime ? new MeasuringClassDataConsumer(classDataConsumer) : classDataConsumer;
+
     this.files = new ArrayList<>(files.size());
     this.resourceFileFactory = resourceFileFactory;
     if (!files.isEmpty()) {
@@ -89,10 +111,6 @@ public final class ClassPath {
         this.files.add(files.get(i));
       }
     }
-  }
-
-  public @Nullable ResourceFileFactory getResourceFileFactory() {
-    return resourceFileFactory;
   }
 
   public interface ResourceFileFactory {
@@ -113,12 +131,17 @@ public final class ClassPath {
   }
 
   // in nanoseconds
-  public static long getTotalTime() {
-    return ourTotalTime.get();
-  }
+  public static @NotNull Map<String, Long> getLoadingStats() {
+    Map<String, Long> result = new HashMap<>(5);
+    result.put("classLoadingTime", classLoading.timeCounter.get());
+    result.put("classDefineTime", classDefineTotalTime.get());
+    result.put("classRequests", (long)classLoading.requestCounter.get());
 
-  public static long getTotalRequests() {
-    return ourTotalRequests.get();
+    result.put("resourceLoadingTime", resourceLoading.timeCounter.get());
+    result.put("resourceRequests", (long)resourceLoading.requestCounter.get());
+
+    result.put("identity", (long)ClassPath.class.hashCode());
+    return result;
   }
 
   /** @deprecated adding URLs to classpath at runtime could lead to hard-to-debug errors */
@@ -135,8 +158,87 @@ public final class ClassPath {
     allUrlsWereProcessed = false;
   }
 
+  public @Nullable Class<?> findClass(@NotNull String className) {
+    long start = classLoading.startTiming();
+    try {
+      String fileName = className.replace('.', '/') + CLASS_EXTENSION;
+      String shortName;
+      int i;
+      if (useCache) {
+        shortName = ClasspathCache.transformClassName(className);
+
+        boolean allUrlsWereProcessed = this.allUrlsWereProcessed;
+        i = allUrlsWereProcessed ? 0 : lastLoaderProcessed.get();
+
+        Object o = cache.getLoadersByName(fileName);
+        if (o instanceof Loader) {
+          Loader loader = (Loader)o;
+          if (loader.containsName(fileName, shortName)) {
+            Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
+            if (result != null) {
+              return result;
+            }
+          }
+        }
+        else if (o != null) {
+          for (Loader loader : (Loader[])o) {
+            if (loader.containsName(fileName, shortName)) {
+              Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
+              if (result != null) {
+                return result;
+              }
+            }
+          }
+        }
+
+        if (allUrlsWereProcessed) {
+          return null;
+        }
+      }
+      else {
+        i = 0;
+        shortName = null;
+      }
+
+      Loader loader;
+      while ((loader = getLoader(i++)) != null) {
+        if (useCache && !loader.containsName(fileName, shortName)) {
+          continue;
+        }
+
+        Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    catch (IOException e) {
+      LoggerRt.getInstance(ClassPath.class).error("Cannot load class " + className, e);
+      return null;
+    }
+    finally {
+      classLoading.record(start, className);
+    }
+
+    return null;
+  }
+
+  private static @Nullable Class<?> findClassInLoader(String fileName,
+                                                      String className,
+                                                      ClassDataConsumer classConsumer,
+                                                      Loader loader) throws IOException {
+    Class<?> result = loader.findClass(fileName, className, classConsumer);
+    if (result == null) {
+      return null;
+    }
+    if (loadedClasses != null) {
+      loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(fileName, loader.path));
+    }
+    return result;
+  }
+
   public @Nullable Resource getResource(@NotNull String resourceName) {
-    long started = startTiming();
+    long start = resourceLoading.startTiming();
     try {
       String shortName;
       Resource resource;
@@ -176,7 +278,7 @@ public final class ClassPath {
       }
     }
     finally {
-      logInfo(started, resourceName);
+      resourceLoading.record(start, resourceName);
     }
 
     return null;
@@ -209,13 +311,11 @@ public final class ClassPath {
     if (i < lastLoaderProcessed.get()) {
       return loaders.get(i);
     }
-
     return getLoaderSlowPath(i);
   }
 
   private synchronized @Nullable Loader getLoaderSlowPath(int i) {
     while (loaders.size() < i + 1) {
-      Path path;
       int size = files.size();
       if (size == 0) {
         if (useCache) {
@@ -223,8 +323,8 @@ public final class ClassPath {
         }
         return null;
       }
-      path = files.remove(size - 1);
 
+      Path path = files.remove(size - 1);
       if (loaderMap.containsKey(path)) {
         continue;
       }
@@ -267,7 +367,7 @@ public final class ClassPath {
     }
 
     if (fileAttributes.isDirectory()) {
-      return new FileLoader(file, this);
+      return new FileLoader(file, isClassPathIndexEnabled);
     }
     else if (!fileAttributes.isRegularFile()) {
       return null;
@@ -324,11 +424,11 @@ public final class ClassPath {
     }
   }
 
-  Attributes getManifestData(@NotNull Path file) {
+  Map<Loader.Attribute, String> getManifestData(@NotNull Path file) {
     return useCache && cachePool != null ? cachePool.getManifestData(file) : null;
   }
 
-  void cacheManifestData(@NotNull Path file, @NotNull Attributes manifestAttributes) {
+  void cacheManifestData(@NotNull Path file, @NotNull Map<Loader.Attribute, String> manifestAttributes) {
     if (useCache && cachePool != null && cachingCondition != null && cachingCondition.test(file)) {
       cachePool.cacheManifestData(file, manifestAttributes);
     }
@@ -352,7 +452,7 @@ public final class ClassPath {
         return true;
       }
 
-      long started = startTiming();
+      long start = resourceLoading.startTiming();
       try {
         Loader loader;
         while (index < loaders.length) {
@@ -368,7 +468,7 @@ public final class ClassPath {
         }
       }
       finally {
-        logInfo(started, name);
+        resourceLoading.record(start, name);
       }
 
       return false;
@@ -409,7 +509,7 @@ public final class ClassPath {
         return true;
       }
 
-      long started = startTiming();
+      long start = resourceLoading.startTiming();
       try {
         Loader loader;
         while ((loader = classPath.getLoader(index++)) != null) {
@@ -423,7 +523,7 @@ public final class ClassPath {
         }
       }
       finally {
-        logInfo(started, name);
+        resourceLoading.record(start, name);
       }
 
       return false;
@@ -454,37 +554,6 @@ public final class ClassPath {
     return resource;
   }
 
-  private static long startTiming() {
-    if (!recordLoadingTime || doingTiming.get() != null) {
-      return 0;
-    }
-    else {
-      doingTiming.set(Boolean.TRUE);
-      return System.nanoTime();
-    }
-  }
-
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void logInfo(long started, String resourceName) {
-    if (started == 0 || !recordLoadingTime) {
-      return;
-    }
-
-    doingTiming.set(null);
-
-    long time = System.nanoTime() - started;
-    long totalTime = ourTotalTime.addAndGet(time);
-    int totalRequests = ourTotalRequests.incrementAndGet();
-    if (logLoadingInfo) {
-      if (time > 3000000L) {
-        System.out.println(time / 1000000 + " ms for " + resourceName);
-      }
-      if (totalRequests % 10000 == 0) {
-        System.out.println(ClassPath.class.getClassLoader() + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
-      }
-    }
-  }
-
   private static String @Nullable [] loadManifestClasspath(@NotNull JarLoader loader) {
     try {
       String classPath = loader.getClassPathManifestAttribute();
@@ -498,5 +567,109 @@ public final class ClassPath {
     catch (Exception ignore) {
     }
     return null;
+  }
+
+  private static final class MeasuringClassDataConsumer implements ClassDataConsumer {
+    private static final ThreadLocal<Boolean> doingClassDefineTiming = new ThreadLocal<>();
+
+    private final ClassDataConsumer classDataConsumer;
+
+    MeasuringClassDataConsumer(ClassDataConsumer classDataConsumer) {
+      this.classDataConsumer = classDataConsumer;
+    }
+
+    @Override
+    public boolean isByteBufferSupported(String name, @Nullable ProtectionDomain protectionDomain) {
+      return classDataConsumer.isByteBufferSupported(name, protectionDomain);
+    }
+
+    @Override
+    public Class<?> consumeClassData(String name,
+                                     byte[] data,
+                                     Loader loader,
+                                     @Nullable ProtectionDomain protectionDomain) throws IOException {
+      long start = startTiming();
+      try {
+        return classDataConsumer.consumeClassData(name, data, loader, protectionDomain);
+      }
+      finally {
+        record(start);
+      }
+    }
+
+    @Override
+    public Class<?> consumeClassData(String name,
+                                     ByteBuffer data,
+                                     Loader loader,
+                                     @Nullable ProtectionDomain protectionDomain) throws IOException {
+      long start = startTiming();
+      try {
+        return classDataConsumer.consumeClassData(name, data, loader, protectionDomain);
+      }
+      finally {
+        record(start);
+      }
+    }
+
+    private static long startTiming() {
+      if (doingClassDefineTiming.get() != null) {
+        return -1;
+      }
+      else {
+        doingClassDefineTiming.set(Boolean.TRUE);
+        return System.nanoTime();
+      }
+    }
+
+    private static void record(long start) {
+      if (start != -1) {
+        doingClassDefineTiming.set(null);
+        classDefineTotalTime.addAndGet(System.nanoTime() - start);
+      }
+    }
+  }
+
+  private static final class Measurer {
+    private final AtomicLong timeCounter = new AtomicLong();
+    private final AtomicInteger requestCounter = new AtomicInteger();
+
+    private final ThreadLocal<Boolean> doingTiming = new ThreadLocal<>();
+
+    long startTiming() {
+      if (!recordLoadingTime || doingTiming.get() != null) {
+        return -1;
+      }
+      else {
+        doingTiming.set(Boolean.TRUE);
+        return System.nanoTime();
+      }
+    }
+
+    @SuppressWarnings("UseOfSystemOutOrSystemErr")
+    void record(long start, String resourceName) {
+      if (start == -1) {
+        return;
+      }
+
+      doingTiming.set(null);
+
+      long time = System.nanoTime() - start;
+      long totalTime = timeCounter.addAndGet(time);
+      int totalRequests = requestCounter.incrementAndGet();
+      if (logLoadingInfo) {
+        if (time > 3000000L) {
+          System.out.println(TimeUnit.NANOSECONDS.toMillis(time) + " ms for " + resourceName);
+        }
+        if (totalRequests % 10000 == 0) {
+          System.out.println(ClassPath.class.getClassLoader() + ", requests: " + totalRequests +
+                             ", time:" + TimeUnit.NANOSECONDS.toMillis(totalTime) + "ms");
+        }
+      }
+    }
+
+    @Override
+    public String toString() {
+      return "Measurer(time=" + TimeUnit.NANOSECONDS.toMillis(timeCounter.get()) + "ms, requests=" + requestCounter + ')';
+    }
   }
 }

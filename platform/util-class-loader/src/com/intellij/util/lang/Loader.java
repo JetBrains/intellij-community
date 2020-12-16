@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -14,7 +15,11 @@ import java.util.function.Predicate;
  * @see JarLoader
  * @see FileLoader
  */
-abstract class Loader {
+public abstract class Loader {
+  public enum Attribute {
+    SPEC_TITLE, SPEC_VERSION, SPEC_VENDOR, CLASS_PATH, IMPL_TITLE, IMPL_VERSION, IMPL_VENDOR
+  }
+
   final @NotNull Path path;
   private Predicate<String> nameFilter;
 
@@ -23,6 +28,10 @@ abstract class Loader {
   }
 
   abstract @Nullable Resource getResource(@NotNull String name);
+
+  public abstract Map<Loader.Attribute, String> getAttributes() throws IOException;
+
+  abstract @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException;
 
   abstract @NotNull ClasspathCache.IndexRegistrar buildData() throws IOException;
 

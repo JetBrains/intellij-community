@@ -12,40 +12,44 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.jar.Attributes;
 
 public class JarLoader extends Loader {
-  private static final List<Map.Entry<Resource.Attribute, Attributes.Name>> PACKAGE_FIELDS = Arrays.asList(
-    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.SPEC_TITLE, Attributes.Name.SPECIFICATION_TITLE),
-    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.SPEC_VERSION, Attributes.Name.SPECIFICATION_VERSION),
-    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.SPEC_VENDOR, Attributes.Name.SPECIFICATION_VENDOR),
-    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.IMPL_TITLE, Attributes.Name.IMPLEMENTATION_TITLE),
-    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
-    new AbstractMap.SimpleImmutableEntry<>(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
-
-  private static final String NULL_STRING = "<null>";
+  @SuppressWarnings("unchecked")
+  private static final Map.Entry<Attribute, Attributes.Name>[] PACKAGE_FIELDS = new Map.Entry[]{
+    new AbstractMap.SimpleImmutableEntry<>(Attribute.SPEC_TITLE, Attributes.Name.SPECIFICATION_TITLE),
+    new AbstractMap.SimpleImmutableEntry<>(Attribute.SPEC_VERSION, Attributes.Name.SPECIFICATION_VERSION),
+    new AbstractMap.SimpleImmutableEntry<>(Attribute.SPEC_VENDOR, Attributes.Name.SPECIFICATION_VENDOR),
+    new AbstractMap.SimpleImmutableEntry<>(Attribute.CLASS_PATH, Attributes.Name.CLASS_PATH),
+    new AbstractMap.SimpleImmutableEntry<>(Attribute.IMPL_TITLE, Attributes.Name.IMPLEMENTATION_TITLE),
+    new AbstractMap.SimpleImmutableEntry<>(Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
+    new AbstractMap.SimpleImmutableEntry<>(Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR)
+  };
 
   protected final ClassPath configuration;
-  protected final URL url;
+  final URL url;
   private final SoftReference<JarMemoryLoader> memoryLoader;
   protected final ResourceFile zipFile;
-  private volatile Map<Resource.Attribute, String> attributes;
-  private volatile String classPathManifestAttribute;
+  private volatile Map<Loader.Attribute, String> attributes;
 
   JarLoader(@NotNull Path file, @NotNull ClassPath configuration, @NotNull ResourceFile zipFile) throws IOException {
     super(file);
 
     this.configuration = configuration;
     this.zipFile = zipFile;
-    this.url = new URL("jar", "", -1, fileToUri(file) + "!/");
+    url = new URL("jar", "", -1, fileToUri(file) + "!/");
 
     SoftReference<JarMemoryLoader> memoryLoader = null;
     if (configuration.preloadJarContents) {
       // IOException from opening is propagated to caller if zip file isn't valid
       try {
-        JarMemoryLoader loader = zipFile.preload(path, this);
+        JarMemoryLoader loader = zipFile.preload(path);
         if (loader != null) {
+          loadManifestAttributes(zipFile);
           memoryLoader = new SoftReference<>(loader);
         }
       }
@@ -54,6 +58,23 @@ public class JarLoader extends Loader {
       }
     }
     this.memoryLoader = memoryLoader;
+  }
+
+  @Override
+  public final Map<Attribute, String> getAttributes() throws IOException {
+    return loadManifestAttributes(zipFile);
+  }
+
+  @Override
+  final @Nullable Class<?> findClass(String fileName, String className, @NotNull ClassPath.ClassDataConsumer classConsumer) throws IOException {
+    JarMemoryLoader memoryLoader = this.memoryLoader == null ? null : this.memoryLoader.get();
+    if (memoryLoader != null) {
+      byte[] data = memoryLoader.getBytes(fileName);
+      if (data != null) {
+        return classConsumer.consumeClassData(className, data, this, null);
+      }
+    }
+    return zipFile.findClass(fileName, className, this, classConsumer);
   }
 
   // Path.toUri is broken — do not use it
@@ -75,27 +96,29 @@ public class JarLoader extends Loader {
   }
 
   final @Nullable String getClassPathManifestAttribute() throws IOException {
-    loadManifestAttributes(zipFile);
-    String result = classPathManifestAttribute;
-    return result == NULL_STRING ? null : result;
+    return loadManifestAttributes(zipFile).get(Attribute.CLASS_PATH);
   }
 
-  private static @Nullable Map<Resource.Attribute, String> getAttributes(@NotNull Attributes attributes) {
-    Map<Resource.Attribute, String> map = null;
-    for (Map.Entry<Resource.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
+  private static @NotNull Map<Loader.Attribute, String> getAttributes(@NotNull Attributes attributes) {
+    if (attributes.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    Map<Loader.Attribute, String> map = null;
+    for (Map.Entry<Loader.Attribute, Attributes.Name> p : PACKAGE_FIELDS) {
       String value = attributes.getValue(p.getValue());
       if (value != null) {
         if (map == null) {
-          map = new EnumMap<>(Resource.Attribute.class);
+          map = new EnumMap<>(Loader.Attribute.class);
         }
         map.put(p.getKey(), value);
       }
     }
-    return map;
+    return map == null ? Collections.emptyMap() : map;
   }
 
-  public final Map<Resource.Attribute, String> loadManifestAttributes(@NotNull ResourceFile resourceFile) throws IOException {
-    Map<Resource.Attribute, String> result = attributes;
+  private @NotNull Map<Loader.Attribute, String> loadManifestAttributes(@NotNull ResourceFile resourceFile) throws IOException {
+    Map<Loader.Attribute, String> result = attributes;
     if (result != null) {
       return result;
     }
@@ -106,19 +129,13 @@ public class JarLoader extends Loader {
         return result;
       }
 
-      Attributes manifestAttributes = configuration.getManifestData(path);
-      if (manifestAttributes == null) {
-        manifestAttributes = resourceFile.loadManifestAttributes();
-        if (manifestAttributes == null) {
-          manifestAttributes = new Attributes(0);
-        }
-        configuration.cacheManifestData(path, manifestAttributes);
+      result = configuration.getManifestData(path);
+      if (result == null) {
+        Attributes manifestAttributes = resourceFile.loadManifestAttributes();
+        result = manifestAttributes == null ? Collections.emptyMap() : getAttributes(manifestAttributes);
+        configuration.cacheManifestData(path, result);
       }
-
-      result = getAttributes(manifestAttributes);
       attributes = result;
-      Object attribute = manifestAttributes.get(Attributes.Name.CLASS_PATH);
-      classPathManifestAttribute = attribute instanceof String ? (String)attribute : NULL_STRING;
     }
     return result;
   }
@@ -143,9 +160,8 @@ public class JarLoader extends Loader {
     }
     catch (Exception e) {
       error("url: " + path, e);
+      return null;
     }
-
-    return null;
   }
 
   protected final void error(@NotNull String message, @NotNull Throwable t) {

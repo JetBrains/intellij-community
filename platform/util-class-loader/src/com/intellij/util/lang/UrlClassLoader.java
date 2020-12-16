@@ -2,7 +2,6 @@
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,6 +15,7 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
@@ -26,15 +26,14 @@ import java.util.function.Predicate;
  * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
  * Should be constructed using {@link #build()} method.
  */
-public class UrlClassLoader extends ClassLoader {
+public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
   protected static final boolean USE_PARALLEL_LOADING = Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
   private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
 
-  static final String CLASS_EXTENSION = ".class";
-  private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<>();
+  private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
   private final List<Path> files;
-  private final ClassPath classPath;
+  protected final ClassPath classPath;
   private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
 
@@ -76,8 +75,8 @@ public class UrlClassLoader extends ClassLoader {
 
   // called via reflection
   @SuppressWarnings({"unused", "MethodMayBeStatic"})
-  public final long @NotNull [] getLoadingStats() {
-    return new long[]{ClassPath.getTotalTime(), ClassPath.getTotalRequests()};
+  public final @NotNull Map<String, Long> getLoadingStats() {
+    return ClassPath.getLoadingStats();
   }
 
   public static @NotNull UrlClassLoader.Builder build() {
@@ -131,6 +130,14 @@ public class UrlClassLoader extends ClassLoader {
     this(builder, null, isParallelCapable);
   }
 
+  /**
+   * @deprecated Do not extend UrlClassLoader. If you cannot avoid it, use {@link #UrlClassLoader(Builder, boolean)}.
+   */
+  @Deprecated
+  protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder) {
+    this(builder, null, false);
+  }
+
   protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder,
                            @Nullable ClassPath.ResourceFileFactory resourceFileFactory,
                            boolean isParallelCapable) {
@@ -143,7 +150,7 @@ public class UrlClassLoader extends ClassLoader {
       urlsWithProtectionDomain = Collections.emptySet();
     }
 
-    classPath = new ClassPath(files, urlsWithProtectionDomain, builder, resourceFileFactory);
+    classPath = new ClassPath(files, urlsWithProtectionDomain, builder, resourceFileFactory, this);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
     classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
@@ -180,71 +187,77 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
-    Class<?> clazz = _findClass(name);
+    Class<?> clazz = classPath.findClass(name);
     if (clazz == null) {
       throw new ClassNotFoundException(name);
     }
     return clazz;
   }
 
-  protected final @Nullable Class<?> _findClass(@NotNull String name) {
-    Resource resource = classPath.getResource(name.replace('.', '/') + CLASS_EXTENSION);
-    if (resource == null) {
-      return null;
+  private void definePackageIfNeeded(@NotNull String name, Loader loader) throws IOException {
+    int lastDotIndex = name.lastIndexOf('.');
+    if (lastDotIndex == -1) {
+      return;
+    }
+
+    String packageName = name.substring(0, lastDotIndex);
+    // check if package already loaded
+    if (isPackageDefined(packageName)) {
+      return;
     }
 
     try {
-      return defineClass(name, resource);
+      Map<Loader.Attribute, String> attributes = loader.getAttributes();
+      if (attributes == null || attributes.isEmpty()) {
+        definePackage(packageName, null, null, null, null, null, null, null);
+      }
+      else {
+        definePackage(packageName,
+                      attributes.get(Loader.Attribute.SPEC_TITLE),
+                      attributes.get(Loader.Attribute.SPEC_VERSION),
+                      attributes.get(Loader.Attribute.SPEC_VENDOR),
+                      attributes.get(Loader.Attribute.IMPL_TITLE),
+                      attributes.get(Loader.Attribute.IMPL_VERSION),
+                      attributes.get(Loader.Attribute.IMPL_VENDOR),
+                      null);
+      }
     }
-    catch (IOException e) {
-      LoggerRt.getInstance(UrlClassLoader.class).error(e);
-      return null;
+    catch (IllegalArgumentException ignore) {
+      // do nothing, package already defined by some another thread
     }
   }
 
-  private Class<?> defineClass(@NotNull String name, @NotNull Resource resource) throws IOException {
-    int i = name.lastIndexOf('.');
-    if (i != -1) {
-      String packageName = name.substring(0, i);
-      // Check if package already loaded.
-      Package aPackage = getPackage(packageName);
-      if (aPackage == null) {
-        try {
-          Map<Resource.Attribute, String> attributes = resource.getAttributes();
-          definePackage(packageName,
-                        attributes == null ? null : attributes.get(Resource.Attribute.SPEC_TITLE),
-                        attributes == null ? null : attributes.get(Resource.Attribute.SPEC_VERSION),
-                        attributes == null ? null : attributes.get(Resource.Attribute.SPEC_VENDOR),
-                        attributes == null ? null : attributes.get(Resource.Attribute.IMPL_TITLE),
-                        attributes == null ? null : attributes.get(Resource.Attribute.IMPL_VERSION),
-                        attributes == null ? null : attributes.get(Resource.Attribute.IMPL_VENDOR),
-                        null);
-        }
-        catch (IllegalArgumentException ignore) {
-          // do nothing, package already defined by some another thread
-        }
-      }
-    }
-
-    ProtectionDomain protectionDomain = resource.getProtectionDomain();
-    if (protectionDomain == null) {
-      protectionDomain = getProtectionDomain();
-    }
-    return _defineClass(name, resource, protectionDomain);
+  protected boolean isPackageDefined(String packageName) {
+    //noinspection deprecation
+    return getPackage(packageName) != null;
   }
 
   protected ProtectionDomain getProtectionDomain() {
     return null;
   }
 
-  protected Class<?> _defineClass(String name, Resource resource, @Nullable ProtectionDomain protectionDomain) throws IOException {
-    byte[] data = resource.getBytes();
-    return defineClass(name, data, 0, data.length, protectionDomain);
+  @Override
+  public boolean isByteBufferSupported(@NotNull String name, @Nullable ProtectionDomain protectionDomain) {
+    return true;
+  }
+
+  @Override
+  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader, @Nullable ProtectionDomain protectionDomain)
+    throws IOException {
+    definePackageIfNeeded(name, loader);
+    return super.defineClass(name, data, 0, data.length, protectionDomain == null ? getProtectionDomain() : protectionDomain);
+  }
+
+  @Override
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader, @Nullable ProtectionDomain protectionDomain)
+    throws IOException {
+    definePackageIfNeeded(name, loader);
+    return super.defineClass(name, data, protectionDomain == null ? getProtectionDomain() : protectionDomain);
   }
 
   @Override
   public URL findResource(String name) {
-    if (ourSkipFindingResource.get() != null) {
+    if (skipFindingResource.get() != null) {
       return null;
     }
     Resource resource = findResourceImpl(name);
@@ -264,15 +277,20 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   public @Nullable InputStream getResourceAsStream(String name) {
     if (isBootstrapResourcesAllowed) {
-      ourSkipFindingResource.set(Boolean.TRUE);
+      skipFindingResource.set(Boolean.TRUE);
       try {
-        InputStream stream = super.getResourceAsStream(name);
-        if (stream != null) {
-          return stream;
+        URL url = getResource(name);
+        try {
+          InputStream stream = url == null ? null : url.openStream();
+          if (stream != null) {
+            return stream;
+          }
+        }
+        catch (IOException ignore) {
         }
       }
       finally {
-        ourSkipFindingResource.set(null);
+        skipFindingResource.set(null);
       }
     }
 
@@ -317,7 +335,7 @@ public class UrlClassLoader extends ClassLoader {
           return c;
         }
       }
-      return _findClass(name);
+      return classPath.findClass(name);
     }
   }
 
@@ -341,7 +359,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @SuppressWarnings("DuplicatedCode")
-  private static String toCanonicalPath(@NotNull String path) {
+  protected static String toCanonicalPath(@NotNull String path) {
     if (path.isEmpty()) {
       return path;
     }
@@ -487,7 +505,7 @@ public class UrlClassLoader extends ClassLoader {
     Builder() { }
 
     /**
-     * @deprecated Use {@link #files(List)}. Using of {@link URL} is discoruaged in favoir of modern {@lin Path}.
+     * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@lin Path}.
      */
     @Deprecated
     public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {

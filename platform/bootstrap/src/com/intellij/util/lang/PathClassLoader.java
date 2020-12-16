@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.security.ProtectionDomain;
 
 @ApiStatus.Internal
@@ -36,31 +35,24 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   @Override
-  protected Class<?> _defineClass(String name, Resource resource, @Nullable ProtectionDomain protectionDomain) throws IOException {
-    if (transformer == null || !transformer.isApplicable(name)) {
-      if (RESOURCE_FILE_FACTORY != null) {
-        ByteBuffer buffer = resource.getByteBuffer();
-        if (buffer != null) {
-          try {
-            return defineClass(name, buffer, protectionDomain);
-          }
-          finally {
-            resource.releaseByteBuffer(buffer);
-          }
-        }
-      }
+  public boolean isByteBufferSupported(@NotNull String name, @Nullable ProtectionDomain protectionDomain) {
+    return transformer == null || !transformer.isApplicable(name, this, protectionDomain);
+  }
 
-      byte[] data = resource.getBytes();
-      return defineClass(name, data, 0, data.length, protectionDomain);
-    }
-    else {
-      byte[] b = resource.getBytes();
-      byte[] result = transformer.transform(this, name, protectionDomain, b);
-      if (result != null) {
-        b = result;
+  @Override
+  protected boolean isPackageDefined(String packageName) {
+    return getDefinedPackage(packageName) != null;
+  }
+
+  @Override
+  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader, @Nullable ProtectionDomain protectionDomain)
+    throws IOException {
+    if (transformer != null && transformer.isApplicable(name, this, protectionDomain)) {
+      byte[] transformedData = transformer.transform(this, name, protectionDomain, data);
+      if (transformedData != null) {
+        return super.consumeClassData(name, transformedData, loader, protectionDomain);
       }
-      byte[] data = b;
-      return defineClass(name, data, 0, data.length, protectionDomain);
     }
+    return super.consumeClassData(name, data, loader, protectionDomain);
   }
 }

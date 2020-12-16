@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
@@ -58,17 +59,44 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
   }
 
   override fun writeExtraData(writer: JsonGenerator) {
+    val stats = getClassAndResourceLoadingStats()
+    writer.obj("classLoading") {
+      val time = stats.getValue("classLoadingTime")
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(time))
+      val defineTime = stats.getValue("classDefineTime")
+      writer.writeNumberField("searchTime", TimeUnit.NANOSECONDS.toMillis(time - defineTime))
+      writer.writeNumberField("defineTime", TimeUnit.NANOSECONDS.toMillis(defineTime))
+      writer.writeNumberField("count", stats.getValue("classRequests"))
+    }
+    writer.obj("resourceLoading") {
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getValue("resourceLoadingTime")))
+      writer.writeNumberField("count", stats.getValue("resourceRequests"))
+    }
+
     writeServiceStats(writer)
     writeIcons(writer)
+  }
 
+  private fun getClassAndResourceLoadingStats(): Map<String, Long> {
+    // data from bootstrap classloader
     val classLoader = IdeIdeaFormatWriter::class.java.classLoader
+    @Suppress("UNCHECKED_CAST")
     val stats = MethodHandles.lookup()
-      .findVirtual(classLoader::class.java, "getLoadingStats", MethodType.methodType(LongArray::class.java))
-      .bindTo(classLoader).invokeExact() as LongArray
-    writer.obj("classLoading") {
-      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats[0]))
-      writer.writeNumberField("count", stats[1])
+      .findVirtual(classLoader::class.java, "getLoadingStats", MethodType.methodType(Map::class.java))
+      .bindTo(classLoader).invokeExact() as MutableMap<String, Long>
+
+    // data from core classloader
+    val coreStats = ClassPath.getLoadingStats()
+    if (coreStats.get("identity") != stats.get("identity")) {
+      for (entry in coreStats.entries) {
+        val v1 = stats.getValue(entry.key)
+        if (v1 != entry.value) {
+          stats.put(entry.key, v1 + entry.value)
+        }
+      }
     }
+
+    return stats
   }
 
   override fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {

@@ -176,6 +176,8 @@ public final class ImmutableZipFile implements Closeable {
     // StandardCharsets.UTF_8.decode doesn't benefit from using direct buffer and introduces char buffer allocation for each decode
     byte[] tempNameBytes = new byte[4096];
 
+    ImmutableZipEntry prevEntry = null;
+    int prevEntryExpectedDataOffset = -1;
     while (offset < centralDirSize) {
       if (buffer.getInt(offset) != 33639248) {
         throw new EOFException("Expected central directory size " + centralDirSize +
@@ -190,6 +192,10 @@ public final class ImmutableZipFile implements Closeable {
       int nameLengthInBytes = buffer.getShort(offset + 28) & 0xffff;
       int extraFieldLength = buffer.getShort(offset + 30) & 0xffff;
       int commentLength = buffer.getShort(offset + 32) & 0xffff;
+
+      if (prevEntry != null && prevEntryExpectedDataOffset == (headerOffset - prevEntry.getCompressedSize())) {
+        prevEntry.setDataOffset(prevEntryExpectedDataOffset);
+      }
 
       offset += 46;
       buffer.position(offset);
@@ -209,13 +215,17 @@ public final class ImmutableZipFile implements Closeable {
       buffer.get(tempNameBytes, 0, nameLengthInBytes);
       String name = new String(tempNameBytes, 0, nameLengthInBytes - extraSuffixLength, StandardCharsets.UTF_8);
 
-      ImmutableZipEntry entry = new ImmutableZipEntry(name, compressedSize, uncompressedSize, headerOffset, nameLengthInBytes, method);
       int entrySetIndex = probe(name, Murmur3_32Hash.MURMUR3_32.hashBytes(tempNameBytes, 0, nameLengthInBytes - extraSuffixLength), entrySet);
       if (entrySetIndex >= 0) {
         // duplicates in xmlbeans-2.6.0.jar for example, skip it
         // throw new IllegalArgumentException("duplicate name: " + name);
+        prevEntry = null;
         continue;
       }
+
+      ImmutableZipEntry entry = new ImmutableZipEntry(name, compressedSize, uncompressedSize, headerOffset, nameLengthInBytes, method);
+      prevEntry = entry;
+      prevEntryExpectedDataOffset = headerOffset + 30 + nameLengthInBytes + extraFieldLength;
 
       entrySet[-(entrySetIndex + 1)] = entry;
       entries[entryIndex++] = entry;

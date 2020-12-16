@@ -14,9 +14,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -44,14 +44,13 @@ public final class ZipResourceFile implements ResourceFile {
   }
 
   @Override
-  public @Nullable JarMemoryLoader preload(@NotNull Path basePath, @Nullable JarLoader jarLoader) throws IOException {
+  public @Nullable JarMemoryLoader preload(@NotNull Path basePath) throws IOException {
     if (entryCountToPreload == -1) {
       return null;
     }
 
     Object[] table = new Object[((entryCountToPreload * 4) + 1) & ~1];
     String baseUrl = JarLoader.fileToUri(basePath).toString();
-    Map<Resource.Attribute, String> attributes = jarLoader == null ? null : jarLoader.loadManifestAttributes(this);
     ImmutableZipEntry[] entries = zipFile.getEntries();
     // skip size entry - it is still added for old implementation
     for (int entryIndex = 1, n = entryCountToPreload + 1; entryIndex < n; entryIndex++) {
@@ -64,7 +63,7 @@ public final class ZipResourceFile implements ResourceFile {
       else {
         int dest = -(index + 1);
         table[dest] = name;
-        table[dest + 1] = new MemoryResource(baseUrl, entry.getData(zipFile), name, attributes);
+        table[dest + 1] = new MemoryResource(baseUrl, entry.getData(zipFile), name);
       }
     }
     return new JarMemoryLoader(table);
@@ -89,7 +88,7 @@ public final class ZipResourceFile implements ResourceFile {
       }
 
       String name = entry.getName();
-      if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+      if (name.endsWith(ClassPath.CLASS_EXTENSION)) {
         builder.addClassPackageFromName(name);
       }
       else {
@@ -100,12 +99,34 @@ public final class ZipResourceFile implements ResourceFile {
   }
 
   @Override
+  public @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
+    throws IOException {
+    ImmutableZipEntry entry = zipFile.getEntry(fileName);
+    if (entry == null) {
+      return null;
+    }
+
+    if (classConsumer.isByteBufferSupported(className, null)) {
+      ByteBuffer buffer = entry.getByteBuffer(zipFile);
+      try {
+        return classConsumer.consumeClassData(className, buffer, jarLoader, null);
+      }
+      finally {
+        DirectByteBufferPool.DEFAULT_POOL.release(buffer);
+      }
+    }
+    else {
+      return classConsumer.consumeClassData(className, entry.getData(zipFile), jarLoader, null);
+    }
+  }
+
+  @Override
   public @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) throws IOException {
     ImmutableZipEntry entry = zipFile.getEntry(name);
     if (entry == null) {
       return null;
     }
-    return new ZipFileResource(jarLoader.url, entry, zipFile, jarLoader);
+    return new ZipFileResource(jarLoader.url, entry, zipFile);
   }
 
   @Override
@@ -113,18 +134,21 @@ public final class ZipResourceFile implements ResourceFile {
     zipFile.close();
   }
 
-  private static final class ZipFileResource extends Resource {
+  private static final class ZipFileResource implements Resource {
     private final URL baseUrl;
     private URL url;
     private final ImmutableZipEntry entry;
     private final ImmutableZipFile file;
-    private final JarLoader jarLoader;
 
-    private ZipFileResource(@NotNull URL baseUrl, @NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file, @NotNull JarLoader jarLoader) {
+    private ZipFileResource(@NotNull URL baseUrl, @NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file) {
       this.baseUrl = baseUrl;
       this.entry = entry;
       this.file = file;
-      this.jarLoader = jarLoader;
+    }
+
+    @Override
+    public String toString() {
+      return "ZipFileResource(name=" + entry.getName() + ", file=" + file + ')';
     }
 
     @Override
@@ -144,17 +168,12 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public @NotNull InputStream getInputStream() throws IOException {
-      return new ByteArrayInputStream(getBytes());
+      return new DirectByteBufferBackedInputStream(entry.getByteBuffer(file));
     }
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
       return entry.getData(file);
-    }
-
-    @Override
-    public Map<Attribute, String> getAttributes() throws IOException {
-      return jarLoader.loadManifestAttributes(jarLoader.zipFile);
     }
   }
 
@@ -204,17 +223,12 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public InputStream getInputStream() throws IOException {
-      return new ByteArrayInputStream(getData());
+      return new DirectByteBufferBackedInputStream(entry.getByteBuffer(file));
     }
 
     @Override
     public int getContentLength() {
-      try {
-        return getData().length;
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
+      return entry.getUncompressedSize();
     }
   }
 }

@@ -6,7 +6,9 @@ import org.jetbrains.annotations.Nullable;
 import java.security.ProtectionDomain;
 
 public interface BytecodeTransformer {
-  boolean isApplicable(String className);
+  default boolean isApplicable(String className, ClassLoader loader, @Nullable ProtectionDomain protectionDomain) {
+    return true;
+  }
 
   byte[] transform(ClassLoader loader, String className, @Nullable ProtectionDomain protectionDomain, byte[] classBytes);
 }
