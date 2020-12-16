@@ -115,12 +115,11 @@ internal object OpenLessonActivities {
         }
       }
 
-      if (projectWhereToStartLesson != learnProject) {
-        LOG.error(Exception("Invalid learning project initialization: projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
-        return
-      }
-
       if (lesson.lessonType == LessonType.PROJECT) {
+        if (projectWhereToStartLesson != learnProject) {
+          LOG.error(Exception("Invalid learning project initialization: projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
+          return
+        }
         cleanupAndOpenLesson(projectWhereToStartLesson, lesson)
       }
       else {
