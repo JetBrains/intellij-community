@@ -6,7 +6,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDataKeys.VIRTUAL_FILES
 import com.intellij.openapi.vcs.changes.EditorDiffPreviewFilesManager
-import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
 import com.intellij.util.containers.JBIterable
 import com.intellij.vcsUtil.VcsUtil
 
@@ -18,15 +17,15 @@ internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boole
     val project = e.project
     val file = JBIterable.from(e.getData(VIRTUAL_FILES)).single()
     e.presentation.isEnabledAndVisible = project != null
+                                         && file != null
                                          && isEnabledAndVisible(project)
-                                         && file is PreviewDiffVirtualFile
   }
 
 
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val diffPreviewFile = VcsUtil.getVirtualFiles(e).first() as PreviewDiffVirtualFile
+    val diffPreviewFile = VcsUtil.getVirtualFiles(e).first()
 
     EditorDiffPreviewFilesManager.getInstance().openFile(project, diffPreviewFile, true, openInNewWindow, true)
   }

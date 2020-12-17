@@ -24,7 +24,7 @@ class DiffEditorProvider : DefaultPlatformFileEditorProvider, DumbAware {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val processor = (file as DiffVirtualFile).createProcessor(project)
     processor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR, true)
-    return DiffRequestProcessorEditor(file, processor).also(DiffRequestProcessorEditorCustomizer::customize)
+    return DiffRequestProcessorEditor(file, processor).also { DiffRequestProcessorEditorCustomizer.customize(file, it, processor) }
   }
 
   override fun disposeEditor(editor: FileEditor) {

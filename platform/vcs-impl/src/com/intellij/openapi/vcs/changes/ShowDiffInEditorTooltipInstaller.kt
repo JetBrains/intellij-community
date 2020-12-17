@@ -1,23 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.diff.editor.DiffRequestProcessorEditor
 import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ActionToolbarGotItTooltip
 import com.intellij.openapi.vcs.changes.ui.gearButton
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 
 class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCustomizer {
 
-  override fun customize(editor: DiffRequestProcessorEditor) {
-    val diffProcessor = editor.processor
-    ShowDiffInEditorTabTooltipHolder(editor, diffProcessor)
+  override fun customize(file: VirtualFile, editor: FileEditor, processor: DiffRequestProcessor) {
+    ShowDiffInEditorTabTooltipHolder(editor, processor)
   }
 }
 

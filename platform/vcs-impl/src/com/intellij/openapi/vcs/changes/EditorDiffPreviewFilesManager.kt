@@ -30,7 +30,7 @@ class EditorDiffPreviewFilesManager :
     val messageBus = ApplicationManager.getApplication().messageBus
     messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        if (file is PreviewDiffVirtualFile && source is FileEditorManagerEx) {
+        if (source is FileEditorManagerEx) {
           val isOpenInNewWindow = source.findFloatingWindowForFile(file) != null
           shouldOpenInNewWindow = isOpenInNewWindow
           messageBus.syncPublisher(EditorDiffPreviewFilesListener.TOPIC).shouldOpenInNewWindowChanged(isOpenInNewWindow)
@@ -46,7 +46,7 @@ class EditorDiffPreviewFilesManager :
     }
 
   fun openFile(project: Project,
-               file: PreviewDiffVirtualFile,
+               file: VirtualFile,
                focusEditor: Boolean,
                openInNewWindow: Boolean,
                shouldCloseFile: Boolean): Array<out FileEditor> {
@@ -59,7 +59,7 @@ class EditorDiffPreviewFilesManager :
     return openFile(project, file, focusEditor)
   }
 
-  fun openFile(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
+  fun openFile(project: Project, file: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
     if (editorManager.isFileOpen(file)) {
       if (focusEditor) {
@@ -76,7 +76,7 @@ class EditorDiffPreviewFilesManager :
     }
   }
 
-  private fun focusEditor(project: Project, file: PreviewDiffVirtualFile) {
+  private fun focusEditor(project: Project, file: VirtualFile) {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
     val window = editorManager.windows.find { it.isFileOpen(file) } ?: return
     val composite = window.findFileComposite(file) ?: return
