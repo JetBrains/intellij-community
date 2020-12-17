@@ -570,7 +570,6 @@ public class PerformanceTypingIndentationTestGenerated extends AbstractPerforman
             public void testWhileWithoutCondition() throws Exception {
                 runTest("../idea/testData/indentationOnNewline/controlFlowConstructions/WhileWithoutCondition.after.kt");
             }
-
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
