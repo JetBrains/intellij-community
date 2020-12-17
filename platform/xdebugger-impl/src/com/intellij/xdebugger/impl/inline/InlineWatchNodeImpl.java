@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
@@ -23,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNode {
   private final InlineWatch myWatch;
-
+  private final List<Inlay<InlineDebugRenderer>> myInlays = new ArrayList<>();
 
   public InlineWatchNodeImpl(@NotNull XDebuggerTree tree,
                              @NotNull XDebuggerTreeNode parent,
@@ -50,6 +53,10 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
   @Override
   public @NotNull InlineWatch getWatch() {
     return myWatch;
+  }
+
+  void inlayCreated(Inlay<InlineDebugRenderer> inlay) {
+    myInlays.add(inlay);
   }
 
   public void nodeRemoved() {

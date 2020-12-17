@@ -57,7 +57,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private boolean isHovered = false;
   private int myRemoveXCoordinate = Integer.MAX_VALUE;
   private int myTextStartXCoordinate;
-  private SimpleColoredText myText;
   private XSourcePosition myPosition;
 
   InlineDebugRenderer(XValueNodeImpl valueNode,
@@ -66,7 +65,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
                       Editor editor) {
     myPosition = position;
     mySession = session;
-    myText = computeText(valueNode);
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
     myEditor = editor;
@@ -76,11 +74,11 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
                                              ((XDebugSessionImpl)session).getValueMarkers());
   }
 
-  private SimpleColoredText computeText(XValueNodeImpl valueNode) {
+  private SimpleColoredText getPresentation() {
     TextAttributes attributes = XDebuggerEditorLinePainter.getAttributes(myPosition.getLine(), myPosition.getFile(), mySession);
-    SimpleColoredText valuePresentation = XDebuggerEditorLinePainter.createPresentation(valueNode);
+    SimpleColoredText valuePresentation = XDebuggerEditorLinePainter.createPresentation(myValueNode);
     return XDebuggerEditorLinePainter
-      .computeVariablePresentationWithChanges(valueNode, valueNode.getName(), valuePresentation, attributes, myPosition.getLine(),
+      .computeVariablePresentationWithChanges(myValueNode, myValueNode.getName(), valuePresentation, attributes, myPosition.getLine(),
                                               mySession.getProject());
   }
 
@@ -94,10 +92,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
              && debuggerManager.isFullLineHighlighter();
     }
     return false;
-  }
-
-  public void refreshData() {
-    myText = computeText(myValueNode);
   }
 
   private static Font getFont(@NotNull Editor editor) {
@@ -187,12 +181,13 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
   private int getInlayTextWidth(@NotNull Inlay inlay) {
     Font font = getFont(inlay.getEditor());
+    SimpleColoredText presentation = getPresentation();
     String text;
     if (isErrorMessage()) {
-      text = myText.getTexts().get(0);
+      text = presentation.getTexts().get(0);
     }
     else {
-      text = myText.toString() + NAME_VALUE_SEPARATION;
+      text = presentation.toString() + NAME_VALUE_SEPARATION;
     }
     return getFontMetrics(font, inlay.getEditor()).stringWidth(text + INDENT);
   }
@@ -214,6 +209,7 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     EditorImpl editor = (EditorImpl)inlay.getEditor();
     TextAttributes inlineAttributes = getAttributes(editor);
     if (inlineAttributes == null || inlineAttributes.getForegroundColor() == null) return;
+    SimpleColoredText presentation = getPresentation();
 
     Font font = getFont(editor);
     g.setFont(font);
@@ -240,12 +236,12 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
       curX += watchIcon.getIconWidth() + margin * 2;
     }
     myTextStartXCoordinate = curX;
-    for (int i = 0; i < myText.getTexts().size(); i++) {
-      String curText = myText.getTexts().get(i);
+    for (int i = 0; i < presentation.getTexts().size(); i++) {
+      String curText = presentation.getTexts().get(i);
       if (i == 0 && !isErrorMessage()) {
         curText += NAME_VALUE_SEPARATION;
       }
-      SimpleTextAttributes attr = myText.getAttributes().get(i);
+      SimpleTextAttributes attr = presentation.getAttributes().get(i);
 
       Color fgColor = isHovered ? inlineAttributes.getForegroundColor() : attr.getFgColor();
       g.setColor(fgColor);
