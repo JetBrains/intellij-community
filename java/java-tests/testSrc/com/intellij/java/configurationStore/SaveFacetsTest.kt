@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.configurationStore
 
-import com.intellij.facet.FacetManager
-import com.intellij.facet.impl.FacetUtil
 import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
@@ -15,7 +13,6 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
@@ -23,8 +20,11 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlData
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import org.junit.*
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 
 class SaveFacetsTest {
   companion object {
