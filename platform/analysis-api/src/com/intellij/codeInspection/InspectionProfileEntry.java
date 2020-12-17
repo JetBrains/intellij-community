@@ -471,7 +471,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       InputStream descriptionStream = null;
       final String fileName = getDescriptionFileName();
       if (fileName != null) {
-        descriptionStream = ResourceUtil.getResourceAsStream(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+        descriptionStream =
+          ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
       }
       //noinspection HardCodedStringLiteral(IDEA-249976)
       return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;

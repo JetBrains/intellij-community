@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +69,7 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
   }
 
   protected static String @NotNull [] fromFile(String resource) throws IOException {
-    try (InputStream stream = ResourceUtil.getResourceAsStream(MavenBuildToolLogTestUtils.class, "", resource);
+    try (InputStream stream = ResourceUtil.getResourceAsStream(MavenBuildToolLogTestUtils.class.getClassLoader(), "", resource);
          Scanner scanner = new Scanner(stream)) {
       List<String> result = new ArrayList<>();
       while (scanner.hasNextLine()) {

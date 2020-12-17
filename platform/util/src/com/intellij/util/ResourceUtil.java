@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,16 +21,24 @@ public final class ResourceUtil {
   private ResourceUtil() {
   }
 
+  /**
+   * @deprecated Use {@link #getResourceAsStream(ClassLoader, String, String)}
+   */
+  @Deprecated
   public static URL getResource(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResource(loaderClass.getClassLoader(), basePath, fileName);
   }
 
+  /**
+   * @deprecated Use {@link #getResourceAsStream(ClassLoader, String, String)}
+   */
+  @Deprecated
   public static InputStream getResourceAsStream(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResourceAsStream(loaderClass.getClassLoader(), basePath, fileName);
   }
 
   public static InputStream getResourceAsStream(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    String fixedPath = StringUtil.trimStart(StringUtil.trimEnd(basePath, "/"), "/");
+    String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
 
     List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
     for (String bundle : bundles) {
@@ -44,12 +53,14 @@ public final class ResourceUtil {
   }
 
   public static URL getResource(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
-    String fixedPath = StringUtil.trimStart(StringUtil.trimEnd(basePath, "/"), "/");
+    String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
 
     List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
     for (String bundle : bundles) {
       URL url = loader.getResource(bundle + "/" + fileName);
-      if (url == null) continue;
+      if (url == null) {
+        continue;
+      }
 
       try {
         url.openConnection();
@@ -110,6 +121,10 @@ public final class ResourceUtil {
     return result;
   }
 
+  /**
+   * @deprecated Use {@link #loadText(InputStream)}
+   */
+  @Deprecated
   public static @NotNull String loadText(@NotNull URL url) throws IOException {
     return loadText(URLUtil.openStream(url));
   }

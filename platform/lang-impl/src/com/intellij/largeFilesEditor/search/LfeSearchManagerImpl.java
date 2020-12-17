@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -548,7 +548,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
                              new DefaultCustomComponentAction(
                                () -> RegExHelpPopup.createRegExLink(
                                  new HtmlBuilder().append(HtmlChunk.text("?").bold()).wrapWithHtmlBody().toString(),
-                                 null, null, "FindInFile")),
+                                 null, "FindInFile")),
                              myStatusTextAction)
       //.addSearchFieldActions(new RestorePreviousSettingsAction())
       .withCloseAction(this::onEscapePressed)

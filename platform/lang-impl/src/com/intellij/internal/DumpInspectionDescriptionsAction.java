@@ -110,7 +110,7 @@ public final class DumpInspectionDescriptionsAction extends AnAction implements 
 
   private static InputStream getDescriptionStream(final InspectionToolWrapper toolWrapper) {
     final Class aClass = getInspectionClass(toolWrapper);
-    return ResourceUtil.getResourceAsStream(aClass, "/inspectionDescriptions", toolWrapper.getShortName() + ".html");
+    return ResourceUtil.getResourceAsStream(aClass.getClassLoader(), "inspectionDescriptions", toolWrapper.getShortName() + ".html");
   }
 
   private interface Processor {

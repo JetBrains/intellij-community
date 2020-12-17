@@ -247,11 +247,10 @@ public final class TipUIUtil {
     }
   }
 
-  @NotNull
-  private static String getImageCanonicalPath(@NotNull String path, @Nullable ClassLoader tipLoader, @NotNull String tipPath) {
+  private static @NotNull String getImageCanonicalPath(@NotNull String path, @Nullable ClassLoader tipLoader, @NotNull String tipPath) {
     try {
-      URL url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new File(tipPath, path).toURI().toURL();
-      return url != null ? url.toExternalForm() : path;
+      URL url = tipLoader == null ? new File(tipPath, path).toURI().toURL() : ResourceUtil.getResource(tipLoader, "tips", path);
+      return url == null ? path : url.toExternalForm();
     }
     catch (MalformedURLException e) {
       return path;
@@ -356,8 +355,6 @@ public final class TipUIUtil {
           }
         }
       );
-      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", StartupUiUtil.isUnderDarcula()
-                                                                             ? "tips_darcula.css" : "tips.css");
       HTMLEditorKit kit = new JBHtmlEditorKit(false) {
         private final ViewFactory myFactory = createViewFactory();
         //SVG support
@@ -471,6 +468,9 @@ public final class TipUIUtil {
           return myFactory;
         }
       };
+
+      String fileName = StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css";
+      URL resource = TipUIUtil.class.getClassLoader().getResource("tips/css/" + fileName);
       kit.getStyleSheet().addStyleSheet(UIUtil.loadStyleSheet(resource));
       setEditorKit(kit);
     }

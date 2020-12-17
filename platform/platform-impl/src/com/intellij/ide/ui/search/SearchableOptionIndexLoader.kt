@@ -10,7 +10,7 @@ import java.net.URL
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache: MutableSet<String> = HashSet()
-  val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap<LongArray>(20, 0.9f, true)
+  val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
   val identifierTable = IndexedCharsInterner()
 
   override fun addOptions(text: String,
@@ -51,7 +51,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
 
   private fun loadSynonyms(): MutableMap<Pair<String, String>, MutableSet<String>> {
     val result = HashMap<Pair<String, String>, MutableSet<String>>()
-    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java, "/search/", "synonyms.xml"))
+    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java.classLoader, "/search/", "synonyms.xml"))
     val cache = HashSet<String>()
     for (configurable in root.getChildren("configurable")) {
       val id = configurable.getAttributeValue("id") ?: continue
