@@ -177,10 +177,6 @@ public final class CollectionFactory {
     return SystemInfoRt.isFileSystemCaseSensitive ? new HashMap<>() : createCaseInsensitiveStringMap();
   }
 
-  public static @NotNull <V> Map<String, V> createFilePathToLongMap() {
-    return SystemInfoRt.isFileSystemCaseSensitive ? new HashMap<>() : createCaseInsensitiveStringMap();
-  }
-
   public static @NotNull <V> Map<String, V> createFilePathMap(int expectedSize) {
     return createFilePathMap(expectedSize, SystemInfoRt.isFileSystemCaseSensitive);
   }

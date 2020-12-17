@@ -76,7 +76,7 @@ public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
   public void testModeFlagChanged(@NotNull Key<?> key, @Nullable Object value) {
   }
 
-  private static IdeaTestExecutionPolicy ourCurrent = null;
+  private static IdeaTestExecutionPolicy ourCurrent;
 
   @Nullable
   public static IdeaTestExecutionPolicy current() {
