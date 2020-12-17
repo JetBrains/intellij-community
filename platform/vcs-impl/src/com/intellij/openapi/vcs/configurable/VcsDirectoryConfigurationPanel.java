@@ -131,7 +131,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         MapInfo info = (MapInfo)value;
 
         if (!selected && (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED)) {
-          setBackground(getUnregisteredRootBackground());
+          setBackground(UIUtil.getDecoratedRowColor());
         }
 
         if (info == MapInfo.SEPARATOR) {
@@ -164,11 +164,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         }
       }
     }
-  }
-
-  @NotNull
-  private static Color getUnregisteredRootBackground() {
-    return new JBColor(UIUtil.getLabelBackground(), new Color(0x45494A));
   }
 
   @NotNull
@@ -213,13 +208,13 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
           protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
             if (info == MapInfo.SEPARATOR) {
               if (!selected) {
-                setBackground(getUnregisteredRootBackground());
+                setBackground(UIUtil.getDecoratedRowColor());
               }
               return;
             }
 
             if (info.type == MapInfo.Type.UNREGISTERED && !selected) {
-              setBackground(getUnregisteredRootBackground());
+              setBackground(UIUtil.getDecoratedRowColor());
             }
 
             final String vcsName = info.mapping.getVcs();
