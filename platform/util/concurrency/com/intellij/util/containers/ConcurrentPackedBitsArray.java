@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * Packs the specified number of bits (1..32) into a chunk which stored in array and allows to {@link #get} and {@link #set} these bits atomically.
  * Useful for storing related flags together.
  * Guarantees are similar to {@link ConcurrentBitSet}, only for bit chunk instead of bit.
+ * Restrictions: bitsPerChunk<=32; every bit chunk is stored in one word only (no splitting) so storage required for N chunks = ceil(N/(32 div bitsPerChunk))*4 bytes
  */
 public interface ConcurrentPackedBitsArray {
   @NotNull
