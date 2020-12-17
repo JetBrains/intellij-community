@@ -30,11 +30,11 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractFontCombo;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
@@ -113,6 +113,8 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
       typographyPanel.add(new JLabel(ApplicationBundle.message("settings.editor.font.main.weight")), c);
       c.gridx = 1;
       myRegularWeightCombo = new MyRegularFontWeightCombo();
+      int comboWidth = myRegularWeightCombo.getFontMetrics(myRegularWeightCombo.getFont()).stringWidth(StringUtil.repeat("M", 20));
+      fixComboWidth(myRegularWeightCombo, comboWidth);
       myRegularWeightCombo.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -126,7 +128,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
             });
         }
       });
-      typographyPanel.add(myRegularWeightCombo, getWeightComboConstraints(c));
+      typographyPanel.add(myRegularWeightCombo, c);
       c.gridy ++;
       c.gridx = 0;
       typographyPanel.add(new JLabel(ApplicationBundle.message("settings.editor.font.bold.weight")), c);
@@ -139,7 +141,8 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
             preferences -> preferences.setBoldSubFamily(myBoldWeightCombo.getSelectedSubFamily()));
         }
       });
-      typographyPanel.add(myBoldWeightCombo, getWeightComboConstraints(c));
+      fixComboWidth(myBoldWeightCombo, comboWidth);
+      typographyPanel.add(myBoldWeightCombo, c);
       c.gridy ++;
       JLabel boldHintLabel = new JLabel(ApplicationBundle.message("settings.editor.font.bold.weight.hint"));
       boldHintLabel.setFont(JBUI.Fonts.smallFont());
@@ -152,14 +155,10 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     return typographyPanel;
   }
 
-  private static GridBagConstraints getWeightComboConstraints(GridBagConstraints currConstraints) {
-    GridBagConstraints c = new GridBagConstraints();
-    c.anchor = GridBagConstraints.LINE_START;
-    c.gridx = currConstraints.gridx;
-    c.gridy = currConstraints.gridy;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.insets = JBUI.insets(BASE_INSET, BASE_INSET, 0, JBUIScale.scale(50));
-    return c;
+  private static void fixComboWidth(@NotNull FontWeightCombo combo, int width) {
+    combo.setMinimumSize(new Dimension(width, 0));
+    combo.setMinimumSize(new Dimension(width, Integer.MAX_VALUE));
+    combo.setPreferredSize(new Dimension(width, combo.getPreferredSize().height));
   }
 
   void restoreDefaults() {
