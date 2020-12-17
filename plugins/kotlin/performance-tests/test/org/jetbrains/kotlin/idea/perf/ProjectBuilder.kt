@@ -10,9 +10,10 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.util.io.*
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
-import org.jetbrains.kotlin.idea.testFramework.GRADLE_JDK_NAME
 import org.jetbrains.kotlin.idea.testFramework.OpenProject
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.test.KotlinRoot
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -154,7 +155,9 @@ class ProjectBuilder {
     private val kotlinFiles = mutableListOf<Pair<String, KotlinFileSource>>()
 
     fun buildGradle(buildGradle: String) {
-        this.buildGradle = buildGradle
+        val file = File(buildGradle)
+        val target = if (file.exists()) file else KotlinRoot.DIR.resolve(file)
+        this.buildGradle = target.absolutePath
     }
 
     fun name(name: String) {
