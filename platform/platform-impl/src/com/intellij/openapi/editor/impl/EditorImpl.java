@@ -479,6 +479,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
+    ComponentUtil.putClientProperty(myGutterComponent, ColorKey.FUNCTION_KEY, key -> getColorsScheme().getColor(key));
     initComponent();
 
     myView = new EditorView(this);
