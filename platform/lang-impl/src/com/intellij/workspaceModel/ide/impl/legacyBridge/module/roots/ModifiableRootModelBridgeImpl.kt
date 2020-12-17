@@ -538,11 +538,10 @@ class ModifiableRootModelBridgeImpl(
         error("setSdk: expected sdkName is null, but got: $sdkName")
       }
     } else {
-      val jdkTable = ProjectJdkTable.getInstance()
-      if (jdkTable.findJdk(jdk.name, jdk.sdkType.name) == null) {
+      if (SdkOrderEntryBridge.findSdk(jdk.name, jdk.sdkType.name) == null) {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           // TODO Fix all tests and remove this
-          (jdkTable as ProjectJdkTableImpl).addTestJdk(jdk, project)
+          (ProjectJdkTable.getInstance() as ProjectJdkTableImpl).addTestJdk(jdk, project)
         } else {
           error("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
         }
