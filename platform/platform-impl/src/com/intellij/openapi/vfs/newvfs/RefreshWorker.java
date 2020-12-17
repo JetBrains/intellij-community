@@ -161,7 +161,8 @@ final class RefreshWorker {
     Set<String> deletedNames = new HashSet<>(persistedNames);
     ContainerUtil.removeAll(deletedNames, upToDateNames);
 
-    ObjectOpenCustomHashSet<String> actualNames = dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);
+    ObjectOpenCustomHashSet<String> actualNames =
+      dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);
     if (LOG.isTraceEnabled()) {
       LOG.trace("current=" + persistedNames + " +" + newNames + " -" + deletedNames);
     }
