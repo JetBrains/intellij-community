@@ -3,28 +3,16 @@ package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
 import com.intellij.ide.ActiveWindowsWatcher;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -70,7 +58,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     storeFullScreenStateIfNeeded();
     myFullScreenQueue.runFromQueue();
 
-    updateTabBar(myFrame, 0);
+    myTabsHandler.enterFullScreen();
   }
 
   private void exitFullScreen() {
@@ -81,7 +69,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
     myFullScreenQueue.runFromQueue();
 
-    updateTabBarOnExitFromFullScreen();
+    myTabsHandler.exitFullScreen();
   }
 
   private void storeFullScreenStateIfNeeded() {
@@ -118,73 +106,13 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   private final FullScreenQueue myFullScreenQueue = new FullScreenQueue();
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
+  private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
-  private boolean myShowFrame;
-  private boolean myInitFrame;
-
-  private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
-
-  private static int DEFAULT_WIN_TAB_HEIGHT() {
-    return Registry.intValue("ide.mac.bigsur.window.with.tabs.height", 28);
-  }
-
-  @SuppressWarnings("FieldCanBeLocal")
-  private static Callback myObserverCallback; // don't convert to local var
-  private static ID myObserverDelegate;
-
-  private static void initTabObserver(@NotNull ID window) {
-    ID tabBar = Foundation.invoke(window, "tabGroup");
-    if (!ID.NIL.equals(Foundation.invoke(tabBar, "observationInfo"))) {
-      return;
-    }
-
-    if (myObserverDelegate == null) {
-      myObserverCallback = new Callback() {
-        @SuppressWarnings("unused")
-        public void callback(ID self, Pointer selector, ID ofObject, ID change, Pointer context) {
-          ApplicationManager.getApplication().invokeLater(() -> updateTabBars(null));
-        }
-      };
-
-      ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "MyWindowTabGroupObserver");
-      Foundation.addMethod(delegateClass, Foundation.createSelector("observeValueForKeyPath:ofObject:change:context:"),
-                           myObserverCallback, "v*");
-      Foundation.registerObjcClassPair(delegateClass);
-
-      myObserverDelegate = Foundation.invoke("MyWindowTabGroupObserver", "new");
-    }
-
-    Foundation.invoke(tabBar, "addObserver:forKeyPath:options:context:", myObserverDelegate, Foundation.nsString("windows"), 0, ID.NIL);
-  }
-
-  @NotNull
-  public static JComponent _wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
-    if (!JdkEx.isTabbingModeAvailable()) {
-      return northComponent;
-    }
-
-    NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-
-    NonOpaquePanel filler = new NonOpaquePanel();
-    filler.setVisible(false);
-
-    panel.add(filler, BorderLayout.NORTH);
-    panel.add(northComponent);
-    rootPane.putClientProperty(WIN_TAB_FILLER, filler);
-    return panel;
-  }
 
   public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     super(frame);
 
-    if (JdkEx.setTabbingMode(frame, () -> updateTabBars(null))) {
-      Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
-        @Override
-        public void dispose() {
-          updateTabBars(null);
-        }
-      });
-    }
+    myTabsHandler = new MacWinTabsHandler(frame, parentDisposable);
 
     if (leaveFullScreenMethod != null || toggleFullScreenMethod != null) {
       FullScreenUtilities.setWindowCanFullScreen(frame, true);
@@ -219,7 +147,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
             rootPane.setBorder(null);
           }
-          updateTabBar(myFrame, 0);
+          myTabsHandler.enteringFullScreen();
         }
 
         @Override
@@ -251,152 +179,12 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   @Override
   public void frameShow() {
-    myShowFrame = true;
-    if (myInitFrame) {
-      initUpdateTabBars();
-    }
+    myTabsHandler.frameShow();
   }
 
   @Override
   public void setProject() {
-    myInitFrame = true;
-    if (myShowFrame) {
-      initUpdateTabBars();
-    }
-  }
-
-  private void initUpdateTabBars() {
-    // update tab logic only after call [NSWindow makeKeyAndOrderFront] and after add frame to window manager
-    ApplicationManager.getApplication().invokeLater(() -> updateTabBars(myFrame));
-  }
-
-  private static void updateTabBars(@Nullable JFrame newFrame) {
-    if (!JdkEx.isTabbingModeAvailable()) {
-      return;
-    }
-
-    IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
-
-    if (frames.length < 2) {
-      if (frames.length == 1) {
-        updateTabBar(frames[0], 0);
-
-        if (newFrame != null) {
-          Foundation.executeOnMainThread(true, false, () -> {
-            initTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
-          });
-        }
-      }
-      return;
-    }
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Integer[] visibleAndHeights = new Integer[frames.length];
-      boolean callInAppkit = false;
-      int newIndex = -1;
-
-      for (int i = 0; i < frames.length; i++) {
-        ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
-        if (newFrame == helper.getFrame()) {
-          newIndex = i;
-        }
-        if (helper.isInFullScreen()) {
-          visibleAndHeights[i] = 0;
-        }
-        else {
-          callInAppkit = true;
-        }
-      }
-
-      if (callInAppkit) {
-        // call only for shown window and only in Appkit
-        Foundation.executeOnMainThread(true, false, () -> {
-          if (newFrame != null) {
-            initTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
-          }
-
-          for (int i = 0; i < frames.length; i++) {
-            if (visibleAndHeights[i] == null) {
-              ID window = MacUtil.getWindowFromJavaWindow(((ProjectFrameHelper)frames[i]).getFrame());
-              int styleMask = Foundation.invoke(window, "styleMask").intValue();
-              if ((styleMask & (1 << 14)) != 0) { // NSWindowStyleMaskFullScreen
-                visibleAndHeights[i] = 0;
-              }
-              else {
-                visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
-                if (visibleAndHeights[i] == -1) {
-                  visibleAndHeights[i] = DEFAULT_WIN_TAB_HEIGHT();
-                }
-              }
-            }
-          }
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            for (int i = 0; i < frames.length; i++) {
-              updateTabBar(frames[i], visibleAndHeights[i]);
-            }
-          });
-        });
-      }
-      else {
-        if (newFrame != null) {
-          Foundation.executeOnMainThread(true, false, () -> {
-            initTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
-          });
-        }
-
-        if (newIndex != -1) {
-          visibleAndHeights[newIndex] = 0;
-        }
-
-        for (int i = 0; i < frames.length; i++) {
-          updateTabBar(frames[i], visibleAndHeights[i]);
-        }
-      }
-    });
-  }
-
-  private void updateTabBarOnExitFromFullScreen() {
-    if (!JdkEx.isTabbingModeAvailable()) {
-      return;
-    }
-
-    Foundation.executeOnMainThread(true, false, () -> {
-      ID window = MacUtil.getWindowFromJavaWindow(myFrame);
-      int visibleAndHeight = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
-      ApplicationManager.getApplication()
-        .invokeLater(() -> updateTabBar(myFrame, visibleAndHeight == -1 ? DEFAULT_WIN_TAB_HEIGHT() : visibleAndHeight));
-    });
-  }
-
-  private static void updateTabBar(@NotNull Object frameObject, int height) {
-    JFrame frame = null;
-    if (frameObject instanceof JFrame) {
-      frame = (JFrame)frameObject;
-    }
-    else if (frameObject instanceof ProjectFrameHelper) {
-      frame = ((ProjectFrameHelper)frameObject).getFrame();
-    }
-    if (frame == null) {
-      return;
-    }
-
-    JComponent filler = (JComponent)frame.getRootPane().getClientProperty(WIN_TAB_FILLER);
-    if (filler == null) {
-      return;
-    }
-    boolean visible = height > 0;
-    boolean oldVisible = filler.isVisible();
-    filler.setVisible(visible);
-    filler.setPreferredSize(new JBDimension(-1, height));
-
-    Container parent = filler.getParent();
-    if (parent == null || oldVisible == visible) {
-      return;
-    }
-    parent.doLayout();
-    parent.revalidate();
-    parent.repaint();
+    myTabsHandler.setProject();
   }
 
   @Override
