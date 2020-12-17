@@ -121,18 +121,19 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           if (buildContext.options.buildDmgWithBundledJre) {
             for (arch in [JvmArchitecture.x64, JvmArchitecture.aarch64]) {
               String suffix = (arch == JvmArchitecture.x64) ? "" : "-${arch.fileSuffix}"
+              String archStr = arch.toString()
 
               File jreArchive = jreManager.findJreArchive(OsFamily.MACOS, arch)
               if (jreArchive.file) {
-                tasks.add(BuildTaskRunnable.task("dmg-$arch") { buildContext ->
-                  buildContext.executeStep("Building dmg with JRE for $arch", "mac_dmg_jre_$arch".toString()) {
+                tasks.add(BuildTaskRunnable.task("dmg-" + archStr) { buildContext ->
+                  buildContext.executeStep("Building dmg with JRE for " + archStr, "mac_dmg_jre_" + archStr) {
                     MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
                                                   jreArchive.absolutePath, suffix, notarize)
                   }
                 })
               }
               else {
-                buildContext.messages.info("Skipping building macOS distribution for $arch with bundled JRE because JRE archive is missing")
+                buildContext.messages.info("Skipping building macOS distribution for $archStr with bundled JRE because JRE archive is missing")
               }
             }
           }
