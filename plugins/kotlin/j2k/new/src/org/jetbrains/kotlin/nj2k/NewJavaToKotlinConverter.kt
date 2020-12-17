@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
@@ -50,9 +49,9 @@ class NewJavaToKotlinConverter(
         override val oldServices = oldConverterServices
     }
 
-    private val LOG = Logger.getInstance("#org.jetbrains.kotlin.j2k.JavaToKotlinConverter")
+    private val LOG = Logger.getInstance(JavaToKotlinConverter::class.java)
 
-    private val phasesCount = J2KConversionPhase.values().size
+    val phasesCount = J2KConversionPhase.values().size
 
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
@@ -101,10 +100,6 @@ class NewJavaToKotlinConverter(
             }
             FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
         }
-    }
-
-    fun elementsToKotlin(inputElements: List<PsiElement>, bodyFilter: ((PsiElement) -> Boolean)?): Result {
-        return elementsToKotlin(inputElements, NewJ2kWithProgressProcessor.DEFAULT, bodyFilter)
     }
 
     fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor, bodyFilter: ((PsiElement) -> Boolean)?): Result {

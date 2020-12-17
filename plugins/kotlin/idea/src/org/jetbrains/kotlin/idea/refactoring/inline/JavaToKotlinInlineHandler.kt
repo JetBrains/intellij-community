@@ -9,6 +9,8 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.usageView.UsageInfo
@@ -24,6 +26,7 @@ import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
@@ -96,22 +99,52 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     referenced: PsiMember,
     context: PsiElement,
 ): KtNamedDeclaration {
-    val factory = KtPsiFactory(project)
-    val className = referenced.containingClass?.qualifiedName
-    val (j2kResults, _, j2kContext) = elementsToKotlin(listOf(referenced)) { it == referenced }
-    val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
-    val fakeFile = factory.createAnalyzableFile("dummy.kt", "class DuMmY_42_ : $className {\n${j2kResult.text}\n}", context).also {
-        it.addImports(j2kResult.importsToAdd)
-    }
+    var fakeFile: KtFile? = null
+    object : Task.Modal(project, KotlinBundle.message("action.j2k.name"), false) {
+        override fun run(indicator: ProgressIndicator) {
+            indicator.isIndeterminate = false
 
-    J2kConverterExtension.extension(useNewJ2k = true).createPostProcessor(formatCode = true).doAdditionalProcessing(
-        JKMultipleFilesPostProcessingTarget(listOf(fakeFile)),
-        j2kContext
-    ) { _, _ -> }
+            val converterExtension = J2kConverterExtension.extension(useNewJ2k = true)
+            val postProcessor = converterExtension.createPostProcessor(formatCode = true)
+            val processor = converterExtension.createWithProgressProcessor(
+                progress = indicator,
+                files = listOf(referenced.containingFile as PsiJavaFile),
+                phasesCount = phasesCount + postProcessor.phasesCount,
+            )
 
+            val (j2kResults, _, j2kContext) = runReadAction {
+                elementsToKotlin(
+                    inputElements = listOf(referenced),
+                    processor = processor,
+                    bodyFilter = { it == referenced }
+                )
+            }
 
-    val fakeClass = fakeFile.declarations.singleOrNull() as? KtClass ?: error("Can't find dummy class in ${fakeFile.text}")
-    return fakeClass.declarations.singleOrNull() as? KtNamedDeclaration ?: error("Can't find fake declaration in ${fakeFile.text}")
+            val factory = KtPsiFactory(project)
+            val className = runReadAction { referenced.containingClass?.qualifiedName }
+            val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
+            val file = runReadAction {
+                factory.createAnalyzableFile(
+                    fileName = "dummy.kt",
+                    text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}",
+                    contextToAnalyzeIn = context,
+                ).also {
+                    it.addImports(j2kResult.importsToAdd)
+                }
+            }
+
+            postProcessor.doAdditionalProcessing(
+                target = JKMultipleFilesPostProcessingTarget(files = listOf(file)),
+                converterContext = j2kContext,
+                onPhaseChanged = { i, s -> processor.updateState(null, phasesCount + i, s) },
+            )
+
+            fakeFile = file
+        }
+    }.queue()
+
+    val fakeClass = fakeFile?.declarations?.singleOrNull() as? KtClass ?: error("Can't find dummy class in ${fakeFile?.text}")
+    return fakeClass.declarations.singleOrNull() as? KtNamedDeclaration ?: error("Can't find fake declaration in ${fakeFile?.text}")
 }
 
 private fun unwrapUsage(usage: UsageInfo): KtReferenceExpression? {
