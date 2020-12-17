@@ -373,7 +373,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void instantiatePendingFileTypes() {
-    Collection<FileTypeBean> fileTypes = new ArrayList<>(withReadLock(() -> myPendingFileTypes.values()));
+    Collection<FileTypeBean> fileTypes = withReadLock(() -> new ArrayList<>(myPendingFileTypes.values()));
     for (FileTypeBean fileTypeBean : fileTypes) {
       mergeOrInstantiateFileTypeBean(fileTypeBean);
     }
@@ -788,7 +788,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public List<FileNameMatcher> getAssociations(@NotNull FileType type) {
     instantiatePendingFileTypeByName(type.getName());
 
-    return withReadLock(() -> myPatternsTable.getAssociations(type));
+    return withReadLock(() -> new ArrayList<>(myPatternsTable.getAssociations(type)));
   }
 
   @Override
@@ -1274,7 +1274,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   FileTypeAssocTable<FileType> getExtensionMap() {
     instantiatePendingFileTypes();
 
-    return withReadLock(() -> myPatternsTable);
+    return myPatternsTable;
   }
 
   void setPatternsTable(@NotNull Set<? extends FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
