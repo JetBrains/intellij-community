@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ClonableOrderEntry
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
+import com.intellij.openapi.roots.impl.SdkFinder
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
@@ -280,11 +281,10 @@ internal class SdkOrderEntryBridge(
   override fun isValid(): Boolean = jdk != null
 
   override fun getJdk(): Sdk? {
-    val jdkTable = ProjectJdkTable.getInstance()
-
     val sdkType = sdkDependencyItem.sdkType
-    val sdk = jdkTable.findJdk(sdkDependencyItem.sdkName, sdkType)
-    return getRootModel().accessor.getSdk(sdk, sdkDependencyItem.sdkName)
+    val sdkName = sdkDependencyItem.sdkName
+    val sdk = findSdk(sdkName, sdkType)
+    return getRootModel().accessor.getSdk(sdk, sdkName)
   }
 
   override fun getJdkName() = sdkDependencyItem.sdkName
@@ -299,6 +299,18 @@ internal class SdkOrderEntryBridge(
   ): OrderEntry = SdkOrderEntryBridge(rootModel as ModuleRootModelBridge, index, sdkDependencyItem.copy())
 
   override fun isSynthetic(): Boolean = true
+
+  companion object {
+    @JvmStatic
+    internal fun findSdk(sdkName: String, sdkType: String): Sdk? {
+      for (finder in SdkFinder.EP_NAME.extensions) {
+        val sdk = finder.findSdk(sdkName, sdkType)
+        if (sdk != null) return sdk
+      }
+
+      return ProjectJdkTable.getInstance().findJdk(sdkName, sdkType)
+    }
+  }
 }
 
 internal class InheritedSdkOrderEntryBridge(rootModel: ModuleRootModelBridge, index: Int, item: ModuleDependencyItem.InheritedSdkDependency)
