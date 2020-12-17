@@ -1,16 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.io.InputStreamEx;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -130,18 +131,18 @@ public final class ResourceUtil {
   }
 
   public static @NotNull String loadText(@NotNull InputStream in) throws IOException {
-    InputStream inputStream = in instanceof BufferedInputStream ? in : new BufferedInputStream(in);
-    try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-      StringBuilder text = new StringBuilder();
-      char[] buf = new char[5000];
-      while (reader.ready()) {
-        int length = reader.read(buf);
-        if (length == -1) {
-          break;
-        }
-        text.append(buf, 0, length);
+    try {
+      if (in instanceof InputStreamEx) {
+        return ((InputStreamEx)in).readString();
       }
-      return text.toString();
+      else {
+        BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
+        FileUtilRt.copy(in, buffer);
+        return new String(buffer.getInternalBuffer(), 0, buffer.size(), StandardCharsets.UTF_8);
+      }
+    }
+    finally {
+      in.close();
     }
   }
 }

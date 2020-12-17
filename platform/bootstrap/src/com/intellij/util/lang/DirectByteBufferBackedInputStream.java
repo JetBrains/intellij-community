@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import java.io.IOException;
+import com.intellij.util.io.InputStreamEx;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
-final class DirectByteBufferBackedInputStream extends InputStream {
+final class DirectByteBufferBackedInputStream extends InputStream implements InputStreamEx {
   private ByteBuffer buffer;
 
   DirectByteBufferBackedInputStream(ByteBuffer buffer) {
@@ -13,13 +16,12 @@ final class DirectByteBufferBackedInputStream extends InputStream {
   }
 
   @Override
-  public int read() throws IOException {
+  public int read() {
     return buffer.hasRemaining() ? buffer.get() & 0xff : -1;
   }
 
   @Override
-  public int read(byte[] bytes, int offset, int length)
-    throws IOException {
+  public int read(byte[] bytes, int offset, int length) {
     if (!buffer.hasRemaining()) {
       return -1;
     }
@@ -44,19 +46,19 @@ final class DirectByteBufferBackedInputStream extends InputStream {
   }
 
   @Override
-  public int available() throws IOException {
+  public int available() {
     return buffer.remaining();
   }
 
   @Override
-  public byte[] readAllBytes() throws IOException {
+  public byte[] readAllBytes() {
     byte[] result = new byte[buffer.remaining()];
     buffer.get(result);
     return result;
   }
 
   @Override
-  public long skip(long length) throws IOException {
+  public long skip(long length) {
     int actualLength = Math.min((int)length, buffer.remaining());
     buffer.position(buffer.position() + actualLength);
     return actualLength;
@@ -72,5 +74,10 @@ final class DirectByteBufferBackedInputStream extends InputStream {
 
     this.buffer = null;
     DirectByteBufferPool.DEFAULT_POOL.release(buffer);
+  }
+
+  @Override
+  public @NotNull String readString() {
+    return new String(readAllBytes(), StandardCharsets.UTF_8);
   }
 }
