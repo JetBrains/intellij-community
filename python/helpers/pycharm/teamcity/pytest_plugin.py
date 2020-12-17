@@ -286,6 +286,10 @@ class EchoTeamCityMessages(object):
         except Exception:
             pass
 
+        if not diff_error:
+            from .jb_local_exc_store import get_exception
+            diff_error = get_exception()
+
         if diff_error:
             # Cut everything after postfix: it is internal view of DiffError
             strace = str(report.longrepr)

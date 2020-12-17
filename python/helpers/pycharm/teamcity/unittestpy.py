@@ -195,7 +195,8 @@ class TeamcityTestResult(TestResult):
 
         diff_failed = None
         try:
-            error = err[1]
+            from .jb_local_exc_store import get_exception
+            error = get_exception()
             if isinstance(error, EqualsAssertionError):
                 diff_failed = error
         except Exception:

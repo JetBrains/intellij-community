@@ -31,12 +31,13 @@ def patch_unittest_diff(test_filter=None):
         try:
             old(self, first, second, msg)
             return
-        except AssertionError as native_error:
+        except AssertionError:
             if not test_filter or test_filter(self):
                 error = EqualsAssertionError(first, second, msg)
                 if error.can_be_serialized():
-                    raise error
-            raise native_error
+                    from .jb_local_exc_store import store_exception
+                    store_exception(error)
+            raise
 
     unittest.TestCase.assertEqual = _patched_equals
 

@@ -70,6 +70,34 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  /**
+   * assertEquals from TestCase launched by pytest
+   */
+  @Test
+  public void testDiffUnit() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/diff_unit", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_diff.py", 1);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all, int exitCode) {
+
+          final String expectedConsoleText = "Expected :A\n" +
+                                             "Actual   :B\n" +
+                                             "<Click to see difference>";
+          assertThat("No diff", runner.getAllConsoleText(), containsString(expectedConsoleText));
+          assertThat("Wrong line", runner.getAllConsoleText(), containsString("test_diff.py:7"));
+        }
+      });
+  }
 
   @Test
   public void testDiff() {
