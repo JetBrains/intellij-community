@@ -7,8 +7,12 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.EditorNotifications
 import org.fest.swing.exception.ComponentLookupException
@@ -19,6 +23,7 @@ import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.commands.kotlin.TaskTestContext
 import training.learn.ActionsRecorder
+import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
@@ -64,6 +69,32 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     }
   }
 
+  private fun checkEditor(): RestoreNotification? {
+    fun restoreNotification(file: VirtualFile) =
+      RestoreNotification(LearnBundle.message("learn.restore.notification.wrong.editor"),
+                          LearnBundle.message("learn.restore.get.back.link.text")) {
+        invokeLater {
+          FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
+        }
+      }
+
+    val selectedTextEditor = FileEditorManager.getInstance(project).selectedTextEditor ?: return null
+    if (lessonExecutor.lesson.lessonType.isSingleEditor) {
+      if (selectedTextEditor != lessonExecutor.predefinedEditor) {
+        val file = lessonExecutor.predefinedFile ?: return null
+        return restoreNotification(file)
+      }
+    }
+    else {
+      val file = runtimeContext.previous.file ?: return null
+      val currentFile = FileDocumentManager.getInstance().getFile(selectedTextEditor.document)
+      if (file != currentFile) {
+        return restoreNotification(file)
+      }
+    }
+    return null
+  }
+
   override fun showWarning(text: String, warningRequired: TaskRuntimeContext.() -> Boolean) {
     restoreState(delayMillis = defaultRestoreDelay) {
       val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
@@ -79,7 +110,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   private fun checkAndShowNotificationIfNeeded(notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
                                                setNotification: (RestoreNotification) -> Unit) {
     val file = lessonExecutor.virtualFile
-    val proposal = notificationRequired(runtimeContext)
+    val proposal = checkEditor() ?: notificationRequired(runtimeContext)
     if (proposal == null) {
       if (LessonManager.instance.shownRestoreNotification != null) {
         LessonManager.instance.clearRestoreMessage()

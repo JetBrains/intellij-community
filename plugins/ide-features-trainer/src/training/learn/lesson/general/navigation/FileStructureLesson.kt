@@ -9,6 +9,7 @@ import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
+import training.learn.interfaces.LessonType
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
@@ -23,6 +24,8 @@ abstract class FileStructureLesson(module: Module, lang: String)
   private val searchSubstring: String = "hosa"
   private val firstWord: String = "homo"
   private val secondWord: String = "sapience"
+
+  override val lessonType = LessonType.SINGLE_EDITOR
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {

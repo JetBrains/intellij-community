@@ -2,6 +2,7 @@
 package training.commands.kotlin
 
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.vfs.VirtualFile
 import training.learn.lesson.kimpl.LessonSample
 import java.awt.Component
 
@@ -10,4 +11,5 @@ interface PreviousTaskInfo {
   val position: LogicalPosition
   val sample: LessonSample
   val ui: Component?
+  val file: VirtualFile?
 }
