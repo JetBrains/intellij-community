@@ -17,7 +17,7 @@ public final class GeneratedFilesScope extends NamedScope {
   public static final GeneratedFilesScope INSTANCE = new GeneratedFilesScope();
 
   public GeneratedFilesScope() {
-    super(ID, () -> AnalysisBundle.message("generated.files.scope.name"), AllIcons.Modules.GeneratedSourceRoot,
+    super(ID, AnalysisBundle.messagePointer("generated.files.scope.name"), AllIcons.Modules.GeneratedSourceRoot,
           new FilteredPackageSet(ID) {
             @Override
             public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
