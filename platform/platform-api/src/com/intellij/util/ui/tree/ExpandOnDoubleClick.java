@@ -2,6 +2,8 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JTree;
@@ -9,15 +11,23 @@ import javax.swing.JTree;
 /**
  * This class allows to change the default behaviour of expanding/collapsing tree nodes by double-clicking.
  */
+@ApiStatus.Experimental
 public enum ExpandOnDoubleClick {
   NEVER, ALWAYS, NAVIGATABLE, DEFAULT;
 
   private static final String KEY = "ide.tree.expand.on.double.click";
 
+  /**
+   * Changes the default behaviour for the given tree.
+   */
   public void installOn(@NotNull JTree tree) {
     tree.putClientProperty(KEY, this);
   }
 
+  /**
+   * @return the preferable behaviour for the given tree.
+   * @see EditSourceOnDoubleClickHandler#isExpandPreferable
+   */
   public static @NotNull ExpandOnDoubleClick getBehavior(@NotNull JTree tree) {
     Object property = tree.getClientProperty(KEY);
     if (property instanceof ExpandOnDoubleClick) return (ExpandOnDoubleClick)property;
