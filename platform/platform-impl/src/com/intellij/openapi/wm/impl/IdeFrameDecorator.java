@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.ui.mac.MacWinTabsHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   @NotNull
   public static JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
     if (SystemInfo.isMac) {
-      return MacMainFrameDecorator._wrapRootPaneNorthSide(rootPane, northComponent);
+      return MacWinTabsHandler.wrapRootPaneNorthSide(rootPane, northComponent);
     }
     return northComponent;
   }
