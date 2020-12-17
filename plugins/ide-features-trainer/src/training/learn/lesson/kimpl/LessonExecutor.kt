@@ -26,7 +26,7 @@ import training.util.WeakReferenceDelegator
 import java.awt.Component
 import kotlin.math.max
 
-class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?) : Disposable {
+class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
                               var taskProperties: TaskProperties?,
@@ -35,10 +35,20 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
                               var rehighlightComponent: (() -> Component)? = null,
                               var userVisibleInfo: PreviousTaskInfo? = null)
 
-  private val predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
+  var predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
+  private set
 
-  private val selectedEditor
-    get() = FileEditorManager.getInstance(project).selectedTextEditor ?: predefinedEditor?.takeIf { !it.isDisposed }
+  private val selectedEditor: Editor?
+    get() {
+      val result = if (lesson.lessonType.isSingleEditor) predefinedEditor
+      else FileEditorManager.getInstance(project).selectedTextEditor?.also {
+        // We may need predefined editor in the multi-editor lesson in the start of the lesson.
+        // It seems, there is a platform bug with no selected editor when the needed editor is actually opened.
+        // But better do not use it later to avoid possible bugs.
+        predefinedEditor = null
+      } ?: predefinedEditor // It may be needed in the start of the lesson.
+      return result?.takeIf { !it.isDisposed }
+    }
 
   val editor: Editor
     get() = selectedEditor ?: throw NoTextEditor()
@@ -169,6 +179,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
         override val position: LogicalPosition = selectedEditor?.caretModel?.currentCaret?.logicalPosition ?: LogicalPosition(0, 0)
         override val sample: LessonSample = selectedEditor?.let { prepareSampleFromCurrentState(it) } ?: parseLessonSample("")
         override val ui: Component? = foundComponent
+        override val file: VirtualFile? = selectedEditor?.let { FileDocumentManager.getInstance().getFile(it.document) }
       }
       taskInfo.rehighlightComponent = rehighlightComponent
     }

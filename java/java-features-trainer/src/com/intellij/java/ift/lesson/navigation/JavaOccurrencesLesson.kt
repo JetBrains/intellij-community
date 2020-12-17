@@ -7,6 +7,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.actionButton
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.usageView.UsageViewBundle
+import training.learn.interfaces.LessonType
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
@@ -16,6 +17,9 @@ import training.learn.lesson.kimpl.parseLessonSample
 
 class JavaOccurrencesLesson(module: Module)
   : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name"), module, "JAVA") {
+
+  override val lessonType = LessonType.SINGLE_EDITOR
+
   val sample = parseLessonSample("""
     class OccurrencesDemo {
         final private String DATABASE = "MyDataBase";

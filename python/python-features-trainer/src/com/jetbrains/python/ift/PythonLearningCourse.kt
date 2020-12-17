@@ -93,7 +93,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
     LearningModule(name = LessonsBundle.message("code.assistance.module.name"),
                    description = LessonsBundle.message("code.assistance.module.description"),
                    primaryLanguage = langSupport,
-                   moduleType = LessonType.PROJECT) {
+                   moduleType = LessonType.SINGLE_EDITOR) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
         CodeFormatLesson(it, lang, ls("CodeFormat.py.sample"), true),
@@ -116,7 +116,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
     LearningModule(name = LessonsBundle.message("run.debug.module.name"),
                    description = LessonsBundle.message("run.debug.module.description"),
                    primaryLanguage = langSupport,
-                   moduleType = LessonType.PROJECT) {
+                   moduleType = LessonType.SINGLE_EDITOR) {
       listOf(
         PythonRunConfigurationLesson(it),
         PythonDebugLesson(it),
