@@ -5,6 +5,7 @@ import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.AccessDeniedException
@@ -99,7 +100,12 @@ private class ScatterZipOutputStream(private val backingStore: MappedByteBufferB
 
   private var directByteBuffer: ByteBuffer? = null
 
-  private class CompressedEntry(val entry: ZipEntry, val crc: Long, val compressedSize: Int, val size: Int) {
+  private class CompressedEntry(val entry: ZipEntry,
+                                val crc: Long,
+                                val compressedSize: Int,
+                                val size: Int,
+                                val endPosition: Int,
+                                val nameBytes: ByteArray) {
     fun setSizeAndCompressedSizeAndCrcToArchiveEntry() {
       entry.compressedSize = compressedSize.toLong()
       entry.size = size.toLong()
@@ -132,26 +138,38 @@ private class ScatterZipOutputStream(private val backingStore: MappedByteBufferB
     crc32.update(buffer)
     buffer.flip()
 
+    val mappedByteBuffer = backingStore.mappedByteBuffer
+
+    val name = entry.name.toByteArray()
+    val compressedSizeOffset = writeLocalFileHeader(mappedByteBuffer, name, buffer.limit(), crc32.value, entry.method)
+
     val compressedSize: Int
     if (deflater != null && entry.method == ZipEntry.DEFLATED) {
-      val oldPosition = backingStore.mappedByteBuffer.position()
+      val oldPosition = mappedByteBuffer.position()
       deflater.setInput(buffer)
       deflater.finish()
       do {
-        val n = deflater.deflate(backingStore.mappedByteBuffer, Deflater.NO_FLUSH)
+        val n = deflater.deflate(mappedByteBuffer, Deflater.NO_FLUSH)
         assert(n != 0)
       }
       while (buffer.hasRemaining())
       deflater.reset()
 
-      compressedSize = backingStore.mappedByteBuffer.position() - oldPosition
+      compressedSize = mappedByteBuffer.position() - oldPosition
     }
     else {
       compressedSize = buffer.limit()
-      backingStore.mappedByteBuffer.put(buffer)
+      mappedByteBuffer.put(buffer)
     }
 
-    items.add(CompressedEntry(entry, crc32.value, compressedSize, buffer.limit()))
+    mappedByteBuffer.putInt(compressedSizeOffset, compressedSize)
+
+    items.add(CompressedEntry(entry = entry,
+                              crc = crc32.value,
+                              compressedSize = compressedSize,
+                              size = buffer.limit(),
+                              endPosition = mappedByteBuffer.position(),
+                              nameBytes = name))
   }
 
   fun addArchiveEntry(entry: ZipEntry, stream: InputStream) {
@@ -166,25 +184,68 @@ private class ScatterZipOutputStream(private val backingStore: MappedByteBufferB
     crc32.update(buffer)
 
     val compressedSize: Int
+    val mappedByteBuffer = backingStore.mappedByteBuffer
+
+    val name = entry.name.toByteArray()
+    val compressedSizeOffset = writeLocalFileHeader(mappedByteBuffer, name, buffer.size, crc32.value, entry.method)
+
     if (deflater != null && entry.method == ZipEntry.DEFLATED) {
-      val oldPosition = backingStore.mappedByteBuffer.position()
+      val oldPosition = mappedByteBuffer.position()
       deflater.setInput(buffer)
       deflater.finish()
       do {
-        val n = deflater.deflate(backingStore.mappedByteBuffer, Deflater.NO_FLUSH)
+        val n = deflater.deflate(mappedByteBuffer, Deflater.NO_FLUSH)
         assert(n != 0)
       }
       while (!deflater.finished())
       deflater.reset()
 
-      compressedSize = backingStore.mappedByteBuffer.position() - oldPosition
+      compressedSize = mappedByteBuffer.position() - oldPosition
     }
     else {
       compressedSize = buffer.size
-      backingStore.mappedByteBuffer.put(buffer)
+      mappedByteBuffer.put(buffer)
     }
 
-    items.add(CompressedEntry(entry, crc32.value, compressedSize, buffer.size))
+    mappedByteBuffer.putInt(compressedSizeOffset, compressedSize)
+
+    items.add(CompressedEntry(entry = entry,
+                              crc = crc32.value,
+                              compressedSize = compressedSize,
+                              size = buffer.size,
+                              endPosition = mappedByteBuffer.position(),
+                              nameBytes = name))
+  }
+
+  private fun writeLocalFileHeader(buffer: MappedByteBuffer,
+                                   name: ByteArray,
+                                   size: Int,
+                                   crc32: Long,
+                                   method: Int): Int {
+    buffer.putInt(0x04034b50)
+    // Version needed to extract (minimum)
+    buffer.putShort(0)
+    // General purpose bit flag
+    buffer.putShort(0)
+    // Compression method
+    buffer.putShort(method.toShort())
+    // File last modification time
+    buffer.putShort(0)
+    // File last modification date
+    buffer.putShort(0)
+    // CRC-32 of uncompressed data
+    buffer.putInt((crc32 and 0xffffffffL).toInt())
+    val compressedSizeOffset = buffer.position()
+    // Compressed size
+    buffer.position(compressedSizeOffset + Int.SIZE_BYTES)
+    // Uncompressed size
+    buffer.putInt(size)
+    // File name length
+    buffer.putShort((name.size and 0xffff).toShort())
+    // Extra field length
+    buffer.putShort(0)
+    buffer.put(name)
+    return compressedSizeOffset
   }
 
   class ZipEntryWriter(scatter: ScatterZipOutputStream) {
@@ -198,9 +259,9 @@ private class ScatterZipOutputStream(private val backingStore: MappedByteBufferB
 
     fun writeNextZipEntry(target: ZipArchiveOutputStream) {
       val compressedEntry = itemIterator.next()
-      buffer.limit((buffer.position() + compressedEntry.compressedSize))
+      buffer.limit(compressedEntry.endPosition)
       compressedEntry.setSizeAndCompressedSizeAndCrcToArchiveEntry()
-      target.addRawArchiveEntry(compressedEntry.entry, buffer)
+      target.addRawArchiveEntry(compressedEntry.entry, buffer, compressedEntry.nameBytes)
     }
   }
 
@@ -245,7 +306,9 @@ internal class MappedByteBufferBasedScatterGatherBackingStore(private val target
   val mappedByteBuffer: MappedByteBuffer = (Files.newByteChannel(target, EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE)) as FileChannel)
     .use { fileChannel ->
       // 2GB buffer - should be enough
-      fileChannel.map(FileChannel.MapMode.PRIVATE, 0, Integer.MAX_VALUE.toLong())
+      val result = fileChannel.map(FileChannel.MapMode.PRIVATE, 0, Integer.MAX_VALUE.toLong())
+      result.order(ByteOrder.LITTLE_ENDIAN)
+      result
     }
 
   fun closeForWriting() {

@@ -16,20 +16,18 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
   // 128K should be enough (max size for central directory record = 46 + file name length)
   private val buffer = ByteBuffer.allocate(131_072).order(ByteOrder.LITTLE_ENDIAN)
 
-  @Suppress("DuplicatedCode")
-  fun addRawArchiveEntry(entry: ZipEntry, content: ByteBuffer) {
+  fun addDirEntry(name: String) {
     if (finished) {
       throw IOException("Stream has already been finished")
     }
 
-    val name = entry.name.toByteArray()
-    entries.add(EntryMetaData(offset = channel.position(), entry = entry, name = name))
-    assert(entry.method != -1)
-    if ((entry.size >= 0xFFFFFFFFL || entry.compressedSize >= 0xFFFFFFFFL)) {
-      throw UnsupportedOperationException("Entry is too big")
-    }
+    val entry = ZipEntry("$name/")
+    entry.method = ZipEntry.STORED
+    entry.size = 0
+    entry.compressedSize = 0
 
-    assert(content.remaining() == entry.compressedSize.toInt())
+    val nameBytes = entry.name.toByteArray()
+    entries.add(EntryMetaData(offset = channel.position(), entry = entry, name = nameBytes))
 
     buffer.clear()
     buffer.putInt(0x04034b50)
@@ -38,26 +36,38 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
     // General purpose bit flag
     buffer.putShort(0)
     // Compression method
-    buffer.putShort(entry.method.toShort())
+    buffer.putShort(ZipEntry.STORED.toShort())
     // File last modification time
     buffer.putShort(0)
     // File last modification date
     buffer.putShort(0)
     // CRC-32 of uncompressed data
-    buffer.putInt((entry.crc and 0xffffffffL).toInt())
+    buffer.putInt(0)
     // Compressed size
-    buffer.putInt(entry.compressedSize.toInt())
+    buffer.putInt(0)
     // Uncompressed size
-    buffer.putInt((entry.size and 0xffffffffL).toInt())
+    buffer.putInt(0)
     // File name length
-    buffer.putShort((name.size and 0xffff).toShort())
+    buffer.putShort((nameBytes.size and 0xffff).toShort())
     // Extra field length
     buffer.putShort(0)
-    // File name
-    buffer.put(name)
+    buffer.put(nameBytes)
 
     buffer.flip()
     writeBuffer(buffer)
+  }
+
+  @Suppress("DuplicatedCode")
+  fun addRawArchiveEntry(entry: ZipEntry, content: ByteBuffer, nameBytes: ByteArray) {
+    if (finished) {
+      throw IOException("Stream has already been finished")
+    }
+
+    entries.add(EntryMetaData(offset = channel.position(), entry = entry, name = nameBytes))
+    assert(entry.method != -1)
+    if ((entry.size >= 0xFFFFFFFFL || entry.compressedSize >= 0xFFFFFFFFL)) {
+      throw UnsupportedOperationException("Entry is too big")
+    }
 
     writeBuffer(content)
   }

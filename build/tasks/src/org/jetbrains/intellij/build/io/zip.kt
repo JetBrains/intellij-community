@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
@@ -45,8 +44,6 @@ private fun formatDuration(value: Long): String {
     .toLowerCase()
 }
 
-private val emptyByteBuffer = ByteBuffer.allocate(0)
-
 private fun addDirForResourceFiles(out: ZipArchiveOutputStream) {
   val dirSetWithoutClassFiles = HashSet<String>()
   @Suppress("DuplicatedCode")
@@ -71,11 +68,7 @@ private fun addDirForResourceFiles(out: ZipArchiveOutputStream) {
   val dirs = ArrayList(dirSetWithoutClassFiles)
   dirs.sort()
   for (dir in dirs) {
-    val entry = ZipEntry("$dir/")
-    entry.method = ZipEntry.STORED
-    entry.size = 0
-    entry.compressedSize = 0
-    out.addRawArchiveEntry(entry, emptyByteBuffer)
+    out.addDirEntry(dir)
   }
 }
 
