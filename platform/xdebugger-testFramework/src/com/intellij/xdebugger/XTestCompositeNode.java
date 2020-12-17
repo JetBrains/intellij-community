@@ -50,7 +50,7 @@ public class XTestCompositeNode extends XTestContainer<XValue> implements XCompo
   }
 
   @Override
-  public void tooManyChildren(int remaining) {
+  public final void tooManyChildren(int remaining) {
     tooManyChildren(remaining, null);
   }
 
