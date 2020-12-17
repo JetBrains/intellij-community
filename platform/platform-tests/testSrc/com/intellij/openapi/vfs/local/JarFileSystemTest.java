@@ -24,7 +24,6 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -235,7 +234,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vf);
     assertNotNull(jarRoot);
     List<String> entries = new ArrayList<>();
-    VfsUtilCore.visitChildrenRecursively(jarRoot, new VirtualFileVisitor<Object>() {
+    VfsUtilCore.visitChildrenRecursively(jarRoot, new VirtualFileVisitor<>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!jarRoot.equals(file)) {
@@ -356,7 +355,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testCrazyJarWithBackSlashedLongEntryMustNotCrashAnything() {
-    VirtualFile vFile = createJar("META-INF/MANIFEST.MF", "\\META-INF\\RETLD-00.00015.xml");
+    VirtualFile vFile = createJar("META-INF/MANIFEST.MF", "\\META-INF\\RET-LD00.00015.xml");
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
     assertNotNull(jarRoot);
@@ -366,7 +365,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
     child.getChildren();
     assertNotNull(jarRoot.findFileByRelativePath("META-INF/MANIFEST.MF"));
-    assertNotNull(jarRoot.findFileByRelativePath("META-INF/RETLD-00.00015.xml"));
+    assertNotNull(jarRoot.findFileByRelativePath("META-INF/RET-LD00.00015.xml"));
   }
 
   @Test
