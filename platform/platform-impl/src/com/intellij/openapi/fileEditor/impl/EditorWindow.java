@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -324,8 +325,8 @@ public final class EditorWindow {
     myTabbedPane.setStyleAt(index, style);
   }
 
-  void setWaveColor(int index, @Nullable Color color) {
-    myTabbedPane.setWaveColor(index, color);
+  void setTextAttributes(int index, @Nullable TextAttributes attributes) {
+    myTabbedPane.setTextAttributes(index, attributes);
   }
 
   private void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String text) {

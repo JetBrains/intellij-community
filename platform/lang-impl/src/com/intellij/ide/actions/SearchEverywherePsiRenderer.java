@@ -1,10 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
@@ -20,7 +26,10 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,8 +42,9 @@ import java.util.Optional;
 * @author Konstantin Bulenkov
 */
 public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement> {
+  private EditorColorsScheme scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
 
-  public SearchEverywherePsiRenderer() {
+  public SearchEverywherePsiRenderer(Disposable parent) {
     setFocusBorderEnabled(false);
     setLayout(new BorderLayout() {
       @Override
@@ -51,6 +61,17 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
         }
       }
     });
+
+    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(LafManagerListener.TOPIC, __ -> {
+      scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+    });
+  }
+
+  @Override
+  protected @NotNull SimpleTextAttributes getErrorAttributes() {
+    SimpleTextAttributes schemeAttributes = SimpleTextAttributes.fromTextAttributes(scheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES));
+    return new SimpleTextAttributes(schemeAttributes.getBgColor(), UIUtil.getInactiveTextColor(), schemeAttributes.getWaveColor(),
+                                    schemeAttributes.getStyle() | SimpleTextAttributes.STYLE_USE_EFFECT_COLOR);
   }
 
   @Override

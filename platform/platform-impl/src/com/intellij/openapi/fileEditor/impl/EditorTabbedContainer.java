@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -185,9 +186,9 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     myTabs.getTabAt(index).setDefaultStyle(style);
   }
 
-  void setWaveColor(int index, @Nullable Color color) {
+  void setTextAttributes(int index, @Nullable TextAttributes attributes) {
     TabInfo tab = myTabs.getTabAt(index);
-    tab.setDefaultWaveColor(color);
+    tab.setDefaultAttributes(attributes);
   }
 
   void setIconAt(int index, Icon icon) {

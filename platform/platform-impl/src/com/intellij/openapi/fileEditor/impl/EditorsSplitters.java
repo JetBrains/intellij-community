@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -13,6 +14,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -89,6 +93,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private final Alarm myIconUpdaterAlarm;
   final Disposable parentDisposable;
   private final UIBuilder myUIBuilder = new UIBuilder();
+  private EditorColorsScheme colorScheme;
 
   EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer, @NotNull Disposable parentDisposable) {
     super(new BorderLayout());
@@ -127,6 +132,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         invalidate();
         repaint();
       }
+    });
+
+    colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+    ApplicationManager.getApplication().getMessageBus().connect(myManager).subscribe(LafManagerListener.TOPIC, laf -> {
+      colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     });
   }
 
@@ -411,7 +421,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       int index = window.findEditorIndex(window.findFileComposite(file));
       LOG.assertTrue(index != -1);
       window.setForegroundAt(index, getManager().getFileColor(file));
-      window.setWaveColor(index, getManager().isProblem(file) ? JBColor.red : null);
+      window.setTextAttributes(index, getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null);
     }
   }
 

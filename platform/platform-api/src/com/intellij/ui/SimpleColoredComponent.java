@@ -991,6 +991,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     if (attributes.isUnderline()) {
+      if (attributes.useEffectColor() && attributes.getWaveColor() != null) {
+        g.setColor(attributes.getWaveColor());
+      }
       EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), font);
     }
 
@@ -998,6 +1001,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
       final Color lineColor = attributes.getWaveColor();
       UIUtil.drawBoldDottedLine(g, offset, offset + fragmentWidth, dottedAt, attributes.getBgColor(), lineColor, isOpaque());
+    }
+
+    if (attributes.isBoldUnderline()) {
+      if (attributes.useEffectColor() && attributes.getWaveColor() != null) {
+        g.setColor(attributes.getWaveColor());
+      }
+      EffectPainter.BOLD_LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), font);
     }
   }
 

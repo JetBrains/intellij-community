@@ -73,8 +73,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
 
   private int myDefaultStyle = -1;
   private Color myDefaultForeground;
-  private Color myDefaultWaveColor;
-
+  private TextAttributes editorAttributes;
   private SimpleTextAttributes myDefaultAttributes;
   private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert);
 
@@ -104,23 +103,29 @@ public final class TabInfo implements Queryable, PlaceProvider {
   public TabInfo setText(@NlsContexts.TabTitle @NotNull String text) {
     List<SimpleTextAttributes> attributes = myText.getAttributes();
     TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
-    TextAttributes defaultAttributes = getDefaultAttributes().toTextAttributes();
-    if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes)) {
+    SimpleTextAttributes defaultAttributes = getDefaultAttributes();
+    if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes.toTextAttributes())) {
       clearText(false);
-      append(text, getDefaultAttributes());
+      append(text, defaultAttributes);
     }
     return this;
   }
 
   @NotNull
   private SimpleTextAttributes getDefaultAttributes() {
-    SimpleTextAttributes attributes = myDefaultAttributes;
-    if (attributes == null) {
-      int style = myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN;
-      style =  myDefaultWaveColor == null ? style : style | SimpleTextAttributes.STYLE_WAVED;
-      myDefaultAttributes = attributes = new SimpleTextAttributes(style, myDefaultForeground, myDefaultWaveColor);
+    if (myDefaultAttributes == null) {
+      if (editorAttributes != null) {
+        SimpleTextAttributes attr = SimpleTextAttributes.fromTextAttributes(editorAttributes);
+        attr = SimpleTextAttributes.merge(new SimpleTextAttributes(SimpleTextAttributes.STYLE_USE_EFFECT_COLOR, attr.getFgColor()), attr);
+        myDefaultAttributes = (myDefaultStyle != -1) ?
+                              new SimpleTextAttributes(attr.getBgColor(), attr.getFgColor(), attr.getWaveColor(), myDefaultStyle) : attr;
+      }
+      else {
+        int style = myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN;
+        myDefaultAttributes = new SimpleTextAttributes(style, myDefaultForeground);
+      }
     }
-    return attributes;
+    return myDefaultAttributes;
   }
 
   @NotNull
@@ -352,8 +357,8 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   @NotNull
-  public TabInfo setDefaultWaveColor(final Color waveColor) {
-    myDefaultWaveColor = waveColor;
+  public TabInfo setDefaultAttributes(@Nullable TextAttributes attributes) {
+    editorAttributes = attributes;
     myDefaultAttributes = null;
     update();
     return this;

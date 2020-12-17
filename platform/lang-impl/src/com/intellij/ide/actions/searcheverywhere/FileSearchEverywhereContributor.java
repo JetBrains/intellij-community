@@ -7,7 +7,9 @@ import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -24,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.FileTypeFilterCollector;
 
 /**
  * @author Konstantin Bulenkov
@@ -86,7 +88,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @NotNull
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
-    return new SearchEverywherePsiRenderer() {
+    return new SearchEverywherePsiRenderer(this) {
       @NotNull
       @Override
       protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {

@@ -454,7 +454,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @NotNull
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
-    return new SearchEverywherePsiRenderer();
+    return new SearchEverywherePsiRenderer(this);
   }
 
   @Override

@@ -4,7 +4,12 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.StructureViewBundle;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -25,7 +30,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nls;
@@ -38,12 +42,24 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class NavBarPresentation {
-  private static final SimpleTextAttributes WOLFED = new SimpleTextAttributes(null, null, JBColor.red, SimpleTextAttributes.STYLE_WAVED);
-
   private final Project myProject;
+  private EditorColorsScheme scheme;
 
   public NavBarPresentation(Project project) {
     myProject = project;
+    updateScheme();
+
+    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(LafManagerListener.TOPIC, laf -> updateScheme());
+  }
+
+  private void updateScheme() {
+    scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+  }
+
+  private SimpleTextAttributes getErrorAttributes() {
+    SimpleTextAttributes schemeAttributes = SimpleTextAttributes.fromTextAttributes(scheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES));
+    return SimpleTextAttributes.merge(new SimpleTextAttributes(SimpleTextAttributes.STYLE_USE_EFFECT_COLOR, schemeAttributes.getFgColor()),
+                                      schemeAttributes);
   }
 
   @Nullable
@@ -113,11 +129,11 @@ public class NavBarPresentation {
       }
       PsiFile psiFile = ((PsiElement)object).getContainingFile();
       if (psiFile != null) {
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        VirtualFile virtualFile = psiFile.getVirtualFile();
         return new SimpleTextAttributes(null, selected ? null : FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor(),
-                                        JBColor.red, virtualFile != null && WolfTheProblemSolver.getInstance(myProject).isProblemFile(virtualFile)
-                                                   ? SimpleTextAttributes.STYLE_WAVED
-                                                   : SimpleTextAttributes.STYLE_PLAIN);
+                                        getErrorAttributes().getWaveColor(),
+                                        virtualFile != null && WolfTheProblemSolver.getInstance(myProject).isProblemFile(virtualFile)
+                                                   ? getErrorAttributes().getStyle() : SimpleTextAttributes.STYLE_PLAIN);
       }
       else {
         if (object instanceof PsiDirectory) {
@@ -128,13 +144,13 @@ public class NavBarPresentation {
         }
 
         if (wolfHasProblemFilesBeneath((PsiElement)object)) {
-          return WOLFED;
+          return getErrorAttributes();
         }
       }
     }
     else if (object instanceof Module) {
       if (WolfTheProblemSolver.getInstance(myProject).hasProblemFilesBeneath((Module)object)) {
-        return WOLFED;
+        return getErrorAttributes();
       }
 
     }
@@ -143,7 +159,7 @@ public class NavBarPresentation {
       final Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
       for (Module module : modules) {
         if (WolfTheProblemSolver.getInstance(project).hasProblemFilesBeneath(module)) {
-          return WOLFED;
+          return getErrorAttributes();
         }
       }
     }
