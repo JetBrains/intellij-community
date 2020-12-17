@@ -11,16 +11,18 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,49 +33,48 @@ public final class ConsentOptions {
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private final boolean myIsEAP;
 
-  private static @NotNull @NonNls String getBundledResourcePath() {
-    final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    return appInfo.isVendorJetBrains() ? "/consents.json" : "/consents-" + appInfo.getShortCompanyName() + ".json";
-  }
-
   private static final class InstanceHolder {
     static final ConsentOptions ourInstance;
     static {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       ourInstance = new ConsentOptions(new IOBackend() {
-        private final File DEFAULT_CONSENTS_FILE = PathManager.getCommonDataPath().resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName()).resolve("consentOptions").resolve("cached").toFile();
-        private final File CONFIRMED_CONSENTS_FILE = PathManager.getCommonDataPath().resolve("consentOptions").resolve("accepted").toFile();
+        private final Path DEFAULT_CONSENTS_FILE = PathManager.getCommonDataPath()
+          .resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName())
+          .resolve("consentOptions/cached");
+        private final Path CONFIRMED_CONSENTS_FILE = PathManager.getCommonDataPath().resolve("consentOptions").resolve("accepted");
         private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
 
         @Override
         public void writeDefaultConsents(@NotNull String data) throws IOException {
-          FileUtil.writeToFile(DEFAULT_CONSENTS_FILE, data);
+          Files.createDirectories(DEFAULT_CONSENTS_FILE.getParent());
+          Files.writeString(DEFAULT_CONSENTS_FILE, data);
         }
 
         @Override
         public @NotNull String readDefaultConsents() throws IOException {
-          return loadText(new FileInputStream(DEFAULT_CONSENTS_FILE));
+          return Files.readString(DEFAULT_CONSENTS_FILE);
         }
 
         @Override
         public @NotNull String readBundledConsents() {
-          return loadText(ConsentOptions.class.getResourceAsStream(BUNDLED_CONSENTS_PATH));
+          return loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(BUNDLED_CONSENTS_PATH));
         }
 
         @Override
         public void writeConfirmedConsents(@NotNull String data) throws IOException {
-          FileUtil.writeToFile(CONFIRMED_CONSENTS_FILE, data);
+          Files.createDirectories(CONFIRMED_CONSENTS_FILE.getParent());
+          Files.writeString(CONFIRMED_CONSENTS_FILE, data);
         }
 
         @Override
         public @NotNull String readConfirmedConsents() throws IOException {
-          return loadText(new FileInputStream(CONFIRMED_CONSENTS_FILE));
+          return Files.readString(CONFIRMED_CONSENTS_FILE);
         }
 
         private @NotNull String loadText(InputStream stream) {
           if (stream != null) {
             try (InputStream inputStream = CharsetToolkit.inputStreamSkippingBOM(stream)) {
-              return new String(FileUtilRt.loadBytes(inputStream), StandardCharsets.UTF_8);
+              return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             }
             catch (IOException e) {
               LOG.info(e);
@@ -82,6 +83,11 @@ public final class ConsentOptions {
           return "";
         }
       }, appInfo.isEAP() && appInfo.isVendorJetBrains());
+    }
+
+    private static @NotNull @NonNls String getBundledResourcePath() {
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      return appInfo.isVendorJetBrains() ? "consents.json" : "consents-" + appInfo.getShortCompanyName() + ".json";
     }
   }
 
