@@ -719,7 +719,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createSettingsFile("rootProject.name = 'root'\n" +
                        "includeBuild('A')\n" +
                        "includeBuild('B')\n" +
-                       "includeBuild('C')");
+                       "includeBuild('C')\n" +
+                       "includeBuild('.')");
     createProjectSubFile("A/settings.gradle", "includeBuild('AA')");
     createProjectSubFile("A/AA/settings.gradle", "includeBuild('AAA')");
     createProjectSubFile("A/AA/AAA/settings.gradle");
@@ -727,7 +728,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("B/settings.gradle", "includeBuild('../C')\n" +
                                               "includeBuild('../D')");
 
-    createProjectSubFile("C/settings.gradle", "includeBuild('../D')");
+    createProjectSubFile("C/settings.gradle", "includeBuild('..')\n" +
+                                              "includeBuild('../D')");
 
     createProjectSubFile("D/settings.gradle", "includeBuild('../A')\n" +
                                               "includeBuild('../C')");

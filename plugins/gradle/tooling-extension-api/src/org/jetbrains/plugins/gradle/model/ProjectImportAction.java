@@ -130,12 +130,15 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     void accept(@NotNull GradleBuild build);
   }
 
-  private static void forEachNestedBuild(@NotNull GradleBuild build, @NotNull GradleBuildConsumer buildConsumer) {
-    Set<GradleBuild> allIncludedBuilds = new HashSet<GradleBuild>();
-    Queue<GradleBuild> queue = new LinkedList<GradleBuild>(build.getIncludedBuilds());
+  private static void forEachNestedBuild(@NotNull GradleBuild rootBuild, @NotNull GradleBuildConsumer buildConsumer) {
+    Set<String> processedBuildsPaths = new HashSet<String>();
+    String rootBuildPath = rootBuild.getBuildIdentifier().getRootDir().getPath();
+    processedBuildsPaths.add(rootBuildPath);
+    Queue<GradleBuild> queue = new LinkedList<GradleBuild>(rootBuild.getIncludedBuilds());
     while (!queue.isEmpty()) {
       GradleBuild includedBuild = queue.remove();
-      if (allIncludedBuilds.add(includedBuild)) {
+      String includedBuildPath = includedBuild.getBuildIdentifier().getRootDir().getPath();
+      if (processedBuildsPaths.add(includedBuildPath)) {
         buildConsumer.accept(includedBuild);
         queue.addAll(includedBuild.getIncludedBuilds());
       }
