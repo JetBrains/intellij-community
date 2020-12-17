@@ -15,7 +15,7 @@ import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-public class Utf8ResourceControl extends ResourceBundle.Control {
+final class Utf8ResourceControl extends ResourceBundle.Control {
   public static final Utf8ResourceControl INSTANCE = new Utf8ResourceControl();
 
   @Override
