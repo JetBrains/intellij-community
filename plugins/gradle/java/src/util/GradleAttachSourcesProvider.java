@@ -108,6 +108,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
                             "        project.tasks.create(name: '" + taskName + "', overwrite: overwrite) {\n" +
                             "        doLast {\n" +
                             "          def configuration = null\n" +
+                            "          def repositoriesBackup = project.repositories.collect()\n" +
                             "          def repository = project.repositories.toList().find {\n" +
                             "              logger.lifecycle('Attempt to download sources from ' + it.name)\n" +
                             "              project.repositories.clear()\n" +
@@ -122,6 +123,8 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
                             "              return files && !files.isEmpty()\n" +
                             "          }\n" +
                             "          if (!repository) {\n" +
+                            "              project.repositories.clear()\n" +
+                            "              project.repositories.addAll(repositoriesBackup)\n" +
                             "              configuration = project.configurations.create('downloadSources_' + UUID.randomUUID())\n" +
                             "              configuration.transitive = false\n" +
                             "              project.dependencies.add(configuration.name, '" + sourceArtifactNotation + "')\n" +
