@@ -50,6 +50,7 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
   private void checkAcceptedLevel(LanguageLevel selectedLevel) {
     if (selectedLevel == null)
       return;
+    hidePopup();
     LanguageLevel level = AcceptedLanguageLevelsSettings.checkAccepted(this, selectedLevel);
     if (level == null) {
       setSelectedItem(AcceptedLanguageLevelsSettings.getHighestAcceptedLevel());
