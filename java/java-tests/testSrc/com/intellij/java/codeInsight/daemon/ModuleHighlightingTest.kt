@@ -369,6 +369,14 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("module M { requires M6; }")
   }
 
+  fun testCorrectedType() {
+    addFile("module-info.java", "module M { requires M6; requires lib.named; }")
+    
+    addFile("module-info.java", "module M6 {  requires lib.named; exports pkg;}", M6)
+    addFile("pkg/A.java", "package pkg; public class A {public static void foo(java.util.function.Supplier<pkg.lib1.LC1> f){}}", M6)
+    highlight("pkg/Usage.java","import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
+  }
+
   fun testDeprecations() {
     myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
     addFile("module-info.java", "@Deprecated module M2 { }", M2)

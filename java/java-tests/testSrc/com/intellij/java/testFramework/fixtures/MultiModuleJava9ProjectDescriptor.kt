@@ -93,6 +93,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       ModuleRootModificationUtil.addModuleLibrary(m2, "${libDir}/lib-auto-1.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(m4, "${libDir}/lib-auto-2.0.jar!/")
+      ModuleRootModificationUtil.addModuleLibrary(m6, "${libDir}/lib-named-2.0.jar!/")
     }
   }
 
