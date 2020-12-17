@@ -115,7 +115,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
               File jreArchive = jreManager.findJreArchive(OsFamily.MACOS, arch)
               if (jreArchive.file) {
                 tasks.add(BuildTasksImpl.createAsyncTask("dmg-$arch") { buildContext ->
-                  buildContext.executeStep("Building dmg with JRE for $arch", "mac_dmg_jre_$arch") {
+                  buildContext.executeStep("Building dmg with JRE for $arch", "mac_dmg_jre_$arch".toString()) {
                     MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
                                                   jreArchive.absolutePath, suffix, notarize)
                   }
