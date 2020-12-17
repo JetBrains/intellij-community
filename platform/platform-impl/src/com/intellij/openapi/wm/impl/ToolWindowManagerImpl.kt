@@ -611,10 +611,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                  info: WindowInfoImpl,
                                  autoFocusContents: Boolean = true,
                                  source: ToolWindowEventSource? = null) {
-    if (entry.toolWindow.hasFocus) {
-      return
-    }
-
     LOG.debug { "activateToolWindow($entry)" }
 
     if (source != null) {
