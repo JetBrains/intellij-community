@@ -20,6 +20,7 @@ import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -32,7 +33,8 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -150,15 +152,18 @@ public final class ClasspathBootstrap {
         else {
           compilerClass = Class.forName("com.sun.tools.javac.api.JavacTool", false, ClasspathBootstrap.class.getClassLoader());
         }
-        String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(compilerClass).getPath());
-        String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
-        if (relPath != null) {
-          if (relPath.contains("..")) {
-            relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
-          }
+        final File resourceFile = getResourceFile(compilerClass);
+        if (resourceFile != null) {
+          String localJarPath = FileUtil.toSystemIndependentName(resourceFile.getPath());
+          String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
           if (relPath != null) {
-            final File targetFile = new File(sdkHome, relPath);
-            cp.add(targetFile);  // tools.jar
+            if (relPath.contains("..")) {
+              relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+            }
+            if (relPath != null) {
+              final File targetFile = new File(sdkHome, relPath);
+              cp.add(targetFile);  // tools.jar
+            }
           }
         }
       }
@@ -202,12 +207,15 @@ public final class ClasspathBootstrap {
     return userHome != null ? new File(userHome, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
   }
 
+  @Nullable
   public static String getResourcePath(Class<?> aClass) {
     return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
   }
 
+  @Nullable
   public static File getResourceFile(Class<?> aClass) {
-    return new File(getResourcePath(aClass));
+    final String resourcePath = getResourcePath(aClass);
+    return resourcePath != null? new File(resourcePath) : null;
   }
 
   private static List<String> getInstrumentationUtilRoots() {
