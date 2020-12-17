@@ -7,6 +7,7 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import java.nio.file.AccessDeniedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -256,7 +257,18 @@ internal class MappedByteBufferBasedScatterGatherBackingStore(private val target
       closeForWriting()
     }
     finally {
-      Files.deleteIfExists(target)
+      try {
+        Files.deleteIfExists(target)
+      }
+      catch (ignore: AccessDeniedException) {
+        @Suppress("SSBasedInspection")
+        try {
+          target.toFile().deleteOnExit()
+        }
+        catch (ignore: UnsupportedOperationException) {
+          // mem fs
+        }
+      }
     }
   }
 }
