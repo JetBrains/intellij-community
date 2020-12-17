@@ -57,7 +57,9 @@ final class SlowerTypeConversions {
   }
 
   private static boolean isChainable(Object object) {
-    return object instanceof PsiVariable || object instanceof PsiMethod || object instanceof PsiExpression;
+    return object instanceof PsiVariable || object instanceof PsiExpression ||
+           // clone() is excluded to avoid weird chains suggestions like arr.stream<caret> -> Arrays.stream(arr.clone())
+           (object instanceof PsiMethod && !CLONE.methodMatches((PsiMethod)object));
   }
 
   private static void addSecondCompletionVariants(PsiElement element, PsiReference reference, LookupElement baseItem,
@@ -98,8 +100,6 @@ final class SlowerTypeConversions {
       final PsiMethod method = (PsiMethod)o;
       final PsiType type = method.getReturnType();
       if (PsiType.VOID.equals(type) || PsiType.NULL.equals(type)) return null;
-      // clone() is excluded to avoid weird chains suggestions like arr.stream<caret> -> Arrays.stream(arr.clone())
-      if (CLONE.methodMatches(method)) return null;
       if (!method.getParameterList().isEmpty()) return null;
       return method.getName() + "(" +
              getSpace(CodeStyle.getLanguageSettings(file).SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES) + ")";
