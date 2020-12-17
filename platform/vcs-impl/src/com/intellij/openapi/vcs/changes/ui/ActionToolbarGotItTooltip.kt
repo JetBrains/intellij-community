@@ -15,20 +15,18 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.Component
 import javax.swing.JComponent
 
 internal class ActionToolbarGotItTooltip(@NonNls private val id: String,
                                          @Nls private val tooltipText: String,
                                          disposable: Disposable,
                                          private val toolbar: ActionToolbar,
-                                         private val actionComponentSelector: (ActionToolbar) -> JComponent?,
-                                         targetComponent: Component = toolbar.component) : Activatable {
+                                         private val actionComponentSelector: (ActionToolbar) -> JComponent?) : Activatable {
   val tooltipDisposable = Disposer.newDisposable().also { Disposer.register(disposable, it) }
   private var balloon: Balloon? = null
 
   init {
-    UiNotifyConnector(targetComponent, this).also { Disposer.register(tooltipDisposable, it) }
+    UiNotifyConnector(toolbar.component, this).also { Disposer.register(tooltipDisposable, it) }
   }
 
   override fun showNotify() = showHint()

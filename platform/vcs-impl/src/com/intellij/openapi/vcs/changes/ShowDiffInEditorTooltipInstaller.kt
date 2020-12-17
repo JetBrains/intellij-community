@@ -46,9 +46,8 @@ private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
   }
 
   private fun showGotItTooltip() = notificationQueue.queue(DisposableUpdate.createDisposable(this, TOOLTIP_ID, {
-    val targetComponent = diffProcessor.contentPanel.targetComponent
     ActionToolbarGotItTooltip(TOOLTIP_ID, VcsBundle.message("show.diff.in.editor.tab.got.it.tooltip"),
-                              this, diffProcessor.toolbar, gearButton, targetComponent)
+                              this, diffProcessor.toolbar, gearButton)
   }))
 
   override fun dispose() {}
