@@ -153,11 +153,10 @@ public class MdnDocumentationUtil {
             }
           }
         }
-        String content = FileUtil.loadFile(targetFile, StandardCharsets.UTF_8);
-        if (content.isEmpty()) return null;
+        String jsonContent = FileUtil.loadFile(targetFile, StandardCharsets.UTF_8);
+        if (jsonContent.isEmpty()) return null;
 
-        String summary = extractSummary(content);
-        String mdnDecorated = decorate(fixLinks(summary), url);
+        String mdnDecorated = extractAndDecorateSummary(jsonContent, url);
         if (text == null) {
           return mdnDecorated;
         }
@@ -177,8 +176,8 @@ public class MdnDocumentationUtil {
     return null;
   }
 
-  private static String extractSummary(String content) {
-    JsonReader reader = new JsonReader(new StringReader(content));
+  private static @Nullable String extractAndDecorateSummary(@NotNull String jsonContent, String url) {
+    JsonReader reader = new JsonReader(new StringReader(jsonContent));
     reader.setLenient(true);
     return StreamEx.of(JsonParser.parseReader(reader)).select(JsonObject.class)
       .map(obj -> obj.get("doc")).select(JsonObject.class)
@@ -190,17 +189,20 @@ public class MdnDocumentationUtil {
       })
       .map(entry -> entry.get("value")).select(JsonObject.class)
       .map(entry -> entry.get("content")).select(JsonPrimitive.class)
-      .findFirst(JsonPrimitive::isString)
+      .filter(JsonPrimitive::isString)
       .map(JsonPrimitive::getAsString)
       .map(MdnDocumentationUtil::fixSummary)
+      .map(MdnDocumentationUtil::fixLinks)
+      .map(summary -> decorate(summary, url))
+      .findFirst()
       .orElse(null);
   }
 
-  private static String fixSummary(String summary) {
-    return summary.replaceAll("<iframe.*</iframe>|<(p|div).*class=['\"]hidden['\"].*>.*(</p>|<div>|</div>)", "")
-      .replaceAll("<table class=\"properties\">","<table class=\"sections\">")
+  private static @NotNull String fixSummary(@NotNull String summary) {
+    return summary.replaceAll("<iframe.*</iframe>|<p[^<>]*class=['\"]hidden['\"].*(<p>|</p>|<div>|</div>)|<div[^<>]*class=['\"]hidden['\"].*</div>", "")
+      .replaceAll("<table[^<>]*class=['\"]properties['\"]>","<table class=\"sections\">")
       .replaceAll("<td>(.*)</td>", "<td valign='top'>$1</td>")
-      .replaceAll("<th scope=\"row\">(.*)</th>", "<td valign='top' class='section'><p>$1</td>")
+      .replaceAll("<th scope=['\"]row['\"]>(.*)</th>", "<td valign='top' class='section'><p>$1</td>")
       .replaceAll("&apos;", "'");
   }
 
