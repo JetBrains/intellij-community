@@ -292,6 +292,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       assertNotNull(root);
       root2 = myFS.findFileByPath("//SOME-UNC-SERVER/SOME-UNC-SHARE");
       assertSame(String.valueOf(root), root, root2);
+      assertEquals("\\\\some-unc-server\\some-unc-share", root.getPresentableName());
       RefreshQueue.getInstance().processSingleEvent(false, new VFileDeleteEvent(this, root, false));
     }
     else if (SystemInfo.isUnix) {
