@@ -28,6 +28,8 @@ import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 import java.util.*;
 
 public class TasksFactory {
+  private static final boolean TASKS_REFRESH_REQUIRED =
+    GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.0")) < 0;
   private final Map<Project, Set<Task>> allTasks = new HashMap<Project, Set<Task>>();
   private final Set<Project> processedRootProjects = new HashSet<Project>();
   @NotNull private final MessageReporter myMessageReporter;
@@ -37,17 +39,6 @@ public class TasksFactory {
   }
 
   private void collectTasks(Project root) {
-    // Refresh tasks
-    if (GradleVersion.current().compareTo(GradleVersion.version("5.0")) < 0) {
-      TaskContainer tasks = root.getTasks();
-      if (tasks instanceof DefaultTaskContainer) {
-        ((DefaultTaskContainer)tasks).discoverTasks();
-        SortedSet<String> taskNames = tasks.getNames();
-        for (String taskName : taskNames) {
-          tasks.findByName(taskName);
-        }
-      }
-    }
     allTasks.putAll(getAllTasks(root));
   }
 
@@ -58,6 +49,7 @@ public class TasksFactory {
       @Override
       public void execute(@NotNull Project project) {
         try {
+          maybeRefreshTasks(project);
           TaskContainer projectTasks = project.getTasks();
           foundTargets.put(project, new TreeSet<Task>(projectTasks));
         }
@@ -91,6 +83,19 @@ public class TasksFactory {
     }
     else {
       return Collections.emptySet();
+    }
+  }
+
+  private static void maybeRefreshTasks(Project project) {
+    if (TASKS_REFRESH_REQUIRED) {
+      TaskContainer tasks = project.getTasks();
+      if (tasks instanceof DefaultTaskContainer) {
+        ((DefaultTaskContainer)tasks).discoverTasks();
+        SortedSet<String> taskNames = tasks.getNames();
+        for (String taskName : taskNames) {
+          tasks.findByName(taskName);
+        }
+      }
     }
   }
 }

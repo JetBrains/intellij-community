@@ -11,6 +11,20 @@ import org.junit.Test
 class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
 
   @Test
+  fun `test basic tasks importing`() {
+    createSettingsFile("include 'subproject'")
+    importProject()
+    assertSyncViewTreeEquals("-\n" +
+                             " finished")
+
+    assertThat(findTasks(projectPath).map { it.name })
+      .contains("help", "init", "wrapper", "projects", "tasks", "properties")
+
+    assertThat(findTasks(path("subproject")).map { it.name })
+      .contains("help", "projects", "tasks", "properties")
+  }
+
+  @Test
   @TargetVersions("5.0+")
   fun `test task registration failure doesn't break other tasks importing of unrelated projects`() {
     createSettingsFile("include 'project1', 'project2'")
@@ -24,10 +38,12 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
                              " -finished\n" +
                              "  Can not load tasks for project ':project1'")
 
+    assertThat(findTasks(projectPath)).isNotEmpty
+    assertThat(findTasks(path("project1"))).isEmpty()
+    assertThat(findTasks(path("project2"))).isNotEmpty
+  }
 
-    val tasksFinder: (projectPath: String) -> Collection<TaskData> = { ExternalSystemApiUtil.findProjectTasks(myProject, SYSTEM_ID, it) }
-    assertThat(tasksFinder(projectPath)).isNotEmpty
-    assertThat(tasksFinder(path("project1"))).isEmpty()
-    assertThat(tasksFinder(path("project2"))).isNotEmpty
+  private fun findTasks(projectPath: String) : Collection<TaskData> {
+    return ExternalSystemApiUtil.findProjectTasks(myProject, SYSTEM_ID, projectPath)
   }
 }
