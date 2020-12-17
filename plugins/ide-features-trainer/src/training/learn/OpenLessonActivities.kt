@@ -247,6 +247,14 @@ internal object OpenLessonActivities {
           hideOtherViews(project)
           showModules(project)
           CourseManager.instance.unfoldModuleOnInit = null
+          // Try to fix PyCharm double startup indexing :(
+          val openWhenSmart = {
+            showModules(project)
+            DumbService.getInstance(project).runWhenSmart {
+              showModules(project)
+            }
+          }
+          Alarm().addRequest(openWhenSmart, 500)
         }
       }
     }
