@@ -84,12 +84,24 @@ object TeamCity {
         message { "testFailed name='$testName' message='Exceptions reported' details='${escape(details)}'" }
     }
 
-    private fun escape(s: String) = s.replace("|", "||")
-        .replace("[", "|[")
-        .replace("]", "|]")
-        .replace("\r", "|r")
-        .replace("\n", "|n")
-        .replace("'", "|'")
+    // https://www.jetbrains.com/help/teamcity/service-messages.html#:~:text=The%20text%20is%20limited%20to,if%20the%20limit%20is%20exceeded.
+    //  The text is limited to 4000 symbols, and will be truncated if the limit is exceeded.
+    private fun escape(s: String): String {
+        val s1 = s.replace("|", "||")
+            .replace("[", "|[")
+            .replace("]", "|]")
+            .replace("\r", "|r")
+            .replace("\n", "|n")
+            .replace("'", "|'")
+
+        var limit = 4000
+        if (s1.length < limit) return s1
+        while (limit > 0) {
+            if (s1[limit - 1] != '|') return s1.take(limit)
+            limit--
+        }
+        return ""
+    }
 
     private fun toDetails(errors: List<Throwable>): String? {
         if (errors.isEmpty()) return null
