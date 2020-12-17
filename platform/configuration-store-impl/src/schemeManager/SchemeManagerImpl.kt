@@ -30,10 +30,10 @@ import org.jdom.Document
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
-import java.net.URL
 import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -114,18 +114,27 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     try {
       val bytes: ByteArray
       if (pluginDescriptor == null) {
-        @Suppress("DEPRECATION")
-        val url: URL? = when (requestor) {
-          is TempUIThemeBasedLookAndFeelInfo -> File(resourceName).toURI().toURL()
-          is UITheme -> DecodeDefaultsUtil.getDefaults(requestor.providerClassLoader, resourceName)
-          else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
+        when (requestor) {
+          is TempUIThemeBasedLookAndFeelInfo -> {
+            bytes = Files.readAllBytes(Paths.get(resourceName))
+          }
+          is UITheme -> {
+            val stream = requestor.providerClassLoader.getResourceAsStream(resourceName.removePrefix("/"))
+            if (stream == null) {
+              LOG.error("Cannot find $resourceName in ${requestor.providerClassLoader}")
+              return
+            }
+            bytes = stream.use { it.readAllBytes()  }
+          }
+          else -> {
+            val url = DecodeDefaultsUtil.getDefaults(requestor, resourceName)
+            if (url == null) {
+              LOG.error("Cannot read scheme from $resourceName")
+              return
+            }
+            bytes = URLUtil.openStream(url).readAllBytes()
+          }
         }
-
-        if (url == null) {
-          LOG.error("Cannot read scheme from $resourceName")
-          return
-        }
-        bytes = URLUtil.openStream(url).readAllBytes()
       }
       else {
         val stream = pluginDescriptor.pluginClassLoader.getResourceAsStream(resourceName.removePrefix("/"))

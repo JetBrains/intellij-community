@@ -2,6 +2,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.ApiStatus;
@@ -276,10 +277,26 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   @Override
   public @Nullable InputStream getResourceAsStream(String name) {
+    String normalizedName = toCanonicalPath(name);
+    Resource resource = classPath.getResource(normalizedName);
+    // compatibility with existing code, non-standard classloader behavior
+    if (resource != null) {
+      try {
+        return resource.getInputStream();
+      }
+      catch (IOException e) {
+        LoggerRt.getInstance(UrlClassLoader.class).error("Cannot load resource " + normalizedName, e);
+      }
+    }
+
+    if (normalizedName.startsWith("/")) {
+      throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash");
+    }
+
     if (isBootstrapResourcesAllowed) {
       skipFindingResource.set(Boolean.TRUE);
       try {
-        URL url = getResource(name);
+        URL url = super.getResource(name);
         try {
           InputStream stream = url == null ? null : url.openStream();
           if (stream != null) {
@@ -293,14 +310,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
         skipFindingResource.set(null);
       }
     }
-
-    try {
-      Resource resource = findResourceImpl(name);
-      return resource == null ? null : resource.getInputStream();
-    }
-    catch (IOException e) {
-      return null;
-    }
+    return null;
   }
 
   @Override
