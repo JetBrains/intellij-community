@@ -43,9 +43,10 @@ internal object PreviewLAFThemeStyles {
         "rgba($red, $blue, $green, ${alpha / 255.0})"
       }
       // language=CSS
+      val backgroundColor: String = defaultBackground.webRgba()//if (UIUtil.isUnderDarcula()) "rgb(49, 51, 53)" else defaultBackground.webRgba()
       return """
               body {
-                  background-color: ${defaultBackground.webRgba()};
+                  background-color: ${backgroundColor};
                   font-size: ${fontSize}px !important;
               }
               
