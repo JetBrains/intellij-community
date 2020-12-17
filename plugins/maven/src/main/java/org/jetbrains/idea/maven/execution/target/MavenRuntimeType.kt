@@ -64,7 +64,7 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
                                                  RunnerBundle.message("maven.target.execution.project.folder.label"),
                                                  RunnerBundle.message("maven.target.execution.project.folder.description"),
                                                  RunnerBundle.message("maven.target.execution.project.folder.browsing.title"),
-                                                 "/project")
+                                                 "")
 
     @JvmStatic
     val MAVEN_EXT_CLASS_PATH_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":maven.ext.class.path",
