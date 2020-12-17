@@ -60,7 +60,9 @@ public final class XDebuggerInlayUtil {
           boolean customNode = valueNode instanceof InlineWatchNodeImpl;
           InlineDebugRenderer renderer = new InlineDebugRenderer(valueNode, position, session, e);
           Inlay<InlineDebugRenderer> inlay = ((InlayModelImpl)e.getInlayModel()).addAfterLineEndDebuggerHint(offset, customNode, renderer);
-          valueNode.inlayCreated(inlay);
+          if (customNode) {
+            ((InlineWatchNodeImpl)valueNode).inlayCreated(inlay);
+          }
         }
       });
       return true;
