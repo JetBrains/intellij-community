@@ -35,10 +35,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -85,12 +85,18 @@ public class JBCefBrowser extends JBCefBrowserBase {
     new LazyInitializer.NotNullValue<>() {
       @Override
       public @NotNull String initialize() {
-        try {
-          URL url = JBCefApp.class.getResource("resources/load_error.html");
-          if (url != null) return Files.readString(Paths.get(url.toURI()));
-        }
-        catch (IOException | URISyntaxException ex) {
-          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", ex);
+        InputStream in = JBCefApp.class.getResourceAsStream("resources/load_error.html");
+        if (in != null) {
+          StringBuilder builder = new StringBuilder();
+          try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+            for (String line; (line = reader.readLine()) != null;) {
+              builder.append(line);
+            }
+            return builder.toString();
+          }
+          catch (IOException ex) {
+            Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", ex);
+          }
         }
         return "";
       }
