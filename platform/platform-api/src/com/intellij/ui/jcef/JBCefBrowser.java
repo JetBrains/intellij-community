@@ -12,6 +12,7 @@ import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -41,9 +42,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -85,18 +84,12 @@ public class JBCefBrowser extends JBCefBrowserBase {
     new LazyInitializer.NotNullValue<>() {
       @Override
       public @NotNull String initialize() {
-        InputStream in = JBCefApp.class.getResourceAsStream("resources/load_error.html");
-        if (in != null) {
-          StringBuilder builder = new StringBuilder();
-          try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-            for (String line; (line = reader.readLine()) != null;) {
-              builder.append(line);
-            }
-            return builder.toString();
-          }
-          catch (IOException ex) {
-            Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", ex);
-          }
+        try {
+          return new String(FileUtil.loadBytes(Objects.requireNonNull(
+              JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
+        }
+        catch (IOException | NullPointerException e) {
+          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", e);
         }
         return "";
       }
