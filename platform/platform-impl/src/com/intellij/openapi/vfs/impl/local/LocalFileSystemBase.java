@@ -601,7 +601,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
-    if (file.isCaseSensitive()) {
+    if (file.getParent().isCaseSensitive()) {
       return super.getCanonicallyCasedName(file);
     }
 
