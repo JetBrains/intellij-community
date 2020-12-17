@@ -169,7 +169,7 @@ final class RefreshWorker {
     List<ChildInfo> newKids = new ArrayList<>(newNames.size());
     for (String newName : newNames) {
       checkCancelled(dir);
-      ChildInfo record = childRecord(fs, dir, newName);
+      ChildInfo record = childRecord(fs, dir, newName, false);
       if (record != null) {
         newKids.add(record);
       }
@@ -279,7 +279,7 @@ final class RefreshWorker {
     for (String name : wanted) {
       if (name.isEmpty()) continue;
       checkCancelled(dir);
-      ChildInfo record = childRecord(fs, dir, name);
+      ChildInfo record = childRecord(fs, dir, name, true);
       if (record != null) {
         newKids.add(record);
       }
@@ -316,16 +316,14 @@ final class RefreshWorker {
     });
   }
 
-  @Nullable
-  private static ChildInfo childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
+  private static @Nullable ChildInfo childRecord(NewVirtualFileSystem fs, VirtualFile dir, String name, boolean canonicalize) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    if (!dir.isCaseSensitive()) {
-      // extra check if "suspicious name" differs from the actual name - we want actual names in the file events
-      name = fs.getCanonicallyCasedName(file);
+    if (canonicalize) {
+      name = fs.getCanonicallyCasedName(file);  // need case-exact names in file events
     }
     return new ChildInfoImpl(name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
