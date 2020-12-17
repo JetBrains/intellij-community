@@ -199,7 +199,7 @@ public class MdnDocumentationUtil {
   }
 
   private static @NotNull String fixSummary(@NotNull String summary) {
-    return summary.replaceAll("<iframe.*</iframe>|<p[^<>]*class=['\"]hidden['\"].*(<p>|</p>|<div>|</div>)|<div[^<>]*class=['\"]hidden['\"].*</div>", "")
+    return summary.replaceAll("<iframe.*</iframe>|<p[^<>]*class=['\"]hidden['\"].*</p>|<div[^<>]*class=['\"]hidden['\"].*</div>", "")
       .replaceAll("<table[^<>]*class=['\"]properties['\"]>","<table class=\"sections\">")
       .replaceAll("<td>(.*)</td>", "<td valign='top'>$1</td>")
       .replaceAll("<th scope=['\"]row['\"]>(.*)</th>", "<td valign='top' class='section'><p>$1</td>")
