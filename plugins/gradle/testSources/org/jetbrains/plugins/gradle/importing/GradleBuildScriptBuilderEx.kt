@@ -37,7 +37,7 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
 
   fun withTask(name: String, type: String? = null, configure: GroovyBuilder.() -> Unit = {}) = apply {
     addPostfix("""
-      tasks.register("$name"${type?.let{", $it"} ?: ""}) {
+      tasks.create("$name"${type?.let{", $it"} ?: ""}) {
       ${GroovyBuilder.generate("  ", configure)}
       }
     """.trimIndent())
