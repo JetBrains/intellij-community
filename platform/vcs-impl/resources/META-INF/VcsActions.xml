@@ -384,6 +384,7 @@
       </action>
       <separator/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
     </group>
 
     <reference ref="Vcs.VcsClone">
