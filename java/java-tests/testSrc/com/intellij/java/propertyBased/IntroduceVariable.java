@@ -1,10 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.java.refactoring.InplaceIntroduceVariableTest;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -15,11 +20,15 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.propertyBased.ActionOnFile;
+import com.intellij.testFramework.propertyBased.RandomActivityInterceptor;
+import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
 
 import java.util.List;
+
+import static org.junit.Assert.assertNotNull;
 
 public class IntroduceVariable extends ActionOnFile {
   public IntroduceVariable(@NotNull PsiFile file) {
@@ -40,13 +49,39 @@ public class IntroduceVariable extends ActionOnFile {
     PsiExpression expression = env.generateValue(Generator.sampledFrom(expressions), "Expression");
     TextRange range = expression.getTextRange();
     editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    if (env.generateValue(Generator.booleans(), "inline")) {
+      introduceVariableInline(env, project, editor, expression);
+    } else {
+      introduceVariableNoInline(env, project, editor, expression);
+    }
+  }
+
+  private static void introduceVariableInline(Environment env, Project project, Editor editor, PsiExpression expression) {
+    var handler = new InplaceIntroduceVariableTest.MyIntroduceVariableHandler();
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      UiInterceptors.register(new RandomActivityInterceptor(env, disposable));
+      TemplateManagerImpl.setTemplateTesting(disposable);
+      handler.invokeImpl(project, expression, editor);
+      TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+      assertNotNull(state);
+      state.gotoEnd(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException ignored) { }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+
+  private static void introduceVariableNoInline(@NotNull Environment env, Project project, Editor editor, PsiExpression expression) {
     IntroduceVariableBase handler = new MockIntroduceVariableHandler(env.generateValue(Generator.asciiIdentifiers(), "var name"),
                                                                      env.generateValue(Generator.booleans(), "replaceAll"),
                                                                      env.generateValue(Generator.booleans(), "replaceFinal"),
                                                                      env.generateValue(Generator.booleans(), "replaceVar"),
                                                                      env.generateValue(Generator.booleans(), "replaceLValues"));
     try {
-    handler.invoke(project, expression, editor);
+      handler.invoke(project, expression, editor);
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException ignored) { }
   }
