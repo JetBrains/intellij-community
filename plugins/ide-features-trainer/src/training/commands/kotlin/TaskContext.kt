@@ -46,7 +46,9 @@ abstract class TaskContext : LearningDslBase {
     }
   }
 
-  data class RestoreNotification(@Nls val message: String, val callback: () -> Unit)
+  data class RestoreNotification(@Nls val message: String,
+                                 @Nls val restoreLinkText: String = LearnBundle.message("learn.restore.default.link.text"),
+                                 val callback: () -> Unit)
 
   open fun proposeRestore(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) = Unit
 
