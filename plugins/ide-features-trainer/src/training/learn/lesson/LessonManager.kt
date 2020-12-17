@@ -165,7 +165,7 @@ class LessonManager {
       }
     }
     val message = MessagePart(" ${notification.message} ", MessagePart.MessageType.TEXT_BOLD)
-    val restoreLink = MessagePart("Restore", MessagePart.MessageType.LINK).also { it.runnable = callback }
+    val restoreLink = MessagePart(notification.restoreLinkText, MessagePart.MessageType.LINK).also { it.runnable = callback }
     setNotification(listOf(message, restoreLink))
     shownRestoreNotification = notification
   }

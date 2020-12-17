@@ -482,7 +482,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample,
       val breakpoints = lineWithBreakpoints()
       checkExpectedStateOfEditor(sample)
       ?: if (breakpoints.isNotEmpty() && (checkLine && breakpoints != setOf(logicalPosition().line))) {
-        TaskContext.RestoreNotification(incorrectBreakPointsMessage, restorePreviousTaskCallback)
+        TaskContext.RestoreNotification(incorrectBreakPointsMessage, callback = restorePreviousTaskCallback)
       }
       else null
     }

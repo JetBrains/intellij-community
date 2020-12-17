@@ -100,7 +100,7 @@ abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
   private fun TaskContext.proposeIfModified(checkCaret: TaskRuntimeContext.() -> Boolean) {
     proposeRestore {
       checkExpectedStateOfEditor(previous.sample, false)
-      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, restorePreviousTaskCallback) else null
+      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback) else null
     }
   }
 }
