@@ -47,6 +47,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
         val contextElement = getContextElement(context)
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", item.text, initImports(item.imports), contextElement)
+
         supplyDebugInformation(item, codeFragment, context)
 
         codeFragment.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->

@@ -112,7 +112,7 @@ class CoroutineFrameBuilder {
         ): RunningCoroutineStackFrameItem? {
             val location = frame.location() ?: return null
             return if (!location.safeCoroutineExitPointLineNumber())
-                RunningCoroutineStackFrameItem(SkipCoroutineStackFrameProxyImpl(frame))
+                RunningCoroutineStackFrameItem(SkipCoroutineStackFrameProxyImpl(frame), location)
             else
                 null
         }

@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-stdlib-jdk8" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
     <orderEntry type="library" name="maven-resolver-provider" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />

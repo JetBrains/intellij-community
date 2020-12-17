@@ -59,6 +59,9 @@ fun Type.isBaseContinuationImpl() =
 fun Type.isAbstractCoroutine() =
     isSubtype("kotlinx.coroutines.AbstractCoroutine")
 
+fun Type.isCoroutineScope() =
+    isSubtype("kotlinx.coroutines.CoroutineScope")
+
 fun Type.isSubTypeOrSame(className: String) =
     name() == className || isSubtype(className)
 

@@ -343,18 +343,19 @@ class VariableFinder(val context: ExecutionContext) {
     }
 
     private fun findCoroutineContextForLambda(method: Method): ObjectReference? {
-        if (method.name() != "invokeSuspend" || method.signature() != "(Ljava/lang/Object;)Ljava/lang/Object;") {
+        if (method.name() != "invokeSuspend" || method.signature() != "(Ljava/lang/Object;)Ljava/lang/Object;" ||
+            frameProxy !is CoroutineStackFrameProxyImpl) {
             return null
         }
 
-        val thisObject = thisObject() ?: return null
-        val thisType = thisObject.referenceType()
+        val continuation = frameProxy.continuation ?: return null
+        val continuationType = continuation.referenceType()
 
-        if (SUSPEND_LAMBDA_CLASSES.none { thisType.isSubtype(it) }) {
+        if (SUSPEND_LAMBDA_CLASSES.none { continuationType.isSubtype(it) }) {
             return null
         }
 
-        return findCoroutineContextForContinuation(thisObject)
+        return findCoroutineContextForContinuation(continuation)
     }
 
     private fun findCoroutineContextForMethod(method: Method): ObjectReference? {

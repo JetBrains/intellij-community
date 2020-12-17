@@ -124,7 +124,7 @@ fun ValueDescriptorImpl.safeCalcValue(context: EvaluationContextImpl): Value? {
     return wrapEvaluateException { calcValue(context) }
 }
 
-private inline fun <T> wrapEvaluateException(block: () -> T): T? {
+inline fun <T> wrapEvaluateException(block: () -> T): T? {
     return try {
         block()
     } catch (e: EvaluateException) {

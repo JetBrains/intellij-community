@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
+import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.BasicStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
@@ -16,20 +18,38 @@ import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.impl.PositionUtil
+import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.request.StepRequest
+import junit.framework.TestCase
+import org.jetbrains.idea.maven.aether.ArtifactKind
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
+import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.stepping.*
 import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.*
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
 import org.jetbrains.kotlin.idea.debugger.test.util.render
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
+    companion object {
+        //language=RegExp
+        val mavenDependencyRegex = """maven\(([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+)\)"""
+    }
+
     private val dp: DebugProcessImpl
         get() = debugProcess ?: throw AssertionError("createLocalProcess() should be called before getDebugProcess()")
 
@@ -45,11 +65,35 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     private var myCommandProvider: KotlinSteppingCommandProvider? = null
     private val commandProvider get() = myCommandProvider!!
 
+    private val classPath = mutableListOf<String>()
+
     private fun initContexts(suspendContext: SuspendContextImpl) {
         myEvaluationContext = createEvaluationContext(suspendContext)
         myDebuggerContext = createDebuggerContext(suspendContext)
         myCommandProvider = JvmSteppingCommandProvider.EP_NAME.extensions.firstIsInstance<KotlinSteppingCommandProvider>()
     }
+
+    private fun SuspendContextImpl.getKotlinStackFrame(): KotlinStackFrame? {
+        val proxy = frameProxy ?: return null
+        val positionManager = KotlinPositionManager(debugProcess)
+        val stackFrame = positionManager.createStackFrame(
+            proxy, debugProcess, proxy.location()
+        )
+
+        return stackFrame as? KotlinStackFrame
+    }
+
+    override fun createEvaluationContext(suspendContext: SuspendContextImpl): EvaluationContextImpl? {
+        return try {
+            val proxy = suspendContext.getKotlinStackFrame()?.stackFrameProxy ?: suspendContext.frameProxy
+            assertNotNull(proxy)
+            EvaluationContextImpl(suspendContext, proxy, proxy?.thisObject())
+        } catch (e: EvaluateException) {
+            error(e)
+            null
+        }
+    }
+
 
     internal fun process(instructions: List<SteppingInstruction>) {
         instructions.forEach(this::process)
@@ -89,6 +133,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             ?: dp.createStepOutCommand(this)
 
         dp.managerThread.schedule(stepOutCommand)
+    }
+
+    override fun tearDown() {
+        super.tearDown()
+        classPath.clear()
     }
 
     private fun SuspendContextImpl.doStepOver(ignoreBreakpoints: Boolean = false) {
@@ -196,5 +245,47 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             override fun action() = callback()
             override fun commandCancelled() = error(message = "Test was cancelled")
         })
+    }
+
+    override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
+        val regex = Regex(mavenDependencyRegex)
+        val result = regex.matchEntire(library) ?: return
+        val (_, groupId: String, artifactId: String, version: String) = result.groupValues
+        addMavenDependency(compilerFacility, groupId, artifactId, version)
+    }
+
+    override fun createJavaParameters(mainClass: String?): JavaParameters {
+        val params = super.createJavaParameters(mainClass)
+        for (entry in classPath) {
+            params.classPath.add(entry)
+        }
+        return params
+    }
+
+    protected fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, groupId: String, artifactId: String, version: String) {
+        val description = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)
+        val artifacts = loadDependencies(description)
+        compilerFacility.addDependencies(artifacts.map { it.file.presentableUrl })
+        addLibraries(artifacts)
+    }
+
+    private fun addLibraries(artifacts: MutableList<OrderRoot>) {
+        runInEdtAndWait {
+            ConfigLibraryUtil.addLibrary(module, "ARTIFACTS") {
+                for (artifact in artifacts) {
+                    classPath.add(artifact.file.presentableUrl) // for sandbox jvm
+                    addRoot(artifact.file, artifact.type)
+                }
+            }
+        }
+    }
+
+    protected fun loadDependencies(
+        description: JpsMavenRepositoryLibraryDescriptor
+    ): MutableList<OrderRoot> {
+        return JarRepositoryManager.loadDependenciesSync(
+            project, description, setOf(ArtifactKind.ARTIFACT),
+            RemoteRepositoryDescription.DEFAULT_REPOSITORIES, null
+        ) ?: throw AssertionError("Maven Dependency not found: $description")
     }
 }

@@ -7,9 +7,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.getCallLabelForLambdaArgument
 import org.jetbrains.kotlin.descriptors.*
@@ -27,7 +25,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.isDotSelector
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_1_3_FQ_NAME
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
@@ -100,7 +97,12 @@ class CodeFragmentParameterAnalyzer(
                 }
 
                 if (runReadAction { expression.isDotSelector() }) {
-                    // The receiver expression is already captured for this reference
+                    val descriptor = resolvedCall.resultingDescriptor
+                    val parameter = processCoroutineContextCall(resolvedCall.resultingDescriptor)
+                    if (parameter != null) {
+                        checkBounds(descriptor, expression, parameter)
+                    }
+                    // If the receiver expression is not a coroutine context call, it is already captured for this reference
                     return
                 }
 
@@ -193,12 +195,6 @@ class CodeFragmentParameterAnalyzer(
                 val resolvedCall = expression.getResolvedCall(bindingContext)
                 if (resolvedCall != null) {
                     val descriptor = resolvedCall.resultingDescriptor
-                    if (descriptor is FunctionDescriptor && descriptor.isSuspend) {
-                        evaluationStatus.error(EvaluationError.SuspendCall)
-                        throw EvaluateExceptionUtil.createEvaluateException(
-                            KotlinDebuggerEvaluationBundle.message("error.suspend.calls.not.supported")
-                        )
-                    }
                     if (descriptor is ConstructorDescriptor && KotlinBuiltIns.isNothing(descriptor.returnType)) {
                         throw EvaluateExceptionUtil.createEvaluateException(
                             KotlinDebuggerEvaluationBundle.message("error.nothing.initialization")

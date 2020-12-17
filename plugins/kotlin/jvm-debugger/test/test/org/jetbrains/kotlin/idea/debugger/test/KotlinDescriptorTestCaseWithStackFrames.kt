@@ -10,27 +10,21 @@ import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.jarRepository.JarRepositoryManager
-import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutinePreflightFrame
 import org.jetbrains.kotlin.idea.debugger.invokeInSuspendManagerThread
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.XDebuggerTestUtil
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.PrintWriter
 import java.io.StringWriter
 
-abstract class KotlinDescriptorTestCaseWithStackFrames() : KotlinDescriptorTestCaseWithStepping() {
+abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCaseWithStepping() {
     private companion object {
         val ASYNC_STACKTRACE_EP_NAME = AsyncStackTraceProvider.EP.name
         val INDENT_FRAME = 1
@@ -38,7 +32,6 @@ abstract class KotlinDescriptorTestCaseWithStackFrames() : KotlinDescriptorTestC
     }
 
     val agentList = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
-    val classPath = mutableListOf<String>()
 
     protected fun out(frame: XStackFrame) {
         out(INDENT_FRAME, frame.javaClass.simpleName + " FRAME:" + XDebuggerTestUtil.getFramePresentation(frame))
@@ -134,22 +127,16 @@ abstract class KotlinDescriptorTestCaseWithStackFrames() : KotlinDescriptorTestC
     }
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        val regex = Regex(pattern = """maven\(([a-zA-Z0-9_\-\.]+)\:([a-zA-Z0-9_\-\.]+):([a-zA-Z0-9_\-\.]+)\)(\-javaagent)?""")
+        val regex = Regex(pattern = "$mavenDependencyRegex(-javaagent)?")
         val result = regex.matchEntire(library) ?: return
         val (_, groupId: String, artifactId: String, version: String, agent: String) = result.groupValues
         if ("-javaagent" == agent)
             agentList.add(JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, false))
-        val description = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)
-        val artifacts = loadDependencies(description)
-        compilerFacility.addDependencies(artifacts.map { it.file.presentableUrl })
-        addLibraries(artifacts)
+        addMavenDependency(compilerFacility, groupId, artifactId, version)
     }
 
     override fun createJavaParameters(mainClass: String?): JavaParameters {
         val params = super.createJavaParameters(mainClass)
-        for (entry in classPath) {
-            params.classPath.add(entry)
-        }
         for (agent in agentList) {
             val dependencies = loadDependencies(agent)
             for (dependency in dependencies) {
@@ -157,25 +144,5 @@ abstract class KotlinDescriptorTestCaseWithStackFrames() : KotlinDescriptorTestC
             }
         }
         return params
-    }
-
-    private fun addLibraries(artifacts: MutableList<OrderRoot>) {
-        runInEdtAndWait {
-            ConfigLibraryUtil.addLibrary(module, "ARTIFACTS") {
-                for (artifact in artifacts) {
-                    classPath.add(artifact.file.presentableUrl) // for sandbox jvm
-                    addRoot(artifact.file, artifact.type)
-                }
-            }
-        }
-    }
-
-    private fun loadDependencies(
-        description: JpsMavenRepositoryLibraryDescriptor
-    ): MutableList<OrderRoot> {
-        return JarRepositoryManager.loadDependenciesSync(
-            project, description, setOf(ArtifactKind.ARTIFACT),
-            RemoteRepositoryDescription.DEFAULT_REPOSITORIES, null
-        ) ?: throw AssertionError("Maven Dependency not found: $description")
     }
 }

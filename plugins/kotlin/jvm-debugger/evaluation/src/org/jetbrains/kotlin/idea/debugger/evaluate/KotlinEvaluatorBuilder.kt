@@ -22,12 +22,12 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
+import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
-import com.intellij.testFramework.runInEdtAndWait
 import com.sun.jdi.*
 import com.sun.jdi.Value
 import org.jetbrains.eval4j.*
@@ -37,6 +37,7 @@ import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -60,13 +61,12 @@ import org.jetbrains.kotlin.idea.debugger.safeLocation
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.idea.debugger.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
@@ -221,10 +221,22 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     private fun compileCodeFragment(context: ExecutionContext, status: EvaluationStatus): CompiledDataDescriptor {
         val debugProcess = context.debugProcess
         var analysisResult = analyze(codeFragment, status, debugProcess)
+        val codeFragmentWasEdited = KotlinCodeFragmentEditor(codeFragment)
+            .withToStringWrapper(analysisResult.bindingContext)
+            .withSuspendFunctionWrapper(
+                analysisResult.bindingContext,
+                context,
+                isCoroutineScopeAvailable(context.frameProxy)
+            )
+            .editCodeFragment()
 
-        if (codeFragment.wrapToStringIfNeeded(analysisResult.bindingContext)) {
-            // Repeat analysis with toString() added
+        if (codeFragmentWasEdited) {
+            // Repeat analysis for edited code fragment
             analysisResult = analyze(codeFragment, status, debugProcess)
+        }
+
+        analysisResult.illegalSuspendFunCallDiagnostic?.let {
+            reportErrorDiagnostic(it, status)
         }
 
         val (bindingContext, filesToCompile) = runReadAction {
@@ -238,43 +250,17 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         return createCompiledDataDescriptor(result, sourcePosition)
     }
 
-    private fun KtCodeFragment.wrapToStringIfNeeded(bindingContext: BindingContext): Boolean {
-        val expression = runReadAction {
-            when (this) {
-                is KtExpressionCodeFragment -> getContentElement()
-                is KtBlockCodeFragment -> getContentElement().statements.lastOrNull()
-                else -> {
-                    LOG.error("Invalid code fragment type: ${this.javaClass}")
-                    null
-                }
-            }
-        } ?: return false
-
-        return wrapToStringIfNeeded(expression, bindingContext)
-    }
-
-    private fun wrapToStringIfNeeded(expression: KtExpression, bindingContext: BindingContext): Boolean {
-        val expressionType = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type ?: return false
-        if (expressionType.isInlineClassType()) {
-            val newExpression = runReadAction {
-                val expressionText = expression.text
-                KtPsiFactory(expression.project).createExpression("($expressionText).toString()")
-            }
-            runInEdtAndWait {
-                expression.project.executeWriteCommand(KotlinDebuggerEvaluationBundle.message("wrap.with.tostring")) {
-                    expression.replace(newExpression)
-                }
-            }
-            return true
-        }
-
-        return false
-    }
+    private fun isCoroutineScopeAvailable(frameProxy: StackFrameProxy) =
+        if (frameProxy is CoroutineStackFrameProxyImpl)
+            frameProxy.isCoroutineScopeAvailable()
+        else
+            false
 
     private data class ErrorCheckingResult(
         val bindingContext: BindingContext,
         val moduleDescriptor: ModuleDescriptor,
-        val files: List<KtFile>
+        val files: List<KtFile>,
+        val illegalSuspendFunCallDiagnostic: Diagnostic?
     )
 
     private fun analyze(codeFragment: KtCodeFragment, status: EvaluationStatus, debugProcess: DebugProcessImpl): ErrorCheckingResult {
@@ -298,18 +284,32 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             }
 
             val bindingContext = analysisResult.bindingContext
-
-            bindingContext.diagnostics
-                .filter { it.factory !in IGNORED_DIAGNOSTICS }
-                .firstOrNull { it.severity == Severity.ERROR && it.psiElement.containingFile == codeFragment }
-                ?.let {
-                    status.error(EvaluationError.ErrorsInCode)
-                    evaluationException(DefaultErrorMessages.render(it))
+            reportErrorDiagnosticIfAny(status, bindingContext)
+            ErrorCheckingResult(
+                bindingContext,
+                analysisResult.moduleDescriptor,
+                Collections.singletonList(codeFragment),
+                bindingContext.diagnostics.firstOrNull {
+                    it.isIllegalSuspendFunCallInCodeFragment()
                 }
-
-            ErrorCheckingResult(bindingContext, analysisResult.moduleDescriptor, Collections.singletonList(codeFragment))
+            )
         }
     }
+
+    private fun reportErrorDiagnosticIfAny(status: EvaluationStatus, bindingContext: BindingContext) =
+        bindingContext.diagnostics
+            .filter { it.factory !in IGNORED_DIAGNOSTICS }
+            .firstOrNull { it.severity == Severity.ERROR && it.psiElement.containingFile == codeFragment }
+            ?.let { reportErrorDiagnostic(it, status) }
+
+    private fun reportErrorDiagnostic(diagnostic: Diagnostic, status: EvaluationStatus) {
+        status.error(EvaluationError.ErrorsInCode)
+        evaluationException(DefaultErrorMessages.render(diagnostic))
+    }
+
+    private fun Diagnostic.isIllegalSuspendFunCallInCodeFragment() =
+        severity == Severity.ERROR && psiElement.containingFile == codeFragment &&
+                factory == Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
 
     private fun evaluateWithCompilation(
         context: ExecutionContext,
@@ -449,8 +449,13 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     override fun getModifier() = null
 
     companion object {
-        private val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
-                setOf(Errors.EXPERIMENTAL_API_USAGE_ERROR, Errors.MISSING_DEPENDENCY_SUPERCLASS, Errors.IR_COMPILED_CLASS)
+        internal val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
+                setOf(
+                    Errors.EXPERIMENTAL_API_USAGE_ERROR,
+                    Errors.MISSING_DEPENDENCY_SUPERCLASS,
+                    Errors.IR_COMPILED_CLASS,
+                    Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
+                )
 
         private val DEFAULT_METHOD_MARKERS = listOf(AsmTypes.OBJECT_TYPE, AsmTypes.DEFAULT_CONSTRUCTOR_MARKER)
 
@@ -548,8 +553,8 @@ fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult,
     )
 }
 
-private fun evaluationException(msg: String): Nothing = throw EvaluateExceptionUtil.createEvaluateException(msg)
-private fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptionUtil.createEvaluateException(e)
+internal fun evaluationException(msg: String): Nothing = throw EvaluateExceptionUtil.createEvaluateException(msg)
+internal fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptionUtil.createEvaluateException(e)
 
 internal fun getResolutionFacadeForCodeFragment(codeFragment: KtCodeFragment): ResolutionFacade {
     val filesToAnalyze = listOf(codeFragment)

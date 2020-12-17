@@ -458,11 +458,6 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             runTest("testData/evaluation/singleBreakpoint/superCallsSimple.kt");
         }
 
-        @TestMetadata("suspendCalls.kt")
-        public void testSuspendCalls() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/suspendCalls.kt");
-        }
-
         @TestMetadata("synchronizedBlock.kt")
         public void testSynchronizedBlock() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/synchronizedBlock.kt");
@@ -593,6 +588,21 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateVariable.kt");
             }
 
+            @TestMetadata("coroutineContextExists.kt")
+            public void testCoroutineContextExists() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/coroutineContextExists.kt");
+            }
+
+            @TestMetadata("coroutineScopeReceiver.kt")
+            public void testCoroutineScopeReceiver() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/coroutineScopeReceiver.kt");
+            }
+
+            @TestMetadata("functionCallWithSuspendFunctionInside.kt")
+            public void testFunctionCallWithSuspendFunctionInside() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");
+            }
+
             @TestMetadata("primitivesCoertion.kt")
             public void testPrimitivesCoertion() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/primitivesCoertion.kt");
@@ -616,6 +626,31 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             @TestMetadata("stringUpdateVariable.kt")
             public void testStringUpdateVariable() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdateVariable.kt");
+            }
+
+            @TestMetadata("suspendFunctionInClass.kt")
+            public void testSuspendFunctionInClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionInClass.kt");
+            }
+
+            @TestMetadata("suspendFunctionWithInlineClass.kt")
+            public void testSuspendFunctionWithInlineClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionWithInlineClass.kt");
+            }
+
+            @TestMetadata("suspendFunctionsWithContext.kt")
+            public void testSuspendFunctionsWithContext() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithContext.kt");
+            }
+
+            @TestMetadata("suspendFunctionsWithoutContext.kt")
+            public void testSuspendFunctionsWithoutContext() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithoutContext.kt");
+            }
+
+            @TestMetadata("suspendFunctionsWithoutKotlinxCoroutines.kt")
+            public void testSuspendFunctionsWithoutKotlinxCoroutines() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithoutKotlinxCoroutines.kt");
             }
         }
 
@@ -1206,6 +1241,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
         @TestMetadata("mutations.kt")
         public void testMutations() throws Exception {
             runTest("testData/evaluation/multipleBreakpoints/mutations.kt");
+        }
+
+        @TestMetadata("nestedCoroutineContexts.kt")
+        public void testNestedCoroutineContexts() throws Exception {
+            runTest("testData/evaluation/multipleBreakpoints/nestedCoroutineContexts.kt");
         }
 
         @TestMetadata("noReceiverOnStack.kt")
