@@ -1999,32 +1999,11 @@ public final class UIUtil {
     return StartupUiUtil.getLabelFont();
   }
 
-  /**
-   * @deprecated use getBorderColor instead
-   */
-  @Deprecated
-  public static @NotNull Color getBorderInactiveColor() {
-    return JBColor.border();
-  }
-
-  /**
-   * @deprecated use getBorderColor instead
-   */
-  @Deprecated
-  public static @NotNull Color getBorderActiveColor() {
-    return JBColor.border();
-  }
-
-  /**
-   * @deprecated use getBorderColor instead
-   */
-  @Deprecated
-  public static @NotNull Color getBorderSeparatorColor() {
-    return JBColor.border();
-  }
-
   public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    if (url == null) return null;
+    if (url == null) {
+      return null;
+    }
+
     try {
       StyleSheet styleSheet = new StyleSheet();
       styleSheet.loadRules(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url);

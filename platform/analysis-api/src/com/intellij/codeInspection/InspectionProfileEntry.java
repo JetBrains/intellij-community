@@ -101,7 +101,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (element == null) {
       return SuppressQuickFix.EMPTY_ARRAY;
     }
-    Set<SuppressQuickFix> fixes = new ObjectOpenCustomHashSet<>(new Hash.Strategy < SuppressQuickFix > () {
+    Set<SuppressQuickFix> fixes = new ObjectOpenCustomHashSet<>(new Hash.Strategy<>() {
       @Override
       public int hashCode(@Nullable SuppressQuickFix object) {
         if (object == null) {
@@ -428,7 +428,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return serialization filter.
    */
-  @SuppressWarnings({"DeprecatedIsStillUsed"})
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   protected @Nullable SerializationFilter getSerializationFilter() {
     return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();

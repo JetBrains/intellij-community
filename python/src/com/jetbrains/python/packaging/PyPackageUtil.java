@@ -404,7 +404,7 @@ public final class PyPackageUtil {
   }
 
 
-  public static boolean hasManagement(@NotNull List<? extends PyPackage> packages) {
+  public static boolean hasManagement(@NotNull List<PyPackage> packages) {
     return (PyPsiPackageUtil.findPackage(packages, SETUPTOOLS) != null || PyPsiPackageUtil.findPackage(packages, DISTRIBUTE) != null) ||
            PyPsiPackageUtil.findPackage(packages, PIP) != null;
   }
