@@ -29,7 +29,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,7 +146,7 @@ public class MarkerType {
 
   @NotNull
   private static <E extends PsiElement> PsiElementProcessor.CollectElementsWithLimit<E> getProcessor(int limit, boolean set) {
-    return set ? new PsiElementProcessor.CollectElementsWithLimit<>(limit, new THashSet<>())
+    return set ? new PsiElementProcessor.CollectElementsWithLimit<>(limit, new HashSet<>())
                : new PsiElementProcessor.CollectElementsWithLimit<>(limit);
   }
 
