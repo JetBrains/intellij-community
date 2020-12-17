@@ -11,7 +11,6 @@ import com.intellij.execution.application.JavaApplicationRunConfigurationImporte
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.jar.JarApplicationRunConfigurationImporter;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -754,7 +753,6 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
 
   @Test
-  @Bombed(month = Calendar.NOVEMBER, day = 1, user="Nikita.Skvortsov", description = "Disabled until release of Gradle-Idea-Ext plugin v0.10")
   public void testModuleTypesImport() throws Exception {
     importProject(
       new GradleBuildScriptBuilderEx()
