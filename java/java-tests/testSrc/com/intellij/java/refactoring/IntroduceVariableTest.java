@@ -389,6 +389,17 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest("x", true, false, false, "java.lang.@org.eclipse.jdt.annotation.NonNull String"); 
   }
 
+  public void testAllButWriteNoRead() {
+    try {
+      doTest("x", true, false, false, "int");
+    }
+    catch (Exception e) {
+      assertEquals("Error message:No matching occurrences", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
   private void doTestWithVarType(IntroduceVariableBase testMe) {
     Boolean asVarType = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE;
     try {

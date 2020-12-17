@@ -25,6 +25,7 @@ import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -201,6 +202,11 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testInBlockLambda2() {
     doTestReplaceChoice("Replace 0 occurrences in outer 'lambda' block");
   }
+  
+  public void testAllLValues() {
+    doTestReplaceChoice("Replace all 2 occurrences (will change semantics!)", null,
+                        List.of("Replace this occurrence only", "Replace all 2 occurrences (will change semantics!)"));
+  }
 
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
@@ -250,6 +256,12 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   private void doTestReplaceChoice(String choiceText, Consumer<AbstractInplaceIntroducer<?, ?>> pass) {
+    doTestReplaceChoice(choiceText, pass, null);
+  }
+
+  private void doTestReplaceChoice(String choiceText,
+                                   Consumer<AbstractInplaceIntroducer<?, ?>> pass,
+                                   @Nullable List<String> expectedOptions) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -258,7 +270,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       MyIntroduceHandler handler = createIntroduceHandler();
-      UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote(choiceText)));
+      UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(choiceText)));
       final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
       if (pass != null) {
         pass.accept(introducer);
