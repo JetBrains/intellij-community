@@ -14,11 +14,12 @@ class ProjectRefreshActionGroup : DefaultActionGroup() {
   override fun update(e: AnActionEvent) {
     ensureValidActionVisibility(e)
     val project = e.project ?: return
-    val toolbarComponent = e.toolbarComponent ?: return
+    // todo move the following to ProjectNotificationAware?
     val notificationAware = ProjectNotificationAware.getInstance(project)
+    val extension = ProjectRefreshFloatingProvider.getExtension()
     when (notificationAware.isNotificationVisible()) {
-      true -> toolbarComponent.scheduleShow()
-      else -> toolbarComponent.scheduleHide()
+      true -> extension.forEachToolbarComponent(FloatingToolbarComponent::scheduleShow)
+      else -> extension.forEachToolbarComponent(FloatingToolbarComponent::scheduleHide)
     }
   }
 
@@ -36,7 +37,4 @@ class ProjectRefreshActionGroup : DefaultActionGroup() {
     if (virtualFile is LightVirtualFileBase) return false
     return virtualFile != null && virtualFile.isValid
   }
-
-  private val AnActionEvent.toolbarComponent: FloatingToolbarComponent?
-    get() = getData(FloatingToolbarComponent.KEY)
 }

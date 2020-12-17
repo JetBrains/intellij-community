@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
@@ -20,7 +19,7 @@ class FloatingToolbarComponentImpl(
   actionGroup: ActionGroup,
   autoHideable: Boolean,
   parentDisposable: Disposable
-) : JPanel(), FloatingToolbarComponent, DataProvider {
+) : JPanel(), FloatingToolbarComponent {
 
   private val actionToolbar: ActionToolbar
   private val visibilityController: VisibilityController
@@ -28,11 +27,6 @@ class FloatingToolbarComponentImpl(
   override fun update() = actionToolbar.updateActionsImmediately()
   override fun scheduleShow() = visibilityController.scheduleShow()
   override fun scheduleHide() = visibilityController.scheduleHide()
-
-  override fun getData(dataId: String): Any? {
-    if (FloatingToolbarComponent.KEY.`is`(dataId)) return this
-    return null
-  }
 
   override fun paintChildren(g: Graphics) {
     val graphics = g.create() as Graphics2D

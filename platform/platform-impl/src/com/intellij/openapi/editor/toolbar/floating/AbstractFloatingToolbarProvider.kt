@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Consumer
 
 abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : FloatingToolbarProvider {
 
@@ -22,6 +23,10 @@ abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : Floating
 
   fun updateAllToolbarComponents() {
     toolbars.forEach { it.update() }
+  }
+
+  fun forEachToolbarComponent(consumer: Consumer<FloatingToolbarComponent>) {
+    toolbars.forEach(consumer);
   }
 
   companion object {
