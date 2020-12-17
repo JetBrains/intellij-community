@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ScreenUtil;
@@ -547,17 +548,18 @@ public class JBTabsImpl extends JComponent
         showLeftFadeout |= label.getX() < 0;
         showRightFadeout |= label.getWidth() < label.getPreferredSize().width - 1;
       }
+      Color transparent = ColorUtil.withAlpha(UIUtil.getPanelBackground(), 0);
       if (showLeftFadeout) {
         Rectangle leftSide = new Rectangle(0, labelsArea.y, width, labelsArea.height);
         ((Graphics2D)g).setPaint(
           new GradientPaint(leftSide.x, leftSide.y, UIUtil.getPanelBackground(), leftSide.x + leftSide.width,
-                            leftSide.y, UIUtil.TRANSPARENT_COLOR));
+                            leftSide.y, transparent));
         ((Graphics2D)g).fill(leftSide);
       }
       if (showRightFadeout) {
         Rectangle rightSide = new Rectangle(myMoreToolbar.getComponent().getX() - 1 - width, labelsArea.y, width, labelsArea.height);
         ((Graphics2D)g).setPaint(
-          new GradientPaint(rightSide.x, rightSide.y, UIUtil.TRANSPARENT_COLOR, rightSide.x + rightSide.width, rightSide.y,
+          new GradientPaint(rightSide.x, rightSide.y, transparent, rightSide.x + rightSide.width, rightSide.y,
                             UIUtil.getPanelBackground()));
         ((Graphics2D)g).fill(rightSide);
       }
