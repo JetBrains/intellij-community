@@ -10,6 +10,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -279,7 +280,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
       withTask("printArgs", "JavaExec") {
         property("classpath", "rootProject.sourceSets.main.runtimeClasspath")
         property("main", "'pack.AClass'")
-        call("args", "'$subProjectArgsFile'")
+        call("args", "'${subProjectArgsFile.systemIndependentPath}'")
       }
     }
 
