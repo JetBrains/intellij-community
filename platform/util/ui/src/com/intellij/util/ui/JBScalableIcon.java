@@ -32,6 +32,10 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
 
   protected JBScalableIcon(@NotNull JBScalableIcon icon) {
     this();
+    updateContextFrom(icon);
+  }
+
+  protected final void updateContextFrom(@NotNull JBScalableIcon icon) {
     updateScaleContext(icon.getScaleContext());
     myScaler.update(icon.myScaler);
     autoUpdateScaleContext = icon.autoUpdateScaleContext;
