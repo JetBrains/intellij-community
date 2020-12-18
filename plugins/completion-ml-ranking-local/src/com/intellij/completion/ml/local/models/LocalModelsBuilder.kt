@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -33,7 +32,7 @@ object LocalModelsBuilder {
       override fun run(indicator: ProgressIndicator) {
         val files = getFiles(project)
         val model = FrequencyLocalModel.getInstance(project)
-        processFiles(files, model.visitor(), project, indicator)
+        processFiles(files, model, project, indicator)
         model.onFinished()
       }
 
@@ -44,7 +43,7 @@ object LocalModelsBuilder {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
   }
 
-  private fun processFiles(files: List<VirtualFile>, visitor: PsiElementVisitor, project: Project, indicator: ProgressIndicator) {
+  private fun processFiles(files: List<VirtualFile>, model: LocalModel, project: Project, indicator: ProgressIndicator) {
     val dumbService = DumbService.getInstance(project)
     val psiManager = PsiManager.getInstance(project)
     val executorService = Executors.newFixedThreadPool((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1))
@@ -56,7 +55,7 @@ object LocalModelsBuilder {
     for (file in files) {
       executorService.submit {
         dumbService.runReadActionInSmartMode {
-          psiManager.findFile(file)?.accept(visitor)
+          psiManager.findFile(file)?.accept(model.visitor())
           indicator.fraction = processed.incrementAndGet().toDouble() / files.size
         }
       }

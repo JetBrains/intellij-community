@@ -4,14 +4,7 @@ import com.intellij.completion.ml.local.util.LocalModelsUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 
-class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaElementVisitor() {
-
-  override fun visitElement(element: PsiElement) {
-    super.visitElement(element)
-    if (element !is PsiCompiledElement) {
-      element.acceptChildren(this)
-    }
-  }
+class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaRecursiveElementWalkingVisitor() {
 
   override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
     expression.resolveMethod()?.let { method ->
@@ -66,7 +59,7 @@ class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaEle
         }
       }
     }
-    super.visitExpression(expression)
+    super.visitReferenceExpression(expression)
   }
 
   private fun addClassOccurrence(cls: PsiClass) {
@@ -75,6 +68,7 @@ class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaEle
     }
   }
 
+  override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) = Unit
   override fun visitImportStatement(statement: PsiImportStatement) = Unit
   override fun visitImportStaticStatement(statement: PsiImportStaticStatement) = Unit
 }

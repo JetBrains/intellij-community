@@ -23,14 +23,13 @@ class FrequencyLocalModel private constructor(private val project: Project) : Lo
   }
 
   private val storage = FrequencyStorage(LocalModelsUtil.storagePath(project))
-  private val referenceVisitor = ReferenceFrequencyVisitor(storage)
   private var isTrained = PropertiesComponent.getInstance(project).isTrueValue(MODEL_TRAINED_PROPERTY_KEY)
 
   init {
     ApplicationManager.getApplication().executeOnPooledThread { storage.postProcess() }
   }
 
-  override fun visitor(): PsiElementVisitor = referenceVisitor
+  override fun visitor(): PsiElementVisitor = ReferenceFrequencyVisitor(storage)
 
   override fun calculateContextFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
     if (!isTrained) return emptyMap()
