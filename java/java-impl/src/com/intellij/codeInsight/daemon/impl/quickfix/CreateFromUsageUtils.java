@@ -328,7 +328,7 @@ public final class CreateFromUsageUtils {
       if (qualifierElement instanceof PsiClass) {
         if (!FileModificationService.getInstance().preparePsiElementForWrite(qualifierElement)) return null;
 
-        return WriteAction.compute(() -> createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement));
+        return WriteAction.compute(() -> createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement, superClassName));
       }
     }
     else {
@@ -393,7 +393,8 @@ public final class CreateFromUsageUtils {
   private static PsiClass createClassInQualifier(PsiClass psiClass,
                                                  CreateClassKind classKind,
                                                  String name,
-                                                 PsiJavaCodeReferenceElement referenceElement) {
+                                                 PsiJavaCodeReferenceElement referenceElement, 
+                                                 @Nullable String superClassName) {
     PsiManager manager = psiClass.getManager();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
     PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
@@ -403,6 +404,9 @@ public final class CreateFromUsageUtils {
                       elementFactory.createEnum(name);
     CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
     result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
+    if (!StringUtil.isEmpty(superClassName)) {
+      setupSuperClassReference(result, superClassName);
+    }
     return (PsiClass) psiClass.add(result);
   }
 
