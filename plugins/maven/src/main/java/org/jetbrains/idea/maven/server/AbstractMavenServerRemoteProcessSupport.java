@@ -26,7 +26,7 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
   protected final Project myProject;
   protected final Integer myDebugPort;
 
-  public AbstractMavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @Nullable MavenDistribution mavenDistribution,
+  public AbstractMavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @NotNull MavenDistribution mavenDistribution,
                                                  @NotNull Project project, @Nullable Integer debugPort) {
     super(MavenServer.class);
     myJdk = jdk;

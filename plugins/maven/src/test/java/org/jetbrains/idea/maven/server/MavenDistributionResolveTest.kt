@@ -1,33 +1,37 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.wrapper
+package org.jetbrains.idea.maven.server
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.ZipUtil
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.server.MavenServerManager
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.util.zip.ZipOutputStream
 
-class MavenWrapperTest : MavenImportingTestCase() {
+class MavenDistributionResolveTest : MavenImportingTestCase() {
   private val myEvents: MutableList<BuildEvent> = ArrayList()
+  private lateinit var mySyncViewManager: SyncViewManager;
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    myProject.replaceService(SyncViewManager::class.java, object : SyncViewManager(myProject) {
+    mySyncViewManager = object : SyncViewManager(myProject) {
       override fun onEvent(buildId: Any,
                            event: BuildEvent) {
         myEvents.add(event)
       }
-    }, testRootDisposable)
+    }
+    myProject.replaceService(SyncViewManager::class.java, mySyncViewManager, testRootDisposable)
+    MavenProjectsManager.getInstance(myProject).setProgressListener(mySyncViewManager);
   }
 
   @Throws(IOException::class)
@@ -89,6 +93,19 @@ class MavenWrapperTest : MavenImportingTestCase() {
       assertNotContains<BuildEvent> {  it.message == "Running maven wrapper" }
     }
   }
+
+  @Throws(IOException::class)
+  fun testShouldUseEmbeddedMavenForUnexistingHome() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>")
+    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = FileUtil.toSystemDependentName("path/to/unexisted/maven/home");
+    importProject()
+    val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
+    assertEquals(MavenServerManager.resolveEmbeddedMavenHome().mavenHome.canonicalPath, connector.mavenDistribution.mavenHome.canonicalPath)
+    assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }
+  }
+
 
   private inline fun runWithServer(test: (String) -> Unit) {
     val server = HttpServer.create()

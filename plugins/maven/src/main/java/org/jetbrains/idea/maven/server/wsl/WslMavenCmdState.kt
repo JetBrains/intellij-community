@@ -15,31 +15,32 @@ import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.utils.MavenWslUtl.getPropertiesFromMavenOpts
 
 class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
                        jdk: Sdk,
                        vmOptions: String?,
-                       mavenDistribution: MavenDistribution?,
-                       project: Project?,
-                       debugPort: Int?
-) : MavenServerCMDState(jdk, vmOptions, mavenDistribution, project, debugPort) {
+                       mavenDistribution: MavenDistribution,
+                       debugPort: Int?,
+                       val myProject: Project,
+                       val remoteHost: String
+) : MavenServerCMDState(jdk, vmOptions, mavenDistribution, debugPort) {
 
   override fun getMavenOpts(): Map<String, String> {
     return getPropertiesFromMavenOpts(myWslDistribution)
   }
 
   override fun getWorkingDirectory(): String {
-    return myWslDistribution.userHome ?: myWslDistribution.getWslPath(super.getWorkingDirectory()) ?: "/";
+    return myWslDistribution.userHome?: "/";
   }
 
   override fun createJavaParameters(): SimpleJavaParameters {
     val parameters = super.createJavaParameters();
     val wslParams = toWslParameters(parameters)
-    wslParams.vmParametersList.add(RemoteServer.SERVER_HOSTNAME, myWslDistribution.hostIp)
-    wslParams.vmParametersList.add("idea.maven.knownPort", "true")
+    wslParams.vmParametersList.add("-D${RemoteServer.SERVER_HOSTNAME}=${remoteHost}")
+    wslParams.vmParametersList.add("-Didea.maven.knownPort=true")
     return wslParams
   }
 
@@ -53,10 +54,8 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
       wslParams.programParametersList.add(item)
     }
     wslParams.charset = parameters.charset
-    for (item in parameters.classPath.pathList) {
-      wslParams.classPath.add(myWslDistribution.getWslPath(item))
-    }
-    wslParams.setWorkingDirectory(parameters.workingDirectory)
+    wslParams.vmParametersList.add("-classpath")
+    wslParams.vmParametersList.add(parameters.classPath.pathList.map(myWslDistribution::getWslPath).joinToString(":"))
     return wslParams
   }
 
@@ -64,25 +63,28 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val wslConfig = WslTargetEnvironmentConfiguration(myWslDistribution)
     val myEnvFactory = WslTargetEnvironmentFactory(wslConfig)
 
-    val params = createJavaParameters()
+    val wslParams = createJavaParameters()
     val request = myEnvFactory.createRequest();
-    myEnvFactory.targetConfiguration.addLanguageRuntime(JavaLanguageRuntimeConfiguration())
+    val languageRuntime = JavaLanguageRuntimeConfiguration()
+    languageRuntime.homePath = "/usr";
+    myEnvFactory.targetConfiguration.addLanguageRuntime(languageRuntime)
     val setup = JdkCommandLineSetup(request, myEnvFactory.targetConfiguration)
-    setup.setupCommandLine(params)
-    setup.setupJavaExePath(params)
+    setup.setupCommandLine(wslParams)
+    setup.setupJavaExePath(wslParams)
 
-    val builder = params
-      .toCommandLine(myEnvFactory.createRequest(), wslConfig)
+    val builder = wslParams.toCommandLine(myEnvFactory.createRequest(), wslConfig)
     builder.setWorkingDirectory(workingDirectory)
-
-    val commandLine = builder.build()
 
     val wslEnvironment = myEnvFactory.prepareRemoteEnvironment(request,
                                                                TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
+
     setup.provideEnvironment(wslEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
 
     val manager = MavenProjectsManager.getInstance(myProject)
+    val commandLine = builder.build()
+    val commandPresentation = commandLine.getCommandPresentation(wslEnvironment)
+    MavenLog.LOG.info("Staring maven server on WSL as $commandPresentation")
     val process = wslEnvironment.createProcess(commandLine, MavenProgressIndicator(myProject, manager::getSyncConsole).indicator)
-    return MavenWslProcessHandler(process, commandLine.getCommandPresentation(wslEnvironment), myWslDistribution)
+    return MavenWslProcessHandler(process, commandPresentation, myWslDistribution)
   }
 }

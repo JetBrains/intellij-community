@@ -33,7 +33,7 @@ public class MavenServerConnector implements @NotNull Disposable {
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
   private final Sdk myJdk;
-  private final MavenDistribution myDistribution;
+  private @NotNull final MavenDistribution myDistribution;
   private final String myVmOptions;
   private int connectedProjects;
 

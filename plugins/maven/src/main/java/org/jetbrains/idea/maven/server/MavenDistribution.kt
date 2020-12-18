@@ -13,7 +13,7 @@ interface MavenDistribution {
   val mavenHome: File
   val version: String?
   fun isValid(): Boolean
-  fun compatibleWith(distribution: MavenDistribution): Boolean
+  fun compatibleWith(mavenDistribution: MavenDistribution): Boolean
 
   companion object {
     @JvmStatic
@@ -28,8 +28,8 @@ interface MavenDistribution {
 
 class LocalMavenDistribution(override val mavenHome: File, override val name: String) : MavenDistribution {
   override val version = MavenUtil.getMavenVersion(mavenHome)
-  override fun compatibleWith(distribution: MavenDistribution): Boolean {
-    return distribution == this || FileUtil.filesEqual(distribution.mavenHome, mavenHome)
+  override fun compatibleWith(mavenDistribution: MavenDistribution): Boolean {
+    return mavenDistribution == this || FileUtil.filesEqual(mavenDistribution.mavenHome, mavenHome)
   }
   override fun isValid() = version != null
   override fun toString(): String {
@@ -39,7 +39,7 @@ class LocalMavenDistribution(override val mavenHome: File, override val name: St
 
 class WslMavenDistribution(private val wslDistribution: WSLDistribution, val pathToMaven: String, override val name: String): MavenDistribution {
   override val version = MavenUtil.getMavenVersion(wslDistribution.getWindowsPath(pathToMaven))
-  override val mavenHome = File(pathToMaven)
+  override val mavenHome = File(wslDistribution.getWindowsPath(pathToMaven)!!)
   override fun compatibleWith(mavenDistribution: MavenDistribution): Boolean {
     if(mavenDistribution == this) return true
     val another = mavenDistribution as? WslMavenDistribution?: return false;

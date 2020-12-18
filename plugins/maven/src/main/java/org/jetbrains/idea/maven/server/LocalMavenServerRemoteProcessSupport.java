@@ -11,13 +11,13 @@ import org.jetbrains.annotations.Nullable;
 public class LocalMavenServerRemoteProcessSupport extends AbstractMavenServerRemoteProcessSupport {
   public LocalMavenServerRemoteProcessSupport(@NotNull Sdk jdk,
                                               @Nullable String vmOptions,
-                                              @Nullable MavenDistribution mavenDistribution,
+                                              @NotNull MavenDistribution mavenDistribution,
                                               @NotNull Project project,
                                               @Nullable Integer debugPort) {
     super(jdk, vmOptions, mavenDistribution, project, debugPort);
   }
 
   protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
-    return new MavenServerCMDState(myJdk, myOptions, myDistribution, myProject, myDebugPort);
+    return new MavenServerCMDState(myJdk, myOptions, myDistribution, myDebugPort);
   }
 }

@@ -1,10 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -14,6 +19,8 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +48,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -130,7 +138,7 @@ public final class MavenServerManager implements Disposable {
       .orElse(directory));
   }
 
-  private static String calculateMultimoduleDirUpToFileTree(String directory) {
+  private static @NotNull String calculateMultimoduleDirUpToFileTree(String directory) {
     VirtualFile path = LocalFileSystem.getInstance().findFileByPath(directory);
     if(path == null) return directory;
     return MavenUtil.getVFileBaseDir(path).getPath();
@@ -173,9 +181,11 @@ public final class MavenServerManager implements Disposable {
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
     Disposer.register(MavenDisposable.getInstance(project), () -> {
-      synchronized (myMultimoduleDirToConnectorMap) {
-        connector.shutdown(false);
-      }
+      ApplicationManager.getApplication().executeOnPooledThread(()->{
+        synchronized (myMultimoduleDirToConnectorMap) {
+          connector.shutdown(false);
+        }
+      });
     });
   }
 
@@ -210,6 +220,7 @@ public final class MavenServerManager implements Disposable {
            StringUtil.equals(settings.generalSettings.getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
   }
 
+  @NotNull
   public static MavenDistribution findMavenDistribution(Project project,
                                                         String multimoduleDirectory) {
     MavenSyncConsole console = MavenProjectsManager.getInstance(project).getSyncConsole();
@@ -227,7 +238,14 @@ public final class MavenServerManager implements Disposable {
       }
     }
     else {
-      return new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
+      MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
+      if(distribution == null) {
+        console.addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
+          .message("is.not.correct.maven.home.reverting.to.embedded", settings.generalSettings.getMavenHome()));
+        return resolveEmbeddedMavenHome();
+      } else  {
+        return distribution;
+      }
     }
   }
 
@@ -387,20 +405,23 @@ public final class MavenServerManager implements Disposable {
   Made public for external systems integration
    */
   //TODO: WSL
-  public static List<File> collectClassPathAndLibsFolder(@NotNull String mavenVersion, @NotNull File mavenHome) {
+  public static List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
+    if(!distribution.isValid()) {
+      throw new IllegalArgumentException("Maven distribution is not valid");
+    }
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final String root = pluginFileOrDir.getParent();
 
     final List<File> classpath = new ArrayList<>();
 
     if (pluginFileOrDir.isDirectory()) {
-      prepareClassPathForLocalRunAndUnitTests(mavenVersion, classpath, root);
+      prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath, root);
     }
     else {
-      prepareClassPathForProduction(mavenVersion, classpath, root);
+      prepareClassPathForProduction(distribution.getVersion(), classpath, root);
     }
 
-    addMavenLibs(classpath, mavenHome);
+    addMavenLibs(classpath, distribution.getMavenHome());
     MavenLog.LOG.debug("Collected classpath = ", classpath);
     return classpath;
   }
@@ -604,13 +625,19 @@ public final class MavenServerManager implements Disposable {
   public static LocalMavenDistribution resolveEmbeddedMavenHome() {
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final String root = pluginFileOrDir.getParent();
+    LocalMavenDistribution result;
     if (pluginFileOrDir.isDirectory()) {
       File parentFile = getMavenPluginParentFile();
-      return new LocalMavenDistribution(new File(parentFile, "maven36-server-impl/lib/maven3"), BUNDLED_MAVEN_3);
+      File mavenFile = new File(parentFile, "maven36-server-impl/lib/maven3");
+      if(mavenFile.isDirectory()) {
+        return new LocalMavenDistribution(mavenFile, BUNDLED_MAVEN_3);
+      }
     }
     else {
       return new LocalMavenDistribution(new File(root, "maven3"), BUNDLED_MAVEN_3);
     }
+
+    throw new RuntimeException("run setupBundledMaven.gradle task. Cannot resolve embedded maven home without it");
   }
 
   @NotNull

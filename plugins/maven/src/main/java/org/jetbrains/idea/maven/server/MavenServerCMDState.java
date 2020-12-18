@@ -61,19 +61,16 @@ public class MavenServerCMDState extends CommandLineState {
   protected final Sdk myJdk;
   protected final String myVmOptions;
   protected final MavenDistribution myDistribution;
-  protected final Project myProject;
   protected final Integer myDebugPort;
 
   public MavenServerCMDState(@NotNull Sdk jdk,
                              @Nullable String vmOptions,
-                             @Nullable MavenDistribution mavenDistribution,
-                             Project project,
+                             @NotNull MavenDistribution mavenDistribution,
                              @Nullable Integer debugPort) {
     super(null);
     myJdk = jdk;
     myVmOptions = vmOptions;
     myDistribution = mavenDistribution;
-    myProject = project;
     myDebugPort = debugPort;
   }
 
@@ -99,7 +96,7 @@ public class MavenServerCMDState extends CommandLineState {
 
     if (myDebugPort != null) {
       params.getVMParametersList()
-        .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=" + myDebugPort);
+        .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:" + myDebugPort);
     }
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
@@ -119,19 +116,14 @@ public class MavenServerCMDState extends CommandLineState {
     }
     params.getVMParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
 
-    Pair<File, String> homeAndVersion = getHomeAndVersion(myDistribution);
+    setupMainClass(params, myDistribution.getVersion());
 
-    final File mavenHome = homeAndVersion.first;
-    final String mavenVersion = homeAndVersion.second;
+    params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
-    setupMainClass(params, mavenVersion);
-
-    params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
-
-    final List<String> classPath = collectRTLibraries(mavenVersion);
+    final List<String> classPath = collectRTLibraries(myDistribution.getVersion());
     params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
     params.getClassPath().addAll(classPath);
-    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(mavenVersion, mavenHome));
+    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
 
     String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
     if (embedderXmx != null) {
@@ -178,30 +170,6 @@ public class MavenServerCMDState extends CommandLineState {
     return PathManager.getBinPath();
   }
 
-  protected Pair<File, String> getHomeAndVersion(MavenDistribution distribution) {
-    @NotNull File mavenHome;
-    String mavenVersion;
-    if (distribution == null) {
-      MavenLog.LOG.warn("Not found maven at ");
-      MavenDistribution embedded = MavenServerManager.resolveEmbeddedMavenHome();
-      mavenHome = embedded.getMavenHome();
-      mavenVersion = embedded.getVersion();
-      showInvalidMavenNotification(mavenVersion);
-    }
-    else {
-      mavenHome = distribution.getMavenHome();
-      mavenVersion = distribution.getVersion();
-    }
-    MavenLog.LOG.debug("", distribution, " chosen as maven home");
-    if(mavenVersion == null ){
-      if(ApplicationManager.getApplication().isInternal()) {
-        throw new RuntimeException("Cannot resolve embedded maven home. Consider running setupBundledMaven.gradle script");
-      } else {
-        throw new RuntimeException("Cannot resolve embedded maven home");
-      }
-    }
-    return new Pair<>(mavenHome, mavenVersion);
-  }
 
   @NotNull
   protected List<String> collectRTLibraries(String mavenVersion) {
@@ -249,44 +217,6 @@ public class MavenServerCMDState extends CommandLineState {
     OSProcessHandler processHandler = new OSProcessHandler.Silent(commandLine);
     processHandler.setShouldDestroyProcessRecursively(false);
     return processHandler;
-  }
-
-  private void showInvalidMavenNotification(@Nullable @NlsSafe String mavenVersion) {
-    String message = invalidHomeMessageToShow(myDistribution, mavenVersion, myProject);
-
-    NotificationListener listener = new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenProjectBundle.message("configurable.MavenSettings.display.name"));
-      }
-    };
-
-    new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", message, NotificationType.WARNING, listener).notify(myProject);
-  }
-
-  //TODO: Remove project and notificcations out of there IDEA-257466
-  @BuildEventsNls.Message
-  private static String invalidHomeMessageToShow(@Nullable MavenDistribution mavenDistribution,
-                                                 @NlsSafe String substitutedVersion,
-                                                 Project project) {
-    if (mavenDistribution != null && StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_2, mavenDistribution.getName())) {
-      if (project == null) {
-        return RunnerBundle.message("bundled.maven.maven2.not.supported");
-      }
-      else {
-        return RunnerBundle.message("bundled.maven.maven2.not.supported.with.fix");
-      }
-    }
-    else {
-      String wrongDir = mavenDistribution == null ? null : mavenDistribution.getMavenHome().getAbsolutePath();
-      if (project == null) {
-        return RunnerBundle
-          .message("external.maven.home.invalid.substitution.warning", wrongDir, substitutedVersion);
-      }
-      else {
-        return RunnerBundle.message("external.maven.home.invalid.substitution.warning.with.fix", wrongDir, substitutedVersion);
-      }
-    }
   }
 
   @TestOnly
