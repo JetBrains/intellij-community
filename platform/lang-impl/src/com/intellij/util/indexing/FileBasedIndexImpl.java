@@ -831,7 +831,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private static void scheduleIndexRebuild(String reason) {
-    LOG.info("scheduleIndexRebuild, reason: " + reason);
+    LOG.info("schedule index re-scanning, reason: " + reason);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
     }
