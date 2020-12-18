@@ -27,33 +27,33 @@ class FrequencyStorage(storageDirectory: Path) {
   @Volatile var totalMethods = 0
     private set
 
-  @Volatile var totalMethodsOccurrences = 0
+  @Volatile var totalMethodsUsages = 0
     private set
 
   @Volatile var totalClasses = 0
     private set
 
-  @Volatile var totalClassesOccurrences = 0
+  @Volatile var totalClassesUsages = 0
     private set
 
   @Synchronized
-  fun addMethodOccurrence(methodName: String, className: String) {
+  fun addMethodUsage(className: String, methodName: String) {
     val existingFrequencies = storage.get(className)
     if (existingFrequencies == null) {
-      storage.put(className, ClassFrequencies.withMethodOccurrence(methodName))
+      storage.put(className, ClassFrequencies.withMethodUsage(methodName))
     } else {
-      existingFrequencies.addMethodOccurrence(methodName)
+      existingFrequencies.addMethodUsage(methodName)
       storage.put(className, existingFrequencies)
     }
   }
 
   @Synchronized
-  fun addClassOccurrence(className: String) {
+  fun addClassUsage(className: String) {
     val existingFrequencies = storage.get(className)
     if (existingFrequencies == null) {
-      storage.put(className, ClassFrequencies.withClassOccurrence())
+      storage.put(className, ClassFrequencies.withClassUsage())
     } else {
-      existingFrequencies.addClassOccurrence()
+      existingFrequencies.addClassUsage()
       storage.put(className, existingFrequencies)
     }
   }
@@ -72,9 +72,9 @@ class FrequencyStorage(storageDirectory: Path) {
       val frequencies = storage.get(it) ?: return@Processor true
       val classFrequency = frequencies.getFrequency()
       totalClasses++
-      totalClassesOccurrences += classFrequency
+      totalClassesUsages += classFrequency
       totalMethods += frequencies.getMethods().size
-      totalMethodsOccurrences += frequencies.getMethodsFrequency()
+      totalMethodsUsages += frequencies.getMethodsFrequency()
       if (classFrequency >= CLASS_FREQUENCY_THRESHOLD) {
         classFrequencies[it] = classFrequency
       }

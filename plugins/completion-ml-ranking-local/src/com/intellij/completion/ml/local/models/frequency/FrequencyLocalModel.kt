@@ -29,7 +29,7 @@ class FrequencyLocalModel private constructor(private val project: Project) : Lo
     ApplicationManager.getApplication().executeOnPooledThread { storage.postProcess() }
   }
 
-  override fun visitor(): PsiElementVisitor = ReferenceFrequencyVisitor(storage)
+  override fun visitor(): PsiElementVisitor = ReferenceFrequencyVisitor(UsagesTracker(storage))
 
   override fun calculateContextFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
     if (!isTrained) return emptyMap()
@@ -43,9 +43,9 @@ class FrequencyLocalModel private constructor(private val project: Project) : Lo
     }
     return mapOf(
       "total_methods" to MLFeatureValue.Companion.numerical(storage.totalMethods),
-      "total_methods_occurrences" to MLFeatureValue.Companion.numerical(storage.totalMethodsOccurrences),
+      "total_methods_usages" to MLFeatureValue.Companion.numerical(storage.totalMethodsUsages),
       "total_classes" to MLFeatureValue.Companion.numerical(storage.totalClasses),
-      "total_classes_occurrences" to MLFeatureValue.Companion.numerical(storage.totalClassesOccurrences)
+      "total_classes_usages" to MLFeatureValue.Companion.numerical(storage.totalClassesUsages)
     )
   }
 
@@ -60,9 +60,9 @@ class FrequencyLocalModel private constructor(private val project: Project) : Lo
           LocalModelsUtil.getMethodName(psi)?.let { methodName ->
             val frequency = classFrequencies.getMethodFrequency(methodName)
             if (frequency > 0) {
-              val totalOccurrences = classFrequencies.getMethodsFrequency()
+              val totalUsages = classFrequencies.getMethodsFrequency()
               features["absolute_method_frequency"] = MLFeatureValue.Companion.numerical(frequency)
-              features["relative_method_frequency"] = MLFeatureValue.Companion.numerical(frequency.toDouble() / totalOccurrences)
+              features["relative_method_frequency"] = MLFeatureValue.Companion.numerical(frequency.toDouble() / totalUsages)
             }
           }
         }
@@ -72,7 +72,7 @@ class FrequencyLocalModel private constructor(private val project: Project) : Lo
       LocalModelsUtil.getClassName(psi)?.let { className ->
         storage.getClassFrequency(className)?.let {
           features["absolute_class_frequency"] = MLFeatureValue.Companion.numerical(it)
-          features["relative_class_frequency"] = MLFeatureValue.Companion.numerical(it.toDouble() / storage.totalClassesOccurrences)
+          features["relative_class_frequency"] = MLFeatureValue.Companion.numerical(it.toDouble() / storage.totalClassesUsages)
         }
       }
     }

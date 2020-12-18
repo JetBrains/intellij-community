@@ -4,13 +4,13 @@ import com.intellij.completion.ml.local.util.LocalModelsUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 
-class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaRecursiveElementWalkingVisitor() {
+class ReferenceFrequencyVisitor(private val usagesTracker: UsagesTracker) : JavaRecursiveElementWalkingVisitor() {
 
   override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
     expression.resolveMethod()?.let { method ->
       LocalModelsUtil.getMethodName(method)?.let { methodName ->
         LocalModelsUtil.getClassName(method.containingClass)?.let { clsName ->
-          storage.addMethodOccurrence(methodName, clsName)
+          usagesTracker.methodUsed(clsName, methodName)
         }
       }
     }
@@ -20,14 +20,14 @@ class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaRec
   override fun visitNewExpression(expression: PsiNewExpression) {
     val cls = expression.classReference?.resolve()
     if (cls is PsiClass) {
-      addClassOccurrence(cls)
+      addClassUsage(cls)
     }
     super.visitNewExpression(expression)
   }
 
   override fun visitClassObjectAccessExpression(expression: PsiClassObjectAccessExpression) {
     PsiTypesUtil.getPsiClass(expression.operand.type)?.let { cls ->
-      addClassOccurrence(cls)
+      addClassUsage(cls)
     }
   }
 
@@ -35,7 +35,7 @@ class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaRec
     val castType = expression.castType
     if (castType != null) {
       PsiTypesUtil.getPsiClass(castType.type)?.let { cls ->
-        addClassOccurrence(cls)
+        addClassUsage(cls)
       }
     }
     expression.operand?.accept(this)
@@ -45,7 +45,7 @@ class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaRec
     expression.operand.accept(this)
     val checkType = expression.checkType ?: return
     PsiTypesUtil.getPsiClass(checkType.type)?.let { cls ->
-      addClassOccurrence(cls)
+      addClassUsage(cls)
     }
   }
 
@@ -54,7 +54,7 @@ class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaRec
       if (qualifier is PsiReferenceExpression) {
         qualifier.resolve()?.let { def ->
           if (def is PsiClass) {
-            addClassOccurrence(def)
+            addClassUsage(def)
           }
         }
       }
@@ -62,9 +62,9 @@ class ReferenceFrequencyVisitor(private val storage: FrequencyStorage) : JavaRec
     super.visitReferenceExpression(expression)
   }
 
-  private fun addClassOccurrence(cls: PsiClass) {
+  private fun addClassUsage(cls: PsiClass) {
     LocalModelsUtil.getClassName(cls)?.let {
-      storage.addClassOccurrence(it)
+      usagesTracker.classUsed(it)
     }
   }
 

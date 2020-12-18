@@ -4,20 +4,20 @@ class ClassFrequencies(private var frequency: Int = 0,
                        private var methodsFrequency: Int = 0,
                        private val methods: MutableMap<Int, Int> = mutableMapOf()) {
   companion object {
-    fun withMethodOccurrence(methodName: String): ClassFrequencies {
+    fun withMethodUsage(methodName: String): ClassFrequencies {
       return ClassFrequencies(0, 1, mutableMapOf(methodName.hashCode() to 1))
     }
 
-    fun withClassOccurrence(): ClassFrequencies {
+    fun withClassUsage(): ClassFrequencies {
       return ClassFrequencies(1, 0, mutableMapOf())
     }
   }
 
-  fun addClassOccurrence() {
+  fun addClassUsage() {
     frequency++
   }
 
-  fun addMethodOccurrence(name: String) {
+  fun addMethodUsage(name: String) {
     methodsFrequency++
     val hash = name.hashCode()
     methods[hash] = methods.getOrDefault(hash, 0) + 1
