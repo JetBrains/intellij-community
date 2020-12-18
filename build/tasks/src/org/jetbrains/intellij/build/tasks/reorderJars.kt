@@ -5,8 +5,10 @@ import com.google.common.hash.HashFunction
 import com.google.common.hash.Hashing
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.apache.commons.compress.archivers.zip.ZipFile
-import org.jetbrains.intellij.build.io.*
-import java.io.ByteArrayInputStream
+import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.intellij.build.io.deleteDir
+import org.jetbrains.intellij.build.io.info
+import org.jetbrains.intellij.build.io.runJava
 import java.lang.System.Logger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -17,16 +19,14 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.IntConsumer
 import java.util.zip.ZipEntry
+import kotlin.math.min
 
 // see JarMemoryLoader.SIZE_ENTRY
 internal const val SIZE_ENTRY = "META-INF/jb/$\$size$$"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val excludedLibJars = java.util.Set.of("testFramework.core.jar", "testFramework.jar", "testFramework-java.jar")
-
-private val simpleClassPathIndex = System.getProperty("build.simple.index", "true").toBoolean()
 
 fun main(args: Array<String>) {
   System.setProperty("java.util.logging.SimpleFormatter.format", "%5\$s %n")
@@ -72,55 +72,16 @@ fun reorderJars(homeDir: Path,
   val coreClassLoaderFiles = computeAppClassPath(sourceToNames, libDir, antLibDir)
 
   logger.log(Logger.Level.INFO, "Reordering *.jar files in $homeDir")
-  val packageIndex = doReorderJars(sourceToNames = sourceToNames, sourceDir = homeDir, targetDir = targetDir, logger = logger)
-  return writeClassLoaderData(packageIndex, coreClassLoaderFiles, homeDir, stageDir)
+  doReorderJars(sourceToNames = sourceToNames, sourceDir = homeDir, targetDir = targetDir, logger = logger)
+  return writeClassLoaderData(coreClassLoaderFiles, homeDir, stageDir)
 }
 
-private fun writeClassLoaderData(packageIndex: List<PackageIndexEntry>,
-                                 coreClassLoaderFiles: LinkedHashSet<Path>,
+private fun writeClassLoaderData(coreClassLoaderFiles: LinkedHashSet<Path>,
                                  homeDir: Path,
                                  stageDir: Path): Path {
-  // to simplify code for now we build package index on the fly and merge it on the fly
-  // not yet clear - does it worth to build unified package index for all JARs or not
-  if (simpleClassPathIndex) {
-    val resultFile = stageDir.resolve("classpath.txt")
-    Files.writeString(resultFile, coreClassLoaderFiles.joinToString(separator = "\n") { homeDir.relativize(it).toString() })
-    return resultFile
-  }
-
-  val byteBuffer = ByteBuffer.allocate(
-    256 +
-    packageIndex.sumBy { Short.SIZE_BYTES + (it.path.toString().length * 2) + (it.index.size * (Int.SIZE_BYTES + Short.SIZE_BYTES)) } +
-    coreClassLoaderFiles.sumBy { Short.SIZE_BYTES + (it.toString().length * 2) }
-  ).order(ByteOrder.LITTLE_ENDIAN)
-  // version
-  byteBuffer.put(0)
-  // files for core class loader class path
-  byteBuffer.putShort(coreClassLoaderFiles.size.toShort())
-  for (file in coreClassLoaderFiles) {
-    writePath(file, homeDir, byteBuffer)
-  }
-
-  // package index (currently, only for JARs that were used during start-up)
-  byteBuffer.putShort(packageIndex.size.toShort())
-  for (item in packageIndex) {
-    writePath(item.path, homeDir, byteBuffer)
-
-    byteBuffer.putInt(item.index.size)
-    item.index.forEach(IntConsumer {
-      byteBuffer.putInt(it)
-    })
-  }
-
-  byteBuffer.flip()
-  val appClassPathFile = stageDir.resolve("classpath.db")
-  Files.newByteChannel(appClassPathFile, EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)).use {
-    do {
-      it.write(byteBuffer)
-    }
-    while (byteBuffer.hasRemaining())
-  }
-  return appClassPathFile
+  val resultFile = stageDir.resolve("classpath.txt")
+  Files.writeString(resultFile, coreClassLoaderFiles.joinToString(separator = "\n") { homeDir.relativize(it).toString() })
+  return resultFile
 }
 
 private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path, antLibDir: Path?): LinkedHashSet<Path> {
@@ -139,12 +100,6 @@ private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: 
     }
   }
   return result
-}
-
-private fun writePath(file: Path, homeDir: Path, byteBuffer: ByteBuffer) {
-  val nameBytes = homeDir.relativize(file).toString().toByteArray()
-  byteBuffer.putShort(nameBytes.size.toShort())
-  byteBuffer.put(nameBytes)
 }
 
 private inline fun addJarsFromDir(dir: Path, consumer: (Sequence<Path>) -> Unit) {
@@ -204,7 +159,7 @@ internal fun doReorderJars(sourceToNames: Map<Path, List<String>>,
   return index
 }
 
-internal data class PackageIndexEntry(val path: Path, val index: IntOpenHashSet)
+internal data class PackageIndexEntry(val path: Path, val classPackageIndex: IntOpenHashSet, val resourcePackageIndex: IntOpenHashSet)
 
 private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): PackageIndexEntry {
   val orderedNameSet = HashSet(orderedNames)
@@ -212,7 +167,8 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
   val tempJarFile = resultJarFile.resolveSibling("${resultJarFile.fileName}_reorder.jar")
 
   val hasher = Hashing.murmur3_32()
-  val packageHashSet: IntOpenHashSet
+  val classPackageHashSet: IntOpenHashSet
+  val resourcePackageHashSet: IntOpenHashSet
 
   ZipFile(Files.newByteChannel(jarFile, EnumSet.of(StandardOpenOption.READ))).use { zipFile ->
     val entries = zipFile.entries.asSequence().toMutableList()
@@ -234,7 +190,8 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
       }
     })
 
-    packageHashSet = IntOpenHashSet(entries.size)
+    classPackageHashSet = IntOpenHashSet(min(entries.size / 4, 10))
+    resourcePackageHashSet = IntOpenHashSet(min(entries.size / 4, 10))
 
     // leave only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
     val dirSetWithoutClassFiles = HashSet<String>()
@@ -244,49 +201,73 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
         @Suppress("DuplicatedCode")
         var slashIndex = name.lastIndexOf('/')
         if (slashIndex != -1) {
-          while (dirSetWithoutClassFiles.add(name.substring(0, slashIndex))) {
-            slashIndex = name.lastIndexOf('/', slashIndex - 2)
+          var dirName = name.substring(0, slashIndex)
+          while (dirSetWithoutClassFiles.add(dirName)) {
+            resourcePackageHashSet.add(hasher.hashString(dirName, Charsets.UTF_8).asInt())
+
+            slashIndex = dirName.lastIndexOf('/')
             if (slashIndex == -1) {
               break
             }
+
+            dirName = name.substring(0, slashIndex)
           }
         }
       }
     }
 
-    val zipCreator = ParallelScatterZipCreator(Executors.newWorkStealingPool(2), compress = false)
-    addSizeEntry(orderedNames, zipCreator)
-    for (originalEntry in entries) {
-      val name = originalEntry.name
-
-      if (originalEntry.isDirectory &&
-          (dirSetWithoutClassFiles.isEmpty() || !dirSetWithoutClassFiles.contains(name.substring(0, name.length - 1)))) {
-        continue
-      }
-
-      // by intention not the whole original ZipArchiveEntry is copied,
-      // but only name, method and size are copied - that's enough and should be enough
-      val entry = ZipEntry(name)
-      entry.method = ZipEntry.STORED
-      entry.size = originalEntry.size
-      zipCreator.addEntry(entry) {
-        zipFile.getInputStream(originalEntry)
-      }
-
-      packageHashSet.add(getPackageNameHash(name, hasher))
-    }
-
-    Files.createDirectories(resultJarFile.parent)
+    Files.createDirectories(tempJarFile.parent)
     (Files.newByteChannel(tempJarFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ,
                                                   StandardOpenOption.CREATE_NEW)) as FileChannel).use { outChannel ->
+      val zipCreator = ZipFileWriter(outChannel, deflater = null)
+      zipCreator.writeUncompressedEntry(SIZE_ENTRY, 2) {
+        it.putShort((orderedNames.size and 0xffff).toShort())
+      }
+      for (originalEntry in entries) {
+        val name = originalEntry.name
+
+        if (originalEntry.isDirectory) {
+          if (dirSetWithoutClassFiles.isEmpty() || !dirSetWithoutClassFiles.contains(name.substring(0, name.length - 1))) {
+            continue
+          }
+
+          zipCreator.addDirEntry(name)
+        }
+        else {
+          // by intention not the whole original ZipArchiveEntry is copied,
+          // but only name, method and size are copied - that's enough and should be enough
+          zipCreator.writeEntry(name, ZipEntry.STORED, originalEntry.size.toInt(), zipFile.getInputStream(originalEntry))
+
+          if (name.endsWith(".class")) {
+            classPackageHashSet.add(getPackageNameHash(name, hasher))
+          }
+          else {
+            resourcePackageHashSet.add(getPackageNameHash(name, hasher))
+          }
+        }
+      }
+
+      zipCreator.writeUncompressedEntry("__packageIndex__",
+                                        (2 * Int.SIZE_BYTES) + ((classPackageHashSet.size + resourcePackageHashSet.size) * Int.SIZE_BYTES)) {
+        val classPackages = classPackageHashSet.toIntArray()
+        val resourcePackages = resourcePackageHashSet.toIntArray()
+        // same content for same data
+        classPackages.sort()
+        resourcePackages.sort()
+        it.putInt(classPackages.size)
+        it.putInt(resourcePackages.size)
+        val intBuffer = it.asIntBuffer()
+        intBuffer.put(classPackages)
+        intBuffer.put(resourcePackages)
+        it.position(it.position() + (intBuffer.position() * Int.SIZE_BYTES))
+      }
+
       val comment = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN)
       comment.putInt(1759251304)
       comment.putShort(orderedNames.size.toShort())
       comment.flip()
 
-      val stream = ZipArchiveOutputStream(outChannel)
-      zipCreator.writeTo(stream)
-      stream.finish(comment)
+      zipCreator.finish(comment)
     }
   }
 
@@ -300,7 +281,7 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
     Files.deleteIfExists(tempJarFile)
   }
 
-  return PackageIndexEntry(path = resultJarFile, packageHashSet)
+  return PackageIndexEntry(path = resultJarFile, classPackageHashSet, resourcePackageHashSet)
 }
 
 private fun getPackageNameHash(name: String, hasher: HashFunction): Int {
@@ -309,17 +290,4 @@ private fun getPackageNameHash(name: String, hasher: HashFunction): Int {
     return 0
   }
   return hasher.hashString(name.substring(0, i), Charsets.UTF_8).asInt()
-}
-
-private fun addSizeEntry(orderedNames: List<String>, zipCreator: ParallelScatterZipCreator) {
-  val entry = ZipEntry(SIZE_ENTRY)
-  val buffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN)
-  buffer.putShort((orderedNames.size and 0xffff).toShort())
-  buffer.flip()
-
-  entry.method = ZipEntry.STORED
-  entry.size = 2
-  zipCreator.addEntry(entry) {
-    ByteArrayInputStream(buffer.array())
-  }
 }

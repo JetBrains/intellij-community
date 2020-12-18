@@ -7,35 +7,55 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.util.*
-import java.util.concurrent.Executors
+import java.util.zip.Deflater
 import java.util.zip.ZipEntry
-import kotlin.math.min
 
 // symlinks not supported but can be easily implemented - see CollectingVisitor.visitFile
 fun zip(targetFile: Path, dirs: Map<Path, String>, compress: Boolean = true, addDirEntries: Boolean = false, logger: System.Logger? = null) {
   // note - dirs contain duplicated directories (you cannot simply add directory entry on visit - uniqueness must be preserved)
   // anyway, directory entry are not added
-  val executorService = Executors.newWorkStealingPool(if (compress) min(Runtime.getRuntime().availableProcessors() - 1, 2) else 2)
-  val zipCreator = ParallelScatterZipCreator(executorService = executorService, compress = compress)
-  val archiver = ZipArchiver(method = if (compress) ZipEntry.DEFLATED else ZipEntry.STORED, zipCreator)
-  for ((dir, prefix) in dirs.entries) {
-    val normalizedDir = dir.toAbsolutePath().normalize()
-    archiver.setRootDir(normalizedDir, prefix)
-    compressDir(normalizedDir, archiver)
-  }
-  executorService.shutdown()
-
   Files.createDirectories(targetFile.parent)
-  ZipArchiveOutputStream(Files.newByteChannel(targetFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)))
-    .use { out ->
-      zipCreator.writeTo(out)
-      if (addDirEntries) {
-        addDirForResourceFiles(out)
+  val start = System.currentTimeMillis()
+  Files.newByteChannel(targetFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)).use {
+    val zipCreator = ZipFileWriter(it, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null)
+
+    val fileAdded: ((String) -> Unit)?
+    val dirNameSetToAdd: Set<String>
+    if (addDirEntries) {
+      dirNameSetToAdd = LinkedHashSet()
+      fileAdded = { name ->
+        if (!name.endsWith(".class") && !name.endsWith("/package.html") && name != "META-INF/MANIFEST.MF") {
+          var slashIndex = name.lastIndexOf('/')
+          if (slashIndex != -1) {
+            while (dirNameSetToAdd.add(name.substring(0, slashIndex))) {
+              slashIndex = name.lastIndexOf('/', slashIndex - 2)
+              if (slashIndex == -1) {
+                break
+              }
+            }
+          }
+        }
       }
     }
+    else {
+      fileAdded = null
+      dirNameSetToAdd = emptySet()
+    }
 
-  val stats = zipCreator.statisticsMessage
-  logger?.info("${targetFile.fileName} created in ${formatDuration(stats.compressionElapsed)} (merged in ${formatDuration(stats.mergingElapsed)})")
+    val archiver = ZipArchiver(method = if (compress) ZipEntry.DEFLATED else ZipEntry.STORED, zipCreator, fileAdded)
+    for ((dir, prefix) in dirs.entries) {
+      val normalizedDir = dir.toAbsolutePath().normalize()
+      archiver.setRootDir(normalizedDir, prefix)
+      compressDir(normalizedDir, archiver)
+    }
+
+    if (dirNameSetToAdd.isNotEmpty()) {
+      addDirForResourceFiles(zipCreator, dirNameSetToAdd)
+    }
+    zipCreator.finish(null)
+  }
+
+  logger?.info("${targetFile.fileName} created in ${formatDuration(System.currentTimeMillis() - start)}")
 }
 
 private fun formatDuration(value: Long): String {
@@ -44,35 +64,13 @@ private fun formatDuration(value: Long): String {
     .toLowerCase()
 }
 
-private fun addDirForResourceFiles(out: ZipArchiveOutputStream) {
-  val dirSetWithoutClassFiles = HashSet<String>()
-  @Suppress("DuplicatedCode")
-  for (item in out.entries) {
-    val name = item.entry.name
-    assert(!name.endsWith('/'))
-    if (name.endsWith(".class") || name.endsWith("/package.html") || name == "META-INF/MANIFEST.MF") {
-      continue
-    }
-
-    var slashIndex = name.lastIndexOf('/')
-    if (slashIndex != -1) {
-      while (dirSetWithoutClassFiles.add(name.substring(0, slashIndex))) {
-        slashIndex = name.lastIndexOf('/', slashIndex - 2)
-        if (slashIndex == -1) {
-          break
-        }
-      }
-    }
-  }
-
-  val dirs = ArrayList(dirSetWithoutClassFiles)
-  dirs.sort()
-  for (dir in dirs) {
-    out.addDirEntry(dir)
+private fun addDirForResourceFiles(out: ZipFileWriter, dirNameSetToAdd: Set<String>) {
+  for (dir in dirNameSetToAdd) {
+    out.addDirEntry("$dir/")
   }
 }
 
-private class ZipArchiver(private val method: Int, val zipCreator: ParallelScatterZipCreator) {
+private class ZipArchiver(private val method: Int, val zipCreator: ZipFileWriter, val fileAdded: ((String) -> Unit)?) {
   private var localPrefixLength = -1
   private var archivePrefix = ""
 
@@ -89,9 +87,8 @@ private class ZipArchiver(private val method: Int, val zipCreator: ParallelScatt
 
   fun addFile(file: Path) {
     val name = archivePrefix + file.toString().substring(localPrefixLength).replace('\\', '/')
-    val entry = ZipEntry(name)
-    entry.method = method
-    zipCreator.addEntry(entry, file)
+    fileAdded?.invoke(name)
+    zipCreator.writeEntry(name, method, file)
   }
 }
 

@@ -10,24 +10,19 @@ import java.util.zip.ZipEntry
 
 internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) : Closeable {
   private var finished = false
+  private var entryCount = 0
 
-  internal val entries = ArrayList<EntryMetaData>()
+  private val metadataBuffer = ByteBuffer.allocateDirect(5 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
+  // 128K should be enough for end of central directory record
+  private val buffer = ByteBuffer.allocateDirect(16_384).order(ByteOrder.LITTLE_ENDIAN)
 
-  // 128K should be enough (max size for central directory record = 46 + file name length)
-  private val buffer = ByteBuffer.allocate(131_072).order(ByteOrder.LITTLE_ENDIAN)
-
-  fun addDirEntry(name: String) {
+  fun addDirEntry(name: ByteArray) {
     if (finished) {
       throw IOException("Stream has already been finished")
     }
 
-    val entry = ZipEntry("$name/")
-    entry.method = ZipEntry.STORED
-    entry.size = 0
-    entry.compressedSize = 0
-
-    val nameBytes = entry.name.toByteArray()
-    entries.add(EntryMetaData(offset = channel.position(), entry = entry, name = nameBytes))
+    val offset = channel.position()
+    entryCount++
 
     buffer.clear()
     buffer.putInt(0x04034b50)
@@ -48,28 +43,32 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
     // Uncompressed size
     buffer.putInt(0)
     // File name length
-    buffer.putShort((nameBytes.size and 0xffff).toShort())
+    buffer.putShort((name.size and 0xffff).toShort())
     // Extra field length
     buffer.putShort(0)
-    buffer.put(nameBytes)
+    buffer.put(name)
 
     buffer.flip()
     writeBuffer(buffer)
+
+    writeCentralFileHeader(0, 0, ZipEntry.STORED, 0, metadataBuffer, name, offset)
   }
 
   @Suppress("DuplicatedCode")
-  fun addRawArchiveEntry(entry: ZipEntry, content: ByteBuffer, nameBytes: ByteArray) {
+  fun addRawEntry(content: ByteBuffer, nameBytes: ByteArray, size: Int, compressedSize: Int, method: Int, crc: Long) {
     if (finished) {
       throw IOException("Stream has already been finished")
     }
 
-    entries.add(EntryMetaData(offset = channel.position(), entry = entry, name = nameBytes))
-    assert(entry.method != -1)
-    if ((entry.size >= 0xFFFFFFFFL || entry.compressedSize >= 0xFFFFFFFFL)) {
+    val offset = channel.position()
+    entryCount++
+    assert(method != -1)
+    if ((size >= 0xFFFFFFFFL || compressedSize >= 0xFFFFFFFFL)) {
       throw UnsupportedOperationException("Entry is too big")
     }
 
     writeBuffer(content)
+    writeCentralFileHeader(size, compressedSize, method, crc, metadataBuffer, nameBytes, offset)
   }
 
   fun finish(comment: ByteBuffer?) {
@@ -78,23 +77,13 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
     }
 
     val centralDirectoryOffset = channel.position()
-
     // write central directory file header
-    buffer.clear()
-    var centralDirectoryLength = 0
-    for (entry in entries) {
-      createCentralFileHeader(entry, buffer)
-      if (buffer.remaining() < 4_096) {
-        centralDirectoryLength += buffer.position()
-        buffer.flip()
-        writeBuffer(buffer)
-        buffer.clear()
-      }
-    }
-
-    centralDirectoryLength += buffer.position()
+    metadataBuffer.flip()
+    val centralDirectoryLength = metadataBuffer.limit()
+    writeBuffer(metadataBuffer)
 
     // write end of central directory record (EOCD)
+    buffer.clear()
     buffer.putInt(0x06054b50)
     // write 0 to clear reused buffer content
     // Number of this disk
@@ -102,7 +91,7 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
     // Disk where central directory starts
     buffer.putShort(0)
     // Number of central directory records on this disk
-    val shortEntryCount = (entries.size.coerceAtMost(0xffff) and 0xffff).toShort()
+    val shortEntryCount = (entryCount.coerceAtMost(0xffff) and 0xffff).toShort()
     buffer.putShort(shortEntryCount)
     // Total number of central directory records
     buffer.putShort(shortEntryCount)
@@ -112,17 +101,16 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
     // Comment length
     if (comment == null) {
       buffer.putShort(0)
+      buffer.flip()
+      writeBuffer(buffer)
     }
     else {
       buffer.putShort((comment.remaining() and 0xffff).toShort())
-      // assume that comment is small and will fit into our own buffer
-      buffer.put(comment)
+      buffer.flip()
+      writeBuffer(buffer)
+      writeBuffer(comment)
     }
 
-    buffer.flip()
-    writeBuffer(buffer)
-
-    entries.clear()
     finished = true
   }
 
@@ -140,51 +128,46 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
       }
     }
   }
-
-  @Suppress("DuplicatedCode")
-  private fun createCentralFileHeader(item: EntryMetaData, buffer: ByteBuffer) {
-    val entry = item.entry
-
-    buffer.putInt(0x02014b50)
-    // write 0 to clear reused buffer content
-    // Version made by
-    buffer.putShort(0)
-    // Version needed to extract (minimum)
-    buffer.putShort(0)
-    // General purpose bit flag
-    buffer.putShort(0)
-    // Compression method
-    buffer.putShort(entry.method.toShort())
-
-    // File last modification time
-    buffer.putShort(0)
-    // File last modification date
-    buffer.putShort(0)
-
-    // CRC-32 of uncompressed data
-    buffer.putInt((entry.crc and 0xffffffffL).toInt())
-    // Compressed size
-    buffer.putInt(entry.compressedSize.toInt())
-    // Uncompressed size
-    buffer.putInt((entry.size and 0xffffffffL).toInt())
-
-    // File name length
-    buffer.putShort((item.name.size and 0xffff).toShort())
-    // Extra field length
-    buffer.putShort(0)
-    // File comment length
-    buffer.putShort(0)
-    // Disk number where file starts
-    buffer.putShort(0)
-    // Internal file attributes
-    buffer.putShort(0)
-    // External file attributes
-    buffer.putInt(0)
-    // Relative offset of local file header
-    buffer.putInt((item.offset and 0xffffffffL).toInt())
-    // File name
-    buffer.put(item.name)
-  }
 }
 
-internal class EntryMetaData(val offset: Long, val entry: ZipEntry, val name: ByteArray)
+private fun writeCentralFileHeader(size: Int, compressedSize: Int, method: Int, crc: Long, buffer: ByteBuffer, name: ByteArray, offset: Long) {
+  buffer.putInt(0x02014b50)
+  // write 0 to clear reused buffer content
+  // Version made by
+  buffer.putShort(0)
+  // Version needed to extract (minimum)
+  buffer.putShort(0)
+  // General purpose bit flag
+  buffer.putShort(0)
+  // Compression method
+  buffer.putShort(method.toShort())
+
+  // File last modification time
+  buffer.putShort(0)
+  // File last modification date
+  buffer.putShort(0)
+
+  // CRC-32 of uncompressed data
+  buffer.putInt((crc and 0xffffffffL).toInt())
+  // Compressed size
+  buffer.putInt(compressedSize)
+  // Uncompressed size
+  buffer.putInt(size)
+
+  // File name length
+  buffer.putShort((name.size and 0xffff).toShort())
+  // Extra field length
+  buffer.putShort(0)
+  // File comment length
+  buffer.putShort(0)
+  // Disk number where file starts
+  buffer.putShort(0)
+  // Internal file attributes
+  buffer.putShort(0)
+  // External file attributes
+  buffer.putInt(0)
+  // Relative offset of local file header
+  buffer.putInt((offset and 0xffffffffL).toInt())
+  // File name
+  buffer.put(name)
+}

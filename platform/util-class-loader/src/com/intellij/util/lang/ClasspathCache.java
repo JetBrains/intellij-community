@@ -4,6 +4,7 @@ package com.intellij.util.lang;
 import com.intellij.util.BloomFilterBase;
 import com.intellij.util.lang.fastutil.StrippedIntOpenHashSet;
 import com.intellij.util.lang.fastutil.StrippedLongOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class ClasspathCache {
   private static final double PROBABILITY = 0.005d;
 
@@ -25,7 +27,7 @@ public final class ClasspathCache {
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-  interface IndexRegistrar {
+  public interface IndexRegistrar {
     void registerPackageIndex(IntObjectHashMap classMap, IntObjectHashMap resourceMap, Loader loader);
   }
 
@@ -205,7 +207,7 @@ public final class ClasspathCache {
     return endIndex <= 0 ? 0 : Murmur3_32Hash.MURMUR3_32.hashString(resourcePath, 0, endIndex);
   }
 
-  private static void addResourceEntry(int hash, @NotNull IntObjectHashMap map, @NotNull Loader loader) {
+  public static void addResourceEntry(int hash, @NotNull IntObjectHashMap map, @NotNull Loader loader) {
     Object o = map.get(hash);
     if (o == null) {
       map.put(hash, loader);

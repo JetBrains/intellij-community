@@ -45,13 +45,14 @@ class ReorderJarsTest {
     Files.createDirectories(dir2)
     Files.write(dir2.resolve("resource2.txt"), random.nextBytes(random.nextInt(128)))
 
-    val archiveFile = fsRule.fs.getPath("/dir/archive.jar")
+    val archiveFile = fsRule.fs.getPath("/archive.jar")
     zip(archiveFile, mapOf(rootDir to ""), addDirEntries = true)
 
     doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent, TaskTest.logger)
     ZipFile(Files.newByteChannel(archiveFile)).use { zipFile ->
       assertThat(zipFile.entriesInPhysicalOrder.asSequence().map { it.name }.sorted().joinToString(separator = "\n")).isEqualTo("""
         META-INF/jb/${'$'}${'$'}size${'$'}${'$'}
+        __packageIndex__
         anotherDir/
         anotherDir/resource2.txt
         dir2/
@@ -103,7 +104,9 @@ class ReorderJarsTest {
   }
 
   private fun testNewJarResourceImpl(file: Path, data: ByteArray) {
-    val loader = ZipResourceFile(file).preload(file)
+    val resourceFile = ZipResourceFile(file)
+    resourceFile.buildClassPathCacheData()
+    val loader = resourceFile.preload(file)
     assertThat(loader).isNotNull()
     val bytes = loader!!.getBytes("org/jetbrains/annotations/Nullable.class")
     assertThat(bytes).isNotNull()

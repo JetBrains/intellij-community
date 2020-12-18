@@ -16,6 +16,7 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.file.Path;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -79,8 +80,38 @@ public final class ZipResourceFile implements ResourceFile {
   }
 
   @Override
-  public @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() {
+  public @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() throws IOException {
     // name hash is not added - doesn't make sense as fast lookup by name is supported by ImmutableZipFile
+    ImmutableZipEntry packageIndex = zipFile.getEntry("__packageIndex__");
+    if (packageIndex == null) {
+      return computePackageIndex();
+    }
+
+    ByteBuffer buffer = packageIndex.getByteBuffer(zipFile);
+    try {
+      buffer.order(ByteOrder.LITTLE_ENDIAN);
+      int[] classPackages = new int[buffer.getInt()];
+      int[] resourcePackages = new int[buffer.getInt()];
+      IntBuffer intBuffer = buffer.asIntBuffer();
+      intBuffer.get(classPackages);
+      intBuffer.get(resourcePackages);
+      return (classMap, resourceMap, loader) -> {
+        for (int classPackageHash : classPackages) {
+          ClasspathCache.addResourceEntry(classPackageHash, classMap, loader);
+        }
+
+        for (int resourcePackageHash : resourcePackages) {
+          ClasspathCache.addResourceEntry(resourcePackageHash, resourceMap, loader);
+        }
+      };
+    }
+    finally {
+      DirectByteBufferPool.DEFAULT_POOL.release(buffer);
+    }
+  }
+
+  @NotNull
+  private ClasspathCache.LoaderDataBuilder computePackageIndex() {
     ClasspathCache.LoaderDataBuilder builder = new ClasspathCache.LoaderDataBuilder(false);
     for (ImmutableZipEntry entry : zipFile.getRawNameSet()) {
       if (entry == null) {
