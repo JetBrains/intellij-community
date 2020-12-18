@@ -213,6 +213,11 @@
       }
     },
 
+    "OptionButton" : {
+      "default.separatorColor": "#000000",
+      "separatorColor": "#FFFFFF"
+    },
+
     "ParameterInfo": {
       "background": "#281A33",
       "foreground": "#CCCCCC",

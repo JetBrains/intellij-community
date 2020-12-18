@@ -660,6 +660,14 @@
       "deprecated": true
     },
     {
+      "key": "OptionButton.default.separatorColor",
+      "description": "JBOptionButton separator color in default state."
+    },
+    {
+      "key": "OptionButton.separatorColor",
+      "description": "JBOptionButton separator color."
+    },
+    {
       "key": "OptionPane.background"
     },
     {
