@@ -34,7 +34,7 @@ public interface ClasspathStorageProvider {
 
   void detach(@NotNull Module module);
 
-  default void attach(@NotNull Module module) {
+  default void attach(@NotNull ModuleRootModel model) {
   }
 
   default void moduleRenamed(@NotNull Module module, @NotNull String oldName, @NotNull String newName) {
