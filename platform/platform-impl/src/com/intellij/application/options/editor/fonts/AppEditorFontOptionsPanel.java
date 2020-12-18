@@ -267,7 +267,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   @Override
   protected AbstractFontCombo<?> createPrimaryFontCombo() {
     if (isAdvancedFontFamiliesUI()) {
-      return new FontFamilyCombo(false);
+      return new FontFamilyCombo(true);
     }
     else {
       return super.createPrimaryFontCombo();
@@ -277,7 +277,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   @Override
   protected AbstractFontCombo<?> createSecondaryFontCombo() {
     if (isAdvancedFontFamiliesUI()) {
-      return new FontFamilyCombo(true);
+      return new FontFamilyCombo(false);
     }
     else {
       return super.createSecondaryFontCombo();
