@@ -39,6 +39,8 @@ class RegionIcon(
 
   override fun getIconHeight() = ceil(scaleVal(height.toDouble())).toInt()
 
+  override fun toString() = painter.toString()
+
   override fun hashCode(): Int = Objects.hash(width, height, painter)
 
   override fun equals(other: Any?): Boolean {
