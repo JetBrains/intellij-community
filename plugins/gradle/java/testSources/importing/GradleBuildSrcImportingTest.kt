@@ -184,6 +184,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
       includeBuild('build1')
       includeBuild('build2')
       """.trimIndent())
+    createProjectSubFile("buildSrc/settings.gradle")
 
     createProjectSubFile("build1/settings.gradle", "include('app')")
 
@@ -192,6 +193,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
 
     importProject("")
     assertModules("project",
+                  "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test",
                   "build1", "build1.app",
                   "build2", "build2.app",
                   "build2.buildSrc", "build2.buildSrc.main", "build2.buildSrc.test")
