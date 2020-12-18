@@ -104,7 +104,7 @@ object KeymapUtil {
     if (shortcut.contains('→')) {
       val split = shortcut.split('→')
       if (split.size != 2) return shortcut
-      return decryptMacShortcut(split[0]) + '→' + split[1]
+      return decryptMacShortcut(split[0].trim()) + " →" + split[1]
     }
     val buffer = StringBuffer()
     var shouldInsertPlus = false
@@ -123,6 +123,7 @@ object KeymapUtil {
         }
         else {
           buffer.append(c)
+          shouldInsertPlus = false
         }
       }
     }
