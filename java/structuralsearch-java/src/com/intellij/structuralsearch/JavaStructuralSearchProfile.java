@@ -532,6 +532,19 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         }
       }
     }
+    else if (parent instanceof PsiReferenceParameterList && grandParent instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement greatGrandParent = grandParent.getParent();
+      if (greatGrandParent instanceof PsiTypeElement) {
+        final PsiElement greatGreatGrandParent = greatGrandParent.getParent();
+        if (greatGreatGrandParent instanceof PsiDeclarationStatement &&
+            PsiTreeUtil.skipWhitespacesAndCommentsBackward(greatGreatGrandParent) == null &&
+            PsiTreeUtil.skipWhitespacesAndCommentsForward(greatGreatGrandParent) == null &&
+            JavaPsiBundle.message("expected.gt.or.comma").equals(description)) {
+          // probably less-than expression, not unfinished generic variable declaration e.g. List<String
+          return false;
+        }
+      }
+    }
     return true;
   }
 
@@ -554,11 +567,11 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PatternContext patternContext = matchOptions.getPatternContext();
     final PsiElement[] statements =
       createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, dialect, patternContext.getId(), project, false);
-    final boolean searchIsExpression = statements.length == 1 && statements[0].getLastChild() instanceof PsiErrorElement;
+    final boolean searchIsExpression = isExpressionTemplate(statements);
 
     final PsiElement[] statements2 =
       createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, dialect, patternContext.getId(), project, false);
-    final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
+    final boolean replaceIsExpression = isExpressionTemplate(statements2);
 
     final ValidatingVisitor visitor = new ValidatingVisitor();
     for (PsiElement statement : statements2) {
@@ -582,6 +595,14 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         SSRBundle.message("search.template.is.not.expression.error.message")
       );
     }
+  }
+
+  private static boolean isExpressionTemplate(PsiElement[] elements) {
+    if (elements.length != 1) {
+      return false;
+    }
+    final PsiElement element = elements[0];
+    return element instanceof PsiExpression || element.getLastChild() instanceof PsiErrorElement;
   }
 
   class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {

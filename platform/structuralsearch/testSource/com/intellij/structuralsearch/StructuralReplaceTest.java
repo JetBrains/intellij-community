@@ -454,6 +454,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult1 = "new Integer(get(\"smth\"))";
 
     assertEquals("Replacement of top-level expression only", expectedResult1, replace(s4, s5, s6));
+
+    String in = "class X {" +
+                "  boolean x(int foo, int bar) {" +
+                "    return foo - 1 < bar - 1;" +
+                "  }" +
+                "}";
+    String what = "'_intA:[exprtype( *int|Integer )] - '_const < '_intB:[exprtype( *int|Integer )] - '_const";
+    String by = "$intA$ < $intB$";
+    String expected = "class X {" +
+                      "  boolean x(int foo, int bar) {" +
+                      "    return foo < bar;" +
+                      "  }" +
+                      "}";
+
+    assertEquals("No errors in pattern", expected, replace(in, what, by));
   }
 
   public void testReplaceParameter() {
