@@ -102,7 +102,9 @@ public final class PerformanceWatcher implements Disposable {
     try {
       File appInfoFile = new File(systemDir, IdeaFreezeReporter.APPINFO_FILE_NAME);
       File pidFile = new File(systemDir, PID_FILE_NAME);
-      if (appInfoFile.isFile() && pidFile.isFile()) {
+      // TODO: check jre in app info, not the current
+      // Only report if on JetBrains jre
+      if (SystemInfo.isJetBrainsJvm && appInfoFile.isFile() && pidFile.isFile()) {
         String pid = FileUtil.loadFile(pidFile);
         File[] crashFiles = new File(SystemProperties.getUserHome())
           .listFiles(file -> file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile());
