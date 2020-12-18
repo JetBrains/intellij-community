@@ -1104,10 +1104,17 @@ final class DistributionJARsBuilder {
               !toPublish ? "" :
               "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\" $eapAttribute \$2 />")
       buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parent.parent.fileName} <product-descriptor/>")
+      
+      //hack for publishing: we plugin is compatible only with WebStorm
+      if (toPublish && text.contains("code=\"PDB\"") && 
+          buildContext.getApplicationInfo().productName == "WebStorm") {
+        text = text.replace("Database Tools and SQL", "Database Tools and SQL for WebStorm")
+        text = text.replace("IntelliJ-based IDEs", "WebStorm")
+      }
     }
 
     def anchor = text.contains("</id>") ? "</id>" : "</name>"
-    if (!text.contains("<version>")) {
+    if (!text.contains("<version>")) { 
       text = text.replace(anchor, "${anchor}\n  <version>${pluginVersion}</version>")
     }
     if (!text.contains("<idea-version since-build")) {
