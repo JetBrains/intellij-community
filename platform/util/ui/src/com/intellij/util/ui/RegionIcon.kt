@@ -10,10 +10,10 @@ import kotlin.math.ceil
 class RegionIcon(
   private val width: Int,
   private val height: Int,
-  private val painter: RegionPainter<Component>
+  private val painter: RegionPainter<Component?>
 ) : JBCachingScalableIcon<RegionIcon>() {
 
-  constructor(size: Int, painter: RegionPainter<Component>) : this(size, size, painter)
+  constructor(size: Int, painter: RegionPainter<Component?>) : this(size, size, painter)
 
   override fun copy(): RegionIcon {
     val icon = RegionIcon(width, height, painter)
