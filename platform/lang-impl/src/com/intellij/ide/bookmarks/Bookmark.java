@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -44,11 +45,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IconWithToolTip;
+import com.intellij.ui.IconWrapperWithToolTip;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.RetrievableIcon;
-import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBCachingScalableIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,12 +63,13 @@ import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 
 public final class Bookmark implements Navigatable, Comparable<Bookmark> {
-  static final Icon DEFAULT_ICON = new MyCheckedIcon();
+  static final Icon DEFAULT_ICON = new IconWrapperWithToolTip(PlatformIcons.CHECK_ICON, IdeBundle.messagePointer("tooltip.bookmarked"));
 
   private OpenFileDescriptor myTarget;
   private Reference<RangeHighlighterEx> myHighlighterRef;
@@ -390,8 +393,8 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return result.toString();
   }
 
-  static final class MnemonicIcon extends JBCachingScalableIcon<MnemonicIcon> {
-    private static final MnemonicIcon[] cache = new MnemonicIcon[36];//0..9  + A..Z
+  static final class MnemonicIcon extends JBCachingScalableIcon<MnemonicIcon> implements IconWithToolTip {
+    private static final Icon[] cache = new Icon[36];//0..9  + A..Z
     private final char myMnemonic;
 
     @NotNull
@@ -401,7 +404,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
 
     @NotNull
-    static MnemonicIcon getIcon(char mnemonic) {
+    static Icon getIcon(char mnemonic) {
       int index = mnemonic - 48;
       if (index > 9)
         index -= 7;
@@ -410,6 +413,21 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       if (cache[index] == null)
         cache[index] = new MnemonicIcon(mnemonic);
       return cache[index];
+    }
+
+    private static @NotNull Color getBackground(Component component) {
+      Function<ColorKey, Color> function = UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY);
+      Color color = function == null ? JBUI.CurrentTheme.Tree.BACKGROUND : function.apply(EditorColors.GUTTER_BACKGROUND);
+      //noinspection UseJBColor
+      return !ColorUtil.isDark(color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor())
+             ? new Color(0xffffcc)
+             : new Color(0x675133);
+    }
+
+    private static @NotNull Color getForeground(Component component) {
+      return null != UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY)
+             ? EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground()
+             : JBUI.CurrentTheme.Label.foreground();
     }
 
     private MnemonicIcon(char mnemonic) {
@@ -421,16 +439,13 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       int width = getIconWidth();
       int height = getIconHeight();
 
-      g.setColor(new JBColor(() -> {
-        //noinspection UseJBColor
-        return !darkBackground() ? new Color(0xffffcc) : new Color(0x675133);
-      }));
+      g.setColor(getBackground(c));
       g.fillRect(x, y, width, height);
 
       g.setColor(JBColor.GRAY);
       g.drawRect(x, y, width, height);
 
-      g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground());
+      g.setColor(getForeground(c));
       setupAntialiasing(g);
 
       float startingFontSize = 40f;  // large font for smaller rounding error
@@ -460,6 +475,11 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
 
     @Override
+    public String getToolTip(boolean composite) {
+      return IdeBundle.message("tooltip.bookmarked");
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -473,52 +493,6 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     public int hashCode() {
       return myMnemonic;
     }
-  }
-
-  private static class MyCheckedIcon extends JBCachingScalableIcon<MyCheckedIcon> implements RetrievableIcon, IconWithToolTip {
-    @NotNull
-    @Override
-    public Icon retrieveIcon() {
-      return IconUtil.scale(PlatformIcons.CHECK_ICON, null, getScale());
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      IconUtil.scale(PlatformIcons.CHECK_ICON, c, getScale()).paintIcon(c, g, x, y);
-    }
-
-    @Override
-    public int getIconWidth() {
-      return scale(PlatformIcons.CHECK_ICON.getIconWidth());
-    }
-
-    private int scale(int width) {
-      return (int)Math.ceil(scaleVal(width, OBJ_SCALE));
-    }
-
-    @Override
-    public int getIconHeight() {
-      return scale(PlatformIcons.CHECK_ICON.getIconHeight());
-    }
-
-    @NotNull
-    @Override
-    public MyCheckedIcon copy() {
-      return new MyCheckedIcon();
-    }
-
-    @Override
-    public String getToolTip(boolean composite) {
-      return IdeBundle.message("tooltip.bookmarked");
-    }
-  }
-
-  private static boolean darkBackground() {
-    Color gutterBackground = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
-    if (gutterBackground == null) {
-      gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
-    }
-    return ColorUtil.isDark(gutterBackground);
   }
 
   private static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
