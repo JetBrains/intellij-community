@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code.cfg;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -31,9 +31,16 @@ public class ExceptionRangeCFG {
     StringBuilder buf = new StringBuilder();
 
     buf.append("exceptionType:");
-    for (String exception_type : exceptionTypes) {
-      buf.append(" ").append(exception_type);
+
+    if (exceptionTypes == null) {
+      buf.append(" null");
     }
+    else {
+      for (String exception_type : exceptionTypes) {
+        buf.append(" ").append(exception_type);
+      }
+    }
+
     buf.append(new_line_separator);
 
     buf.append("handler: ").append(handler.id).append(new_line_separator);
