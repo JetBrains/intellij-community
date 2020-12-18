@@ -314,6 +314,12 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
                        "class X {static void test(int x) {<caret>assertFalse(x > 0);}" +
                        "static void assertFalse(boolean flag) {if(flag) throw new AssertionError();}}");
   }
+  
+  public void testAssertTrueUnboxing() {
+    doTestIntermediate("Find why 'x' could be false",
+                       "class X {static void test(Boolean x) {<caret>assertTrue(x);}" +
+                       "static void assertTrue(boolean flag) {if(!flag) throw new AssertionError();}}");
+  }
 
   public void testOptionalGet() {
     // Not supported
