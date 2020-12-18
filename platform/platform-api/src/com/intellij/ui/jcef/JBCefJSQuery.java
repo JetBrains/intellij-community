@@ -29,7 +29,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
 
   @NotNull private final Map<Function<? super String, ? extends Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
 
-  private JBCefJSQuery(@NotNull JBCefBrowser browser, @NotNull JBCefJSQuery.JSQueryFunc func) {
+  private JBCefJSQuery(@NotNull JBCefBrowserBase browser, @NotNull JBCefJSQuery.JSQueryFunc func) {
     myFunc = func;
     myCefClient = browser.getJBCefClient().getCefClient();
     Disposer.register(browser.getJBCefClient(), this);
@@ -49,7 +49,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
    * @see JBCefClient#JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP
    * @param browser the associated cef browser
    */
-  public static JBCefJSQuery create(@NotNull JBCefBrowser browser) {
+  public static JBCefJSQuery create(@NotNull JBCefBrowserBase browser) {
     Function<Void, JBCefJSQuery> create = (v) -> {
       return new JBCefJSQuery(browser, new JSQueryFunc(browser.getJBCefClient()));
     };
