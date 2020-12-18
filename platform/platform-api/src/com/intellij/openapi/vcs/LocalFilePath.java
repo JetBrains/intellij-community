@@ -22,6 +22,7 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class LocalFilePath implements FilePath {
   @NotNull
@@ -57,7 +58,9 @@ public class LocalFilePath implements FilePath {
     if (!CaseInsensitiveStringHashingStrategy.INSTANCE.equals(myPath, path.myPath)) return false;
     // make sure to not query (expensive) getVirtualFile() until it's absolutely necessary, e.g. we encountered two file paths differ by case only
     VirtualFile file = getVirtualFile();
-    return file == null ? !SystemInfo.isFileSystemCaseSensitive : !file.isCaseSensitive();
+    VirtualFile oFile = path.getVirtualFile();
+    if (file == null && oFile == null) return !SystemInfo.isFileSystemCaseSensitive;
+    return Objects.equals(file, oFile);
   }
 
   @Override
