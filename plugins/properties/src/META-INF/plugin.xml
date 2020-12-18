@@ -56,7 +56,6 @@
 
     <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighter"/>
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
-    <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromProjectViewRenameHandler"/>
     <automaticRenamerFactory implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFactory"/>
     <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>
     <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
