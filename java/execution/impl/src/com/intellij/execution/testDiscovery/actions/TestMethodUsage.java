@@ -77,12 +77,16 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
       @NotNull
       @Override
       public @NlsSafe String getPlainText() {
-        return StringUtil.notNullize(Objects.requireNonNull(getElement()).getName());
+        PsiMember element = getElement();
+        if (element == null) return "";
+        return StringUtil.notNullize(element.getName());
       }
 
       @Override
       public Icon getIcon() {
-        return Objects.requireNonNull(getElement()).getIcon(0);
+        PsiMember element = getElement();
+        if (element == null) return null;
+        return element.getIcon(0);
       }
 
       @Override
@@ -94,7 +98,7 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
   @Override
   public boolean isValid() {
-    return getPointer().getElement() != null;
+    return getElement() != null;
   }
 
   @Override
