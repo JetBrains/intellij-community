@@ -147,6 +147,7 @@ public class InspectionTree extends Tree {
   @Nullable
   public InspectionToolWrapper getSelectedToolWrapper(boolean allowDummy) {
     InspectionProfileImpl profile = myView.getCurrentProfile();
+    if (profile == null) return null;
     String singleToolName = profile.getSingleTool();
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) {
