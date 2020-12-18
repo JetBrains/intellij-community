@@ -45,6 +45,7 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
     ): DebugProcessImpl.ResumeCommand? {
         if (suspendContext == null || suspendContext.isResumed) return null
         val sourcePosition = suspendContext.debugProcess.debuggerContext.sourcePosition ?: return null
+        if (sourcePosition.file !is KtFile) return null
         return getStepOverCommand(suspendContext, ignoreBreakpoints, sourcePosition)
     }
 
@@ -64,8 +65,8 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
 
     override fun getStepOutCommand(suspendContext: SuspendContextImpl?, stepSize: Int): DebugProcessImpl.ResumeCommand? {
         if (suspendContext == null || suspendContext.isResumed) return null
-
         val sourcePosition = suspendContext.debugProcess.debuggerContext.sourcePosition ?: return null
+        if (sourcePosition.file !is KtFile) return null
         return getStepOutCommand(suspendContext, sourcePosition)
     }
 
