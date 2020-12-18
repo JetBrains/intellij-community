@@ -30,8 +30,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 
-public class IntroduceVariable extends ActionOnFile {
-  public IntroduceVariable(@NotNull PsiFile file) {
+public class IntroduceVariableActionOnFile extends ActionOnFile {
+  public IntroduceVariableActionOnFile(@NotNull PsiFile file) {
     super(file);
   }
 
