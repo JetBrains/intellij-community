@@ -78,6 +78,9 @@ enum class ProjectOpenAction {
 
     GRADLE_PROJECT {
         override fun openProject(projectPath: String, projectName: String, jdk: Sdk): Project {
+            check(System.getProperty("org.gradle.native") == "false") {
+                "Please specify -Dorg.gradle.native=false due to known Gradle native issue"
+            }
             val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectPath)!!
             assertTrue(
                 !project.isDisposed,

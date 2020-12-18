@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.close
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFileInEditor
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFixture
+import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
 
 abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
@@ -169,7 +170,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         openAction: ProjectOpenAction,
         fast: Boolean = false
     ): Project {
-        val projectPath = File(path).absolutePath
+        val projectPath = (if (File(path).exists()) File(path) else KotlinRoot.REPO.resolve(path)).absolutePath
 
         assertTrue("path $projectPath does not exist, check README.md", File(projectPath).exists())
 
