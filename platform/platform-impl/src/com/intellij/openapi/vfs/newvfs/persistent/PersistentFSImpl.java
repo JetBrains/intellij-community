@@ -290,7 +290,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public int getFilesystemModificationCount() {
-    return FSRecords.getModCount();
+    return FSRecords.getPersistentModCount();
   }
 
   // return nameId>0 if write successful, -1 if not

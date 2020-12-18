@@ -70,6 +70,7 @@ public class PersistentFSRecordsStorage {
   }
 
   void setNameId(int id, int nameId) {
+    PersistentFSConnection.ensureIdIsValid(nameId);
     putRecordInt(id, NAME_OFFSET, nameId);
   }
 

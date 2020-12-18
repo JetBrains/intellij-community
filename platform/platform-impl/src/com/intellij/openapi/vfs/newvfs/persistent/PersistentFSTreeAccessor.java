@@ -65,6 +65,8 @@ class PersistentFSTreeAccessor {
 
   @NotNull
   ListResult doLoadChildren(int parentId, @NotNull PersistentFSConnection connection) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(parentId);
+
     try (DataInputStream input = myAttributeAccessor.readAttribute(parentId, ourChildrenAttr, connection)) {
       int count = input == null ? 0 : DataInputOutputUtil.readINT(input);
       List<ChildInfo> result = count == 0 ? Collections.emptyList() : new ArrayList<>(count);

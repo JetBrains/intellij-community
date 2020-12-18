@@ -85,16 +85,18 @@ public final class FSRecords {
     w = lock.writeLock();
   }
 
-  // return nameId>0
-  static int writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
+  /**
+   * @return nameId > 0
+   */
+  static int writeAttributesToRecord(int fileId, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
     return writeAndHandleErrors(() -> {
-      int nameId = setName(id, name);
+      int nameId = setName(fileId, name);
 
-      setTimestamp(id, attributes.lastModified);
-      setLength(id, attributes.isDirectory() ? -1L : attributes.length);
+      setTimestamp(fileId, attributes.lastModified);
+      setLength(fileId, attributes.isDirectory() ? -1L : attributes.length);
+      setFlags(fileId, PersistentFSImpl.fileAttributesToFlags(attributes));
+      setParent(fileId, parentId);
 
-      setFlags(id, PersistentFSImpl.fileAttributesToFlags(attributes));
-      setParent(id, parentId);
       return nameId;
     });
   }
@@ -105,10 +107,13 @@ public final class FSRecords {
   }
 
   @NotNull
-  public static String diagnosticsForAlreadyCreatedFile(int id, int nameId, @NotNull Object existingData) {
+  public static String diagnosticsForAlreadyCreatedFile(int fileId, int nameId, @NotNull Object existingData) {
     invalidateCaches();
-    int parentId = getParent(id);
-    String msg = "File already created: id="+id + "; nameId="+nameId + "("+getNameByNameId(nameId)+"); parentId=" + parentId+ "; existingData=" + existingData;
+    int parentId = getParent(fileId);
+    String msg = "File already created: fileId=" + fileId +
+                 "; nameId=" + nameId + "(" + getNameByNameId(nameId) + ")" +
+                 "; parentId=" + parentId +
+                 "; existingData=" + existingData;
     if (parentId > 0) {
       msg += "; parent.name=" + getName(parentId);
       msg += "; parent.children=" + list(parentId);
@@ -163,7 +168,7 @@ public final class FSRecords {
       markAsDeletedRecursively(subRecord);
     }
 
-    writeAndHandleErrors(() -> ourRecordAccessor.addToFreeRecordsList(id, ourConnection));
+    ourRecordAccessor.addToFreeRecordsList(id, ourConnection);
   }
 
   @TestOnly
@@ -190,22 +195,22 @@ public final class FSRecords {
     return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, ourConnection, () -> createRecord()));
   }
 
-  static void deleteRootRecord(int id) {
-    writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(id, ourConnection));
+  static void deleteRootRecord(int fileId) {
+    writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId, ourConnection));
   }
 
-  static int @NotNull [] listIds(int id) {
-    return readAndHandleErrors(() -> ourTreeAccessor.listIds(id, ourConnection));
+  static int @NotNull [] listIds(int fileId) {
+    return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId, ourConnection));
   }
 
-  static boolean mayHaveChildren(int id) {
-    return readAndHandleErrors(() -> ourTreeAccessor.mayHaveChildren(id, ourConnection));
+  static boolean mayHaveChildren(int fileId) {
+    return readAndHandleErrors(() -> ourTreeAccessor.mayHaveChildren(fileId, ourConnection));
   }
 
   // returns child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
   @NotNull
   static ListResult list(int parentId) {
-    return readAndHandleErrors(() -> doLoadChildren(parentId));
+    return readAndHandleErrors(() -> ourTreeAccessor.doLoadChildren(parentId, ourConnection));
   }
 
   @NotNull
@@ -213,14 +218,7 @@ public final class FSRecords {
     return ContainerUtil.map(list(parentId).children, c -> c.getName());
   }
 
-  @NotNull
-  private static ListResult doLoadChildren(int parentId) throws IOException {
-    checkFileIsValid(parentId);
-    return ourTreeAccessor.doLoadChildren(parentId, ourConnection);
-  }
-
   static boolean wereChildrenAccessed(int id) {
-    checkFileIsValid(id);
     return readAndHandleErrors(() -> ourTreeAccessor.wereChildrenAccessed(id, ourConnection));
   }
 
@@ -289,12 +287,12 @@ public final class FSRecords {
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
 
+    w.lock();
     try {
-      w.lock();
       ListResult toSave;
       // optimization: if the children were never changed after list(), do not check for duplicates again
       if (result.childrenWereChangedSinceLastList()) {
-        children = doLoadChildren(parentId);
+        children = list(parentId);
         toSave = childrenConvertor.apply(children);
       }
       else {
@@ -373,13 +371,12 @@ public final class FSRecords {
     return ourConnection.getLocalModificationCount(); // This is volatile, only modified under Application.runWriteAction() lock.
   }
 
-  static int getModCount() {
-    return readAndHandleErrors(ourConnection::getGlobalModCount);
+  static int getPersistentModCount() {
+    return readAndHandleErrors(ourConnection::getPersistentModCount);
   }
 
   private static void incModCount(int id) {
-    int count = ourConnection.incGlobalModCount();
-    ourConnection.getRecords().setModCount(id, count);
+    ourConnection.incModCount(id);
   }
 
   public static int getParent(int id) {
@@ -426,6 +423,7 @@ public final class FSRecords {
         return null;
       }
 
+      @Nullable
       private VirtualFileSystemEntry findDescendantByIdPath() {
         VirtualFileSystemEntry parent = foundParent;
         if (path != null) {
@@ -437,6 +435,7 @@ public final class FSRecords {
         return findChild(parent, id);
       }
 
+      @Nullable
       private VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent, int childId) {
         if (!(parent instanceof VirtualDirectoryImpl)) {
           return null;
@@ -507,13 +506,14 @@ public final class FSRecords {
     return nameId == 0 ? "" : ourConnection.getNames().valueOf(nameId);
   }
 
-  // return nameId>0
-  static int setName(int id, @NotNull String name) {
+  /**
+   * @return nameId
+   */
+  static int setName(int fileId, @NotNull String name) {
     return writeAndHandleErrors(() -> {
-      incModCount(id);
+      incModCount(fileId);
       int nameId = ourConnection.getNames().enumerate(name);
-      assert nameId > 0 : nameId;
-      ourConnection.getRecords().setNameId(id, nameId);
+      ourConnection.getRecords().setNameId(fileId, nameId);
       return nameId;
     });
   }
@@ -558,7 +558,6 @@ public final class FSRecords {
   @Nullable
   static DataInputStream readContent(int fileId) {
     ThrowableComputable<DataInputStream, IOException> computable = readAndHandleErrors(() -> {
-      checkFileIsValid(fileId);
       return ourContentAccessor.readContent(fileId, ourConnection);
     });
     if (computable == null) return null;
@@ -608,13 +607,8 @@ public final class FSRecords {
   // must be called under r or w lock
   @Nullable
   private static DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
-    checkFileIsValid(fileId);
 
     return ourAttributeAccessor.readAttribute(fileId, attribute, ourConnection);
-  }
-
-  private static void checkFileIsValid(int fileId) {
-    assert fileId > 0 : fileId;
   }
 
   static int acquireFileContent(int fileId) {
@@ -636,7 +630,6 @@ public final class FSRecords {
 
   @NotNull
   static DataOutputStream writeContent(int fileId, boolean readOnly) {
-    checkFileIsValid(fileId);
     return new DataOutputStream(ourContentAccessor.new ContentOutputStream(fileId, readOnly, ourConnection)) {
       @Override
       public void close() {
@@ -651,7 +644,6 @@ public final class FSRecords {
   }
 
   static void writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean readOnly) {
-    checkFileIsValid(fileId);
     writeAndHandleErrors(() -> {
       if (ourContentAccessor.writeContent(fileId, bytes, readOnly, ourConnection)) {
         incModCount(fileId);

@@ -31,6 +31,7 @@ public class PersistentFSContentAccessor {
 
   @Nullable
   ThrowableComputable<DataInputStream, IOException> readContent(int fileId, @NotNull PersistentFSConnection connection) {
+    PersistentFSConnection.ensureIdIsValid(fileId);
     int page = connection.getRecords().getContentRecordId(fileId);
     if (page == 0) return null;
     return () -> {
@@ -60,6 +61,8 @@ public class PersistentFSContentAccessor {
   }
 
   boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean fixedSize, @NotNull PersistentFSConnection connection) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+
     boolean modified = false;
     RefCountingStorage contentStorage = connection.getContents();
 
@@ -206,6 +209,7 @@ public class PersistentFSContentAccessor {
 
     ContentOutputStream(int fileId, boolean readOnly, @NotNull PersistentFSConnection connection) {
       super(new BufferExposingByteArrayOutputStream());
+      PersistentFSConnection.ensureIdIsValid(fileId);
       myFileId = fileId;
       myFixedSize = readOnly;
       myConnection = connection;

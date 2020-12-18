@@ -33,6 +33,8 @@ class PersistentFSAttributeAccessor {
   DataInputStream readAttribute(int fileId,
                                 @NotNull FileAttribute attribute,
                                 @NotNull PersistentFSConnection connection) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+
     int recordId = connection.getRecords().getAttributeRecordId(fileId);
     if (recordId == 0) return null;
     int encodedAttrId = connection.getAttributeId(attribute.getId());
@@ -83,6 +85,8 @@ class PersistentFSAttributeAccessor {
                                 @NotNull FileAttribute attr,
                                 boolean toWrite,
                                 @NotNull PersistentFSConnection connection) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+
     int recordId = connection.getRecords().getAttributeRecordId(fileId);
     int encodedAttrId = connection.getAttributeId(attr.getId());
     boolean directoryRecord = false;
