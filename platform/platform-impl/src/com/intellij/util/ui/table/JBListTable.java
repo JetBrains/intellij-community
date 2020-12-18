@@ -2,7 +2,6 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -112,7 +111,7 @@ public abstract class JBListTable {
       }
     };
 
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    Font font = EditorFontType.PLAIN.getGlobalFont();
     font = new Font(font.getFontName(), font.getStyle(), JBUIScale.scaleFontSize((float)12));
     field.setFont(font);
     field.addSettingsProvider(EditorSettingsProvider.NO_WHITESPACE);

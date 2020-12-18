@@ -119,7 +119,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
 
   @NotNull
   public static Font getBookmarkFont() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    return EditorFontType.PLAIN.getGlobalFont();
   }
 
   @Override

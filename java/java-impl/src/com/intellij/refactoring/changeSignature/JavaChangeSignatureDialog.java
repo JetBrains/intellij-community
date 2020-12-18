@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -460,7 +459,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   private int getColumnWidth(int index) {
     int letters = getTypesMaxLength() + (index == 0 ? 1 : getNamesMaxLength() + 2);
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    Font font = EditorFontType.PLAIN.getGlobalFont();
     font = new Font(font.getFontName(), font.getStyle(), 12);
     return  letters * Toolkit.getDefaultToolkit().getFontMetrics(font).stringWidth("W");
   }
