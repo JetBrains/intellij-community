@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -45,6 +46,7 @@ internal class SpaceDiffEditorProvider : FileEditorProvider, DumbAware {
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor =
     SpaceDiffFileEditor(project, file as SpaceDiffFile).also { editor ->
+      editor.putUserData(EditorWindow.HIDE_TABS, true)
       DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
     }
 
