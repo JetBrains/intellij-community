@@ -27,6 +27,6 @@ public class StringBufferReplaceableByStringBuilderInspectionTest extends LightJ
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
+    return JAVA_14;
   }
 }

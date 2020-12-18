@@ -256,11 +256,11 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       if (expression == null) {
         return false;
       }
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiExpressionStatement) {
+      if (ExpressionUtils.isVoidContext(expression)) {
         return true;
       }
-      else if (parent instanceof PsiReferenceExpression) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiReferenceExpression) {
         final PsiElement grandParent = parent.getParent();
         if (grandParent instanceof PsiMethodCallExpression) {
           final String methodName = ((PsiReferenceExpression)parent).getReferenceName();

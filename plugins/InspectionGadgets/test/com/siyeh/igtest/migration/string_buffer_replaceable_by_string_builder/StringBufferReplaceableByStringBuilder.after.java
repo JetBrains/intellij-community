@@ -95,6 +95,11 @@ public class StringBufferReplaceableByStringBuilder {
     m.appendTail(sb).append("end");
     return m.appendTail(sb).toString();
   }
+
+  void x(Matcher matcher) {
+    StringBuffer sb2 = new StringBuffer();
+    StringBuffer sb1 = switch(0) {default -> matcher.appendTail(sb2);};
+  }
 }
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE, ElementType.TYPE, ElementType.PACKAGE})
