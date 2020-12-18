@@ -170,44 +170,48 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     final Ref<Boolean> result = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
-      final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
       boolean started = false;
-      if (variable != null) {
-        int caretOffset = getCaretOffset();
-        myEditor.getCaretModel().moveToOffset(caretOffset);
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-
-        final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>();
-        nameSuggestions.add(variable.getName());
-        nameSuggestions.addAll(Arrays.asList(names));
-        initOccurrencesMarkers();
-        setElementToRename(variable);
-        updateTitle(getVariable());
-        started = super.performInplaceRefactoring(nameSuggestions);
-        if (started) {
-          myDocumentAdapter = new DocumentListener() {
-            @Override
-            public void documentChanged(@NotNull DocumentEvent e) {
-              if (myPreview == null) return;
-              final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-              if (templateState != null) {
-                final TextResult value = templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME);
-                if (value != null) {
-                  updateTitle(getVariable(), value.getText());
+      try {
+        final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
+        if (variable != null) {
+          int caretOffset = getCaretOffset();
+          myEditor.getCaretModel().moveToOffset(caretOffset);
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+  
+          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>();
+          nameSuggestions.add(variable.getName());
+          nameSuggestions.addAll(Arrays.asList(names));
+          initOccurrencesMarkers();
+          setElementToRename(variable);
+          updateTitle(getVariable());
+          started = super.performInplaceRefactoring(nameSuggestions);
+          if (started) {
+            myDocumentAdapter = new DocumentListener() {
+              @Override
+              public void documentChanged(@NotNull DocumentEvent e) {
+                if (myPreview == null) return;
+                final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+                if (templateState != null) {
+                  final TextResult value = templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME);
+                  if (value != null) {
+                    updateTitle(getVariable(), value.getText());
+                  }
                 }
               }
+            };
+            myEditor.getDocument().addDocumentListener(myDocumentAdapter);
+            updateTitle(getVariable());
+            if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
+              myEditor.putUserData(ACTIVE_INTRODUCE, this);
             }
-          };
-          myEditor.getDocument().addDocumentListener(myDocumentAdapter);
-          updateTitle(getVariable());
-          if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
-            myEditor.putUserData(ACTIVE_INTRODUCE, this);
           }
         }
+        result.set(started);
       }
-      result.set(started);
-      if (!started) {
-        finish(true);
+      finally {
+        if (!started) {
+          finish(true);
+        }
       }
     }, getCommandName(), getCommandName());
     return result.get();
