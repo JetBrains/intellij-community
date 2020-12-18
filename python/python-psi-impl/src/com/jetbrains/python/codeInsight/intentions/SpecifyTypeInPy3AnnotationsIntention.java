@@ -23,7 +23,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,6 +35,7 @@ import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,13 +92,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
                                                    boolean createTemplate) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
-    String paramName = StringUtil.notNullize(parameter.getName());
-    if (parameter.isPositionalContainer()) {
-      paramName = "*" + paramName;
-    }
-    else if (parameter.isKeywordContainer()) {
-      paramName = "**" + paramName;
-    }
+    final String paramName = ParamHelper.getNameInSignature(parameter);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     final String defaultParamText = defaultParamValue == null ? null : defaultParamValue.getText();
