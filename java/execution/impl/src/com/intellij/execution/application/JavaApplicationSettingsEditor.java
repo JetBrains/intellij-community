@@ -40,8 +40,9 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
 
   @NotNull
   private SettingsEditorFragment<ApplicationConfiguration, EditorTextField> createMainClass(ModuleClasspathCombo classpathCombo) {
+    ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), classpathCombo);
     EditorTextField mainClass = ClassEditorField.createClassField(getProject(), () -> classpathCombo.getSelectedModule(),
-                                                                  JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE, null);
+                                                                  ApplicationConfigurable.getVisibilityChecker(moduleSelector), null);
     mainClass.setBackground(UIUtil.getTextFieldBackground());
     mainClass.setShowPlaceholderWhenFocused(true);
     CommonParameterFragments.setMonospaced(mainClass);
