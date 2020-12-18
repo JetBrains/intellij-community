@@ -82,6 +82,7 @@ Includes the following features:</p>
                              instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable">
     </applicationConfigurable>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
+    <!--<projectService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownProjectSettings" configurationSchemaKey="markdown.settings"/>-->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
@@ -150,6 +151,7 @@ Includes the following features:</p>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension"/>
+    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.FontStylesExtension"/>
 
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension"/>
 

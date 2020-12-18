@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -224,15 +223,14 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   @Override
   public MarkdownCssSettings getMarkdownCssSettings() {
     String customCssText = myEditor != null && !myEditor.isDisposed() ? ReadAction.compute(() -> myEditor.getDocument().getText()) : "";
-
-    int defaultFontSize = Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_SIZE;
-    Integer fontSizeFromCss = MarkdownFontUtil.getFontSizeFromCss(customCssText);
+    //font change available only from the preview
+    Integer fontSize = MarkdownApplicationSettings.getInstance().getMarkdownCssSettings().getFontSize();
 
     return new MarkdownCssSettings(myCustomCssFromPathEnabled.isSelected(),
                                    myCustomCssPath.getText(),
                                    myApplyCustomCssText.isSelected(),
                                    customCssText,
-                                   fontSizeFromCss != null ? fontSizeFromCss : defaultFontSize);
+                                   fontSize);
   }
 
   @NotNull
