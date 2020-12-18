@@ -6,6 +6,7 @@ import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -238,7 +239,27 @@ final class VariableExtractor {
     if (parent == null) {
       throw new IllegalStateException("Unexpectedly anchor has no parent. Anchor class: " + anchor.getClass());
     }
+    tryFixSurroundContext(anchor);
     return parent.addBefore(declaration, anchor);
+  }
+
+  /**
+   * Try to fix the surrounding PSI before inserting the new declaration.
+   * Otherwise, the reparsed PSI may not contain the inserted declaration.
+   * @param anchor anchor to insert the declaration before
+   */
+  private static void tryFixSurroundContext(@NotNull PsiElement anchor) {
+    PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor);
+    if (prev instanceof PsiStatement) {
+      PsiErrorElement last = ObjectUtils.tryCast(PsiTreeUtil.getDeepestLast(prev), PsiErrorElement.class);
+      if (last != null && last.getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) {
+        try {
+          prev.replace(JavaPsiFacade.getElementFactory(prev.getProject()).createStatementFromText(prev.getText() + ";", anchor));
+        }
+        catch (IncorrectOperationException ignored) {
+        }
+      }
+    }
   }
 
   private static @NotNull PsiType stripNullabilityAnnotationsFromTargetType(@NotNull SmartTypePointer selectedType,
@@ -365,7 +386,17 @@ final class VariableExtractor {
                                       final @NotNull IntroduceVariableSettings settings) {
     Computable<SmartPsiElementPointer<PsiVariable>> computation =
       new VariableExtractor(project, expr, editor, anchorStatement, occurrences, settings)::extractVariable;
+    PsiFile file = expr.getContainingFile();
     SmartPsiElementPointer<PsiVariable> pointer = ApplicationManager.getApplication().runWriteAction(computation);
-    return pointer != null ? pointer.getElement() : null;
+    if (pointer != null) {
+      PsiVariable var = pointer.getElement();
+      if (var == null) {
+        throw new RuntimeExceptionWithAttachments("Refactoring is interrupted due to syntax errors in the file",
+                                                  new Attachment("expression.txt", expr.getText()),
+                                                  new Attachment("source.java", file.getText()));
+      }
+      return var;
+    }
+    return null;
   }
 }
