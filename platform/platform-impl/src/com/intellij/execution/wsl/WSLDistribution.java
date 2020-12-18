@@ -55,6 +55,7 @@ public class WSLDistribution {
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
   private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
+  private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(() -> readWslIp());
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -530,8 +531,15 @@ public class WSLDistribution {
     return myHostIp.getValue();
   }
 
+  public String getWslIp() {
+    return myWslIp.getValue();
+  }
+
   public InetAddress getHostIpAddress() {
     return InetAddresses.forString(getHostIp());
+  }
+  public InetAddress getWslIpAddress() {
+    return InetAddresses.forString(getWslIp());
   }
 
   private @Nullable String readHostIp() {
@@ -548,6 +556,28 @@ public class WSLDistribution {
     for (String line : output.getStdoutLines(true)) {
       if (line.startsWith("nameserver")) {
         return line.substring("nameserver".length()).trim();
+      }
+    }
+    return null;
+  }
+
+  private @Nullable String readWslIp() {
+    final ProcessOutput output;
+    try {
+      output = executeOnWsl(10000, "ip", "addr", "show", "eth0");
+    }
+    catch (ExecutionException e) {
+      return null;
+    }
+    if (LOG.isDebugEnabled()) LOG.debug("Reading eth0 info: " + getId());
+    if (!output.checkSuccess(LOG)) return null;
+    for (String line : output.getStdoutLines(true)) {
+      String trimmed = line.trim();
+      if (trimmed.startsWith("inet ")) {
+        int index = trimmed.indexOf("/");
+        if (index != -1) {
+          return trimmed.substring("inet ".length(), index);
+        }
       }
     }
     return null;

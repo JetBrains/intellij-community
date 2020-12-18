@@ -21,15 +21,20 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Gregory.Shrago
@@ -42,7 +47,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private final Map<Pair<Target, Parameters>, InProcessInfo<EntryPoint>> myInProcMap = new HashMap<>();
 
   static {
-    RemoteServer.setupRMI();
+    RemoteServer.setupRMI(true);
   }
 
   public RemoteProcessSupport(@NotNull Class<EntryPoint> valueClass) {
@@ -284,7 +289,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private EntryPoint acquire(final RunningInfo port) throws Exception {
     EntryPoint result = RemoteUtil.executeWithClassLoader(() -> {
-      Registry registry = LocateRegistry.getRegistry(getLocalHost(), port.port);
+      Registry registry = LocateRegistry.getRegistry(port.host, port.port);
       Remote remote = Objects.requireNonNull(registry.lookup(port.name));
 
       if (myValueClass.isInstance(remote)) {
@@ -352,10 +357,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
                 if (idxEnd > 0) {
                   String name = pair.substring(idx + 1, idxEnd);
                   int servicePort = Integer.parseInt(pair.substring(idxEnd + 1));
-                  result = new RunningInfo(info.handler, port, name, servicePort);
+                  result = new RunningInfo(info.handler, getRemoteHost(), port, name, servicePort);
                 }
                 else {
-                  result = new RunningInfo(info.handler, port, pair.substring(idx + 1));
+                  result = new RunningInfo(info.handler, getRemoteHost(), port, pair.substring(idx + 1));
                 }
                 myProcMap.put(key, result);
                 myProcMap.notifyAll();
@@ -376,7 +381,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           }
           fireModificationCountChanged();
           try {
-            RemoteDeadHand.TwoMinutesTurkish.startCooking(getLocalHost(), result.port);
+            if ("127.0.0.1".equals(result.host)) {
+              RemoteDeadHand.TwoMinutesTurkish.startCooking(result.host, result.port);
+            }
+            else {
+              new Heartbeat(result.host, result.port).startBeat();
+            }
           }
           catch (Throwable e) {
             LOG.warn("The cook failed to start due to " + ExceptionUtil.getRootCause(e));
@@ -390,8 +400,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   protected void sendDataAfterStart(ProcessHandler handler) {}
 
-  @NotNull
-  private static String getLocalHost() {
+  protected String getRemoteHost() {
     return ObjectUtils.notNull(System.getProperty(RemoteServer.SERVER_HOSTNAME), "127.0.0.1");
   }
 
@@ -465,17 +474,19 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   private static class RunningInfo extends Info {
+    final String host;
     final int port;
     final String name;
     final int servicePort; //port number when was exported with RemoteServer.start(knownPort=true), -1 otherwise
     Object entryPointHardRef;
 
-    RunningInfo(ProcessHandler handler, int port, String name) {
-      this(handler, port, name, -1);
+    RunningInfo(ProcessHandler handler, String host, int port, String name) {
+      this(handler, host, port, name, -1);
     }
 
-    RunningInfo(ProcessHandler handler, int port, String name, int servicePort) {
+    RunningInfo(ProcessHandler handler, String host, int port, String name, int servicePort) {
       super(handler);
+      this.host = host;
       this.port = port;
       this.name = name;
       this.servicePort = servicePort;
@@ -483,7 +494,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
     @Override
     public String toString() {
-      return port + "/" + name;
+      return host + ":" + port + "/" + name;
     }
   }
 
@@ -492,7 +503,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     final @NlsSafe String stderr;
 
     FailedInfo(Throwable cause, String stderr) {
-      super(null, -1, null);
+      super(null, null, -1, null);
       this.cause = cause;
       this.stderr = stderr;
     }
@@ -515,6 +526,44 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     @Override
     public String toString() {
       return "InProcessInfo{" + Integer.toHexString(hashCode()) + '}';
+    }
+  }
+
+  private class Heartbeat {
+    private final Registry myRegistry;
+    private boolean live = true;
+    private ScheduledFuture<?> myFuture = null;
+
+    public Heartbeat(String host, int port) throws RemoteException {
+      myRegistry = LocateRegistry.getRegistry(host, port);
+    }
+
+    void startBeat() {
+
+      myFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
+        try {
+          if (!live) {
+            if (myFuture != null) {
+              myFuture.cancel(false);
+            }
+            return;
+          }
+          IdeaWatchdog watchdog = getWatchdog();
+          watchdog.ping();
+        }
+        catch (Exception ignore) {
+          live = false;
+        }
+      }, IdeaWatchdog.PULSE_TIMEOUT, IdeaWatchdog.PULSE_TIMEOUT, TimeUnit.MILLISECONDS);
+    }
+
+    private IdeaWatchdog getWatchdog() throws RemoteException, NotBoundException {
+      Remote remote = myRegistry.lookup(IdeaWatchdog.BINDING_NAME);
+      if (remote instanceof IdeaWatchdog) {
+        return (IdeaWatchdog)remote;
+      } else {
+        return RemoteUtil.castToLocal(remote, IdeaWatchdog.class);
+      }
     }
   }
 }

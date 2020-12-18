@@ -34,6 +34,7 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -57,15 +58,15 @@ public class RemoteServer {
   private static Remote ourRemote;
 
   protected static void start(Remote remote) throws Exception {
-    start(remote, false);
+    start(remote, false, false);
   }
 
   /**
    * @param requireKnownPort when true, the port for the exported Remote will be written to stdout together with serverPort/name pair
    */
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  protected static void start(Remote remote, boolean requireKnownPort) throws Exception {
-    setupRMI();
+  protected static void start(Remote remote, boolean requireKnownPort, boolean localHostOnly) throws Exception {
+    setupRMI(localHostOnly);
     banJNDI();
     setupSSL();
 
@@ -78,7 +79,14 @@ public class RemoteServer {
       port = random.nextInt(0xffff);
       if (port < 4000) continue;
       try {
-        registry = LocateRegistry.createRegistry(port);
+        if (localHostOnly) {
+          registry = LocateRegistry.createRegistry(port);
+        }
+        else {
+          registry = LocateRegistry.createRegistry(port, null, RMISocketFactory.getSocketFactory());
+        }
+
+
         break;
       }
       catch (ExportException ignored) {
@@ -88,35 +96,64 @@ public class RemoteServer {
     try {
       Remote stub;
       String portSuffix;
-      if (requireKnownPort){
+      if (requireKnownPort) {
         Pair<Remote, Integer> exported = export(ourRemote);
         stub = exported.first;
         portSuffix = "#" + exported.second;
-      } else{
+      }
+      else {
         stub = UnicastRemoteObject.exportObject(ourRemote, 0);
         portSuffix = "";
       }
       String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
       registry.bind(name, stub);
 
+      IdeaWatchdog watchdog = new IdeaWatchdogImpl();
+      if (!localHostOnly) {
+        Remote watchdogStub = UnicastRemoteObject.exportObject(watchdog, 0);
+        registry.bind(IdeaWatchdog.BINDING_NAME, watchdogStub);
+      }
       String id = port + "/" + name + portSuffix;
       System.out.println("Port/ID: " + id);
+      System.out.println();
 
-      long waitTime = RemoteDeadHand.PING_TIMEOUT;
-      Object lock = new Object();
-      //noinspection InfiniteLoopStatement
-      while (true) {
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (lock) {
-          lock.wait(waitTime);
-        }
-        RemoteDeadHand deadHand = (RemoteDeadHand)registry.lookup(RemoteDeadHand.BINDING_NAME);
-        waitTime = deadHand.ping(id);
+      if (localHostOnly) {
+        waitForRemoteHand(registry, id);
+      } else {
+        spinUntilWatchdogAlive(watchdog);
       }
     }
     catch (Throwable e) {
       e.printStackTrace(System.err);
       System.exit(1);
+    }
+  }
+
+  private static void spinUntilWatchdogAlive(IdeaWatchdog watchdog) throws Exception {
+    long waitTime = IdeaWatchdog.WAIT_TIMEOUT;
+    Object lock = new Object();
+    while (true) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (lock) {
+        lock.wait(waitTime);
+      }
+      if (!watchdog.isAlive()) {
+        System.exit(1);
+      }
+    }
+  }
+
+  private static void waitForRemoteHand(Registry registry, String id) throws InterruptedException, RemoteException, NotBoundException {
+    long waitTime = RemoteDeadHand.PING_TIMEOUT;
+    Object lock = new Object();
+    //noinspection InfiniteLoopStatement
+    while (true) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (lock) {
+        lock.wait(waitTime);
+      }
+      RemoteDeadHand deadHand = (RemoteDeadHand)registry.lookup(RemoteDeadHand.BINDING_NAME);
+      waitTime = deadHand.ping(id);
     }
   }
 
@@ -136,7 +173,7 @@ public class RemoteServer {
     }
   }
 
-  public static void setupRMI() {
+  public static void setupRMI(final boolean localHostOnly) {
     // this properties are necessary for RMI servers to work in some cases:
     // if we are behind a firewall, if the network connection is lost, etc.
 
@@ -148,10 +185,9 @@ public class RemoteServer {
     System.setProperty("java.rmi.server.disableHttp", "true");
 
     if (RMISocketFactory.getSocketFactory() != null) return;
-    // bind to localhost only
     try {
       RMISocketFactory.setSocketFactory(new RMISocketFactory() {
-        final InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
+        final InetAddress loopbackAddress = InetAddress.getByName(getListenAddress(localHostOnly));
 
         @Override
         public Socket createSocket(String host, int port) throws IOException {
@@ -192,15 +228,26 @@ public class RemoteServer {
     }
   }
 
+
+  private static String getListenAddress(boolean localHostOnly) {
+    if (localHostOnly) {
+      return getLoopbackAddress();
+    }
+    return isIpV6() ? "::/0" : "0.0.0.0";
+  }
+
   @NotNull
   private static String getLoopbackAddress() {
-    boolean ipv6 = false;
+    return isIpV6() ? "::1" : "127.0.0.1";
+  }
+
+  private static boolean isIpV6() {
     try {
-      ipv6 = InetAddress.getByName(null) instanceof Inet6Address;
+      return InetAddress.getByName(null) instanceof Inet6Address;
     }
     catch (IOException ignore) {
+      return false;
     }
-    return ipv6 ? "::1" : "127.0.0.1";
   }
 
   @SuppressWarnings("UnusedDeclaration")

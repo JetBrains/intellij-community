@@ -5,4 +5,8 @@ public abstract class RemoteServerUtil {
   public static boolean isKnownPortRequired(){
     return Boolean.parseBoolean(System.getProperty("idea.maven.knownPort"));
   }
+
+  public static boolean isWSL(){
+    return Boolean.parseBoolean(System.getProperty("idea.maven.wsl"));
+  }
 }
