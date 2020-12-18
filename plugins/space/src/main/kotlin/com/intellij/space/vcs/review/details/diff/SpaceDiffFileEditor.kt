@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.diff
 
+import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditor
@@ -42,7 +43,10 @@ internal class SpaceDiffFileEditor(project: Project, spaceDiffFile: SpaceDiffFil
 internal class SpaceDiffEditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is SpaceDiffFile
 
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor = SpaceDiffFileEditor(project, file as SpaceDiffFile)
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor =
+    SpaceDiffFileEditor(project, file as SpaceDiffFile).also { editor ->
+      DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
+    }
 
   override fun getEditorTypeId(): String = "SpaceDiffEditor"
 
