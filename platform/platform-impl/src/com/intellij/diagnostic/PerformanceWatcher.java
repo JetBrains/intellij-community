@@ -114,6 +114,10 @@ public final class PerformanceWatcher implements Disposable {
                 break;
               }
               String content = FileUtil.loadFile(file);
+              // TODO: maybe we need to notify the user
+              if (content.contains("fuck_the_regulations")) {
+                break;
+              }
               Attachment attachment = new Attachment("crash.txt", content);
               attachment.setIncluded(true);
               Attachment[] attachments = new Attachment[]{attachment};
