@@ -21,9 +21,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.RollbackUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,31 +30,35 @@ import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
+import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.containers.UtilKt.notNullize;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
+import static com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName;
+import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 
 public class RollbackAction extends AnAction implements DumbAware, UpdateInBackground {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    final boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
+    boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
     e.getPresentation().setEnabledAndVisible(visible);
-    if (! visible) return;
+    if (!visible) return;
 
-    final Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
-    boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
-                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
-                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
-                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES)) ||
-                        hasReversibleFiles(e) ||
-                        currentChangelistNotEmpty(project);
+    Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
+    boolean isEnabled =
+      !ArrayUtil.isEmpty(leadSelection) ||
+      Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
+      Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
+      Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES)) ||
+      !getIncludedChanges(e).isEmpty() ||
+      hasReversibleFiles(e) ||
+      currentChangelistNotEmpty(project);
+
     e.getPresentation().setEnabled(isEnabled);
-    String operationName = RollbackUtil.getRollbackOperationName(project);
-    e.getPresentation().setText(operationName + "...");
-    if (isEnabled) {
-      e.getPresentation().setDescription(VcsBundle.message("action.message.use.selected.changes.description", removeMnemonic(operationName)));
-    }
+    e.getPresentation().setText(getRollbackOperationName(project) + ELLIPSIS);
   }
 
   private static boolean hasReversibleFiles(@NotNull AnActionEvent e) {
@@ -81,14 +84,14 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
     final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace())
                          ? null
                          : VcsBundle.message("error.cant.perform.operation.now",
-                                             removeEllipsisSuffix(removeMnemonic(RollbackUtil.getRollbackOperationName(project))));
+                                             removeEllipsisSuffix(removeMnemonic(getRollbackOperationName(project))));
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
 
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
-    List<Change> changes = getChanges(project, e);
+    Collection<Change> changes = getChanges(e);
     LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
     if (modifiedWithoutEditing != null) {
-      changes = ContainerUtil.filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
+      changes = filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
     }
 
 
@@ -113,13 +116,15 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
     }
   }
 
-  @NotNull
-  private static List<Change> getChanges(final Project project, final AnActionEvent e) {
+  private static @NotNull Collection<Change> getChanges(@NotNull AnActionEvent e) {
+    Collection<Change> includedChanges = getIncludedChanges(e);
+    if (!includedChanges.isEmpty()) return includedChanges;
+
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     if (changes == null) {
       final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
-        final ChangeListManager clManager = ChangeListManager.getInstance(project);
+        final ChangeListManager clManager = ChangeListManager.getInstance(requireNonNull(e.getProject()));
         final List<Change> changesList = new ArrayList<>();
         for (VirtualFile vf : files) {
           changesList.addAll(clManager.getChangesIn(vf));
@@ -129,10 +134,16 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
         }
       }
     }
-    if (changes != null && changes.length > 0) {
-      return ContainerUtil.newArrayList(changes);
-    }
-    return Collections.emptyList();
+
+    if (!ArrayUtil.isEmpty(changes)) return newArrayList(changes);
+    return emptyList();
+  }
+
+  private static @NotNull Collection<Change> getIncludedChanges(@NotNull AnActionEvent e) {
+    ChangesListView changesView = e.getData(ChangesListView.DATA_KEY);
+    if (changesView == null) return emptyList();
+
+    return filterIsInstance(changesView.getInclusionModel().getInclusion(), Change.class);
   }
 
   @Nullable
@@ -153,7 +164,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final LinkedHashSet<VirtualFile> modifiedWithoutEditing) {
-    final String operationName = StringUtil.decapitalize(removeMnemonic(RollbackUtil.getRollbackOperationName(project)));
+    final String operationName = StringUtil.decapitalize(removeMnemonic(getRollbackOperationName(project)));
     String message = (modifiedWithoutEditing.size() == 1)
                      ? VcsBundle.message("rollback.modified.without.editing.confirm.single",
                                          operationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
