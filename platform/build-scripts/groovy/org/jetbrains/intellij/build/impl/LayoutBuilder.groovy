@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 
 import java.nio.file.Path
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
@@ -161,7 +162,7 @@ final class LayoutBuilder {
      */
     @CompileStatic(TypeCheckingMode.SKIP)
     void dir(String relativePath, Closure body) {
-      def parent = PathUtilRt.getParentPath(relativePath)
+      String parent = PathUtilRt.getParentPath(relativePath)
       if (relativePath.empty) {
         body()
       }
@@ -230,7 +231,7 @@ final class LayoutBuilder {
      * keep names of JARs included into bootstrap classpath only.</strong>
      */
     void projectLibrary(String libraryName, boolean removeVersionFromJarName = false) {
-      def library = context.project.libraryCollection.findLibrary(libraryName)
+      JpsLibrary library = context.project.libraryCollection.findLibrary(libraryName)
       if (library == null) {
         throw new IllegalArgumentException("Cannot find library $libraryName in the project")
       }
@@ -263,8 +264,8 @@ final class LayoutBuilder {
      * Include JARs added as classes roots of a module library {@code libraryName} from module {@code moduleName} to the current place in the layout
      */
     void moduleLibrary(String moduleName, String libraryName) {
-      def module = findModule(moduleName)
-      def library = module.libraryCollection.libraries.find {getLibraryName(it) == libraryName}
+      JpsModule module = findModule(moduleName)
+      JpsLibrary library = module.libraryCollection.libraries.find {getLibraryName(it) == libraryName}
       if (library == null) {
         throw new IllegalArgumentException("Cannot find library $libraryName in '$moduleName' module")
       }
@@ -277,22 +278,22 @@ final class LayoutBuilder {
      **/
     @CompileStatic(TypeCheckingMode.SKIP)
     void jpsLibrary(JpsLibrary library, boolean removeVersionFromJarName = false) {
-      library.getFiles(JpsOrderRootType.COMPILED).each {
-        def matcher = it.name =~ JAR_NAME_WITH_VERSION_PATTERN
+      for (file in library.getFiles(JpsOrderRootType.COMPILED)) {
+        Matcher matcher = file.name =~ JAR_NAME_WITH_VERSION_PATTERN
         if (removeVersionFromJarName && matcher.matches()) {
-          def newName = matcher.group(1) + ".jar"
+          String newName = matcher.group(1) + ".jar"
           if (copyFiles) {
-            ant.renamedFile(filePath: it.absolutePath, newName: newName)
+            ant.renamedFile(filePath: file.absolutePath, newName: newName)
           }
-          addLibraryMapping(library, newName, it.absolutePath)
-          context.messages.debug(" include $newName (renamed from $it.absolutePath) from library '${getLibraryName(library)}'")
+          addLibraryMapping(library, newName, file.absolutePath)
+          context.messages.debug(" include $newName (renamed from $file.absolutePath) from library '${getLibraryName(library)}'")
         }
         else {
           if (copyFiles) {
-            ant.fileset(file: it.absolutePath)
+            ant.fileset(file: file.absolutePath)
           }
-          addLibraryMapping(library, it.name, it.absolutePath)
-          context.messages.debug(" include $it.name ($it.absolutePath) from library '${getLibraryName(library)}'")
+          addLibraryMapping(library, file.name, file.absolutePath)
+          context.messages.debug(" include $file.name ($file.absolutePath) from library '${getLibraryName(library)}'")
         }
       }
     }
@@ -301,7 +302,7 @@ final class LayoutBuilder {
      * Include files and directories specified in {@code inner} into the current place in this layout
      */
     void include(@DelegatesTo(LayoutSpec) Closure inner) {
-      def body = inner.rehydrate(null, this, inner.thisObject)
+      Closure body = inner.rehydrate(null, this, inner.thisObject)
       body.resolveStrategy = Closure.OWNER_FIRST
       body()
     }

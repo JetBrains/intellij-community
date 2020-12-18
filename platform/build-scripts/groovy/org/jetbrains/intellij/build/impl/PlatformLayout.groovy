@@ -58,7 +58,7 @@ final class PlatformLayout extends BaseLayout {
      * will be removed when build scripts automatically compose bootstrap classpath.
      */
     void removeVersionFromProjectLibraryJarNames(String libraryName) {
-      layout.projectLibrariesWithRemovedVersionFromJarNames << libraryName
+      layout.projectLibrariesWithRemovedVersionFromJarNames.add(libraryName)
     }
 
     /**

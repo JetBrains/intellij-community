@@ -503,13 +503,13 @@ final class DistributionJARsBuilder {
   }
 
   private void buildLib() {
-    def layoutBuilder = createLayoutBuilder()
-    def productLayout = buildContext.productProperties.productLayout
+    LayoutBuilder layoutBuilder = createLayoutBuilder()
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
 
     addSearchableOptions(layoutBuilder)
 
-    String applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
-    Path ideaDir = Paths.get(applicationInfoDir, "idea")
+    Path applicationInfoDir = buildContext.paths.tempDir.resolve("applicationInfo")
+    Path ideaDir = applicationInfoDir.resolve("idea")
     Files.createDirectories(ideaDir)
     Files.copy(patchedApplicationInfo, ideaDir.resolve(patchedApplicationInfo.fileName), StandardCopyOption.REPLACE_EXISTING)
     layoutBuilder.patchModuleOutput(buildContext.productProperties.applicationInfoModule, applicationInfoDir)
@@ -520,8 +520,8 @@ final class DistributionJARsBuilder {
     if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
       buildContext.executeStep("Bundling a default version of feature usage statistics", BuildOptions.FUS_METADATA_BUNDLE_STEP) {
         try {
-          def metadata = StatisticsRecorderBundledMetadataProvider.downloadMetadata(buildContext)
-          layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', metadata.absolutePath)
+          Path metadata = StatisticsRecorderBundledMetadataProvider.downloadMetadata(buildContext)
+          layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', metadata)
         }
         catch (Exception e) {
           buildContext.messages.warning('Failed to bundle default version of feature usage statistics metadata')
@@ -530,23 +530,23 @@ final class DistributionJARsBuilder {
       }
     }
 
-    def libDirectoryMapping = new ProjectStructureMapping()
+    ProjectStructureMapping libDirectoryMapping = new ProjectStructureMapping()
     buildContext.messages.block("Build platform JARs in lib directory") {
       processLibDirectoryLayout(layoutBuilder, projectStructureMapping, true)
     }
     projectStructureMapping.mergeFrom(libDirectoryMapping, "")
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
-      def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
+      List<String> forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
       File[] packagedFiles = buildContext.paths.distAllDir.resolve("lib").toFile().listFiles()
-      def forbiddenJars = packagedFiles.findAll { forbiddenJarNames.contains(it.name) }
+      Collection<File> forbiddenJars = packagedFiles.findAll { forbiddenJarNames.contains(it.name) }
       if (!forbiddenJars.empty) {
         buildContext.messages.error( "The following JARs cannot be included into the product 'lib' directory, they need to be scrambled with the main jar: ${forbiddenJars}")
       }
-      def modulesToBeScrambled = buildContext.proprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled
-      platform.moduleJars.keySet().each { jarName ->
+      List<String> modulesToBeScrambled = buildContext.proprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled
+      for (jarName in platform.moduleJars.keySet()) {
         if (jarName != productLayout.mainJarName) {
-          def notScrambled = platform.moduleJars.get(jarName).intersect(modulesToBeScrambled)
+          Collection<String> notScrambled = platform.moduleJars.get(jarName).intersect(modulesToBeScrambled)
           if (!notScrambled.isEmpty()) {
             buildContext.messages.error("Module '${notScrambled.first()}' is included into $jarName which is not scrambled.")
           }
@@ -624,6 +624,7 @@ final class DistributionJARsBuilder {
         }
 
       Path autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
+      Path patchedPluginXmlDir = buildContext.paths.tempDir.resolve("patched-plugin-xml")
       for (plugin in pluginsToPublish) {
         String directory = getActualPluginDirectoryName(plugin, buildContext)
         Path targetDirectory = whiteList.contains(plugin.mainModule)
@@ -632,9 +633,9 @@ final class DistributionJARsBuilder {
         Path destFile = targetDirectory.resolve("$directory-${pluginVersion}.zip")
 
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-          Path pluginXml = buildContext.paths.tempDir.resolve("patched-plugin-xml/$plugin.mainModule/META-INF/plugin.xml")
+          Path pluginXml = patchedPluginXmlDir.resolve("${plugin.mainModule}/META-INF/plugin.xml")
           if (!Files.exists(pluginXml)) {
-            buildContext.messages.error("patched plugin.xml not found for $plugin.mainModule module: $pluginXml")
+            buildContext.messages.error("patched plugin.xml not found for ${plugin.mainModule} module: $pluginXml")
           }
           pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXml.toString()))
         }
@@ -899,13 +900,13 @@ final class DistributionJARsBuilder {
    */
   @CompileStatic(TypeCheckingMode.SKIP)
   void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, Path targetDirectory,
-                             ProjectStructureMapping mapping, boolean copyFiles,
-                             MultiMap<String, String> moduleJars,
-                             List<Pair<File, String>> additionalResources) {
-    def ant = buildContext.ant
-    def resourceExcluded = RESOURCES_EXCLUDED
-    def resourcesIncluded = RESOURCES_INCLUDED
-    def buildContext = buildContext
+                     ProjectStructureMapping mapping, boolean copyFiles,
+                     MultiMap<String, String> moduleJars,
+                     List<Pair<File, String>> additionalResources) {
+    AntBuilder ant = buildContext.ant
+    String resourceExcluded = RESOURCES_EXCLUDED
+    String resourcesIncluded = RESOURCES_INCLUDED
+    BuildContext buildContext = buildContext
     if (copyFiles) {
       checkModuleExcludes(layout.moduleExcludes)
     }
@@ -950,6 +951,7 @@ final class DistributionJARsBuilder {
             }
           }
         }
+
         MultiMap<String, String> outputResourceJars = MultiMap.createLinked()
         for (String moduleName in actualModuleJars.values()) {
           String resourcesJarName = layout.localizableResourcesJarName(moduleName)
@@ -957,6 +959,7 @@ final class DistributionJARsBuilder {
             outputResourceJars.putValue(resourcesJarName, moduleName)
           }
         }
+
         if (!outputResourceJars.empty) {
           outputResourceJars.keySet().forEach { resourceJarName ->
             jar(resourceJarName, true) {
@@ -1111,9 +1114,9 @@ final class DistributionJARsBuilder {
               !toPublish ? "" :
               "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\" $eapAttribute \$2 />")
       buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parent.parent.fileName} <product-descriptor/>")
-      
+
       //hack for publishing: we plugin is compatible only with WebStorm
-      if (toPublish && text.contains("code=\"PDB\"") && 
+      if (toPublish && text.contains("code=\"PDB\"") &&
           buildContext.getApplicationInfo().productName == "WebStorm") {
         text = text.replace("Database Tools and SQL", "Database Tools and SQL for WebStorm")
         text = text.replace("IntelliJ-based IDEs", "WebStorm")
@@ -1121,7 +1124,7 @@ final class DistributionJARsBuilder {
     }
 
     def anchor = text.contains("</id>") ? "</id>" : "</name>"
-    if (!text.contains("<version>")) { 
+    if (!text.contains("<version>")) {
       text = text.replace(anchor, "${anchor}\n  <version>${pluginVersion}</version>")
     }
     if (!text.contains("<idea-version since-build")) {
