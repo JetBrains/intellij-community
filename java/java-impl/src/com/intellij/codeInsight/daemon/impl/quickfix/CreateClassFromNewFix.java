@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -206,7 +207,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     PsiNewExpression expression = getNewExpression();
-    if (rejectQualifier(expression.getQualifier())) {
+    if (rejectContainer(expression)) {
       return false;
     }
 
@@ -225,8 +226,20 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  protected boolean rejectQualifier(PsiExpression qualifier) {
-    return qualifier != null;
+  protected boolean rejectContainer(PsiNewExpression expression) {
+    if (expression.getQualifier() != null) {
+      return true;
+    }
+    PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+    if (classReference != null && classReference.isQualified()) {
+      PsiJavaCodeReferenceElement containerReference = ObjectUtils.tryCast(classReference.getQualifier(), PsiJavaCodeReferenceElement.class);
+      if (containerReference != null) {
+        PsiElement targetClass = containerReference.resolve();
+        return !(targetClass instanceof PsiClass) || !InheritanceUtil.hasEnclosingInstanceInScope((PsiClass)targetClass, expression, true, true);
+      }
+      return true;
+    }
+    return false;
   }
 
   protected @IntentionName String getText(final String varName) {
