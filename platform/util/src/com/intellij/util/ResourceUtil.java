@@ -41,6 +41,10 @@ public final class ResourceUtil {
   public static InputStream getResourceAsStream(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
 
+    if (fixedPath.isEmpty()) {
+      return loader.getResourceAsStream(fileName);
+    }
+
     List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
     for (String bundle : bundles) {
       InputStream stream = loader.getResourceAsStream(bundle + "/" + fileName);
