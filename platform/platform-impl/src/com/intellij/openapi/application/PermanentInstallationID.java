@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +20,8 @@ import java.util.prefs.Preferences;
  * UUID identifying pair user@computer
  */
 public final class PermanentInstallationID {
+  private static final Logger LOG = Logger.getInstance("#PermanentInstallationID");
+
   private static final String OLD_USER_ON_MACHINE_ID_KEY = "JetBrains.UserIdOnMachine";
   @NonNls private static final String INSTALLATION_ID_KEY = "user_id_on_machine";
   private static final String INSTALLATION_ID = calculateInstallationId();
@@ -58,8 +61,9 @@ public final class PermanentInstallationID {
         oldPrefs.put(OLD_USER_ON_MACHINE_ID_KEY, installationId);
       }
     }
-    catch (Throwable ignored) {
+    catch (Throwable ex) {
       // should not happen
+      LOG.info("Unexpected error initializing Installation ID", ex);
     }
 
     return installationId == null? UUID.randomUUID().toString() : installationId;
@@ -89,7 +93,8 @@ public final class PermanentInstallationID {
         }
       }
     }
-    catch (Throwable ignored) {
+    catch (Throwable ex) {
+      LOG.info("Error synchronizing Installation ID", ex);
     }
     return installationId;
   }
