@@ -24,7 +24,11 @@ interface ScrambleTool {
 
   /**
    * Scramble plugin's {@code jarsToScramble} jars
-   * Plugin's zkm script template is expected to be in "$buildContext.paths.projectHome/plugins/{@code pluginName}/build/script.zkm.stub" file
+   * Plugin's zkm script template is expected to be in
+   *  if (pluginLayout.zkmScriptStub) is set, then
+   *     $buildContext.paths.projectHome/${pluginLayout.zkmScriptStub}"
+   *  else
+   *     "$buildContext.paths.projectHome/plugins/{@code pluginName}/build/script.zkm.stub"
    */
   void scramblePlugin(BuildContext buildContext, PluginLayout pluginLayout, Path targetDir)
 

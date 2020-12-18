@@ -746,6 +746,7 @@ final class DistributionJARsBuilder {
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, Path targetDirectory,
                             ProjectStructureMapping parentMapping) {
     addSearchableOptions(layoutBuilder)
+    List<Pair<PluginLayout, Path>> pluginsToScramble = new ArrayList<>()
     for (plugin in pluginsToInclude) {
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
@@ -763,14 +764,20 @@ final class DistributionJARsBuilder {
 
       Path targetDir = targetDirectory.resolve(getActualPluginDirectoryName(plugin, buildContext))
       processPluginLayout(plugin, layoutBuilder, targetDir, generatedResources, parentMapping, true)
-      if (buildContext.proprietaryBuildTools.scrambleTool != null) {
-        buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, plugin, targetDir)
-      }
-      else if (!plugin.pathsToScramble.isEmpty()) {
-        buildContext.messages.warning("Scrambling plugin $plugin.directoryName skipped: 'scrambleTool' isn't defined, " +
-                                      "but plugin defines paths to be scrambled")
+      if (!plugin.pathsToScramble.isEmpty()) {
+        pluginsToScramble.add(Pair.create(plugin, targetDir))
       }
     }
+
+    if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+      pluginsToScramble.each { pluginPair -> buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, pluginPair.first, pluginPair.second) }
+    }
+    else {
+      pluginsToScramble.each { pluginPair ->
+        buildContext.messages.warning("Scrambling plugin $pluginPair.first.directoryName skipped: 'scrambleTool' isn't defined, but plugin defines paths to be scrambled")
+      }
+    }
+
   }
 
   private void patchPluginXml(LayoutBuilder layoutBuilder, PluginLayout plugin) {

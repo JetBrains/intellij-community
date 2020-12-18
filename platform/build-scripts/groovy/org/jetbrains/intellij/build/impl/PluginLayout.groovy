@@ -23,7 +23,9 @@ final class PluginLayout extends BaseLayout {
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
   Collection<String> pathsToScramble = []
+  Collection<String> scrambleClasspathPlugins = []
   BiPredicate<BuildContext, File> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, File>
+  String zkmScriptStub
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -188,6 +190,28 @@ final class PluginLayout extends BaseLayout {
      */
     void scramble(String relativePath) {
       layout.pathsToScramble.add(relativePath)
+    }
+
+    /**
+     * Specifies a relative to $buildContext.paths.projectHome path to a zkm script stub file.
+     * If scramble tool is not defined, scramble toot will expect to find the script stub file at "$buildContext.paths.projectHome/plugins/{@code pluginName}/build/script.zkm.stub"
+     *
+     * @param relativePath - a path to a jar file relative to project home directory
+     */
+    void zkmScriptStub(String relativePath) {
+      layout.zkmScriptStub = relativePath
+    }
+
+    /**
+     * Specifies a dependent plugin name to be added to scrambled classpath
+     * Scrambling is performed by the {@link org.jetbrains.intellij.build.ProprietaryBuildTools#scrambleTool}
+     * If scramble tool is not defined, scrambling will not be performed
+     * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
+     *
+     * @param pluginName - a name of dependent plugin, whose jars should be added to scramble classpath
+     */
+    void scrambleClasspathPlugin(String pluginName) {
+      layout.scrambleClasspathPlugins.add(pluginName)
     }
 
     /**
