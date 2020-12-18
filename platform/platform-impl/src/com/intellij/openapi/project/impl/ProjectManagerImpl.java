@@ -199,7 +199,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
   @Override
   public @NotNull Project getDefaultProject() {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
+    LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application has already been disposed!");
     // call instance method to reset timeout
     MessageBus bus = myDefaultProject.getMessageBus(); // re-instantiate if needed
     LOG.assertTrue(!bus.isDisposed());
@@ -261,10 +261,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   }
 
   public static void showCannotConvertMessage(@NotNull CannotConvertException e, @Nullable Component component) {
-    AppUIUtil.invokeOnEdt(() -> {
-      Messages.showErrorDialog(component, IdeBundle.message("error.cannot.convert.project", e.getMessage()),
-                               IdeBundle.message("title.cannot.convert.project"));
-    });
+    AppUIUtil.invokeOnEdt(() -> Messages.showErrorDialog(component, IdeBundle.message("error.cannot.convert.project", e.getMessage()),
+                                                       IdeBundle.message("title.cannot.convert.project")));
   }
 
   @Override
