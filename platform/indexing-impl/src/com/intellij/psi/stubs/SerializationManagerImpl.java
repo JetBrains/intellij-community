@@ -141,6 +141,11 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @Override
+  public void registerSerializer(ObjectStubSerializer<?, ? extends Stub> serializer) {
+    registerSerializer(serializer.getExternalId(), () -> serializer);
+  }
+
+  @Override
   public String internString(String string) {
     return myStubSerializationHelper.intern(string);
   }
@@ -181,8 +186,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  @Override
-  protected void registerSerializer(@NotNull String externalId, Supplier<ObjectStubSerializer<?, ? extends Stub>> lazySerializer) {
+  private void registerSerializer(@NotNull String externalId, @NotNull Supplier<ObjectStubSerializer<?, ? extends Stub>> lazySerializer) {
     try {
       myStubSerializationHelper.assignId(lazySerializer, externalId);
     }
