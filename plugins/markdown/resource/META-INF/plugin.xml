@@ -61,6 +61,7 @@ Includes the following features:</p>
     <bidiRegionsSeparator language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownBidiRegionsSeparator"/>
 
     <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownHighlightingAnnotator"/>
+    <externalAnnotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.date.MarkdownDateExternalAnnotator"/>
 
     <multiHostInjector implementation="org.intellij.plugins.markdown.injection.CodeFenceInjector"/>
 
