@@ -353,7 +353,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     else if (context == PatternTreeContext.Expression) {
       final PsiExpressionCodeFragment fragment =
         JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, null, null, physical);
-      return new PsiElement[] {fragment.getExpression()};
+      final PsiExpression expression = fragment.getExpression();
+      return (expression == null) ? PsiElement.EMPTY_ARRAY : new PsiElement[] {expression};
     }
     else {
       return new PsiElement[] {PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", JavaFileType.INSTANCE, text)};
