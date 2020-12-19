@@ -68,7 +68,7 @@ final class KeymapPluginsBuilder {
       }
     }
     Path resultFile = targetDir.resolve("${shortName}Keymap.zip")
-    buildContext.notifyArtifactBuilt(resultFile.toString())
+    buildContext.notifyArtifactWasBuilt(resultFile)
     return new PluginRepositorySpec(pluginZip: resultFile.toString(),
                                     pluginXml: metaInf.resolve("plugin.xml").toString())
   }

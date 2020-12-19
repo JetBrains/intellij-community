@@ -21,6 +21,7 @@ final class BuildHelper {
 
   private final UrlClassLoader helperClassLoader
   private final MethodHandle zipHandle
+  private final MethodHandle bulkZipWithPrefixHandle
   private final MethodHandle runJavaHandle
   final MethodHandle brokenPluginsTask
   final MethodHandle reorderJars
@@ -42,6 +43,10 @@ final class BuildHelper {
     zipHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ZipKt"),
                                   "zip",
                                   MethodType.methodType(voidClass, path, Map.class as Class<?>, bool, bool, logger))
+
+    bulkZipWithPrefixHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ZipKt"),
+                                                "bulkZipWithPrefix",
+                                                MethodType.methodType(voidClass, path, List.class as Class<?>, bool, logger))
 
     runJavaHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ProcessKt"),
                                       "runJava", MethodType.methodType(voidClass, String.class as Class<?>, iterable, iterable, iterable,
@@ -78,13 +83,11 @@ final class BuildHelper {
     getInstance(buildContext).zipHandle.invokeWithArguments(targetFile, map, true, false, buildContext.messages)
   }
 
-  /**
-   * JAR differs from ZIP in our case - for ZIP directory entries are never created,
-   * for JAR directory entries are created, including parent directories, if there is at least one resource file in it.
-   */
-  static void jarWithPrefix(@NotNull BuildContext buildContext, @NotNull Path targetFile, Path dir, String prefix, boolean compress) {
-    getInstance(buildContext).zipHandle
-      .invokeWithArguments(targetFile, Collections.singletonMap(dir, prefix), compress, true, buildContext.messages)
+  static void bulkZipWithPrefix(@NotNull BuildContext buildContext,
+                                @NotNull Path commonSourceDir,
+                                @NotNull List<Map.Entry<String, Path>> items,
+                                boolean compress) {
+    getInstance(buildContext).bulkZipWithPrefixHandle.invokeWithArguments(commonSourceDir, items, compress, buildContext.messages)
   }
 
   /**

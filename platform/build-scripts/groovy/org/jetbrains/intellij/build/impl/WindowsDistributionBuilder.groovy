@@ -312,7 +312,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath, productJsonDir] + jreDirectoryPaths
       BuildHelper.zip(buildContext, targetFile, dirs)
       ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), "")
-      buildContext.notifyArtifactBuilt(targetFile.toString())
+      buildContext.notifyArtifactWasBuilt(targetFile)
       return targetFile
     }
   }

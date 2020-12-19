@@ -29,6 +29,8 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
@@ -435,49 +437,54 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static final AtomicLong totalSizeOfProducedArtifacts = new AtomicLong()
+
   @Override
   void notifyArtifactBuilt(String artifactPath) {
+    notifyArtifactWasBuilt(Paths.get(artifactPath).toAbsolutePath().normalize())
+  }
+
+  @Override
+  void notifyArtifactWasBuilt(Path file) {
     if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION)) {
       return
     }
-    def file = new File(artifactPath)
-    def artifactsDir = new File(paths.artifacts)
 
-    if (file.isFile()) {
+    Path artifactsDir = Paths.get(paths.artifacts)
+    if (Files.isRegularFile(file)) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
       def fileSize = file.size()
       if (fileSize > 1000000) {
-        def producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
-        def willBePublishedWhenBuildFinishes = FileUtil.isAncestor(artifactsDir, file, true)
+        long producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
+        boolean willBePublishedWhenBuildFinishes = FileUtil.isAncestor(artifactsDir.toString(), file.toString(), true)
 
         long oneGb = 1024L * 1024 * 1024
         long requiredAdditionalSpace = oneGb * 6
         long requiredSpaceForArtifacts = oneGb * 9
-        long availableSpace = file.freeSpace
+        long availableSpace = Files.getFileStore(file).getUsableSpace()
         //heuristics: a build publishes at most 9Gb of artifacts and requires some additional space for compiled classes, dependencies, temp files, etc.
         // So we'll publish an artifact earlier only if there will be enough space for its copy.
         def skipPublishing = willBePublishedWhenBuildFinishes && availableSpace < (requiredSpaceForArtifacts - producedSize) + requiredAdditionalSpace + fileSize
-        messages.debug("Checking free space before publishing $artifactPath (${StringUtil.formatFileSize(fileSize)}): ")
+        messages.debug("Checking free space before publishing $file (${StringUtil.formatFileSize(fileSize)}): ")
         messages.debug(" total produced: ${StringUtil.formatFileSize(producedSize)}")
         messages.debug(" available space: ${StringUtil.formatFileSize(availableSpace)}")
         messages.debug(" ${skipPublishing ? "will be" : "won't be"} skipped")
         if (skipPublishing) {
-          messages.info("Artifact $artifactPath won't be published early to avoid caching on agent (workaround for TW-54541)")
+          messages.info("Artifact $file won't be published early to avoid caching on agent (workaround for TW-54541)")
           return
         }
       }
     }
 
-    def pathToReport = file.absolutePath
-
-    def targetDirectoryPath = ""
-    if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
-      targetDirectoryPath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(artifactsDir, file.parentFile) ?: "")
+    String targetDirectoryPath = ""
+    if (file.parent.startsWith(artifactsDir)) {
+      targetDirectoryPath = FileUtil.toSystemIndependentName(artifactsDir.relativize(file.parent).toString())
     }
 
-    if (file.isDirectory()) {
-      targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
+    if (Files.isDirectory(file)) {
+      targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.fileName
     }
+
+    String pathToReport = file.toString()
     if (targetDirectoryPath) {
       pathToReport += "=>" + targetDirectoryPath
     }
@@ -502,6 +509,6 @@ class BuildPathsImpl extends BuildPaths {
     this.projectHome = projectHome
     this.jdkHome = jdkHome
     this.kotlinHome = kotlinHome
-    artifacts = "$buildOutputRoot/artifacts"
+    artifacts = "${this.buildOutputRoot}/artifacts"
   }
 }

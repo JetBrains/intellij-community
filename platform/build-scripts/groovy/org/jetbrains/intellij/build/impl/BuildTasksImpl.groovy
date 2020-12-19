@@ -110,7 +110,7 @@ final class BuildTasksImpl extends BuildTasks {
       if (!Files.exists(targetFile)) {
         buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
       }
-      buildContext.notifyArtifactBuilt(targetFile.toString())
+      buildContext.notifyArtifactWasBuilt(targetFile)
     })
   }
 
@@ -574,7 +574,7 @@ idea.fatal.error.notification=disabled
   private void copyDependenciesFile() {
     File outputFile = new File(buildContext.paths.artifacts, "dependencies.txt")
     FileUtil.copy(buildContext.dependenciesProperties.file, outputFile)
-    buildContext.notifyArtifactBuilt(outputFile.toString())
+    buildContext.notifyArtifactWasBuilt(outputFile.toPath())
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)

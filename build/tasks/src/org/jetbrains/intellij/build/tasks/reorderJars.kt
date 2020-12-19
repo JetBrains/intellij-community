@@ -5,10 +5,7 @@ import com.google.common.hash.HashFunction
 import com.google.common.hash.Hashing
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.apache.commons.compress.archivers.zip.ZipFile
-import org.jetbrains.intellij.build.io.ZipFileWriter
-import org.jetbrains.intellij.build.io.deleteDir
-import org.jetbrains.intellij.build.io.info
-import org.jetbrains.intellij.build.io.runJava
+import org.jetbrains.intellij.build.io.*
 import java.lang.System.Logger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -16,7 +13,6 @@ import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.Callable
-import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.ZipEntry
@@ -124,7 +120,7 @@ internal fun doReorderJars(sourceToNames: Map<Path, List<String>>,
                            sourceDir: Path,
                            targetDir: Path,
                            logger: Logger): List<PackageIndexEntry> {
-  val executor = Executors.newWorkStealingPool(if (Runtime.getRuntime().availableProcessors() > 2) 4 else 2)
+  val executor = createIoTaskExecutorPool()
 
   val results = mutableListOf<Future<PackageIndexEntry?>>()
   val errorOccurred = AtomicBoolean()

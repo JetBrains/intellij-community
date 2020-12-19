@@ -625,6 +625,7 @@ final class DistributionJARsBuilder {
 
       Path autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
       Path patchedPluginXmlDir = buildContext.paths.tempDir.resolve("patched-plugin-xml")
+      List<Map.Entry<String, Path>> toArchive = new ArrayList<>()
       for (plugin in pluginsToPublish) {
         String directory = getActualPluginDirectoryName(plugin, buildContext)
         Path targetDirectory = whiteList.contains(plugin.mainModule)
@@ -639,9 +640,12 @@ final class DistributionJARsBuilder {
           }
           pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXml.toString()))
         }
+        toArchive.add(new AbstractMap.SimpleImmutableEntry(directory, destFile))
+      }
 
-        BuildHelper.jarWithPrefix(buildContext, destFile, pluginsToPublishDir.resolve(directory), directory, compressPluginArchive)
-        buildContext.notifyArtifactBuilt(destFile.toString())
+      BuildHelper.bulkZipWithPrefix(buildContext, pluginsToPublishDir, toArchive, compressPluginArchive)
+      for (Map.Entry<String, Path> item : toArchive) {
+        buildContext.notifyArtifactWasBuilt(item.value)
       }
 
       for (PluginRepositorySpec item in KeymapPluginsBuilder.buildKeymapPlugins(buildContext, autoUploadingDir)) {
@@ -660,7 +664,7 @@ final class DistributionJARsBuilder {
 
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts.toString())
-        buildContext.notifyArtifactBuilt(nonBundledPluginsArtifacts.resolve("plugins.xml").toString())
+        buildContext.notifyArtifactWasBuilt(nonBundledPluginsArtifacts.resolve("plugins.xml"))
       }
     }
   }

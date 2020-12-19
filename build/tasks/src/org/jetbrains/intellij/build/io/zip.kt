@@ -7,6 +7,10 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.util.*
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 
@@ -56,6 +60,32 @@ fun zip(targetFile: Path, dirs: Map<Path, String>, compress: Boolean = true, add
   }
 
   logger?.info("${targetFile.fileName} created in ${formatDuration(System.currentTimeMillis() - start)}")
+}
+
+fun bulkZipWithPrefix(commonSourceDir: Path, items: List<Map.Entry<String, Path>>, compress: Boolean, logger: System.Logger) {
+  val pool = Executors.newWorkStealingPool()
+  logger.debug { "Create ${items.size} archives in parallel (commonSourceDir=$commonSourceDir)" }
+  val error = AtomicReference<Throwable>()
+  for (item in items) {
+    pool.execute {
+      if (error.get() != null) {
+        return@execute
+      }
+
+      try {
+        zip(item.value, mapOf(commonSourceDir.resolve(item.key) to item.key), compress, logger = logger)
+      }
+      catch (e: Throwable) {
+        error.compareAndSet(null, e)
+      }
+    }
+  }
+
+  pool.shutdown()
+  pool.awaitTermination(1, TimeUnit.HOURS)
+  error.get()?.let {
+    throw it
+  }
 }
 
 private fun formatDuration(value: Long): String {
@@ -123,4 +153,8 @@ private fun compressDir(startDir: Path, archiver: ZipArchiver) {
       }
     }
   }
+}
+
+internal fun createIoTaskExecutorPool(): ExecutorService {
+  return Executors.newWorkStealingPool(if (Runtime.getRuntime().availableProcessors() > 2) 4 else 2)
 }

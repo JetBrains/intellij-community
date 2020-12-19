@@ -89,7 +89,7 @@ class IntelliJCoreArtifactsBuilder {
                file: "$coreArtifactDir/README.txt")
       processCoreLayout(coreArtifactDir, new ProjectStructureMapping(), true)
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
-      buildContext.notifyArtifactBuilt(coreArtifactDir.toString())
+      buildContext.notifyArtifactWasBuilt(coreArtifactDir)
 
       new ClassVersionChecker(["": "1.8", "intellij-core-analysis-deprecated.jar": "11"]).checkVersions(buildContext, coreArtifactDir)
 

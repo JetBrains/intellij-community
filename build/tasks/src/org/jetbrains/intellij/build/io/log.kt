@@ -8,6 +8,10 @@ fun Logger.error(message: String) {
   log(Logger.Level.ERROR, null as ResourceBundle?, message)
 }
 
+fun Logger.error(error: Throwable) {
+  log(Logger.Level.ERROR, null as ResourceBundle?, error.message, error)
+}
+
 fun Logger.info(message: String) {
   log(Logger.Level.INFO, null as ResourceBundle?, message)
 }

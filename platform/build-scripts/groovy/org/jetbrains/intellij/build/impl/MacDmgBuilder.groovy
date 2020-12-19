@@ -333,7 +333,7 @@ final class MacDmgBuilder {
           include(name: '**/' + logFileName)
         }
       }
-      buildContext.notifyArtifactBuilt(new File(artifactsPath, logFileName).absolutePath)
+      buildContext.notifyArtifactWasBuilt(new File(artifactsPath, logFileName).toPath())
       buildContext.messages.error("SSH command failed, details are available in $logFileName: $e.message", e)
     }
   }

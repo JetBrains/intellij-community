@@ -199,6 +199,11 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  void notifyArtifactWasBuilt(Path artifactPath) {
+    compilationContext.notifyArtifactWasBuilt(artifactPath)
+  }
+
+  @Override
   @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
     for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
       Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
