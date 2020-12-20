@@ -57,6 +57,7 @@ public final class CpuUsageData {
     return printLongestNames(myGcTimes) + "; free " + myMemStart + " -> " + myMemEnd + " MB";
   }
 
+  @NotNull
   String getProcessCpuStats() {
     long gcTotal = myGcTimes.stream().mapToLong(p -> p.first).sum();
     return myCompilationTimeMs + "ms (" + (myCompilationTimeMs * 100 / (myProcessTimeMs == 0 ? 1000000 : myProcessTimeMs)) + "%) JITc" +
@@ -64,6 +65,7 @@ public final class CpuUsageData {
            " of " + myProcessTimeMs + "ms total";
   }
 
+  @NotNull
   public String getThreadStats() {
     return printLongestNames(myThreadTimes);
   }
@@ -74,33 +76,33 @@ public final class CpuUsageData {
     return usedAfter - usedBefore;
   }
 
-  public String getSummary(String indent) {
+  @NotNull
+  public String getSummary(@NotNull String indent) {
     return indent + "GC: " + getGcStats() + "\n" +
            indent + "Threads: " + getThreadStats() + "\n" +
            indent + "Process: " + getProcessCpuStats();
   }
 
-  boolean hasAnyActivityBesides(Thread thread) {
+  boolean hasAnyActivityBesides(@NotNull Thread thread) {
     return myCompilationTimeMs > 0 ||
            myThreadTimes.stream().anyMatch(pair -> pair.first > 0 && !pair.second.equals(thread.getName())) ||
            myGcTimes.stream().anyMatch(pair -> pair.first > 0);
   }
 
-  @NotNull PerformanceTestInfo.IterationResult getIterationResult(int expectedOnMyMachine) {
+  @NotNull
+  PerformanceTestInfo.IterationResult getIterationResult(int expectedOnMyMachine) {
     if (myCompilationTimeMs >= durationMs) {
-      // too many irrelevant activity, try again
+      // too much irrelevant activity (JITc), try again
       return PerformanceTestInfo.IterationResult.DISTRACTED;
     }
-    // ignore JIT times
-    long actualTimeMs = durationMs - myCompilationTimeMs;
-    return actualTimeMs < expectedOnMyMachine ? PerformanceTestInfo.IterationResult.ACCEPTABLE :
+    return durationMs < expectedOnMyMachine ? PerformanceTestInfo.IterationResult.ACCEPTABLE :
            // Allow 10% more in case of test machine is busy.
-           actualTimeMs < expectedOnMyMachine * 1.1 ? PerformanceTestInfo.IterationResult.BORDERLINE :
+           durationMs < expectedOnMyMachine * 1.1 ? PerformanceTestInfo.IterationResult.BORDERLINE :
            PerformanceTestInfo.IterationResult.SLOW;
   }
 
   @NotNull
-  private static String printLongestNames(List<? extends Pair<Long, String>> times) {
+  private static String printLongestNames(@NotNull List<? extends Pair<Long, String>> times) {
     String stats = StreamEx.of(times)
       .sortedBy(p -> -p.first)
       .filter(p -> p.first > 10)
@@ -111,7 +113,7 @@ public final class CpuUsageData {
   }
 
   @NotNull
-  public static <E extends Throwable> CpuUsageData measureCpuUsage(ThrowableRunnable<E> runnable) throws E {
+  public static <E extends Throwable> CpuUsageData measureCpuUsage(@NotNull ThrowableRunnable<E> runnable) throws E {
     FreeMemorySnapshot memStart = new FreeMemorySnapshot();
 
     Object2LongMap<GarbageCollectorMXBean> gcTimes = new Object2LongOpenHashMap<>();
