@@ -11,11 +11,11 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.intellij.util.lang;
+package com.intellij.util.io;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 /**
  * See MurmurHash3_x86_32 in <a
@@ -45,7 +45,7 @@ public final class Murmur3_32Hash {
     int k1 = mixK1(input);
     int h1 = mixH1(seed, k1);
 
-    return fMix(h1, Integer.BYTES);
+    return fMix(h1, 4);
   }
 
   public int hashLong(long input) {
@@ -58,7 +58,7 @@ public final class Murmur3_32Hash {
     k1 = mixK1(high);
     h1 = mixH1(h1, k1);
 
-    return fMix(h1, Long.BYTES);
+    return fMix(h1, 8);
   }
 
   public int hashUnencodedChars(CharSequence input) {
@@ -78,7 +78,7 @@ public final class Murmur3_32Hash {
       h1 ^= k1;
     }
 
-    return fMix(h1, Character.BYTES * input.length());
+    return fMix(h1, 2 * input.length());
   }
 
   public int hashString(CharSequence input, int start, int end) {
@@ -127,7 +127,7 @@ public final class Murmur3_32Hash {
         int codePoint = Character.codePointAt(input, i);
         if (codePoint == c) {
           // not a valid code point; let the JDK handle invalid Unicode
-          byte[] bytes = input.toString().getBytes(StandardCharsets.UTF_8);
+          byte[] bytes = input.toString().getBytes(Charset.forName("UTF-8") );
           return hashBytes(bytes, 0, bytes.length);
         }
         i++;

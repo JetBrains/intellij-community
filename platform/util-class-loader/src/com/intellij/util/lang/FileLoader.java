@@ -2,6 +2,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
+import com.intellij.util.io.DirectByteBufferPool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

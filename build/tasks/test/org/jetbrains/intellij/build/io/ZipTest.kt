@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.lang.zip.ImmutableZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -30,7 +29,7 @@ class ZipTest {
     val archiveFile = fsRule.fs.getPath("/archive.zip")
     zip(archiveFile, mapOf(dir to ""))
 
-    val zipFile = ImmutableZipFile.load(archiveFile)
+    val zipFile = com.intellij.util.zip.ImmutableZipFile.load(archiveFile)
     for (entry in fileDescriptors) {
       assertThat(zipFile.getEntry(entry.path).method)
         .describedAs(entry.path)
@@ -54,7 +53,7 @@ class ZipTest {
     val archiveFile = fsRule.fs.getPath("/archive.zip")
     zip(archiveFile, mapOf(dir to ""))
 
-    val zipFile = ImmutableZipFile.load(archiveFile)
+    val zipFile = com.intellij.util.zip.ImmutableZipFile.load(archiveFile)
     for (name in list) {
       assertThat(zipFile.getEntry(name)).isNotNull()
     }
@@ -76,7 +75,7 @@ class ZipTest {
     val archiveFile = fsRule.fs.getPath("/archive.zip")
     zip(archiveFile, mapOf(dir to "test"))
 
-    val zipFile = ImmutableZipFile.load(archiveFile)
+    val zipFile = com.intellij.util.zip.ImmutableZipFile.load(archiveFile)
     for (name in list) {
       assertThat(zipFile.getEntry("test/$name")).isNotNull()
     }

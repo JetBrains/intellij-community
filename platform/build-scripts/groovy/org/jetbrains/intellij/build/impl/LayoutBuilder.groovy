@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.containers.Stack
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.AntClassLoader
@@ -31,7 +30,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-
 /**
  * Use this class to pack output of modules and libraries into JARs and lay out them by directories. It delegates the actual work to
  * {@link jetbrains.antlayout.tasks.LayoutTask}.
@@ -88,23 +86,44 @@ final class LayoutBuilder {
 
   @CompileStatic(TypeCheckingMode.SKIP)
   void process(String targetDirectory, ProjectStructureMapping mapping, boolean copyFiles, @DelegatesTo(LayoutSpec) Closure data) {
-    def spec = new LayoutSpec(mapping, copyFiles)
-    //we cannot set 'spec' as delegate because 'delegate' will be overwritten by AntBuilder
-    def body = data.rehydrate(null, spec, data.thisObject)
+    process(targetDirectory, createLayoutSpec(mapping, copyFiles), data)
+  }
+
+  LayoutSpec createLayoutSpec(ProjectStructureMapping mapping, boolean copyFiles) {
+    new LayoutSpec(mapping, copyFiles, context, ant, compressJars, moduleOutputPatches)
+  }
+
+  @CompileStatic(TypeCheckingMode.SKIP)
+  void process(String targetDirectory, LayoutSpec spec, @DelegatesTo(LayoutSpec) Closure data) {
+    // we cannot set 'spec' as delegate because 'delegate' will be overwritten by AntBuilder
+    Closure body = data.rehydrate(null, spec, data.thisObject)
     body.resolveStrategy = Closure.OWNER_FIRST
     context.messages.debug("Creating layout in $targetDirectory:")
     ant.layout(toDir: targetDirectory, body)
     context.messages.debug("Finish creating layout in $targetDirectory.")
   }
 
-  final class LayoutSpec {
+  final static class LayoutSpec {
     final ProjectStructureMapping projectStructureMapping
-    final Stack<String> currentPath = new Stack<>()
-    private final boolean copyFiles
+    final Deque<String> currentPath = new ArrayDeque<>()
+    final boolean copyFiles
+    final boolean compressJars
+    private final AntBuilder ant
+    private final CompilationContext context
+    private MultiMap<String, String> moduleOutputPatches
 
-    LayoutSpec(ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
+    private LayoutSpec(ProjectStructureMapping projectStructureMapping,
+               boolean copyFiles,
+               CompilationContext context,
+               AntBuilder ant,
+               boolean compressJars,
+               MultiMap<String, String> moduleOutputPatches) {
       this.copyFiles = copyFiles
+      this.ant = ant
+      this.compressJars = compressJars
       this.projectStructureMapping = projectStructureMapping
+      this.context = context
+      this.moduleOutputPatches = moduleOutputPatches
     }
 
     /**
@@ -115,7 +134,7 @@ final class LayoutBuilder {
     void jar(String relativePath, boolean preserveDuplicates = false, boolean mergeManifests = true, Closure body) {
       String directory = PathUtilRt.getParentPath(relativePath)
       if (directory.isEmpty()) {
-        currentPath.push(relativePath)
+        currentPath.addLast(relativePath)
         if (copyFiles) {
           ant.jar(name: relativePath, compress: compressJars, duplicate: preserveDuplicates ? "preserve" : "fail",
                   filesetmanifest: mergeManifests ? "merge" : "skip", body)
@@ -123,7 +142,7 @@ final class LayoutBuilder {
         else {
           body()
         }
-        currentPath.pop()
+        currentPath.removeLast()
       }
       else {
         dir(directory) {
@@ -140,14 +159,14 @@ final class LayoutBuilder {
     void zip(String relativePath, Closure body) {
       def directory = PathUtilRt.getParentPath(relativePath)
       if (directory == "") {
-        currentPath.push(relativePath)
+        currentPath.addLast(relativePath)
         if (copyFiles) {
           ant.zip(name: relativePath, body)
         }
         else {
           body()
         }
-        currentPath.pop()
+        currentPath.removeLast()
       }
       else {
         dir(directory) {
@@ -167,14 +186,14 @@ final class LayoutBuilder {
         body()
       }
       else if (parent.empty) {
-        currentPath.push(relativePath)
+        currentPath.addLast(relativePath)
         if (copyFiles) {
           ant.dir(name: relativePath, body)
         }
         else {
           body()
         }
-        currentPath.pop()
+        currentPath.removeLast()
       }
       else {
         dir(parent) {
@@ -278,7 +297,7 @@ final class LayoutBuilder {
      **/
     @CompileStatic(TypeCheckingMode.SKIP)
     void jpsLibrary(JpsLibrary library, boolean removeVersionFromJarName = false) {
-      for (file in library.getFiles(JpsOrderRootType.COMPILED)) {
+      for (File file in library.getFiles(JpsOrderRootType.COMPILED)) {
         Matcher matcher = file.name =~ JAR_NAME_WITH_VERSION_PATTERN
         if (removeVersionFromJarName && matcher.matches()) {
           String newName = matcher.group(1) + ".jar"
@@ -324,7 +343,7 @@ final class LayoutBuilder {
       return name
     }
 
-    private void addLibraryMapping(JpsLibrary library, String outputFileName, String libraryFilePath) {
+    void addLibraryMapping(JpsLibrary library, String outputFileName, String libraryFilePath) {
       def outputFilePath = getCurrentPathString().isEmpty() ? outputFileName : getCurrentPathString() + "/" + outputFileName
       def parentReference = library.createReference().parentReference
       if (parentReference instanceof JpsModuleReference) {

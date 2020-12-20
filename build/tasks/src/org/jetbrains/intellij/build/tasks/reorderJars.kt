@@ -1,35 +1,37 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.tasks
 
-import com.google.common.hash.HashFunction
-import com.google.common.hash.Hashing
+import com.intellij.util.io.DirectByteBufferPool
+import com.intellij.util.io.Murmur3_32Hash
+import com.intellij.util.zip.ImmutableZipEntry
+import com.intellij.util.zip.ImmutableZipFile
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.io.*
 import java.lang.System.Logger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
-import java.nio.file.*
-import java.util.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.zip.ZipEntry
 import kotlin.math.min
 
 // see JarMemoryLoader.SIZE_ENTRY
 internal const val SIZE_ENTRY = "META-INF/jb/$\$size$$"
+private const val PACKAGE_INDEX_NAME = "__packageIndex__"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val excludedLibJars = java.util.Set.of("testFramework.core.jar", "testFramework.jar", "testFramework-java.jar")
 
 fun main(args: Array<String>) {
   System.setProperty("java.util.logging.SimpleFormatter.format", "%5\$s %n")
-  reorderJars(homeDir = Paths.get(args[0]),
-              targetDir = Paths.get(args[1]),
-              bootClassPathJarNames = listOf("bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"),
-              stageDir = Paths.get(args[2]),
+  reorderJars(homeDir = Path.of(args[0]),
+              targetDir = Path.of(args[1]),
+              bootClassPathJarNames = listOf("bootstrap.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"),
+              stageDir = Path.of(args[2]),
               antLibDir = null,
               platformPrefix = "idea", logger = System.getLogger(""))
 }
@@ -162,12 +164,12 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
 
   val tempJarFile = resultJarFile.resolveSibling("${resultJarFile.fileName}_reorder.jar")
 
-  val hasher = Hashing.murmur3_32()
   val classPackageHashSet: IntOpenHashSet
   val resourcePackageHashSet: IntOpenHashSet
 
-  ZipFile(Files.newByteChannel(jarFile, EnumSet.of(StandardOpenOption.READ))).use { zipFile ->
-    val entries = zipFile.entries.asSequence().toMutableList()
+  ImmutableZipFile.load(jarFile).use { zipFile ->
+    // ignore existing package index on reorder - a new one will computed even if it is the same, do not optimize for simplicity
+    val entries = zipFile.entries.asSequence().filter { it.name != PACKAGE_INDEX_NAME }.toMutableList()
     entries.sortWith(Comparator { o1, o2 ->
       val o2p = o2.name
       if ("META-INF/plugin.xml" == o2p) {
@@ -189,74 +191,18 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
     classPackageHashSet = IntOpenHashSet(min(entries.size / 4, 10))
     resourcePackageHashSet = IntOpenHashSet(min(entries.size / 4, 10))
 
-    // leave only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
-    val dirSetWithoutClassFiles = HashSet<String>()
-    for (entry in entries) {
-      val name = entry.name
-      if (!entry.isDirectory && !name.endsWith(".class") && !name.endsWith("/package.html") && name != "META-INF/MANIFEST.MF") {
-        @Suppress("DuplicatedCode")
-        var slashIndex = name.lastIndexOf('/')
-        if (slashIndex != -1) {
-          var dirName = name.substring(0, slashIndex)
-          while (dirSetWithoutClassFiles.add(dirName)) {
-            resourcePackageHashSet.add(hasher.hashString(dirName, Charsets.UTF_8).asInt())
-
-            slashIndex = dirName.lastIndexOf('/')
-            if (slashIndex == -1) {
-              break
-            }
-
-            dirName = name.substring(0, slashIndex)
-          }
-        }
-      }
-    }
+    val dirsToCreate = HashSet<String>()
+    computeDirsToCreate(entries, resourcePackageHashSet, dirsToCreate)
 
     Files.createDirectories(tempJarFile.parent)
-    (Files.newByteChannel(tempJarFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ,
-                                                  StandardOpenOption.CREATE_NEW)) as FileChannel).use { outChannel ->
+    FileChannel.open(tempJarFile, RW_CREATE_NEW).use { outChannel ->
       val zipCreator = ZipFileWriter(outChannel, deflater = null)
       zipCreator.writeUncompressedEntry(SIZE_ENTRY, 2) {
         it.putShort((orderedNames.size and 0xffff).toShort())
       }
-      for (originalEntry in entries) {
-        val name = originalEntry.name
-
-        if (originalEntry.isDirectory) {
-          if (dirSetWithoutClassFiles.isEmpty() || !dirSetWithoutClassFiles.contains(name.substring(0, name.length - 1))) {
-            continue
-          }
-
-          zipCreator.addDirEntry(name)
-        }
-        else {
-          // by intention not the whole original ZipArchiveEntry is copied,
-          // but only name, method and size are copied - that's enough and should be enough
-          zipCreator.writeEntry(name, ZipEntry.STORED, originalEntry.size.toInt(), zipFile.getInputStream(originalEntry))
-
-          if (name.endsWith(".class")) {
-            classPackageHashSet.add(getPackageNameHash(name, hasher))
-          }
-          else {
-            resourcePackageHashSet.add(getPackageNameHash(name, hasher))
-          }
-        }
-      }
-
-      zipCreator.writeUncompressedEntry("__packageIndex__",
-                                        (2 * Int.SIZE_BYTES) + ((classPackageHashSet.size + resourcePackageHashSet.size) * Int.SIZE_BYTES)) {
-        val classPackages = classPackageHashSet.toIntArray()
-        val resourcePackages = resourcePackageHashSet.toIntArray()
-        // same content for same data
-        classPackages.sort()
-        resourcePackages.sort()
-        it.putInt(classPackages.size)
-        it.putInt(resourcePackages.size)
-        val intBuffer = it.asIntBuffer()
-        intBuffer.put(classPackages)
-        intBuffer.put(resourcePackages)
-        it.position(it.position() + (intBuffer.position() * Int.SIZE_BYTES))
-      }
+      writeEntries(entries, zipCreator, zipFile, classPackageHashSet, resourcePackageHashSet)
+      writeDirs(dirsToCreate, zipCreator)
+      writePackageIndex(zipCreator, classPackageHashSet, resourcePackageHashSet)
 
       val comment = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN)
       comment.putInt(1759251304)
@@ -280,10 +226,94 @@ private fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile:
   return PackageIndexEntry(path = resultJarFile, classPackageHashSet, resourcePackageHashSet)
 }
 
-private fun getPackageNameHash(name: String, hasher: HashFunction): Int {
+internal fun writeDirs(dirsToCreate: Set<String>, zipCreator: ZipFileWriter) {
+  val list = dirsToCreate.toMutableList()
+  list.sort()
+  for (name in list) {
+    // name in our ImmutableZipEntry doesn't have ending slash
+    zipCreator.addDirEntry(if (name.endsWith('/')) name else "$name/")
+  }
+}
+
+internal fun writePackageIndex(zipCreator: ZipFileWriter,
+                               classPackageHashSet: IntOpenHashSet,
+                               resourcePackageHashSet: IntOpenHashSet) {
+  zipCreator.writeUncompressedEntry(PACKAGE_INDEX_NAME,
+                                    (2 * Int.SIZE_BYTES) + ((classPackageHashSet.size + resourcePackageHashSet.size) * Int.SIZE_BYTES)) {
+    val classPackages = classPackageHashSet.toIntArray()
+    val resourcePackages = resourcePackageHashSet.toIntArray()
+    // same content for same data
+    classPackages.sort()
+    resourcePackages.sort()
+    it.putInt(classPackages.size)
+    it.putInt(resourcePackages.size)
+    val intBuffer = it.asIntBuffer()
+    intBuffer.put(classPackages)
+    intBuffer.put(resourcePackages)
+    it.position(it.position() + (intBuffer.position() * Int.SIZE_BYTES))
+  }
+}
+
+internal fun writeEntries(entries: List<ImmutableZipEntry>,
+                          zipCreator: ZipFileWriter,
+                          sourceZipFile: ImmutableZipFile,
+                          classPackageHashSet: IntOpenHashSet,
+                          resourcePackageHashSet: IntOpenHashSet) {
+  for (entry in entries) {
+    val name = entry.name
+    if (entry.isDirectory) {
+      continue
+    }
+
+    // by intention not the whole original ZipArchiveEntry is copied,
+    // but only name, method and size are copied - that's enough and should be enough
+    val data = entry.getByteBuffer(sourceZipFile)
+    try {
+      zipCreator.writeUncompressedEntry(name, data)
+    }
+    finally {
+      DirectByteBufferPool.DEFAULT_POOL.release(data)
+    }
+
+    if (name.endsWith(".class")) {
+      classPackageHashSet.add(getPackageNameHash(name))
+    }
+    else {
+      resourcePackageHashSet.add(getPackageNameHash(name))
+    }
+  }
+}
+
+// leave only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
+internal fun computeDirsToCreate(entries: List<ImmutableZipEntry>, resourcePackageHashSet: IntOpenHashSet, result: MutableSet<String>) {
+  for (entry in entries) {
+    val name = entry.name
+    if (entry.isDirectory || name.endsWith(".class") || name.endsWith("/package.html") || name == "META-INF/MANIFEST.MF") {
+      continue
+    }
+
+    @Suppress("DuplicatedCode")
+    var slashIndex = name.lastIndexOf('/')
+    if (slashIndex != -1) {
+      var dirName = name.substring(0, slashIndex)
+      while (result.add(dirName)) {
+        resourcePackageHashSet.add(Murmur3_32Hash.MURMUR3_32.hashString(dirName, 0, dirName.length))
+
+        slashIndex = dirName.lastIndexOf('/')
+        if (slashIndex == -1) {
+          break
+        }
+
+        dirName = name.substring(0, slashIndex)
+      }
+    }
+  }
+}
+
+private fun getPackageNameHash(name: String): Int {
   val i = name.lastIndexOf('/')
   if (i == -1) {
     return 0
   }
-  return hasher.hashString(name.substring(0, i), Charsets.UTF_8).asInt()
+  return Murmur3_32Hash.MURMUR3_32.hashString(name, 0, i)
 }

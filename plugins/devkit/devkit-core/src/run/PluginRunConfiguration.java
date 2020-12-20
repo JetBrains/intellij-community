@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -43,7 +43,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
@@ -215,9 +215,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          for (String path : Arrays.asList(
-            "log4j.jar", "jdom.jar", "trove4j.jar", "openapi.jar", "util.jar",
-            "extensions.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar")) {
+          for (String path : List.of("log4j.jar", "jdom.jar", "trove4j.jar", "openapi.jar", "util.jar", "bootstrap.jar",
+                                     "idea_rt.jar", "idea.jar")) {
             params.getClassPath().add(ideaJdkHome + toSystemDependentName("/lib/" + path));
           }
         }

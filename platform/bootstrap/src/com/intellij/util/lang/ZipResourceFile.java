@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.util.lang.zip.ImmutableZipEntry;
-import com.intellij.util.lang.zip.ImmutableZipFile;
+import com.intellij.util.io.DirectByteBufferPool;
+import com.intellij.util.io.Murmur3_32Hash;
+import com.intellij.util.zip.ImmutableZipEntry;
+import com.intellij.util.zip.ImmutableZipFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

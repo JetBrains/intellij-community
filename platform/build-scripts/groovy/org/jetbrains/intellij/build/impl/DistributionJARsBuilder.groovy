@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
+import java.util.regex.Matcher
 import java.util.stream.Collectors
 import java.util.stream.Stream
 import java.util.zip.ZipEntry
@@ -166,6 +167,7 @@ final class DistributionJARsBuilder {
 
       addModule("intellij.platform.util", "util.jar")
       addModule("intellij.platform.util.rt", "util.jar")
+      addModule("intellij.platform.util.zip", "util.jar")
       addModule("intellij.platform.util.classLoader", "util.jar")
       addModule("intellij.platform.util.text.matching", "util.jar")
       addModule("intellij.platform.util.collections", "util.jar")
@@ -173,14 +175,9 @@ final class DistributionJARsBuilder {
       addModule("intellij.platform.util.diagnostic", "util.jar")
       addModule("intellij.platform.util.ui", "util.jar")
       addModule("intellij.platform.util.ex", "util.jar")
-      addModule("intellij.platform.rd.community")
-
-      addModule("intellij.platform.diagnostic")
       addModule("intellij.platform.ide.util.io", "util.jar")
+      addModule("intellij.platform.extensions", "util.jar")
 
-      addModule("intellij.platform.core.ui")
-
-      addModule("intellij.platform.credentialStore")
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
       addModule("intellij.json")
       addModule("intellij.spellchecker")
@@ -203,7 +200,6 @@ final class DistributionJARsBuilder {
 
       addModule("intellij.platform.objectSerializer.annotations")
 
-      addModule("intellij.platform.extensions")
       addModule("intellij.platform.bootstrap")
       addModule("intellij.java.guiForms.rt")
       addModule("intellij.platform.icons")
@@ -556,7 +552,8 @@ final class DistributionJARsBuilder {
   }
 
   void processLibDirectoryLayout(LayoutBuilder layoutBuilder, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
-    processLayout(layoutBuilder, platform, buildContext.paths.distAllDir, projectStructureMapping, copyFiles, platform.moduleJars,
+    processLayout(layoutBuilder, platform, buildContext.paths.distAllDir, layoutBuilder.createLayoutSpec(projectStructureMapping, copyFiles),
+                  platform.moduleJars,
                   Collections.<Pair<File, String>>emptyList())
   }
 
@@ -822,7 +819,7 @@ final class DistributionJARsBuilder {
   private void processPluginLayout(PluginLayout plugin, LayoutBuilder layoutBuilder, Path targetDir,
                                    List<Pair<File, String>> generatedResources, ProjectStructureMapping parentMapping, boolean copyFiles) {
     def mapping = new ProjectStructureMapping()
-    processLayout(layoutBuilder, plugin, targetDir, mapping, copyFiles, plugin.moduleJars, generatedResources)
+    processLayout(layoutBuilder, plugin, targetDir, layoutBuilder.createLayoutSpec(mapping, copyFiles), plugin.moduleJars, generatedResources)
     if (parentMapping != null) {
       parentMapping.mergeFrom(mapping, "plugins/${getActualPluginDirectoryName(plugin, buildContext)}")
     }
@@ -903,15 +900,17 @@ final class DistributionJARsBuilder {
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
   @CompileStatic(TypeCheckingMode.SKIP)
-  void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, Path targetDirectory,
-                     ProjectStructureMapping mapping, boolean copyFiles,
+  void processLayout(LayoutBuilder layoutBuilder,
+                     BaseLayout layout,
+                     Path targetDirectory,
+                     LayoutBuilder.LayoutSpec layoutSpec,
                      MultiMap<String, String> moduleJars,
                      List<Pair<File, String>> additionalResources) {
     AntBuilder ant = buildContext.ant
     String resourceExcluded = RESOURCES_EXCLUDED
     String resourcesIncluded = RESOURCES_INCLUDED
     BuildContext buildContext = buildContext
-    if (copyFiles) {
+    if (layoutSpec.copyFiles) {
       checkModuleExcludes(layout.moduleExcludes)
     }
     MultiMap<String, String> actualModuleJars = MultiMap.createLinked()
@@ -920,7 +919,9 @@ final class DistributionJARsBuilder {
       String jarPath = getActualModuleJarPath(entry.key, modules, layout.explicitlySetJarPaths, buildContext)
       actualModuleJars.putValues(jarPath, modules)
     }
-    layoutBuilder.process(targetDirectory.toString(), mapping, copyFiles) {
+
+    Path outputDir = targetDirectory.resolve("lib")
+    layoutBuilder.process(targetDirectory.toString(), layoutSpec) {
       dir("lib") {
         for (Map.Entry<String, Collection<String>> entry in actualModuleJars.entrySet()) {
           Collection<String> modules = entry.value
@@ -948,7 +949,7 @@ final class DistributionJARsBuilder {
             }
             for (String projectLib in layout.projectLibrariesToUnpack.get(jarPath)) {
               buildContext.project.libraryCollection.findLibrary(projectLib)?.getFiles(JpsOrderRootType.COMPILED)?.each {
-                if (copyFiles) {
+                if (layoutSpec.copyFiles) {
                   ant.zipfileset(src: it.absolutePath)
                 }
               }
@@ -982,12 +983,9 @@ final class DistributionJARsBuilder {
             }
           }
         }
-        for (libraryData in layout.includedProjectLibraries) {
-          dir(libraryData.relativeOutputPath) {
-            projectLibrary(libraryData.libraryName, layout instanceof PlatformLayout &&
-                                                    layout.projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName))
-          }
-        }
+
+        copyProjectLibraries(outputDir, layout, layoutSpec, buildContext)
+
         for (Map.Entry<String, String> entry in layout.includedArtifacts.entrySet()) {
           String artifactName = entry.key
           String relativePath = entry.value
@@ -1020,7 +1018,7 @@ final class DistributionJARsBuilder {
           }
         }
       }
-      if (copyFiles) {
+      if (layoutSpec.copyFiles) {
         for (ModuleResourceData resourceData in layout.resourcePaths) {
           String path = FileUtil.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
                                                                   resourceData.resourcePath).absolutePath)
@@ -1055,6 +1053,73 @@ final class DistributionJARsBuilder {
               ant.fileset(dir: resource.absolutePath)
             }
           }
+        }
+      }
+    }
+  }
+
+  private static void copyProjectLibraries(Path outputDir,
+                                           BaseLayout layout,
+                                           LayoutBuilder.LayoutSpec layoutSpec,
+                                           BuildContext buildContext) {
+    Map<Path, ProjectLibraryData> copiedFiles = new HashMap<>()
+    libProcessing:
+    for (ProjectLibraryData libraryData in layout.includedProjectLibraries) {
+      Path libOutputDir = outputDir
+      String relativePath = libraryData.relativeOutputPath
+      if (relativePath != null && !relativePath.isEmpty()) {
+        libOutputDir = outputDir.resolve(relativePath)
+      }
+
+      JpsLibrary library = buildContext.project.libraryCollection.findLibrary(libraryData.libraryName)
+      if (library == null) {
+        throw new IllegalArgumentException("Cannot find library ${libraryData.libraryName} in the project")
+      }
+
+      boolean removeVersionFromJarName = layout instanceof PlatformLayout &&
+                                         layout.projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName)
+      List<File> files = library.getFiles(JpsOrderRootType.COMPILED)
+      List<Path> nioFiles = new ArrayList<Path>(files.size())
+      for (File file : files) {
+        Path nioFile = file.toPath()
+        nioFiles.add(nioFile)
+        ProjectLibraryData alreadyCopiedFor = copiedFiles.putIfAbsent(nioFile, libraryData)
+        if (alreadyCopiedFor != null) {
+          throw new IllegalStateException("File $nioFile from ${library.name} is already provided by ${alreadyCopiedFor.libraryName} library")
+        }
+      }
+
+      boolean copyFiles = layoutSpec.copyFiles
+      if (copyFiles) {
+        Files.createDirectories(libOutputDir)
+        if (!removeVersionFromJarName && files.size() > 1) {
+          String mergedFilename = library.name.toLowerCase()
+          if (mergedFilename == "gradle") {
+            mergedFilename = "gradle-lib"
+          }
+          Path targetFile = outputDir.resolve(mergedFilename + ".jar")
+          BuildHelper.getInstance(buildContext).mergeJars.invokeWithArguments(targetFile, nioFiles)
+          layoutSpec.addLibraryMapping(library, targetFile.fileName.toString(), targetFile.toString())
+          continue libProcessing
+        }
+      }
+
+      for (Path file in nioFiles) {
+        Matcher matcher = file.fileName.toString() =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN
+        if (removeVersionFromJarName && matcher.matches()) {
+          String newName = matcher.group(1) + ".jar"
+          if (copyFiles) {
+            Files.copy(file, libOutputDir.resolve(newName))
+          }
+          layoutSpec.addLibraryMapping(library, newName, file.toString())
+          buildContext.messages.debug(" include $newName (renamed from $file) from library '${LayoutBuilder.LayoutSpec.getLibraryName(library)}'")
+        }
+        else {
+          if (copyFiles) {
+            Files.copy(file, libOutputDir.resolve(file.fileName))
+          }
+          layoutSpec.addLibraryMapping(library, file.fileName.toString(), file.toString())
+          buildContext.messages.debug(" include $file from library '${LayoutBuilder.LayoutSpec.getLibraryName(library)}'")
         }
       }
     }

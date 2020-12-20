@@ -89,7 +89,11 @@ final class CommunityRepositoryModules {
     "intellij.platform.debugger.impl",
     "intellij.platform.configurationStore.impl",
     "intellij.platform.serviceContainer",
-    "intellij.platform.objectSerializer"
+    "intellij.platform.objectSerializer",
+    "intellij.platform.diagnostic",
+    "intellij.platform.core.ui",
+    "intellij.platform.credentialStore",
+    "intellij.platform.rd.community"
   ]
 
   /**

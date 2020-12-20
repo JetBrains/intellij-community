@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.lang.zip;
+package com.intellij.util.zip;
 
-import com.intellij.util.lang.DirectByteBufferPool;
+import com.intellij.util.io.DirectByteBufferPool;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.EOFException;
@@ -147,6 +148,10 @@ public final class ImmutableZipEntry {
     }
   }
 
+  /**
+   * Returned buffer should be released using {@link DirectByteBufferPool#release(ByteBuffer)}
+   */
+  @ApiStatus.Internal
   public ByteBuffer getByteBuffer(@NotNull ImmutableZipFile file) throws IOException {
     if (uncompressedSize < 0) {
       throw new IOException("no data");
@@ -197,7 +202,7 @@ public final class ImmutableZipEntry {
     ByteBuffer inputBuffer;
     if (dataOffset == -1) {
       int additionalBytesToRead = 2 /* extra field length */ + nameLengthInBytes +
-                                  32 /* assume that extra data will be not more than 32 bytes */;
+                                  64 /* assume that extra data will be not more than 64 bytes */;
       inputBuffer = DirectByteBufferPool.DEFAULT_POOL.allocate(compressedSize + additionalBytesToRead);
       inputBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
@@ -206,9 +211,10 @@ public final class ImmutableZipEntry {
 
       // read actual extra field length
       int extraFieldLength = inputBuffer.getShort(0) & 0xffff;
-      if (extraFieldLength > 32) {
+      if (extraFieldLength > 64) {
         // we can re-read, but for now let's check is it needed or not to implement
-        throw new UnsupportedOperationException("extraFieldLength expected to be less than 32 bytes but " + extraFieldLength);
+        throw new UnsupportedOperationException(
+          "extraFieldLength expected to be less than 32 bytes but " + extraFieldLength + " (name=" + name + ")");
       }
 
       inputBuffer.position(2 + nameLengthInBytes + extraFieldLength);

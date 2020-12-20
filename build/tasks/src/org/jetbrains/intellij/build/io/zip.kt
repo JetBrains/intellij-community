@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
+import java.io.IOException
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
@@ -20,7 +22,7 @@ fun zip(targetFile: Path, dirs: Map<Path, String>, compress: Boolean = true, add
   // anyway, directory entry are not added
   Files.createDirectories(targetFile.parent)
   val start = System.currentTimeMillis()
-  Files.newByteChannel(targetFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)).use {
+  FileChannel.open(targetFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)).use {
     val zipCreator = ZipFileWriter(it, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null)
 
     val fileAdded: ((String) -> Unit)?
@@ -50,7 +52,7 @@ fun zip(targetFile: Path, dirs: Map<Path, String>, compress: Boolean = true, add
     for ((dir, prefix) in dirs.entries) {
       val normalizedDir = dir.toAbsolutePath().normalize()
       archiver.setRootDir(normalizedDir, prefix)
-      compressDir(normalizedDir, archiver)
+      compressDir(normalizedDir, archiver, logger)
     }
 
     if (dirNameSetToAdd.isNotEmpty()) {
@@ -122,7 +124,7 @@ private class ZipArchiver(private val method: Int, val zipCreator: ZipFileWriter
   }
 }
 
-private fun compressDir(startDir: Path, archiver: ZipArchiver) {
+private fun compressDir(startDir: Path, archiver: ZipArchiver, logger: System.Logger?) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
@@ -143,10 +145,30 @@ private fun compressDir(startDir: Path, archiver: ZipArchiver) {
     tempList.sort()
     for (file in tempList) {
       val path = file.toString()
-      if (path.endsWith(".class") || (path.length > 4 && path[path.length - 3] == '.' &&
-                                      (path.endsWith("xml") || path.endsWith("svg") || path.endsWith("png"))) ||
-          path.endsWith(".properties")) {
-        archiver.addFile(file)
+
+      val isFile: Boolean
+      val lastDot = path.lastIndexOf('.')
+      if (lastDot == -1) {
+        isFile = path.endsWith("LICENSE")
+      }
+      else {
+        // foo-1.2.3 is a directory
+        isFile = lastDot < path.length && path[lastDot + 1] >= 'A'
+      }
+
+      if (isFile) {
+        try {
+          archiver.addFile(file)
+        }
+        catch (e: IOException) {
+          if (e.message == "Is a directory") {
+            logger?.warn("$path expected to be a file, but it is a directory, please rename it")
+            dirCandidates.add(file)
+          }
+          else {
+            throw e
+          }
+        }
       }
       else {
         dirCandidates.add(file)

@@ -22,6 +22,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
@@ -88,7 +89,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void buildArtifacts(@NotNull Path winDistPath) {
     if (customizer.include32BitLauncher) {
       buildContext.executeStep("Packaging x86 JRE for $OsFamily.WINDOWS", BuildOptions.WINDOWS_JRE_FOR_X86_STEP) {
@@ -100,13 +100,15 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     Path jreDir = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (jreDir != null) {
       Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
-      if (!Files.exists(vcRtDll)) {
+      try {
+        BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
+      }
+      catch (NoSuchFileException ignore) {
         buildContext.messages.error(
           "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
           "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
           "If DLL was relocated to another place, please correct the path in this code.")
       }
-      buildContext.ant.copy(file: vcRtDll, toDir: "$winDistPath/bin")
     }
 
     if (customizer.buildZipArchive) {
@@ -136,25 +138,12 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     Path tempZip = Files.createTempDirectory(buildContext.paths.tempDir, "zip-")
     Path tempExe = Files.createTempDirectory(buildContext.paths.tempDir, "exe-")
     try {
-      buildContext.ant.exec(executable: "unzip", dir: tempZip, failOnError: true) {
-        arg(value: "-qq")
-        arg(value: zipPath)
-      }
-
-      buildContext.ant.exec(executable: "7z", dir: tempExe, failOnError: true) {
-        arg(value: "x")
-        arg(value: "-bd")
-        arg(value: exePath)
-      }
+      BuildHelper.runProcess(buildContext, List.of("unzip", "-qq", zipPath), tempZip)
+      BuildHelper.runProcess(buildContext, List.of("7z", "x", "-bd", exePath), tempExe)
       //noinspection SpellCheckingInspection
       FileUtil.delete(tempExe.resolve("\$PLUGINSDIR"))
 
-      buildContext.ant.exec(executable: "diff", failOnError: true) {
-        arg(value: "-q")
-        arg(value: "-r")
-        arg(value: tempZip.toString())
-        arg(value: tempExe.toString())
-      }
+      BuildHelper.runProcess(buildContext, List.of("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
     }
     finally {
       FileUtil.delete(tempZip)

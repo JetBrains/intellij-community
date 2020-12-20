@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -22,9 +23,13 @@ final class BuildHelper {
   private final UrlClassLoader helperClassLoader
   private final MethodHandle zipHandle
   private final MethodHandle bulkZipWithPrefixHandle
+
   private final MethodHandle runJavaHandle
+  private final MethodHandle runProcessHandle
+
   final MethodHandle brokenPluginsTask
   final MethodHandle reorderJars
+  MethodHandle mergeJars
 
   private final MethodHandle copyDirHandle
 
@@ -48,25 +53,36 @@ final class BuildHelper {
                                                 "bulkZipWithPrefix",
                                                 MethodType.methodType(voidClass, path, List.class as Class<?>, bool, logger))
 
+    Class<?> string = String.class as Class<?>
     runJavaHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ProcessKt"),
-                                      "runJava", MethodType.methodType(voidClass, String.class as Class<?>, iterable, iterable, iterable,
+                                      "runJava", MethodType.methodType(voidClass, string, iterable, iterable, iterable,
                                                                        logger))
+    runProcessHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ProcessKt"),
+                                         "runProcess", MethodType.methodType(voidClass, List.class as Class<?>, path, logger))
 
     brokenPluginsTask = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.BrokenPluginsKt"),
                                           "buildBrokenPlugins",
                                           MethodType.methodType(voidClass,
-                                                                path, String.class as Class<?>, bool, logger))
+                                                                path, string, bool, logger))
 
     reorderJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
                                                      "reorderJars",
                                                      MethodType.methodType(path,
                                                                            path, path, iterable, path,
-                                                                           String.class as Class<?>, path,
+                                                                           string, path,
                                                                            logger))
+    mergeJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MergeJarsKt"),
+                                                     "mergeJars",
+                                                     MethodType.methodType(voidClass, path, List.class as Class<?>))
   }
 
   static void copyDir(Path fromDir, Path targetDir, BuildContext buildContext) {
     getInstance(buildContext).copyDirHandle.invokeWithArguments(fromDir, targetDir)
+  }
+
+  static void copyFileToDir(Path file, Path targetDir) {
+    Files.createDirectories(targetDir)
+    Files.copy(file, targetDir.resolve(file.fileName))
   }
 
   static void moveFile(Path source, Path target) {
@@ -99,6 +115,14 @@ final class BuildHelper {
                       Iterable<String> jvmArgs,
                       Iterable<String> classPath) {
     getInstance(buildContext).runJavaHandle.invokeWithArguments(mainClass, args, jvmArgs, classPath, buildContext.messages)
+  }
+
+  static void runProcess(BuildContext buildContext, List<String> args) {
+    getInstance(buildContext).runProcessHandle.invokeWithArguments(args, null, buildContext.messages)
+  }
+
+  static void runProcess(BuildContext buildContext, List<String> args, @Nullable Path workingDir) {
+    getInstance(buildContext).runProcessHandle.invokeWithArguments(args, workingDir, buildContext.messages)
   }
 
   static BuildHelper getInstance(@NotNull BuildContext buildContext) {

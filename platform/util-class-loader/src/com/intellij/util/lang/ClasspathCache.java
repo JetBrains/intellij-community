@@ -2,6 +2,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.util.BloomFilterBase;
+import com.intellij.util.io.Murmur3_32Hash;
 import com.intellij.util.lang.fastutil.StrippedIntOpenHashSet;
 import com.intellij.util.lang.fastutil.StrippedLongOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;

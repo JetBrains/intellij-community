@@ -5,6 +5,10 @@ import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
+import java.util.*
+
+internal val RW_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ,
+                                        StandardOpenOption.CREATE_NEW)
 
 fun copyDir(sourceDir: Path, targetDir: Path) {
   Files.walkFileTree(sourceDir, CopyDirectoryVisitor(sourceDir, targetDir))

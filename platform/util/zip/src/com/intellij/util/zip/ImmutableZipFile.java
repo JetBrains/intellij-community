@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.lang.zip;
+package com.intellij.util.zip;
 
-import com.intellij.util.lang.DirectByteBufferPool;
-import com.intellij.util.lang.Murmur3_32Hash;
+import com.intellij.util.io.DirectByteBufferPool;
+import com.intellij.util.io.Murmur3_32Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +13,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
@@ -49,7 +48,7 @@ public final class ImmutableZipFile implements Closeable {
   public static @NotNull ImmutableZipFile load(@NotNull Path file, @Nullable Consumer<ByteBuffer> commentConsumer) throws IOException {
     // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
     // ability to read data without setting channel position, as setting channel position will require synchronization
-    FileChannel fileChannel = (FileChannel)Files.newByteChannel(file, EnumSet.of(StandardOpenOption.READ));
+    FileChannel fileChannel = FileChannel.open(file, EnumSet.of(StandardOpenOption.READ));
     try {
       return populateFromCentralDirectory(fileChannel, commentConsumer);
     }
@@ -204,6 +203,7 @@ public final class ImmutableZipFile implements Closeable {
       if (buffer.get((offset + nameLengthInBytes) - 1) == '/') {
         // skip directory
         uncompressedSize = -2;
+        compressedSize = -2;
         extraSuffixLength = 1;
       }
       else {

@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.lang;
+package com.intellij.util.io;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ public final class DirectByteBufferPool {
   private static final int MIN_SIZE = 2048;
   private static final int MAX_POOL_SIZE = 32;
 
-  private final ConcurrentSkipListMap<Integer, ByteBuffer> pool = new ConcurrentSkipListMap<>();
+  private final ConcurrentSkipListMap<Integer, ByteBuffer> pool = new ConcurrentSkipListMap<Integer, ByteBuffer>();
   private final AtomicInteger count = new AtomicInteger();
 
   public @NotNull ByteBuffer allocate(int requiredSize) {

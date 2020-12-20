@@ -5,16 +5,18 @@ import java.io.Closeable
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.channels.SeekableByteChannel
+import java.nio.channels.FileChannel
 import java.util.zip.ZipEntry
 
-internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) : Closeable {
+internal class ZipArchiveOutputStream(private val channel: FileChannel) : Closeable {
   private var finished = false
   private var entryCount = 0
 
   private val metadataBuffer = ByteBuffer.allocateDirect(5 * 1024 * 1024).order(ByteOrder.LITTLE_ENDIAN)
   // 128K should be enough for end of central directory record
   private val buffer = ByteBuffer.allocateDirect(16_384).order(ByteOrder.LITTLE_ENDIAN)
+
+  private val tempArray = arrayOfNulls<ByteBuffer>(2)
 
   fun addDirEntry(name: ByteArray) {
     if (finished) {
@@ -54,8 +56,8 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
     writeCentralFileHeader(0, 0, ZipEntry.STORED, 0, metadataBuffer, name, offset)
   }
 
-  @Suppress("DuplicatedCode")
-  fun addRawEntry(content: ByteBuffer, nameBytes: ByteArray, size: Int, compressedSize: Int, method: Int, crc: Long) {
+  fun writeRawEntry(header: ByteBuffer, content: ByteBuffer, name: ByteArray, size: Int, compressedSize: Int, method: Int, crc: Long) {
+    @Suppress("DuplicatedCode")
     if (finished) {
       throw IOException("Stream has already been finished")
     }
@@ -63,12 +65,34 @@ internal class ZipArchiveOutputStream(private val channel: SeekableByteChannel) 
     val offset = channel.position()
     entryCount++
     assert(method != -1)
-    if ((size >= 0xFFFFFFFFL || compressedSize >= 0xFFFFFFFFL)) {
+    if (size >= 0xFFFFFFFFL || compressedSize >= 0xFFFFFFFFL) {
+      throw UnsupportedOperationException("Entry is too big")
+    }
+
+    tempArray[0] = header
+    tempArray[1] = content
+    do {
+      channel.write(tempArray, 0, 2)
+    }
+    while (header.hasRemaining() || content.hasRemaining())
+
+    writeCentralFileHeader(size, compressedSize, method, crc, metadataBuffer, name, offset)
+  }
+
+  fun writeRawEntry(content: ByteBuffer, name: ByteArray, size: Int, compressedSize: Int, method: Int, crc: Long) {
+    if (finished) {
+      throw IOException("Stream has already been finished")
+    }
+
+    val offset = channel.position()
+    entryCount++
+    assert(method != -1)
+    if (size >= 0xFFFFFFFFL || compressedSize >= 0xFFFFFFFFL) {
       throw UnsupportedOperationException("Entry is too big")
     }
 
     writeBuffer(content)
-    writeCentralFileHeader(size, compressedSize, method, crc, metadataBuffer, nameBytes, offset)
+    writeCentralFileHeader(size, compressedSize, method, crc, metadataBuffer, name, offset)
   }
 
   fun finish(comment: ByteBuffer?) {

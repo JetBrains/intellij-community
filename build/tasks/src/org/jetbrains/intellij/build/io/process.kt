@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.io
 import java.io.File
 import java.lang.System.Logger
 import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * Executes a Java class in a forked JVM.
@@ -38,21 +39,8 @@ fun runJava(mainClass: String,
 
     val process = ProcessBuilder(processArgs).start()
 
-    Thread {
-      process.errorStream.bufferedReader().use { reader ->
-        while (true) {
-          val line = reader.readLine() ?: break
-          logger.warn(line)
-        }
-      }
-    }.start()
-
-    process.inputStream.bufferedReader().use { reader ->
-      while (true) {
-        val line = reader.readLine() ?: break
-        logger.info(line)
-      }
-    }
+    readErrorOutput(process, logger)
+    readOutputAndBlock(process, logger)
 
     val exitCode = process.waitFor()
     if (exitCode != 0) {
@@ -63,6 +51,39 @@ fun runJava(mainClass: String,
   finally {
     Files.deleteIfExists(classpathFile)
   }
+}
+
+fun runProcess(args: List<String>, workingDir: Path?, logger: Logger) {
+  logger.debug { "Execute: $args" }
+  val process = ProcessBuilder(args).directory(workingDir?.toFile()).start()
+
+  readErrorOutput(process, logger)
+  readOutputAndBlock(process, logger)
+
+  val exitCode = process.waitFor()
+  if (exitCode != 0) {
+    throw RuntimeException("Cannot execute $args (exitCode=$exitCode)")
+  }
+}
+
+private fun readOutputAndBlock(process: Process, logger: Logger) {
+  process.inputStream.bufferedReader().use { reader ->
+    while (true) {
+      val line = reader.readLine() ?: break
+      logger.info(line)
+    }
+  }
+}
+
+private fun readErrorOutput(process: Process, logger: Logger) {
+  Thread {
+    process.errorStream.bufferedReader().use { reader ->
+      while (true) {
+        val line = reader.readLine() ?: break
+        logger.warn(line)
+      }
+    }
+  }.start()
 }
 
 private fun appendArg(value: String, builder: StringBuilder) {
