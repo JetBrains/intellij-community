@@ -136,7 +136,8 @@ public final class SvgCacheManager {
       try {
         map.remove(key);
       }
-      catch (Exception ignore) {
+      catch (Exception e1) {
+        getLogger().error("Cannot remove invalid entry", e1);
       }
       return null;
     }

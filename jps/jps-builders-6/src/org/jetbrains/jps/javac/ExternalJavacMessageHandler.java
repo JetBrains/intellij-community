@@ -111,7 +111,8 @@ public class ExternalJavacMessageHandler {
             convertKind(kind),
             outputObject.hasClassName()? outputObject.getClassName() : null,
             sources,
-            myEncodingName, fileObjectContent, location
+            myEncodingName, fileObjectContent, location,
+            outputObject.getIsGenerated()
           );
 
           myOutputSink.save(fileObject);

@@ -46,6 +46,7 @@ public abstract class HintManager {
   public @interface HideFlags {}
 
   public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, @HideFlags int flags, int timeout);
+  public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, @HideFlags int flags, int timeout, @Nullable Runnable onHintHidden);
 
   public abstract void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text);
   public abstract void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, @PositionFlags short position);

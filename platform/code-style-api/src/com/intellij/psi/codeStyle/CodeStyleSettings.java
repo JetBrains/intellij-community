@@ -655,7 +655,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public void writeExternal(Element element) throws WriteExternalException {
     setVersion(element, myVersion);
     CodeStyleSettings parentSettings = new CodeStyleSettings(true, false);
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
+    DefaultJDOMExternalizer.write(this, element, new DifferenceFilter<>(this, parentSettings));
     mySoftMargins.serializeInto(element);
     myExcludedFiles.serializeInto(element);
 
@@ -1186,7 +1186,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     CodeStyleSettings defaults = getDefaults();
     ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<>(this, defaults){
       @Override
-      public boolean isAccept(@NotNull Field field) {
+      public boolean test(@NotNull Field field) {
         return field.getAnnotation(Deprecated.class) != null;
       }
     });

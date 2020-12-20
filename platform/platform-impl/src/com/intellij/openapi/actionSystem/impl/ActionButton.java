@@ -28,6 +28,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -138,14 +139,20 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void click() {
-    click(true);
+    performAction(makeClickMouseEvent());
   }
 
   /**
    * @param checkIsShowing If true, prevent action to be performed if the button is not showed.
    */
+  @TestOnly
   public void click(boolean checkIsShowing) {
-    performAction(new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false), checkIsShowing);
+    performAction(makeClickMouseEvent(), checkIsShowing);
+  }
+
+  @NotNull
+  private MouseEvent makeClickMouseEvent() {
+    return new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
   }
 
   private void performAction(MouseEvent e) {

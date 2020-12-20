@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -160,16 +159,19 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
 
 
 class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
+  @IntentionName
   private var lastOptionName = ""
   
   override fun getText(): String = getIntentionText()
 
   @IntentionName
   private fun getIntentionText(): String {
-    if (lastOptionName.startsWith("show", ignoreCase = true)) {
-      return "Do not ${lastOptionName.toLowerCase()}"
+    val optionPrefix = CodeInsightBundle.message("inlay.hints.disable.option.shortening_rule", 0)
+    val resultPrefix = CodeInsightBundle.message("inlay.hints.disable.option.shortening_rule", 1)
+    if (optionPrefix.isNotBlank() && resultPrefix.isNotBlank() && lastOptionName.startsWith(optionPrefix)) {
+      return resultPrefix + lastOptionName.substring(optionPrefix.length)
     }
-    return CodeInsightBundle.message("inlay.hints.disable.custom.option", lastOptionName)
+    return CodeInsightBundle.message("inlay.hints.disable.option", lastOptionName)
   }
   
   override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
@@ -203,10 +205,11 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
   private var lastOptionName = ""
   
   override fun getText(): String {
-    if (lastOptionName.startsWith("show", ignoreCase = true)) {
-      return lastOptionName.capitalizeFirstLetter()
+    val optionPrefix = CodeInsightBundle.message("inlay.hints.enable.option.shortening_rule").replace('|', ' ')
+    if (optionPrefix.isNotBlank() && lastOptionName.startsWith(optionPrefix)) {
+      return lastOptionName
     }
-    return CodeInsightBundle.message("inlay.hints.enable.custom.option", lastOptionName)
+    return CodeInsightBundle.message("inlay.hints.enable.option", lastOptionName)
   }
   
   override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
@@ -255,12 +258,6 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 
 class ToggleInlineHintsAction : AnAction() {
 
-  companion object {
-
-    private val disableText: @NlsActions.ActionText String = CodeInsightBundle.message("inlay.hints.disable.action.text")
-    private val enableText: @NlsActions.ActionText String = CodeInsightBundle.message("inlay.hints.enable.action.text")
-  }
-  
   override fun update(e: AnActionEvent) {
     if (!InlayParameterHintsExtension.hasAnyExtensions()) {
       e.presentation.isEnabledAndVisible = false
@@ -269,7 +266,10 @@ class ToggleInlineHintsAction : AnAction() {
 
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
     val isHintsShownNow = isParameterHintsEnabledForLanguage(file.language)
-    e.presentation.text = if (isHintsShownNow) disableText else enableText
+    e.presentation.text = if (isHintsShownNow)
+      CodeInsightBundle.message("inlay.hints.disable.action.text")
+    else
+      CodeInsightBundle.message("inlay.hints.enable.action.text")
     e.presentation.isEnabledAndVisible = true
   }
 

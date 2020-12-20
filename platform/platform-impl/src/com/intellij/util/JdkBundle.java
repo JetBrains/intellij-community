@@ -35,18 +35,15 @@ public final class JdkBundle {
     myJdk = jdk;
   }
 
-  @NotNull
-  public File getLocation() {
+  public @NotNull File getLocation() {
     return myLocation;
   }
 
-  @NotNull
-  public JavaVersion getBundleVersion() {
+  public @NotNull JavaVersion getBundleVersion() {
     return myVersionInfo.version;
   }
 
-  @NotNull
-  public Bitness getBitness() {
+  public @NotNull Bitness getBitness() {
     return myVersionInfo.bitness;
   }
 
@@ -62,13 +59,11 @@ public final class JdkBundle {
     return myJdk;
   }
 
-  @NotNull
-  public File getHome() {
+  public @NotNull File getHome() {
     return getVMExecutable().getParentFile().getParentFile();
   }
 
-  @NotNull
-  public File getVMExecutable() {
+  public @NotNull File getVMExecutable() {
     File home = myLocation;
     if (SystemInfo.isMac) {
       File contents = new File(home, "Contents/Home");
@@ -101,22 +96,18 @@ public final class JdkBundle {
     }
   }
 
-
-  @NotNull
-  public static JdkBundle createBoot() {
+  public static @NotNull JdkBundle createBoot() {
     File home = new File(SystemProperties.getJavaHome());
     JdkBundle bundle = createBundle(home, true);
     assert bundle != null : home;
     return bundle;
   }
 
-  @Nullable
-  public static JdkBundle createBundled() {
+  public static @Nullable JdkBundle createBundled() {
     return createBundle(new File(PathManager.getHomePath(), BUNDLED_JDK_DIR_NAME), false);
   }
 
-  @Nullable
-  public static JdkBundle createBundle(@NotNull File bundleHome) {
+  public static @Nullable JdkBundle createBundle(@NotNull File bundleHome) {
     return createBundle(bundleHome, false);
   }
 

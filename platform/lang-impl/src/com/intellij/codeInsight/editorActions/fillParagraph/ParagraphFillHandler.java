@@ -5,12 +5,12 @@ import com.intellij.formatting.FormatterTagHandler;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +54,14 @@ public class ParagraphFillHandler {
       document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
                              replacementText);
       final PsiFile file = element.getContainingFile();
-      final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(CodeStyle.getSettings(file), element.getLanguage());
       FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyle.getSettings(file));
       List<TextRange> enabledRanges = formatterTagHandler.getEnabledRanges(file.getNode(), TextRange.create(0, document.getTextLength()));
 
-      codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
-                                               textRange.getStartOffset(),
-                                               textRange.getStartOffset() + replacementText.length() + 1,
-                                               enabledRanges);
+      EditorFacade.getInstance().doWrapLongLinesIfNecessary(editor, element.getProject(), document,
+                                                            textRange.getStartOffset(),
+                                                            textRange.getStartOffset() + replacementText.length() + 1,
+                                                            enabledRanges,
+                                                            CodeStyle.getSettings(file).getRightMargin(element.getLanguage()));
     }, null, document);
 
   }

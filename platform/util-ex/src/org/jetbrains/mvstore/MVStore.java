@@ -139,8 +139,7 @@ MVStore:
  */
 @SuppressWarnings("TypeParameterExtendsFinalClass")
 public final class MVStore implements AutoCloseable {
-    //public static final boolean ASSERT_MODE = Boolean.getBoolean("mvstore.assert.mode");
-    public static final boolean ASSERT_MODE = true;
+    public static final boolean ASSERT_MODE = Boolean.getBoolean("mvstore.assert.mode");
 
     // id of map name to map id map
     private static final int MAP_NAME_MAP_ID = 0;
@@ -333,8 +332,6 @@ public final class MVStore implements AutoCloseable {
     private LZ4Compressor compressor;
     private LZ4FastDecompressor decompressor;
 
-    private final boolean recoveryMode;
-
     private volatile long currentVersion;
 
     /**
@@ -401,7 +398,6 @@ public final class MVStore implements AutoCloseable {
      *             occurred while opening
      */
     public MVStore(FileStore fileStore, Builder config) {
-        recoveryMode = config.recoveryMode;
         closeFileStoreClose = true;
         this.fileStore = fileStore;
 
@@ -852,7 +848,7 @@ public final class MVStore implements AutoCloseable {
                                        "The read format " + format + " is larger than the supported format " + FORMAT_READ);
         }
 
-        assumeCleanShutdown = assumeCleanShutdown && newest != null && !recoveryMode;
+        assumeCleanShutdown = assumeCleanShutdown && newest != null && !config.recoveryMode;
         if (assumeCleanShutdown) {
             assumeCleanShutdown = storeHeader.cleanShutdown;
         }
@@ -951,7 +947,7 @@ public final class MVStore implements AutoCloseable {
 
         if (!assumeCleanShutdown) {
             boolean quickRecovery = false;
-            if (!recoveryMode) {
+            if (!config.recoveryMode) {
                 // now we know, that previous shutdown did not go well and file
                 // is possibly corrupted but there is still hope for a quick
                 // recovery
@@ -2608,43 +2604,42 @@ public final class MVStore implements AutoCloseable {
             }
 
             Cache<Long, Page<?, ?>> cache = getPageCache(DataUtil.isLeafPage(pageInfo));
+            Chunk chunk = getChunk(DataUtil.getPageChunkId(pageInfo));
             if (cache == null) {
-                return doReadPage(map, pageInfo);
+                return doReadPage(map, pageInfo, chunk);
             }
             else {
                 //noinspection unchecked
-                return (Page<K, V>)cache.get(pageInfo, info -> doReadPage(map, info));
+                return (Page<K, V>)cache.get(pageInfo, info -> doReadPage(map, info, chunk));
             }
         } catch (MVStoreException e) {
-            if (recoveryMode) {
+            if (config.recoveryMode) {
                 return map.createEmptyLeaf();
             }
             throw e;
         }
     }
 
-    private @NotNull <K, V> Page<K, V> doReadPage(MVMap<K, V> map, long pageInfo) {
-        Page<K, V> page;
-        int chunkId = DataUtil.getPageChunkId(pageInfo);
-        Chunk chunk = getChunk(chunkId);
+    private @NotNull <K, V> Page<K, V> doReadPage(@NotNull MVMap<K, V> map, long pageInfo, @NotNull Chunk chunk) {
         int pageOffset = DataUtil.getPageOffset(pageInfo);
         try {
+            Page<K, V> page;
             ByteBuf buf = chunk.readBufferForPage(fileStore, pageOffset, pageInfo);
             try {
-                page = DataUtil.isLeafPage(pageInfo) ? new LeafPage<>(map, buf, pageInfo, chunkId) : new NonLeafPage<>(map, buf, pageInfo, chunkId);
+                page = DataUtil.isLeafPage(pageInfo) ? new LeafPage<>(map, buf, pageInfo, chunk.id) : new NonLeafPage<>(map, buf, pageInfo, chunk.id);
             }
             finally {
                 buf.release();
             }
             assert page.pageNo >= 0;
+            return page;
         } catch (MVStoreException e) {
             throw e;
         } catch (Exception e) {
             throw new MVStoreException(MVStoreException.ERROR_FILE_CORRUPT,
                                        "Unable to read the page (info=" + pageInfo +
-                                       ", chunk=" + chunkId + ", offset=" + pageOffset + ")", e);
+                                       ", chunk=" + chunk.id + ", offset=" + pageOffset + ")", e);
         }
-        return page;
     }
 
     private @NotNull LongArrayList getToC(Chunk chunk) {

@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -31,6 +32,8 @@ import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -267,9 +270,11 @@ class DistributionJARsBuilder {
 
   void buildJARs() {
     validateModuleStructure()
-    prebuildSVG()
-    buildOrderFiles()
-    buildSearchableOptions()
+    CompletableFuture.allOf(
+      runAsync(BuildOptions.SVGICONS_PREBUILD_STEP, { SVGPreBuilder.prebuildSVGIcons(it) }),
+      runAsync(BuildOptions.GENERATE_JAR_ORDER_STEP, { buildOrderFiles(it) }),
+      runAsync(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, { buildSearchableOptions(it) })
+    ).join()
     buildLib()
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
@@ -277,6 +282,11 @@ class DistributionJARsBuilder {
     buildNonBundledPluginsBlockMaps()
     buildThirdPartyLibrariesList()
     reorderJARs()
+  }
+
+  private CompletableFuture<Void> runAsync(String taskName, Consumer<BuildContext> consumer) {
+    BuildContext childContext = buildContext.forkForParallelTask(taskName)
+    CompletableFuture.runAsync({ consumer.accept(childContext) }, AppExecutorUtil.appExecutorService)
   }
 
   void reorderJARs() {
@@ -290,16 +300,11 @@ class DistributionJARsBuilder {
     }
   }
 
-  void prebuildSVG() {
-    def productLayout = buildContext.productProperties.productLayout
-    SVGPreBuilder.prebuildSVGIcons(buildContext, productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish)
-  }
-
   /**
    * Creates files with modules and class loading order.
    * The files are used in {@link #processOrderFiles} for creating the "classpath-order.txt" and "order.txt"
    */
-  void buildOrderFiles() {
+  static void buildOrderFiles(BuildContext buildContext) {
     buildContext.executeStep("Build jar order file", BuildOptions.GENERATE_JAR_ORDER_STEP, {
       def directory = "$buildContext.paths.temp/jarOrder"
       def modulesOrder = "$directory/modules-order.txt"
@@ -342,7 +347,7 @@ class DistributionJARsBuilder {
   /**
    * Build index which is used to search options in the Settings dialog.
    */
-  void buildSearchableOptions() {
+  void buildSearchableOptions(BuildContext buildContext) {
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def productLayout = buildContext.productProperties.productLayout
       def modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish

@@ -41,7 +41,7 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
         return;
       }
       YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getValueMetaType(value);
-      if (meta != null && meta.getField().isMany()) {
+      if (meta != null && meta.getField().hasRelationSpecificType(Field.Relation.SEQUENCE_ITEM)) {
         meta.getMetaType().validateValue(value, myProblemsHolder);
       }
     }

@@ -89,7 +89,7 @@ class NavBarModifier(onChange: () -> Unit, disposable: Disposable) {
   }
 
   fun getNewRunDebug(): AnAction? {
-    return ActionManager.getInstance().getAction("RunDebugControlAction")
+    return ActionManager.getInstance().getAction("RunDebugConfigAction")
   }
 
   fun getNewVcsGroup(): AnAction? {

@@ -519,7 +519,7 @@ public final class SearchEverywhereUIMixedResults extends SearchEverywhereUIBase
           public void setEverywhere(boolean state) {
             seManager.setEverywhere(state);
             myTabs.stream()
-              .filter(tab -> tab != SETab.this)
+              .filter(tab -> tab != SETab.this && tab.everywhereAction != null)
               .forEach(tab -> tab.everywhereAction.setEverywhere(state));
             onChanged.run();
           }

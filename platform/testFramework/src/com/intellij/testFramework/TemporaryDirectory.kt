@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
+import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.throwIfNotEmpty
@@ -102,7 +103,7 @@ class TemporaryDirectory : ExternalResource() {
 
     val errors = mutableListOf<Throwable>()
     for (i in (paths.size - 1) downTo 0) {
-      errors.catchAndStoreExceptions { paths[i] }
+      errors.catchAndStoreExceptions { paths[i].delete() }
     }
 
     paths.clear()

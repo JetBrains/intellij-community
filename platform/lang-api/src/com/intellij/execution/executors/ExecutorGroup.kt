@@ -51,7 +51,7 @@ abstract class ExecutorGroup<Settings : RunExecutorSettings> : Executor() {
     }
   }
 
-  fun childExecutors(): List<Executor> {
+  open fun childExecutors(): List<Executor> {
     return customSettingsLock.read {
       customSettings2Executor.values.toList()
     }

@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -19,7 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 class UniformIdentifierUtil {
@@ -58,8 +61,12 @@ class UniformIdentifierUtil {
       return uris;
     }
     try {
-      String uri = getUriByExtension(fileType.getDefaultExtension());
-      return uri != null ? new String[] {uri} : ArrayUtil.EMPTY_STRING_ARRAY;
+      List<String> uriList = new ArrayList<>();
+      for (String ext : OSAssociateFileTypesUtil.getExtensions(fileType)) {
+        String uri = getUriByExtension(ext);
+        if (uri != null) uriList.add(uri);
+      }
+      return ArrayUtil.toStringArray(uriList);
     }
     catch (IOException | ExecutionException e) {
       throw new OSFileAssociationException(e.getMessage());

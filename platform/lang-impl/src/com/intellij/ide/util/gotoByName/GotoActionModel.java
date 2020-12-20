@@ -526,8 +526,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @NotNull
-    public static GroupMapping createFromText(@ActionText String text) {
-      GroupMapping mapping = new GroupMapping();
+    public static GroupMapping createFromText(@ActionText String text, boolean showGroupText) {
+      GroupMapping mapping = new GroupMapping(showGroupText);
       mapping.addPath(singletonList(new DefaultActionGroup(text, false)));
       return mapping;
     }

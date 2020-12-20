@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.paths.PsiDynaReference;
@@ -193,7 +194,7 @@ public class CompletionData {
       s = ((PresentableLookupValue)object).getPresentation();
     }
     if (s == null) {
-      throw new AssertionError("Null string for object: " + object + " of class " + object.getClass());
+      throw PluginException.createByClass("Null string for object: " + object + " of " + object.getClass(), null, object.getClass());
     }
 
     LookupItem<?> item = new LookupItem<>(object, s);

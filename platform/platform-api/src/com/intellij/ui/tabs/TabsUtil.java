@@ -8,6 +8,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,7 +51,6 @@ public final class TabsUtil {
   public static int getDropSideFor(Point point, JComponent component) {
     double r = Math.max(.05, Math.min(.45, Registry.doubleValue("ide.tabbedPane.dragToSplitRatio")));
 
-    int placement = UISettings.getInstance().getState().getEditorTabPlacement();
     Dimension size = component.getSize();
     double width = size.getWidth();
     double height = size.getHeight();
@@ -82,10 +82,34 @@ public final class TabsUtil {
     rightShape.lineTo(width, height);
     rightShape.closePath();
 
-    if (placement != RIGHT && rightShape.contains(point)) return RIGHT;
-    if (placement != LEFT && leftShape.contains(point)) return LEFT;
-    if (placement != BOTTOM && bottomShape.contains(point)) return BOTTOM;
-    if (placement != TOP && topShape.contains(point)) return TOP;
-    return new Rectangle(size).contains(point) ? CENTER : -1;
+    if (rightShape.contains(point)) return RIGHT;
+    if (leftShape.contains(point)) return LEFT;
+    if (bottomShape.contains(point)) return BOTTOM;
+    if (topShape.contains(point)) return TOP;
+    return component.getBounds().contains(point) ? CENTER : -1;
+  }
+
+  @NotNull
+  public static Rectangle getDropArea(@NotNull JBTabs tabs) {
+    Rectangle r = new Rectangle(tabs.getComponent().getBounds());
+    if (tabs.getTabCount() > 0) {
+      Rectangle firstTabBounds = tabs.getTabLabel(tabs.getTabAt(0)).getBounds();
+      switch (tabs.getPresentation().getTabsPosition()) {
+        case top:
+          r.y += firstTabBounds.height;
+          r.height -= firstTabBounds.height;
+          break;
+        case left:
+          r.x += firstTabBounds.width;
+          r.width -= firstTabBounds.width;
+          break;
+        case bottom:
+          r.height -= firstTabBounds.height;
+          break;
+        case right:
+          r.width -= firstTabBounds.width;
+      }
+    }
+    return r;
   }
 }

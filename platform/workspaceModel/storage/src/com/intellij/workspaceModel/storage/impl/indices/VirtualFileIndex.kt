@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.indices
 
-import com.intellij.util.SmartList
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -17,11 +16,11 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 open class VirtualFileIndex internal constructor(
-  internal open val entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableList<VirtualFileUrlInfo>>,
-  internal open val vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>
+  internal open val entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableSet<VirtualFileUrlInfo>>,
+  internal open val vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableSet<VirtualFileUrlInfo>>
 ): VirtualFileUrlIndex {
   private lateinit var entityStorage: AbstractEntityStorage
-  constructor() : this(HashMap<EntityId, MutableList<VirtualFileUrlInfo>>(), HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>())
+  constructor() : this(HashMap<EntityId, MutableSet<VirtualFileUrlInfo>>(), HashMap<VirtualFileUrl, MutableSet<VirtualFileUrlInfo>>())
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> =
     entityId2VirtualFileUrlInfo[id]?.asSequence()?.map { it.vfu }?.toSet() ?: emptySet()
@@ -42,8 +41,8 @@ open class VirtualFileIndex internal constructor(
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrlInfo]  and [vfu2VirtualFileUrlInfo] directly! Create a dedicated method for that
     // and call [startWrite] before write.
-    override var entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableList<VirtualFileUrlInfo>>,
-    override var vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>
+    override var entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableSet<VirtualFileUrlInfo>>,
+    override var vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableSet<VirtualFileUrlInfo>>
   ) : VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo) {
 
     private var freezed = true
@@ -92,11 +91,11 @@ open class VirtualFileIndex internal constructor(
 
     private fun indexVirtualFileUrl(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl) {
       val entityProperty = VirtualFileUrlInfo(virtualFileUrl, id, propertyName)
-      val firstVfuInfos = entityId2VirtualFileUrlInfo.getOrDefault(id, SmartList())
+      val firstVfuInfos = entityId2VirtualFileUrlInfo.getOrDefault(id, HashSet())
       firstVfuInfos.add(entityProperty)
       entityId2VirtualFileUrlInfo[id] = firstVfuInfos
 
-      val secondVfuInfos = vfu2VirtualFileUrlInfo.getOrDefault(virtualFileUrl, SmartList())
+      val secondVfuInfos = vfu2VirtualFileUrlInfo.getOrDefault(virtualFileUrl, HashSet())
       secondVfuInfos.add(entityProperty)
       vfu2VirtualFileUrlInfo[virtualFileUrl] = secondVfuInfos
     }
@@ -115,9 +114,9 @@ open class VirtualFileIndex internal constructor(
       }
     }
 
-    private fun <T> copyMap(originMap: HashMap<T, MutableList<VirtualFileUrlInfo>>): HashMap<T, MutableList<VirtualFileUrlInfo>>{
-      val copiedMap = HashMap<T, MutableList<VirtualFileUrlInfo>>()
-      originMap.forEach{ (key, value) -> copiedMap[key] = ArrayList(value) }
+    private fun <T> copyMap(originMap: HashMap<T, MutableSet<VirtualFileUrlInfo>>): HashMap<T, MutableSet<VirtualFileUrlInfo>>{
+      val copiedMap = HashMap<T, MutableSet<VirtualFileUrlInfo>>()
+      originMap.forEach{ (key, value) -> copiedMap[key] = HashSet(value) }
       return copiedMap
     }
 

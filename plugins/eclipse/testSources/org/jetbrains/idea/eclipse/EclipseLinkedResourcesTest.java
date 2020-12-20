@@ -22,14 +22,6 @@ public class EclipseLinkedResourcesTest extends EclipseVarsTest{
     return "linked";
   }
 
-  public void testResolvedVars() throws Exception {
-    EclipseClasspathTest.doTest("/test", getProject());
-  }
-
-  public void testResolvedVarsInOutput() throws Exception {
-    EclipseClasspathTest.doTest("/test", getProject());
-  }
-
   public void testResolvedVarsInIml() throws Exception {
     EclipseImlTest.doTest("/test", getProject());
   }
@@ -37,12 +29,8 @@ public class EclipseLinkedResourcesTest extends EclipseVarsTest{
   public void testResolvedVarsInOutputImlCheck() throws Exception {
     EclipseImlTest.doTest("/test", getProject());
   }
-  
+
   public void testResolvedVarsInLibImlCheck() throws Exception {
     EclipseImlTest.doTest("/test", getProject());
-  }
-
-  public void testResolvedVarsInLibImlCheck1() throws Exception {
-    EclipseClasspathTest.doTest("/test", getProject());
   }
 }

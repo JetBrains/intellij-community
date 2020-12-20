@@ -346,4 +346,11 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   public void testFilterInaccessibleConstructors() { doAntiTest(); }
 
   public void testCastInToArrayCallWithUnresolvedType() { doAntiTest(); }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testNoDuplicateEmptyList() {
+    configureByTestName();
+    Lookup lookup = getLookup();
+    assertEquals(1, lookup.getItems().stream().filter(item -> item.getLookupString().equals("emptyList")).count());
+  }
 }

@@ -7,6 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * Container for all factors and pre-computed data calculated inside {@link ContextFeatureProvider}.
+ */
 public interface ContextFeatures extends UserDataHolder {
   @Nullable
   Boolean binaryValue(@NotNull String name);

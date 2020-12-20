@@ -64,7 +64,8 @@
     <!--suppress PluginXmlCapitalization -->
     <registryKey key="space.code.review.enabled"
                  defaultValue="false"
-                 description="Space Code Review"/>
+                 description="Space Code Review"
+                 restartRequired="true"/>
   </extensions>
 
   <actions>

@@ -261,6 +261,7 @@ Android Studio: exclude intellij.statsCollector */
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
+      withProjectLibrary("ktor-server-jetty")
       withGeneratedResources(new ResourcesGenerator() {
         @Override
         File generateResources(BuildContext context) {

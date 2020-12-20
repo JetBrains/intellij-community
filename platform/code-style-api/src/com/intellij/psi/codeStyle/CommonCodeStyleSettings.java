@@ -183,7 +183,7 @@ public class CommonCodeStyleSettings {
     else {
       return;
     }
-    DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
+    DefaultJDOMExternalizer.write(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     mySoftMargins.serializeInto(element);
     if (myIndentOptions != null) {
       IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
@@ -209,7 +209,7 @@ public class CommonCodeStyleSettings {
     return provider == null ? null : provider.getSupportedFields();
   }
 
-  private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
+  private static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
 
     SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
@@ -220,10 +220,10 @@ public class CommonCodeStyleSettings {
     }
 
     @Override
-    public boolean isAccept(@NotNull Field field) {
+    public boolean test(@NotNull Field field) {
       if (mySupportedFieldNames != null &&
           mySupportedFieldNames.contains(field.getName())) {
-        return super.isAccept(field);
+        return super.test(field);
       }
       return false;
     }

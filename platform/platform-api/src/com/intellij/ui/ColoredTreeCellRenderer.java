@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -51,6 +52,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
                                                       boolean hasFocus) {
     try {
       rendererComponentInner(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       try { LOG.error(e); } catch (Exception ignore) { }

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -117,7 +118,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return busyObject != null ? busyObject.getReady(requestor) : ActionCallback.DONE;
   }
 
-  private final class MyNonOpaquePanel extends JPanel implements DataProvider {
+  private final class MyNonOpaquePanel extends JBPanelWithEmptyText implements DataProvider {
     MyNonOpaquePanel() {
       super(new BorderLayout());
 

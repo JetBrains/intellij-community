@@ -35,18 +35,23 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     Assert.assertNull(context.findExisting());
 
     Disposable disposable = Disposer.newDisposable();
-    RunConfigurationProducer.EP_NAME.getPoint().registerExtension(new FakeRunConfigurationProducer(""), disposable);
-    List<RunnerAndConfigurationSettings> configs = getConfigurationsFromContext();
-    Assert.assertEquals(1, configs.size());
-    for (RunnerAndConfigurationSettings config : configs) {
-      addConfiguration(config);
+    try {
+      RunConfigurationProducer.EP_NAME.getPoint().registerExtension(new FakeRunConfigurationProducer(""), disposable);
+      List<RunnerAndConfigurationSettings> configs = getConfigurationsFromContext();
+      Assert.assertEquals(1, configs.size());
+      for (RunnerAndConfigurationSettings config : configs) {
+        addConfiguration(config);
+      }
+
+      context = ConfigurationContext.getFromContext(createDataContext());
+      RunnerAndConfigurationSettings existing = context.findExisting();
+      Assert.assertNotNull(existing);
+      Assert.assertTrue(existing.getConfiguration() instanceof FakeRunConfiguration);
+    }
+    finally {
+      Disposer.dispose(disposable);
     }
 
-    context = ConfigurationContext.getFromContext(createDataContext());
-    RunnerAndConfigurationSettings existing = Objects.requireNonNull(context.findExisting());
-    Assert.assertTrue(existing.getConfiguration() instanceof FakeRunConfiguration);
-
-    Disposer.dispose(disposable);
     context = ConfigurationContext.getFromContext(createDataContext());
     Assert.assertNull(context.findExisting());
   }
@@ -67,12 +72,14 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
 
     FakeRunConfigurationProducer.SORTING = SortingMode.NAME_ASC;
     ConfigurationContext context = ConfigurationContext.getFromContext(createDataContext());
-    RunnerAndConfigurationSettings existing = Objects.requireNonNull(context.findExisting());
+    RunnerAndConfigurationSettings existing = context.findExisting();
+    Assert.assertNotNull(existing);
     Assert.assertTrue(existing.getConfiguration().getName().startsWith("hello_"));
 
     FakeRunConfigurationProducer.SORTING = SortingMode.NAME_DESC;
     context = ConfigurationContext.getFromContext(createDataContext());
-    existing = Objects.requireNonNull(context.findExisting());
+    existing = context.findExisting();
+    Assert.assertNotNull(existing);
     Assert.assertTrue(existing.getConfiguration().getName().startsWith("world_"));
   }
 

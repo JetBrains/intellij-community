@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -15,6 +14,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
+import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
@@ -35,7 +35,7 @@ public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProv
   @NotNull
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.Properties;
+    return DevkitIcons.Gutter.Properties;
   }
 
   @Override
@@ -70,7 +70,7 @@ public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProv
       if (targets.isEmpty()) return;
 
       result.add(
-        NavigationGutterIconBuilder.create(AllIcons.FileTypes.Properties,
+        NavigationGutterIconBuilder.create(DevkitIcons.Gutter.Properties,
                                            e -> Collections.singletonList(((PsiElement)e)),
                                            e -> Collections.singletonList(new GotoRelatedItem((PsiElement)e)))
           .setTargets(targets.toList())

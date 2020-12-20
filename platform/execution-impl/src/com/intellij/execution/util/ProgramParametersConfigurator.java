@@ -33,6 +33,7 @@ import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
@@ -190,7 +191,14 @@ public class ProgramParametersConfigurator {
         ExecutionBundle.message("dialog.message.working.directory.null.for.project.module", project.getName(), project.getBasePath(),
                                 module == null ? "null" : "'" + module.getName() + "' (" + module.getModuleFilePath() + ")"));
     }
-    if (!Files.exists(Paths.get(workingDir))) {
+    boolean exists;
+    try {
+      exists = Files.exists(Paths.get(workingDir));
+    }
+    catch (InvalidPathException e) {
+      exists = false;
+    }
+    if (!exists) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("dialog.message.working.directory.doesn.t.exist", workingDir));
     }
   }

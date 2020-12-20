@@ -14,10 +14,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Actions;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-import org.jetbrains.idea.devkit.dom.Separator;
+import org.jetbrains.idea.devkit.dom.*;
 
 import java.util.List;
 
@@ -31,18 +28,20 @@ public class DescriptorI18nUtil {
 
     Actions actions = null;
     if (domElement instanceof ActionOrGroup ||
-        domElement instanceof Separator) {
+        domElement instanceof Separator ||
+        domElement instanceof OverrideText ||
+        domElement instanceof Synonym) {
       actions = DomUtil.getParentOfType(domElement, Actions.class, true);
       if (actions == null) return null;
 
-      bundleXmlElement = actions.getResourceBundle().getXmlAttributeValue();
+      bundleXmlElement = DomUtil.hasXml(actions.getResourceBundle()) ? actions.getResourceBundle().getXmlAttributeValue() : null;
     }
 
     if (bundleXmlElement == null) {
       final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(domElement, IdeaPlugin.class, true);
       if (ideaPlugin == null) return null;
 
-      bundleXmlElement = ideaPlugin.getResourceBundle().getXmlElement();
+      bundleXmlElement = DomUtil.hasXml(ideaPlugin.getResourceBundle()) ? ideaPlugin.getResourceBundle().getXmlElement() : null;
     }
 
     if (bundleXmlElement == null) {
@@ -66,7 +65,8 @@ public class DescriptorI18nUtil {
     if (ideaPlugin == null) return false;
 
     return PluginManagerCore.CORE_PLUGIN_ID.equals(ideaPlugin.getPluginId()) ||
-           PsiUtil.isIdeaProject(module.getProject()) && (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode());
+           PsiUtil.isIdeaProject(module.getProject()) &&
+           (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode());
   }
 
   private static @Nullable PropertiesFile findCoreActionsBundlePropertiesFile(@Nullable Actions actions) {

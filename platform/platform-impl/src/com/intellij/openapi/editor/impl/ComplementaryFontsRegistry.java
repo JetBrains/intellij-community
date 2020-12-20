@@ -97,8 +97,7 @@ public final class ComplementaryFontsRegistry {
       String name = font.getName();
       Integer style = FONT_NAME_TO_STYLE.get(name);
       if (style == null) {
-        if (!Patches.JDK_MAC_FONT_STYLE_BUG) continue;
-        style = getFontStyle(name);
+        continue;
       }
       if (style != Font.PLAIN) {
         String familyName = font.getFamily();

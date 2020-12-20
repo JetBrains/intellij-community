@@ -23,7 +23,8 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -37,6 +38,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +52,7 @@ public final class MacOSApplicationProvider {
   private MacOSApplicationProvider() { }
 
   public static void initApplication() {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       try {
         Worker.initMacApplication();
       }
@@ -91,13 +94,17 @@ public final class MacOSApplicationProvider {
 
       application.setOpenFileHandler(event -> {
         List<File> files = event.getFiles();
-        if (files.isEmpty()) return;
+        if (files.isEmpty()) {
+          return;
+        }
+
+        List<Path> list = ContainerUtil.map(files, file -> file.toPath());
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
           Project project = getProject(false);
-          submit("OpenFile", () -> ProjectUtil.tryOpenFileList(project, files, "MacMenu"));
+          submit("OpenFile", () -> ProjectUtil.tryOpenFiles(project, list, "MacMenu"));
         }
         else {
-          IdeStarter.openFilesOnLoading(files);
+          IdeStarter.openFilesOnLoading(list);
         }
       });
 
@@ -205,7 +212,8 @@ public final class MacOSApplicationProvider {
           }
 
           if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            IdeStarter.openFilesOnLoading(Collections.singletonList(new File(file)));
+            // handle paths like /file/foo\qwe
+            IdeStarter.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
             return;
           }
 

@@ -1,17 +1,19 @@
 <html>
 <body>
+Reports code that uses non-ASCII symbols in suspicious context.<br>
 
-This inspection warns you of the code accidentally written in the wrong encoding.<br>
-
-For example, <br>
+For example:<br>
 <ul>
-  <li>Non-ASCII characters used in the names/strings/comments or</li>
-  <li>Identifiers written in different languages
-    (e.g. when in the variable "<code>my<span color="red">C</span>ollection</code>"
-    the letter <code><span color="red">C</span></code> written in Cyrillic) or</li>
-  <li>Unicode symbols used in comments or strings
-    (e.g. long dashes and arrows in the comment
-    "<code>// a <span color="red">→</span> !a <span color="red">—</span> please note</code>")</li>
+  <li>
+    Non-ASCII characters in identifiers, strings, or comments
+  </li>
+  <li>
+    Identifiers written in different languages, such as <code>my<span color="red">C</span>ollection</code> with
+    letter <code><span color="red">C</span></code> written in Cyrillic.
+  </li>
+  <li>
+    Comments or strings containing Unicode symbols, such as long dashes and arrows
+  </li>
 </ul>
 
 </body>

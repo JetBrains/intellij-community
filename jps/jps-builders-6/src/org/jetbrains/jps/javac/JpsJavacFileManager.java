@@ -200,7 +200,11 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       }
     }
     final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
-    return new OutputFileObject(myContext, dir, fileName, file, kind, className, originatingSources == null? Collections.<URI>emptyList() : originatingSources, myEncodingName, null, location);
+    final boolean isGenerated = (sibling instanceof OutputFileObject && ((OutputFileObject)sibling).getKind() == JavaFileObject.Kind.SOURCE) /*created from generated source*/ ||
+                                myGeneratedToOriginatingMap.containsKey(className != null? className : fileName);
+    return new OutputFileObject(
+      myContext, dir, fileName, file, kind, className, originatingSources == null? Collections.<URI>emptyList() : originatingSources, myEncodingName, null, location, isGenerated
+    );
   }
 
   @Nullable

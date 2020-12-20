@@ -139,6 +139,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       .orElse(false);
   }
 
+  protected static boolean isDebugAllTasks(@Nullable GradleExecutionSettings settings) {
+    return Optional.ofNullable(settings)
+      .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_ALL_KEY))
+      .orElse(false);
+  }
+
   @Override
   public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException {
@@ -231,6 +237,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       boolean isJdk9orLater = ExternalSystemJdkUtil.isJdk9orLater(effectiveSettings.getJavaHome());
       String jvmOpt = ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + (isJdk9orLater ? "127.0.0.1:" : "") + gradleScriptDebugPort;
       effectiveSettings.withVmOption(jvmOpt);
+    }
+    if (isDebugAllTasks(effectiveSettings)) {
+      effectiveSettings.withVmOption("-Dij.gradle.debug.all=true");
     }
   }
 

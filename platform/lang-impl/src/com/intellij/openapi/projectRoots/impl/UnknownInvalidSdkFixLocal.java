@@ -2,25 +2,22 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
+class UnknownInvalidSdkFixLocal extends UnknownSdkFixActionLocalBase implements UnknownSdkFixAction {
   private @NotNull final UnknownInvalidSdk mySdk;
-  private @NotNull final Project myProject;
   private @NotNull final UnknownSdkLocalSdkFix myFix;
 
   UnknownInvalidSdkFixLocal(@NotNull UnknownInvalidSdk sdk,
-                            @NotNull Project project,
                             @NotNull UnknownSdkLocalSdkFix localSdkFix) {
     mySdk = sdk;
-    myProject = project;
     myFix = localSdkFix;
   }
 
@@ -36,6 +33,11 @@ class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
   }
 
   @Override
+  public @Nullable Sdk getRegisteredSdkPrototype() {
+    return myFix.getRegisteredSdkPrototype();
+  }
+
+  @Override
   public @NotNull @Nls String getActionDetailedText() {
     String sdkTypeName = mySdk.mySdkType.getPresentableName();
     return ProjectBundle.message("label.text.use.for.invalid.sdk",
@@ -45,24 +47,21 @@ class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
                                  mySdk.mySdk.getName());
   }
 
+  @NotNull
   @Override
-  public void applySuggestionAsync() {
-    applyLocalFix(myProject);
-  }
+  protected Sdk applyLocalFix() {
+    try {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      String sdkFixVersionString = myFix.getVersionString();
+      String sdkHome = myFix.getExistingSdkHome();
 
-  @Override
-  public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      applyLocalFix(myProject);
-    });
-  }
-
-  private void applyLocalFix(@NotNull Project project) {
-    String sdkFixVersionString = myFix.getVersionString();
-    String sdkHome = myFix.getExistingSdkHome();
-
-    mySdk.copySdk(project, sdkFixVersionString, sdkHome);
-    myFix.configureSdk(mySdk.mySdk);
+      mySdk.copySdk(sdkFixVersionString, sdkHome);
+      myFix.configureSdk(mySdk.mySdk);
+      return mySdk.mySdk;
+    } catch (Throwable t) {
+      Logger.getInstance(getClass()).warn("Failed to configure " + mySdk.getSdkType().getPresentableName() + " " + " for " + mySdk + " for path " + myFix + ". " + t.getMessage(), t);
+      throw t;
+    }
   }
 
   @Override

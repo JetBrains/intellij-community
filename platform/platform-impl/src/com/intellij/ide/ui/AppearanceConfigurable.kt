@@ -332,8 +332,18 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
 fun Cell.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): CellBuilder<ComboBox<String>> {
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
-  return comboBox(model, { getter().toString() }, { setter(getIntValue(it, defaultValue)) })
-    .applyToComponent { isEditable = true }
+  val modelBinding: PropertyBinding<String?> = PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) })
+  return component(ComboBox(model))
+    .applyToComponent {
+      isEditable = true
+      renderer = SimpleListCellRenderer.create("") { it.toString() }
+      selectedItem = modelBinding.get()
+    }
+    .withBinding(
+      { component -> component.editor.item as String? },
+      { component, value -> component.setSelectedItem(value) },
+      modelBinding
+    )
 }
 
 fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }

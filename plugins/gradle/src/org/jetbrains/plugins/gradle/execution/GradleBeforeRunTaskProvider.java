@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.execution;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTaskProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import icons.GradleIcons;
@@ -30,7 +31,7 @@ import javax.swing.*;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleBeforeRunTaskProvider extends ExternalSystemBeforeRunTaskProvider {
+public class GradleBeforeRunTaskProvider extends ExternalSystemBeforeRunTaskProvider implements DumbAware {
   public static final Key<ExternalSystemBeforeRunTask> ID = Key.create("Gradle.BeforeRunTask");
 
   public GradleBeforeRunTaskProvider(Project project) {

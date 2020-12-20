@@ -1,38 +1,58 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnknownMissingSdkFix implements UnknownSdkFix {
-  @NotNull private final Project myProject;
-  @NotNull private final String mySdkName;
-  @NotNull private final SdkType mySdkType;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
+
+final class UnknownMissingSdkFix implements UnknownSdkFix {
+  private static final Logger LOG = Logger.getInstance(UnknownMissingSdkFix.class);
+
+  @Nullable private final Project myProject;
+  @NotNull private final UnknownSdk mySdk;
   @Nullable private final UnknownSdkFixAction myAction;
 
-  public UnknownMissingSdkFix(@NotNull Project project,
-                              @NotNull String sdkName,
-                              @NotNull SdkType sdkType,
-                              @Nullable UnknownSdkFixAction action) {
+  UnknownMissingSdkFix(@Nullable Project project,
+                       @NotNull UnknownSdk unknownSdk,
+                       @Nullable UnknownSdkFixAction action) {
     myProject = project;
-    mySdkName = sdkName;
-    mySdkType = sdkType;
+    mySdk = unknownSdk;
     myAction = action;
   }
 
-  @Override
-  public @NotNull Project getProject() {
-    return myProject;
+  @NotNull
+  String getSdkNameForUi() {
+    return UnknownMissingSdk.getSdkNameForUi(mySdk);
   }
 
   @Override
-  public @NotNull SdkType getSdkType() {
-    return mySdkType;
+  public boolean isRelevantFor(@NotNull Project project) {
+    return myProject == null || project == myProject;
+  }
+
+  @Override
+  public boolean isRelevantFor(@NotNull Project project, @NotNull VirtualFile file) {
+    return isRelevantFor(project) && mySdk.getSdkType().isRelevantForFile(project, file);
+  }
+
+  private @NotNull SdkType getSdkType() {
+    return mySdk.getSdkType();
   }
 
   @Override
@@ -42,27 +62,32 @@ public class UnknownMissingSdkFix implements UnknownSdkFix {
 
   @Override
   public @Nls @NotNull String getIntentionActionText() {
-    String sdkTypeName = mySdkType.getPresentableName();
-    return ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, mySdkName);
+    String sdkTypeName = mySdk.getSdkType().getPresentableName();
+    return ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, getSdkNameForUi());
   }
 
   @Override
-  public @NotNull EditorNotificationPanel.ActionHandler getConfigureActionHandler() {
-    return UnknownSdkTracker
-      .getInstance(myProject)
-      .createSdkSelectionPopup(mySdkName, mySdkType);
+  public @NotNull EditorNotificationPanel.ActionHandler getConfigureActionHandler(@NotNull Project project) {
+    return SdkPopupFactory
+      .newBuilder()
+      .withProject(myProject)
+      .withSdkTypeFilter(type -> Objects.equals(type, mySdk.getSdkType()))
+      .onSdkSelected(sdk -> {
+        registerNewSdkInJdkTable(mySdk.getSdkName(), sdk);
+      })
+      .buildEditorNotificationPanelHandler();
   }
 
   @Override
   public @Nls @NotNull String getNotificationText() {
     String sdkTypeName = getSdkType().getPresentableName();
-    return ProjectBundle.message("notification.text.config.unknown.sdk", sdkTypeName, mySdkName);
+    return ProjectBundle.message("notification.text.config.unknown.sdk", sdkTypeName, getSdkNameForUi());
   }
 
   @Override
   public @Nls @NotNull String getSdkTypeAndNameText() {
     String sdkTypeName = getSdkType().getPresentableName();
-    return ProjectBundle.message("dialog.text.resolving.sdks.item", sdkTypeName, mySdkName);
+    return ProjectBundle.message("dialog.text.resolving.sdks.item", sdkTypeName, getSdkNameForUi());
   }
 
   @Override
@@ -72,6 +97,37 @@ public class UnknownMissingSdkFix implements UnknownSdkFix {
 
   @Override
   public String toString() {
-    return "SdkFixInfo { name: " + mySdkName + ", " + myAction + "}";
+    return "SdkFixInfo {" + mySdk + ", " + myAction + "}";
+  }
+
+  @NotNull
+  static Sdk createNewSdk(@NotNull UnknownSdk unknownSdk,
+                          @NotNull Supplier<@NotNull String> suggestedSdkName) {
+    var actualSdkName = unknownSdk.getSdkName();
+    if (actualSdkName == null) {
+      actualSdkName = suggestedSdkName.get();
+    }
+
+    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+    actualSdkName = SdkConfigurationUtil.createUniqueSdkName(actualSdkName, List.of(jdkTable.getAllJdks()));
+    return jdkTable.createSdk(actualSdkName, unknownSdk.getSdkType());
+  }
+
+  static void registerNewSdkInJdkTable(@Nullable String sdkName, @NotNull Sdk sdk) {
+    WriteAction.run(() -> {
+      ProjectJdkTable table = ProjectJdkTable.getInstance();
+      if (sdkName != null) {
+        Sdk clash = table.findJdk(sdkName);
+        if (clash != null) {
+          LOG.warn("SDK with name " + sdkName + " already exists: clash=" + clash + ", new=" + sdk);
+          return;
+        }
+        SdkModificator mod = sdk.getSdkModificator();
+        mod.setName(sdkName);
+        mod.commitChanges();
+      }
+
+      table.addJdk(sdk);
+    });
   }
 }

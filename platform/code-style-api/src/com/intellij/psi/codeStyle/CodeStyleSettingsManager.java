@@ -8,8 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -225,10 +223,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     Element result = new Element("state");
     try {
       //noinspection deprecation
-      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<>(this, new CodeStyleSettingsManager()) {
+      DefaultJDOMExternalizer.write(this, result, new DifferenceFilter<>(this, new CodeStyleSettingsManager()) {
         @Override
-        public boolean isAccept(@NotNull Field field) {
-          return !isIgnoredOnSave(field.getName()) && super.isAccept(field);
+        public boolean test(@NotNull Field field) {
+          return !isIgnoredOnSave(field.getName()) && super.test(field);
         }
       });
     }

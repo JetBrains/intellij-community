@@ -2,41 +2,43 @@
 package com.intellij.ide;
 
 import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-public final class BootstrapBundle extends AbstractBundle {
+public final class BootstrapBundle {
   private static final String BUNDLE = "messages.BootstrapBundle";
 
-  private static final @Nullable BootstrapBundle INSTANCE;
+  private static final @Nullable AbstractBundle INSTANCE;
 
   static {
-    BootstrapBundle instance = null;
+    AbstractBundle instance = null;
     try {
-      instance = new BootstrapBundle();
+      instance = new AbstractBundle(BUNDLE);
     }
     catch (Throwable ignored) { }
     INSTANCE = instance;
   }
 
   private BootstrapBundle() {
-    super(BUNDLE);
   }
 
   // used for reporting startup errors, hence must not produce any exceptions
   public static @Nls @NotNull String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (INSTANCE != null) {
       try {
-        return INSTANCE.getMessage(key, params);
+        return BundleBase.messageOrDefault(INSTANCE.getResourceBundle(BootstrapBundle.class.getClassLoader()), key, null, params);
       }
       catch (Throwable ignored) { }
     }
 
     StringBuilder sb = new StringBuilder();
     sb.append('!').append(key).append('!');
-    for (Object param : params) sb.append(param).append('!');
+    for (Object param : params) {
+      sb.append(param).append('!');
+    }
     return sb.toString();  // NON-NLS (fallback)
   }
 }

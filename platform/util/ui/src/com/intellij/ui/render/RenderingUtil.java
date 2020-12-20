@@ -20,6 +20,12 @@ public final class RenderingUtil {
   public static final Key<Boolean> ALWAYS_PAINT_SELECTION_AS_FOCUSED = Key.create("ALWAYS_PAINT_SELECTION_AS_FOCUSED");
 
   /**
+   * This key allows to paint a background of a hovered row if it is not selected.
+   */
+  @ApiStatus.Experimental
+  public static final Key<Boolean> PAINT_HOVERED_BACKGROUND = Key.create("PAINT_HOVERED_BACKGROUND");
+
+  /**
    * This key allows to paint focused selection even if a component does not have a focus.
    * Our tree table implementations use a table as a focusable sibling of a tree.
    * In such case the table colors will be used to paint the tree.

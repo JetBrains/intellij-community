@@ -418,7 +418,7 @@ public final class HardcodedContracts {
           .filter(PsiMethodCallExpression.class)
           .takeWhile(c -> {
             String name = c.getMethodExpression().getReferenceName();
-            return name != null && (name.startsWith("is") || name.equals("describedAs"));
+            return name != null && (name.startsWith("is") || name.equals("describedAs") || name.equals("as"));
           })
           .filterMap(c -> constraintFromAssertJMatcher(type, c))
           .toList();

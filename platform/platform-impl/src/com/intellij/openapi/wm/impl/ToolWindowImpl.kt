@@ -32,7 +32,9 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SingleAlarm
+import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -385,12 +387,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun getTitle(): String? {
-    EDT.assertIsEdt()
     return contentManager.value.selectedContent?.displayName
   }
 
   override fun getStripeTitle(): String {
-    EDT.assertIsEdt()
     return stripeTitle
   }
 
@@ -550,6 +550,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       }
     })
     return group
+  }
+
+  override fun getEmptyText(): StatusText? {
+    val component = contentManager.value.component
+    return (component as? ComponentWithEmptyText)?.emptyText
   }
 
   private inner class GearActionGroup : DefaultActionGroup(), DumbAware {

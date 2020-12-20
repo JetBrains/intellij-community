@@ -155,9 +155,9 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   }
 
 
-  public @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addInlineDebuggerHint(int offset,
-                                                                                         boolean insertFirst,
-                                                                                         @NotNull T renderer) {
+  public @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndDebuggerHint(int offset,
+                                                                                               boolean insertFirst,
+                                                                                               @NotNull T renderer) {
     return addAfterLineEndElement(offset, false, insertFirst, false, renderer);
   }
 

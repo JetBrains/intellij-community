@@ -24,8 +24,6 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public final class JavacMain {
-  private static final String JAVA_VERSION = System.getProperty("java.version", "");
-
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     "-d", "-classpath", "-cp", "--class-path", "-bootclasspath", "--boot-class-path"
@@ -38,8 +36,9 @@ public final class JavacMain {
   )));
 
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
-  private static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty("jps.track.ap.dependencies", "true"));
 
+  public static final String TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY = "jps.track.ap.dependencies";
+  public static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty(TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY, "true"));
 
   public static boolean compile(Collection<String> options,
                                 final Collection<? extends File> sources,
@@ -191,12 +190,24 @@ public final class JavacMain {
         }
       };
 
+      final WrappedProcessorsContainer wrappedProcessors;
+      final DiagnosticListener<JavaFileObject> diagnosticListener;
+      if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
+        // use real processor class names and not names of processor wrappers
+        wrappedProcessors = new WrappedProcessorsContainer();
+        diagnosticListener = APIWrappers.newDiagnosticListenerWrapper(diagnosticConsumer, wrappedProcessors);
+      }
+      else {
+        wrappedProcessors = null;
+        diagnosticListener = diagnosticConsumer;
+      }
+
       // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
       // do not delegate to corresponding methods of FileManager's base implementation
       // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
       final StandardJavaFileManager fm = APIWrappers.wrap(StandardJavaFileManager.class, fileManager, fileManager.getClass().getSuperclass(), fileManager.getStdManager());
       final JavaCompiler.CompilationTask task = tryInstallClientCodeWrapperCallDispatcher(compiler.getTask(
-        out, fm, diagnosticConsumer, _options, null, fileManager.setInputSources(sources)
+        out, fm, diagnosticListener, _options, null, fileManager.setInputSources(sources)
       ), fm);
 
       for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
@@ -212,6 +223,7 @@ public final class JavacMain {
       if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
         final Iterable<Processor> processors = lookupAnnotationProcessors(fileManager, getAnnotationProcessorNames(_options));
         if (processors != null) {
+          wrappedProcessors.setProcessors(processors);
           task.setProcessors(processors);
         }
       }
@@ -249,6 +261,21 @@ public final class JavacMain {
       }
     }
     return false;
+  }
+
+  private static class WrappedProcessorsContainer implements Iterable<Processor> {
+    Iterable<Processor> myDelegate;
+
+    public void setProcessors(Iterable<Processor> delegate) {
+      myDelegate = delegate;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Processor> iterator() {
+      final Iterable<Processor> delegate = myDelegate;
+      return delegate == null? Collections.<Processor>emptyList().iterator() : delegate.iterator();
+    }
   }
 
   @Nullable

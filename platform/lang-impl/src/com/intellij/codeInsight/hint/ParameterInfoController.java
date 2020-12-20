@@ -957,14 +957,22 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
       if (previousOffset == offset && !lookupPositionChanged && !hintSizeChanged) return Pair.create(previousBestPoint, previousBestPosition);
 
       final boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
-      if (pos == null) pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
+      Editor editor = myEditor;
+      if (pos == null) {
+        pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
+        // The position above is always in the host editor. If we are in an injected
+        // editor this position will likely be outside of our range and the hint position
+        // will be our range's end. To avoid that and compute hint position correctly,
+        // switch to the host editor.
+        editor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : editor;
+      }
       Pair<Point, Short> position;
 
       if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor, pos, hint, activeLookup, preferredPosition, false);
+        position = chooseBestHintPosition(editor, pos, hint, activeLookup, preferredPosition, false);
       }
       else {
-        Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
+        Point p = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.ABOVE);
         position = new Pair<>(p, HintManager.ABOVE);
       }
       previousBestPoint = position.getFirst();

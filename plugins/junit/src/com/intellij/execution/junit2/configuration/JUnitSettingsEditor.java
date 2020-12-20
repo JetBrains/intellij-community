@@ -45,7 +45,8 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     String group = JUnitBundle.message("test.group");
     VariantTagFragment<JUnitConfiguration, TestSearchScope> scopeFragment =
       VariantTagFragment.createFragment("testScope", JUnitBundle.message("search.scope.name"), group,
-                                        () -> new TestSearchScope[] { TestSearchScope.WHOLE_PROJECT, TestSearchScope.SINGLE_MODULE, TestSearchScope.MODULE_WITH_DEPENDENCIES},
+                                        () -> new TestSearchScope[]{TestSearchScope.WHOLE_PROJECT, TestSearchScope.SINGLE_MODULE,
+                                          TestSearchScope.MODULE_WITH_DEPENDENCIES},
                                         configuration -> configuration.getTestSearchScope(),
                                         (configuration, scope) -> configuration.setSearchScope(scope),
                                         configuration -> configuration.getTestSearchScope() != TestSearchScope.WHOLE_PROJECT);

@@ -38,16 +38,16 @@ import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
-import java.io.File
+import java.nio.file.Path
 import javax.swing.JOptionPane
 
 open class IdeStarter : ApplicationStarter {
   companion object {
-    private var filesToLoad: List<File> = emptyList()
+    private var filesToLoad: List<Path> = emptyList()
     private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
     @JvmStatic
-    fun openFilesOnLoading(value: List<File>) {
+    fun openFilesOnLoading(value: List<Path>) {
       filesToLoad = value
     }
 
@@ -122,7 +122,7 @@ open class IdeStarter : ApplicationStarter {
 
     val project = when {
       !needToOpenProject -> null
-      filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFileList(null, filesToLoad, "MacMenu")
+      filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
       args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
       else -> null
     }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.vfs
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -21,8 +20,7 @@ class GitIndexFileSystem : VirtualFileSystem() {
   override fun findFileByPath(path: String): VirtualFile? {
     val (project, virtualFile, filePath) = GitIndexVirtualFile.decode(path) ?: return null
 
-    project.service<GitIndexFileSystemRefresher>() // init service
-    return project.service<GitIndexVirtualFileCache>().get(virtualFile, filePath)
+    return GitIndexFileSystemRefresher.getInstance(project).getFile(virtualFile, filePath)
   }
 
   override fun refreshAndFindFileByPath(path: String): VirtualFile? = findFileByPath(path)

@@ -88,7 +88,7 @@ abstract class TargetEnvironment(
      * Returns the resulting remote path (even if it's predictable, many tests rely on specific, usually relative paths).
      */
     @Throws(IOException::class)
-    fun upload(relativePath: String, progressIndicator: ProgressIndicator): String
+    fun upload(relativePath: String, targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator): String
   }
 
   interface DownloadableVolume {  // TODO Would it be better if there is no inheritance from the upload Volume?

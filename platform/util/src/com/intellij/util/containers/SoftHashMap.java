@@ -3,7 +3,6 @@ package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.DeprecatedMethodException;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
    * Null keys are NOT allowed
    * Null values are allowed
    *
-   * @deprecated use {@link ContainerUtil#createSoftMap()} instead
+   * @deprecated use {@link CollectionFactory#createSoftMap()} instead
    */
   @Deprecated
   public SoftHashMap() {
@@ -34,25 +33,23 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
     super(initialCapacity);
   }
 
-  SoftHashMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
+  SoftHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     super(hashingStrategy);
   }
 
-
-  @NotNull
   @Override
-  protected <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
+  protected @NotNull <T> Key<T> createKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
     return new SoftKey<>(k, strategy, q);
   }
 
   private static final class SoftKey<T> extends SoftReference<T> implements Key<T> {
     private final int myHash;  /* Hash code of key, stored here since the key may be tossed by the GC */
-    @NotNull private final TObjectHashingStrategy<? super T> myStrategy;
+    @NotNull private final HashingStrategy<? super T> myStrategy;
 
-    private SoftKey(@NotNull T k, @NotNull TObjectHashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
+    private SoftKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
       super(k, q);
       myStrategy = strategy;
-      myHash = strategy.computeHashCode(k);
+      myHash = strategy.hashCode(k);
     }
 
     @Override

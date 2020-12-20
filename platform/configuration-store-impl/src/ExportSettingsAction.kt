@@ -110,6 +110,7 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 
 fun exportSettings(exportableItems: Set<ExportableItem>,
                    out: OutputStream,
+                   exportableThirdPartyFiles: Map<FileSpec, Path> = mapOf(),
                    storageManager: StateStorageManagerImpl = getAppStorageManager()) {
   val filter = HashSet<String>()
   Compressor.Zip(out)
@@ -125,6 +126,14 @@ fun exportSettings(exportableItems: Set<ExportableItem>,
             zip.addFile(item.fileSpec.relativePath, content)
           }
         }
+      }
+
+      // dotSettings file for Rider backend
+      for ((fileSpec, path) in exportableThirdPartyFiles) {
+        LOG.assertTrue(!fileSpec.isDirectory, "fileSpec should not be directory")
+        LOG.assertTrue(path.isFile(), "path should be file")
+
+        zip.addFile(fileSpec.relativePath, Files.readAllBytes(path))
       }
 
       exportInstalledPlugins(zip)

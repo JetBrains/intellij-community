@@ -149,7 +149,7 @@ public final class LoadTextUtil {
 
     for (int src = startOffset; src < endOffset; src++) {
       char c = (char)charsAsBytes[src];
-      if (c > 128) {
+      if (c >= 128) {
         result.append(UNDEFINED_CHAR);
         continue;
       }

@@ -10,8 +10,10 @@
   </action>
 
   <action id="Debug">
-    <keyboard-shortcut first-keystroke="ctrl meta D"/>
+    <keyboard-shortcut first-keystroke="shift alt D"/>
   </action>
+
+  <action id="hg4idea.QFold"/>
 
   <!--
   <action id="RecentFiles">
@@ -83,8 +85,15 @@
   </action>
 
   <action id="EvaluateExpression">
-    <keyboard-shortcut first-keystroke="meta shift L"/>
+    <keyboard-shortcut first-keystroke="meta ctrl L"/>
     <keyboard-shortcut first-keystroke="alt F8"/>
+  </action>
+
+  <action id="Vcs.MoveChangedLinesToChangelist">
+    <keyboard-shortcut first-keystroke="ctrl meta M"/>
+  </action>
+  <action id="ChangesView.Move">
+    <keyboard-shortcut first-keystroke="ctrl meta M"/>
   </action>
 
   <action id="Generate">
@@ -139,11 +148,11 @@
   </action>
 
   <action id="Run">
-    <keyboard-shortcut first-keystroke="ctrl meta R"/>
+    <keyboard-shortcut first-keystroke="alt shift R"/>
   </action>
 
   <action id="RerunTests">
-    <keyboard-shortcut first-keystroke="shift alt R"/>
+    <keyboard-shortcut first-keystroke="ctrl meta R"/>
   </action>
 
   <action id="Refactorings.QuickListPopupAction">
@@ -207,8 +216,12 @@
     <keyboard-shortcut first-keystroke="ctrl shift V"/>
   </action>
 
+  <action id="QuickImplementations">
+    <keyboard-shortcut first-keystroke="meta Y"/>
+  </action>
+
   <action id="Synchronize">
-    <keyboard-shortcut first-keystroke="meta shift Y"/>
+    <keyboard-shortcut first-keystroke="meta ctrl Y"/>
   </action>
 
   <action id="CopyElement">
@@ -431,4 +444,13 @@
     <keyboard-shortcut first-keystroke="meta F2"/>
   </action>
 
+  <action id="CommentByBlockComment">
+    <keyboard-shortcut first-keystroke="meta alt SLASH"/>
+    <keyboard-shortcut first-keystroke="meta alt DIVIDE"/>
+    <keyboard-shortcut first-keystroke="control shift SLASH"/>
+    <keyboard-shortcut first-keystroke="control shift DIVIDE"/>
+  </action>
+
+  <action id="EditorLookupUp"/>
+  <action id="EditorLookupDown"/>
 </keymap>

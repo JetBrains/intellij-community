@@ -15,8 +15,6 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
  * @author ilyas
  */
 public class GroovyElementType extends IElementType {
-
-  private final String myDebugName;
   private final boolean myLeftBound;
 
   public GroovyElementType(@NonNls String debugName) {
@@ -25,12 +23,7 @@ public class GroovyElementType extends IElementType {
 
   public GroovyElementType(String debugName, boolean boundToLeft) {
     super(debugName, GroovyLanguage.INSTANCE);
-    myDebugName = debugName;
     myLeftBound = boundToLeft;
-  }
-
-  public String toString() {
-    return myDebugName;
   }
 
   @Override

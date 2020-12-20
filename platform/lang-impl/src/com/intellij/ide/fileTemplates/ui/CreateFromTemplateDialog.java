@@ -129,21 +129,27 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
   private void doCreate(@Nullable String fileName)  {
     try {
-      String newName = fileName;
-      PsiDirectory directory = myDirectory;
-      if (fileName != null) {
-        final String finalFileName = fileName;
-        CreateFileAction.MkDirs mkDirs =
-          WriteAction.compute(() -> new CreateFileAction.MkDirs(finalFileName, myDirectory));
-        newName = mkDirs.newName;
-        directory = mkDirs.directory;
+      for (FileTemplate child : myTemplate.getChildren()) {
+        String childName = FileTemplateUtil.mergeTemplate(myDefaultProperties, child.getFileName(), false);
+        createFile(childName, child);
       }
-      Properties properties = myAttrPanel.getProperties(myDefaultProperties);
-      myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, newName, properties, directory);
+      myCreatedElement = createFile(fileName, myTemplate);
     }
     catch (Exception e) {
       showErrorDialog(e);
     }
+  }
+
+  private @NotNull PsiElement createFile(@Nullable String fileName, @NotNull FileTemplate template) throws Exception {
+    String newName = fileName;
+    PsiDirectory directory = myDirectory;
+    if (fileName != null) {
+      CreateFileAction.MkDirs mkDirs = WriteAction.compute(() -> new CreateFileAction.MkDirs(fileName, myDirectory));
+      newName = mkDirs.newName;
+      directory = mkDirs.directory;
+    }
+    Properties properties = myAttrPanel.getProperties(myDefaultProperties);
+    return FileTemplateUtil.createFromTemplate(template, newName, properties, directory);
   }
 
   public Properties getEnteredProperties() {

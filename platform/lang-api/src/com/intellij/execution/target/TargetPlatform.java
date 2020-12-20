@@ -13,6 +13,10 @@ public class TargetPlatform {
   @NotNull private final Platform myPlatform;
   @NotNull private final Arch myArch;
 
+  public TargetPlatform() {
+    this(CURRENT.getPlatform(), CURRENT.getArch());
+  }
+
   public TargetPlatform(@NotNull Platform platform, @NotNull Arch arch) {
     myPlatform = platform;
     myArch = arch;

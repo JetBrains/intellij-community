@@ -102,6 +102,10 @@ public interface FileTemplate extends Cloneable {
 
   void setLiveTemplateEnabled(boolean value);
 
+  default FileTemplate @NotNull[] getChildren() { return EMPTY_ARRAY; }
+
+  default void setChildren(FileTemplate @NotNull[] children) {}
+
   @NotNull
   FileTemplate clone();
 

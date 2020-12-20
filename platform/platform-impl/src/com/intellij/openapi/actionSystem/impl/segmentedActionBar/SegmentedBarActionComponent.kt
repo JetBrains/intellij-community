@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.project.DumbAware
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.util.*
@@ -14,7 +15,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
 
-open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
+open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, DumbAware {
   enum class ControlBarProperty {
     FIRST,
     LAST,
@@ -191,7 +192,6 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
       }
     }.apply {
       component.isOpaque = false
-      setHideDisabled(true)
     }
     bar = tb
   }

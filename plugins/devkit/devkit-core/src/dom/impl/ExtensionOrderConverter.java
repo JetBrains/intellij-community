@@ -22,7 +22,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +38,7 @@ import java.util.*;
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPoint;
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPointAndId;
 
-public class ExtensionOrderConverter implements CustomReferenceConverter<String> {
+public final class ExtensionOrderConverter implements CustomReferenceConverter<String> {
   private static final Logger LOG = Logger.getInstance(ExtensionOrderConverter.class);
 
   @Override
@@ -118,7 +117,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
   }
 
   private static List<TextRange> getWordIndicesInOrderPart(String orderPart) {
-    return StringUtil.getWordIndicesIn(orderPart, ContainerUtil.set(' ', ':'));
+    return StringUtil.getWordIndicesIn(orderPart, Set.of(' ', ':'));
   }
 
   private static boolean isBeforeOrAfterKeyword(String str) {

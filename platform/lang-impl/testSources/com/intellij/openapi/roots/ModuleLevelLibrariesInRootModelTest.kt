@@ -41,6 +41,7 @@ class ModuleLevelLibrariesInRootModelTest {
     run {
       val model = createModifiableModel(module)
       val library = model.moduleLibraryTable.createLibrary() as LibraryEx
+      assertThat(library.presentableName).isEqualTo("Empty Library")
       assertThat(model.moduleLibraryTable.libraries.single()).isEqualTo(library)
       val libraryEntry = getSingleLibraryOrderEntry(model)
       assertThat(libraryEntry.ownerModule).isEqualTo(module)
@@ -77,6 +78,7 @@ class ModuleLevelLibrariesInRootModelTest {
       val libraryEntryForUncommitted = getSingleLibraryOrderEntry(model)
       assertThat(libraryEntryForUncommitted.getFiles(OrderRootType.CLASSES)).isEmpty()
       libraryModel.commit()
+      assertThat(library.presentableName).isEqualTo("lib")
       val libraryEntry = getSingleLibraryOrderEntry(model)
       assertThat(libraryEntry.getFiles(OrderRootType.CLASSES).single()).isEqualTo(root)
       assertThat(libraryEntry.presentableName).isEqualTo(root.presentableUrl)

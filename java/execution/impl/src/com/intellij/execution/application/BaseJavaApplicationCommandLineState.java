@@ -16,7 +16,6 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,9 +52,9 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
                                               @Nullable TargetEnvironmentConfiguration configuration,
-                                              @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+                                              @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
     prepareRemoteConnection(request, configuration);
-    super.prepareTargetEnvironmentRequest(request, configuration, progressIndicator);
+    super.prepareTargetEnvironmentRequest(request, configuration, targetProgressIndicator);
     TargetEnvironment.TargetPortBinding portRequest = myDebuggerPortRequest;
     if (portRequest != null) {
       Objects.requireNonNull(request).getTargetPortBindings().add(portRequest);
@@ -63,9 +62,10 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   @Override
-  public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator progressIndicator) {
+  public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment,
+                                             @NotNull TargetProgressIndicator targetProgressIndicator) {
     // TODO Should the debugger initialization be moved into the super class?
-    super.handleCreatedTargetEnvironment(environment, progressIndicator);
+    super.handleCreatedTargetEnvironment(environment, targetProgressIndicator);
     TargetEnvironment.TargetPortBinding portRequest = myDebuggerPortRequest;
     if (portRequest != null) {
       setRemoteConnectionPort(environment.getTargetPortBindings().get(portRequest));
@@ -177,8 +177,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
 
-    EmptyProgressIndicator environmentIndicator = new EmptyProgressIndicator();
-    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, environmentIndicator);
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());

@@ -2,12 +2,6 @@
 <project version="4">
   <component name="JavaProjectCodeInsightSettings">
     <excluded-names>
-      <name>android</name>
-      <name>com.android.annotations.Nullable</name>
-      <name>com.google.android</name>
-      <name>com.google.api.client.repackaged</name>
-      <name>com.google.api.client.util</name>
-      <name>com.sun</name>
       <name>com.intellij.util.containers.HashMap</name>
       <name>com.intellij.util.containers.HashSet</name>
       <name>com.intellij.util.containers.hash.HashMap</name>
@@ -19,10 +13,8 @@
       <name>io.netty.util.concurrent.Promise</name>
       <name>io.netty.util.internal</name>
       <name>java.awt.List</name>
-      <name>javax.annotation.Nullable</name>
-      <name>javax.annotation.RegEx</name>
+      <name>jdk.internal</name>
       <name>kotlin.reflect.jvm.internal</name>
-      <name>org.gradle.api.Nullable</name>
       <name>org.jetbrains.concurrency.InternalPromiseUtil</name>
       <name>sun.reflect.generics.reflectiveObjects.NotImplementedException</name>
     </excluded-names>

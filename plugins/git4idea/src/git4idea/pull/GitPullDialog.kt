@@ -220,7 +220,7 @@ class GitPullDialog(private val project: Project,
 
   private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
                                                             GitBundle.message("pull.options.modify.popup.title"),
-                                                            getOptions(),
+                                                            ::getOptions,
                                                             OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
                                                             ::optionChosen,
                                                             ::isOptionEnabled)

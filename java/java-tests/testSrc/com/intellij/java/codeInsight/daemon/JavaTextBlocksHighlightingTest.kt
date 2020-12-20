@@ -11,6 +11,7 @@ class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testTextBlocks() = doTest()
   fun testUnclosedTextBlock() = doTest()
+  fun testUnclosedTextBlock2() = doTest()
 
   fun testTextBlockOpeningSpaces() {
     myFixture.configureByText("${getTestName(false)}.java", "class C {\n  String spaces = \"\"\" \t \u000C \n    \"\"\";\n}")

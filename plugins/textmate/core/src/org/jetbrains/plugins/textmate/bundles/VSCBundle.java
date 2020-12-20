@@ -120,7 +120,7 @@ public class VSCBundle extends Bundle {
         }
       }
     }
-    catch (FileNotFoundException ignored) {
+    catch (FileNotFoundException | JsonSyntaxException ignored) {
     }
   }
 

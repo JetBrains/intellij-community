@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -64,23 +65,25 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener {
   }
 
   public void installCompletion(EditorTextField field) {
-    new TextFieldCompletionProvider() {
-      @Override
-      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
-        final String className = getClassName();
-        if (className.trim().length() == 0) {
-          return;
-        }
-        final PsiClass testClass = getModuleSelector().findClass(className);
-        if (testClass == null) return;
-        final Condition<PsiMethod> filter = getFilter(testClass);
-        for (PsiMethod psiMethod : testClass.getAllMethods()) {
-          if (filter.value(psiMethod)) {
-            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
-          }
+    new MyTextFieldCompletionProvider().apply(field);
+  }
+
+  private class MyTextFieldCompletionProvider extends TextFieldCompletionProvider implements DumbAware {
+    @Override
+    protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+      final String className = getClassName();
+      if (className.trim().length() == 0) {
+        return;
+      }
+      final PsiClass testClass = getModuleSelector().findClass(className);
+      if (testClass == null) return;
+      final Condition<PsiMethod> filter = getFilter(testClass);
+      for (PsiMethod psiMethod : testClass.getAllMethods()) {
+        if (filter.value(psiMethod)) {
+          result.addElement(LookupElementBuilder.create(psiMethod.getName()));
         }
       }
-    }.apply(field);
+    }
   }
 
 }

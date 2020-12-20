@@ -55,7 +55,8 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
   private boolean isActivateToolWindow() {
     RunnerAndConfigurationSettings settings = RunManager.getInstance(myProject).findSettings(myRunConfiguration);
-    return settings != null && settings.isActivateToolWindowBeforeRun();
+    if (settings == null) return true;
+    return settings.isActivateToolWindowBeforeRun();
   }
 
   private ExecutionResult buildExecutionResult() throws ExecutionException {

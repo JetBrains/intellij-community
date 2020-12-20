@@ -33,7 +33,7 @@ public final class UnknownSdkEditorPanel extends EditorNotificationPanel {
     if (myAction != null) {
       HyperlinkLabel label = createActionLabel(myAction.getActionShortText(), () -> {
         if (!myIsRunning.compareAndSet(false, true)) return;
-        myAction.applySuggestionAsync();
+        myAction.applySuggestionAsync(project);
       }, true);
 
       String tooltip = myAction.getActionTooltipText();
@@ -41,7 +41,7 @@ public final class UnknownSdkEditorPanel extends EditorNotificationPanel {
     }
 
     createActionLabel(myFix.getConfigureActionText(), new EditorNotificationPanel.ActionHandler() {
-      private final ActionHandler handler = myFix.getConfigureActionHandler();
+      private final ActionHandler handler = myFix.getConfigureActionHandler(project);
 
       @Override
       public void handlePanelActionClick(@NotNull EditorNotificationPanel panel, @NotNull HyperlinkEvent event) {

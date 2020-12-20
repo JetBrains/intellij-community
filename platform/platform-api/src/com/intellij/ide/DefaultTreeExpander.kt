@@ -9,7 +9,7 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
   constructor(tree: JTree) : this({ tree })
 
 
-  override fun canExpand() = supplier()?.let { canCollapse(it) } ?: false
+  override fun canExpand() = supplier()?.let { canExpand(it) } ?: false
 
   protected open fun canExpand(tree: JTree) = isEnabled(tree)
 

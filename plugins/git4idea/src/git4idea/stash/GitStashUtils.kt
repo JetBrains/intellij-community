@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitCommit
 import git4idea.GitUtil
 import git4idea.commands.*
@@ -55,7 +56,7 @@ fun unstash(project: Project,
       val result = Git.getInstance().runCommand { handler }
 
       val changesInStash = hash?.run { loadChangesInStash(project, root, hash) }
-      GitUtil.refreshVfs(root, changesInStash)
+      GitUtil.refreshVfs(root, changesInStash?.flatten())
 
       if (conflictDetector.hasHappened()) {
         val conflictsResolved = conflictResolver.merge()
@@ -79,12 +80,13 @@ fun unstash(project: Project,
   }
 }
 
-private fun loadChangesInStash(project: Project, root: VirtualFile, hash: Hash): Collection<Change>? {
+private fun loadChangesInStash(project: Project, root: VirtualFile, hash: Hash): List<Collection<Change>>? {
   return try {
     val consumer = CollectConsumer<GitCommit>()
     GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()),
                                         GitCommitRequirements(false, NO_RENAMES, DIFF_TO_PARENTS), consumer)
-    return consumer.result.first().changes
+    val stashCommit = consumer.result.first()
+    return (0 until stashCommit.parents.size).map { stashCommit.getChanges(it) }
   }
   catch (e: Exception) {
     LOG.warn("Couldn't load changes in root [$root] in stash resolved to [$hash]" , e)
@@ -105,22 +107,24 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
 
   val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
   h.setSilent(true)
-  h.addParameters("list")
+  h.addParameters("list", "--pretty=format:%H:%gd:%s")
   h.charset = charset
   val output = Git.getInstance().runCommand(h)
   output.throwOnError()
 
   val result = mutableListOf<StashInfo>()
   for (line in output.output) {
-    val parts = line.split(':', limit = 3);
-    if (parts.size < 2) {
-      logger<GitUtil>().error("Can't parse stash record: ${line}")
-    }
-    else if (parts.size == 2) {
-      result.add(StashInfo(parts[0], null, parts[1].trim()))
-    }
-    else {
-      result.add(StashInfo(parts[0], parts[1].trim(), parts[2].trim()))
+    val parts = line.split(':', limit = 4);
+    when {
+      parts.size < 3 -> {
+        logger<GitUtil>().error("Can't parse stash record: ${line}")
+      }
+      parts.size == 3 -> {
+        result.add(StashInfo(root, HashImpl.build(parts[0]), parts[1], null, parts[2].trim()))
+      }
+      else -> {
+        result.add(StashInfo(root, HashImpl.build(parts[0]), parts[1], parts[2].trim(), parts[3].trim()))
+      }
     }
   }
   return result

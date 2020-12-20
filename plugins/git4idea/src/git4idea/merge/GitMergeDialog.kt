@@ -360,7 +360,7 @@ class GitMergeDialog(private val project: Project,
 
   private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
                                                             GitBundle.message("merge.options.modify.popup.title"),
-                                                            getOptions(),
+                                                            ::getOptions,
                                                             OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
                                                             ::optionChosen,
                                                             ::isOptionEnabled)

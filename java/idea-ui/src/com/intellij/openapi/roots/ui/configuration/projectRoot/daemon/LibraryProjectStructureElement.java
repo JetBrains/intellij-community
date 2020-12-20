@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -144,9 +143,9 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final String name = Objects.toString(myLibrary.getName());
     final String libraryName = HtmlChunk.link("http://library/" + name, name).toString();
 
-    @Nls final String result = JavaUiBundle.message("library.0.is.not.used", libraryName);
-    return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml(result),
-                                                  (HtmlChunk) null,
+    final String result = JavaUiBundle.message("library.0.is.not.used", libraryName);
+    return new ProjectStructureProblemDescription(result,
+                                                  HtmlChunk.empty(),
                                                   createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"),
                                                   ProjectStructureProblemDescription.ProblemLevel.PROJECT,

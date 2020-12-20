@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * @author peter
  */
 public final class StaticGenericInfoBuilder {
-  private static final Set<Class<?>> ADDER_PARAMETER_TYPES = ContainerUtil.set(Class.class, int.class);
+  private static final Set<Class<?>> ADDER_PARAMETER_TYPES = Set.of(Class.class, int.class);
   private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);
   private final Class myClass;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<>();

@@ -10,7 +10,6 @@ import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -31,8 +30,8 @@ import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.NodeKind
+import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.index.vfs.GitIndexVirtualFile
-import git4idea.index.vfs.GitIndexVirtualFileCache
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
@@ -109,7 +108,7 @@ private fun headContentBytes(project: Project, root: VirtualFile, status: GitFil
 @Throws(VcsException::class)
 private fun stagedContentFile(project: Project, root: VirtualFile, statusNode: GitFileStatus): VirtualFile {
   val filePath = statusNode.path(ContentVersion.STAGED)
-  return project.service<GitIndexVirtualFileCache>().get(root, filePath)
+  return GitIndexFileSystemRefresher.getInstance(project).getFile(root, filePath)
 }
 
 private class UnStagedProducer constructor(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {

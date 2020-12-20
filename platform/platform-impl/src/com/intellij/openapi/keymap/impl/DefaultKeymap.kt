@@ -35,7 +35,7 @@ open class DefaultKeymap {
 
   init {
     val filterKeymaps = !ApplicationManager.getApplication().isHeadlessEnvironment
-                        //&& Registry.`is`("keymap.current.os.only")
+                        && System.getProperty("keymap.current.os.only", "true").toBoolean()
     val filteredBeans = mutableListOf<BundledKeymapBean>()
 
     var macosParentKeymapFound = false

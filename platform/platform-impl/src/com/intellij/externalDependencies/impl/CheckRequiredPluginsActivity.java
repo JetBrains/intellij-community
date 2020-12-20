@@ -42,7 +42,6 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
   public void runActivity(@NotNull Project project) {
     // will trigger 'loadState' and run check if required plugins are specified
     ExternalDependenciesManager.getInstance(project);
-    ProjectPluginTracker.getInstance(project);
   }
 
   public static void runCheck(@NotNull Project project, @NotNull ExternalDependenciesManager dependencyManager) {

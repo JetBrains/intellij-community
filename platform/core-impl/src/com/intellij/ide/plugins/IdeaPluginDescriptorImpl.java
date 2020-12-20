@@ -887,6 +887,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myEnabled = enabled;
   }
 
+  public boolean isExtensionsCleared() {
+    return isExtensionsCleared;
+  }
+
   @Override
   public String getSinceBuild() {
     return mySinceBuild;

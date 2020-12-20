@@ -21,8 +21,13 @@ public final class Callbacks {
   }
 
   public interface Backend {
-    void associate(String classFileName, String sourceFileName, ClassReader cr);
-    void associate(String classFileName, Collection<String> sources, ClassReader cr);
+    default void associate(String classFileName, String sourceFileName, ClassReader cr) {
+      associate(classFileName, Collections.singleton(sourceFileName), cr);
+    }
+    default void associate(String classFileName, Collection<String> sources, ClassReader cr) {
+      associate(classFileName, sources, cr, false);
+    }
+    void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated);
     void registerImports(String className, Collection<String> classImports, Collection<String> staticImports);
     void registerConstantReferences(String className, Collection<ConstantRef> cRefs);
   }

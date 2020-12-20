@@ -146,6 +146,10 @@ public abstract class ConfigurationFactory {
     return RunConfigurationSingletonPolicy.SINGLE_INSTANCE;
   }
 
+  public boolean isEditableInDumbMode() {
+    return false;
+  }
+
   @Nullable
   public Class<? extends BaseState> getOptionsClass() {
     return null;

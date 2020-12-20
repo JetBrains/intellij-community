@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -52,6 +54,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun getKind(): PersistentLibraryKind<*>? = currentLibrary.kind
   override fun getUrls(rootType: OrderRootType): Array<String> = currentLibrary.getUrls(rootType)
   override fun getName(): String? = currentLibrary.name
+  override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
   override fun getProperties(): LibraryProperties<*>? = currentLibrary.properties
   override fun getExcludedRootUrls(): Array<String> = currentLibrary.excludedRootUrls
   override fun isJarDirectory(url: String): Boolean = currentLibrary.isJarDirectory(url)
@@ -140,7 +143,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addJarDirectory(url: String, recursive: Boolean, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val rootTypeId = LibraryRootTypeId(rootType.name())
+    val rootTypeId = rootType.toLibraryRootType()
     val virtualFileUrl = virtualFileManager.fromUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
@@ -229,8 +232,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val root = LibraryRoot(
       url = virtualFileUrl,
-      type = LibraryRootTypeId(rootType.name()),
-      inclusionOptions = LibraryRoot.InclusionOptions.ROOT_ITSELF
+      type = rootType.toLibraryRootType()
     )
 
     update {
@@ -340,6 +342,10 @@ internal class LibraryModifiableModelBridgeImpl(
   }
 
   override fun isDisposed(): Boolean = disposed
+
+  override fun toString(): String {
+    return "Library '$name', roots: ${currentLibrary.libraryEntity.roots}"
+  }
 
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = currentLibrary.getInvalidRootUrls(type)
   override fun getExcludedRoots(): Array<VirtualFile> = currentLibrary.excludedRoots

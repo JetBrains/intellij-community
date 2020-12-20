@@ -12,7 +12,9 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.TestOnly
+import java.util.stream.Stream
 
 interface HtmlEmbeddedContentSupport {
 
@@ -26,17 +28,20 @@ interface HtmlEmbeddedContentSupport {
     internal val EP_NAME: ExtensionPointName<HtmlEmbeddedContentSupport> = ExtensionPointName.create(
       "com.intellij.html.embeddedContentSupport")
 
+    fun getContentSupports(): @NotNull Stream<HtmlEmbeddedContentSupport> {
+      return EP_NAME.extensions()
+    }
+
     @JvmStatic
     fun getStyleTagEmbedmentInfo(language: Language): HtmlEmbedmentInfo? =
       if (LanguageUtil.isInjectableLanguage(language))
-        EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.extensions()
+        EmbeddedTokenTypesProvider.getProviders()
           .map { it.elementType }
           .filter { language.`is`(it.language) }
           .map { elementType ->
             HtmlLanguageEmbedmentInfo(elementType, language)
           }
-          .findFirst()
-          .orElse(null)
+          .firstOrNull()
       else null
 
     @JvmStatic

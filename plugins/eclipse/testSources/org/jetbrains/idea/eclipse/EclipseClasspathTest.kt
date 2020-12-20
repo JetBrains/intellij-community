@@ -2,9 +2,7 @@
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
@@ -18,15 +16,11 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions
-import com.intellij.testFramework.loadProjectAndCheckResults
-import com.intellij.util.io.assertMatches
-import com.intellij.util.io.directoryContentOf
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.PathUtil
+import com.intellij.util.io.div
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter
@@ -35,12 +29,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.io.File
-import java.nio.file.Paths
 
 class EclipseClasspathTest {
   @JvmField
   @Rule
-  val tempDirectory = TemporaryDirectory()
+  val tempDirectory = TempDirectory()
 
   @JvmField
   @Rule
@@ -159,30 +152,33 @@ class EclipseClasspathTest {
     doTest()
   }
 
-  private fun doTest() {
-    doTest("test")
+  @Test
+  fun testResolvedVariables() {
+    doTest(setupPathVariables = true)
   }
 
-  fun doTest(relativePath: String) {
-    val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData/round")
-    val testRoot = testDataRoot.resolve(testName.methodName.removePrefix("test").decapitalize()).resolve(relativePath)
-    val commonRoot = testDataRoot.resolve("common")
-    loadProjectAndCheckResults(listOf(testRoot, commonRoot), tempDirectory) { project ->
-      runWriteActionAndWait {
-        ModuleManager.getInstance(project).modules.forEach {
-          it.moduleFile!!.delete(this)
-          it.stateStore.clearCaches()
-        }
-        if (WorkspaceModel.isEnabled) {
-          JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
-        }
-      }
-      project.stateStore.save(true)
-      val baseDir = Paths.get(project.basePath!!)
-      baseDir.assertMatches(directoryContentOf(testRoot).mergeWith(directoryContentOf(commonRoot)), filePathFilter = { path ->
-        path.endsWith("/.classpath") || path.endsWith(".iml")
-      })
-    }
+  @Test
+  fun testResolvedVars() {
+    doTest("test", true, "linked")
+  }
+
+  @Test
+  fun testResolvedVarsInOutput() {
+    doTest("test", true, "linked")
+  }
+
+  @Test
+  fun testResolvedVarsInLibImlCheck1() {
+    doTest("test", true, "linked")
+  }
+
+
+  private fun doTest(eclipseProjectDirPath: String = "test", setupPathVariables: Boolean = false, testDataParentDir: String = "round") {
+    val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath() / "testData"
+    val testRoot = testDataRoot / testDataParentDir / testName.methodName.removePrefix("test").decapitalize()
+    val commonRoot = testDataRoot / "common" / "testModuleWithClasspathStorage"
+    val modulePath = "$eclipseProjectDirPath/${PathUtil.getFileName(eclipseProjectDirPath)}"
+    checkLoadSaveRoundTrip(listOf(testRoot, commonRoot), tempDirectory, setupPathVariables, listOf("test" to modulePath))
   }
 
   companion object {
@@ -200,10 +196,10 @@ class EclipseClasspathTest {
     @JvmStatic
     fun setUpModule(path: String, project: Project): Module {
       val classpathFile = File(path, EclipseXml.DOT_CLASSPATH_EXT)
-      var fileText = FileUtil.loadFile(classpathFile).replace("\\\$ROOT\\$".toRegex(),
+      var fileText = FileUtil.loadFile(classpathFile).replace("\\\$ROOT\\$",
                                                               PlatformTestUtil.getOrCreateProjectBaseDir(project).path)
       if (!SystemInfo.isWindows) {
-        fileText = fileText.replace(EclipseXml.FILE_PROTOCOL + "/".toRegex(), EclipseXml.FILE_PROTOCOL)
+        fileText = fileText.replace(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL)
       }
       val classpathElement = JDOMUtil.load(fileText)
       val module = WriteCommandAction.runWriteCommandAction(null, (Computable {
@@ -228,10 +224,10 @@ class EclipseClasspathTest {
     fun checkModule(path: String?, module: Module) {
       val classpathFile1 = File(path, EclipseXml.DOT_CLASSPATH_EXT)
       if (!classpathFile1.exists()) return
-      var fileText1 = FileUtil.loadFile(classpathFile1).replace("\\\$ROOT\\$".toRegex(),
+      var fileText1 = FileUtil.loadFile(classpathFile1).replace("\\\$ROOT\\$",
                                                                 PlatformTestUtil.getOrCreateProjectBaseDir(module.project).path)
       if (!SystemInfo.isWindows) {
-        fileText1 = fileText1.replace(EclipseXml.FILE_PROTOCOL + "/".toRegex(), EclipseXml.FILE_PROTOCOL)
+        fileText1 = fileText1.replace(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL)
       }
       val classpathElement1 = JDOMUtil.load(fileText1)
       val model: ModuleRootModel = ModuleRootManager.getInstance(module)

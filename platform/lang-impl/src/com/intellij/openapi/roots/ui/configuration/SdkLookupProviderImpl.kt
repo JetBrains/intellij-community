@@ -47,15 +47,18 @@ class SdkLookupProviderImpl : SdkLookupProvider {
     this.context = context
     context.onProgress(builder.progressIndicator)
     val parameters = builder
-      .withProgressIndicator(context.progressIndicator)
-      .onSdkNameResolved { sdk ->
-        context.setSdkInfo(sdk)
-        builder.onSdkNameResolved(sdk)
-      }
-      .onSdkResolved { sdk ->
-        context.setSdk(sdk)
-        builder.onSdkResolved(sdk)
-      }
+      .copy(
+        progressIndicator = context.progressIndicator,
+        //listeners are merged, so copy is the way to avoid chaining the listeners
+        onSdkNameResolved = { sdk ->
+          context.setSdkInfo(sdk)
+          builder.onSdkNameResolved(sdk)
+        },
+        onSdkResolved =  { sdk ->
+          context.setSdk(sdk)
+          builder.onSdkResolved(sdk)
+        }
+      )
     invokeAndWaitIfNeeded {
       service<SdkLookup>().lookup(parameters)
     }

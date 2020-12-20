@@ -53,7 +53,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     return new IconWithToolTipImpl(path, IconLoader.loadRasterizedIcon(path, aClass, cacheKey, flags));
   }
 
-  private static class IconWithToolTipImpl extends IconLoader.CachedImageIcon implements IconWithToolTip {
+  private static final class IconWithToolTipImpl extends IconLoader.CachedImageIcon implements IconWithToolTip {
     private String result;
     private boolean isTooltipCalculated;
 
@@ -67,6 +67,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
         result = findIconDescription(Objects.requireNonNull(getOriginalPath()));
         isTooltipCalculated = true;
       }
+      //noinspection HardCodedStringLiteral
       return result;
     }
   }

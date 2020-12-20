@@ -38,6 +38,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
+
 public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance(ProjectViewDirectoryHelper.class);
 
@@ -342,7 +344,9 @@ public class ProjectViewDirectoryHelper {
   private boolean shouldBeShown(@NotNull VirtualFile dir, ViewSettings settings) {
     if (!dir.isValid()) return false;
     DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
-    return directoryInfo.isInProject(dir) || shouldShowExcludedFiles(settings) && directoryInfo.isExcluded(dir);
+    return directoryInfo.isInProject(dir)
+           ? shouldShowExcludedFiles(settings) || !isProjectOrWorkspaceFile(dir)
+           : shouldShowExcludedFiles(settings) && directoryInfo.isExcluded(dir);
   }
 
   private static boolean shouldShowExcludedFiles(ViewSettings settings) {

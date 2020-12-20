@@ -76,9 +76,6 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
                                                             ", viewProvider=" + documentManager.getCachedViewProvider(document);
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
-    PsiFile psiFile = documentManager.getCachedPsiFile(document);
-    if (psiFile == null || psiFile instanceof PsiCompiledElement) return;
-
     CommitTask task =
       new CommitTask(project, document, reason, modality, documentManager.getLastCommittedText(document));
     ReadAction

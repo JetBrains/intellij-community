@@ -18,6 +18,7 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.PathUtil
@@ -120,7 +121,7 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
 
           val rootPath = root.path
           for (manualWatchRoot in manualWatchRoots) {
-            if (PathUtil.isAncestorOrSelf(manualWatchRoot, root)) {
+            if (VfsUtilCore.isAncestorOrSelf(manualWatchRoot, root)) {
               if (nonWatched == null) {
                 nonWatched = mutableListOf()
               }

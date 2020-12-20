@@ -209,9 +209,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @NotNull
   public static @NlsContexts.ProgressTitle String getProgressTitle(@NotNull UsageViewPresentation presentation) {
-    String scopeText = presentation.getScopeText();
-    String usagesString = StringUtil.capitalize(presentation.getSearchString());
-    return UsageViewBundle.message("search.progress.0.in.1", usagesString, scopeText);
+    return UsageViewBundle.message("search.progress.0.in.1", presentation.getSearchString(), presentation.getScopeText());
   }
 
   void showToolWindow(boolean activateWindow) {

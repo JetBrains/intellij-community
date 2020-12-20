@@ -46,8 +46,8 @@ import java.util.Map;
 public final class ChunkExtractor {
   private static final Logger LOG = Logger.getInstance(ChunkExtractor.class);
   static final int MAX_LINE_LENGTH_TO_SHOW = 200;
-  static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 1;
-  static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 1;
+  static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 40;
+  static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 100;
 
   private final EditorColorsScheme myColorsScheme;
 

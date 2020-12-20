@@ -34,6 +34,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
+import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
 import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
@@ -241,7 +242,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     }
 
     boolean isExcluded(@NotNull VirtualFile file) {
-      return !showExcludedFiles && ProjectFileIndex.getInstance(project).isExcluded(file);
+      return !showExcludedFiles && (ProjectFileIndex.getInstance(project).isExcluded(file) || isProjectOrWorkspaceFile(file));
     }
 
     @Override

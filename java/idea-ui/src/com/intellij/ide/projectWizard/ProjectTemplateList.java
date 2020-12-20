@@ -81,7 +81,7 @@ public class ProjectTemplateList extends JPanel {
 
     final String description = template.getDescription();
 
-    HtmlChunk.Element fontTag = HtmlChunk.tag("font").addText(description);
+    HtmlChunk.Element fontTag = HtmlChunk.tag("font").addRaw(description);
     if (!SystemInfo.isMac) {
       fontTag = fontTag.attr("face", "Verdana")
         .attr("size","-1");

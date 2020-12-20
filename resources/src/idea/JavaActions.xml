@@ -6,7 +6,7 @@
     </action>
 
 
-    <group id="NewGroup1">
+    <group id="NewGroup1" searchable="false">
       <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
               icon="AllIcons.Nodes.Module"/>
 

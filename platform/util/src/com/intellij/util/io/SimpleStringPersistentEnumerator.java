@@ -14,7 +14,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Simple version of string enumerator:
@@ -65,6 +67,15 @@ public final class SimpleStringPersistentEnumerator {
 
   public synchronized void forceDiskSync() {
     writeStorageToDisk(myState, myFile);
+  }
+
+  @NotNull
+  public String dumpToString() {
+    return myState
+      .object2ShortEntrySet()
+      .stream()
+      .sorted(Comparator.comparing(e -> e.getShortValue()))
+      .map(e -> e.getKey() + "->" + e.getShortValue()).collect(Collectors.joining("\n"));
   }
 
   private static @NotNull Object2ShortOpenHashMap<String> readStorageFromDisk(@NotNull Path file) {

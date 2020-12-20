@@ -78,6 +78,8 @@ public final class JavacProtoUtil {
 
     msgBuilder.setKind(convertKind(fileObject.getKind()));
     msgBuilder.setFilePath(FileUtilRt.toSystemIndependentName(fileObject.getFile().getPath()));
+    msgBuilder.setIsGenerated(fileObject.isGenerated());
+
     final BinaryContent content = fileObject.getContent();
     if (content != null) {
       msgBuilder.setContent(ByteString.copyFrom(content.getBuffer(), content.getOffset(), content.getLength()));
@@ -110,6 +112,7 @@ public final class JavacProtoUtil {
   public static JavacRemoteProto.Message.Response createCustomDataResponse(String pluginId, String dataName, byte[] data) {
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
       .setKind(JavacRemoteProto.Message.Response.OutputObject.Kind.OTHER)
+      .setIsGenerated(false)
       .setFilePath(pluginId)
       .setClassName(dataName)
       .setContent(ByteString.copyFrom(data))
@@ -122,7 +125,7 @@ public final class JavacProtoUtil {
 
   public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
-      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
+      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setIsGenerated(false).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
 
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.SRC_FILE_LOADED).setOutputObject(outObjMsg);

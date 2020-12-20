@@ -30,7 +30,9 @@ fun <T> invokeAndWaitIfNeeded(modalityState: ModalityState? = null, runnable: ()
     return runnable()
   }
   else {
-    return computeDelegated { app.invokeAndWait({ it (runnable()) }, modalityState ?: ModalityState.defaultModalityState()) }
+    return computeDelegated {
+      app.invokeAndWait({ it (runnable()) }, modalityState ?: ModalityState.defaultModalityState())
+    }
   }
 }
 

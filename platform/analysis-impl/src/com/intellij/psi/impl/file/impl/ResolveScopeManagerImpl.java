@@ -18,6 +18,7 @@ import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
@@ -44,17 +45,25 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
     myDefaultResolveScopesCache = ConcurrentFactoryMap.create(
       key -> {
+        VirtualFile file = key;
+        VirtualFile original = key instanceof LightVirtualFile ? ((LightVirtualFile)key).getOriginalFile() : null;
+        if (original != null) {
+          file = original;
+        }
         GlobalSearchScope scope = null;
         for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
-          scope = resolveScopeProvider.getResolveScope(key, myProject);
+          scope = resolveScopeProvider.getResolveScope(file, myProject);
           if (scope != null) break;
         }
-        if (scope == null) scope = getInherentResolveScope(key);
+        if (scope == null) scope = getInherentResolveScope(file);
         for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-          SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
+          SearchScope extra = enlarger.getAdditionalResolveScope(file, myProject);
           if (extra != null) {
             scope = scope.union(extra);
           }
+        }
+        if (original != null && !scope.contains(key)) {
+          scope = scope.union(GlobalSearchScope.fileScope(myProject, key));
         }
         return scope;
       },
@@ -133,11 +142,10 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     if (psiFile instanceof FileResolveScopeProvider) {
       return ((FileResolveScopeProvider)psiFile).getFileResolveScope();
     }
-    VirtualFile vFile = psiFile.getOriginalFile().getVirtualFile();
-    if (vFile == null) {
+    if (!psiFile.getOriginalFile().isPhysical()) {
       return withFile(psiFile, GlobalSearchScope.allScope(myProject));
     }
-    return getResolveScopeFromProviders(vFile);
+    return getResolveScopeFromProviders(psiFile.getViewProvider().getVirtualFile());
   }
 
   private GlobalSearchScope withFile(PsiFile containingFile, GlobalSearchScope scope) {

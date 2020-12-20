@@ -1,0 +1,27 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <localInspection
+                bundle="messages.packageSearchBundle"
+                enabledByDefault="true"
+                groupKey="packagesearch.inspection.update.group"
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenPackageUpdateInspection"
+                key="packagesearch.inspection.update.key.maven"
+                hasStaticDescription="true"
+                language="XML"
+                level="WARNING"/>
+
+        <packagesearch.projectModuleOperationProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleOperationProvider"/>
+        <packagesearch.projectModuleProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleProvider"/>
+
+        <packagesearch.configurableContributor
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.configuration.ui.MavenConfigurableContributor"/>
+
+        <search.optionContributor
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.configuration.MavenSearchableOptionContributor"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.configuration.PackageSearchMavenConfiguration"/>
+    </extensions>
+</idea-plugin>

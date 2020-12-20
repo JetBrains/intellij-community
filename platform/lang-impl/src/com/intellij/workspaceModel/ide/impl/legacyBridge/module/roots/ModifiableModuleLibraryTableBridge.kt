@@ -156,6 +156,20 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     }
   }
 
+  internal fun restoreLibraryMappingsAndDisposeCopies() {
+    libraryIterator.forEach {
+      val originalLibrary = copyToOriginal[it]
+      if (originalLibrary == null)  {
+        LOG.error("Cannot find an original library for $it")
+        return@forEach
+      }
+      val mutableLibraryMap = modifiableModel.diff.mutableLibraryMap
+      mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(it as LibraryBridge).single(), originalLibrary)
+
+      Disposer.dispose(it)
+    }
+  }
+
   internal fun disposeOriginalLibraries() {
     libraryIterator.forEach {
       val original = copyToOriginal[it]

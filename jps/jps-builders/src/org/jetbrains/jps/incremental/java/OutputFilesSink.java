@@ -96,7 +96,7 @@ final class OutputFilesSink implements OutputFileConsumer {
         // register in mappings any non-temp class file
         try {
           final ClassReader reader = new FailSafeClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePaths, reader);
+          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePaths, reader, fileObject.isGenerated());
         }
         catch (Throwable e) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation

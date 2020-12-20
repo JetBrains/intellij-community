@@ -26,9 +26,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
-import gnu.trove.THashMap;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
@@ -36,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,8 +47,8 @@ public final class XsltSupport {
   public static final TextAttributesKey XSLT_DIRECTIVE =
     TextAttributesKey.createTextAttributesKey("XSLT_DIRECTIVE", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
 
-  private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<>(10);
-  private static final Map<String, Set<String>> XPATH_AVT_MAP = new THashMap<>(10);
+  private static final Map<String, String> XPATH_ATTR_MAP = new HashMap<>(10);
+  private static final Map<String, Set<String>> XPATH_AVT_MAP = new HashMap<>(10);
 
   static {
     XPATH_ATTR_MAP.put("select", "");
@@ -63,18 +62,18 @@ public final class XsltSupport {
     XPATH_ATTR_MAP.put("value", "number");
     XPATH_ATTR_MAP.put("use", "key");
 
-    XPATH_AVT_MAP.put("element", ContainerUtil.set("name", "namespace"));
-    XPATH_AVT_MAP.put("attribute", ContainerUtil.set("name", "namespace"));
-    XPATH_AVT_MAP.put("namespace", ContainerUtil.set("name"));
-    XPATH_AVT_MAP.put("processing-instruction", ContainerUtil.set("name"));
+    XPATH_AVT_MAP.put("element", Set.of("name", "namespace"));
+    XPATH_AVT_MAP.put("attribute", Set.of("name", "namespace"));
+    XPATH_AVT_MAP.put("namespace", Set.of("name"));
+    XPATH_AVT_MAP.put("processing-instruction", Set.of("name"));
 
-    XPATH_AVT_MAP.put("number", ContainerUtil.set("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal"));
-    XPATH_AVT_MAP.put("sort", ContainerUtil.set("lang", "data-type", "order", "case-order", "collation"));
+    XPATH_AVT_MAP.put("number", Set.of("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal"));
+    XPATH_AVT_MAP.put("sort", Set.of("lang", "data-type", "order", "case-order", "collation"));
 
-    XPATH_AVT_MAP.put("message", ContainerUtil.set("terminate"));
-    XPATH_AVT_MAP.put("value-of", ContainerUtil.set("separator"));
+    XPATH_AVT_MAP.put("message", Set.of("terminate"));
+    XPATH_AVT_MAP.put("value-of", Set.of("separator"));
 
-    XPATH_AVT_MAP.put("result-document", ContainerUtil.set("format", "href", "method", "byte-order-mark",
+    XPATH_AVT_MAP.put("result-document", Set.of("format", "href", "method", "byte-order-mark",
                                                            "cdata-section-elements", "doctype-public", "doctype-system",
                                                            "encoding", "escape-uri-attributes", "include-content-type",
                                                            "indent", "media-type", "normalization-form",

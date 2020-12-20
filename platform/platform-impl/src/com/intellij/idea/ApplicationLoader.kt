@@ -19,7 +19,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WeakFocusStackManager
@@ -47,6 +47,7 @@ import java.util.concurrent.CompletionStage
 import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.BiFunction
 import java.util.function.Function
 import kotlin.system.exitProcess
 
@@ -146,7 +147,7 @@ private fun startApp(app: ApplicationImpl,
     }, nonEdtExecutor)
 
   if (!headless) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       runActivity("mac app init") {
         MacOSApplicationProvider.initApplication()
       }
@@ -334,10 +335,10 @@ private fun addActivateAndWindowsCliListeners() {
     ref.get()
   }
 
-  MainRunner.LISTENER = WindowsCommandLineListener { currentDirectory, args ->
+  MainRunner.LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
     if (args.isEmpty()) {
-      return@WindowsCommandLineListener 0
+      return@BiFunction 0
     }
 
     val app = ApplicationManager.getApplication()
@@ -358,7 +359,7 @@ private fun addActivateAndWindowsCliListeners() {
   ApplicationManager.getApplication().messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
       StartupUtil.addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
-      MainRunner.LISTENER = WindowsCommandLineListener { _, _ -> Main.ACTIVATE_DISPOSING }
+      MainRunner.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
     }
   })
 }

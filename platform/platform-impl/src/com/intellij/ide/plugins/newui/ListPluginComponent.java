@@ -182,7 +182,7 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
           myEnableDisableButton.setOpaque(false);
           myEnableDisableButton.addActionListener(e -> {
-            UIUtilsKt.changeEnableDisable(
+            UIUtils.changeEnableDisable(
               myPluginModel,
               Set.of(myPlugin),
               !myPluginModel.isEnabled(myPlugin)
@@ -564,7 +564,7 @@ public class ListPluginComponent extends JPanel {
     if (myEnableDisableButton != null) {
       myEnableDisableButton.setSelected(state.isEnabled());
     }
-    myNameComponent.setIcon(UIUtilsKt.perProjectIcon(state));
+    myNameComponent.setIcon(UIUtils.perProjectIcon(state));
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {

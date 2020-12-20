@@ -93,4 +93,8 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     input.write(bytes);
     input.flush();
   }
+
+  public @NotNull BaseProcessHandler<?> getProcessHandler() {
+    return myProcessHandler;
+  }
 }

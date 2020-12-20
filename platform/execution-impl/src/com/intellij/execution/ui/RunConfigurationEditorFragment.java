@@ -30,7 +30,7 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
                                                                                  int menuPosition) {
     Ref<SettingsEditorFragment<?, ?>> ref = new Ref<>();
     TagButton button = new TagButton(name, () -> ref.get().setSelected(false));
-    RunConfigurationEditorFragment<Settings, ?> fragment = new RunConfigurationEditorFragment<Settings, TagButton>(id, name, group, button, 0) {
+    RunConfigurationEditorFragment<Settings, ?> fragment = new RunConfigurationEditorFragment<>(id, name, group, button, 0) {
       @Override
       protected void disposeEditor() {
         Disposer.dispose(myComponent);

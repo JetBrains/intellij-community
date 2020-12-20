@@ -2,6 +2,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
+import com.intellij.build.BuildContentManager
 import com.intellij.execution.*
 import com.intellij.execution.configuration.CompatibilityAwareRunProfile
 import com.intellij.execution.configurations.RunConfiguration
@@ -17,6 +18,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -30,7 +32,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -532,7 +533,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       return resolvedPromise()
     }
 
-    if ((environment.runProfile as TargetEnvironmentAwareRunProfile).defaultTargetName == null) {
+    val targetName = (environment.runProfile as TargetEnvironmentAwareRunProfile).defaultTargetName
+    if (targetName == null) {
       return resolvedPromise()
     }
 
@@ -540,24 +542,29 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(environment.project).console
     ProcessTerminatedListener.attach(processHandler)
     consoleView.attachToProcess(processHandler)
-    val executionResult = DefaultExecutionResult(consoleView, processHandler)
-    val descriptor = RunContentDescriptor(executionResult.executionConsole, executionResult.processHandler,
-                                          executionResult.executionConsole.component,
-                                          ExecutionBundle.message("tab.title.prepare.environment", environment.executionTarget.displayName))
+
+    val contentManager = BuildContentManager.getInstance(environment.project)
+    contentManager.addTabbedContent(consoleView.component,
+                                    ExecutionBundle.message("tab.group.id.targets"),
+                                    ExecutionBundle.message("tab.title.prepare.environment", targetName,
+                                                            environment.runProfile.name),
+                                    environment.runProfile.icon, consoleView)
+
     val promise = AsyncPromise<Any?>()
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
-        executionResult.processHandler.startNotify()
-        val progressIndicator = object : ProgressIndicatorBase() {
-          override fun setText(text: String) {
-            processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
+        processHandler.startNotify()
+        val targetProgressIndicator = object : TargetEnvironmentAwareRunProfileState.TargetProgressIndicator {
+
+          override fun addText(text: String, key: Key<*>) {
+            processHandler.notifyTextAvailable(text, key)
           }
 
-          override fun setText2(text: String) {
-            processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
+          override fun isCanceled(): Boolean {
+            return false
           }
         }
-        promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
+        promise.setResult(environment.prepareTargetEnvironment(currentState, targetProgressIndicator))
       }
       catch (t: Throwable) {
         promise.setError(t)
@@ -568,7 +575,6 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         processHandler.notifyProcessTerminated(exitCode)
       }
     }
-    RunContentManager.getInstance(environment.project).showRunContent(environment.executor, descriptor)
     return promise
   }
 
@@ -655,11 +661,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       if(executorIds.contains(id)) {
         val processHandler = entry.descriptor.processHandler
         if (processHandler != null && !processHandler.isProcessTerminated) {
-          result[id] ?: kotlin.run {
+          val list = result[id] ?: kotlin.run {
             val smartList = SmartList<RunnerAndConfigurationSettings>()
             result[id] = smartList
             smartList
-          }.add(entry.settings)
+          }
+          list.add(entry.settings)
         }
       }
     }

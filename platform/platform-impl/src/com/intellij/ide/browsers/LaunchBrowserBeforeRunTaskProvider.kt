@@ -13,6 +13,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -24,7 +25,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
 
-internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>() {
+internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>(), DumbAware {
   companion object {
     val ID = Key.create<LaunchBrowserBeforeRunTask>("LaunchBrowser.Before.Run")
   }

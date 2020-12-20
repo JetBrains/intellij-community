@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +16,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class UpdateOutputLineConverter {
-
+public final class UpdateOutputLineConverter {
   private final static @NonNls String MERGING = "--- Merging";
   private final static @NonNls String RECORDING_MERGE_INFO = "--- Recording mergeinfo";
 
@@ -98,7 +96,7 @@ public class UpdateOutputLineConverter {
     return new ProgressEvent(file, revision, null, null, action, error, null);
   }
 
-  private final static Set<Character> ourActions = ContainerUtil.set('A', 'D', 'U', 'C', 'G', 'E', 'R');
+  private final static Set<Character> ourActions = Set.of('A', 'D', 'U', 'C', 'G', 'E', 'R');
 
   @Nullable
   private ProgressEvent parseNormalString(final String line) {

@@ -416,6 +416,9 @@ final class ActionUpdater {
         if (hasChildrenWithState(childGroup, checkVisible, checkEnabled, strategy, visited)) {
           return true;
         }
+        if (strategy.canBePerformed.test(childGroup)) {
+          return true;
+        }
       }
       else if ((checkVisible && presentation.isVisible()) || (checkEnabled && presentation.isEnabled())) {
         return true;

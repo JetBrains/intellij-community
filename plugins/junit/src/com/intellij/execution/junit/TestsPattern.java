@@ -12,6 +12,7 @@ import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -125,7 +126,7 @@ public class TestsPattern extends TestPackage {
       final PsiClass testClass = getTestClass(configuration.getProject(), pattern.trim());
       if (testClass != null && testClass.equals(element)) {
         final RefactoringElementListener listeners =
-          RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<PsiClass>() {
+          RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<>() {
             private String myOldName = testClass.getQualifiedName();
 
             @Override
@@ -183,6 +184,7 @@ public class TestsPattern extends TestPackage {
     if (patterns.isEmpty()) {
       throw new RuntimeConfigurationWarning(JUnitBundle.message("no.pattern.error.message"));
     }
+    if (DumbService.getInstance(getConfiguration().getProject()).isDumb()) return;
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getConfiguration().getProject());
     for (String pattern : patterns) {
       final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;

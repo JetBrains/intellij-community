@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -25,8 +26,9 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
 
   protected boolean addFile(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
-    myFiles.add(file);
-    onFileAdded(file);
+    if (myFiles.add(file)) {
+      onFileSettingsChanged(Collections.singleton(file));
+    }
     return true;
   }
 
@@ -37,16 +39,12 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
   protected boolean removeFile(@NotNull VirtualFile file) {
     boolean isRemoved = myFiles.remove(file);
     if (isRemoved) {
-      onFileRemoved(file);
+      onFileSettingsChanged(Collections.singleton(file));
     }
     return isRemoved;
   }
 
-  protected void onFileAdded(@NotNull VirtualFile file) {
-
-  }
-
-  protected void onFileRemoved(@NotNull VirtualFile file) {
+  protected void onFileSettingsChanged(@NotNull Collection<VirtualFile> files) {
 
   }
 
@@ -93,16 +91,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
       }
     }
 
-    for (VirtualFile file : myFiles) {
-      if (!oldFiles.contains(file)) {
-        onFileAdded(file);
-      }
-    }
-
-    for (VirtualFile file : oldFiles) {
-      if (!myFiles.contains(file)) {
-        onFileRemoved(file);
-      }
-    }
+    Collection<VirtualFile> toReparse = Sets.symmetricDifference(myFiles, oldFiles);
+    onFileSettingsChanged(toReparse);
   }
 }

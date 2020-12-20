@@ -60,6 +60,7 @@ public interface SMTRunnerEventsListener {
 
   void onSuiteTreeNodeAdded(SMTestProxy testProxy);
   void onSuiteTreeStarted(SMTestProxy suite);
+  default void onRootPresentationAdded(@NotNull SMTestProxy.SMRootTestProxy testsRoot, String rootName, String comment, String rootLocation) {}
 
   default void onTestOutput(@NotNull SMTestProxy proxy, @NotNull TestOutputEvent event) {}
   default void onUncapturedOutput(@NotNull SMTestProxy activeProxy, String text, Key type) { }

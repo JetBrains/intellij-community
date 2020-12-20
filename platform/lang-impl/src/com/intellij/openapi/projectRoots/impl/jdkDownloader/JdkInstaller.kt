@@ -29,9 +29,9 @@ import java.nio.file.Paths
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
-import java.util.stream.Stream
 import kotlin.concurrent.withLock
 import kotlin.math.absoluteValue
+import kotlin.streams.toList
 
 interface JdkInstallRequest {
   val item: JdkItem
@@ -324,22 +324,26 @@ class JdkInstaller {
 
   private fun findAlreadyInstalledJdk(feedItem: JdkItem) : JdkInstallRequest? {
     try {
-      //TODO: we may track install locations nad use the data to scan more paths
-      Files.list(defaultInstallDir()).use { list ->
-        for (installDir in Stream.concat(list, service<JdkInstallerStore>().findInstallations(feedItem).stream())) {
-          if (!installDir.isDirectory()) continue
-          val item = findJdkItemForInstalledJdk(installDir) ?: continue
-          if (item != feedItem) continue
+      val localRoots = run {
+        val defaultInstallDir = defaultInstallDir()
+        if (!defaultInstallDir.isDirectory()) return@run listOf()
+        Files.list(defaultInstallDir).toList()
+      }
 
-          val jdkHome = item.resolveJavaHome(installDir)
-          if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome.toFile())) {
-            return LocallyFoundJdk(feedItem, installDir, jdkHome)
-          }
+      val historyRoots = service<JdkInstallerStore>().findInstallations(feedItem)
+      for (installDir in localRoots + historyRoots) {
+        if (!installDir.isDirectory()) continue
+
+        val item = findJdkItemForInstalledJdk(installDir) ?: continue
+        if (item != feedItem) continue
+
+        val jdkHome = item.resolveJavaHome(installDir)
+        if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome.toFile())) {
+          return LocallyFoundJdk(feedItem, installDir, jdkHome)
         }
       }
     } catch (t: Throwable) {
-      if (t is ControlFlowException) throw t
-      LOG.warn("Failed to scan for installed JDKs. ${t.message}", t)
+      return null
     }
 
     return null

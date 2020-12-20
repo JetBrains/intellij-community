@@ -27,7 +27,8 @@ public class WeakInterner<T> extends Interner<T> {
   }
 
   public WeakInterner(@NotNull TObjectHashingStrategy<? super T> strategy) {
-    myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap(strategy);
+    myMap = new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(),
+                                                    ContainerUtil.createHashingStrategy(strategy));
   }
 
   @Override

@@ -1165,7 +1165,7 @@ public final class BuildManager implements Disposable {
 
     if (isProfilingMode) {
       try {
-        YourKitProfilerService yourKitProfilerService = ServiceManager.getService(YourKitProfilerService.class);
+        YourKitProfilerService yourKitProfilerService = ApplicationManager.getApplication().getService(YourKitProfilerService.class);
         if (yourKitProfilerService == null) {
           throw new IOException("Performance Plugin is missing or disabled");
         }
@@ -1215,9 +1215,9 @@ public final class BuildManager implements Disposable {
     }
     final DynamicBundle.LanguageBundleEP languageBundle = DynamicBundle.findLanguageBundle();
     if (languageBundle != null) {
-      final PluginDescriptor pluginDescriptor = languageBundle.getPluginDescriptor();
-      final ClassLoader loader = pluginDescriptor != null? pluginDescriptor.getPluginClassLoader() : null;
-      final String bundlePath = loader != null? PathManager.getResourceRoot(loader, "/META-INF/plugin.xml") : null;
+      final PluginDescriptor pluginDescriptor = languageBundle.pluginDescriptor;
+      final ClassLoader loader = pluginDescriptor == null ? null : pluginDescriptor.getPluginClassLoader();
+      final String bundlePath = loader == null ? null : PathManager.getResourceRoot(loader, "/META-INF/plugin.xml");
       if (bundlePath != null) {
         cmdLine.addParameter("-D"+ GlobalOptions.LANGUAGE_BUNDLE + "=" + FileUtil.toSystemIndependentName(bundlePath));
       }

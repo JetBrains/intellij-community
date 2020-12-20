@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.FileVisitResult;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,8 +50,14 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
 
   @Override
   public void setOptionState(boolean enabled) {
-    Collection<IdeaPluginDescriptor> autoSwitchedIds = enabled ? getPluginsIdsToEnable(plugin) : getPluginsIdsToDisable(plugin);
-    boolean enabledWithoutRestart = PluginEnabler.enablePlugins(null, autoSwitchedIds, enabled);
+    Set<IdeaPluginDescriptor> autoSwitchedIds = enabled ?
+                                                getPluginsIdsToEnable(plugin) :
+                                                getPluginsIdsToDisable(plugin);
+    boolean enabledWithoutRestart = PluginEnabler.enablePlugins(
+      null,
+      new ArrayList<>(autoSwitchedIds),
+      enabled
+    );
     if (autoSwitchedIds.size() > 1) {
       showAutoSwitchNotification(autoSwitchedIds, enabled);
     }
@@ -96,34 +103,26 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
     Notifications.Bus.notify(switchNotification);
   }
 
-  @NotNull
-  private static Collection<IdeaPluginDescriptor> getPluginsIdsToEnable(@NotNull IdeaPluginDescriptor rootDescriptor) {
+  private static @NotNull Set<IdeaPluginDescriptor> getPluginsIdsToEnable(@NotNull IdeaPluginDescriptor rootDescriptor) {
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 
-    if (!(rootDescriptor instanceof IdeaPluginDescriptorImpl)) {
-      return result;
+    if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
+      PluginManagerCore.processAllDependencies(
+        (IdeaPluginDescriptorImpl)rootDescriptor,
+        false,
+        descriptor -> descriptor.getPluginId() != PluginManagerCore.CORE_ID &&
+                      !descriptor.isEnabled() &&
+                      result.add(descriptor) ?
+                      FileVisitResult.CONTINUE : // if descriptor has already been added/enabled, no need to process it's dependencies
+                      FileVisitResult.SKIP_SUBTREE
+      );
     }
 
-    PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, false, descriptor -> {
-      if (descriptor.getPluginId() == PluginManagerCore.CORE_ID) {
-        return FileVisitResult.SKIP_SUBTREE;
-      }
-
-      if (!descriptor.isEnabled()) {
-        // if descriptor was already added, no need to process it's dependencies again
-        return result.add(descriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
-      }
-      else {
-        // if descriptor is already enabled, no need to process it's dependencies
-        return FileVisitResult.SKIP_SUBTREE;
-      }
-    });
     return result;
   }
 
-  @NotNull
-  private static Collection<IdeaPluginDescriptor> getPluginsIdsToDisable(@NotNull IdeaPluginDescriptor rootDescriptor) {
+  private static @NotNull Set<IdeaPluginDescriptor> getPluginsIdsToDisable(@NotNull IdeaPluginDescriptor rootDescriptor) {
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 

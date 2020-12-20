@@ -49,7 +49,7 @@ public class TestMacMessagesAction extends AnAction {
 
         JButton yesNoCancel = new JButton("Show YesNoCancel Alert");
         yesNoCancel.addActionListener(event -> {
-          Messages.showYesNoCancelDialog("Message", "Title", "YesText", "NoText", "CancelText", null);
+          System.out.println(Messages.showYesNoCancelDialog("Message", "Title", "YesText", "NoText", "CancelText", null));
         });
         panel.add(yesNoCancel);
 
@@ -95,12 +95,10 @@ public class TestMacMessagesAction extends AnAction {
         });
         panel.add(error);
 
-        JButton buttons = new JButton("Show Buttons Alert");
-        buttons.addActionListener(event -> {
-          System.out.println(
-            Messages.showDialog(buttons, "Message", "Title", new String[]{"Button1", "Button2", "Button3", "Button4", "Button5"}, 0, null));
-        });
-        panel.add(buttons);
+        alertWithButtons(panel, "Show Buttons Alert", new String[]{"Button1", "Button2", "Button3", "Button4", "Button5"});
+        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Cancel", "Button3", "Button4", "Button5"});
+        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Button2", "Button3", "Cancel", "Button5"});
+        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Button2", "Button3", "Button4", "Cancel"});
 
         JButton dialogAlert = new JButton("Dialog -> YesNo Alert");
         dialogAlert.addActionListener(event -> new DialogWrapper(e.getProject()) {
@@ -195,5 +193,13 @@ public class TestMacMessagesAction extends AnAction {
         return panel;
       }
     }.show();
+  }
+
+  private static void alertWithButtons(JPanel panel, String title, String[] buttons) {
+    JButton button = new JButton(title);
+    button.addActionListener(event -> {
+      System.out.println(Messages.showDialog(button, "Message", "Title", buttons, 0, null));
+    });
+    panel.add(button);
   }
 }

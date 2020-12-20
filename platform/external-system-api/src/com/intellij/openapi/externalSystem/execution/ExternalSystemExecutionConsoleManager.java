@@ -46,4 +46,15 @@ public interface ExternalSystemExecutionConsoleManager<
   default Filter[] getCustomExecutionFilters(@NotNull Project project,
                                              @NotNull ExternalSystemTask task,
                                              @Nullable ExecutionEnvironment env) { return Filter.EMPTY_ARRAY; }
+
+  @ApiStatus.Experimental
+  default AnAction[] getCustomActions(@NotNull Project project,
+                                      @NotNull ExternalSystemTask task,
+                                      @Nullable ExecutionEnvironment env) { return AnAction.EMPTY_ARRAY; }
+
+  @ApiStatus.Experimental
+  default AnAction[] getCustomContextActions(@NotNull Project project,
+                                             @NotNull ExternalSystemTask task,
+                                             @Nullable ExecutionEnvironment env) { return AnAction.EMPTY_ARRAY; }
+
 }

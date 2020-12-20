@@ -295,16 +295,7 @@ private class MyChangesTree(project: Project)
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
     val groupingSupport = ChangesGroupingSupport(myProject, this, false)
-
-    val propertiesComponent = PropertiesComponent.getInstance(project)
-    groupingSupport.setGroupingKeysOrSkip(propertiesComponent.getValues(GROUPING_KEYS_PROPERTY)?.toSet() ?: setOf(DIRECTORY_GROUPING))
-    groupingSupport.addPropertyChangeListener(PropertyChangeListener {
-      propertiesComponent.setValues(GROUPING_KEYS_PROPERTY, groupingSupport.groupingKeys.toTypedArray())
-
-      val oldSelection = VcsTreeModelData.selected(this).userObjects()
-      rebuildTree()
-      setSelectedChanges(oldSelection)
-    })
+    installGroupingSupport(this, groupingSupport, GROUPING_KEYS_PROPERTY, DIRECTORY_GROUPING)
     return groupingSupport
   }
 

@@ -111,7 +111,20 @@
     <orderEntry type="library" scope="RUNTIME" name="jackson" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson-datatype-joda" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="okhttp3" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="okhttp3" type="repository">
+        <properties maven-id="com.squareup.okhttp3:okhttp:3.12.10" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3.12.10/okhttp-3.12.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/1.15.0/okio-1.15.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3.12.10/okhttp-3.12.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/1.15.0/okio-1.15.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.codeReview" />
     <orderEntry type="module-library" scope="RUNTIME">

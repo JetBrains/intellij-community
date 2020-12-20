@@ -181,9 +181,10 @@ IFS="$(printf '\n\t')"
 "$JAVA_BIN" \
   -classpath "$CLASSPATH" \
   ${VM_OPTIONS} \
-  "-XX:ErrorFile=$HOME/java_error_in___product_uc___%p.log" \
-  "-XX:HeapDumpPath=$HOME/java_error_in___product_uc__.hprof" \
-  -Didea.paths.selector=__system_selector__ \
+  "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
+  "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
+  "-Didea.vendor.name=${PRODUCT_VENDOR}" \
+  "-Didea.paths.selector=${PATHS_SELECTOR}" \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILES" \
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -17,11 +16,11 @@ import org.jetbrains.yaml.psi.YAMLValue;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class YamlGenericValueAdapter implements JsonValueAdapter {
-  @NotNull private static final Set<String> NULLS = ContainerUtil.set("null", "Null", "NULL", "~");
-  @NotNull private static final Set<String> BOOLS = ContainerUtil.set("true", "True", "TRUE", "false", "False", "FALSE");
-  @NotNull private static final Set<String> INFS = ContainerUtil.set(".inf", ".Inf", ".INF");
-  @NotNull private static final Set<String> NANS = ContainerUtil.set(".nan", ".NaN", ".NAN");
+public final class YamlGenericValueAdapter implements JsonValueAdapter {
+  @NotNull private static final Set<String> NULLS = Set.of("null", "Null", "NULL", "~");
+  @NotNull private static final Set<String> BOOLS = Set.of("true", "True", "TRUE", "false", "False", "FALSE");
+  @NotNull private static final Set<String> INFS = Set.of(".inf", ".Inf", ".INF");
+  @NotNull private static final Set<String> NANS = Set.of(".nan", ".NaN", ".NAN");
   @NotNull private final YAMLValue myValue;
 
   public YamlGenericValueAdapter(@NotNull YAMLValue value) {myValue = value;}

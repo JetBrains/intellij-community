@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
@@ -317,7 +318,9 @@ public abstract class Decompressor {
               InputStream inputStream = openEntryStream(entry);
               try {
                 Files.createDirectories(outputFile.getParent());
-                Files.copy(inputStream, outputFile, StandardCopyOption.REPLACE_EXISTING);
+                try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
+                  StreamUtil.copy(inputStream, outputStream);
+                }
                 if (!entry.isWritable || entry.isExecutable) {
                   if (SystemInfoRt.isWindows) {
                     if (!entry.isWritable) {

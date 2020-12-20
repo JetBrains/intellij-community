@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,16 +202,13 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   @Override
-  void rebuildCache() {
-    Set<VirtualFile> files = new HashSet<>();
+  void collectFiles(Processor<? super VirtualFile> collector) {
     TodoTreeStructure treeStructure=getTodoTreeStructure();
     PsiFile[] psiFiles= myPsiTodoSearchHelper.findFilesWithTodoItems();
     for (PsiFile psiFile : psiFiles) {
       if (myPsiTodoSearchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
-        files.add(psiFile.getVirtualFile());
+        collector.process(psiFile.getVirtualFile());
       }
     }
-
-    super.rebuildCache(files);
   }
 }

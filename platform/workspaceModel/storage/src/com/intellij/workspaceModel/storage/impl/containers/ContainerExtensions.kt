@@ -20,3 +20,8 @@ internal fun <A, B> BidirectionalMap<A, B>.copy(): BidirectionalMap<A, B> {
   return copy
 }
 
+internal fun <A, B> BidirectionalSetMap<A, B>.copy(): BidirectionalSetMap<A, B> {
+  val copy = BidirectionalSetMap<A, B>()
+  keys.forEach { key -> this[key]?.also { value -> copy[key] = value } }
+  return copy
+}

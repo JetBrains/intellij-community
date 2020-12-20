@@ -262,7 +262,7 @@
     <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitAcceptTheirsAction"/>
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
-    <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction" icon="AllIcons.Actions.Stub"/>
+    <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
@@ -288,6 +288,23 @@
       <separator/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="LocalHistory"/>
+    </group>
+
+    <action id="Git.Stash.Pop" class="git4idea.stash.ui.GitPopStashAction"/>
+    <action id="Git.Stash.Apply" class="git4idea.stash.ui.GitApplyStashAction"/>
+    <action id="Git.Stash.Drop" class="git4idea.stash.ui.GitDropStashAction"/>
+
+    <group id="Git.Stash.Toolbar">
+      <reference id="Diff.ShowDiff"/>
+    </group>
+    <group id="Git.Stash.ContextMenu">
+      <reference id="Git.Stash.Pop"/>
+      <reference id="Git.Stash.Apply"/>
+      <reference id="Git.Stash.Drop"/>
+      <separator/>
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference id="Vcs.ShowDiffWithLocal.Before"/>
     </group>
   </actions>
 
@@ -380,6 +397,8 @@
                  description="If set to a value > 0, load base contents for shelving in batches: by reading the given number of files at once. If set to -1, contents are loaded as usual, one by one."/>
     <registryKey key="git.allow.wsl1.executables" defaultValue="false"
                  description="If set to false, IDE will ignore configured WSL1 executables. See IDEA-242469"/>
+    <registryKey key="git.enable.stash.toolwindow" defaultValue="false"
+                 description="Show toolwindow tab with stashes"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -493,7 +512,7 @@
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
                  description="Use Log to collect Rebase Entries"/>
 
-    <registryKey key="git.search.everywhere.commit.by.message" defaultValue="false"
+    <registryKey key="git.search.everywhere.commit.by.message" defaultValue="true"
                  description="Use Git log index to lookup commits by message in Search Everywhere" restartRequired="false"/>
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
@@ -524,7 +543,6 @@
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
-    <projectService serviceImplementation="git4idea.index.vfs.GitIndexVirtualFileCache"/>
     <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>
 
@@ -537,6 +555,17 @@
       implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
       implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Clipboard"/>
+
+    <actionPromoter implementation="git4idea.index.actions.GitIndexActionPromoter"/>
+
+    <changesViewContent id="git.stash" tabName="Stash" className="git4idea.stash.ui.GitStashContentProvider"
+                        predicateClassName="git4idea.stash.ui.GitStashContentVisibilityPredicate"
+                        preloaderClassName="git4idea.stash.ui.GitStashContentPreloader"
+                        displayNameSupplierClassName="git4idea.stash.ui.GitStashDisplayNameSupplier"/>
+    <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
+    <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
+    <backgroundPostStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -115,6 +116,7 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
+    //noinspection deprecation
     return WSLUtil.addInputCloseListener(processHandler).runProcess(timeout);
   }
 
@@ -155,7 +157,7 @@ public class WSLDistribution {
     command.add(wslPath + "/");
     String targetWslPath = getWslPath(windowsPath);
     if (targetWslPath == null) {
-      throw new ExecutionException("Unable to copy files to " + windowsPath);
+      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
     }
     command.add(targetWslPath + "/");
     return executeOnWsl(handlerConsumer, ArrayUtilRt.toStringArray(command));
@@ -222,13 +224,13 @@ public class WSLDistribution {
           }
           String password = CredentialPromptDialog.askPassword(
             project,
-            "Enter Root Password",
-            "Sudo password for " + getPresentableName() + " root:",
+            IdeBundle.message("wsl.enter.root.password.dialog.title"),
+            IdeBundle.message("wsl.sudo.password.for.root.label", getPresentableName()),
             new CredentialAttributes("WSL", "root", WSLDistribution.class),
             true
           );
           if (password != null) {
-            try (PrintWriter pw = new PrintWriter(input)) {
+            try (PrintWriter pw = new PrintWriter(input, false, commandLine.getCharset())) {
               pw.println(password);
             }
           }
@@ -348,6 +350,7 @@ public class WSLDistribution {
    * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
    */
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
+    //noinspection deprecation
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return getMntRoot() + convertWindowsPath(windowsPath);
     }

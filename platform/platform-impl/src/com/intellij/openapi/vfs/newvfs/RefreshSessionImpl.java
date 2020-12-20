@@ -127,7 +127,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
       if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
 
-      long t = System.nanoTime();
+      long t = System.currentTimeMillis();
       PerformanceWatcher.Snapshot snapshot = null;
       Map<String, Integer> types = null;
       if (DURATION_REPORT_THRESHOLD_MS > 0) {

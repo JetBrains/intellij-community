@@ -18,14 +18,13 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.security.CompositeX509TrustManager;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +53,7 @@ final class ITNProxy {
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
 
   private static final NotNullLazyValue<Map<String, String>> TEMPLATE = AtomicNotNullLazyValue.createValue(() -> {
-    @NonNls Map<String, String> template = new LinkedHashMap<>();
+    Map<String, String> template = new LinkedHashMap<>();
 
     template.put("protocol.version", "1.1");
     template.put("os.name", SystemInfo.OS_NAME);
@@ -65,7 +64,7 @@ final class ITNProxy {
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     BuildNumber build = appInfo.getBuild();
     String buildNumberWithAllDetails = build.asString();
-    if (StringUtil.startsWith(buildNumberWithAllDetails, build.getProductCode() + "-")) {
+    if (buildNumberWithAllDetails.startsWith(build.getProductCode() + "-")) {
       buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.getProductCode().length() + 1);
     }
 
@@ -134,7 +133,7 @@ final class ITNProxy {
                         @NotNull ErrorBean error,
                         @NotNull IntConsumer onSuccess,
                         @NotNull Consumer<? super Exception> onError) {
-    if (StringUtil.isEmptyOrSpaces(login)) {
+    if (login == null || login.isBlank()) {
       login = DEFAULT_USER;
       password = DEFAULT_PASS;
     }
@@ -173,7 +172,10 @@ final class ITNProxy {
       throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode));
     }
 
-    String response = FileUtil.loadTextAndClose(connection.getInputStream());
+    String response;
+    try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+      response = StreamUtil.readText(reader);
+    }
 
     if ("unauthorized".equals(response)) {
       throw new NoSuchEAPUserException(login);
@@ -222,7 +224,7 @@ final class ITNProxy {
 
     UpdateSettings updateSettings = UpdateSettings.getInstance();
     append(builder, "update.channel.status", updateSettings.getSelectedChannelStatus().getCode());
-    append(builder, "update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ","));
+    append(builder, "update.ignored.builds", String.join(",", updateSettings.getIgnoredBuildNumbers()));
 
     append(builder, "plugin.id", error.pluginId);
     append(builder, "plugin.name", error.pluginName);
@@ -273,8 +275,8 @@ final class ITNProxy {
     return builder;
   }
 
-  private static void append(StringBuilder builder, @NonNls String key, @NonNls @Nullable String value) {
-    if (!StringUtil.isEmpty(value)) {
+  private static void append(StringBuilder builder, String key, @Nullable String value) {
+    if (value != null && !value.isEmpty()) {
       String encoded;
       try { encoded = URLEncoder.encode(value, StandardCharsets.UTF_8.name()); }
       catch (UnsupportedEncodingException e) { throw new IllegalStateException(e); }  // not expected to happen
@@ -370,7 +372,7 @@ final class ITNProxy {
     }
   }
 
-  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String JB_CA_CERT =
+  @SuppressWarnings("SpellCheckingInspection") private static final String JB_CA_CERT =
     "-----BEGIN CERTIFICATE-----\n" +
     "MIIFvjCCA6agAwIBAgIQMYHnK1dpIZVCoitWqBwhXjANBgkqhkiG9w0BAQsFADBn\n" +
     "MRMwEQYKCZImiZPyLGQBGRYDTmV0MRgwFgYKCZImiZPyLGQBGRYISW50ZWxsaUox\n" +

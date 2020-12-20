@@ -20,6 +20,7 @@ import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
@@ -34,6 +35,7 @@ import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
 import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -99,6 +101,14 @@ internal class SpaceChatItemComponentFactory(
       isOpaque = false
       add(authorPanel)
       add(timePanel)
+      launch(lifetime, Ui) {
+        delay(2000)
+        if (!message.delivered) {
+          add(JBLabel(AnimatedIcon.Default.INSTANCE))
+          revalidate()
+          repaint()
+        }
+      }
     }
   }
 
@@ -133,7 +143,7 @@ internal class SpaceChatItemComponentFactory(
           itemsListModel.messageListUpdated(
             messageList.messages
               .drop(if (withFirst) 0 else 1)
-              .map { it.message.convertToChatItem(it.getLink(server)) }
+              .map { it.convertToChatItem(it.getLink(server)) }
           )
         }
       }
@@ -178,7 +188,7 @@ internal class SpaceChatItemComponentFactory(
       if (panel.componentCount == 2) {
         panel.remove(1)
       }
-      panel.add(createSimpleMessagePanel(comment.message.convertToChatItem(comment.getLink(server)), server))
+      panel.add(createSimpleMessagePanel(comment.convertToChatItem(comment.getLink(server)), server))
     }
     return panel
   }

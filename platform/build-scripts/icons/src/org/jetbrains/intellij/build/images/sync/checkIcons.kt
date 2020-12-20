@@ -232,7 +232,7 @@ private fun doSkip(file: Path, testRoots: Set<Path>, skipDirsRegex: Regex?): Boo
                 // is test root
                 (testRoots.contains(file) ||
                  // or matches skip dir pattern
-                 skipDirsRegex != null && file.fileName.toString().matches(skipDirsRegex))
+                 skipDirsRegex != null && file.fileName?.toString()?.matches(skipDirsRegex) == true)
   if (skipDir) synchronized(skippedDirsGuard) {
     skippedDirs = skippedDirs + file
   }

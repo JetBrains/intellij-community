@@ -160,12 +160,12 @@ public final class Presentation implements Cloneable {
   public Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
                                                         boolean mayContainMnemonic) {
     if (mayContainMnemonic) {
-      UISettings uiSettings = UISettings.getInstanceOrNull();
-      boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
       return () -> {
         String s = text.get();
         if (s == null) return null;
         TextWithMnemonic parsed = TextWithMnemonic.parse(s);
+        UISettings uiSettings = UISettings.getInstanceOrNull();
+        boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
         return mnemonicsDisabled ? parsed.dropMnemonic(removeMnemonics.getValue()) : parsed;
       };
     }

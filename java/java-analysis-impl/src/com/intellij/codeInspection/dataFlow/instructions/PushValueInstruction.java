@@ -36,6 +36,10 @@ public class PushValueInstruction extends ExpressionPushingInstruction<PsiExpres
     this(value, null);
   }
 
+  public @NotNull DfType getValue() {
+    return myValue;
+  }
+
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitPush(this, runner, stateBefore, runner.getFactory().fromDfType(myValue));

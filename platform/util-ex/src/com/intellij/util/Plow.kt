@@ -58,10 +58,12 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
     fun <T> of(processorCall: (Processor<T>) -> Boolean): Plow<T> = Plow(processorCall)
 
     @JvmStatic
-    fun <T> ofArray(sources: Array<T>): Plow<T> = Plow { pr -> sources.all { pr.process(it) } }
+    @JvmName("ofArray")
+    fun <T> Array<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }
 
     @JvmStatic
-    fun <T> ofIterable(sources: Iterable<T>): Plow<T> = Plow { pr -> sources.all { pr.process(it) } }
+    @JvmName("ofIterable")
+    fun <T> Iterable<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }
 
     @JvmStatic
     fun <T> concat(vararg plows: Plow<T>): Plow<T> = of { pr -> plows.all { it.processWith(pr) } }

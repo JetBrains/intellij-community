@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.Application;
@@ -30,7 +30,7 @@ public final class ApplicationActivationStateManager {
 
   private ApplicationActivationStateManager() {}
 
-  private static State state = State.DEACTIVATED;
+  private static ApplicationActivationStateManagerState state = ApplicationActivationStateManagerState.DEACTIVATED;
 
   public static boolean isInactive() {
     return state.isInactive();
@@ -65,15 +65,15 @@ public final class ApplicationActivationStateManager {
       // We do not know for sure that application is going to be inactive,
       // windowEvent could just be showing a popup or another transient window.
       // So let's postpone the application deactivation for a while
-      state = State.DEACTIVATING;
+      state = ApplicationActivationStateManagerState.DEACTIVATING;
       LOG.debug("The app is in the deactivating state");
 
       Timer timer = TimerUtil.createNamedTimer("ApplicationDeactivation", Registry.intValue("application.deactivation.timeout", 1500), new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent evt) {
-          if (state == State.DEACTIVATING) {
+          if (state == ApplicationActivationStateManagerState.DEACTIVATING) {
             //noinspection AssignmentToStaticFieldFromInstanceMethod
-            state = State.DEACTIVATED;
+            state = ApplicationActivationStateManagerState.DEACTIVATED;
             LOG.debug("The app is in the deactivated state");
 
             if (!app.isDisposed()) {
@@ -94,7 +94,8 @@ public final class ApplicationActivationStateManager {
     return false;
   }
 
-  private static boolean setActive(@NotNull Application app, @Nullable Window window) { state = State.ACTIVE;
+  private static boolean setActive(@NotNull Application app, @Nullable Window window) {
+    state = ApplicationActivationStateManagerState.ACTIVE;
     LOG.debug("The app is in the active state");
 
     if (!app.isDisposed()) {
@@ -120,7 +121,7 @@ public final class ApplicationActivationStateManager {
   }
 }
 
-enum State {
+enum ApplicationActivationStateManagerState {
   ACTIVE,
   DEACTIVATED,
   DEACTIVATING;

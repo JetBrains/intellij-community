@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -147,7 +147,7 @@ public final class ReflectionUtil {
   }
 
   public static @Nullable Field findFieldInHierarchy(@NotNull Class<?> rootClass,
-                                                     @NotNull java.util.function.Predicate<? super Field> checker) {
+                                                     @NotNull Predicate<? super Field> checker) {
     for (Class<?> aClass = rootClass; aClass != null; aClass = aClass.getSuperclass()) {
       for (Field field : aClass.getDeclaredFields()) {
         if (checker.test(field)) {
@@ -164,7 +164,7 @@ public final class ReflectionUtil {
   @Nullable
   private static Field processInterfaces(Class<?> @NotNull [] interfaces,
                                          @NotNull Set<? super Class<?>> visited,
-                                         @NotNull java.util.function.Predicate<? super Field> checker) {
+                                         @NotNull Predicate<? super Field> checker) {
     for (Class<?> anInterface : interfaces) {
       if (!visited.add(anInterface)) {
         continue;
@@ -419,7 +419,7 @@ public final class ReflectionUtil {
   }
 
   /**
-   * Like {@link Class#newInstance()} but also handles private classes
+   * Handles private classes.
    */
   @NotNull
   public static <T> T newInstance(@NotNull Class<T> aClass) {
@@ -433,8 +433,7 @@ public final class ReflectionUtil {
       try {
         constructor.setAccessible(true);
       }
-      catch (SecurityException e) {
-        return aClass.newInstance();
+      catch (SecurityException ignored) {
       }
       return constructor.newInstance();
     }
@@ -565,7 +564,7 @@ public final class ReflectionUtil {
       if (sourceFields.contains(field)) {
         if (isPublic(field) && !isFinal(field)) {
           try {
-            if (diffFilter == null || diffFilter.isAccept(field)) {
+            if (diffFilter == null || diffFilter.test(field)) {
               copyFieldValue(from, to, field);
               valuesChanged = true;
             }

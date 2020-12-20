@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -52,7 +52,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
 
-  private final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
+  private final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -73,7 +73,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     }
   };
 
-  private final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
+  private final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -383,11 +383,11 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
-    DefaultJDOMExternalizer.writeExternal(getPersistantData(), element, new DifferenceFilter<TestData>(getPersistantData(), new TestData()) {
+    DefaultJDOMExternalizer.write(this, element, JavaParametersUtil.getFilter(this));
+    DefaultJDOMExternalizer.write(getPersistantData(), element, new DifferenceFilter<>(getPersistantData(), new TestData()) {
       @Override
-      public boolean isAccept(@NotNull Field field) {
-        return "TEST_OBJECT".equals(field.getName()) || super.isAccept(field);
+      public boolean test(@NotNull Field field) {
+        return "TEST_OBJECT".equals(field.getName()) || super.test(field);
       }
     });
     EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());

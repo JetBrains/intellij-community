@@ -1,8 +1,6 @@
  @startuml
  !include jb-plantuml-theme.puml
 
-' Time measurement: svg-decode includes svg-cache-read.
-
 :find-icon;
 note right
   Externally called method ""IconLoader.findIcon""
@@ -24,11 +22,17 @@ if (Is Cached) then (yes)
 else (no)
   if (Is resourceClass Provided) then (yes)
     :load-from-resource]
-    if (Is Resource Exist) then (yes)
-    else (no)
-      ' That's why load-from-resource maybe not equal to sum of ""svg-load"" and ""png-load""
-      :Return ""null"";
+    if (Is prebuiltCacheId Provided) then (yes)
+      :svg-prebuilt]
+      :Return Image;
       detach;
+    else
+      if (Is Resource Exist) then (yes)
+      else (no)
+        ' That's why load-from-resource maybe not equal to sum of ""svg-load"" and ""png-load""
+        :Return ""null"";
+        detach;
+      endif
     endif
   else (no)
     :load-from-url]
@@ -36,6 +40,7 @@ else (no)
 
   if (Is SVG) then (yes)
     :svg-cache-read]
+
     if (Is Cached) then (yes)
     else (no)
       :svg-decode]

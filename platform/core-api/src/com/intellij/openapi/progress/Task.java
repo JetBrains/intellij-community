@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,14 +182,15 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
-    protected final PerformInBackgroundOption myBackgroundOption;
+    @NotNull
+    private final PerformInBackgroundOption myBackgroundOption;
 
     public Backgroundable(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title) {
       this(project, title, true);
     }
 
     public Backgroundable(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
-      this(project, title, canBeCancelled, null);
+      this(project, title, canBeCancelled, ALWAYS_BACKGROUND);
     }
 
     public Backgroundable(@Nullable Project project,
@@ -197,7 +198,7 @@ public abstract class Task implements TaskInfo, Progressive {
                           boolean canBeCancelled,
                           @Nullable PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
-      myBackgroundOption = backgroundOption;
+      myBackgroundOption = ObjectUtils.notNull(backgroundOption, ALWAYS_BACKGROUND);
       if (StringUtil.isEmptyOrSpaces(title)) {
         LOG.warn("Empty title for backgroundable task.", new Throwable());
       }
@@ -205,14 +206,12 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @Override
     public boolean shouldStartInBackground() {
-      return myBackgroundOption == null || myBackgroundOption.shouldStartInBackground();
+      return myBackgroundOption.shouldStartInBackground();
     }
 
     @Override
     public void processSentToBackground() {
-      if (myBackgroundOption != null) {
-        myBackgroundOption.processSentToBackground();
-      }
+      myBackgroundOption.processSentToBackground();
     }
 
     @Override

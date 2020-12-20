@@ -5,7 +5,6 @@ import java.io.File
 import java.util.function.Predicate
 
 abstract class SchemeManager<T> {
-
   abstract val allSchemes: List<T>
 
   open val isEmpty: Boolean

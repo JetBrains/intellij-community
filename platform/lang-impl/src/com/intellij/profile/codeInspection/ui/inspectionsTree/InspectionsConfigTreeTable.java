@@ -22,6 +22,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
@@ -79,7 +80,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int column) {
         Component component = super.getTableCellRendererComponent(table, value, false, focus, row, column);
-        Color bg = selected ? table.getSelectionBackground() : table.getBackground();
+        Color bg = RenderingUtil.getBackground(table, selected);
         component.setBackground(bg);
         ((JLabel) component).setText("");
         return component;

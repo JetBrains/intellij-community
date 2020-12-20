@@ -31,8 +31,8 @@
       <option name="DOC_COMMENT_GUIDE" value="e8e8e8"/>
       <option name="DOC_COMMENT_LINK" value="4585be"/>
       <option name="INLINE_REFACTORING_SETTINGS_DEFAULT" value="d8d8d88c"/>
-      <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="cccccc8c" />
-      <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="cccccc8c" />
+      <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="B3B3B38c" />
+      <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="B3B3B38c" />
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
@@ -1305,8 +1305,8 @@
       <option name="DOC_COMMENT_GUIDE" value="3b4b38"/>
       <option name="DOC_COMMENT_LINK" value="4f86cd"/>
       <option name="INLINE_REFACTORING_SETTINGS_DEFAULT" value="5959598c"/>
-      <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="6969698c"/>
-      <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="6969698c"/>
+      <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="7373738c"/>
+      <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="7373738c"/>
 
       <option name="MODIFIED_TAB_ICON" value="4083C9"/>
 

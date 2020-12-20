@@ -56,7 +56,7 @@ public class StatusPanel extends JBPanel {
    * @return new action with methods to be invoked to notify about its result
    */
   @NotNull
-  public Action progress(@NotNull String message) {
+  public Action progress(@NotNull @Nls String message) {
     return progress(message, true);
   }
 
@@ -68,7 +68,7 @@ public class StatusPanel extends JBPanel {
    * @return new action with methods to be invoked to notify about its result
    */
   @NotNull
-  public Action progress(@NotNull String message, boolean addProgressIconBelow) {
+  public Action progress(@NotNull @Nls String message, boolean addProgressIconBelow) {
     myLock.lock();
     try {
       cancelCurrentAction();

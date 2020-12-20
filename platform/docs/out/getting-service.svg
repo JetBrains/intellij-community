@@ -60,7 +60,7 @@
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="37" x="524.75" y="387.3047">active</text>
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="195" x="708.75" y="387.3047">disposed or dispose in progress</text>
     <rect fill="#FFFFFF" filter="url(#f1l0swyqxm156j)" height="426.5352" style="stroke: #000000; stroke-width: 1.5;" width="867" x="11" y="412.7227"/>
-    <path d="M204,413.7227 L204,422.1289 L194,432.1289 L11,432.1289 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
+    <path d="M204,412.7227 L204,422.1289 L194,432.1289 L11,432.1289 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="183" x="14" y="426.7109">synchronized on service class</text>
     <polygon fill="#F8F8F8" filter="url(#f1l0swyqxm156j)" points="207.5,499.332,291.5,499.332,303.5,511.332,291.5,523.332,207.5,523.332,195.5,511.332,207.5,499.332" style="stroke: #383838; stroke-width: 1.0;"/>
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="84" x="207.5" y="516.1172">Is Initializing?</text>
@@ -71,7 +71,7 @@
     <text class="code" lengthAdjust="spacingAndGlyphs" textLength="111" x="80" y="556.8672">PluginException</text>
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="162" x="33" y="572.8086">Cyclic Service Initialization</text>
     <rect fill="#FFFFFF" filter="url(#f1l0swyqxm156j)" height="249.9258" style="stroke: #000000; stroke-width: 1.5;" width="611" x="225" y="533.332"/>
-    <path d="M328,534.332 L328,542.7383 L318,552.7383 L225,552.7383 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
+    <path d="M328,533.332 L328,542.7383 L318,552.7383 L225,552.7383 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
     <text class="text" lengthAdjust="spacingAndGlyphs" textLength="93" x="228" y="547.3203">non cancelable</text>
     <path class="note" d="M464,569.7383 L464,587.1445 L444,591.1445 L464,595.1445 L464,612.5508 A0,0 0 0 0 464,612.5508 L826,612.5508 A0,0 0 0 0 826,612.5508 L826,579.7383 L816,569.7383 L464,569.7383 A0,0 0 0 0 464,569.7383 " filter="url(#f1l0swyqxm156j)"/>
     <path class="note" d="M816,569.7383 L816,579.7383 L826,579.7383 L816,569.7383 "/>

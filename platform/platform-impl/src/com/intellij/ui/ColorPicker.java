@@ -422,14 +422,16 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     ColorListener colorListener = new ColorListener() {
       final Object groupId = new Object();
+      final Alarm alarm = new Alarm();
 
       @Override
       public void colorChanged(final Color color, final Object source) {
-        ApplicationManager.getApplication().invokeLaterOnWriteThread(
-          () -> CommandProcessor.getInstance().executeCommand(project,
-                                                              () -> listener.colorChanged(color, source),
-                                                              IdeBundle.message("command.name.apply.color"),
-                                                              groupId));
+        Runnable apply = () -> CommandProcessor.getInstance().executeCommand(project,
+                                                                             () -> listener.colorChanged(color, source),
+                                                                             IdeBundle.message("command.name.apply.color"),
+                                                                             groupId);
+        alarm.cancelAllRequests();
+        alarm.addRequest(() -> ApplicationManager.getApplication().invokeLaterOnWriteThread(apply), 150);
       }
     };
 

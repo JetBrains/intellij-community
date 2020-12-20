@@ -751,26 +751,25 @@ public final class ConfigImportHelper {
     updateVMOptions(newConfigDir, log);
   }
 
-  private static List<StartupActionScriptManager.ActionCommand> loadStartupActionScript(Path oldConfigDir,
-                                                                                        @Nullable Path oldIdeHome,
-                                                                                        Path oldPluginsDir) throws IOException {
-    if (Files.isDirectory(oldPluginsDir)) {
-      Path oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
-      if (!Files.isDirectory(oldSystemDir)) {
-        oldSystemDir = null;
-        if (oldIdeHome != null) {
-          oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, ConfigImportHelper::defaultSystemPath);
-        }
-        if (oldSystemDir == null) {
-          oldSystemDir = oldConfigDir.getFileSystem().getPath(defaultSystemPath(getNameWithVersion(oldConfigDir)));
-        }
+  private static @NotNull List<StartupActionScriptManager.ActionCommand> loadStartupActionScript(Path oldConfigDir,
+                                                                                                 @Nullable Path oldIdeHome,
+                                                                                                 Path oldPluginsDir) throws IOException {
+    if (!Files.isDirectory(oldPluginsDir)) {
+      return Collections.emptyList();
+    }
+
+    Path oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
+    if (!Files.isDirectory(oldSystemDir)) {
+      oldSystemDir = null;
+      if (oldIdeHome != null) {
+        oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, ConfigImportHelper::defaultSystemPath);
       }
-      Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
-      if (Files.isRegularFile(script)) {
-        return StartupActionScriptManager.loadActionScript(script);
+      if (oldSystemDir == null) {
+        oldSystemDir = oldConfigDir.getFileSystem().getPath(defaultSystemPath(getNameWithVersion(oldConfigDir)));
       }
     }
-    return Collections.emptyList();
+    Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
+    return StartupActionScriptManager.loadActionScript(script);
   }
 
   private static void migratePlugins(Path oldPluginsDir,

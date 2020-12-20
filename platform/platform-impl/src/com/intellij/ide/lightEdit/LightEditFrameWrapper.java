@@ -144,9 +144,9 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   }
 
   static @NotNull LightEditFrameWrapper allocate(@NotNull Project project, @NotNull BooleanSupplier closeHandler) {
-    return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(
-      project,
-      () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false), closeHandler));
+    return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(project, () -> {
+      return new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false, null), closeHandler);
+    });
   }
 
   void setFrameTitleUpdateEnabled(boolean frameTitleUpdateEnabled) {

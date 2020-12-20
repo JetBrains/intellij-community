@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,7 +71,7 @@ public final class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     if (vFile == null) {
       return false;
     }
-    if (myAntFileUrl == null || !PathUtil.pathEqualsTo(vFile, VfsUtilCore.urlToPath(myAntFileUrl))) {
+    if (myAntFileUrl == null || !VfsUtilCore.pathEqualsTo(vFile, VfsUtilCore.urlToPath(myAntFileUrl))) {
       return false;
     }
     return Objects.equals(myTargetName, target.getName());

@@ -42,7 +42,8 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "IdeaLight",
     "High contrast",
     "ReSharper",
-    "Rider"
+    "Rider",
+    "IntelliJ Light"
   };
 
   @Override

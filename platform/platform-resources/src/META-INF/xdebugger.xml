@@ -100,5 +100,9 @@
     <action id="XDebugger.PinToTop" class="com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
     </action>
+
+    <action class="com.intellij.execution.actions.ActivateDebugToolWindowAction" id="ActivateDebugToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
   </actions>
 </idea-plugin>

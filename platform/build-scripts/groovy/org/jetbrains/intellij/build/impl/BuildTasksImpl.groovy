@@ -346,7 +346,7 @@ idea.fatal.error.notification=disabled
       }
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-        distributionJARsBuilder.buildOrderFiles()
+        DistributionJARsBuilder.buildOrderFiles(buildContext)
         distributionJARsBuilder.buildSearchableOptions()
         distributionJARsBuilder.buildNonBundledPlugins()
       }
@@ -441,7 +441,7 @@ idea.fatal.error.notification=disabled
     def pluginsToPublish = new LinkedHashSet<PluginLayout>(
       DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
     def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
-    distributionJARsBuilder.buildSearchableOptions()
+    distributionJARsBuilder.buildSearchableOptions(buildContext)
     distributionJARsBuilder.buildNonBundledPlugins()
   }
 

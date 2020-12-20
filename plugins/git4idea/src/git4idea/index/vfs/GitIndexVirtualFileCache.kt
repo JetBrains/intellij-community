@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 
-class GitIndexVirtualFileCache(private val project: Project) : Disposable {
+internal class GitIndexVirtualFileCache(private val project: Project) : Disposable {
   private val cache = CacheBuilder.newBuilder().weakValues().build<Key, GitIndexVirtualFile>(CacheLoader.from { key ->
     GitIndexVirtualFile(project, key!!.root, key.filePath)
   })

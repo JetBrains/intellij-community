@@ -125,7 +125,7 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
     for (VirtualFile rootDir : myRepositoryFiles.getRootDirs()) {
       rootDir.getChildren();
     }
-    for (String path : myRepositoryFiles.getDirsToWatch()) {
+    for (String path : myRepositoryFiles.getPathsToWatch()) {
       DvcsUtil.ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     }
   }

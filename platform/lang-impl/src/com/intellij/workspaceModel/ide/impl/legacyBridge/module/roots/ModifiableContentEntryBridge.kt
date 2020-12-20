@@ -34,13 +34,13 @@ internal class ModifiableContentEntryBridge(
   }
   private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
 
-  private val currentContentEntry = CachedValueImpl<ContentEntryBridge> {
+  private val currentContentEntry = CachedValueImpl {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryBridge
       ?: error("Unable to find content entry in parent modifiable root model by url: $contentEntryUrl")
-    CachedValueProvider.Result.createSingleDependency<ContentEntryBridge>(contentEntry, modifiableRootModel)
+    CachedValueProvider.Result.createSingleDependency(contentEntry, modifiableRootModel)
   }
 
-  private fun <P : JpsElement?> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
+  private fun <P : JpsElement> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
     if (!contentEntryUrl.isEqualOrParentOf(sourceFolderUrl)) {
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
     }
@@ -110,8 +110,10 @@ internal class ModifiableContentEntryBridge(
       error("Exclude folder $excludeUrl must be under content entry $contentEntryUrl")
     }
 
-    updateContentEntry {
-      excludedUrls = if (excludedUrls.contains(excludeUrl)) excludedUrls else (excludedUrls + excludeUrl)
+    if (excludeUrl !in currentContentEntry.value.entity.excludedUrls) {
+      updateContentEntry {
+        excludedUrls = excludedUrls + excludeUrl
+      }
     }
 
     return currentContentEntry.value.excludeFolders.firstOrNull {
@@ -188,19 +190,19 @@ internal class ModifiableContentEntryBridge(
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean, packagePrefix: String): SourceFolder =
     addSourceFolder(file, if (isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE)
 
-  override fun <P : JpsElement?> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>): SourceFolder =
+  override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>): SourceFolder =
     addSourceFolder(file, type, type.createDefaultProperties())
 
   override fun addSourceFolder(url: String, isTestSource: Boolean): SourceFolder =
     addSourceFolder(url, if (isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE)
 
-  override fun <P : JpsElement?> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>): SourceFolder =
+  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>): SourceFolder =
     addSourceFolder(url, type, type.createDefaultProperties())
 
-  override fun <P : JpsElement?> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
+  override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
     addSourceFolder(file.toVirtualFileUrl(virtualFileManager), type, properties)
 
-  override fun <P : JpsElement?> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
+  override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
     addSourceFolder(virtualFileManager.fromUrl(url), type, properties)
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file

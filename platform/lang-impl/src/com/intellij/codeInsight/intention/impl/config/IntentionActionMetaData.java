@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.extensions.PluginId;
@@ -38,6 +39,7 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
   }
 
   @NotNull
+  @IntentionFamilyName
   public String getFamily() {
     return myAction.getFamilyName();
   }

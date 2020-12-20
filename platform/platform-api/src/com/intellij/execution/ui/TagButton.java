@@ -60,9 +60,10 @@ public class TagButton extends JBLayeredPane implements Disposable {
     myCloseButton.setBounds(new Rectangle(p, iconSize));
   }
 
-  protected void updateButton(@NlsContexts.Button String text, Icon icon) {
+  protected void updateButton(@NlsContexts.Button String text, Icon icon, boolean isEnabled) {
     myButton.setText(text);
     myButton.setIcon(icon);
+    myButton.setEnabled(isEnabled);
     layoutButtons();
   }
 

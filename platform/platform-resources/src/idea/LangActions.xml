@@ -13,9 +13,12 @@
 
     <group id="RunContextGroup" popup="false">
       <!-- A dynamic group filled with executor actions -->
-      <group id="RunContextGroupInner"/>
+      <group id="RunContextGroupInner">
+        <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
+          <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+        </group>
+      </group>
       <separator/>
-      <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
     </group>
     <group id="RunContextPopupGroup" popup="false">
       <reference ref="RunContextGroup"/>
@@ -71,7 +74,9 @@
       <action id="EmacsStyleIndent" class="com.intellij.codeInsight.editorActions.EmacsStyleIndentAction"/>
       <action id="EditorCodeBlockStart" class="com.intellij.codeInsight.editorActions.CodeBlockStartAction"/>
       <action id="EditorCodeBlockEnd" class="com.intellij.codeInsight.editorActions.CodeBlockEndAction"/>
-      <action id="EditorMatchBrace" class="com.intellij.codeInsight.editorActions.MatchBraceAction"/>
+      <action id="EditorMatchBrace" class="com.intellij.codeInsight.editorActions.MatchBraceAction">
+        <add-to-group group-id="NavigateInFileGroup" anchor="after" relative-to-action="MethodUp"/>
+      </action>
       <action id="EditorCodeBlockStartWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockStartWithSelectionAction"/>
       <action id="EditorCodeBlockEndWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockEndWithSelectionAction"/>
       <action id="EditorCompleteStatement" class="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction"/>
@@ -462,8 +467,11 @@
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" searchable="false"/>
     <reference ref="AssociateWithFileType"/>
 
-    <group id="RevealGroup">
-      <reference id="OpenInRightSplit" />
+    <reference id="OpenInRightSplit">
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </reference>
+
+    <group id="RevealGroup" popup="true">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
 
@@ -498,14 +506,14 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <action id="RunDebugControlAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRunDebugControlAction"/>
+    <action id="RunDebugConfigAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRDCAction"/>
 
-    <group id="SegmentedRunDebugActionGroup">
-      <action class="com.intellij.execution.segmentedRunDebugWidget.RunDebugLabelAction"/>
-      <action class="com.intellij.execution.segmentedRunDebugWidget.RunDebugBarAction"/>
+    <group id="SegmentedRunDebugConfigActionGroup">
+      <action class="com.intellij.execution.segmentedRunDebugWidget.RDCLabelAction"/>
+      <action class="com.intellij.execution.segmentedRunDebugWidget.RDCBarAction"/>
     </group>
 
-    <group id="RunDebugActionsBarGroup" popup="false">
+    <group id="RunDebugConfigActionBarGroup" popup="false">
       <reference ref="RunConfiguration"/>
       <group id="RunDebugConfigRunnerActions"/>
       <reference ref="Stop"/>
@@ -771,7 +779,7 @@
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CompareClipboardWithSelection" anchor="before"/>
     </group>
 
-    <group id="EditorTabPopupMenuEx">
+    <group id="EditorTabPopupMenuEx" searchable="false">
       <separator/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="AddToFavorites"/>
@@ -1392,6 +1400,10 @@
             class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
             icon="AllIcons.General.Locate">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
+    </action>
+
+    <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
     
   </actions>

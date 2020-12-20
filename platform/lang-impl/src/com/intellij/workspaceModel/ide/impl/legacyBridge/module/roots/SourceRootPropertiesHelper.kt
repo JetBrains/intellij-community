@@ -97,26 +97,24 @@ internal object SourceRootPropertiesHelper {
 
   }
 
-  internal fun <P : JpsElement?> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
+  internal fun <P : JpsElement> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
                                                      sourceRootEntity: SourceRootEntity,
                                                      properties: P,
                                                      serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
-    when (properties) {
-      is JavaSourceRootProperties -> diff.addJavaSourceRootEntity(
+    when (serializer.typeId) {
+      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff.addJavaSourceRootEntity(
         sourceRoot = sourceRootEntity,
-        generated = properties.isForGeneratedSources,
+        generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
         packagePrefix = properties.packagePrefix
       )
 
-      is JavaResourceRootProperties -> diff.addJavaResourceRootEntity(
+      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> diff.addJavaResourceRootEntity(
         sourceRoot = sourceRootEntity,
-        generated = properties.isForGeneratedSources,
+        generated = (properties as JavaResourceRootProperties).isForGeneratedSources,
         relativeOutputPath = properties.relativeOutputPath
       )
 
-      is JpsDummyElement, null -> Unit
-
-      else -> {
+      else -> if (properties !is JpsDummyElement) {
         diff.addCustomSourceRootPropertiesEntity(
           sourceRoot = sourceRootEntity,
           propertiesXmlTag = savePropertiesToString(serializer, properties)

@@ -42,7 +42,7 @@ class CompilerDriverUnknownSdkTracker(
       .getInstance(project)
       .newModalHandler(errorMessage, errorText)
 
-    UnknownSdkTracker.getInstance(project).updateUnknownSdksBlocking(collector, handler)
+    UnknownSdkTracker.getInstance(project).collectUnknownSdksBlocking(collector, handler)
 
     return handler.outcome
   }

@@ -14,9 +14,7 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
-import javax.tools.FileObject;
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -30,7 +28,12 @@ public class APIWrappers {
     return wrap(Processor.class, new ProcessorWrapper(delegate, fileManager), delegate);
   }
 
-  abstract static class DynamicWrapper<T> {
+  @SuppressWarnings("unchecked")
+  public static <T> DiagnosticListener<T> newDiagnosticListenerWrapper(final DiagnosticListener<T> delegate, @NotNull Iterable<Processor> processors) {
+    return wrap(DiagnosticListener.class, new DiagnosticListenerWrapper<T>(delegate, processors), DynamicWrapper.class, delegate);
+  }
+
+  abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
 
     private final T myDelegate;
 
@@ -38,9 +41,56 @@ public class APIWrappers {
       myDelegate = delegate;
     }
 
-    protected final T getDelegate() {
+    @Override
+    public final T getWrapperDelegate() {
       return myDelegate;
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  static class DiagnosticListenerWrapper<T> extends DynamicWrapper<DiagnosticListener<T>> implements DiagnosticListener<T>{
+    private final Iterable<Pair<String, String>> myNamesPairs;
+
+    DiagnosticListenerWrapper(DiagnosticListener<T> delegate, @NotNull Iterable<Processor> processors) {
+      super(delegate);
+      myNamesPairs = Iterators.filter(Iterators.map(processors, new Function<Processor, Pair<String, String>>() {
+        @Override
+        public Pair<String, String> fun(Processor processor) {
+          return processor instanceof WrapperDelegateAccessor<?> ? Pair.create(processor.getClass().getName(), ((WrapperDelegateAccessor<?>)processor).getWrapperDelegate().getClass().getName()) : null;
+        }
+      }), Iterators.<Pair<String, String>>notNullFilter());
+    }
+
+    @Override
+    public void report(Diagnostic<? extends T> diagnostic) {
+      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<T>((Diagnostic<T>)diagnostic, myNamesPairs), DynamicWrapper.class, diagnostic));
+    }
+  }
+
+  static class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
+    private final Iterable<Pair<String, String>> myNamesMap;
+
+    DiagnosticWrapper(Diagnostic<T> delegate, Iterable<Pair<String, String>> namesMap) {
+      super(delegate);
+      myNamesMap = namesMap;
+    }
+
+    public String getMessage(Locale locale) {
+      final String message = getWrapperDelegate().getMessage(locale);
+      if (message != null) {
+        for (Pair<String, String> pair : myNamesMap) {
+          final String replaced = message.replace(pair.getFirst(), pair.getSecond());
+          if (!message.equals(replaced)) {
+            return replaced;
+          }
+        }
+      }
+      return message;
+    }
+  }
+
+  interface WrapperDelegateAccessor<T> {
+    T getWrapperDelegate();
   }
 
   static class ProcessorWrapper extends DynamicWrapper<Processor> {
@@ -52,11 +102,11 @@ public class APIWrappers {
     }
 
     public void init(ProcessingEnvironment processingEnv) {
-      getDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager), processingEnv));
+      getWrapperDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager), processingEnv));
     }
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-      return getDelegate().process(annotations, roundEnv);
+      return getWrapperDelegate().process(annotations, roundEnv);
     }
   }
 
@@ -72,8 +122,8 @@ public class APIWrappers {
     public Filer getFiler() {
       Filer impl = myFilerImpl;
       if (impl == null) {
-        final Filer delegateFiler = getDelegate().getFiler();
-        myFilerImpl = impl = wrap(Filer.class, new FilerWrapper(delegateFiler, myFileManager, getDelegate().getElementUtils()), delegateFiler);
+        final Filer delegateFiler = getWrapperDelegate().getFiler();
+        myFilerImpl = impl = wrap(Filer.class, new FilerWrapper(delegateFiler, myFileManager, getWrapperDelegate().getElementUtils()), delegateFiler);
       }
       return impl;
     }
@@ -92,13 +142,13 @@ public class APIWrappers {
     @Override
     public JavaFileObject createSourceFile(CharSequence name, Element... originatingElements) throws IOException {
       addMapping(name, Arrays.asList(originatingElements));
-      return getDelegate().createSourceFile(name, originatingElements);
+      return getWrapperDelegate().createSourceFile(name, originatingElements);
     }
 
     @Override
     public JavaFileObject createClassFile(CharSequence name, Element... originatingElements) throws IOException {
       addMapping(name, Arrays.asList(originatingElements));
-      return getDelegate().createClassFile(name, originatingElements);
+      return getWrapperDelegate().createClassFile(name, originatingElements);
     }
 
     @Override
@@ -131,12 +181,12 @@ public class APIWrappers {
         // package-path is a package-name where '.' replaced with '/'
         addMapping(resourceName, Arrays.asList(originatingElements));
       }
-      return getDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements);
+      return getWrapperDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements);
     }
 
     @Override
     public FileObject getResource(JavaFileManager.Location location, CharSequence moduleAndPkg, CharSequence relativeName) throws IOException {
-      return getDelegate().getResource(location, moduleAndPkg, relativeName);
+      return getWrapperDelegate().getResource(location, moduleAndPkg, relativeName);
     }
 
     private void addMapping(CharSequence resourceName, final Collection<? extends Element> elements) {
@@ -153,7 +203,8 @@ public class APIWrappers {
   
   @NotNull
   public static <T> T wrap(@NotNull Class<T> ifaceClass, @NotNull final Object wrapper, @NotNull final Class<?> parentToStopSearchAt, @NotNull final T delegateTo) {
-    return ifaceClass.cast(Proxy.newProxyInstance(wrapper.getClass().getClassLoader(), new Class[]{ifaceClass}, new InvocationHandler() {
+    final Class<?>[] implemented = wrapper instanceof WrapperDelegateAccessor? new Class<?>[]{ifaceClass, WrapperDelegateAccessor.class} : new Class<?>[]{ifaceClass};
+    return ifaceClass.cast(Proxy.newProxyInstance(wrapper.getClass().getClassLoader(), implemented, new InvocationHandler() {
       private final Map<Method, Pair<Method, Object>> myCallHandlers = Collections.synchronizedMap(new HashMap<Method, Pair<Method, Object>>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -171,19 +222,24 @@ public class APIWrappers {
       private Pair<Method, Object> getCallHandlerMethod(Method method) {
         Pair<Method, Object> pair = myCallHandlers.get(method);
         if (pair == null) {
-          // important: look for implemented methods starting from the actual class
-          Class<?> aClass = wrapper.getClass();
-          while (!(parentToStopSearchAt.equals(aClass) || Object.class.equals(aClass))) {
-            try {
-              pair = Pair.create(aClass.getDeclaredMethod(method.getName(), method.getParameterTypes()), wrapper);
-              break;
-            }
-            catch (NoSuchMethodException e) {
-              aClass = aClass.getSuperclass();
-            }
+          if (WrapperDelegateAccessor.class.equals(method.getDeclaringClass())) {
+            pair = Pair.create(method, wrapper);
           }
-          if (pair == null) {
-            pair = Pair.<Method, Object>create(method, delegateTo);
+          else {
+            // important: look for implemented methods starting from the actual class
+            Class<?> aClass = wrapper.getClass();
+            while (!(parentToStopSearchAt.equals(aClass) || Object.class.equals(aClass))) {
+              try {
+                pair = Pair.create(aClass.getDeclaredMethod(method.getName(), method.getParameterTypes()), wrapper);
+                break;
+              }
+              catch (NoSuchMethodException e) {
+                aClass = aClass.getSuperclass();
+              }
+            }
+            if (pair == null) {
+              pair = Pair.<Method, Object>create(method, delegateTo);
+            }
           }
           myCallHandlers.put(method, pair);
         }

@@ -90,11 +90,6 @@ public class DefaultRunExecutor extends Executor {
     return "ideaInterface.run";
   }
 
-  @Override
-  public boolean isRDCAction() {
-    return getId() == EXECUTOR_ID;
-  }
-
   public static Executor getRunExecutorInstance() {
     return ExecutorRegistry.getInstance().getExecutorById(EXECUTOR_ID);
   }

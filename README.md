@@ -60,7 +60,6 @@ To run tests on the build, apply these setting to the **Run | Edit Configuration
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 
-    * `-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader` 
     * `-Didea.config.path=../test-config`
     * `-Didea.system.path=../test-system`
  

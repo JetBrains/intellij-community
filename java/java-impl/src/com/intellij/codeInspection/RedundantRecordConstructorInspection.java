@@ -5,10 +5,12 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -45,16 +47,16 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
 
       private void checkCanonical(PsiMethod ctor) {
         ConstructorSimplifier simplifier = createCtorSimplifier(ctor);
-        if (simplifier instanceof CanonicalCtorSimplifier) {
+        if (simplifier instanceof RemoveRedundantCtorSimplifier) {
           PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
           if (nameIdentifier == null) return;
           holder.registerProblem(nameIdentifier, JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier.getQuickFix());
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier);
         }
-        else if (simplifier instanceof CompactCtorSimplifier) {
+        else if (simplifier instanceof MakeCtorCompactSimplifier) {
           holder.registerProblem(ctor.getParameterList(),
                                  JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier.getQuickFix());
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier);
         }
       }
 
@@ -79,7 +81,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
             ctor.getDocComment() == null) {
           holder.registerProblem(Objects.requireNonNull(ctor.getNameIdentifier()),
                                  JavaBundle.message("inspection.redundant.record.constructor.compact.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(ctor));
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new RemoveRedundantCtorSimplifier());
         }
       }
     };
@@ -105,13 +107,13 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     int assignedCount = getAssignedComponentsCount(components, parameters, statements);
     if (statements.length == components.length && assignedCount == components.length &&
         ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
-      return new CanonicalCtorSimplifier(ctor);
+      return new RemoveRedundantCtorSimplifier();
     }
     if (PsiUtil.findReturnStatements(body).length > 0) return null;
     if (PsiUtil.getLanguageLevel(ctor) != LanguageLevel.JDK_14_PREVIEW && assignedCount != components.length) {
       return null;
     }
-    return new CompactCtorSimplifier();
+    return new MakeCtorCompactSimplifier();
   }
 
   private static int getAssignedComponentsCount(PsiRecordComponent @NotNull [] components,
@@ -141,44 +143,37 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     return components.length - unprocessed.size();
   }
 
-  public interface ConstructorSimplifier {
+  public interface ConstructorSimplifier extends LocalQuickFix {
     void simplify(@NotNull PsiMethod ctor);
 
-    LocalQuickFix getQuickFix();
+    @Override
+    default void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethod ctor = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethod.class);
+      if (ctor != null) {
+        simplify(ctor);
+      }
+    }
   }
 
-  private static class CanonicalCtorSimplifier implements ConstructorSimplifier {
-    private final PsiMethod myCtor;
+  private static class RemoveRedundantCtorSimplifier implements ConstructorSimplifier {
 
-    private CanonicalCtorSimplifier(@NotNull PsiMethod ctor) {
-      myCtor = ctor;
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.remove.title", JavaElementKind.CONSTRUCTOR.object());
     }
 
     @Override
     public void simplify(@NotNull PsiMethod ctor) {
-      DeleteElementFix.deleteElement(myCtor);
-    }
-
-    @Override
-    public LocalQuickFix getQuickFix() {
-      return new DeleteElementFix(myCtor);
+      new CommentTracker().deleteAndRestoreComments(ctor);
     }
   }
 
-  private static class CompactCtorSimplifier implements LocalQuickFix, ConstructorSimplifier {
+  private static class MakeCtorCompactSimplifier implements ConstructorSimplifier {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.redundant.record.constructor.fix.family.name");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethod ctor = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethod.class);
-      if (ctor != null) {
-        simplify(ctor);
-      }
     }
 
     @Override
@@ -215,11 +210,6 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
       PsiMethod compactCtor = JavaPsiFacade.getElementFactory(record.getProject()).createMethodFromText(resultText.toString(), ctor);
       PsiMethod result = (PsiMethod)ctor.replace(compactCtor);
       ct.insertCommentsBefore(Objects.requireNonNull(Objects.requireNonNull(result.getBody()).getRBrace()));
-    }
-
-    @Override
-    public LocalQuickFix getQuickFix() {
-      return this;
     }
   }
 }

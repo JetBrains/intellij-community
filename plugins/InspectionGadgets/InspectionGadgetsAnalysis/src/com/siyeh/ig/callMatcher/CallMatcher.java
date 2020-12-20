@@ -305,7 +305,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     public boolean test(PsiMethodCallExpression call) {
       if (call == null) return false;
       String name = call.getMethodExpression().getReferenceName();
-      if (!myNames.contains(name)) return false;
+      if (name == null || !myNames.contains(name)) return false;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (myParameters != null && myParameters.length > 0) {
         if (args.length < myParameters.length - 1) return false;
@@ -342,7 +342,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     public boolean uCallMatches(@Nullable UCallExpression call) {
       if (call == null) return false;
       String name = call.getMethodName();
-      if (!myNames.contains(name)) return false;
+      if (name == null || !myNames.contains(name)) return false;
       return methodMatches(call.resolve());
     }
 

@@ -32,7 +32,7 @@ public class ArtifactProblemDescription extends ProjectStructureProblemDescripti
   public ArtifactProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message, @NotNull ProjectStructureProblemType problemType,
                                     @Nullable List<PackagingElement<?>> pathToPlace, @NotNull PlaceInArtifact place,
                                     final List<ConfigurationErrorQuickFix> quickFixList) {
-    super(message, (HtmlChunk) null, place, problemType, quickFixList);
+    super(message, HtmlChunk.empty(), place, problemType, quickFixList);
     myPathToPlace = pathToPlace;
   }
 

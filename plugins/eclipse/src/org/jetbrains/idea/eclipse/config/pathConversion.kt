@@ -153,8 +153,8 @@ internal fun convertVariablePathToUrl(pathMap: ExpandMacroToPathMap,
                                       varStart: Int,
                                       virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl {
   val variable = AbstractEclipseClasspathReader.createEPathVariable(path, varStart)
-  val url = pathToUrl(AbstractEclipseClasspathReader.getVariableRelatedPath(variable.variable, variable.relatedPath))
-  return convertToRootUrl(pathMap.substitute(url, SystemInfo.isFileSystemCaseSensitive), virtualUrlManager)
+  val pathWithVariable = AbstractEclipseClasspathReader.getVariableRelatedPath(variable.variable, variable.relatedPath)
+  return convertToRootUrl(pathMap.substitute(pathWithVariable, SystemInfo.isFileSystemCaseSensitive), virtualUrlManager)
 }
 
 internal fun convertRelativePathToUrl(path: String,

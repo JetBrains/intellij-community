@@ -28,7 +28,9 @@ interface JavaUElementWithComments : UElement {
     get() {
       val psi = sourcePsi ?: return emptyList()
       val childrenComments = psi.children.filterIsInstance<PsiComment>().map { UComment(it, this) }
-      if (this !is UExpression && this !is UParameter) return childrenComments
+      if (this !is UExpression &&
+          this !is UParameter     // void method(/* prior */ int a)  <-  /* prior */ is on the level of PsiParameterList
+      ) return childrenComments
       return childrenComments +
              psi.nearestCommentSibling(forward = true)?.let { listOf(UComment(it, this)) }.orEmpty() +
              psi.nearestCommentSibling(forward = false)?.let { listOf(UComment(it, this)) }.orEmpty()

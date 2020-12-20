@@ -27,6 +27,7 @@ public final class OutputFileObject extends JpsFileObject {
   private final Iterable<URI> mySources;
   private volatile BinaryContent myContent;
   private final String myEncodingName;
+  private final boolean myIsGenerated;
 
   public OutputFileObject(@Nullable JpsJavacFileManager.Context context,
                           @Nullable File outputRoot,
@@ -36,7 +37,9 @@ public final class OutputFileObject extends JpsFileObject {
                           @Nullable String className,
                           @NotNull final Iterable<URI> sources,
                           @Nullable final String encodingName,
-                          @Nullable BinaryContent content, final JavaFileManager.Location location) {
+                          @Nullable BinaryContent content,
+                          final JavaFileManager.Location location,
+                          boolean isFromGeneratedSource) {
     super(FileUtilRt.fileToUri(file), kind, location);
     myContext = context;
     mySources = sources;
@@ -46,6 +49,7 @@ public final class OutputFileObject extends JpsFileObject {
     myFile = file;
     myClassName = className != null? className.replace('/', '.') : null;
     myEncodingName = encodingName;
+    myIsGenerated = isFromGeneratedSource;
   }
 
   @Nullable
@@ -65,6 +69,10 @@ public final class OutputFileObject extends JpsFileObject {
   @Nullable
   public String getClassName() {
     return myClassName;
+  }
+
+  public boolean isGenerated() {
+    return myIsGenerated;
   }
 
   /**

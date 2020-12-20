@@ -122,6 +122,10 @@ class MacDmgBuilder {
       ftpAction("mkdir") {}
       try {
         signMacZip(sitFile, jreArchivePath, notarize)
+
+        if (customizer.publishArchive) {
+          buildContext.notifyArtifactBuilt(sitFile.path)
+        }
         buildDmg(targetName)
       }
       finally {
@@ -130,6 +134,9 @@ class MacDmgBuilder {
     }
     else {
       bundleJBRLocally(sitFile, jreArchivePath)
+      if (customizer.publishArchive) {
+        buildContext.notifyArtifactBuilt(sitFile.path)
+      }
       buildDmgLocally(sitFile, targetName)
     }
   }

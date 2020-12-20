@@ -18,17 +18,17 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
   @NotNull
-  private final TObjectHashingStrategy<? super K> myStrategy;
+  private final HashingStrategy<? super K> myStrategy;
   private Set<Entry<K, V>> entrySet;
   private boolean processingQueue;
 
-  RefHashMap(int initialCapacity, float loadFactor, @NotNull final TObjectHashingStrategy<? super K> strategy) {
+  RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
     myStrategy = strategy;
     myMap = new MyMap(initialCapacity, loadFactor);
   }
 
   RefHashMap(int initialCapacity, float loadFactor) {
-    this(initialCapacity, loadFactor, ContainerUtil.canonicalStrategy());
+    this(initialCapacity, loadFactor, HashingStrategy.canonical());
   }
 
   RefHashMap(int initialCapacity) {
@@ -44,11 +44,11 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     putAll(t);
   }
 
-  RefHashMap(@NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
+  RefHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     this(4, 0.8f, hashingStrategy);
   }
 
-  static <K> boolean keyEqual(K k1, K k2, TObjectHashingStrategy<? super K> strategy) {
+  static <K> boolean keyEqual(K k1, K k2, HashingStrategy<? super K> strategy) {
     return k1 == k2 || strategy.equals(k1, k2);
   }
 
@@ -118,7 +118,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   @NotNull
-  protected abstract <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q);
+  protected abstract <T> Key<T> createKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q);
 
   private class HardKey implements Key<K> {
     private K myObject;
@@ -131,7 +131,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
     private void set(@NotNull K object) {
       myObject = object;
-      myHash = myStrategy.computeHashCode(object);
+      myHash = myStrategy.hashCode(object);
     }
 
     private void clear() {
@@ -257,9 +257,9 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     private final Entry<?, V> ent;
     private final K key; // Strong reference to key, so that the GC will leave it alone as long as this Entry exists
     private final int myKeyHashCode;
-    @NotNull private final TObjectHashingStrategy<? super K> myStrategy;
+    @NotNull private final HashingStrategy<? super K> myStrategy;
 
-    private MyEntry(@NotNull Entry<?, V> ent, @NotNull K key, int keyHashCode, @NotNull TObjectHashingStrategy<? super K> strategy) {
+    private MyEntry(@NotNull Entry<?, V> ent, @NotNull K key, int keyHashCode, @NotNull HashingStrategy<? super K> strategy) {
       this.ent = ent;
       this.key = key;
       myKeyHashCode = keyHashCode;

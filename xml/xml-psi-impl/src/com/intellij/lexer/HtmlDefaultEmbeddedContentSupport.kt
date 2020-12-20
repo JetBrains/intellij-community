@@ -15,7 +15,7 @@ import com.intellij.psi.xml.XmlTokenType.XML_DATA_CHARACTERS
 import com.intellij.xml.util.HtmlUtil
 import java.util.*
 
-internal class HtmlDefaultEmbeddedContentSupport : HtmlEmbeddedContentSupport {
+class HtmlDefaultEmbeddedContentSupport : HtmlEmbeddedContentSupport {
 
   override fun createEmbeddedContentProviders(lexer: BaseHtmlLexer): List<HtmlEmbeddedContentProvider> =
     listOf(HtmlDefaultTagEmbeddedContentProvider(lexer))

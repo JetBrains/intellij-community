@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.Main
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -122,6 +123,20 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   override fun getPicoContainer(): PicoContainer = checkStateAndGetPicoContainer()
+
+  @Volatile
+  internal var componentContainerIsReadonly: String? = null
+
+  @Internal
+  fun forbidGettingServices(reason: String): AccessToken {
+    val token = object : AccessToken() {
+      override fun finish() {
+        componentContainerIsReadonly = null
+      }
+    }
+    componentContainerIsReadonly = reason
+    return token
+  }
 
   private fun checkStateAndGetPicoContainer(): DefaultPicoContainer {
     if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {

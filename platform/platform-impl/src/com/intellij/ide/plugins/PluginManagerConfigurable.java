@@ -875,7 +875,7 @@ public class PluginManagerConfigurable
             group.rightAction = new LinkLabel<>(
               "",
               null,
-              (__, ___) -> UIUtilsKt.changeEnableDisable(
+              (__, ___) -> UIUtils.changeEnableDisable(
                 myPluginModel,
                 Set.copyOf(group.descriptors),
                 group.rightAction.getText().startsWith("Enable")
@@ -1579,7 +1579,7 @@ public class PluginManagerConfigurable
       }
 
       if (!descriptors.isEmpty()) {
-        UIUtilsKt.changeEnableDisable(
+        UIUtils.changeEnableDisable(
           myPluginModel,
           descriptors,
           myEnable

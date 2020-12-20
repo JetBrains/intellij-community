@@ -58,7 +58,8 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
         (entitySource as JpsImportedEntitySource).internalFile
       }
       else {
-        JpsImportedEntitySource(entitySource as JpsFileEntitySource, externalSystemId, module.project.isExternalStorageEnabled)
+        val internalFile = entitySource as? JpsFileEntitySource ?: (entitySource as JpsImportedEntitySource).internalFile
+        JpsImportedEntitySource(internalFile, externalSystemId, module.project.isExternalStorageEnabled)
       }
 
       fun changeSources(diffBuilder: WorkspaceEntityStorageDiffBuilder, storage: WorkspaceEntityStorage) {

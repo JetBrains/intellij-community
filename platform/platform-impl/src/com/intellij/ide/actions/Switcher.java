@@ -402,7 +402,7 @@ public final class Switcher extends AnAction implements DumbAware {
       List<ToolWindow> windows = new ArrayList<>();
       for (ActivateToolWindowAction action : actions) {
         ToolWindow tw = toolWindowManager.getToolWindow(action.getToolWindowId());
-        if (tw.isAvailable()) {
+        if (tw != null && tw.isAvailable()) {
           windows.add(tw);
         }
       }

@@ -23,7 +23,7 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
   private val cdRenderedDocs get() = CheckboxDescriptor(LangBundle.message("checkbox.rendered.docs"), settings::showRenderedDocs)
   private val cdLigatures get() = CheckboxDescriptor(LangBundle.message("checkbox.ligatures"), settings::showLigatures)
   private val cdLineSpacing get() = CheckboxDescriptor(LangBundle.message("checkbox.line.spacing"), settings::increaseLineSpacing)
-  private val cdWarnings get() = CheckboxDescriptor(LangBundle.message("checkbox.hide.warnings"), settings::hideWarnings)
+  private val cdWarnings get() = CheckboxDescriptor(LangBundle.message("checkbox.hide.warnings"), settings::showWarnings)
   private val cdEnabled get() = CheckboxDescriptor(LangBundle.message("checkbox.reader.mode.toggle"), settings::enabled)
 
   override fun createPanel(): DialogPanel {
@@ -82,7 +82,7 @@ class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
     var increaseLineSpacing: Boolean = false,
     var showRenderedDocs: Boolean = true,
     var showInlayHints: Boolean = true,
-    var hideWarnings: Boolean = true,
+    var showWarnings: Boolean = false,
     var enabled: Boolean = false,
     var mode: ReaderMode = LIBRARIES_AND_READ_ONLY
   )
@@ -117,10 +117,10 @@ class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
       state.showRenderedDocs = value
     }
 
-  var hideWarnings: Boolean
-    get() = state.hideWarnings
+  var showWarnings: Boolean
+    get() = state.showWarnings
     set(value) {
-      state.hideWarnings = value
+      state.showWarnings = value
     }
 
   var enabled: Boolean

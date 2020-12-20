@@ -302,7 +302,7 @@ class ModifiableRootModelBridgeImpl(
     assertModelIsLive()
     Disposer.dispose(moduleLibraryTable)
     if (!isChanged) {
-      moduleLibraryTable.disposeLibraryCopies()
+      moduleLibraryTable.restoreLibraryMappingsAndDisposeCopies()
       disposeWithoutLibraries()
       return null
     }

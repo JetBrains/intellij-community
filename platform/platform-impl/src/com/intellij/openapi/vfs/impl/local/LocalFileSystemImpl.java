@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -16,7 +17,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
@@ -240,7 +240,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
                                     @NotNull String symlinkTarget) {
     if (parent != null) {
       String symlinkTargetParent = StringUtil.trimEnd(symlinkTarget, "/" + name);
-      return PathUtil.isAncestorOrSelf(symlinkTargetParent, parent);
+      return VfsUtilCore.isAncestorOrSelf(symlinkTargetParent, parent);
     }
     // parent == null means name is root
     return FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(name, symlinkTarget);

@@ -16,7 +16,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -56,7 +55,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -438,19 +436,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   protected void rebuildWithAlarm(final Alarm alarm) {
     alarm.cancelAllRequests();
     alarm.addRequest(() -> {
-      ReadAction.nonBlocking(() -> {
-        final Set<VirtualFile> files = new HashSet<>();
-        if (myTodoTreeBuilder.isDisposed()) return;
-        myTodoTreeBuilder.collectFiles(virtualFile -> {
-          files.add(virtualFile);
-          return true;
-        });
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myTodoTreeBuilder.isDisposed()) return;
-          myTodoTreeBuilder.rebuildCache(files);
-          updateTree();
-        });
-      }).executeSynchronously();
+      myTodoTreeBuilder.rebuildCache();
     }, 300);
   }
 

@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
-import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.hamcrest.CoreMatchers
 import org.junit.Assert.*
@@ -289,5 +288,43 @@ class DiffBuilderTest {
 
     val externalMapping = target.getExternalMapping<Any>("Ext") as ExternalEntityMappingImpl<Any>
     assertEquals(1, externalMapping.index.size)
+  }
+
+  @Test
+  fun `change source in diff`() {
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    val sampleEntity = target.addSampleEntity("Prop", MySource)
+
+    val source = WorkspaceEntityStorageBuilder.from(target)
+    source.changeSource(sampleEntity, AnotherSource)
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val entitySourceIndex = target.indexes.entitySourceIndex
+    assertEquals(1, entitySourceIndex.index.size)
+    assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
+  }
+
+  @Test
+  fun `change source in target`() {
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    val sampleEntity = target.addSampleEntity("Prop", MySource)
+
+    val source = WorkspaceEntityStorageBuilder.from(target)
+    target.changeSource(sampleEntity, AnotherSource)
+
+    source.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
+      this.stringProperty = "Updated"
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val entitySourceIndex = target.indexes.entitySourceIndex
+    assertEquals(1, entitySourceIndex.index.size)
+    assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
   }
 }

@@ -189,7 +189,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public static @Nls String renderSeverity(HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return LangBundle.message("single.inspection.profile.panel.no.highlighting.only.fix");
-    return StringUtil.capitalizeWords(StringUtil.toLowerCase(severity.getName()), true);
+    return severity.getDisplayLowercaseCapitalizedName();
   }
 
   private static boolean isDescriptorAccepted(Descriptor descriptor,
@@ -1072,7 +1072,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   public boolean isModified() {
     if (myTreeTable == null) return false;
     if (myModified) return true;
-    if (myProfile.isChanged() || myProfile.getSchemeState() == SchemeState.POSSIBLY_CHANGED) return true;
+    if (myProfile.isChanged()) return true;
     if (myProfile.getSource().isProjectLevel() != myProfile.isProjectLevel()) return true;
     if (!Comparing.strEqual(myProfile.getSource().getName(), myProfile.getName())) return true;
     if (!Arrays.equals(myInitialScopesOrder, myProfile.getScopesOrder())) return true;

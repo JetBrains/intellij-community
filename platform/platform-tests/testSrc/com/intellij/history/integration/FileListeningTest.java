@@ -8,6 +8,7 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,6 +30,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileListeningTest extends IntegrationTestCase {
   static final String IGNORED_EXTENSION = "pyc";
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    assertTrue("Aaaah, extension '" + IGNORED_EXTENSION+"' is no longer ignored. Please pick another ignored extension, tests count on you!",
+               FileTypeManager.getInstance().isFileIgnored("x."+IGNORED_EXTENSION));
+  }
 
   public void testCreatingFiles() throws Exception {
     VirtualFile f = createFile("file.txt");

@@ -36,6 +36,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.xdebugger.XDebuggerUtil
+import com.jetbrains.python.PyDisposable
 import com.jetbrains.python.newProject.welcome.PyWelcomeCollector.Companion.ProjectType
 import com.jetbrains.python.newProject.welcome.PyWelcomeCollector.Companion.ProjectViewPoint
 import com.jetbrains.python.newProject.welcome.PyWelcomeCollector.Companion.ProjectViewResult
@@ -131,12 +132,12 @@ private object PyWelcome {
   private fun prepareFileAndOpen(project: Project, baseDir: VirtualFile): CancellablePromise<PsiFile?> {
     return AppUIExecutor
       .onWriteThread()
-      .expireWith(project)
+      .expireWith(PyDisposable.getInstance(project))
       .submit(
         Callable {
           WriteAction.compute<PsiFile?, Exception> {
             prepareFile(project, baseDir)?.also {
-              AppUIExecutor.onUiThread().expireWith(project).execute { it.navigate(true) }
+              AppUIExecutor.onUiThread().expireWith(PyDisposable.getInstance(project)).execute { it.navigate(true) }
             }
           }
         }
@@ -183,7 +184,7 @@ private object PyWelcome {
         DumbAwareRunnable {
           AppUIExecutor
             .onUiThread(ModalityState.NON_MODAL)
-            .expireWith(project)
+            .expireWith(PyDisposable.getInstance(project))
             .submit {
               val fileToChoose = (file ?: firstUserFile(project, baseDir, module)) ?: return@submit
 

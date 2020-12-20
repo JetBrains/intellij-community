@@ -428,7 +428,7 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
                          "    # This never gets called\n" +
                          "    print(f'SubFoo.__new__: {p1}, {p2}')\n" +
                          "\n" +
-                         "sub = SubFoo(1<warning descr=\"Parameter(s) unfilledPossible callees:SubFoo.__new__(self: SubFoo, p1, p2)MetaFoo.__call__(cls: MetaFoo, p3, p4)\">)</warning>\n" +
+                         "sub = SubFoo(1<warning descr=\"Parameter(s) unfilledPossible callees:SubFoo.__new__(self: Type[SubFoo], p1, p2)MetaFoo.__call__(cls: MetaFoo, p3, p4)\">)</warning>\n" +
                          "foo = Foo(3<warning descr=\"Parameter 'p4' unfilled\">)</warning>")
     );
   }

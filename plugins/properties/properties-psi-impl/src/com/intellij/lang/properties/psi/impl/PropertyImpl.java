@@ -375,7 +375,11 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
 
   @Override
   public PropertiesFile getPropertiesFile() {
-    return (PropertiesFile)super.getContainingFile();
+    PsiFile containingFile = super.getContainingFile();
+    if (!(containingFile instanceof PropertiesFile)) {
+      LOG.error("Unexpected file type of: " + containingFile.getName());
+    }
+    return (PropertiesFile)containingFile;
   }
 
   @Override

@@ -31,7 +31,6 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private final int EMBEDDED_LEXER_ON = 0x1 << getBaseStateShift();
 
   private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
-  protected Lexer elLexer;
   private Lexer embeddedLexer;
   private boolean hasNoEmbedments;
   private final boolean hasNoLayers;

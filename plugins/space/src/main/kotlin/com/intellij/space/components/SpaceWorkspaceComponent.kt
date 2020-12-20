@@ -129,7 +129,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
     val portsMapping: Map<Int, URL> = IdeaOAuthConfig.redirectURIs.map { rawUri -> URL(rawUri).let { url -> url.port to url } }.toMap()
     val ports = portsMapping.keys
-    val (port, redirectUrl) = startRedirectHandling(lifetime, ports)
+    val (port, redirectUrl) = startRedirectHandling(lifetime, server, ports)
                               ?: return OAuthTokenResponse.Error(server, "", SpaceBundle.message("auth.error.ports.busy.label"))
 
     val authUrl = portsMapping.getValue(port)

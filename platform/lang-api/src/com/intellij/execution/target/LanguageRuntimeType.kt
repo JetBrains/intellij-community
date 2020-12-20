@@ -46,7 +46,7 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    * E.g, to detect java version, it makes sense to check for JAVA_HOME environment variable, and, if available, execute shell script
    * "$JAVA_HOME/bin/java --version"
    */
-  open fun createIntrospector(config: C): Introspector? = null
+  open fun createIntrospector(config: C): Introspector<C>? = null
 
   /**
    * List of all the volume types defined in the volume runtime
@@ -54,6 +54,8 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   open fun volumeDescriptors(): List<VolumeDescriptor> = emptyList()
 
   abstract fun createConfigurable(project: Project, config: C, target: TargetEnvironmentConfiguration): Configurable
+
+  abstract fun findLanguageRuntime(target: TargetEnvironmentConfiguration): C?
 
   companion object {
     @JvmField
@@ -68,12 +70,17 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    * Currently only static inspection of the remote environment variables and launching and inspecting the output of the shell scripts is supported.
    */
   abstract class Introspectable {
-    open fun getEnvironmentVariable(varName: String): String? = null
+    open fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> = CompletableFuture.completedFuture(null)
     open fun promiseExecuteScript(script: String): CompletableFuture<String?> = CompletableFuture.completedFuture(null)
+    open fun shutdown() = Unit
   }
 
-  interface Introspector {
-    fun introspect(subject: Introspectable): CompletableFuture<*>?
+  interface Introspector<C : LanguageRuntimeConfiguration> {
+    fun introspect(subject: Introspectable): CompletableFuture<C>
+
+    companion object {
+      val DONE = CompletableFuture.completedFuture("")
+    }
   }
 
   /**

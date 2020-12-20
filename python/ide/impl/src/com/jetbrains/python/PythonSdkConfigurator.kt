@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
+import org.jetbrains.concurrency.CancellablePromise
 import kotlin.streams.asSequence
 
 /**
@@ -52,7 +53,9 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return ProgressManager.getInstance().runProcess(computable, SensitiveProgressWrapper(indicator))
     }
 
-    private fun onEdt(project: Project, runnable: () -> Unit) = AppUIExecutor.onUiThread().expireWith(project).submit { runnable() }
+    private fun onEdt(project: Project, runnable: () -> Unit): CancellablePromise<*>? {
+      return AppUIExecutor.onUiThread().expireWith(PyDisposable.getInstance(project)).submit { runnable() }
+    }
 
     private fun notifyAboutConfiguredSdk(project: Project, module: Module, sdk: Sdk) {
       BALLOON_NOTIFICATIONS.createNotification(

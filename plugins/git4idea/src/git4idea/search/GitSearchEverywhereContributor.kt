@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.search
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
 import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
@@ -13,10 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.list.LeftRightRenderer
 import com.intellij.util.Processor
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
@@ -35,16 +33,21 @@ import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
+import java.awt.BorderLayout
+import java.awt.Component
+import javax.swing.JLabel
 import javax.swing.JList
+import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
 class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
 
-  private val COMMIT_BY_HASH_WEIGHT = 50
-  private val LOCAL_BRANCH_WEIGHT = 40
-  private val REMOTE_BRANCH_WEIGHT = 30
-  private val TAG_WEIGHT = 20
-  private val COMMIT_BY_MESSAGE_WEIGHT = 10
+  // higher priority -> higher position
+  private val COMMIT_BY_HASH_PRIORITY = 0 - 10
+  private val LOCAL_BRANCH_PRIORITY = 0 - 20
+  private val REMOTE_BRANCH_PRIORITY = 0 - 30
+  private val TAG_PRIORITY = 0 - 40
+  private val COMMIT_BY_MESSAGE_PRIORITY = 0 - 50
 
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
@@ -64,38 +67,42 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       }?.let { commitId ->
         val id = storage.getCommitIndex(commitId.hash, commitId.root)
         dataManager.miniDetailsGetter.loadCommitsData(listOf(id), {
-          consumer.process(FoundItemDescriptor(it, COMMIT_BY_HASH_WEIGHT))
+          consumer.process(FoundItemDescriptor(it, COMMIT_BY_HASH_PRIORITY))
         }, progressIndicator)
       }
     }
 
-    val matcher = NameUtil.buildMatcher(pattern)
+    val matcher = NameUtil.buildMatcher("*$pattern")
       .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
-      .preferringStartMatches()
+      .typoTolerant()
       .build()
 
     dataPack.refsModel.stream().forEach {
       progressIndicator.checkCanceled()
       if (matcher.matches(it.name)) {
         val weight = when (it.type) {
-          GitRefManager.TAG -> TAG_WEIGHT
-          GitRefManager.LOCAL_BRANCH -> LOCAL_BRANCH_WEIGHT
-          GitRefManager.REMOTE_BRANCH -> REMOTE_BRANCH_WEIGHT
-          GitRefManager.HEAD -> LOCAL_BRANCH_WEIGHT
-          else -> REMOTE_BRANCH_WEIGHT
+          GitRefManager.TAG -> TAG_PRIORITY
+          GitRefManager.LOCAL_BRANCH -> LOCAL_BRANCH_PRIORITY
+          GitRefManager.REMOTE_BRANCH -> REMOTE_BRANCH_PRIORITY
+          GitRefManager.HEAD -> LOCAL_BRANCH_PRIORITY
+          else -> REMOTE_BRANCH_PRIORITY
         }
         consumer.process(FoundItemDescriptor(it, weight))
       }
     }
 
     if (Registry.`is`("git.search.everywhere.commit.by.message")) {
+      if (pattern.length < 3) return
+
       val allRootsIndexed = GitRepositoryManager.getInstance(project).repositories.all { index.isIndexed(it.root) }
       if (!allRootsIndexed) return
 
-      val commitsFromIndex = index.dataGetter?.filter(listOf(VcsLogFilterObject.fromPattern(pattern))) ?: return
-      dataManager.miniDetailsGetter.loadCommitsData(commitsFromIndex, {
-        consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_WEIGHT))
-      }, progressIndicator)
+      index.dataGetter?.filterMessages(VcsLogFilterObject.fromPattern(pattern)) { commitIdx ->
+        progressIndicator.checkCanceled()
+        dataManager.miniDetailsGetter.loadCommitsData(listOf(commitIdx), {
+          consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_PRIORITY))
+        }, progressIndicator)
+      }
     }
   }
 
@@ -110,7 +117,57 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
     return dataPack
   }
 
-  override fun getElementsRenderer(): ListCellRenderer<in Any> = Renderer()
+  private val renderer = object : ListCellRenderer<Any> {
+
+    private val leftLabel = JLabel().apply {
+      border = JBUI.Borders.empty(0, 8, 0, 2)
+    }
+    private val rightLabel = JLabel().apply {
+      border = JBUI.Borders.empty(0, 2, 0, 8)
+    }
+
+    private val panel = JPanel(BorderLayout(0, 0)).apply {
+      add(leftLabel, BorderLayout.CENTER)
+      add(rightLabel, BorderLayout.EAST)
+    }
+
+    override fun getListCellRendererComponent(list: JList<out Any>?,
+                                              value: Any?, index: Int,
+                                              isSelected: Boolean, cellHasFocus: Boolean): Component {
+      panel.background = UIUtil.getListBackground(isSelected, cellHasFocus)
+      leftLabel.apply {
+        text = when (value) {
+          is VcsRef -> value.name
+          is VcsCommitMetadata -> value.subject
+          else -> null
+        }
+        icon = when (value) {
+          is VcsRef -> LabelIcon(this, UI.scale(16), background, listOf(value.type.backgroundColor))
+          else -> AllIcons.Vcs.CommitNode
+        }
+        foreground = UIUtil.getListForeground(isSelected, cellHasFocus)
+      }
+
+      rightLabel.apply {
+        text = when (value) {
+          is VcsRef -> getTrackingRemoteBranchName(value)
+          is VcsCommitMetadata -> value.id.toShortString()
+          else -> null
+        }
+        foreground = if (!isSelected) UIUtil.getInactiveTextColor() else UIUtil.getListForeground(isSelected, cellHasFocus)
+      }
+      return panel
+    }
+
+    @NlsSafe
+    private fun getTrackingRemoteBranchName(vcsRef: VcsRef): String? {
+      if (vcsRef.type != GitRefManager.LOCAL_BRANCH) return null
+      val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(vcsRef.root) ?: return null
+      return GitBranchUtil.getTrackInfo(repository, vcsRef.name)?.remoteBranch?.name;
+    }
+  }
+
+  override fun getElementsRenderer(): ListCellRenderer<in Any> = renderer
 
   override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean {
     val hash: Hash?
@@ -142,45 +199,12 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
   override fun getSearchProviderId() = "Vcs.Git"
   override fun getGroupName() = GitBundle.message("search.everywhere.group.name")
   override fun getFullGroupName() = GitBundle.message("search.everywhere.group.full.name")
-  override fun getSortWeight() = 1000
+
+  // higher weight -> lower position
+  override fun getSortWeight() = 500
   override fun showInFindResults() = false
   override fun isShownInSeparateTab(): Boolean = true
   override fun getDataForItem(element: Any, dataId: String): Any? = null
-
-  private inner class Renderer : LeftRightRenderer<Any>() {
-    override val mainRenderer = object : SimpleListCellRenderer<Any>() {
-      override fun customize(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
-        text = when (value) {
-          is VcsRef -> value.name
-          is VcsCommitMetadata -> value.subject
-          else -> null
-        }
-        icon = when (value) {
-          is VcsRef -> LabelIcon(this, UI.scale(16), background, listOf(value.type.backgroundColor))
-          else -> EmptyIcon.ICON_16
-        }
-        border = JBUI.Borders.empty(0, 2)
-      }
-    }
-
-    override val rightRenderer = object : SimpleListCellRenderer<Any>() {
-      override fun customize(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
-        text = when (value) {
-          is VcsRef -> getTrackingRemoteBranchName(value)
-          is VcsCommitMetadata -> value.id.toShortString()
-          else -> null
-        }
-        foreground = if (!selected) UIUtil.getInactiveTextColor() else UIUtil.getListForeground(selected, hasFocus)
-      }
-    }
-
-    @NlsSafe
-    private fun getTrackingRemoteBranchName(vcsRef: VcsRef): String? {
-      if (vcsRef.type != GitRefManager.LOCAL_BRANCH) return null
-      val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(vcsRef.root) ?: return null
-      return GitBranchUtil.getTrackInfo(repository, vcsRef.name)?.remoteBranch?.name;
-    }
-  }
 
   companion object {
     class Factory : SearchEverywhereContributorFactory<Any> {

@@ -1,13 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.Patches;
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.*;
+import com.intellij.ide.AssertiveRepaintManager;
+import com.intellij.ide.BootstrapBundle;
+import com.intellij.ide.CliResult;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
@@ -29,7 +31,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.wm.impl.X11UiUtil;
@@ -73,17 +74,17 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static com.intellij.diagnostic.LoadingState.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 @ApiStatus.Internal
 public final class StartupUtil {
-  public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
+  private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // See ApplicationImpl.USE_SEPARATE_WRITE_THREAD
-  public static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
+  private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static SocketLock ourSocketLock;
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
 
@@ -179,7 +180,7 @@ public final class StartupUtil {
       @SuppressWarnings("unchecked")
       Class<AppStarter> aClass = (Class<AppStarter>)Class.forName(mainClass);
       subActivity.end();
-      return aClass.newInstance();
+      return aClass.getDeclaredConstructor().newInstance();
     });
 
     activity = activity.endAndStart("log4j configuration");
@@ -333,7 +334,7 @@ public final class StartupUtil {
           }
 
           initUiFuture.complete(null);
-          StartUpMeasurer.setCurrentState(LAF_INITIALIZED);
+          StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
 
           if (Main.isHeadless()) {
             return;
@@ -650,7 +651,7 @@ public final class StartupUtil {
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
-    log.info("OS: " + SystemInfo.OS_NAME + " (" + SystemInfo.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
+    log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + System.getProperty("os.arch") + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
 
@@ -712,7 +713,7 @@ public final class StartupUtil {
     CustomizeIDEWizardStepsProvider provider;
     try {
       Class<?> providerClass = Class.forName(stepsProviderName);
-      provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
+      provider = (CustomizeIDEWizardStepsProvider)providerClass.getDeclaredConstructor().newInstance();
     }
     catch (Throwable e) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
@@ -766,23 +767,11 @@ public final class StartupUtil {
   }
 
   private static void patchSystemForUi(@NotNull Logger log) {
-    // Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
-    // because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
-    //
-    // At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
-    //
-    // This matters only if {@code swing.bufferPerWindow = true} and we don't invoke JComponent.getGraphics() directly.
-    //
-    // True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
-    // frame buffer content without the usual repainting, even when the EDT is blocked.
-    if (Patches.REPAINT_MANAGER_LEAK) {
-      RepaintManager.setCurrentManager(new IdeRepaintManager());
-    }
-    else if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
+    if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
       RepaintManager.setCurrentManager(new AssertiveRepaintManager());
     }
 
-    if (SystemInfo.isXWindow) {
+    if (SystemInfoRt.isXWindow) {
       String wmName = X11UiUtil.getWmName();
       log.info("WM detected: " + wmName);
       if (wmName != null) {

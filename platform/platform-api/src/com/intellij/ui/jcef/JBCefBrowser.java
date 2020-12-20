@@ -134,9 +134,11 @@ public class JBCefBrowser implements JBCefDisposable {
         shortcut,
         LightEditActionFactory.create(event -> {
           Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-          if(!(component instanceof JComponent)) return;
-          Object browser = ((JComponent) component).getClientProperty(JBCEFBROWSER_INSTANCE_PROP);
-          if(!(browser instanceof JBCefBrowser)) return;
+          if (component == null) return;
+          Component parentComponent = component.getParent();
+          if (!(parentComponent instanceof JComponent)) return;
+          Object browser = ((JComponent)parentComponent).getClientProperty(JBCEFBROWSER_INSTANCE_PROP);
+          if (!(browser instanceof JBCefBrowser)) return;
           action.accept(((JBCefBrowser) browser).getCefBrowser().getFocusedFrame());
         })
       );
@@ -188,12 +190,12 @@ public class JBCefBrowser implements JBCefDisposable {
     myComponent.setBackground(JBColor.background());
 
     myCefBrowser = cefBrowser != null ?
-      cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : BLANK_URI, false, false);
-    JComponent uiComp = (JComponent)myCefBrowser.getUIComponent();
-    uiComp.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
-    if(SystemInfoRt.isMac) {
+      cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : BLANK_URI, JBCefApp.isOffScreenRenderingMode(), false);
+    Component uiComp = myCefBrowser.getUIComponent();
+    myComponent.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
+    if (SystemInfoRt.isMac) {
       // We handle shortcuts manually on MacOS: https://www.magpcss.org/ceforum/viewtopic.php?f=6&t=12561
-      ShortcutProvider.registerShortcuts(uiComp, this);
+      ShortcutProvider.registerShortcuts(myComponent, this);
     }
     myComponent.add(uiComp, BorderLayout.CENTER);
 
@@ -470,8 +472,16 @@ public class JBCefBrowser implements JBCefDisposable {
   /**
    * Returns {@code JBCefBrowser} instance associated with this {@code CefBrowser}.
    */
+  @Nullable
   public static JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
-    return (JBCefBrowser)((JComponent)browser.getUIComponent()).getClientProperty(JBCEFBROWSER_INSTANCE_PROP);
+    Component uiComp = browser.getUIComponent();
+    if (uiComp != null) {
+      Component parentComp = uiComp.getParent();
+      if (parentComp instanceof JComponent) {
+        return (JBCefBrowser)((JComponent)parentComp).getClientProperty(JBCEFBROWSER_INSTANCE_PROP);
+      }
+    }
+    return null;
   }
 
   /**

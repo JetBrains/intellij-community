@@ -1,5 +1,8 @@
 package org.intellij.plugins.markdown.lang.parser;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import org.intellij.markdown.MarkdownElementTypes;
 import org.intellij.markdown.ast.ASTNode;
@@ -15,6 +18,16 @@ public class MarkdownParserManager {
   public static final CodeFencePluginFlavourDescriptor CODE_FENCE_PLUGIN_FLAVOUR = new CodeFencePluginFlavourDescriptor();
 
   private static final ThreadLocal<ParsingInfo> ourLastParsingResult = new ThreadLocal<>();
+
+  static {
+    ApplicationManager.getApplication().getMessageBus().connect()
+      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          ourLastParsingResult.remove();
+        }
+      });
+  }
 
   public static ASTNode parseContent(@NotNull CharSequence buffer) {
     return parseContent(buffer, FLAVOUR);

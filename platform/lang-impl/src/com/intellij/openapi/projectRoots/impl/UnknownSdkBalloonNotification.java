@@ -35,7 +35,7 @@ public class UnknownSdkBalloonNotification {
     Set<@Nls String> usages = new TreeSet<>();
     for (var entry : localFixes) {
       UnknownSdkLocalSdkFix fix = entry.getLocalSdkFix();
-      String usageText = ProjectBundle.message("notification.text.sdk.usage.is.set.to", entry.getSdkName(), fix.getVersionString());
+      String usageText = ProjectBundle.message("notification.text.sdk.usage.is.set.to", entry.getSdkNameForUi(), fix.getVersionString());
       usages.add(new HtmlBuilder()
                    .append(usageText)
                    .append(HtmlChunk.br())

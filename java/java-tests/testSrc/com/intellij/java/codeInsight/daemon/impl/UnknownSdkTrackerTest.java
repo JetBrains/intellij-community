@@ -284,7 +284,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
 
   @NotNull
   private List<String> detectMissingSdks() {
-    UnknownSdkTracker.getInstance(getProject()).updateUnknownSdksNow();
+    UnknownSdkTracker.getInstance(getProject()).updateUnknownSdks();
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     UIUtil.dispatchAllInvocationEvents();

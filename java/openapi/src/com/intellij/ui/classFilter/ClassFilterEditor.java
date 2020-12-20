@@ -81,6 +81,11 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
         }
 
         @Override
+        public boolean isDumbAware() {
+          return true;
+        }
+
+        @Override
         public void updateButton(@NotNull AnActionEvent e) {
           super.updateButton(e);
           setEnabled(!myProject.isDefault());
@@ -91,6 +96,11 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           addPatternFilter();
+        }
+
+        @Override
+        public boolean isDumbAware() {
+          return true;
         }
 
         @Override

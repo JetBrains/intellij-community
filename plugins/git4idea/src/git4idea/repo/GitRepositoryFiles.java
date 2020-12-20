@@ -51,6 +51,8 @@ public final class GitRepositoryFiles {
   private static final @NonNls String PRE_PUSH_HOOK = "pre-push";
   private static final @NonNls String COMMIT_MSG_HOOK = "commit-msg";
   private static final @NonNls String SHALLOW = "shallow";
+  private static final @NonNls String LOGS = "logs";
+  private static final @NonNls String STASH = "stash";
 
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
@@ -75,6 +77,7 @@ public final class GitRepositoryFiles {
   private final @NonNls String myExcludePath;
   private final @NonNls String myHooksDirPath;
   private final @NonNls String myShallow;
+  private final @NonNls String myStashReflogPath;
 
   private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myMainDir = mainDir;
@@ -91,6 +94,7 @@ public final class GitRepositoryFiles {
     myExcludePath = mainPath + slash(INFO_EXCLUDE);
     myHooksDirPath = mainPath + slash(HOOKS);
     myShallow = mainPath + slash(SHALLOW);
+    myStashReflogPath = mainPath + slash(LOGS) + slash(REFS) + slash(STASH);
 
     String worktreePath = myWorktreeDir.getPath();
     myHeadFilePath = worktreePath + slash(HEAD);
@@ -145,11 +149,11 @@ public final class GitRepositoryFiles {
   }
 
   /**
-   * Returns subdirectories of .git which we are interested in - they should be watched by VFS.
+   * Returns subdirectories and paths of .git which we are interested in - they should be watched by VFS.
    */
   @NotNull
-  Collection<String> getDirsToWatch() {
-    return Arrays.asList(myRefsHeadsDirPath, myRefsRemotesDirPath, myRefsTagsPath, myInfoDirPath, myHooksDirPath);
+  Collection<String> getPathsToWatch() {
+    return Arrays.asList(myRefsHeadsDirPath, myRefsRemotesDirPath, myRefsTagsPath, myInfoDirPath, myHooksDirPath, myStashReflogPath);
   }
 
   @NotNull
@@ -240,6 +244,11 @@ public final class GitRepositoryFiles {
   @NotNull
   public File getExcludeFile() {
     return file(myExcludePath);
+  }
+
+  @NotNull
+  public File getStashReflogFile() {
+    return file(myStashReflogPath);
   }
 
   @NotNull
@@ -337,6 +346,13 @@ public final class GitRepositoryFiles {
    */
   public boolean isExclude(@NotNull String path) {
     return path.equals(myExcludePath);
+  }
+
+  /**
+   * .git/logs/refs/stash
+   */
+  public boolean isStashReflogFile(@NotNull String path) {
+    return path.equals(myStashReflogPath);
   }
 
   /**

@@ -2,15 +2,19 @@
 package com.intellij.navigation
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
-import com.intellij.openapi.application.JBProtocolProjectLocator
 import com.intellij.openapi.application.JetBrainsProtocolHandler.FRAGMENT_PARAM_NAME
-import com.intellij.openapi.application.openProjectAndExecute
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,12 +23,15 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.StatusBarProgress
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import java.io.File
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
@@ -61,8 +68,27 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       LOG.warn("JB navigate action supports only reference target, got $target")
       return
     }
-    openProjectAndExecute(JBProtocolProjectLocator(projectName)) { project ->
-      findAndNavigateToReference(project, parameters)
+
+    for (recentProjectAction in RecentProjectListActionProvider.getInstance().getActions()) {
+      if (recentProjectAction !is ReopenProjectAction || recentProjectAction.projectName != projectName) {
+        continue
+      }
+
+      for (project in ProjectUtil.getOpenProjects()) {
+        if (project.name == projectName) {
+          findAndNavigateToReference(project, parameters)
+          return
+        }
+      }
+
+      ApplicationManager.getApplication().invokeLater(Runnable {
+        val project = RecentProjectsManagerBase.instanceEx.openProject(Paths.get(recentProjectAction.projectPath), OpenProjectTask()) ?: return@Runnable
+        StartupManager.getInstance(project).runAfterOpened {
+          DumbService.getInstance(project).runWhenSmart {
+            findAndNavigateToReference(project, parameters)
+          }
+        }
+      }, ModalityState.NON_MODAL)
     }
   }
 }

@@ -9,7 +9,10 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +27,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +42,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.*;
 
@@ -522,31 +527,37 @@ public final class ProjectUtil {
   }
 
   public static @Nullable Project tryOpenFileList(@Nullable Project project, @NotNull List<? extends File> list, String location) {
+    return tryOpenFiles(project, ContainerUtil.map(list, file -> file.toPath()), location);
+  }
+
+  public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<Path> list, String location) {
     Project result = null;
 
-    for (File file : list) {
-      result = openOrImport(file.toPath().toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
+    for (Path file : list) {
+      result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
       if (result != null) {
         LOG.debug(location + ": load project from ", file);
         return result;
       }
     }
 
-    for (File file : list) {
-      if (!file.exists()) {
+    for (Path file : list) {
+      if (!Files.exists(file)) {
         continue;
       }
 
       LOG.debug(location + ": open file ", file);
-      String path = file.getAbsolutePath();
       if (project != null) {
-        OpenFileAction.openFile(path, project);
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()));
+        if (virtualFile != null && virtualFile.isValid()) {
+          OpenFileAction.openFile(virtualFile, project);
+        }
         result = project;
       }
       else {
         CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
         if (processor != null) {
-          Project opened = processor.openProjectAndFile(file.toPath(), -1, -1, false);
+          Project opened = processor.openProjectAndFile(file, -1, -1, false);
           if (opened != null && result == null) {
             result = opened;
           }

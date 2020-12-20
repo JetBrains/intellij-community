@@ -38,13 +38,12 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
     return null
   }
 
+  inline fun <reified T> findByType(): T? where T : C {
+    return resolvedConfigs().filterIsInstance<T>().firstOrNull()
+  }
+
   fun <T> findByType(type: Class<T>): T? where T : C {
-    for (resolvedInstance in resolvedInstances) {
-      if (resolvedInstance.javaClass == type) {
-        return type.cast(resolvedInstance)
-      }
-    }
-    return null
+    return resolvedInstances.filterIsInstance(type).firstOrNull()
   }
 
   fun resolvedConfigs(): List<C> = resolvedInstances.toList()

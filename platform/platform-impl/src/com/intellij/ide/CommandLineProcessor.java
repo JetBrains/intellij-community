@@ -15,8 +15,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -70,7 +70,7 @@ public final class CommandLineProcessor {
       }
     }
 
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(ioFile.toString()));
     if (file == null) {
       Project lightEditProject = LightEditUtil.openFile(ioFile);
       if (lightEditProject != null) {
@@ -189,7 +189,7 @@ public final class CommandLineProcessor {
         //noinspection AssignmentToForLoopParameter
         i++;
         if (i == args.size()) break;
-        line = StringUtil.parseInt(args.get(i), -1);
+        line = StringUtilRt.parseInt(args.get(i), -1);
         continue;
       }
 
@@ -197,7 +197,7 @@ public final class CommandLineProcessor {
         //noinspection AssignmentToForLoopParameter
         i++;
         if (i == args.size()) break;
-        column = StringUtil.parseInt(args.get(i), -1);
+        column = StringUtilRt.parseInt(args.get(i), -1);
         continue;
       }
 
@@ -211,13 +211,14 @@ public final class CommandLineProcessor {
         continue;
       }
 
-      if (StringUtil.isQuotedString(arg)) {
-        arg = StringUtil.unquoteString(arg);
+      if (StringUtilRt.isQuotedString(arg)) {
+        arg = StringUtilRt.unquoteString(arg);
       }
 
       Path file = null;
       try {
-        file = Paths.get(arg);
+        // handle paths like /file/foo\qwe
+        file = Paths.get(FileUtilRt.toSystemDependentName(arg));
         if (!file.isAbsolute()) {
           file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
         }

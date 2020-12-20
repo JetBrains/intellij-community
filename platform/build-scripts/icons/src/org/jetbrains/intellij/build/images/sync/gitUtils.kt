@@ -20,8 +20,8 @@ internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?
   }
 }
 
-internal fun gitPull(repo: Path): Any {
-  return try {
+internal fun gitPull(repo: Path) {
+  try {
     execute(repo, GIT, "pull", "--rebase")
   }
   catch (e: Exception) {
@@ -211,7 +211,7 @@ private val latestChangeCommitsGuard = Any()
  * @param path path relative to [repo]
  */
 internal fun latestChangeCommit(path: String, repo: Path): CommitInfo? {
-  val file = repo.resolve(path).toRealPath().toString()
+  val file = repo.resolve(path).toAbsolutePath().toString()
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {

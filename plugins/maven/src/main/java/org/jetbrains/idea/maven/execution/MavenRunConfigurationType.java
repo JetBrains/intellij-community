@@ -261,5 +261,10 @@ public final class MavenRunConfigurationType implements ConfigurationType {
         task.setEnabled(false);
       }
     }
+
+    @Override
+    public boolean isEditableInDumbMode() {
+      return true;
+    }
   }
 }

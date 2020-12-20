@@ -58,11 +58,12 @@ final class IntentionsOptionsTopHitProvider implements OptionsTopHitProvider.App
     }
 
     private static @NlsContexts.Label String getOptionName(@NotNull IntentionActionMetaData data) {
-      StringBuilder sb = new StringBuilder();
+      @NlsContexts.Label StringBuilder sb = new StringBuilder();
       for (String category : data.myCategory) {
         sb.append(category).append(": ");
       }
-      return sb.append(data.getFamily()).toString();
+      sb.append(data.getFamily());
+      return sb.toString();
     }
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.CompositeSettingsBuilder;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -246,7 +247,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return wrapped != null ? getLeftInset(wrapped) : 0;
   }
 
-  private static final class ToggleFragmentAction extends ToggleAction {
+  private static final class ToggleFragmentAction extends ToggleAction implements DumbAware {
     private final SettingsEditorFragment<?, ?> myFragment;
 
     private ToggleFragmentAction(SettingsEditorFragment<?, ?> fragment) {

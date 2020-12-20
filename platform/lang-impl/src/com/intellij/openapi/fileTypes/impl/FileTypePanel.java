@@ -9,8 +9,6 @@ class FileTypePanel {
   JPanel myWholePanel;
   JPanel myRecognizedFileTypesPanel;
   JPanel myPatternsPanel;
-  JTextField myIgnoreFilesField;
-  JPanel myIgnorePanel;
   JPanel myHashBangPanel;
   JPanel myOpenWithLightEditPanel;
   JTextField myLightEditPatternsField;

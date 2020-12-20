@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,13 +56,13 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control V",                "$Paste", "Terminal.Paste"},
     { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt B",               "GotoImplementation", "org.jetbrains.r.rendering.chunk.RunChunksAboveAction"},
+    { "control alt D",            "Console.TableResult.SetDefault", "org.jetbrains.r.actions.RMarkdownInterruptAction"},
     { "control alt K",            "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
     { "control alt E",            "Console.History.Browse", "PerforceDirect.Edit", "ToggleFindInSelection"},
     { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
     { "control alt G",            "DatabaseView.SqlGenerator", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
     { "control alt I",             "AutoIndentLines", "RMarkdownNewChunk"},
     { "control alt R",            "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction", "Django.RunManageTaskAction"},
-    { "control alt S",            "ShowSettings", "org.jetbrains.r.rendering.chunk.InterruptChunkExecutionAction"},
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt N",            "Inline", "Console.TableResult.SetNull"},
     { "control alt X",            "SECOND_STROKE_SHORTCUT", "org.jetbrains.r.rendering.chunk.DebugChunkAction"},
@@ -265,6 +264,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "F5",                       "Graph.ApplyCurrentLayout", "StepInto"},
     { "alt DOWN",                 "ShowContent", "MoveStatementDown", "ShowSearchHistory"},
     { "alt HOME",                 "ViewNavigationBar", "ShowNavBar"},
+    { "ctrl 1",                   "DuplicatesForm.SendToLeft", "FileChooser.GotoHome", "ShowIntentionActions"},
     { "control F10",              "ShowPopupMenu", "UpdateRunningApplication"},
     { "control D",                "EditorDeleteLine", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop", "org.jetbrains.r.console.RConsoleView.REofAction"},
     { "control N",                "ShowPopupMenu", "FileChooser.NewFolder"},
@@ -293,7 +293,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control I",          "QuickImplementations", "XDebugger.Inspect"},
     { "shift control UP",         "ResizeToolWindowUp", "MethodUp"},
     { "shift control K",          "Vcs.Push", "FindPrevious"},
-    { "shift ctrl M",             "RInsertPipeAction", "ShowIntentionActions"},
     { "shift control X",          "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     { "shift control T",          "GotoClass", "GotoChangedFile"},
     { "shift ctrl alt RIGHT",     "PreviousEditorTab", "Terminal.MoveToolWindowTabRight"},
@@ -424,25 +423,27 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       { "ctrl ENTER",               "EditorSplitLine", "NotebookRunCellAction", "PyExecuteCellAction"},
       { "meta CLOSE_BRACKET",       "Forward", "NextDiff"},
       { "meta OPEN_BRACKET",        "Back", "PreviousDiff"},
-      { "shift meta L",             "EvaluateExpression", "Jdbc.OpenConsole.New", "rspec.LetIntroduce"},
       { "meta alt E",               "Console.History.Browse", "GotoNextElementUnderCaretUsage", "PerforceDirect.Edit"},
+      { "ctrl meta M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
+      { "meta alt DOWN",            "Console.TableResult.NextPage", "JupyterSelectCellBelowAction", "NextOccurence"},
+      { "meta alt UP",              "Console.TableResult.PreviousPage", "JupyterSelectCellAboveAction", "PreviousOccurence"},
     });
   }};
   // @formatter:on
 
-  @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = ContainerUtil.set(
+  @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = Set.of(
     "ActivateCommitToolWindow", "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow",
-    "ActivateDebugToolWindow", "ActivateServicesToolWindow", "ActivateFindToolWindow", "ActivateHierarchyToolWindow",
-    "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow", "ActivateStructureToolWindow",
+    "ActivateServicesToolWindow", "ActivateHierarchyToolWindow",
+    "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateStructureToolWindow",
     "ActivateProblemsViewToolWindow",
     "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow", "ActivateTerminalToolWindow",
-    "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions",
+    "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions",
     "ActivateErrorsInSolutionToolWindow", "ActivateUnitTestsToolWindow", "ActivateInspectionResultsToolWindow",
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
     ""
   );
 
-  @NonNls protected static final Set<String> DEFAULT_BOUND_ACTIONS = ContainerUtil.set(
+  @NonNls protected static final Set<String> DEFAULT_BOUND_ACTIONS = Set.of(
     "EditorDelete",
     "List-selectLastRowExtendSelection",
     "List-selectLastRow",
@@ -453,7 +454,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Tree-selectFirstExtendSelection",
     "Tree-selectFirst"
   );
-  protected static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS =
+  private static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS =
     List.of("Log.KeymapGroup", "UsageGroupingActionGroup", "SearchEverywhereActions", "Images.ThumbnailViewActions", "Images.ImageViewActions",
             "ArrangementRulesGroup", "ServiceViewTreeToolbar", "TodoViewGroupByGroup", "ChangesView.GroupBy");
 

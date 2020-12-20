@@ -335,7 +335,6 @@ public class ExternalJavacManager extends ProcessAdapter {
     appendParam(cmdLine, "-Djava.awt.headless=true");
 
     //appendParam(cmdLine, "-XX:MaxPermSize=150m");
-    //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
     if (heapSize > 0) {
       // if the value is zero or negative, use JVM default memory settings
       final int xms = heapSize / 2;

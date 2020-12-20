@@ -426,7 +426,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       String message = new HtmlBuilder()
         .append(HtmlChunk.tag("b").addText(JsonBundle.message("schema.widget.conflict.popup.title")))
         .append(HtmlChunk.br()).append(HtmlChunk.br())
-        .append(((MyWidgetState)state).getTooltip()).toString();
+        .appendRaw(((MyWidgetState)state).getTooltip()).toString();
       JComponent label = HintUtil.createErrorLabel(message);
       BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(label);
       JComponent statusBarComponent = getComponent();

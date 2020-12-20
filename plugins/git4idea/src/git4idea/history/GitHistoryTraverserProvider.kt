@@ -44,7 +44,6 @@ fun subscribeForGitHistoryTraverserCreation(project: Project, listener: GitHisto
       logData?.removeDataPackChangeListener(dataPackChangeListener)
       logData = null
       traverser = null
-      listener.traverserDisposed()
     }
   }
 
@@ -73,6 +72,4 @@ interface GitHistoryTraverserListener {
   fun traverserCreated(newTraverser: GitHistoryTraverser)
 
   fun graphUpdated()
-
-  fun traverserDisposed()
 }

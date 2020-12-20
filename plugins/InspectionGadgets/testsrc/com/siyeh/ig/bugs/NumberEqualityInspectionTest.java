@@ -27,6 +27,18 @@ public class NumberEqualityInspectionTest extends LightJavaInspectionTestCase {
     doTest();
   }
 
+  public void testTernary() {
+    doTest();
+  }
+
+  public void testIfElseWithoutCurlyBraces() {
+    doTest();
+  }
+
+  public void testIfElseWithCurlyBraces() {
+    doTest();
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new NumberEqualityInspection();

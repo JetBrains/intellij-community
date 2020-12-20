@@ -490,4 +490,15 @@ public class InjectedLanguageUtilBase {
     return virtualFile instanceof VirtualFileWindow ?
            getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow()).getHostPointer().getElement() : null;
   }
+
+  /**
+   * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
+   */
+  @Deprecated
+  public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
+    if (!host.isPhysical()) return false;
+    final Ref<Boolean> result = Ref.create(false);
+    enumerate(host, (injectedPsi, places) -> result.set(true));
+    return result.get().booleanValue();
+  }
 }
