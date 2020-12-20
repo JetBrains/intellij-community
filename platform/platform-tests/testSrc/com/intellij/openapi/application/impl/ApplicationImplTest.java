@@ -552,7 +552,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
       List<Future<Void>> futures = AppExecutorUtil.getAppExecutorService().invokeAll(callables);
       ConcurrencyUtil.getAll(futures);
-    }).usesAllCPUCores().assertTiming();
+    }).assertTiming();
   }
 
   public void testCheckCanceledReadAction() throws Exception {
