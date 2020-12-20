@@ -525,8 +525,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
     }
     int readIterations = 200_000_000;
-    ReadMostlyRWLock lock = new ReadMostlyRWLock();
-    lock.setWriteThread(Thread.currentThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
     final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
     final Field myThreadLocalsField = Objects.requireNonNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
     //noinspection Convert2Lambda

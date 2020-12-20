@@ -58,6 +58,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
@@ -142,6 +143,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
+    AtomicReference<Thread> edtThread = new AtomicReference<>();
     Runnable runnable = () -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
       // that thread was chosen because we know for sure it's running
@@ -151,9 +153,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       Disposer.register(this, () -> {
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
       });
+      edtThread.set(Thread.currentThread());
     };
     EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
-    myLock = new ReadMostlyRWLock();
+    myLock = new ReadMostlyRWLock(edtThread.get());
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass()));
