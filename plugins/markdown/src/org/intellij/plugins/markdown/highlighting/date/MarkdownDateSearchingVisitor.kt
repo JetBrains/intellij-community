@@ -23,8 +23,4 @@ internal class MarkdownDateSearchingVisitor : MarkdownRecursiveElementVisitor() 
   }
 }
 
-private fun findRangesInText(text: String): Set<TextRange> =
-  Regex("asd").findAll(text)
-    .map { match ->
-      TextRange.create(match.range.first, match.range.last + 1)
-    }.toSet()
+private fun findRangesInText(text: String): Set<TextRange> = findDates(text).flatten().toSet()
