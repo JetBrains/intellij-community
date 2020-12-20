@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.aether;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -202,7 +202,7 @@ public final class ArtifactRepositoryManager {
       org.apache.maven.model.Model.class, //maven-model
       org.apache.maven.model.building.ModelBuilder.class, //maven-model-builder
       org.apache.maven.artifact.repository.metadata.Metadata.class, //maven-repository-metadata
-      org.codehaus.plexus.component.annotations.Component.class, //plexus-component-annotations
+      //org.codehaus.plexus.component.annotations.Component.class, //plexus-component-annotations
       org.codehaus.plexus.interpolation.Interpolator.class, //plexus-interpolation
       org.eclipse.aether.RepositorySystem.class, //aether-api
       org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory.class, //aether-connector-basic
@@ -356,7 +356,7 @@ public final class ArtifactRepositoryManager {
     final Version version = constraint.getVersion();
     if (version != null) {
       final String major = version.toString().split("[.\\-_]")[0];
-      annotationsConstraint = "[" + major + ", " + version.toString() + "-an10000]";
+      annotationsConstraint = "[" + major + ", " + version + "-an10000]";
     }
 
     final VersionRange range = constraint.getRange();
