@@ -6,8 +6,11 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.InputMapExternalizer
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.ForwardIndex
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
+import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout
@@ -34,6 +37,10 @@ internal class MVStoreForwardIndexStorageLayout<K, V>(private val extension: Fil
   @Throws(IOException::class)
   override fun createOrClearForwardIndex(): ForwardIndex {
     return MVStoreForwardIndex()
+  }
+
+  override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
+    return MapForwardIndexAccessor(InputMapExternalizer(extension))
   }
 
   object MVStoreHolder {
