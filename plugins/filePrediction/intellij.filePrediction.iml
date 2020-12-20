@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">
       <library name="file-prediction-model" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.filePrediction.model:file-prediction-model:0.2.2" />
