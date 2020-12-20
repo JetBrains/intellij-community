@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,7 @@ import java.util.concurrent.locks.LockSupport;
 class ReadMostlyRWLock {
   volatile Thread writeThread;
   private volatile Thread writeIntendedThread;
+  @VisibleForTesting
   volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private final AtomicBoolean writeIntent = new AtomicBoolean(false);
   private volatile boolean writeAcquired;   // this writer obtained the write lock
@@ -53,6 +55,9 @@ class ReadMostlyRWLock {
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
 
   private volatile boolean writeSuspended;
+  // time stamp (nanoTime) of the last check for dead reader threads in writeUnlock().
+  // (we have to reduce frequency of this "dead readers GC" activity because Thread.isAlive() turned out to be too expensive)
+  private volatile long deadReadersGCStamp;
 
   ReadMostlyRWLock() {
   }
@@ -275,16 +280,26 @@ class ReadMostlyRWLock {
     checkWriteThreadAccess();
     writeAcquired = false;
     writeRequested = false;
-    List<Reader> dead = new ArrayList<>(readers.size());
+    List<Reader> dead;
+    long current = System.nanoTime();
+    if (current - deadReadersGCStamp > 1_000_000) {
+      dead = new ArrayList<>(readers.size());
+      deadReadersGCStamp = current;
+    }
+    else {
+      dead = null;
+    }
     for (Reader reader : readers) {
       if (reader.blocked) {
         LockSupport.unpark(reader.thread); // parked by readLock()
       }
-      else if (!reader.thread.isAlive()) {
+      else if (dead != null && !reader.thread.isAlive()) {
         dead.add(reader);
       }
     }
-    readers.removeAll(dead);
+    if (dead != null) {
+      readers.removeAll(dead);
+    }
   }
 
   private void checkWriteThreadAccess() {
