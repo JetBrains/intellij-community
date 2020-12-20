@@ -285,26 +285,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return true;
   }
 
-  /**
-   * @deprecated Use {@link CommandProcessor#executeCommand(Project, Runnable, String, Object)} instead
-   */
-  @Deprecated
-  public void performCommand() throws Throwable {
-    //this is needed to prevent memory leak, since command
-    // is put into undo queue
-    final RunResult[] results = {new RunResult<>(this)};
-    final Ref<Throwable> exception = new Ref<>();
-
-    doExecuteCommand(() -> {
-      exception.set(results[0].run().getThrowable());
-      results[0] = null;
-    });
-
-    Throwable throwable = exception.get();
-    if (throwable != null) throw throwable;
-  }
-
-  private void doExecuteCommand(final Runnable runnable) {
+  private void doExecuteCommand(@NotNull Runnable runnable) {
     Runnable wrappedRunnable = () -> {
       if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(getProject());
       runnable.run();

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers.hash;
 
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
   public HashSet(int capacity, float loadFactor) {
     this.loadFactor = loadFactor;
     clear(capacity);
+    DeprecatedMethodException.report("Use java.util.HashSet instead");
   }
 
   @Override

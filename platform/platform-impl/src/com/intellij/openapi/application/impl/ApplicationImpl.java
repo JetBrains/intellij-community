@@ -1140,6 +1140,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public @NotNull AccessToken acquireReadActionLock() {
+    DeprecatedMethodException.report("Use runReadAction() instead");
+
     // if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
     return checkReadAccessAllowedAndNoPendingWrites() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
   }
@@ -1218,6 +1220,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> clazz) {
+    DeprecatedMethodException.report("Use runWriteAction() instead");
+
     return new WriteAccessToken(clazz);
   }
 
