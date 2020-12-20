@@ -59,10 +59,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       }
     });
 
-    if (!isSilentExecution()) {
-      result.throwException();
-    }
-
+    result.throwException();
     return result;
   }
 
