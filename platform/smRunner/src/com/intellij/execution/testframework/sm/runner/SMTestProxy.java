@@ -961,6 +961,7 @@ public class SMTestProxy extends AbstractTestProxy {
     private long myExecutionId = -1;
     @NotNull
     private TestDurationStrategy myDurationStrategy = TestDurationStrategy.AUTOMATIC;
+    private TestConsoleProperties myTestConsoleProperties;
 
     public SMRootTestProxy() {
       this(false, null);
@@ -1083,6 +1084,14 @@ public class SMTestProxy extends AbstractTestProxy {
       else {
         super.printOn(printer);
       }
+    }
+
+    public void setTestConsoleProperties(TestConsoleProperties properties) {
+      myTestConsoleProperties = properties;
+    }
+
+    public TestConsoleProperties getTestConsoleProperties() {
+      return myTestConsoleProperties;
     }
   }
 }

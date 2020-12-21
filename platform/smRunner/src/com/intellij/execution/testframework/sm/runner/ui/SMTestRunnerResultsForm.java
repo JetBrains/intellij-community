@@ -129,6 +129,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     //Create tests common suite root
     myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName(), console);
+    myTestsRootNode.setTestConsoleProperties(consoleProperties);
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
     // Fire selection changed and move focus on SHIFT+ENTER
