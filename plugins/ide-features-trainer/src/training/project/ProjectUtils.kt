@@ -209,6 +209,7 @@ object ProjectUtils {
       VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Void>() {
         override fun visitFile(file: VirtualFile): Boolean {
           if(file.name == ".idea" ||
+             file.name == "venv" ||
              file.name == FEATURE_TRAINER_VERSION ||
              file.name.endsWith(".iml")) return false
 
