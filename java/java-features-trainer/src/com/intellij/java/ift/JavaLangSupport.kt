@@ -21,6 +21,7 @@ import training.lang.AbstractLangSupport
 import training.learn.LearnBundle
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
+import training.util.getFeedbackLink
 import java.nio.file.Path
 
 class JavaLangSupport : AbstractLangSupport() {
@@ -34,6 +35,8 @@ class JavaLangSupport : AbstractLangSupport() {
   override val filename: String = "Learning.java"
 
   override val projectSandboxRelativePath: String = "Sample.java"
+
+  override val langCourseFeedback get() = getFeedbackLink(this, false)
 
   override val readMeCreator: ReadMeCreator = object : ReadMeCreator() {
     private val sharedIndexesRemark: String = JavaLessonsBundle.message("readme.shared.indexes.remark")
