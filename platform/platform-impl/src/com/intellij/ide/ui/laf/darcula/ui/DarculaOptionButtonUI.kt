@@ -102,7 +102,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
       else -> null
     }
 
-    return if (resourceName != null) UIManager.getColor(resourceName) else (mainButton.border as DarculaButtonPainter).getBorderPaint(c)
+    return resourceName?.let{ UIManager.getColor(resourceName)} ?: (mainButton.border as DarculaButtonPainter).getBorderPaint(c)
   }
 
   override fun updateOptions(): Unit = super.updateOptions().also {
