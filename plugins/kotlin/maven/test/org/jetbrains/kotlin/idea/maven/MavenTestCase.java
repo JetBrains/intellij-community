@@ -40,7 +40,6 @@ import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
@@ -52,8 +51,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class MavenTestCase extends UsefulTestCase {
@@ -213,12 +212,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
         try {
             if (runInWriteAction()) {
-                new WriteAction() {
-                    @Override
-                    protected void run(@NotNull Result result) throws Throwable {
-                        MavenTestCase.super.runTestRunnable(testRunnable);
-                    }
-                }.executeSilently().throwException();
+                WriteAction.run(() -> MavenTestCase.super.runTestRunnable(testRunnable));
             }
             else {
                 MavenTestCase.super.runTestRunnable(testRunnable);
