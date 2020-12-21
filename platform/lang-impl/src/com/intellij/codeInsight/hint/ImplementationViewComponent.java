@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,11 +39,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListCellRendererWithRightAlignedComponent;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.list.LeftRightRenderer;
 import com.intellij.usages.UsageView;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
@@ -96,11 +93,11 @@ public class ImplementationViewComponent extends JPanel {
 
   private static class FileDescriptor {
     @NotNull public final VirtualFile myFile;
-    @NotNull public final @NlsSafe String myPresentableText;
+    public final ImplementationViewElement myElement;
 
     FileDescriptor(@NotNull VirtualFile file, ImplementationViewElement element) {
       myFile = file;
-      myPresentableText = element.getPresentableText();
+      myElement = element;
     }
   }
 
@@ -125,6 +122,7 @@ public class ImplementationViewComponent extends JPanel {
 
     myBinaryPanel = new JPanel(new BorderLayout());
     myViewingPanel.add(myBinaryPanel, BINARY_PAGE_KEY);
+    myViewingPanel.setBorder(JBUI.Borders.empty(12, 6));
 
     add(myViewingPanel, BorderLayout.CENTER);
 
@@ -157,13 +155,15 @@ public class ImplementationViewComponent extends JPanel {
     };
     myGearAction.setNoIconsInPopup(true);
 
-    final JPanel header = new JPanel(new BorderLayout(2, 0));
-    header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.emptyRight(5)));
+    final JPanel header = new JPanel(new BorderLayout());
+    header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.empty(3)));
     final JPanel toolbarPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc =
       new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                             JBUI.insetsLeft(2), 0, 0);
-    toolbarPanel.add(myToolbar.getComponent(), gc);
+                             JBUI.insets(0), 0, 0);
+    JComponent component = myToolbar.getComponent();
+    component.setBorder(null);
+    toolbarPanel.add(component, gc);
 
     setPreferredSize(JBUI.size(600, 400));
 
@@ -179,9 +179,13 @@ public class ImplementationViewComponent extends JPanel {
         myEditor.setHighlighter(highlighter);
       }
 
+
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.weightx = 1;
+
       mySingleEntryPanel = new JPanel(new BorderLayout());
+      toolbarPanel.add(mySingleEntryPanel, gc);
+
       myFileChooser = new ComboBox<>(fileDescriptors.toArray(new FileDescriptor[0]), 250);
       myFileChooser.addActionListener(e -> {
         int index1 = myFileChooser.getSelectedIndex();
@@ -194,8 +198,8 @@ public class ImplementationViewComponent extends JPanel {
       toolbarPanel.add(myFileChooser, gc);
 
       if (myElements.length > 1) {
-        updateRenderer(project);
         mySingleEntryPanel.setVisible(false);
+        updateRenderer(project);
       }
       else {
         myFileChooser.setVisible(false);
@@ -203,11 +207,7 @@ public class ImplementationViewComponent extends JPanel {
         if (virtualFile != null) {
           updateSingleEntryLabel(virtualFile);
         }
-        toolbarPanel.add(mySingleEntryPanel, gc);
       }
-
-      gc.fill = GridBagConstraints.NONE;
-      gc.weightx = 0;
 
       header.add(toolbarPanel, BorderLayout.CENTER);
       header.add(myGearAction, BorderLayout.EAST);
@@ -255,17 +255,42 @@ public class ImplementationViewComponent extends JPanel {
     myFileChooser.setRenderer(createRenderer(project));
   }
 
-  private ListCellRendererWithRightAlignedComponent<FileDescriptor> createRenderer(Project project) {
-    return new ListCellRendererWithRightAlignedComponent<>() {
+  private static ListCellRenderer<FileDescriptor> createRenderer(Project project) {
+    return new LeftRightRenderer<>() {
+      @NotNull
       @Override
-      protected void customize(FileDescriptor value) {
-        VirtualFile file = value.myFile;
-        setIcon(getIconForFile(file, project));
-        setLeftForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-        setLeftText(value.myPresentableText);
+      protected ListCellRenderer<FileDescriptor> getMainRenderer() {
+        return new ColoredListCellRenderer<>() {
+          @Override
+          protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
+                                               FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+            if (value != null) {
+              ImplementationViewElement element = value.myElement;
+              setIcon(getIconForFile(value.myFile, project));
+              append(element.getPresentableText());
+              String presentation = element.getContainerPresentation();
+              if (presentation != null) {
+                append("  ");
+                append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              }
+            }
+          }
+        };
+      }
 
-        setRightText(myElements[myIndex].getLocationText());
-        setRightIcon(myElements[myIndex].getLocationIcon());
+      @NotNull
+      @Override
+      protected ListCellRenderer<FileDescriptor> getRightRenderer() {
+        return new SimpleListCellRenderer<>() {
+          @Override
+          public void customize(@NotNull JList<? extends FileDescriptor> list,
+                                FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+            if (value != null) {
+              setText(value.myElement.getLocationText());
+              setIcon(value.myElement.getLocationIcon());
+            }
+          }
+        };
       }
     };
   }
@@ -276,7 +301,7 @@ public class ImplementationViewComponent extends JPanel {
     String[] result = new String[model.getSize()];
     for (int i = 0; i < model.getSize(); i++) {
       FileDescriptor o = model.getElementAt(i);
-      result[i] = o.myPresentableText;
+      result[i] = o.myElement.getPresentableText();
     }
     return result;
   }
@@ -514,7 +539,9 @@ public class ImplementationViewComponent extends JPanel {
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
     group.add(forward);
 
-    return ActionManager.getInstance().createActionToolbar("ImplementationView", group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ImplementationView", group, true);
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    return toolbar;
   }
 
   private void goBack() {
@@ -542,7 +569,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
-      super(CodeInsightBundle.messagePointer("quick.definition.back"), AllIcons.Actions.Back);
+      super(CodeInsightBundle.messagePointer("quick.definition.back"), AllIcons.Actions.Play_back);
     }
 
     @Override
@@ -561,7 +588,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
-      super(CodeInsightBundle.messagePointer("quick.definition.forward"), AllIcons.Actions.Forward);
+      super(CodeInsightBundle.messagePointer("quick.definition.forward"), AllIcons.Actions.Play_forward);
     }
 
     @Override

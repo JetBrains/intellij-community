@@ -139,10 +139,10 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     try {
       final String[] visibleFiles = component.getVisibleFiles();
       assertTrue(visibleFiles.length > 0);
-      assertEquals(visibleFiles[0], "a.java (AFoo)");
+      assertEquals("AFoo", visibleFiles[0]);
       Arrays.sort(visibleFiles);
       Assert.assertArrayEquals(Arrays.toString(visibleFiles),
-                               new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"}, visibleFiles);
+                               new String[]{"AFoo", "AFoo1 in AFoo", "AFoo2 in AFoo", "AFoo3 in AFoo"}, visibleFiles);
     }
     finally {
       component.removeNotify();
@@ -174,7 +174,7 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
+    assertContent(component, new String[]{"AFoo", "a"});
   }
 
   public void testInterfaceConstants() {
@@ -193,7 +193,7 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java (Anonymous in IMPL in AFoo)"});
+    assertContent(component, new String[]{"AFoo", "Anonymous in IMPL in AFoo"});
   }
 
   public void testInterfaceMethodOfFunctionalInterface() {
@@ -216,7 +216,7 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     all.add(psiMethod);
     all.addAll(methods);
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
+    assertContent(component, new String[]{"AFoo", "a"});
   }
 
   public void testOnVarKeyword() {
@@ -246,7 +246,7 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     all.add(psiMethod);
     all.addAll(methods);
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)"});
+    assertContent(component, new String[]{"AFoo"});
   }
 
   public void testMethodsInInnerClasses() {
@@ -286,7 +286,7 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     //make sure they are in predefined order
     Collections.sort(all, Comparator.comparing(o -> o.getContainingClass().getQualifiedName()));
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"});
+    assertContent(component, new String[]{"AFoo", "AFoo1 in AFoo", "AFoo2 in AFoo", "AFoo3 in AFoo"});
   }
 
   private static void assertContent(ImplementationViewComponent component, String[] expects) {
