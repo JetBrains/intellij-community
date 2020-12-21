@@ -17,6 +17,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +89,7 @@ public class ToolwindowSwitcher extends DumbAwareAction {
                                                   boolean cellHasFocus) {
       UIUtil.setBackgroundRecursively(myPanel, UIUtil.getListBackground(isSelected, true));
       myTextLabel.setText(value.getStripeTitle());
-      myTextLabel.setIcon(value.getIcon());
+      myTextLabel.setIcon(ObjectUtils.notNull(value.getIcon(), EmptyIcon.ICON_13));
       myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
       String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
       KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
