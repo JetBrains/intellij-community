@@ -228,6 +228,14 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTest(null);
   }
 
+  public void testWhilePolyadicWholeCondition() {
+    doTest(null);
+  }
+
+  public void testWhilePolyadicWholeConditionParens() {
+    doTest(null);
+  }
+
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
