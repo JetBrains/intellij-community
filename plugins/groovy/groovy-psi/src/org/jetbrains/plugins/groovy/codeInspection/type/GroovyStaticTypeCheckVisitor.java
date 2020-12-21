@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleA
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
@@ -42,8 +40,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
     super.visitTupleAssignmentExpression(expression);
     final GrExpression initializer = expression.getRValue();
     if (initializer != null) {
-      PsiType[] types = Arrays.stream(expression.getLValue().getExpressions()).map(it -> it.getType()).toArray(PsiType[]::new);
-      checkTupleAssignment(initializer, types);
+      checkTupleAssignment(initializer, expression.getLValue().getExpressions().length);
     }
   }
 
@@ -52,23 +49,22 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
     if (variableDeclaration.isTuple()) {
       GrExpression initializer = variableDeclaration.getTupleInitializer();
       if (initializer != null) {
-        PsiType[] types = Arrays.stream(variableDeclaration.getVariables()).map(it -> it.getType()).toArray(PsiType[]::new);
-        checkTupleAssignment(initializer, types);
+        checkTupleAssignment(initializer, variableDeclaration.getVariables().length);
       }
     }
     super.visitVariableDeclaration(variableDeclaration);
   }
 
-  void checkTupleAssignment(@NotNull GrExpression initializer, final PsiType @NotNull [] types) {
+  void checkTupleAssignment(@NotNull GrExpression initializer, int leftCount) {
     if (initializer instanceof GrListOrMap && !((GrListOrMap)initializer).isMap()) {
 
       final GrListOrMap initializerList = (GrListOrMap)initializer;
 
       final GrExpression[] expressions = initializerList.getInitializers();
-      if (types.length > expressions.length) {
+      if (leftCount > expressions.length) {
         registerError(
           initializer,
-          GroovyBundle.message("incorrect.number.of.values", types.length, expressions.length),
+          GroovyBundle.message("incorrect.number.of.values", leftCount, expressions.length),
           LocalQuickFix.EMPTY_ARRAY,
           ProblemHighlightType.GENERIC_ERROR
         );
@@ -79,7 +75,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
     registerError(
       initializer,
       GroovyBundle.message("multiple.assignments.without.list.expr"),
-      new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createMultipleAssignmentFix(types.length)},
+      new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createMultipleAssignmentFix(leftCount)},
       ProblemHighlightType.GENERIC_ERROR
     );
   }
