@@ -27,6 +27,7 @@ import training.learn.exceptons.NoSdkException
 import training.learn.lesson.kimpl.LessonUtil
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
+import training.util.getFeedbackLink
 import java.nio.file.Path
 
 class PythonLangSupport : AbstractLangSupport() {
@@ -39,6 +40,8 @@ class PythonLangSupport : AbstractLangSupport() {
   private val sourcesDirectoryName: String = "src"
 
   override val filename: String = "Learning.py"
+
+  override val langCourseFeedback get() = getFeedbackLink(this, false)
 
   override val readMeCreator = ReadMeCreator()
 
