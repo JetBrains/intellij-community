@@ -89,6 +89,6 @@ class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
       applyToAllEditors(project, true)
     }
 
-
+    Disposer.register(project) { fontPreferences.changeListener = null }
   }
 }
