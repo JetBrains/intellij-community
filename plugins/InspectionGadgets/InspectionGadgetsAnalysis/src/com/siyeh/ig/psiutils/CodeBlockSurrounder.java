@@ -132,8 +132,12 @@ public abstract class CodeBlockSurrounder {
    * @return the expression that replaced the original expression
    */
   public @NotNull CodeBlockSurrounder.SurroundResult surround() {
-    Object marker = new Object();
-    PsiTreeUtil.mark(myExpression, marker);
+    Object marker = ObjectUtils.sentinel("CodeBlockSurrounder.MARKER");
+    PsiExpression expr = PsiUtil.skipParenthesizedExprDown(myExpression);
+    if (expr == null) {
+      expr = myExpression;
+    }
+    PsiTreeUtil.mark(expr, marker);
     Project project = myExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     boolean physical = myExpression.isPhysical();
