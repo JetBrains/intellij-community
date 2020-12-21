@@ -22,6 +22,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
@@ -59,15 +60,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public LocalTerminalDirectRunner(Project project) {
     super(project);
     myDefaultCharset = StandardCharsets.UTF_8;
-  }
-
-  private static String getShellName(@Nullable String path) {
-    if (path == null) {
-      return null;
-    }
-    else {
-      return new File(path).getName();
-    }
   }
 
   @Nullable
@@ -269,13 +261,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       return ParametersListUtil.parse(shellPath, false, false);
     }
     List<String> command = ParametersListUtil.parse(shellPath, false, true);
-    String shellCommand = command.size() > 0 ? command.get(0) : null;
-    String shellName = getShellName(shellCommand);
-
-    if (shellName == null) {
+    String shellCommand = ContainerUtil.getFirstItem(command);
+    if (shellCommand == null) {
       return command;
     }
     command.remove(0);
+    String shellName = PathUtil.getFileName(shellCommand);
 
     if (!containsLoginOrInteractiveOption(command)) {
       if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {
