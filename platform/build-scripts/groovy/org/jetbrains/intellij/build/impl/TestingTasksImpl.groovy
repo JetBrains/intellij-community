@@ -53,11 +53,10 @@ class TestingTasksImpl extends TestingTasks {
     if (projectArtifacts) {
       compilationTasks.buildProjectArtifacts(projectArtifacts)
     }
-    def runConfigurations = options.testConfigurations?.split(";")?.collect { loadRunConfiguration(it) }
-    if (runConfigurations != null) {
-      compilationTasks.
-        compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
-      compilationTasks.buildProjectArtifacts(runConfigurations.collectMany { it.requiredArtifacts })
+    def runConfigurationSpecs = loadRunConfigurationSpecs()
+    if (runConfigurationSpecs != null && !runConfigurationSpecs.isEmpty()) {
+      compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurationSpecs.collect { it.properties.moduleName })
+      compilationTasks.buildProjectArtifacts(runConfigurationSpecs.collectMany {it.properties.requiredArtifacts})
     }
     else if (options.mainModule != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], [options.mainModule, "intellij.platform.buildScripts"])
@@ -76,8 +75,8 @@ class TestingTasksImpl extends TestingTasks {
       Map<String, String> additionalSystemProperties = [:]
       loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
 
-      if (runConfigurations != null) {
-        runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations, additionalSystemProperties)
+      if (runConfigurationSpecs != null && !runConfigurationSpecs.isEmpty()) {
+        runTestsFromRunConfigurations(additionalJvmOptions, runConfigurationSpecs, additionalSystemProperties)
       }
       else {
         runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties)
@@ -113,25 +112,25 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private void runTestsFromRunConfigurations(List<String> additionalJvmOptions,
-                                             List<JUnitRunConfigurationProperties> runConfigurations,
+                                             List<JUnitRunConfigurationSpec> runConfigurationSpecs,
                                              Map<String, String> additionalSystemProperties) {
-    runConfigurations.each { configuration ->
-      context.messages.block("Run '${configuration.name}' run configuration") {
-        runTestsFromRunConfiguration(configuration, additionalJvmOptions, additionalSystemProperties)
+    runConfigurationSpecs.each { spec ->
+      context.messages.block("Run '${spec.properties.name}' run configuration") {
+        runTestsFromRunConfiguration(spec, additionalJvmOptions, additionalSystemProperties)
       }
     }
   }
 
-  private void runTestsFromRunConfiguration(JUnitRunConfigurationProperties runConfigurationProperties,
+  private void runTestsFromRunConfiguration(JUnitRunConfigurationSpec runConfigurationSpec,
                                             List<String> additionalJvmOptions,
                                             Map<String, String> additionalSystemProperties) {
-    context.messages.progress("Running '${runConfigurationProperties.name}' run configuration")
-    List<String> filteredVmOptions = removeStandardJvmOptions(runConfigurationProperties.vmParameters)
-    runTestsProcess(runConfigurationProperties.moduleName,
-                    runConfigurationProperties.testBootstrapSuite, null,
-                    runConfigurationProperties.testClassPatterns.join(";"),
+    context.messages.progress("Running '${runConfigurationSpec.properties.name}' run configuration")
+    List<String> filteredVmOptions = removeStandardJvmOptions(runConfigurationSpec.properties.vmParameters)
+    runTestsProcess(runConfigurationSpec.properties.moduleName,
+                    runConfigurationSpec.testBootstrapSuite, null,
+                    runConfigurationSpec.properties.testClassPatterns.join(";"),
                     filteredVmOptions + additionalJvmOptions, additionalSystemProperties,
-                    runConfigurationProperties.envVariables, false)
+                    runConfigurationSpec.properties.envVariables, false)
   }
 
   private static List<String> removeStandardJvmOptions(List<String> vmOptions) {
@@ -596,20 +595,39 @@ class TestingTasksImpl extends TestingTasks {
     return causalProfilingJvmArgs
   }
 
-  private JUnitRunConfigurationProperties loadRunConfiguration(String descriptor) {
-    String name
-    String testBootstrapSuite
-    def openingIndex = descriptor.indexOf('(')
-    def closingIndex = descriptor.indexOf(')')
-    if (openingIndex > -1 && closingIndex > -1 && closingIndex > openingIndex) {
-      name = descriptor.substring(0, openingIndex).trim()
-      testBootstrapSuite = descriptor.substring(openingIndex + 1, closingIndex).trim()
+  private class JUnitRunConfigurationSpec {
+    final JUnitRunConfigurationProperties properties
+    final String testBootstrapSuite
+
+    JUnitRunConfigurationSpec(JUnitRunConfigurationProperties properties, String testBootstrapSuite) {
+      this.properties = properties
+      this.testBootstrapSuite = testBootstrapSuite
     }
-    else {
-      name = descriptor.trim()
-      testBootstrapSuite = options.bootstrapSuite
+  }
+
+  private List<JUnitRunConfigurationSpec> loadRunConfigurationSpecs() {
+    def testConfigurationsWithBootstrapSuites = [:]
+    options.testConfigurations?.split(";")?.each {
+      testConfigurationsWithBootstrapSuites[it.trim()] = options.bootstrapSuite
     }
-    def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
-    return JUnitRunConfigurationProperties.loadRunConfiguration(file, testBootstrapSuite, context.messages)
+    options.testConfigurationsWithBootstrapSuites?.split(";")?.each { descriptor ->
+      String name
+      String testBootstrapSuite
+      def delimiter = descriptor.lastIndexOf(':')
+      if (delimiter > -1) {
+        name = descriptor.substring(0, delimiter).trim()
+        testBootstrapSuite = descriptor.substring(delimiter + 1).trim()
+      }
+      else {
+        name = descriptor.trim()
+        testBootstrapSuite = options.bootstrapSuite
+      }
+      testConfigurationsWithBootstrapSuites[name] = testBootstrapSuite
+    }
+    return testConfigurationsWithBootstrapSuites.entrySet().collect { String name, String testBootstrapSuite ->
+      def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+      def properties = JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
+      new JUnitRunConfigurationSpec(properties, testBootstrapSuite)
+    }
   }
 }

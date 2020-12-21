@@ -12,11 +12,10 @@ import org.jetbrains.intellij.build.BuildMessages
 class JUnitRunConfigurationProperties extends RunConfigurationProperties {
   final List<String> testClassPatterns
   final List<String> requiredArtifacts
-  final String testBootstrapSuite
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileDynamic
-  static JUnitRunConfigurationProperties loadRunConfiguration(File file, String testBootstrapSuite, BuildMessages messages) {
+  static JUnitRunConfigurationProperties loadRunConfiguration(File file, BuildMessages messages) {
     def configuration = getConfiguration(file, messages)
 
     if (configuration.@type != "JUnit") {
@@ -58,13 +57,11 @@ class JUnitRunConfigurationProperties extends RunConfigurationProperties {
                        // Pattern is a regex already, we don't need to escape it in com.intellij.TestClassesFilter
                        ("pattern" == testKind ? ["-Dintellij.build.test.patterns.escaped=true"] : [])
     def envVariables = first(configuration.envs)?.env?.collectEntries { [it.@name, it.@value] } ?: [:]
-    return new JUnitRunConfigurationProperties(configuration.@name, moduleName, testBootstrapSuite,
-                                               testClassPatterns, vmParameters, requiredArtifacts, envVariables)
+    return new JUnitRunConfigurationProperties(configuration.@name, moduleName, testClassPatterns, vmParameters, requiredArtifacts, envVariables)
   }
 
   JUnitRunConfigurationProperties(String name,
                                   String moduleName,
-                                  String testBootstrapSuite,
                                   List<String> testClassPatterns,
                                   List<String> vmParameters,
                                   List<String> requiredArtifacts,
@@ -72,6 +69,5 @@ class JUnitRunConfigurationProperties extends RunConfigurationProperties {
     super(name, moduleName, vmParameters, envVariables)
     this.testClassPatterns = testClassPatterns
     this.requiredArtifacts = requiredArtifacts
-    this.testBootstrapSuite = testBootstrapSuite
   }
 }
