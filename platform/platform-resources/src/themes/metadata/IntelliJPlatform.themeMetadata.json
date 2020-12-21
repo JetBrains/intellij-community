@@ -524,6 +524,10 @@
       "key": "Notification.ToolWindow.warningForeground"
     },
     {
+      "key": "Panel.mouseShortcutBackground",
+      "description": "Background of mouse shortcut panel"
+    },
+    {
       "key": "ParameterInfo.background",
       "description": "Parameter info tooltip"
     },

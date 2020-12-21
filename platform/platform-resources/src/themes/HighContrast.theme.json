@@ -218,6 +218,8 @@
       "separatorColor": "#FFFFFF"
     },
 
+    "Panel.mouseShortcutBackground": "#000000",
+
     "ParameterInfo": {
       "background": "#281A33",
       "foreground": "#CCCCCC",
