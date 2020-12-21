@@ -61,7 +61,7 @@ public class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
       for (StatusBarWidgetFactory type : StatusBarWidgetFactory.EP_NAME.getExtensions()) {
         if (StringUtil.equals(type.getId(), data)) {
           final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(type.getClass());
-          return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+          return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
       }
       return ValidationResultType.REJECTED;
