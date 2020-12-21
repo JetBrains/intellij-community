@@ -23,8 +23,6 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -370,13 +368,8 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
             final PsiExpression initializer = psiVariable.getInitializer();
             LOG.assertTrue(initializer != null);
             final PsiType type = initializer.getType();
-            if (((PsiReferenceExpression)parent).resolve() == null && type != null && !type.equals(psiVariable.getType())) {
-              if (LambdaUtil.notInferredType(type)) {
-                throw new RuntimeExceptionWithAttachments(
-                  "Unexpected initializer type: " + type,
-                  new Attachment("variable.txt", psiVariable.getText()), new Attachment("reference.txt", parent.getText()),
-                  new Attachment("file.txt", file.getText()));
-              }
+            if (((PsiReferenceExpression)parent).resolve() == null && type != null && !type.equals(psiVariable.getType()) &&
+                !LambdaUtil.notInferredType(type) && !PsiType.NULL.equals(type)) {
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               final PsiExpression castedExpr =
                 elementFactory.createExpressionFromText("((" + type.getCanonicalText() + ")" + referenceExpression.getText() + ")", parent);

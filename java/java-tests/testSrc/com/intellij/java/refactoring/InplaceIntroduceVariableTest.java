@@ -212,6 +212,14 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTest(null);
   }
 
+  public void testNullTypeAddCast() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+
+  public void testLambdaParameterAddCast() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
