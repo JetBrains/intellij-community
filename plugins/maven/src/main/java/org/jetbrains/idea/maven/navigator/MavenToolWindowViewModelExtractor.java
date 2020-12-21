@@ -2,10 +2,8 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -39,7 +37,7 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     myLogger.assertTrue(decoration != null, String.format("couldn't extract decoration of the toolwindow with id %s", toolWindow.getId()));
 
     DataContext context = DataManager.getInstance().getDataContext(mavenPanel);
-    ActionBarViewModel actionBarViewModel = getFromDecoration(decoration, context);
+    ActionBarViewModel actionBarViewModel = getFromRegisteredActions(context);
     return new SimpleToolWindowContent(actionBarViewModel, treeModel);
   }
 
@@ -54,9 +52,8 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
   }
 
 
-  private static ActionBarViewModel getFromDecoration(ToolWindowEx.ToolWindowDecoration decoration,
-                                                      DataContext context) {
-    DefaultActionGroup defaultActionGroup = (DefaultActionGroup)decoration.getActionGroup();
+  private static ActionBarViewModel getFromRegisteredActions(DataContext context) {
+    DefaultActionGroup defaultActionGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("Maven.NavigatorActionsToolbar");
     AnAction[] childrenActions = defaultActionGroup.getChildActionsOrStubs();
 
     final ArrayList<ActionViewModel> iconActions = new ArrayList<>();
@@ -64,12 +61,27 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     for (AnAction action : childrenActions) {
       Icon icon = action.getTemplatePresentation().getIcon();
       if (icon == null) {
+        //todo this is stub
         icon = EmptyIcon.ICON_0;
       }
-      IconAction iconAction = new IconAction(icon, "tooltip text", () -> {
-        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
-      });
-      iconActions.add(iconAction);
+
+      ActionViewModel actionViewModel;
+      if (action instanceof ToggleAction) {
+        //todo lazy tooltip text
+        actionViewModel = new ToggleIconAction(icon, action.getTemplatePresentation().getText(), () -> {
+          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
+        }, true);
+      }
+      else if (action instanceof Separator) {
+        actionViewModel = new com.intellij.ui.viewModel.definition.Separator();
+      }
+      else {
+        actionViewModel = new IconAction(icon, action.getTemplatePresentation().getText(), () -> {
+          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
+        });
+      }
+
+      iconActions.add(actionViewModel);
     }
 
     return new ActionBarViewModel(true, iconActions);

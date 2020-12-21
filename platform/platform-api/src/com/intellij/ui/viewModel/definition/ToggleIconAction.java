@@ -7,7 +7,7 @@ import javax.swing.*;
 public class ToggleIconAction extends IconAction {
   boolean myState;
 
-  ToggleIconAction(Icon icon, String tooltipText, Runnable action, boolean state) {
+  public ToggleIconAction(Icon icon, String tooltipText, Runnable action, boolean state) {
     super(icon, tooltipText, action);
     myState = state;
   }
