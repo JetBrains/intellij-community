@@ -15,7 +15,7 @@
   <resource-bundle>messages.CompletionRankingLocalBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.completion.ml.local.models.frequency.FrequencyLocalModel"/>
+    <projectService serviceImplementation="com.intellij.completion.ml.local.models.LocalModelsManager"/>
 
     <completion.ml.contextFeatures language="JAVA" implementationClass="com.intellij.completion.ml.local.features.LocalModelsContextFeatureProvider"/>
     <completion.ml.elementFeatures language="JAVA" implementationClass="com.intellij.completion.ml.local.features.LocalModelsElementFeatureProvider"/>

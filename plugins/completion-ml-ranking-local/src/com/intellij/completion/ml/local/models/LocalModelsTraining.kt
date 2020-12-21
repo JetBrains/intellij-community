@@ -1,7 +1,7 @@
 package com.intellij.completion.ml.local.models
 
 import com.intellij.completion.ml.local.CompletionRankingLocalBundle
-import com.intellij.completion.ml.local.models.frequency.FrequencyLocalModel
+import com.intellij.completion.ml.local.models.api.LocalModelBuilder
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -21,20 +21,22 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 
-object LocalModelsBuilder {
+object LocalModelsTraining {
   @Volatile private var isTraining = false
 
   fun isTraining(): Boolean = isTraining
 
   fun train(project: Project) = ApplicationManager.getApplication().executeOnPooledThread {
     isTraining = true
+    val modelsManager = LocalModelsManager.getInstance(project)
     val task = object : Task.Backgroundable(project, CompletionRankingLocalBundle.message("ml.completion.local.models.training.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         val files = getFiles(project)
-        val model = FrequencyLocalModel.getInstance(project)
-        model.onStarted()
-        processFiles(files, model, project, indicator)
-        model.onFinished()
+        for (modelBuilder in modelsManager.modelBuilders()) {
+          modelBuilder.onStarted()
+          processFiles(files, modelBuilder, project, indicator)
+          modelBuilder.onFinished()
+        }
       }
 
       override fun onFinished() {
@@ -44,7 +46,7 @@ object LocalModelsBuilder {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
   }
 
-  private fun processFiles(files: List<VirtualFile>, model: LocalModel, project: Project, indicator: ProgressIndicator) {
+  private fun processFiles(files: List<VirtualFile>, model: LocalModelBuilder, project: Project, indicator: ProgressIndicator) {
     val dumbService = DumbService.getInstance(project)
     val psiManager = PsiManager.getInstance(project)
     val executorService = Executors.newFixedThreadPool((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1))

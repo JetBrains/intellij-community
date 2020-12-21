@@ -1,15 +1,11 @@
-package com.intellij.completion.ml.local.models
+package com.intellij.completion.ml.local.models.api
 
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.psi.PsiElementVisitor
 
-interface LocalModel {
+interface LocalModelFeaturesProvider {
   fun calculateContextFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue>
   fun calculateElementFeatures(element: LookupElement, contextFeatures: ContextFeatures): Map<String, MLFeatureValue>
-  fun visitor(): PsiElementVisitor
-  fun onStarted()
-  fun onFinished()
 }
