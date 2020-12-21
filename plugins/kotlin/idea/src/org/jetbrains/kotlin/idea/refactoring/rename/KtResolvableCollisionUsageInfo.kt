@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
@@ -31,7 +32,11 @@ class UsageInfoWithReplacement(
     private val replacement: KtElement
 ) : KtResolvableCollisionUsageInfo(element, referencedElement) {
     override fun apply() {
-        element?.replaced(replacement)?.addToShorteningWaitSet(ShortenReferences.Options.ALL_ENABLED)
+        val toBeReplaced = (element?.parent as? KtCallableReferenceExpression)?.takeIf {
+            // ::element -> this::newElement
+            replacement is KtCallableReferenceExpression
+        } ?: element
+        toBeReplaced?.replaced(replacement)?.addToShorteningWaitSet(ShortenReferences.Options.ALL_ENABLED)
     }
 }
 
