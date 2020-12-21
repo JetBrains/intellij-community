@@ -6,6 +6,7 @@ import circlet.client.api.impl.ApiClassesDeserializer
 import circlet.client.api.impl.tombstones.registerArenaTombstones
 import circlet.code.api.CodeReviewArena
 import circlet.code.api.CodeReviewParticipantsArena
+import circlet.code.api.ReviewPendingMessageCounterArena
 import circlet.common.oauth.IdeaOAuthConfig
 import circlet.permissions.FeatureFlagsVmPersistenceKey
 import circlet.platform.api.oauth.OAuthTokenResponse
@@ -115,6 +116,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     // code review
     ClientArenaRegistry.register(CodeReviewArena)
     ClientArenaRegistry.register(CodeReviewParticipantsArena)
+    ClientArenaRegistry.register(ReviewPendingMessageCounterArena)
     circlet.code.api.impl.ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
   }
 

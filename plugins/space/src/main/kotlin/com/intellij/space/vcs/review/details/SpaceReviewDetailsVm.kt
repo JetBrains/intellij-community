@@ -18,9 +18,12 @@ import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVmImpl
 import com.intellij.space.vcs.review.details.diff.SpaceReviewDiffLoader
+import com.intellij.space.vcs.review.details.process.SpaceReviewStateUpdater
+import com.intellij.space.vcs.review.details.process.SpaceReviewStateUpdaterImpl
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.*
+import runtime.reactive.property.seqCombineLatest
 
 internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
@@ -51,6 +54,8 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
 
   val turnBased: Property<Boolean?> = cellProperty { review.live.turnBased }
 
+  val reviewStateUpdater: SpaceReviewStateUpdater = SpaceReviewStateUpdaterImpl(workspace, review.value)
+
   private val infoByRepos = spaceReposInfo.associateBy(SpaceRepoInfo::name)
 
   private val participantsProperty: Property<LoadingValue<Ref<CodeReviewParticipants>>> = load {
@@ -60,9 +65,14 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   }
 
   private val participantsRef: Property<Ref<CodeReviewParticipants>?> = lastLoadedValueOrNull(participantsProperty)
+  private val pendingCounterRef: Property<Ref<CodeReviewPendingMessageCounter>?> = lastLoadedValueOrNull(pendingCounterAsync(client))
 
-  val participantsVm: Property<SpaceReviewParticipantsVm?> = seqMap(participantsRef) { r ->
-    r?.let { SpaceReviewParticipantsVmImpl(it, projectKey, review.value.identifier, client, lifetime) }
+  val participantsVm: Property<SpaceReviewParticipantsVm?> = seqCombineLatest(participantsRef,
+                                                                              pendingCounterRef) { participantsRef, pendingCounterRef ->
+    if (participantsRef != null && pendingCounterRef != null) {
+      SpaceReviewParticipantsVmImpl(lifetime, projectKey, reviewRef, participantsRef, pendingCounterRef, review.value.identifier, workspace)
+    }
+    else null
   }
 
   private val detailedInfo: Property<CodeReviewDetailedInfo?> = mapInit(review, null) {
@@ -166,4 +176,13 @@ data class ReviewCommitListItem(
   val spaceRepoInfo: SpaceRepoInfo?
 ) {
   val inCurrentProject: Boolean = spaceRepoInfo != null
+}
+
+
+private fun SpaceReviewDetailsVm<*>.pendingCounterAsync(client: KCircletClient): LoadingProperty<Ref<CodeReviewPendingMessageCounter>> {
+  return load {
+    client.arena.resolveRefsOrFetch {
+      reviewRef.extensionRef(CodeReviewPendingMessageCounter::class)
+    }
+  }
 }
