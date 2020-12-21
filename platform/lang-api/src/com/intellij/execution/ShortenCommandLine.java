@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.lang.LangBundle;
@@ -56,6 +56,10 @@ public enum ShortenCommandLine {
 
   public static @NotNull ShortenCommandLine getDefaultMethod(@Nullable Project project, String rootPath) {
     if (!JdkUtil.useDynamicClasspath(project)) return NONE;
+    return getDefaultMethodForJdk(rootPath);
+  }
+
+  public static @NotNull ShortenCommandLine getDefaultMethodForJdk(@Nullable String rootPath) {
     if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) return ARGS_FILE;
     if (JdkUtil.useClasspathJar()) return MANIFEST;
     return CLASSPATH_FILE;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -88,6 +88,15 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myUseDynamicClasspath;
   }
 
+  /**
+   * Enables command line shortening considering current {@link #getJdk JDK}
+   * and ignoring {@link JdkUtil#useDynamicClasspath project and application properties}.
+   */
+  public void useDynamicClasspathUnconditionally() {
+    Sdk jdk = getJdk();
+    setShortenCommandLine(ShortenCommandLine.getDefaultMethodForJdk(jdk != null ? jdk.getHomePath() : null));
+  }
+
   public void setUseDynamicClasspath(boolean useDynamicClasspath) {
     myUseDynamicClasspath = useDynamicClasspath && (myArgFile || myUseClasspathJar || myClasspathFile);
   }
@@ -154,6 +163,10 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
       Sdk jdk = getJdk();
       mode = ShortenCommandLine.getDefaultMethod(project, jdk != null ? jdk.getHomePath() : null);
     }
+    setShortenCommandLine(mode);
+  }
+
+  public void setShortenCommandLine(@NotNull ShortenCommandLine mode) {
     myUseDynamicClasspath = mode != ShortenCommandLine.NONE;
     myUseClasspathJar = mode == ShortenCommandLine.MANIFEST;
     setClasspathFile(mode == ShortenCommandLine.CLASSPATH_FILE);
