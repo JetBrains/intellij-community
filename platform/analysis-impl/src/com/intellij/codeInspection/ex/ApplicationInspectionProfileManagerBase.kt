@@ -7,10 +7,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileLoadUtil
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileProcessor
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.serviceContainer.NonInjectable
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
@@ -54,6 +59,15 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
         DEFAULT_PROFILE_NAME,
         InspectionToolRegistrar.getInstance(), this))
     }
+
+    app.messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectOpened(project: Project) {
+        val appScopeListener = NamedScopesHolder.ScopeListener {
+          profiles.forEach { it.scopesChanged() }
+        }
+        NamedScopeManager.getInstance(project).addScopeListener(appScopeListener, project)
+      }
+    })
   }
 
   @Volatile

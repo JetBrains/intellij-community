@@ -2,6 +2,7 @@
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.configurationStore.*
@@ -104,12 +105,6 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
 
       scopesManager.addScopeListener(projectScopeListener, project)
       NamedScopeManager.getInstance(project).addScopeListener(projectScopeListener, project)
-
-      val appScopeListener = NamedScopesHolder.ScopeListener {
-        InspectionProfileManager.getInstance().currentProfile.scopesChanged()
-      }
-
-      NamedScopeManager.getInstance(project).addScopeListener(appScopeListener, project)
     }
   }
 
