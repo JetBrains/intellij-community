@@ -7,10 +7,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.util.List;
@@ -21,9 +18,9 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public class WSLUtilTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory tempDirectory = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private static final NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
+  private static NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
     List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
     return distributions.isEmpty() ? null : distributions.get(0);
   });
@@ -34,6 +31,11 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
   public static void checkEnvironment() {
     assumeWindows();
     assumeWslPresence();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    WSL = null;
   }
 
   @Before
@@ -77,8 +79,8 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testResolveSymlink() throws Exception {
-    File winFile = tempDirectory.newFile("the_file.txt");
-    File winSymlink = new File(tempDirectory.getRoot(), "sym_link");
+    File winFile = tempDir.newFile("the_file.txt");
+    File winSymlink = new File(tempDir.getRoot(), "sym_link");
 
     String file = wsl.getWslPath(winFile.getPath());
     String symlink = wsl.getWslPath(winSymlink.getPath());

@@ -7,12 +7,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,11 +25,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
-  @Rule public final TempDirectory tempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private static final NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
+  private static NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
     List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
-    return distributions.isEmpty() ? null : distributions.get(0);
+    if (distributions.isEmpty()) return null;
+    WSLDistribution distribution = distributions.get(0);
+    if (distribution instanceof WSLDistributionLegacy || !IoTestUtil.reanimateWslDistribution(distribution.getId())) return null;
+    return distribution;
   });
 
   private WSLDistribution wsl;
@@ -40,6 +41,11 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   public static void checkEnvironment() {
     assumeWindows();
     assumeWslPresence();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    WSL = null;
   }
 
   @Before
