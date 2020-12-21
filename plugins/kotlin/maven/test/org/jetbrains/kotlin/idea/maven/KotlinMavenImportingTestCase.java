@@ -59,7 +59,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class MavenImportingTestCase extends MavenTestCase {
+public abstract class KotlinMavenImportingTestCase extends MavenTestCase {
     protected MavenProjectsTree myProjectsTree;
     protected MavenProjectsManager myProjectsManager;
     private File myGlobalSettingsFile;
