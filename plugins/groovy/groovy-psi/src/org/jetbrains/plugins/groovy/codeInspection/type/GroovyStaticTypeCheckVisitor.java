@@ -41,7 +41,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
     super.visitTupleAssignmentExpression(expression);
     final GrExpression initializer = expression.getRValue();
-    if (initializer!= null) {
+    if (initializer != null) {
       PsiType[] types = Arrays.stream(expression.getLValue().getExpressions()).map(it -> it.getType()).toArray(PsiType[]::new);
       checkTupleAssignment(initializer, types);
     }
@@ -51,7 +51,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
     if (variableDeclaration.isTuple()) {
       GrExpression initializer = variableDeclaration.getTupleInitializer();
-      if (initializer != null ) {
+      if (initializer != null) {
         PsiType[] types = Arrays.stream(variableDeclaration.getVariables()).map(it -> it.getType()).toArray(PsiType[]::new);
         checkTupleAssignment(initializer, types);
       }
@@ -175,6 +175,6 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
 
     if (resolveMethod == null) return LocalQuickFix.EMPTY_ARRAY;
 
-    return new LocalQuickFix[]{ GroovyQuickFixFactory.getInstance().createSpreadArgumentFix(resolveMethod.getParameters().length)};
+    return new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createSpreadArgumentFix(resolveMethod.getParameters().length)};
   }
 }
