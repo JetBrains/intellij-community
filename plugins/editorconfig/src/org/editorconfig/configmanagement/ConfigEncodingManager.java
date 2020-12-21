@@ -2,6 +2,8 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +44,7 @@ public class ConfigEncodingManager implements FileEncodingProvider {
   @Override
   public @Nullable Charset getEncoding(@NotNull VirtualFile virtualFile) {
     Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    if (project != null && !Utils.isEnabled(CodeStyle.getSettings(project)) ||
+    if (project != null && !Utils.isEnabled(CodeStyle.getSettings(project)) || isIndexing(project) ||
         isApplyingSettings.get() != null && isApplyingSettings.get()) return null;
     try {
       isApplyingSettings.set(true);
@@ -61,4 +63,10 @@ public class ConfigEncodingManager implements FileEncodingProvider {
     return null;
   }
 
+  private static boolean isIndexing(@Nullable Project project) {
+    return project != null
+           && !LightEdit.owns(project)
+           && DumbService.isDumb(project)
+           && "Indexing".equals(Thread.currentThread().getName());
+  }
 }
