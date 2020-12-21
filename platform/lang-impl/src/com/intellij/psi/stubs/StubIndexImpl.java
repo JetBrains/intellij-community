@@ -538,7 +538,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   private void clearState() {
     StubIndexKeyDescriptorCache.INSTANCE.clear();
-    ((SerializationManagerImpl)SerializationManager.getInstance()).dropSerializerData();
+    ((SerializationManagerImpl)SerializationManagerEx.getInstanceEx()).dropSerializerData();
     myCachedStubIds.clear();
     myStateFuture = null;
     myState = null;

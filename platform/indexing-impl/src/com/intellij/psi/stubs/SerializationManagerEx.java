@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,9 +14,9 @@ import java.io.OutputStream;
  * This class is intended to manage Stub Serializers {@link ObjectStubSerializer} and stub serialization/deserialization algorithm.
  */
 @ApiStatus.Internal
-public abstract class SerializationManagerEx extends SerializationManager {
+public abstract class SerializationManagerEx {
   public static SerializationManagerEx getInstanceEx() {
-    return (SerializationManagerEx)SerializationManager.getInstance();
+    return ServiceManager.getService(SerializationManagerEx.class);
   }
 
   public abstract void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream);
