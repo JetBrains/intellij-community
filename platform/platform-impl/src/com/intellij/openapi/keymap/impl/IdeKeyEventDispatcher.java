@@ -737,8 +737,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
     }
     else {
+      @NlsSafe String join = String.join(", ", actionNames);
       return getUnavailableMessage(IdeBundle.message("dumb.balloon.none.of.the.following.actions"), true) +
-             ": " + String.join(", ", actionNames);
+             ": " + join;
     }
   }
 
