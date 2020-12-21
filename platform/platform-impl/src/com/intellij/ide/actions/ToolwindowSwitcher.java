@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -42,8 +43,8 @@ public class ToolwindowSwitcher extends DumbAwareAction {
         toolWindows.add(tw);
       }
     }
-    toolWindows.sort((o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));
 
+    toolWindows.sort(new ToolWindowsComparator(toolWindowManager.getRecentToolWindows()));
     IPopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(toolWindows);
 
     Ref<JBPopup> popup = Ref.create();
@@ -98,6 +99,28 @@ public class ToolwindowSwitcher extends DumbAwareAction {
       }
       myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
       return myPanel;
+    }
+  }
+
+  private static class ToolWindowsComparator implements Comparator<ToolWindow> {
+    private final ArrayList<String> myRecent;
+
+    private ToolWindowsComparator(ArrayList<String> recent) {
+      myRecent = recent;
+    }
+
+    @Override
+    public int compare(ToolWindow o1, ToolWindow o2) {
+      int index1 = myRecent.indexOf(o1.getId());
+      int index2 = myRecent.indexOf(o2.getId());
+      if (index1 >= 0 && index2 >= 0) {
+        return index1 - index2;
+      }
+
+      if (index1 >= 0) return -1;
+      if (index2 >= 0) return  1;
+
+      return StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle());
     }
   }
 }
