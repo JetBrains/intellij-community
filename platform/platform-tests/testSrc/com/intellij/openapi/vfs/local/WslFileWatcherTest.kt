@@ -47,7 +47,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 //todo[r.sh] fix ignored tests
 class WslFileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
-  private val LOG: Logger by lazy { Logger.getInstance(WslFileWatcher::class.java) }
+  companion object {
+    private val LOG: Logger by lazy { Logger.getInstance(WslFileWatcher::class.java) }
+    private val WSL: String? by lazy { enumerateWslDistributions().firstOrNull() }
+  }
 
   private lateinit var tempDir: Path
   private lateinit var wsl: String
@@ -64,10 +67,8 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     assumeTrue(SystemInfo.isWin10OrNewer)
     assumeWslPresence()
 
-    val distributions = enumerateWslDistributions()
-    assumeTrue("No WSL distributions found", distributions.isNotEmpty())
-
-    wsl = distributions[0]
+    assumeTrue("No WSL distributions found", WSL != null)
+    wsl = WSL!!
     assumeTrue("WSL distribution ${wsl} doesn't seem to be alive", reanimateWslDistribution(wsl))
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")

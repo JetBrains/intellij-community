@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Before;
@@ -28,7 +29,12 @@ import static org.junit.Assume.assumeTrue;
 public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   @Rule public final TempDirectory tempDir = new TempDirectory();
 
-  private WSLDistribution myWSL;
+  private static final NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
+    List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
+    return distributions.isEmpty() ? null : distributions.get(0);
+  });
+
+  private WSLDistribution wsl;
 
   @BeforeClass
   public static void checkEnvironment() {
@@ -38,9 +44,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
 
   @Before
   public void setUp() {
-    List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
-    assumeTrue("No WSL distributions available", distributions.size() > 0);
-    myWSL = distributions.get(0);
+    assumeTrue("No WSL distributions available", (wsl = WSL.getValue()) != null);
   }
 
   @Test
@@ -211,7 +215,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertPwdOutputInDirectory(String directoryName) throws ExecutionException {
-    String path = myWSL.getWslPath(tempDir.newDirectory(directoryName).getPath());
+    String path = wsl.getWslPath(tempDir.newDirectory(directoryName).getPath());
     assertWslCommandOutput(path + "\n", path, Collections.emptyMap(), List.of("pwd"));
   }
 
@@ -250,7 +254,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
 
   private String createEchoScriptAndGetLinuxPath(String executableName) {
     File file = tempDir.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
-    String wslPath = myWSL.getWslPath(file.getPath());
+    String wslPath = wsl.getWslPath(file.getPath());
     assertNotNull("local path: " + file, wslPath);
     return wslPath;
   }
@@ -275,7 +279,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertWslCommandOutput(String expectedOut, WSLCommandLineOptions options, Map<String, String> envs, List<String> command) throws ExecutionException {
-    GeneralCommandLine cmd = myWSL.patchCommandLine(new GeneralCommandLine(command).withEnvironment(envs), null, options);
+    GeneralCommandLine cmd = wsl.patchCommandLine(new GeneralCommandLine(command).withEnvironment(envs), null, options);
     ProcessOutput output = new CapturingProcessHandler(cmd).runProcess(10_000);
 
     String expected = stringify(false, "", 0, expectedOut);

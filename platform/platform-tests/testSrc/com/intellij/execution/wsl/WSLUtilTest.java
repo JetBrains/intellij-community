@@ -4,6 +4,7 @@ package com.intellij.execution.wsl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Before;
@@ -22,7 +23,12 @@ import static org.junit.Assume.assumeTrue;
 public class WSLUtilTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDirectory = new TempDirectory();
 
-  private WSLDistribution myWSL;
+  private static final NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
+    List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
+    return distributions.isEmpty() ? null : distributions.get(0);
+  });
+
+  private WSLDistribution wsl;
 
   @BeforeClass
   public static void checkEnvironment() {
@@ -32,43 +38,41 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
 
   @Before
   public void setUp() {
-    List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
-    assumeTrue("No WSL distributions available", distributions.size() > 0);
-    myWSL = distributions.get(0);
+    assumeTrue("No WSL distributions available", (wsl = WSL.getValue()) != null);
   }
 
   @Test
   public void testWslToWinPath() {
-    assertNull(myWSL.getWindowsPath("/mnt/cd"));
-    assertNull(myWSL.getWindowsPath("/mnt"));
-    assertNull(myWSL.getWindowsPath(""));
-    assertNull(myWSL.getWindowsPath("/mnt//test"));
-    assertNull(myWSL.getWindowsPath("/mnt/1/test"));
+    assertNull(wsl.getWindowsPath("/mnt/cd"));
+    assertNull(wsl.getWindowsPath("/mnt"));
+    assertNull(wsl.getWindowsPath(""));
+    assertNull(wsl.getWindowsPath("/mnt//test"));
+    assertNull(wsl.getWindowsPath("/mnt/1/test"));
 
-    assertEquals("C:", myWSL.getWindowsPath("/mnt/c"));
-    assertEquals("X:\\", myWSL.getWindowsPath("/mnt/x/"));
-    assertEquals("C:\\temp\\foo", myWSL.getWindowsPath("/mnt/c/temp/foo"));
-    assertEquals("C:\\temp\\KeepCase", myWSL.getWindowsPath("/mnt/c/temp/KeepCase"));
-    assertEquals("C:\\name with spaces\\another name with spaces", myWSL.getWindowsPath("/mnt/c/name with spaces/another name with spaces"));
+    assertEquals("C:", wsl.getWindowsPath("/mnt/c"));
+    assertEquals("X:\\", wsl.getWindowsPath("/mnt/x/"));
+    assertEquals("C:\\temp\\foo", wsl.getWindowsPath("/mnt/c/temp/foo"));
+    assertEquals("C:\\temp\\KeepCase", wsl.getWindowsPath("/mnt/c/temp/KeepCase"));
+    assertEquals("C:\\name with spaces\\another name with spaces", wsl.getWindowsPath("/mnt/c/name with spaces/another name with spaces"));
     //noinspection NonAsciiCharacters
-    assertEquals("C:\\юникод", myWSL.getWindowsPath("/mnt/c/юникод"));
+    assertEquals("C:\\юникод", wsl.getWindowsPath("/mnt/c/юникод"));
   }
 
   @Test
   public void testWinToWslPath() {
-    assertEquals("/mnt/c/foo", myWSL.getWslPath("C:\\foo"));
-    assertEquals("/mnt/c/temp/KeepCase", myWSL.getWslPath("C:\\temp\\KeepCase"));
-    assertNull(myWSL.getWslPath("?:\\temp\\KeepCase"));
-    assertNull(myWSL.getWslPath("c:c"));
+    assertEquals("/mnt/c/foo", wsl.getWslPath("C:\\foo"));
+    assertEquals("/mnt/c/temp/KeepCase", wsl.getWslPath("C:\\temp\\KeepCase"));
+    assertNull(wsl.getWslPath("?:\\temp\\KeepCase"));
+    assertNull(wsl.getWslPath("c:c"));
   }
 
   @Test
   public void testPaths() {
     String originalWinPath = "C:\\usr\\something\\bin\\gcc";
-    assertEquals(originalWinPath, myWSL.getWindowsPath(myWSL.getWslPath(originalWinPath)));
+    assertEquals(originalWinPath, wsl.getWindowsPath(wsl.getWslPath(originalWinPath)));
 
     String originalWslPath = "/mnt/c/usr/bin/gcc";
-    assertEquals(originalWslPath, myWSL.getWslPath(myWSL.getWindowsPath(originalWslPath)));
+    assertEquals(originalWslPath, wsl.getWslPath(wsl.getWindowsPath(originalWslPath)));
   }
 
   @Test
@@ -76,18 +80,18 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
     File winFile = tempDirectory.newFile("the_file.txt");
     File winSymlink = new File(tempDirectory.getRoot(), "sym_link");
 
-    String file = myWSL.getWslPath(winFile.getPath());
-    String symlink = myWSL.getWslPath(winSymlink.getPath());
+    String file = wsl.getWslPath(winFile.getPath());
+    String symlink = wsl.getWslPath(winSymlink.getPath());
     mkSymlink(file, symlink);
 
-    String resolved = myWSL.getWindowsPath(myWSL.resolveSymlink(symlink));
+    String resolved = wsl.getWindowsPath(wsl.resolveSymlink(symlink));
     assertNotNull(resolved);
     assertTrue(new File(resolved).exists());
     assertTrue(winFile.getPath().equalsIgnoreCase(resolved));
   }
 
   private void mkSymlink(String file, String symlink) throws Exception {
-    GeneralCommandLine cmd = myWSL.patchCommandLine(new GeneralCommandLine("ln", "-s", file, symlink), null, new WSLCommandLineOptions());
+    GeneralCommandLine cmd = wsl.patchCommandLine(new GeneralCommandLine("ln", "-s", file, symlink), null, new WSLCommandLineOptions());
     @SuppressWarnings("deprecation") ProcessOutput output = WSLUtil.addInputCloseListener(new CapturingProcessHandler(cmd)).runProcess(10_000);
     assertFalse(output.isTimeout());
     assertEquals(0, output.getExitCode());
