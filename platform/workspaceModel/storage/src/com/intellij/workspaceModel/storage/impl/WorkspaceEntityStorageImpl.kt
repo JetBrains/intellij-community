@@ -624,10 +624,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     return res
   }
 
-  override fun resetChanges() {
-    this.changeLog.clear()
-  }
-
   override fun toStorage(): WorkspaceEntityStorageImpl {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()

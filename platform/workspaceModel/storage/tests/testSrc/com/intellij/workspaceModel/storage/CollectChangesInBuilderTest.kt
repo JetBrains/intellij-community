@@ -44,17 +44,6 @@ class CollectChangesInBuilderTest {
   }
 
   @Test
-  fun `reset changes`() {
-    val baseModificationCount = builder.modificationCount
-    builder.addSampleEntity("added")
-    assertEquals(1, builder.collectChanges(initialStorage).values.flatten().size)
-    assertEquals(baseModificationCount + 1, builder.modificationCount)
-    builder.resetChanges()
-    assertEquals(baseModificationCount + 2, builder.modificationCount)
-    assertEquals(0, builder.collectChanges(initialStorage).values.flatten().size)
-  }
-
-  @Test
   fun `modify entity`() {
     builder.modifyEntity(ModifiableSampleEntity::class.java, initialStorage.singleSampleEntity()) {
       stringProperty = "changed"
