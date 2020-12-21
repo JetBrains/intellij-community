@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -242,6 +243,14 @@ abstract class ScriptClassRootsUpdater(
         val openedScripts = openFiles.filter(filter)
 
         if (openedScripts.isEmpty()) return
+
+        /**
+         * Scripts guts are everywhere in the plugin code, without them some functionality does not work,
+         * And with them some other fir plugin related is broken
+         * As FIR plugin does not have scripts support yet, just disabling not working one for now
+         */
+        @Suppress("DEPRECATION")
+        if (project.service<FirPluginOracleService>().isFirPlugin()) return
 
         GlobalScope.launch(EDT(project)) {
             if (project.isDisposed) return@launch
