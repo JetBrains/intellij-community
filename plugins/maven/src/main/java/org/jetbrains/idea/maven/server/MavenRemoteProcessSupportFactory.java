@@ -16,6 +16,15 @@ public interface MavenRemoteProcessSupportFactory {
                                    Project project,
                                    Integer debugPort);
 
+  @NotNull
+  static MavenRemoteProcessSupportFactory forProject(@NotNull Project project) {
+    MavenRemoteProcessSupportFactory applicable = MAVEN_SERVER_SUPPORT_EP_NAME.findFirstSafe(factory -> factory.isApplicable(project));
+    if (applicable == null) {
+      return new LocalMavenRemoteProcessSupportFactory();
+    }
+    return applicable;
+  }
+
   boolean isApplicable(Project project);
 
   abstract class MavenRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object>{

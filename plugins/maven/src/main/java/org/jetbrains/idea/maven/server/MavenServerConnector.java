@@ -76,7 +76,7 @@ public class MavenServerConnector implements @NotNull Disposable {
         System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
       }
 
-      MavenRemoteProcessSupportFactory factory = getSupportFactory(project);
+      MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(project);
       mySupport = factory.create(myJdk, myVmOptions, myDistribution, project, myDebugPort);
 
       myMavenServer = mySupport.acquire(this, "");
@@ -102,19 +102,6 @@ public class MavenServerConnector implements @NotNull Disposable {
     }
   }
 
-  @NotNull
-  private static MavenRemoteProcessSupportFactory getSupportFactory(Project project) {
-    MavenRemoteProcessSupportFactory[] factories = MavenRemoteProcessSupportFactory.MAVEN_SERVER_SUPPORT_EP_NAME.getExtensions();
-    List<MavenRemoteProcessSupportFactory> aFactories = ContainerUtil.filter(factories, factory -> factory.isApplicable(project));
-    if (aFactories.isEmpty()) {
-      return new LocalMavenRemoteProcessSupportFactory();
-    }
-    if (aFactories.size() > 1) {
-      LOG.warn("More than one MavenRemoteProcessSupportFactory is applicable: " + aFactories);
-    }
-    return aFactories.get(0);
-  }
-
   private void cleanUp() {
     if (myLoggerExported) {
       try {
@@ -138,11 +125,11 @@ public class MavenServerConnector implements @NotNull Disposable {
     mySupport = null;
   }
 
-  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
+  MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     return myMavenServer.createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
   }
 
-  public MavenServerIndexer createIndexer() throws RemoteException {
+  MavenServerIndexer createIndexer() throws RemoteException {
     return myMavenServer.createIndexer(MavenRemoteObjectWrapper.ourToken);
   }
 

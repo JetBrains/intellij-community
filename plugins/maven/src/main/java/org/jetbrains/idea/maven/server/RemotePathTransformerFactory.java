@@ -13,7 +13,7 @@ public interface RemotePathTransformerFactory {
   ExtensionPointName<RemotePathTransformerFactory> MAVEN_REMOTE_PATH_TRANSFORMER_EP_NAME
     = new ExtensionPointName<>("org.jetbrains.idea.maven.remotePathTransformerFactory");
 
-  static Transformer createForProject(@NotNull String projectPath) {
+  static Transformer createForProject(@Nullable String projectPath) {
     RemotePathTransformerFactory[] transformers = MAVEN_REMOTE_PATH_TRANSFORMER_EP_NAME.getExtensions();
     List<RemotePathTransformerFactory> aTransformers = ContainerUtil.filter(transformers, factory -> factory.isApplicable(projectPath));
     if (aTransformers.size() > 1) {
@@ -30,18 +30,18 @@ public interface RemotePathTransformerFactory {
   interface Transformer {
     Transformer ID = new Transformer() {
       @Override
-      public String toRemotePath(String localPath) {
+      public @Nullable String toRemotePath(@NotNull String localPath) {
         return localPath;
       }
 
       @Override
-      public String toIdePath(String remotePath) {
+      public @Nullable String toIdePath(@NotNull String remotePath) {
         return remotePath;
       }
     };
 
-    String toRemotePath(String localPath);
+    @Nullable String toRemotePath(@NotNull String localPath);
 
-    String toIdePath(String remotePath);
+    @Nullable String toIdePath(@NotNull String remotePath);
   }
 }

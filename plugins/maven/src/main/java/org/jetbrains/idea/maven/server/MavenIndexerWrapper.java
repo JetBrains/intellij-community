@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.openapi.project.Project;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.apache.lucene.search.Query;
@@ -22,9 +23,11 @@ import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
   private final Int2ObjectOpenHashMap<IndexData> myDataMap = new Int2ObjectOpenHashMap<>();
+  private final Project myProject;
 
-  public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
+  public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent, Project project) {
     super(parent);
+    myProject = project;
   }
 
   @Override
@@ -96,7 +99,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     performCancelable(() -> {
       MavenServerProgressIndicator indicatorWrapper = wrapAndExport(indicator);
       try {
-        getOrCreateWrappee().updateIndex(getRemoteId(localId), MavenServerManager.convertSettings(settings), indicatorWrapper, ourToken);
+        getOrCreateWrappee().updateIndex(getRemoteId(localId), MavenServerManager.convertSettings(myProject, settings), indicatorWrapper, ourToken);
       }
       finally {
         UnicastRemoteObject.unexportObject(indicatorWrapper, true);

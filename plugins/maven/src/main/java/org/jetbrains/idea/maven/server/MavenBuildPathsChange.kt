@@ -34,19 +34,8 @@ class MavenBuildPathsChange(private val transformer: (String) -> String) {
     excludes
   )
 
-  private fun MavenArtifact.transformPaths() = MavenArtifact(
-    groupId,
-    artifactId,
-    version,
-    baseVersion,
-    type,
-    classifier,
-    scope,
-    isOptional,
-    extension,
+  private fun MavenArtifact.transformPaths() = this.replaceFile(
     File(transformer(file.path)),
-    null,
-    isResolved,
-    false
+    null
   )
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.build.events.BuildEventsNls;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -504,13 +505,13 @@ public final class MavenServerManager implements Disposable {
   public MavenEmbedderWrapper createEmbedder(final Project project,
                                              final boolean alwaysOnline,
                                              @Nullable String workingDirectory,
-                                             @Nullable String multiModuleProjectDirectory) {
+                                             @NotNull String multiModuleProjectDirectory) {
 
     return new MavenEmbedderWrapper(null) {
       @NotNull
       @Override
       protected MavenServerEmbedder create() throws RemoteException {
-        MavenServerSettings settings = convertSettings(MavenProjectsManager.getInstance(project).getGeneralSettings());
+        MavenServerSettings settings = convertSettings(project, MavenProjectsManager.getInstance(project).getGeneralSettings());
         if (alwaysOnline && settings.isOffline()) {
           settings = settings.clone();
           settings.setOffline(false);
@@ -524,7 +525,10 @@ public final class MavenServerManager implements Disposable {
   }
 
   public MavenIndexerWrapper createIndexer(@NotNull Project project) {
-    return new MavenIndexerWrapper(null) {
+    if(project.getBasePath() != null && WslDistributionManager.isWslPath(project.getBasePath())) {
+      throw new UnsupportedOperationException("indexing for WSL is not supported yet");
+    }
+    return new MavenIndexerWrapper(null, project) {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
@@ -564,14 +568,15 @@ public final class MavenServerManager implements Disposable {
     }
   }
 
-  public static MavenServerSettings convertSettings(MavenGeneralSettings settings) {
+  public static MavenServerSettings convertSettings(Project project, MavenGeneralSettings settings) {
+    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project.getBasePath());
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
     result.setMavenHome(settings.getEffectiveMavenHome());
-    result.setUserSettingsFile(settings.getEffectiveUserSettingsIoFile());
-    result.setGlobalSettingsFile(settings.getEffectiveGlobalSettingsIoFile());
-    result.setLocalRepository(settings.getEffectiveLocalRepository());
+    result.setUserSettingsFile(transformer == RemotePathTransformerFactory.Transformer.ID? settings.getEffectiveUserSettingsIoFile() : null);
+    result.setGlobalSettingsFile(transformer == RemotePathTransformerFactory.Transformer.ID? settings.getEffectiveGlobalSettingsIoFile() : null);
+    result.setLocalRepository(transformer == RemotePathTransformerFactory.Transformer.ID? settings.getEffectiveLocalRepository(): null);
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
     result.setSnapshotUpdatePolicy(
       settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
