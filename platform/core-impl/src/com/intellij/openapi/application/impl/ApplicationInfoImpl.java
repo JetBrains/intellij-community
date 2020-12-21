@@ -60,7 +60,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
   private String mySmallSvgEapIconUrl;
-  private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
+  private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.svg";
   private String myWelcomeScreenLogoUrl;
 
   private Calendar myBuildDate;
