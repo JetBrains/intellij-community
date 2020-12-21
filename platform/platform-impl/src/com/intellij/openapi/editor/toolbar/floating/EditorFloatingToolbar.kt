@@ -33,18 +33,10 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     toolbarComponents.forEach { add(it.second) }
 
     editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-      var lastUpdateTime = Long.MIN_VALUE
-
       override fun mouseMoved(e: EditorMouseEvent) {
         if (!isInsideActivationArea(container, e.mouseEvent.point)) return
         for ((provider, component) in toolbarComponents) {
           if (!provider.autoHideable) continue
-
-          val currentTime = System.nanoTime()
-          if (currentTime > lastUpdateTime + ACTION_UPDATE_THROTTLE_DELAY_NS) {
-            component.update()
-            lastUpdateTime = currentTime
-          }
           component.scheduleShow()
         }
       }
@@ -53,7 +45,6 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
 
   companion object {
     val EP_NAME = ExtensionPointName.create<FloatingToolbarProvider>("com.intellij.editorFloatingToolbarProvider")
-    const val ACTION_UPDATE_THROTTLE_DELAY_NS = 500_000_000
 
     private fun isInsideActivationArea(container: JScrollPane, p: Point): Boolean {
       val viewport = container.viewport

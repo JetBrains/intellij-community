@@ -13,14 +13,6 @@ import com.intellij.testFramework.LightVirtualFileBase
 class ProjectRefreshActionGroup : DefaultActionGroup() {
   override fun update(e: AnActionEvent) {
     ensureValidActionVisibility(e)
-    val project = e.project ?: return
-    // todo move the following to ProjectNotificationAware?
-    val notificationAware = ProjectNotificationAware.getInstance(project)
-    val extension = ProjectRefreshFloatingProvider.getExtension()
-    when (notificationAware.isNotificationVisible()) {
-      true -> extension.forEachToolbarComponent(FloatingToolbarComponent::scheduleShow)
-      else -> extension.forEachToolbarComponent(FloatingToolbarComponent::scheduleHide)
-    }
   }
 
   private fun ensureValidActionVisibility(e: AnActionEvent) {

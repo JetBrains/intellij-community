@@ -41,7 +41,10 @@ class ProjectNotificationAware : Disposable {
     this.isHidden = isHidden
     ApplicationManager.getApplication().assertIsDispatchThread()
     val toolbarProvider = ProjectRefreshFloatingProvider.getExtension()
-    toolbarProvider.updateAllToolbarComponents()
+    when (isNotificationVisible()) {
+      true -> toolbarProvider.scheduleShowAllToolbarComponents()
+      else -> toolbarProvider.scheduleHideAllToolbarComponents()
+    }
   }
 
   private fun revealNotification() = setHideStatus(false)
