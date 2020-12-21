@@ -9,6 +9,7 @@ import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.LazyInitializer;
@@ -27,12 +28,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,11 +86,11 @@ public class JBCefBrowser implements JBCefDisposable {
       @Override
       public @NotNull String initialize() {
         try {
-          URL url = JBCefApp.class.getResource("resources/load_error.html");
-          if (url != null) return Files.readString(Paths.get(url.toURI()));
+          return new String(FileUtil.loadBytes(Objects.requireNonNull(
+              JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
         }
-        catch (IOException | URISyntaxException ex) {
-          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", ex);
+        catch (IOException | NullPointerException e) {
+          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", e);
         }
         return "";
       }
