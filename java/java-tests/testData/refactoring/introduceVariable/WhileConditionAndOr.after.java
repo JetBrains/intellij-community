@@ -5,7 +5,7 @@ class Test {
         while (x > 0) {
             boolean temp = z > 0;
             if (!(y < 0 || temp)) break;
-
+            z++;
         }
     }
 }

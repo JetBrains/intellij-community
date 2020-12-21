@@ -318,7 +318,8 @@ final class VariableExtractor {
       PsiWhileStatement whileStatement = (PsiWhileStatement)anchor;
       PsiExpression condition = whileStatement.getCondition();
       if (condition != null && allOccurrences.stream().allMatch(occurrence -> PsiTreeUtil.isAncestor(whileStatement, occurrence, true))) {
-        if (firstOccurrence != null && PsiTreeUtil.isAncestor(condition, firstOccurrence, false)) {
+        if (firstOccurrence != null && PsiTreeUtil.isAncestor(condition, firstOccurrence, false) &&
+            !ExpressionUtils.isLoopInvariant(firstOccurrence, whileStatement)) {
           PsiPolyadicExpression polyadic = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiPolyadicExpression.class);
           if (polyadic != null && JavaTokenType.ANDAND.equals(polyadic.getOperationTokenType())) {
             PsiExpression operand = ContainerUtil.find(polyadic.getOperands(), op -> PsiTreeUtil.isAncestor(op, firstOccurrence, false));

@@ -219,6 +219,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testLambdaParameterAddCast() {
     doTestReplaceChoice("Replace all 0 occurrences");
   }
+  
+  public void testWhileTrue() {
+    doTest(null);
+  }
 
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);

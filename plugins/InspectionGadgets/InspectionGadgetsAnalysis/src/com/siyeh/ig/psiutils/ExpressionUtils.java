@@ -4,6 +4,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -1673,5 +1675,30 @@ public final class ExpressionUtils {
       ((PsiLocalVariable)declaration.getDeclaredElements()[0]).normalizeDeclaration();
     }
     return null;
+  }
+
+  /**
+   * @param expression expression to test
+   * @param loopStatement loop statement
+   * @return true if given expression is likely to be a loop invariant. False if it's not invariant, or not known.
+   */
+  public static boolean isLoopInvariant(PsiExpression expression, @SuppressWarnings("unused") PsiLoopStatement loopStatement) {
+    if (PsiUtil.isConstantExpression(expression)) return true;
+    if (SideEffectChecker.mayHaveSideEffects(expression)) return false;
+    Collection<PsiReferenceExpression> refs = PsiTreeUtil.collectElementsOfType(expression, PsiReferenceExpression.class);
+    for (PsiReferenceExpression ref : refs) {
+      PsiElement target = ref.resolve();
+      // TODO: more sophisticated analysis
+      if (target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.FINAL)) continue;
+      if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+        PsiVariable var = (PsiVariable)target;
+        if (var.hasModifierProperty(PsiModifier.FINAL) ||
+            HighlightControlFlowUtil.isEffectivelyFinal(var, PsiUtil.getVariableCodeBlock(var, null), null)) {
+          continue;
+        }
+      }
+      return false;
+    }
+    return true;
   }
 }

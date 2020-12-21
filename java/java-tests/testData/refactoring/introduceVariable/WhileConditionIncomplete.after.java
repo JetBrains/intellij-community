@@ -1,8 +1,10 @@
 class Test {
-    void test(boolean foo) {
+    void test() {
         while (true) {
-            boolean temp = foo;
+            boolean temp = foo();
             if (!temp) break;
         }
     }
+    
+    native boolean foo();
 }
