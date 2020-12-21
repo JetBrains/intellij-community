@@ -6,47 +6,47 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.completion.ml.local.models.LocalModel
+import com.intellij.completion.ml.local.models.storage.ClassesFrequencyStorage
+import com.intellij.completion.ml.local.models.storage.MethodsFrequencyStorage
 import com.intellij.completion.ml.local.util.LocalModelsUtil
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 
-class FrequencyLocalModel private constructor(private val project: Project) : LocalModel {
+class FrequencyLocalModel private constructor(project: Project) : LocalModel {
   companion object {
     fun getInstance(project: Project): FrequencyLocalModel = project.getService(FrequencyLocalModel::class.java)
 
-    private const val MODEL_TRAINED_PROPERTY_KEY = "ml.completion.local.models.frequency.trained"
     private val RECEIVER_CLASS_NAME_KEY: Key<String> = Key.create("ml.completion.local.models.receiver.class.name")
-    private val RECEIVER_CLASS_FREQUENCIES_KEY: Key<ClassFrequencies> = Key.create("ml.completion.local.models.receiver.class.frequencies")
+    private val RECEIVER_CLASS_FREQUENCIES_KEY: Key<MethodsFrequencies> = Key.create("ml.completion.local.models.receiver.class.frequencies")
   }
 
-  private val storage = FrequencyStorage(LocalModelsUtil.storagePath(project))
-  private var isTrained = PropertiesComponent.getInstance(project).isTrueValue(MODEL_TRAINED_PROPERTY_KEY)
+  private val storagesPath = LocalModelsUtil.storagePath(project)
+  private val methodsFrequencyStorage = MethodsFrequencyStorage.getStorage(storagesPath)
+  private val classesFrequencyStorage = ClassesFrequencyStorage.getStorage(storagesPath)
+  private val storages = listOf(methodsFrequencyStorage, classesFrequencyStorage)
 
-  init {
-    ApplicationManager.getApplication().executeOnPooledThread { storage.postProcess() }
-  }
-
-  override fun visitor(): PsiElementVisitor = ReferenceFrequencyVisitor(UsagesTracker(storage))
+  override fun visitor(): PsiElementVisitor = ReferenceFrequencyVisitor(UsagesTracker(methodsFrequencyStorage, classesFrequencyStorage))
 
   override fun calculateContextFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
-    if (!isTrained) return emptyMap()
-    getReceiverClass(environment.parameters)?.let { cls ->
-      LocalModelsUtil.getClassName(cls)?.let {
-        environment.putUserData(RECEIVER_CLASS_NAME_KEY, it)
-        storage.get(it)?.let { frequencies ->
-          environment.putUserData(RECEIVER_CLASS_FREQUENCIES_KEY, frequencies)
+    val features = mutableMapOf<String, MLFeatureValue>()
+    if (methodsFrequencyStorage.isValid()) {
+      getReceiverClass(environment.parameters)?.let { cls ->
+        LocalModelsUtil.getClassName(cls)?.let {
+          environment.putUserData(RECEIVER_CLASS_NAME_KEY, it)
+          methodsFrequencyStorage.get(it)?.let { frequencies ->
+            environment.putUserData(RECEIVER_CLASS_FREQUENCIES_KEY, frequencies)
+          }
         }
       }
+      features["total_methods"] = MLFeatureValue.numerical(methodsFrequencyStorage.totalMethods)
+      features["total_methods_usages"] = MLFeatureValue.numerical(methodsFrequencyStorage.totalMethodsUsages)
     }
-    return mapOf(
-      "total_methods" to MLFeatureValue.Companion.numerical(storage.totalMethods),
-      "total_methods_usages" to MLFeatureValue.Companion.numerical(storage.totalMethodsUsages),
-      "total_classes" to MLFeatureValue.Companion.numerical(storage.totalClasses),
-      "total_classes_usages" to MLFeatureValue.Companion.numerical(storage.totalClassesUsages)
-    )
+    if (classesFrequencyStorage.isValid()) {
+      features["total_classes"] = MLFeatureValue.numerical(classesFrequencyStorage.totalClasses)
+      features["total_classes_usages"] = MLFeatureValue.numerical(classesFrequencyStorage.totalClassesUsages)
+    }
+    return features
   }
 
   override fun calculateElementFeatures(element: LookupElement, contextFeatures: ContextFeatures): Map<String, MLFeatureValue> {
@@ -60,19 +60,19 @@ class FrequencyLocalModel private constructor(private val project: Project) : Lo
           LocalModelsUtil.getMethodName(psi)?.let { methodName ->
             val frequency = classFrequencies.getMethodFrequency(methodName)
             if (frequency > 0) {
-              val totalUsages = classFrequencies.getMethodsFrequency()
-              features["absolute_method_frequency"] = MLFeatureValue.Companion.numerical(frequency)
-              features["relative_method_frequency"] = MLFeatureValue.Companion.numerical(frequency.toDouble() / totalUsages)
+              val totalUsages = classFrequencies.getTotalFrequency()
+              features["absolute_method_frequency"] = MLFeatureValue.numerical(frequency)
+              features["relative_method_frequency"] = MLFeatureValue.numerical(frequency.toDouble() / totalUsages)
             }
           }
         }
       }
     }
-    if (psi is PsiClass) {
+    if (psi is PsiClass && classesFrequencyStorage.isValid()) {
       LocalModelsUtil.getClassName(psi)?.let { className ->
-        storage.getClassFrequency(className)?.let {
-          features["absolute_class_frequency"] = MLFeatureValue.Companion.numerical(it)
-          features["relative_class_frequency"] = MLFeatureValue.Companion.numerical(it.toDouble() / storage.totalClassesUsages)
+        classesFrequencyStorage.get(className)?.let {
+          features["absolute_class_frequency"] = MLFeatureValue.numerical(it)
+          features["relative_class_frequency"] = MLFeatureValue.numerical(it.toDouble() / classesFrequencyStorage.totalClassesUsages)
         }
       }
     }
@@ -80,15 +80,11 @@ class FrequencyLocalModel private constructor(private val project: Project) : Lo
   }
 
   override fun onStarted() {
-    storage.clear()
-    PropertiesComponent.getInstance(project).setValue(MODEL_TRAINED_PROPERTY_KEY, false)
-    isTrained = false
+    storages.forEach { it.setValid(false) }
   }
 
   override fun onFinished() {
-    storage.postProcess()
-    PropertiesComponent.getInstance(project).setValue(MODEL_TRAINED_PROPERTY_KEY, true)
-    isTrained = true
+    storages.forEach { it.setValid(true) }
   }
 
   private fun getReceiverClass(parameters: CompletionParameters): PsiClass? {

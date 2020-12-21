@@ -32,6 +32,7 @@ object LocalModelsBuilder {
       override fun run(indicator: ProgressIndicator) {
         val files = getFiles(project)
         val model = FrequencyLocalModel.getInstance(project)
+        model.onStarted()
         processFiles(files, model, project, indicator)
         model.onFinished()
       }

@@ -1,11 +1,16 @@
 package com.intellij.completion.ml.local.models.frequency
 
-class UsagesTracker(private val storage: FrequencyStorage) {
+import com.intellij.completion.ml.local.models.storage.ClassesFrequencyStorage
+import com.intellij.completion.ml.local.models.storage.MethodsFrequencyStorage
+
+class UsagesTracker(private val methodsStorage: MethodsFrequencyStorage,
+                    private val classesStorage: ClassesFrequencyStorage) {
+
   fun classUsed(name: String) {
-    storage.addClassUsage(name)
+    classesStorage.addClassUsage(name)
   }
 
   fun methodUsed(className: String, methodName: String) {
-    storage.addMethodUsage(className, methodName)
+    methodsStorage.addMethodUsage(className, methodName)
   }
 }
