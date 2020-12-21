@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -20,8 +21,10 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -78,7 +81,20 @@ public class ToolwindowSwitcher extends DumbAwareAction {
     private final JLabel myShortcutLabel = new JLabel();
 
     private ToolWindowsWidgetCellRenderer() {
-      myPanel = JBUI.Panels.simplePanel().addToLeft(myTextLabel).addToRight(myShortcutLabel);
+      myPanel = new BorderLayoutPanel() {
+        @Override
+        public void paintComponent(Graphics g) {
+          Color bg = UIUtil.getListBackground(false, false);
+          g.setColor(bg);
+          g.fillRect(0,0, getWidth(), getHeight());
+          if (!getBackground().equals(bg)) {
+            g.setColor(getBackground());
+            GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+            g.fillRoundRect(4, 1, getWidth() - 8, getHeight() - 2, 8, 8);
+            config.restore();
+          }
+        }
+      }.addToLeft(myTextLabel).addToRight(myShortcutLabel);
       myShortcutLabel.setBorder(JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0));
       myPanel.setBorder(JBUI.Borders.empty(4, 12));
     }
