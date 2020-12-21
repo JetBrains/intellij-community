@@ -14,6 +14,7 @@ import com.intellij.debugger.memory.agent.ui.RetainedSizeDialog;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 public class CalculateRetainedSizeAction extends DebuggerTreeAction {
-  protected final Logger LOG = Logger.getInstance(this.getClass());
+  protected static final Logger LOG = Logger.getInstance(CalculateRetainedSizeAction.class);
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
@@ -46,11 +47,21 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         try {
+          if (dialog.isDisposed()) {
+            return;
+          }
+
           EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
           MemoryAgent memoryAgent = MemoryAgent.get(debugProcess);
+          Disposer.register(dialog.getDisposable(), () -> memoryAgent.cancelAction());
           MemoryAgentActionResult<Pair<long[], ObjectReference[]>> result = memoryAgent.estimateObjectSize(
             evaluationContext, reference, Registry.get("debugger.memory.agent.action.timeout").asInteger()
           );
+
+          if (dialog.isDisposed()) {
+            return;
+          }
+
           if (result.executedSuccessfully()) {
             Pair<long[], ObjectReference[]> sizesAndHeldObjects = result.getResult();
             dialog.setHeldObjectsAndSizes(

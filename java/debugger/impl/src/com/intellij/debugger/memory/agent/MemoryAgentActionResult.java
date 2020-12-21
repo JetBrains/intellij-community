@@ -5,11 +5,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class MemoryAgentActionResult<T> {
   public enum ErrorCode {
-    OK,
-    TIMEOUT;
+    OK, TIMEOUT, CANCELLED;
 
     public static ErrorCode valueOf(int value) {
-      return value == 0 ? OK : TIMEOUT;
+      switch (value) {
+        case 0:
+          return OK;
+        case 1:
+          return TIMEOUT;
+        default:
+          return CANCELLED;
+      }
     }
   }
 
@@ -27,6 +33,6 @@ public class MemoryAgentActionResult<T> {
   }
 
   public boolean executedSuccessfully() {
-    return myErrorCode != ErrorCode.TIMEOUT;
+    return myErrorCode == ErrorCode.OK;
   }
 }

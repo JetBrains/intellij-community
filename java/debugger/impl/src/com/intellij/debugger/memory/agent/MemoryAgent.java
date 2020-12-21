@@ -30,6 +30,8 @@ public interface MemoryAgent {
     return MemoryAgentOperations.getAgent(debugProcess);
   }
 
+  void cancelAction();
+
   @NotNull
   MemoryAgentCapabilities capabilities();
 

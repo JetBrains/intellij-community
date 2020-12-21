@@ -82,6 +82,7 @@ public class RetainedSizeDialog extends DialogWrapper {
       .addToCenter(ScrollPaneFactory.createScrollPane(myTree))
       .addToTop(createTopPanel());
 
+
     if (session != null) {
       session.addSessionListener(new XDebugSessionListener() {
         @Override

@@ -3,6 +3,8 @@ package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -25,17 +27,18 @@ import java.util.List;
 final class MemoryAgentOperations {
   private static final Key<MemoryAgent> MEMORY_AGENT_KEY = Key.create("MEMORY_AGENT_KEY");
   private static final Logger LOG = Logger.getInstance(MemoryAgentOperations.class);
-
-  private static LongValue getTimeoutValue(@NotNull EvaluationContextImpl evaluationContext, long timeoutInMillis) {
-    return evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(timeoutInMillis);
-  }
+  private static final String proxyConstructorSignature = "(Ljava/lang/Object;J)V";
 
   @NotNull
   static MemoryAgentActionResult<Pair<long[], ObjectReference[]>> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext,
                                                                                      @NotNull ObjectReference reference,
+                                                                                     @NotNull String cancellationFileName,
                                                                                      long timeoutInMillis) throws EvaluateException {
-    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECT_SIZE, Arrays.asList(reference, timeoutValue));
+    Value result = callMethod(
+      evaluationContext,
+      MemoryAgentNames.Methods.ESTIMATE_OBJECT_SIZE,
+      cancellationFileName, timeoutInMillis, reference
+    );
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
     MemoryAgentActionResult.ErrorCode errCode = errCodeAndResult.getFirst();
     Pair<long[], ObjectReference[]> sizesAndObjects;
@@ -55,10 +58,14 @@ final class MemoryAgentOperations {
   @NotNull
   static MemoryAgentActionResult<long[]> estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext,
                                                               @NotNull List<ObjectReference> references,
+                                                              @NotNull String cancellationFileName,
                                                               long timeoutInMillis) throws EvaluateException {
-    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
     ArrayReference array = wrapWithArray(evaluationContext, references);
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE, Arrays.asList(array, timeoutValue));
+    Value result = callMethod(
+      evaluationContext,
+      MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE,
+      cancellationFileName, timeoutInMillis, array
+    );
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
     return new MemoryAgentActionResult<>(
       LongArrayParser.INSTANCE.parse(errCodeAndResult.getSecond()).stream().mapToLong(Long::longValue).toArray(),
@@ -69,10 +76,14 @@ final class MemoryAgentOperations {
   @NotNull
   static MemoryAgentActionResult<long[]> getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
                                                                  @NotNull List<ReferenceType> classes,
+                                                                 @NotNull String cancellationFileName,
                                                                  long timeoutInMillis) throws EvaluateException {
-    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
     ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_SIZE_BY_CLASSES, Arrays.asList(array, timeoutValue));
+    Value result = callMethod(
+      evaluationContext,
+      MemoryAgentNames.Methods.GET_SHALLOW_SIZE_BY_CLASSES,
+      cancellationFileName, timeoutInMillis, array
+    );
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
     return new MemoryAgentActionResult<>(
       LongArrayParser.INSTANCE.parse(errCodeAndResult.getSecond()).stream().mapToLong(Long::longValue).toArray(),
@@ -83,10 +94,14 @@ final class MemoryAgentOperations {
   @NotNull
   static MemoryAgentActionResult<long[]> getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
                                                                   @NotNull List<ReferenceType> classes,
+                                                                  @NotNull String cancellationFileName,
                                                                   long timeoutInMillis) throws EvaluateException {
-    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
     ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_RETAINED_SIZE_BY_CLASSES, Arrays.asList(array, timeoutValue));
+    Value result = callMethod(
+      evaluationContext,
+      MemoryAgentNames.Methods.GET_RETAINED_SIZE_BY_CLASSES,
+      cancellationFileName, timeoutInMillis, array
+    );
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
     return new MemoryAgentActionResult<>(
       LongArrayParser.INSTANCE.parse(errCodeAndResult.getSecond()).stream().mapToLong(Long::longValue).toArray(),
@@ -97,10 +112,14 @@ final class MemoryAgentOperations {
   @NotNull
   static MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
                                                                                           @NotNull List<ReferenceType> classes,
+                                                                                          @NotNull String cancellationFileName,
                                                                                           long timeoutInMillis) throws EvaluateException {
-    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
     ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
-    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_AND_RETAINED_SIZE_BY_CLASSES, Arrays.asList(array, timeoutValue));
+    Value result = callMethod(
+      evaluationContext,
+      MemoryAgentNames.Methods.GET_SHALLOW_AND_RETAINED_SIZE_BY_CLASSES,
+      cancellationFileName, timeoutInMillis, array
+    );
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
     Pair<List<Long>, List<Long>> shallowAndRetainedSizes = ShallowAndRetainedSizeParser.INSTANCE.parse(errCodeAndResult.getSecond());
     return new MemoryAgentActionResult<>(
@@ -114,15 +133,17 @@ final class MemoryAgentOperations {
 
   @NotNull
   static MemoryAgentActionResult<ReferringObjectsInfo> findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                 @NotNull ObjectReference reference, int pathsNumber,
-                                                                                 int objectsNumber,  long timeoutInMillis) throws EvaluateException {
-    LongValue timeoutValue = getTimeoutValue(evaluationContext, timeoutInMillis);
+                                                                                 @NotNull ObjectReference reference,
+                                                                                 int pathsNumber, int objectsNumber,
+                                                                                 @NotNull String cancellationFileName,
+                                                                                 long timeoutInMillis) throws EvaluateException {
     IntegerValue pathsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(pathsNumber);
     IntegerValue objectsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(objectsNumber);
     Value result = callMethod(
       evaluationContext,
       MemoryAgentNames.Methods.FIND_PATHS_TO_CLOSEST_GC_ROOTS,
-      Arrays.asList(reference, pathsNumberValue, objectsNumberValue, timeoutValue)
+      cancellationFileName, timeoutInMillis,
+      reference, pathsNumberValue, objectsNumberValue
     );
 
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
@@ -218,11 +239,30 @@ final class MemoryAgentOperations {
     return false;
   }
 
+  @NotNull
+  private static LongValue getLongValue(@NotNull EvaluationContextImpl evaluationContext, long timeoutInMillis) {
+    return evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(timeoutInMillis);
+  }
+
+  @NotNull
+  private static StringReference getStringReference(@NotNull EvaluationContextImpl evaluationContext, @NotNull String string) {
+    return evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(string);
+  }
+
   private static Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
                                   @NotNull String methodName,
-                                  @NotNull List<? extends Value> args) throws EvaluateException {
+                                  @NotNull String cancellationFileName,
+                                  long timeoutInMillis,
+                                  Value... values) throws EvaluateException {
     ClassType proxyType = getProxyType(evaluationContext);
-    return callMethod(evaluationContext, proxyType, methodName, args);
+    return callMethod(
+      evaluationContext,
+      proxyType,
+      methodName,
+      getStringReference(evaluationContext, cancellationFileName),
+      getLongValue(evaluationContext, timeoutInMillis),
+      Arrays.asList(values)
+    );
   }
 
   @NotNull
@@ -230,6 +270,17 @@ final class MemoryAgentOperations {
                                   @NotNull ClassType proxyType,
                                   @NotNull String methodName,
                                   @NotNull List<? extends Value> args) throws EvaluateException {
+    return callMethod(evaluationContext, proxyType, methodName, getStringReference(evaluationContext, ""), getLongValue(evaluationContext, -1), args);
+  }
+
+  @NotNull
+  private static Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
+                                  @NotNull ClassType proxyType,
+                                  @NotNull String methodName,
+                                  @NotNull ObjectReference cancellationFileName,
+                                  @NotNull LongValue timeoutInMillis,
+                                  @NotNull List<? extends Value> args) throws EvaluateException {
+
     DebuggerManagerThreadImpl.assertIsManagerThread();
     long start = System.currentTimeMillis();
     List<Method> methods = DebuggerUtilsEx.declaredMethodsByName(proxyType, methodName);
@@ -241,13 +292,16 @@ final class MemoryAgentOperations {
     }
 
     Method method = methods.get(0);
-    if (!method.isStatic()) {
-      throw EvaluateExceptionUtil.createEvaluateException("Utility method should be static");
-    }
-
-
     Value result = evaluationContext
-      .computeAndKeep(() -> evaluationContext.getDebugProcess().invokeMethod(evaluationContext, proxyType, method, args, true));
+      .computeAndKeep(() -> {
+        DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+        Method constructor = DebuggerUtils.findMethod(proxyType, JVMNameUtil.CONSTRUCTOR_NAME, proxyConstructorSignature);
+        if (constructor == null) {
+          throw EvaluateExceptionUtil.createEvaluateException("No appropriate constructor found for proxy class");
+        }
+        ObjectReference proxyInstance = debugProcess.newInstance(evaluationContext, proxyType, constructor, Arrays.asList(cancellationFileName, timeoutInMillis));
+        return debugProcess.invokeMethod(evaluationContext, proxyInstance, method, args);
+      });
 
     LOG.info("Memory agent's method \"" + methodName + "\" took " + (System.currentTimeMillis() - start) + " ms");
     return result;

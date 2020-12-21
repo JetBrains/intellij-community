@@ -146,7 +146,7 @@ object ShallowAndRetainedSizeParser : ResultParser<Pair<List<Long>, List<Long>>>
 object SizeAndHeldObjectsParser : ResultParser<Pair<Array<Long>, Array<ObjectReference>>> {
   override fun parse(value: Value): Pair<Array<Long>, Array<ObjectReference>> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
-    if (value.length() < 2) throw UnexpectedValueFormatException("long and array of objects expected")
+    if (value.length() < 2) throw UnexpectedValueFormatException("array of longs and array of objects expected")
     return Pair(
       LongArrayParser.parse(value.getValue(0)).toTypedArray(),
       ObjectReferencesParser.parse(value.getValue(1)).toTypedArray()
