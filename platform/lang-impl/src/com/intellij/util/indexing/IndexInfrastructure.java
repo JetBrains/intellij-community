@@ -97,15 +97,6 @@ public final class IndexInfrastructure {
     return indexDir;
   }
 
-  /**
-   * @deprecated use {@link PersistentFS#findFileByIdIfCached(int)} directly.
-   */
-  @Deprecated
-  @Nullable
-  public static VirtualFile findFileByIdIfCached(@NotNull PersistentFS fs, final int id) {
-    return fs.findFileByIdIfCached(id);
-  }
-
   @NotNull
   public static <T> Future<T> submitGenesisTask(@NotNull Callable<T> action) {
     return ourGenesisExecutor.submit(action);
