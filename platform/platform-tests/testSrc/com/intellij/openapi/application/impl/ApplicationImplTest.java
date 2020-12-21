@@ -156,32 +156,28 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     AtomicBoolean holdRead1 = new AtomicBoolean(true);
     AtomicBoolean holdWrite = new AtomicBoolean(true);
     AtomicBoolean read1Acquired = new AtomicBoolean(false);
-    AtomicBoolean read1Released = new AtomicBoolean(false);
+    AtomicBoolean read1AboutToRelease = new AtomicBoolean(false);
     AtomicBoolean read2Acquired = new AtomicBoolean(false);
-    AtomicBoolean read2Released = new AtomicBoolean(false);
+    AtomicBoolean read2AboutToRelease = new AtomicBoolean(false);
     AtomicBoolean writeAcquired = new AtomicBoolean(false);
-    AtomicBoolean writeReleased = new AtomicBoolean(false);
+    AtomicBoolean writeAboutToRelease = new AtomicBoolean(false);
     Future<?> readAction1 = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         assertFalse(application.isDispatchThread());
-        try {
-          application.runReadAction(() -> {
-            read1Acquired.set(true);
-            LOG.debug("read lock1 acquired");
-            while (holdRead1.get()) {
-              try {
-                checkTimeout();
-              }
-              catch (Throwable throwable) {
-                throw new RuntimeException(throwable);
-              }
+        application.runReadAction(() -> {
+          read1Acquired.set(true);
+          LOG.debug("read lock1 acquired");
+          while (holdRead1.get()) {
+            try {
+              checkTimeout();
             }
-          });
-        }
-        finally {
-          read1Released.set(true);
-          LOG.debug("read lock1 released");
-        }
+            catch (Throwable throwable) {
+              throw new RuntimeException(throwable);
+            }
+          }
+          read1AboutToRelease.set(true);
+        });
+        LOG.debug("read lock1 released");
       }
       catch (Throwable e) {
         exception = e;
@@ -200,16 +196,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         while (!application.myLock.writeRequested) checkTimeout();
         assertTrue(application.isWriteActionPending());
         //assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
-        try {
-          application.runReadAction(() -> {
-            read2Acquired.set(true);
-            assertFalse(application.isWriteActionPending());
-            LOG.debug("read lock2 acquired");
-          });
-        }
-        finally {
-          read2Released.set(true);
-        }
+        application.runReadAction(() -> {
+          read2Acquired.set(true);
+          assertFalse(application.isWriteActionPending());
+          LOG.debug("read lock2 acquired");
+          read2AboutToRelease.set(true);
+        });
         LOG.debug("read lock2 released");
       }
       catch (Throwable e) {
@@ -231,11 +223,11 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
-          assertFalse(read1Released.get());
+          assertFalse(read1AboutToRelease.get());
           assertFalse(read2Acquired.get());
-          assertFalse(read2Released.get());
+          assertFalse(read2AboutToRelease.get());
           assertFalse(writeAcquired.get());
-          assertFalse(writeReleased.get());
+          assertFalse(writeAboutToRelease.get());
 
           assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance())); // write pending
           assertFalse(application.isWriteActionInProgress());
@@ -251,11 +243,11 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
-          assertTrue(read1Released.get());
+          assertTrue(read1AboutToRelease.get());
           assertFalse(read2Acquired.get());
-          assertFalse(read2Released.get());
+          assertFalse(read2AboutToRelease.get());
           assertTrue(writeAcquired.get());
-          assertFalse(writeReleased.get());
+          assertFalse(writeAboutToRelease.get());
 
           assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
           assertTrue(application.isWriteActionInProgress());
@@ -265,18 +257,18 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
         holdWrite.set(false);
 
-        while (!read2Released.get()) checkTimeout();
+        while (!read2AboutToRelease.get()) checkTimeout();
 
         c = setTimeout(100, TimeUnit.MILLISECONDS);
         while (!c.timedOut()) {
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
-          assertTrue(read1Released.get());
+          assertTrue(read1AboutToRelease.get());
           assertTrue(read2Acquired.get());
-          assertTrue(read2Released.get());
+          assertTrue(read2AboutToRelease.get());
           assertTrue(writeAcquired.get());
-          assertTrue(writeReleased.get());
+          assertTrue(writeAboutToRelease.get());
 
           assertFalse(application.isWriteActionInProgress());
           assertFalse(application.isWriteAccessAllowed());
@@ -290,28 +282,24 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     });
 
     aboutToAcquireWrite.set(true);
-    try {
-      application.runWriteAction(() -> {
-        writeAcquired.set(true);
-        LOG.debug("write lock acquired");
+    application.runWriteAction(() -> {
+      writeAcquired.set(true);
+      LOG.debug("write lock acquired");
 
-        while (holdWrite.get()) {
-          try {
-            checkTimeout();
-          }
-          catch (Throwable throwable) {
-            throw new RuntimeException(throwable);
-          }
-          assertTrue(application.isWriteActionInProgress());
-          assertTrue(application.isWriteAccessAllowed());
-          assertFalse(application.isWriteActionPending());
+      while (holdWrite.get()) {
+        try {
+          checkTimeout();
         }
-      });
-    }
-    finally {
-      writeReleased.set(true);
-      LOG.debug("write lock released");
-    }
+        catch (Throwable throwable) {
+          throw new RuntimeException(throwable);
+        }
+        assertTrue(application.isWriteActionInProgress());
+        assertTrue(application.isWriteAccessAllowed());
+        assertFalse(application.isWriteActionPending());
+      }
+      writeAboutToRelease.set(true);
+    });
+    LOG.debug("write lock released");
 
     joinWithTimeout(readAction1, readAction2, checkThread);
     if (exception != null) throw exception;
