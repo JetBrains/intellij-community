@@ -13,7 +13,4 @@ public abstract class SerializationManager {
   public static SerializationManager getInstance() {
     return ApplicationManager.getApplication().getService(SerializationManager.class);
   }
-
-  @Contract("null -> null")
-  public abstract @Nullable String internString(@Nullable String string);
 }
