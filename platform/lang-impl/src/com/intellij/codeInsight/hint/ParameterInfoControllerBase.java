@@ -64,7 +64,8 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   /**
    * Keeps Vector of ParameterInfoControllerBase's in Editor
    */
-  private static final Key<List<ParameterInfoControllerBase>> ALL_CONTROLLERS_KEY = Key.create("ParameterInfoControllerBase.ALL_CONTROLLERS_KEY");
+  private static final Key<List<ParameterInfoControllerBase>> ALL_CONTROLLERS_KEY =
+    Key.create("ParameterInfoControllerBase.ALL_CONTROLLERS_KEY");
 
   public static ParameterInfoControllerBase findControllerAtOffset(Editor editor, int offset) {
     List<ParameterInfoControllerBase> allControllers = getAllControllers(editor);
@@ -129,7 +130,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     List<ParameterInfoControllerBase> allControllers = getAllControllers(myEditor);
     allControllers.add(this);
 
-    myEditorCaretListener = new CaretListener(){
+    myEditorCaretListener = new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
         if (!UndoManager.getInstance(myProject).isUndoOrRedoInProgress()) {
@@ -184,7 +185,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   protected abstract boolean canBeDisposed();
 
   @Override
-  public void dispose(){
+  public void dispose() {
     if (myDisposed) return;
     myDisposed = true;
     hideHint();
@@ -231,7 +232,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
             myEditor);
   }
 
-  protected void rescheduleUpdate(){
+  protected void rescheduleUpdate() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> updateWhenAllCommitted(), DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
   }
@@ -315,11 +316,11 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   }
 
   @Nullable
-  public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset){
+  public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset) {
     if (file == null) return null;
     ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(file.getProject(), PsiUtilCore.getLanguageAtOffset(file, offset), file.getViewProvider().getBaseLanguage());
 
-    for(ParameterInfoHandler handler:handlers) {
+    for (ParameterInfoHandler handler : handlers) {
       if (handler instanceof ParameterInfoHandlerWithTabActionSupport) {
         final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
 
@@ -360,14 +361,16 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
         LockSupport.parkNanos(10_000_000);
         UIUtil.dispatchAllInvocationEvents();
       }
-      else return;
-
+      else {
+        return;
+      }
     }
     throw new TimeoutException();
   }
 
   public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return Registry.is("java.completion.argument.live.template") && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+    return Registry.is("java.completion.argument.live.template") &&
+           !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   }
 
   @NotNull
@@ -402,7 +405,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
       myFile = file;
 
       enabled = new boolean[myParameterInfoControllerData.getDescriptors().length];
-      for(int i = 0; i < enabled.length; i++) {
+      for (int i = 0; i < enabled.length; i++) {
         enabled[i] = myParameterInfoControllerData.isDescriptorEnabled(i);
       }
     }

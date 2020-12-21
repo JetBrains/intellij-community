@@ -38,7 +38,9 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId expectedContext, @NotNull Runnable transaction) {
+  public void submitTransaction(@NotNull Disposable parentDisposable,
+                                @Nullable TransactionId expectedContext,
+                                @NotNull Runnable transaction) {
     ModalityState modality = expectedContext == null ? ModalityState.NON_MODAL : ((TransactionIdImpl)expectedContext).myModality;
     Application app = ApplicationManager.getApplication();
     if (app.isWriteThread() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
@@ -80,11 +82,11 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   /**
    * An absolutely guru method!<p/>
-   *
+   * <p>
    * Executes the given code and marks it as a user activity, to allow write actions to be run without requiring transactions.
    * This is only to be called from UI infrastructure, during InputEvent processing and wrap the point where the control
    * goes to custom input event handlers for the first time.<p/>
-   *
+   * <p>
    * If you wish to invoke some actionPerformed,
    * please consider using {@code ActionManager.tryToExecute()} instead, or ensure in some other way that the action is enabled
    * and can be invoked in the current modality state.
@@ -178,7 +180,8 @@ public class TransactionGuardImpl extends TransactionGuard {
       if (!myWritingAllowed) {
         return null;
       }
-    } else if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+    }
+    else if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
       return null;
     }
 
@@ -198,7 +201,8 @@ public class TransactionGuardImpl extends TransactionGuard {
         if (isWriteSafeModality(modalityState)) {
           ApplicationManager.getApplication().assertIsWriteThread();
           runWithWritingAllowed(runnable);
-        } else {
+        }
+        else {
           runnable.run();
         }
       }

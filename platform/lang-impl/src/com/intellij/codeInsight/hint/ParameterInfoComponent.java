@@ -200,7 +200,7 @@ public class ParameterInfoComponent extends JPanel {
   public String toString() {
     return Stream.of(myPanels)
       .filter(Component::isVisible)
-      .map(c -> c.toString() + (c.getBorder() == BOTTOM_BORDER ? "\n-" : ""))
+      .map(c -> c + (c.getBorder() == BOTTOM_BORDER ? "\n-" : ""))
       .collect(Collectors.joining("\n"));
   }
 
