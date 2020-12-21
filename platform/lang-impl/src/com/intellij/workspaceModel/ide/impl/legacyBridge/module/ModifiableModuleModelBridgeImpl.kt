@@ -48,6 +48,7 @@ internal class ModifiableModuleModelBridgeImpl(
   private val myUncommittedModulesToDispose = ArrayList<ModuleBridge>()
   private val myNewNameToModule = HashBiMap.create<String, ModuleBridge>()
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+  private var moduleGroupsAreModified = false
 
   // TODO Add cache?
   override fun getModules(): Array<Module> {
@@ -249,7 +250,8 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun isChanged(): Boolean =
     myModulesToAdd.isNotEmpty() ||
     myModulesToDispose.isNotEmpty() ||
-    myNewNameToModule.isNotEmpty()
+    myNewNameToModule.isNotEmpty() ||
+    moduleGroupsAreModified
 
   override fun commit() {
     val diff = collectChanges()
@@ -334,6 +336,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
         else -> error("Should not be reached")
       }
+      moduleGroupsAreModified = true
     }
   }
 
