@@ -2112,5 +2112,5 @@ enum class ToolWindowEventSource {
   ToolWindowsWidget, RemoveStripeButtonAction,
   HideOnShowOther, HideSide, CloseFromSwitcher,
   ActivateActionMenu, ActivateActionKeyboardShortcut, ActivateActionGotoAction, ActivateActionOther,
-  CloseAction, HideButton, HideToolWindowAction, HideSideWindowsAction, HideAllWindowsAction, JumpToLastWindowAction
+  CloseAction, HideButton, HideToolWindowAction, HideSideWindowsAction, HideAllWindowsAction, JumpToLastWindowAction, ToolWindowSwitcher
 }
