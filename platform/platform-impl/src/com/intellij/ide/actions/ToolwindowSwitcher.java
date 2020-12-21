@@ -55,6 +55,7 @@ public class ToolwindowSwitcher extends DumbAwareAction {
                 .setAutoselectOnMouseMove(true)
                 .setRequestFocus(true)
                 .setMinSize(new Dimension(300, -1))
+                .setNamerForFiltering(x -> x.getStripeTitle())
                 .setItemChosenCallback((selectedValue) -> {
                   if (popup.get() != null) {
                     popup.get().closeOk(null);
@@ -78,7 +79,7 @@ public class ToolwindowSwitcher extends DumbAwareAction {
     private ToolWindowsWidgetCellRenderer() {
       myPanel = JBUI.Panels.simplePanel().addToLeft(myTextLabel).addToRight(myShortcutLabel);
       myShortcutLabel.setBorder(JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0));
-      myPanel.setBorder(JBUI.Borders.empty(2, 10));
+      myPanel.setBorder(JBUI.Borders.empty(4, 12));
     }
 
     @Override
