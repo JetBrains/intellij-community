@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
@@ -73,7 +74,7 @@ public class ToolwindowSwitcher extends DumbAwareAction {
 
   private static class ToolWindowsWidgetCellRenderer implements ListCellRenderer<ToolWindow> {
     private final JPanel myPanel;
-    private final JLabel myTextLabel = new JLabel();
+    private final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
     private final JLabel myShortcutLabel = new JLabel();
 
     private ToolWindowsWidgetCellRenderer() {
@@ -89,9 +90,11 @@ public class ToolwindowSwitcher extends DumbAwareAction {
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       UIUtil.setBackgroundRecursively(myPanel, UIUtil.getListBackground(isSelected, true));
-      myTextLabel.setText(value.getStripeTitle());
+      myTextLabel.clear();
+      myTextLabel.append(value.getStripeTitle());
       myTextLabel.setIcon(ObjectUtils.notNull(value.getIcon(), EmptyIcon.ICON_13));
       myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
+      myTextLabel.setBackground(UIUtil.getListBackground(isSelected, true));
       String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
       KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
       if (shortcut != null) {
