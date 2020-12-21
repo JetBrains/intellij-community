@@ -100,6 +100,7 @@ internal object OpenLessonActivities {
               "${projectWhereToStartLesson.name}: 0. learnProject is null but the current project (${projectWhereToStartLesson.name})" +
               "is LearnProject then just getFileInLearnProject")
             LearningUiManager.learnProject = projectWhereToStartLesson
+            learnProject = projectWhereToStartLesson
           }
         }
         learnProject.isOpen && projectWhereToStartLesson != learnProject -> {
