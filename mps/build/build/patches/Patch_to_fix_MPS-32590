@@ -1,0 +1,27 @@
+Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/WindowManagerImpl.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/platform-impl/src/com/intellij/openapi/wm/impl/WindowManagerImpl.kt	(revision edfc93d9834e14df02f0ee6b13645e3ea2eaa32c)
++++ community/platform/platform-impl/src/com/intellij/openapi/wm/impl/WindowManagerImpl.kt	(date 1608558153767)
+@@ -320,8 +320,8 @@
+       allocateNewFrame(project, frame)
+     }
+     else {
+-      frame.setProject(project)
+       projectToFrame.put(project, frame)
++      frame.setProject(project)
+     }
+     return frame
+   }
+@@ -349,8 +349,8 @@
+       }
+     }
+ 
+-    frameHelper.setProject(project)
+     projectToFrame.put(project, frameHelper)
++    frameHelper.setProject(project)
+     val uiFrame = frameHelper.frame!!
+     if (frameInfo != null) {
+       uiFrame.extendedState = frameInfo.extendedState
