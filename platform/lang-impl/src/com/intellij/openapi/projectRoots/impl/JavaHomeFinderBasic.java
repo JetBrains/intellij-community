@@ -256,8 +256,8 @@ public class JavaHomeFinderBasic {
     var mac = SystemInfo.isMac;
     var result = new HashSet<@NotNull String>();
 
-    try {
-      var innerDirectories = Files.list(javasDir).filter(d -> isDirectory(d)).collect(Collectors.toList());
+    try (Stream<Path> stream = Files.list(javasDir)) {
+      List<Path> innerDirectories = stream.filter(d -> isDirectory(d)).collect(Collectors.toList());
       for (Path innerDir: innerDirectories) {
         var home = innerDir;
         var releaseFile = home.resolve("release");
