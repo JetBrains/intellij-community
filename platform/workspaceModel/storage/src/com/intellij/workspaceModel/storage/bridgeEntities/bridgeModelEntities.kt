@@ -493,8 +493,8 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
 }
 
-open class LibraryEntity(
-  open val tableId: LibraryTableId,
+class LibraryEntity(
+  val tableId: LibraryTableId,
   val name: String,
   val roots: List<LibraryRoot>,
   val excludedRoots: List<VirtualFileUrl>
