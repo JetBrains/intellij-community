@@ -55,7 +55,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
     registerFinder(this::guessPossibleLocations)
     for (distro in WslDistributionManager.getInstance().installedDistributions) {
-      val wslFinder = JavaHomeFinderWsl(distro, forceEmbeddedJava, *JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS)
+      val wslFinder = JavaHomeFinderWsl(distro)
       registerFinder { wslFinder.findExistingJdks() }
     }
   }
