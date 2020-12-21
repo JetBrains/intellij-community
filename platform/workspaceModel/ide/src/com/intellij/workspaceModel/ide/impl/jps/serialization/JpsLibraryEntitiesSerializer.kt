@@ -230,7 +230,7 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Ele
 }
 
 private val ROOT_TYPES_TO_WRITE_EMPTY_TAG = listOf("CLASSES", "SOURCES", "JAVADOC").map { libraryRootTypes[it]!! }
-private const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
+internal const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
 private const val UNIQUE_INDEX_LIBRARY_NAME_SUFFIX = "-d1a6f608-UNIQUE-INDEX-f29c-4df6-"
 
 fun getLegacyLibraryName(libraryId: LibraryId): String? {
@@ -241,8 +241,6 @@ fun getLegacyLibraryName(libraryId: LibraryId): String? {
 
 fun generateLibraryEntityName(legacyLibraryName: String?, exists: (String) -> Boolean): String {
   if (legacyLibraryName == null) {
-    // TODO Make it O(1) if required
-
     var index = 1
     while (true) {
       val candidate = "$UNNAMED_LIBRARY_NAME_PREFIX$index"
@@ -252,16 +250,19 @@ fun generateLibraryEntityName(legacyLibraryName: String?, exists: (String) -> Bo
 
       index++
     }
-
     @Suppress("UNREACHABLE_CODE")
     error("Unable to suggest unique name for unnamed module library")
   }
 
-  if (!exists(legacyLibraryName)) return legacyLibraryName
+  return generateUniqueLibraryName(legacyLibraryName, exists)
+}
+
+internal fun generateUniqueLibraryName(name: String, exists: (String) -> Boolean): String {
+  if (!exists(name)) return name
 
   var index = 1
   while (true) {
-    val candidate = "$legacyLibraryName$UNIQUE_INDEX_LIBRARY_NAME_SUFFIX$index"
+    val candidate = "$name$UNIQUE_INDEX_LIBRARY_NAME_SUFFIX$index"
     if (!exists(candidate)) {
       return candidate
     }

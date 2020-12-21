@@ -247,7 +247,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     fun Element.isExported() = getAttributeValue(EXPORTED_ATTRIBUTE) != null
-    val moduleLibraryNames = mutableListOf<String>()
+    val moduleLibraryNames = mutableSetOf<String>()
+    var nextUnnamedLibraryIndex = 1
     val dependencyItems = rootManagerElement.getChildrenAndDetach(ORDER_ENTRY_TAG).mapTo(ArrayList()) { dependencyElement ->
       when (dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)) {
         SOURCE_FOLDER_TYPE -> ModuleDependencyItem.ModuleSourceDependency
@@ -264,9 +265,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val libraryElement = dependencyElement.getChild(LIBRARY_TAG)!!
           // TODO. Probably we want a fixed name based on hashed library roots
           val nameAttributeValue = libraryElement.getAttributeValue(NAME_ATTRIBUTE)
-          val name = generateLibraryEntityName(nameAttributeValue) { nameToCheck ->
-            moduleLibraryNames.contains(nameToCheck)
-          }
+          val originalName = nameAttributeValue ?: "$UNNAMED_LIBRARY_NAME_PREFIX${nextUnnamedLibraryIndex++}"
+          val name = generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
           moduleLibraryNames.add(name)
           val tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId())
           loadLibrary(name, libraryElement, tableId, builder, entitySource, virtualFileManager)
