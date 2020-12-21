@@ -5,4 +5,7 @@ interface CollapsibleRow : Row {
 
   var expanded: Boolean
 
+  fun setText(text: String)
+  
+  fun addExpandedListener(action: (Boolean) -> Unit)
 }
