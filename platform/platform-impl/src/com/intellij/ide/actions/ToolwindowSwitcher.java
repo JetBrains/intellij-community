@@ -50,14 +50,17 @@ public class ToolwindowSwitcher extends DumbAwareAction {
       }
     }
 
-    toolWindows.sort(new ToolWindowsComparator(toolWindowManager.getRecentToolWindows()));
+    ArrayList<String> recentToolWindows = toolWindowManager.getRecentToolWindows();
+    toolWindows.sort(new ToolWindowsComparator(recentToolWindows));
     IPopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(toolWindows);
+    ToolWindow selected = toolWindowManager.getActiveToolWindowId() == null ? toolWindows.get(0) : toolWindows.get(1);
 
     Ref<JBPopup> popup = Ref.create();
     popup.set(builder
                 .setRenderer(new ToolWindowsWidgetCellRenderer())
                 .setAutoselectOnMouseMove(true)
                 .setRequestFocus(true)
+                .setSelectedValue(selected, false)
                 .setMinSize(new Dimension(300, -1))
                 .setNamerForFiltering(x -> x.getStripeTitle())
                 .setItemChosenCallback((selectedValue) -> {
