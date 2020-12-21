@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class WSLCommandLineOptions {
-
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
   private boolean mySudo = false;

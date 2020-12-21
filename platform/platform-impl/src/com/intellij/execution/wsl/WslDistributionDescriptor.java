@@ -44,8 +44,7 @@ final class WslDistributionDescriptor {
   /**
    * Necessary for serializer
    */
-  WslDistributionDescriptor() {
-  }
+  WslDistributionDescriptor() { }
 
   WslDistributionDescriptor(@NotNull String msId) {
     this(msId, msId, null, msId);
@@ -163,28 +162,26 @@ final class WslDistributionDescriptor {
   @Nullable
   private List<String> readWSLOutput(WSLCommandLineOptions options, List<@NonNls String> command) {
     WSLDistribution distribution = WSLUtil.getDistributionById(getId());
-    if (distribution == null) {
-      return null;
-    }
-    ProcessOutput pwdOutput;
+    if (distribution == null) return null;
+
+    ProcessOutput output;
     try {
-      pwdOutput = distribution.executeOnWsl(command, options, -1, null);
+      output = distribution.executeOnWsl(command, options, -1, null);
     }
     catch (ExecutionException e) {
-      LOG.warn("Error reading pwd output for " + getId(), e);
+      LOG.warn("Start failed on " + getId(), e);
       return null;
     }
 
-    if (pwdOutput.getExitCode() != 0) {
-      LOG.info("Non-zero exit code while fetching pwd: " +
-               "[id=" + getId() + "; " +
-               "[exitCode=" + pwdOutput.getExitCode() + "; " +
-               "[stderr=" + pwdOutput.getStderr() + "; " +
-               "[stdout=" + pwdOutput.getStdout() + "]");
+    if (output.getExitCode() != 0) {
+      LOG.info("Execution failed on " + getId() +
+               " [exitCode=" + output.getExitCode() +
+               "; stderr=" + output.getStderr() +
+               "; stdout=" + output.getStdout() + "]");
       return null;
     }
 
-    return pwdOutput.getStdoutLines();
+    return output.getStdoutLines();
   }
 
   @NonNls @Nullable
