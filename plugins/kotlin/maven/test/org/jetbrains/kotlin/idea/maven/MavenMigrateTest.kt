@@ -6,25 +6,25 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.FutureResult
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService
 import org.jetbrains.kotlin.idea.configuration.MigrationInfo
 import org.jetbrains.kotlin.idea.configuration.MigrationTestState
-import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.Assert
+import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 @RunWith(JUnit38ClassRunner::class)
-class MavenMigrateTest : MavenImportingTestCase() {
+class MavenMigrateTest : KotlinMavenImportingTestCase() {
     override fun setUp() {
         super.setUp()
         repositoryPath = File(myDir, "repo").path
@@ -70,7 +70,7 @@ class MavenMigrateTest : MavenImportingTestCase() {
         }
 
         runInEdtAndWait {
-            runWriteAction {
+            runWriteAction(ThrowableRunnable {
                 document.setText(
                     MavenTestCase.createPomXml(
                         """
@@ -104,7 +104,7 @@ class MavenMigrateTest : MavenImportingTestCase() {
                         """.trimIndent()
                     )
                 )
-            }
+            })
         }
 
         val importResult = FutureResult<MigrationTestState?>()

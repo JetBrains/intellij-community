@@ -10,11 +10,9 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.QuickFix
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Result
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
@@ -28,7 +26,7 @@ import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.keysToMap
 import java.io.File
 
-abstract class AbstractKotlinMavenInspectionTest : MavenImportingTestCase() {
+abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase() {
 
     override fun setUp() {
         super.setUp()
@@ -81,8 +79,8 @@ abstract class AbstractKotlinMavenInspectionTest : MavenImportingTestCase() {
         val fixFiles =
             pomFile.parentFile.listFiles { _, name -> name.startsWith(filenamePrefix) && name.endsWith(".xml") }.sortedBy { it.name }
 
-        val rangesToFixFiles: Map<File, IntRange> = fixFiles.keysToMap {
-            val fixFileName = it.name
+        val rangesToFixFiles: Map<File, IntRange> = fixFiles.keysToMap { file ->
+            val fixFileName = file.name
             val fixRangeStr = fixFileName.substringBeforeLast('.').substringAfterLast('.')
             val numbers = fixRangeStr.split('-').map { it.toInt() }
             when (numbers.size) {
@@ -93,11 +91,11 @@ abstract class AbstractKotlinMavenInspectionTest : MavenImportingTestCase() {
             }
         }
 
-        val sortedFixRanges = rangesToFixFiles.values.sortedBy { it.start }
+        val sortedFixRanges = rangesToFixFiles.values.sortedBy { it.first }
         sortedFixRanges.forEachIndexed { i, range ->
             if (i > 0) {
                 val previous = sortedFixRanges[i - 1]
-                if (previous.endInclusive + 1 != range.start) {
+                if (previous.last + 1 != range.first) {
                     error("Bad ranges in fix files: $previous and $range")
                 }
             }
@@ -133,12 +131,9 @@ abstract class AbstractKotlinMavenInspectionTest : MavenImportingTestCase() {
     private fun createPomFile(fileName: String) {
         myProjectPom = myProjectRoot.findChild("pom.xml")
         if (myProjectPom == null) {
-            myProjectPom = object : WriteAction<VirtualFile>() {
-                override fun run(result: Result<VirtualFile>) {
-                    val res = myProjectRoot.createChildData(null, "pom.xml")
-                    result.setResult(res)
-                }
-            }.execute().resultObject
+            myProjectPom = runWriteAction(ThrowableComputable {
+                myProjectRoot.createChildData(null, "pom.xml")
+            })
         }
         myAllPoms.add(myProjectPom!!)
 
@@ -147,7 +142,7 @@ abstract class AbstractKotlinMavenInspectionTest : MavenImportingTestCase() {
         }
     }
 
-    private fun <D: ProblemDescriptor> applyFix(quickFix: QuickFix<in D>, desc: D) {
+    private fun <D : ProblemDescriptor> applyFix(quickFix: QuickFix<in D>, desc: D) {
         CommandProcessor.getInstance().executeCommand(
             myProject,
             {
