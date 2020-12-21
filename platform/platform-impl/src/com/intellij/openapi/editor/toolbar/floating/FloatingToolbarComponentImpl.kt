@@ -28,32 +28,32 @@ class FloatingToolbarComponentImpl(
   override fun scheduleShow() = visibilityController.scheduleShow()
   override fun scheduleHide() = visibilityController.scheduleHide()
 
-  override fun paintChildren(g: Graphics) {
-    val graphics = g.create() as Graphics2D
+  override fun paintComponent(g: Graphics) {
+    val graphics = g.create()
     try {
-      val alpha = visibilityController.opacity * FOREGROUND_ALPHA
-      graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, alpha)
-      super.paintChildren(graphics)
+      if (graphics is Graphics2D) {
+        val alpha = visibilityController.opacity * BACKGROUND_ALPHA
+        graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      }
+      graphics.color = BACKGROUND
+      graphics.fillRoundRect(0, 0, bounds.width, bounds.height, 6, 6)
+
+      super.paintComponent(graphics)
     }
     finally {
       graphics.dispose()
     }
   }
 
-  override fun paint(g: Graphics) {
-    paintComponent(g)
-    super.paint(g)
-  }
-
-  override fun paintComponent(g: Graphics) {
-    val r = bounds
-    val graphics = g.create() as Graphics2D
+  override fun paintChildren(g: Graphics) {
+    val graphics = g.create()
     try {
-      val alpha = visibilityController.opacity * BACKGROUND_ALPHA
-      graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
-      graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      graphics.color = BACKGROUND
-      graphics.fillRoundRect(0, 0, r.width, r.height, 6, 6)
+      if (graphics is Graphics2D) {
+        val alpha = visibilityController.opacity
+        graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, alpha)
+      }
+      super.paintChildren(graphics)
     }
     finally {
       graphics.dispose()
@@ -81,8 +81,7 @@ class FloatingToolbarComponentImpl(
   }
 
   companion object {
-    val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D))
-    private const val BACKGROUND_ALPHA = 0.9f
-    private const val FOREGROUND_ALPHA = 1.0f
+    private const val BACKGROUND_ALPHA = 0.75f
+    private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D))
   }
 }
