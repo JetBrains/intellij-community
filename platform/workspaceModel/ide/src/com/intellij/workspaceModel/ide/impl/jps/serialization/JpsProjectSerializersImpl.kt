@@ -325,7 +325,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
     }
 
-    val entitiesToSave = storage.entitiesBySource { it in affectedSources }
+    val entitiesToSave = storage.entitiesBySource { it in affectedSources }.toMutableMap()
     val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
       it.internalFile
     }
@@ -342,12 +342,17 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       if (fileUrl != null) {
         val affectedImportedSourceStoredExternally = when {
           source is JpsImportedEntitySource && source.storedExternally -> sourcesStoredInternally[source.internalFile]
-          source is JpsImportedEntitySource && !source.storedExternally -> sourcesStoredExternally[source.internalFile]
+          source is JpsImportedEntitySource && !source.storedExternally -> {
+            val entitiesBySource = storage.entitiesBySource { it == source.internalFile }
+            if (entitiesBySource.isNotEmpty()) entitiesToSave.putAll(entitiesBySource)
+            sourcesStoredExternally[source.internalFile]
+          }
           else -> null
         }
         // Cleanup old entity source in the following cases:
         // 1) If it was changed from [JpsFileEntitySource] to [JpsImportedEntitySource] e.g Mavenize
         // 2) If [JpsImportedEntitySource#storedExternally] property changed from false to true e.g changing Gradle property for storing in external_build_system folder
+        // 3) We shouldn't clean up JpsImportedEntitySource if there are entities in the store with the same JpsFileEntitySource
         val deleteObsoleteFile = source in internalSourceConvertedToImported || (affectedImportedSourceStoredExternally != null &&
                                                                                  affectedImportedSourceStoredExternally !in obsoleteSources)
         processObsoleteSource(fileUrl, deleteObsoleteFile)
