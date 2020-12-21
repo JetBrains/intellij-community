@@ -39,7 +39,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
 
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
     val filter = VirtualFileFilter { file -> file is VirtualFileWithId && file.id > 0 && !visitedFileSet.set(file.id) }
-    return ModuleRootManager.getInstance(module).fileIndex.iterateContent(fileIterator, filter)
+    return ModuleRootManager.getInstance(module).fileIndex.iterateContentUnderDirectory(root, fileIterator, filter)
   }
 
   override fun getModule(): Module {
