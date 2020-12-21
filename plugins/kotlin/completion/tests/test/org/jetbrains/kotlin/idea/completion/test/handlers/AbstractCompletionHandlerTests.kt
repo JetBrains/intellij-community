@@ -31,7 +31,6 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
     }
 
     protected open fun doTest(testPath: String) {
-        enableTypeParamsInsertion()
         setUpFixture(fileName())
         try {
             configureCodeStyleAndRun(project) {

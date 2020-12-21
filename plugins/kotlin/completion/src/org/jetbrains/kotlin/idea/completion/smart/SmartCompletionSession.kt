@@ -30,9 +30,8 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 class SmartCompletionSession(
     configuration: CompletionSessionConfiguration,
     parameters: CompletionParameters,
-    resultSet: CompletionResultSet,
-    isInsertTypeArgumentEnabled: Boolean = false
-) : CompletionSession(configuration, parameters, resultSet, isInsertTypeArgumentEnabled) {
+    resultSet: CompletionResultSet
+) : CompletionSession(configuration, parameters, resultSet) {
 
     override val descriptorKindFilter: DescriptorKindFilter by lazy {
         // we do not include SAM-constructors because they are handled separately and adding them requires iterating of java classes

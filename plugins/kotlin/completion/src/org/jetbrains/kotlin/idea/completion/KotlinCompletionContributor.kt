@@ -37,7 +37,6 @@ import kotlin.math.max
 var KtFile.doNotComplete: Boolean? by UserDataProperty(Key.create("DO_NOT_COMPLETE"))
 
 class KotlinCompletionContributor : CompletionContributor() {
-    var isInsertTypeArgumentEnabled: Boolean = false
 
     private val AFTER_NUMBER_LITERAL = psiElement().afterLeafSkipping(
         psiElement().withText(""),
@@ -301,7 +300,7 @@ class KotlinCompletionContributor : CompletionContributor() {
 
         val configuration = CompletionSessionConfiguration(parameters)
         if (parameters.completionType == CompletionType.BASIC) {
-            val session = BasicCompletionSession(configuration, parameters, result, isInsertTypeArgumentEnabled)
+            val session = BasicCompletionSession(configuration, parameters, result)
 
             addPostProcessor(session)
 
@@ -322,14 +321,12 @@ class KotlinCompletionContributor : CompletionContributor() {
                     dataClassComponentFunctions = true
                 )
 
-                val newSession = BasicCompletionSession(
-                    newConfiguration, parameters, result, isInsertTypeArgumentEnabled
-                )
+                val newSession = BasicCompletionSession(newConfiguration, parameters, result)
                 addPostProcessor(newSession)
                 newSession.complete()
             }
         } else {
-            val session = SmartCompletionSession(configuration, parameters, result, isInsertTypeArgumentEnabled)
+            val session = SmartCompletionSession(configuration, parameters, result)
             addPostProcessor(session)
             session.complete()
         }

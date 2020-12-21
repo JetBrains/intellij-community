@@ -144,11 +144,5 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                 fixture.type(completionChar)
             }
         }
-
-        fun enableTypeParamsInsertion() {
-            val completionContributor = CompletionContributor.forLanguage(KotlinLanguage.INSTANCE)
-                .find { it is KotlinCompletionContributor } as? KotlinCompletionContributor
-            completionContributor?.isInsertTypeArgumentEnabled = true
-        }
     }
 }

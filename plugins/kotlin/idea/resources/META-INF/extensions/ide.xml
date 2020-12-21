@@ -136,11 +136,6 @@
                      defaultValue="false"
                      restartRequired="false"/>
 
-      <registryKey key="kotlin.completion.insert-type-argument"
-                   description="Enable type argument insertion at code completion"
-                   defaultValue="false"
-                   restartRequired="false"/>
-
         <registryKey key="kotlin.gradle-run.enabled"
                      description="Enable delegation of app running to gradle"
                      defaultValue="false"

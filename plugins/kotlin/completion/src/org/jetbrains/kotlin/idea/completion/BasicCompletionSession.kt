@@ -64,9 +64,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 class BasicCompletionSession(
     configuration: CompletionSessionConfiguration,
     parameters: CompletionParameters,
-    resultSet: CompletionResultSet,
-    isInsertTypeArgumentEnabled: Boolean = false
-) : CompletionSession(configuration, parameters, resultSet, isInsertTypeArgumentEnabled) {
+    resultSet: CompletionResultSet
+) : CompletionSession(configuration, parameters, resultSet) {
 
     private interface CompletionKind {
         val descriptorKindFilter: DescriptorKindFilter?

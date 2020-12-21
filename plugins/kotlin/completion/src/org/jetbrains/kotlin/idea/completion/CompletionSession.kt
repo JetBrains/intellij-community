@@ -73,20 +73,14 @@ fun CompletionSessionConfiguration(parameters: CompletionParameters) = Completio
 abstract class CompletionSession(
     protected val configuration: CompletionSessionConfiguration,
     originalParameters: CompletionParameters,
-    resultSet: CompletionResultSet,
-    isInsertTypeArgumentEnabled: Boolean = false
+    resultSet: CompletionResultSet
 ) {
     init {
         CompletionBenchmarkSink.instance.onCompletionStarted(this)
     }
 
     protected val parameters = run {
-        val enabled = isInsertTypeArgumentEnabled || Registry.`is`("kotlin.completion.insert-type-argument", false)
-        val fixedPosition = if (enabled)
-            addParamTypesIfNeeded(originalParameters.position)
-        else
-            originalParameters.position
-
+        val fixedPosition = addParamTypesIfNeeded(originalParameters.position)
         originalParameters.withPosition(fixedPosition, fixedPosition.textOffset)
     }
 
