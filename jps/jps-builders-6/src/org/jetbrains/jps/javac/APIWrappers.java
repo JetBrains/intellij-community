@@ -30,7 +30,7 @@ public class APIWrappers {
 
   @SuppressWarnings("unchecked")
   public static <T> DiagnosticListener<T> newDiagnosticListenerWrapper(final DiagnosticListener<T> delegate, @NotNull Iterable<Processor> processors) {
-    return wrap(DiagnosticListener.class, new DiagnosticListenerWrapper<T>(delegate, processors), DynamicWrapper.class, delegate);
+    return wrap(DiagnosticListener.class, new DiagnosticListenerWrapper<T>(delegate, processors));
   }
 
   public interface WrapperDelegateAccessor<T> {
@@ -67,7 +67,7 @@ public class APIWrappers {
 
     @Override
     public void report(Diagnostic<? extends T> diagnostic) {
-      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<T>((Diagnostic<T>)diagnostic, myNamesPairs), DynamicWrapper.class, diagnostic));
+      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<T>((Diagnostic<T>)diagnostic, myNamesPairs)));
     }
   }
 
@@ -197,7 +197,7 @@ public class APIWrappers {
   }
 
   @NotNull
-  private static <T, W extends DynamicWrapper<T>> T wrap(@NotNull Class<T> ifaceClass, @NotNull final W wrapper) {
+  private static <T, W extends DynamicWrapper<? extends T>> T wrap(@NotNull Class<T> ifaceClass, @NotNull final W wrapper) {
     return wrap(ifaceClass, wrapper, DynamicWrapper.class, wrapper.getWrapperDelegate());
   }
   
