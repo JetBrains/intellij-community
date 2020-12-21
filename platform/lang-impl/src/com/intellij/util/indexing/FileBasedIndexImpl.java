@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
@@ -1584,9 +1583,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file) {
     waitUntilIndicesAreInitialized();
-    if (!clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file, IndexingStamp.getNontrivialFileIndexedStates(fileId))) {
-      // change in persistent file
-      clearUpToDateStateForPsiIndicesOfVirtualFile(file);
+    clearUpToDateIndexesForUnsavedOrTransactedDocs();
+
+    Document document = myFileDocumentManager.getCachedDocument(file);
+
+    if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {   // will be reindexed in indexUnsavedDocuments
+      myLastIndexedDocStamps.clearForDocument(document); // Q: non psi indices
+      document.putUserData(ourFileContentKey, null);
+    }
+    else {
+      Collection<ID<?, ?>> indexes =
+        ContainerUtil.intersection(IndexingStamp.getNontrivialFileIndexedStates(fileId),
+                                   myRegisteredIndexes.getRequiringContentIndices());
+      removeTransientFileDataFromIndices(indexes, getFileId(file), file);
     }
   }
 
@@ -1717,22 +1726,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return (FileTypeManagerImpl)FileTypeManager.getInstance();
   }
 
-  private boolean clearUpToDateStateForPsiIndicesOfUnsavedDocuments(@NotNull VirtualFile file, Collection<? extends ID<?, ?>> affectedIndices) {
-    clearUpToDateIndexesForUnsavedOrTransactedDocs();
-
-    Document document = myFileDocumentManager.getCachedDocument(file);
-
-    if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {   // will be reindexed in indexUnsavedDocuments
-      myLastIndexedDocStamps.clearForDocument(document); // Q: non psi indices
-      document.putUserData(ourFileContentKey, null);
-
-      return true;
-    }
-
-    removeTransientFileDataFromIndices(ContainerUtil.intersection(affectedIndices, myRegisteredIndexes.getRequiringContentIndices()), getFileId(file), file);
-    return false;
-  }
-
   void clearUpToDateIndexesForUnsavedOrTransactedDocs() {
     if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
       myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
@@ -1786,27 +1779,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
     myIndexableSets.add(set);
     myIndexableSetToProjectMap.put(set, project);
-  }
-
-  private void clearUpToDateStateForPsiIndicesOfVirtualFile(VirtualFile virtualFile) {
-    if (virtualFile instanceof VirtualFileWithId) {
-      int fileId = ((VirtualFileWithId)virtualFile).getId();
-      boolean wasIndexed = false;
-      IndexedFileImpl indexedFile = new IndexedFileImpl(virtualFile, ProjectUtil.guessProjectForFile(virtualFile));
-      List<ID<?, ?>> candidates = getAffectedIndexCandidates(indexedFile);
-      for (ID<?, ?> candidate : candidates) {
-        if (myRegisteredIndexes.isContentDependentIndex(candidate)) {
-          if(acceptsInput(candidate, indexedFile)) {
-            getIndex(candidate).invalidateIndexedStateForFile(fileId);
-            wasIndexed = true;
-          }
-        }
-      }
-      if (wasIndexed) {
-        getChangedFilesCollector().scheduleForUpdate(virtualFile);
-        IndexingStamp.flushCache(fileId);
-      }
-    }
   }
 
   private boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
