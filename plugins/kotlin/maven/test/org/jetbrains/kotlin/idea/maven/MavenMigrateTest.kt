@@ -97,7 +97,7 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
                                 <plugin>
                                     <artifactId>kotlin-maven-plugin</artifactId>
                                     <groupId>org.jetbrains.kotlin</groupId>
-                                    <version>${'$'}{kotlin.version}/version>
+                                    <version>${'$'}{kotlin.version}</version>
                                 </plugin>
                             </plugins>
                         </build>
