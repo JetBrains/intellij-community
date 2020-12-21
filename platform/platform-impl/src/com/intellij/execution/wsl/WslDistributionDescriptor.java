@@ -131,7 +131,7 @@ final class WslDistributionDescriptor {
       return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
     }
 
-    WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
+    WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false).withTimeout(60_000);
     String wslCurrentDirectory = readWslOutputLine(options, Collections.singletonList("pwd"));
     if (wslCurrentDirectory == null) return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
 
@@ -166,7 +166,7 @@ final class WslDistributionDescriptor {
 
     ProcessOutput output;
     try {
-      output = distribution.executeOnWsl(command, options, -1, null);
+      output = distribution.executeOnWsl(command, options, options.getTimeout(), null);
     }
     catch (ExecutionException e) {
       LOG.warn("Start failed on " + getId(), e);
@@ -191,6 +191,6 @@ final class WslDistributionDescriptor {
 
   @NonNls @Nullable
   String getEnvironmentVariable(String name) {
-    return readWslOutputLine(new WSLCommandLineOptions(), Arrays.asList("printenv", name));
+    return readWslOutputLine(new WSLCommandLineOptions().withTimeout(60_000), Arrays.asList("printenv", name));
   }
 }
