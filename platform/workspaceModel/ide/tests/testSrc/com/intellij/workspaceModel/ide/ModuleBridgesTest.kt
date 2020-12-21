@@ -8,11 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.module.EmptyModuleType
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.rd.attach
@@ -35,6 +31,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntities
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -747,6 +744,37 @@ class ModuleBridgesTest {
         modifiableModel.commit()
       }
     }
+
+  @Test
+  fun `remove module without removing module library`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
+
+    val module = moduleManager.modifiableModel.let { modifiableModel ->
+      val module = modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id)
+      modifiableModel.commit()
+      module as ModuleBridge
+    }
+
+    val componentBridge = ModuleRootComponentBridge.getInstance(module)
+    val componentModifiableModel = componentBridge.modifiableModel
+    val modifiableModel = componentModifiableModel.moduleLibraryTable.modifiableModel
+    modifiableModel.createLibrary("myNewLibrary")
+    modifiableModel.commit()
+    componentModifiableModel.commit()
+
+    val currentStore = WorkspaceModel.getInstance(project).entityStorage.current
+    UsefulTestCase.assertOneElement(currentStore.entities(ModuleEntity::class.java).toList())
+    UsefulTestCase.assertOneElement(currentStore.entities(LibraryEntity::class.java).toList())
+
+    WorkspaceModel.getInstance(project).updateProjectModel {
+      val moduleEntity = it.entities(ModuleEntity::class.java).single()
+      it.removeEntity(moduleEntity)
+    }
+
+    val updatedStore = WorkspaceModel.getInstance(project).entityStorage.current
+    assertEmpty(updatedStore.entities(ModuleEntity::class.java).toList())
+    assertEmpty(updatedStore.entities(LibraryEntity::class.java).toList())
+  }
 }
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {

@@ -6,6 +6,9 @@
     <extensionPoint name="workspaceModel.customModuleComponentSerializer"
                     interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer"
                     dynamic="true"/>
+    <extensionPoint name="workspaceModel.preUpdateHandler"
+                    interface="com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ide.new.project.model" defaultValue="true" restartRequired="true"
@@ -19,5 +22,7 @@
 
     <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl" />
+
+    <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
   </extensions>
 </idea-plugin>
