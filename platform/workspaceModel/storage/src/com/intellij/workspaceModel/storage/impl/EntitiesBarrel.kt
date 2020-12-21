@@ -20,7 +20,6 @@ internal class MutableEntitiesBarrel private constructor(
   fun remove(id: Int, clazz: Int) {
     val entityFamily = getMutableEntityFamily(clazz)
     entityFamily.remove(id)
-    if (entityFamily.isEmpty()) entityFamilies[clazz] = null
   }
 
   fun getEntityDataForModification(id: EntityId): WorkspaceEntityData<*> {
@@ -61,7 +60,7 @@ internal class MutableEntitiesBarrel private constructor(
   fun toImmutable(): ImmutableEntitiesBarrel {
     val friezedEntities = entityFamilies.map { family ->
       when (family) {
-        is MutableEntityFamily<*> -> family.toImmutable()
+        is MutableEntityFamily<*> -> if (!family.isEmpty()) family.toImmutable() else null
         is ImmutableEntityFamily<*> -> family
         else -> null
       }

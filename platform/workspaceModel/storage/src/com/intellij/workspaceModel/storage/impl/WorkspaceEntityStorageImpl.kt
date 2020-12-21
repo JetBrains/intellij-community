@@ -930,6 +930,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   private fun checkStrongConnection(connectionKeys: IntSet, entityFamilyClass: Int, connectionTo: Int) {
+    if (connectionKeys.isEmpty()) return
 
     var counter = 0
     val entityFamily = entitiesByType.entityFamilies[entityFamilyClass]

@@ -142,6 +142,8 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
 
   override fun familyCheck() {}
 
+  internal fun isEmpty() = entities.size == amountOfGapsInEntities
+
   /** This method should always be called before any modification */
   private fun startWrite() {
     if (!freezed) return
@@ -171,7 +173,6 @@ internal sealed class EntityFamily<E : WorkspaceEntity> {
   operator fun get(idx: Int) = entities.getOrNull(idx)
   fun exists(id: Int) = get(id) != null
   fun all() = entities.asSequence().filterNotNull()
-  fun isEmpty(): Boolean = entities.isEmpty()
   abstract fun size(): Int
 
   override fun equals(other: Any?): Boolean {
