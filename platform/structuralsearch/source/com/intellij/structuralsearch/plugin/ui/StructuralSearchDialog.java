@@ -567,7 +567,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
           .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
           .setRenderer(new ConfigurationCellRenderer())
           .setItemChosenCallback(c -> {
-            if (c instanceof ReplaceConfiguration) {
+            if (c instanceof ReplaceConfiguration && !myReplace) {
               mySwitchAction.actionPerformed(
                 AnActionEvent.createFromAnAction(mySwitchAction, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
             }
@@ -1115,7 +1115,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (configuration == null) {
         return false;
       }
-      if (configuration instanceof ReplaceConfiguration) {
+      if (configuration instanceof ReplaceConfiguration && !myReplace) {
         mySwitchAction.actionPerformed(
           AnActionEvent.createFromAnAction(mySwitchAction, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
       }
@@ -1396,7 +1396,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         putClientProperty("JComponent.outline", "error");
         repaint();
         getOKAction().setEnabled(false);
-        removeMatchHighlights();
+        if (!myReplace) removeMatchHighlights();
       });
 
       TextCompletionUtil.installCompletionHint(editor);
