@@ -18,7 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -229,18 +229,28 @@ public class XDebuggerTreeInlayPopup<D> {
       myPopup.cancel();
     }
     tree.getModel().addTreeModelListener(createTreeListener(tree));
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(createMainPanel(tree), tree)
+    BorderLayoutPanel popupContent = createMainPanel(tree);
+    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(popupContent, tree)
       .setRequestFocus(true)
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(mySession.getProject(), DIMENSION_SERVICE_KEY, false)
       .setMayBeParent(true)
       .setCancelOnOtherWindowOpen(true)
+      .setCancelKeyEnabled(false)
       .setKeyEventHandler(event -> {
         if (AbstractPopup.isCloseRequest(event)) {
-          // Do not process a close request if the tree shows a speed search popup
-          SpeedSearchSupply supply = SpeedSearchSupply.getSupply(tree);
-          return supply != null && StringUtil.isEmpty(supply.getEnteredPrefix());
+          // Do not process a close request if the tree shows a speed search popup or 'set value' action is in process
+          SpeedSearchBase speedSearch = ((SpeedSearchBase)SpeedSearchSupply.getSupply(tree));
+          if (speedSearch != null && speedSearch.isPopupActive())
+          {
+            speedSearch.hidePopup();
+            return true;
+          } else if (IdeFocusManager.getInstance(mySession.getProject()).getFocusOwner() == tree) {
+            myPopup.cancel();
+            return true;
+          }
+          return false;
         }
         return false;
       })
