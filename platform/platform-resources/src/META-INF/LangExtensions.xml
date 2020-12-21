@@ -1015,6 +1015,7 @@
     <statistics.validation.customValidationRule implementation="com.intellij.notification.impl.NotificationCollector$NotificationGroupValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.notification.impl.NotificationCollector$NotificationIdValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.FavoriteTypeValidationRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUsagesCollector$StatusBarWidgetFactoryValidationRule"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
