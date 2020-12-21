@@ -4,6 +4,7 @@ package com.intellij.ide.ui.experimental.toolbar
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -37,7 +38,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
       toolbarState.state = getToolbarStateByVisibilityFlags(false, UISettings.instance.state.showMainToolbar, false,
                                                             UISettings.instance.state.showNavigationBar)
     }
-    Disposer.register(ProjectManager.getInstance().defaultProject, disposable)
+    Disposer.register(ApplicationManager.getApplication(), disposable)
     Registry.get("ide.new.navbar").addListener(ToolbarRegistryListener(), disposable)
   }
 
