@@ -48,14 +48,17 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return PaintParameters.ROW_HEIGHT;
   }
 
-  private float[] getDashLength(int edgeLength) {
-    int space = getRowHeight() / 4 - 1;
-    int dash = getRowHeight() / 4 + 1;
-    int count = edgeLength / (2 * (dash + space));
-    assert count != 0;
-    int dashApprox = (edgeLength / 2 - count * space) / count;
+  private float[] getDashLength(double edgeLength) {
+    // If the edge is vertical, then edgeLength is equal to rowHeight. Exactly one dash and one space fits on the edge,
+    // so spaceLength + dashLength is also equal to rowHeight.
+    // When the edge is not vertical, spaceLength is kept the same, but dashLength is chosen to be slightly greater
+    // so that the whole number of dashes would fit on the edge.
 
-    return new float[]{2 * dashApprox, 2 * space};
+    int rowHeight = getRowHeight();
+    int dashCount = Math.max(1, (int)Math.floor(edgeLength / rowHeight));
+    float spaceLength = rowHeight / 2.0f - 2;
+    float dashLength = (float)(edgeLength / dashCount - spaceLength);
+    return new float[]{dashLength, spaceLength};
   }
 
   @NotNull
@@ -149,7 +152,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       setUsualStroke(g2, isSelected);
     }
     else {
-      setDashedStroke(g2, isSelected, (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.hypot(x1 - x2, y1 - y2)));
+      setDashedStroke(g2, isSelected, (x1 == x2) ? getRowHeight() : Math.hypot(x1 - x2, y1 - y2));
     }
 
     g2.drawLine(x1, y1, x2, y2);
@@ -206,7 +209,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.setStroke(select ? getSelectedStroke() : getOrdinaryStroke());
   }
 
-  private void setDashedStroke(@NotNull Graphics2D g2, boolean select, int edgeLength) {
+  private void setDashedStroke(@NotNull Graphics2D g2, boolean select, double edgeLength) {
     float[] length = getDashLength(edgeLength);
     g2.setStroke(select ? getSelectedDashedStroke(length) : getDashedStroke(length));
   }
