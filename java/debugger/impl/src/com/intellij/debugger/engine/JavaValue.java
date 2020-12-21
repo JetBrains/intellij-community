@@ -153,7 +153,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     if (isOnDemand() && !isCalculated()) {
-      myValueDescriptor.getOnDemandPresentationProvider().setPresentation(node);
+      myValueDescriptor.setOnDemandPresentation(node);
       return;
     }
     myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {

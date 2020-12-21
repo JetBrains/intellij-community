@@ -243,9 +243,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return true;
   }
 
-  @NotNull
-  public OnDemandPresentationProvider getOnDemandPresentationProvider() {
-    return myOnDemandPresentationProvider;
+  public void setOnDemandPresentation(@NotNull XValueNode node) {
+    myOnDemandPresentationProvider.setPresentation(node);
   }
 
   public void setOnDemandPresentationProvider(@NotNull OnDemandPresentationProvider onDemandPresentationProvider) {
