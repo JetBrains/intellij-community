@@ -37,7 +37,7 @@ class GetterDescriptor(
 
     init {
         OnDemandRenderer.ON_DEMAND_CALCULATED.set(this, false)
-        onDemandPresentationProvider = defaultGetterOnDemandPresentationProvider
+        setOnDemandPresentationProvider(defaultGetterOnDemandPresentationProvider)
     }
 
     private fun String.removeGetterPrefix(): String {
