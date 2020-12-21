@@ -93,6 +93,7 @@
       <action id="hg4idea.add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
               icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.Revert"/>
+      <reference ref="ChangesView.RevertFiles"/>
       <separator/>
 
       <reference ref="Compare.SameVersion"/>

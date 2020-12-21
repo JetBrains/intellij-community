@@ -2,7 +2,10 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,10 +31,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
-import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
+import static com.intellij.openapi.vcs.actions.AbstractCommonCheckinActionKt.isProjectUsesNonModalCommit;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.containers.UtilKt.notNullize;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
@@ -42,13 +46,14 @@ import static java.util.Objects.requireNonNull;
 public class RollbackAction extends AnAction implements DumbAware, UpdateInBackground {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
-    e.getPresentation().setEnabledAndVisible(visible);
-    if (!visible) return;
+    e.getPresentation().setEnabledAndVisible(false);
+
+    Project project = e.getProject();
+    if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return;
+    if (isProjectUsesNonModalCommit(e) && CHANGES_VIEW_POPUP.equals(e.getPlace())) return;
 
     Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
-    boolean isEnabled =
+    boolean hasDataToRollback =
       !ArrayUtil.isEmpty(leadSelection) ||
       Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
       Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
@@ -57,7 +62,8 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
       hasReversibleFiles(e) ||
       currentChangelistNotEmpty(project);
 
-    e.getPresentation().setEnabled(isEnabled);
+    e.getPresentation().setVisible(true);
+    e.getPresentation().setEnabled(hasDataToRollback);
     e.getPresentation().setText(getRollbackOperationName(project) + ELLIPSIS);
   }
 
@@ -77,16 +83,9 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return;
-    }
-    final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace())
-                         ? null
-                         : VcsBundle.message("error.cant.perform.operation.now",
-                                             removeEllipsisSuffix(removeMnemonic(getRollbackOperationName(project))));
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
+    if (!RollbackFilesAction.checkClmActive(e)) return;
 
+    Project project = requireNonNull(e.getProject());
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     Collection<Change> changes = getChanges(e);
     LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);

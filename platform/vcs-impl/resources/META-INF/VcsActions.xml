@@ -117,6 +117,7 @@
 
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
             icon="AllIcons.Actions.Rollback"/>
+    <action id="ChangesView.RevertFiles" class="com.intellij.openapi.vcs.changes.actions.RollbackFilesAction"/>
 
     <group id="ChangesView.ViewOptions"/>
 
@@ -155,6 +156,7 @@
     <group id="ChangesViewPopupMenu">
       <reference ref="CheckinFiles"/>
       <reference ref="ChangesView.Revert"/>
+      <reference ref="ChangesView.RevertFiles"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
       <reference ref="EditSource"/>
@@ -463,6 +465,7 @@
       <reference ref="ChangesView.ApplyPatch"/>
       <reference ref="ChangesView.ApplyPatchFromClipboard"/>
       <reference ref="ChangesView.Revert"/>
+      <reference ref="ChangesView.RevertFiles"/>
       <reference ref="ChangesView.Refresh"/>
       <reference ref="ChangesView.NewChangeList"/>
       <reference ref="ChangesView.RemoveChangeList"/>

@@ -189,6 +189,7 @@
       <reference ref="Git.FileActions"/>
       <reference ref="Show.Current.Revision"/>
       <reference ref="ChangesView.Revert" />
+      <reference ref="ChangesView.RevertFiles" />
       <separator/>
       <reference ref="Git.ResolveConflicts" />
       <separator/>
