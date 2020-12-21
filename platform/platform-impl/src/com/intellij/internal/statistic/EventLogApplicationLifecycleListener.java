@@ -23,7 +23,8 @@ final class EventLogApplicationLifecycleListener implements AppLifecycleListener
         ProgressManager.getInstance().run(new Task.Modal(null, "Starting External Log Uploader", false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            EventLogExternalUploader.INSTANCE.startExternalUpload(config.getRecorderId(), false);
+            boolean isPerformanceScript = System.getProperty("testscript.filename") != null;
+            EventLogExternalUploader.INSTANCE.startExternalUpload(config.getRecorderId(), isPerformanceScript);
           }
         });
       }

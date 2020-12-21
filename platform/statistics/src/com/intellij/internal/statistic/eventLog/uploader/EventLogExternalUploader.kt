@@ -108,7 +108,7 @@ object EventLogExternalUploader {
     addArgument(args, LOGS_OPTION, logFiles.joinToString(separator = File.pathSeparator))
     addArgument(args, DEVICE_OPTION, device.deviceId)
     addArgument(args, BUCKET_OPTION, device.bucket.toString())
-    addArgument(args, URL_OPTION, getTemplateUrl(applicationInfo))
+    addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
     addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
@@ -125,11 +125,6 @@ object EventLogExternalUploader {
       args += EAP_OPTION
     }
     return ArrayUtil.toStringArray(args)
-  }
-
-  private fun getTemplateUrl(applicationInfo: EventLogApplicationInfo): String {
-    val templateUrl = System.getProperty("idea.statistics.config.template.url")
-    return templateUrl ?: applicationInfo.templateUrl
   }
 
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {
