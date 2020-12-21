@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,14 +101,11 @@ final class WslDistributionDescriptor {
 
   @Override
   public String toString() {
-    return "WslDistributionDescriptor{" +
-           "id='" + myId + '\'' +
-           ", msId='" + myMsId + '\'' +
-           '}';
+    return "WslDistributionDescriptor{id='" + myId + "', msId='" + myMsId + "'}";
   }
 
   /**
-   * @return the mount point for current distribution. Default value of {@code /mnt/} may be overriden with {@code /etc/wsl.conf}
+   * @return the mount point for current distribution. Default value of {@code /mnt/} may be overridden with {@code /etc/wsl.conf}
    * @apiNote caches value per IDE run. Meaning - reconfiguring of this option in WSL requires IDE restart.
    */
   final @NotNull @NlsSafe String getMntRoot() {
@@ -145,8 +141,7 @@ final class WslDistributionDescriptor {
     return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
   }
 
-  @Nullable
-  private String readWslOutputLine(WSLCommandLineOptions options, List<@NonNls String> command) {
+  private @Nullable String readWslOutputLine(WSLCommandLineOptions options, List<String> command) {
     List<String> pwdOutputLines = readWSLOutput(options, command);
     if (pwdOutputLines == null) return null;
     if (pwdOutputLines.size() != 1) {
@@ -159,8 +154,7 @@ final class WslDistributionDescriptor {
     return pwdOutputLines.get(0).trim();
   }
 
-  @Nullable
-  private List<String> readWSLOutput(WSLCommandLineOptions options, List<@NonNls String> command) {
+  private @Nullable List<String> readWSLOutput(WSLCommandLineOptions options, List<String> command) {
     WSLDistribution distribution = WSLUtil.getDistributionById(getId());
     if (distribution == null) return null;
 
@@ -184,13 +178,11 @@ final class WslDistributionDescriptor {
     return output.getStdoutLines();
   }
 
-  @NonNls @Nullable
-  private String computeUserHome() {
+  private @Nullable String computeUserHome() {
     return getEnvironmentVariable("HOME");
   }
 
-  @NonNls @Nullable
-  String getEnvironmentVariable(String name) {
+  @Nullable String getEnvironmentVariable(String name) {
     return readWslOutputLine(new WSLCommandLineOptions().withTimeout(60_000), Arrays.asList("printenv", name));
   }
 }

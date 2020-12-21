@@ -375,7 +375,7 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            //noinspection SSBasedInspection
+            //noinspection RedundantSuppression;SSBasedInspection
             Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
             runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
@@ -390,7 +390,7 @@ public final class IoTestUtil {
       }
     }
     catch (Throwable t) {
-      //noinspection SSBasedInspection
+      //noinspection RedundantSuppression;SSBasedInspection
       Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
       return null;
     }
