@@ -1381,9 +1381,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         }
       }
     }
-
-    size.height += getAdComponentHeight();
-
     final Window window = getContentWindow(myContent);
     if (window != null) {
       window.setSize(size);
