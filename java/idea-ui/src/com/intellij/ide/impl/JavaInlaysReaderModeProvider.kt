@@ -12,8 +12,7 @@ class JavaInlaysReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project,
                                 editor: Editor,
                                 readerMode: Boolean,
-                                fileIsOpenAlready: Boolean,
-                                preferGlobalSettings: Boolean) {
+                                fileIsOpenAlready: Boolean) {
     InlayHintsPassFactory.setAlwaysEnabledHintsProviders(editor,if (readerMode && ReaderModeSettings.instance(project).showInlaysHints)
     { listOf(JavaCodeVisionProvider.getSettingsKey()) } else { null })
   }

@@ -7,6 +7,8 @@ import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.app
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -71,11 +73,22 @@ class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
   override fun runActivity(project: Project) {
     val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {
-        EditorSettingsExternalizable.PROP_BREADCRUMBS_PER_LANGUAGE -> applyToAllEditors(project, true)
-        EditorSettingsExternalizable.PROP_DOC_COMMENT_RENDERING -> applyToAllEditors(project, true)
+        EditorSettingsExternalizable.PROP_DOC_COMMENT_RENDERING -> {
+          ReaderModeSettings.instance(project).showRenderedDocs = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
+          applyToAllEditors(project, true)
+        }
       }
     }
     EditorSettingsExternalizable.getInstance().addPropertyChangeListener(propertyChangeListener)
     Disposer.register(project) { EditorSettingsExternalizable.getInstance().removePropertyChangeListener(propertyChangeListener) }
+
+    val fontPreferences = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
+    fontPreferences.changeListener = Runnable {
+      fontPreferences.changeListener
+      ReaderModeSettings.instance(project).showLigatures = fontPreferences.useLigatures()
+      applyToAllEditors(project, true)
+    }
+
+
   }
 }

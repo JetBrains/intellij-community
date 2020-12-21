@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
@@ -34,7 +35,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       val matchMode = matchMode(project, file, editor)
       if (matchMode || forceUpdate) {
         EP_READER_MODE_PROVIDER.extensions().forEach {
-          it.applyModeChanged(project, editor, instance(project).enabled && matchMode, fileIsOpenAlready, preferGlobalSettings)
+          it.applyModeChanged(project, editor, instance(project).enabled && matchMode, fileIsOpenAlready)
         }
       }
     }
@@ -67,7 +68,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
   private var myState = State()
 
   class State : BaseState() {
-    @get:ReportValue var showLigatures by property(true)
+    @get:ReportValue var showLigatures by property(EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures())
     @get:ReportValue var increaseLineSpacing by property(false)
     @get:ReportValue var showRenderedDocs by property(true)
     @get:ReportValue var showInlayHints by property(true)

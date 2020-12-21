@@ -8,18 +8,13 @@ import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 
 class HighlightingReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project,
-                                editor: Editor,
-                                readerMode: Boolean,
-                                fileIsOpenAlready: Boolean,
-                                preferGlobalSettings: Boolean) {
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     if (!fileIsOpenAlready) return
 
     val highlighting =
@@ -43,40 +38,21 @@ class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvide
 }
 
 class LigaturesReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project,
-                                editor: Editor,
-                                readerMode: Boolean,
-                                fileIsOpenAlready: Boolean,
-                                preferGlobalSettings: Boolean) {
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val scheme = editor.colorsScheme
     val preferences = scheme.fontPreferences
-    val ligaturesGlobal = (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures()
-    val useLigatures = when {
-      preferGlobalSettings -> ligaturesGlobal
-      readerMode -> ReaderModeSettings.instance(project).showLigatures
-      else -> ligaturesGlobal
-    }
     scheme.fontPreferences =
       FontPreferencesImpl().also {
         preferences.copyTo(it)
-        it.setUseLigatures(useLigatures)
+        it.setUseLigatures(readerMode && ReaderModeSettings.instance(project).showLigatures)
       }
   }
 }
 
 class FontReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project,
-                                editor: Editor,
-                                readerMode: Boolean,
-                                fileIsOpenAlready: Boolean,
-                                preferGlobalSettings: Boolean) {
-    val globalLineSpacing = AppEditorFontOptions.getInstance().fontPreferences.lineSpacing
-    setLineSpacing(editor, when {
-      preferGlobalSettings -> globalLineSpacing
-      readerMode && ReaderModeSettings.instance(project).increaseLineSpacing -> 1.4f
-      else -> globalLineSpacing
-    })
-
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
+    val lineSpacing = AppEditorFontOptions.getInstance().fontPreferences.lineSpacing
+    setLineSpacing(editor, if (readerMode && ReaderModeSettings.instance(project).increaseLineSpacing) { lineSpacing * 1.2f } else lineSpacing)
   }
 
   private fun setLineSpacing(editor: Editor, lineSpacing: Float) {
@@ -87,16 +63,7 @@ class FontReaderModeProvider : ReaderModeProvider {
 }
 
 class DocsRenderingReaderModeProvider : ReaderModeProvider {
-  override fun applyModeChanged(project: Project,
-                                editor: Editor,
-                                readerMode: Boolean,
-                                fileIsOpenAlready: Boolean,
-                                preferGlobalSettings: Boolean) {
-    val globalDocCommentRenderingEnabled = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
-    DocRenderManager.setDocRenderingEnabled(editor, when {
-      preferGlobalSettings -> globalDocCommentRenderingEnabled
-      readerMode -> ReaderModeSettings.instance(project).showRenderedDocs
-      else -> globalDocCommentRenderingEnabled
-    })
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
+    DocRenderManager.setDocRenderingEnabled(editor, readerMode && ReaderModeSettings.instance(project).showRenderedDocs)
   }
 }
