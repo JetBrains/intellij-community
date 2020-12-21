@@ -51,6 +51,7 @@ public class ToolwindowSwitcher extends DumbAwareAction {
                 .setRenderer(new ToolWindowsWidgetCellRenderer())
                 .setAutoselectOnMouseMove(true)
                 .setRequestFocus(true)
+                .setMinSize(new Dimension(300, -1))
                 .setItemChosenCallback((selectedValue) -> {
                   if (popup.get() != null) {
                     popup.get().closeOk(null);
