@@ -14,14 +14,6 @@ public abstract class SerializationManager {
     return ApplicationManager.getApplication().getService(SerializationManager.class);
   }
 
-  /**
-   * Use {@link StubElementTypeHolderEP} to register stub serializer instead of manual registration.
-   */
-  @ApiStatus.Internal
-  public void registerSerializer(ObjectStubSerializer<?, ? extends Stub> serializer) {
-    throw new UnsupportedOperationException();
-  }
-
   @Contract("null -> null")
   public abstract @Nullable String internString(@Nullable String string);
 }
