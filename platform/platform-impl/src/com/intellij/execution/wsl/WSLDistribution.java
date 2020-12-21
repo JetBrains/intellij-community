@@ -52,8 +52,8 @@ public class WSLDistribution {
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
-  @NotNull private final WslDistributionDescriptor myDescriptor;
-  @Nullable private final Path myExecutablePath;
+  private final @NotNull WslDistributionDescriptor myDescriptor;
+  private final @Nullable Path myExecutablePath;
   private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(() -> readHostIp());
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
@@ -118,8 +118,7 @@ public class WSLDistribution {
    * @param timeout                timeout in ms
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
-  @NotNull
-  public ProcessOutput executeOnWsl(@NotNull List<String> command,
+  public @NotNull ProcessOutput executeOnWsl(@NotNull List<String> command,
                                     @NotNull WSLCommandLineOptions options,
                                     int timeout,
                                     @Nullable Consumer<? super ProcessHandler> processHandlerConsumer) throws ExecutionException {
@@ -175,8 +174,7 @@ public class WSLDistribution {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
+  public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
                                                            @Nullable String remoteWorkingDir,
                                                            boolean askForSudo) {
@@ -205,8 +203,7 @@ public class WSLDistribution {
    * @param <T>              GeneralCommandLine or descendant
    * @return original {@code commandLine}, prepared to run in WSL context
    */
-  @NotNull
-  public <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
+  public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                            @Nullable Project project,
                                                            @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
@@ -380,8 +377,7 @@ public class WSLDistribution {
    * @param processHandler process handler, created from patched commandline
    * @return passed processHandler, patched with sudo listener if any
    */
-  @NotNull
-  public <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
+  public @NotNull <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
     ProcessListener listener = SUDO_LISTENER_KEY.get(commandLine);
     if (listener != null) {
       processHandler.addProcessListener(listener);
@@ -393,8 +389,7 @@ public class WSLDistribution {
   /**
    * @return environment map of the default user in wsl
    */
-  @NotNull
-  public Map<String, String> getEnvironment() {
+  public @NotNull Map<String, String> getEnvironment() {
     try {
       ProcessOutput processOutput = executeOnWsl(5000, "env");
       Map<String, String> result = new HashMap<>();
@@ -417,7 +412,7 @@ public class WSLDistribution {
   }
 
   /**
-   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable
+   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
 
   public @Nullable @NlsSafe String getWindowsPath(@NotNull String wslPath) {
@@ -453,7 +448,7 @@ public class WSLDistribution {
   /**
    * @see WslDistributionDescriptor#getMntRoot()
    */
-  public final @NotNull @NlsSafe String getMntRoot(){
+  public final @NotNull @NlsSafe String getMntRoot() {
     return myDescriptor.getMntRoot();
   }
 
@@ -483,9 +478,7 @@ public class WSLDistribution {
 
   @Override
   public String toString() {
-    return "WSLDistribution{" +
-           "myDescriptor=" + myDescriptor +
-           '}';
+    return "WSLDistribution{myDescriptor=" + myDescriptor + '}';
   }
 
   private static void prependCommand(@NotNull List<String> command, String @NotNull ... commandToPrepend) {
@@ -494,14 +487,7 @@ public class WSLDistribution {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    WSLDistribution that = (WSLDistribution)o;
-
-    if (!myDescriptor.equals(that.myDescriptor)) return false;
-
-    return true;
+    return this == o || o != null && getClass() == o.getClass() && myDescriptor.equals(((WSLDistribution)o).myDescriptor);
   }
 
   @Override
@@ -509,13 +495,9 @@ public class WSLDistribution {
     return myDescriptor.hashCode();
   }
 
-  /**
-   * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
-   */
-  @ApiStatus.Experimental
-  @NotNull
+  /** @deprecated use {@link WSLDistribution#getUNCRootPath()} instead */
   @Deprecated
-  public File getUNCRoot() {
+  public @NotNull File getUNCRoot() {
     return new File(UNC_PREFIX + myDescriptor.getMsId());
   }
 
@@ -535,8 +517,7 @@ public class WSLDistribution {
    * for the network resource availability, this method may be simplified to findFileByIoFile
    */
   @ApiStatus.Experimental
-  @Nullable
-  public VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
+  public @Nullable VirtualFile getUNCRootVirtualFile(boolean refreshIfNeed) {
     if (!Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
       return null;
     }
@@ -553,8 +534,7 @@ public class WSLDistribution {
     return InetAddresses.forString(getHostIp());
   }
 
-  @Nullable
-  private String readHostIp() {
+  private @Nullable String readHostIp() {
     final String releaseInfo = "/etc/resolv.conf"; // available for all distributions
     final ProcessOutput output;
     try {
@@ -573,9 +553,7 @@ public class WSLDistribution {
     return null;
   }
 
-  @NonNls
-  @Nullable
-  public String getEnvironmentVariable(String name) {
+  public @NonNls @Nullable String getEnvironmentVariable(String name) {
     return myDescriptor.getEnvironmentVariable(name);
   }
 }
