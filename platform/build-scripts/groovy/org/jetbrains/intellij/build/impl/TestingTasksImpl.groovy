@@ -606,7 +606,7 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private List<JUnitRunConfigurationSpec> loadRunConfigurationSpecs() {
-    def testConfigurationsWithBootstrapSuites = [:]
+    Map<String, String> testConfigurationsWithBootstrapSuites = [:]
     options.testConfigurations?.split(";")?.each {
       testConfigurationsWithBootstrapSuites[it.trim()] = options.bootstrapSuite
     }
@@ -624,10 +624,10 @@ class TestingTasksImpl extends TestingTasks {
       }
       testConfigurationsWithBootstrapSuites[name] = testBootstrapSuite
     }
-    return testConfigurationsWithBootstrapSuites.entrySet().collect { String name, String testBootstrapSuite ->
-      def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+    return testConfigurationsWithBootstrapSuites.entrySet().collect {
+      def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, it.key, context.messages)
       def properties = JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
-      new JUnitRunConfigurationSpec(properties, testBootstrapSuite)
+      new JUnitRunConfigurationSpec(properties, it.value)
     }
   }
 }
