@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.kotlin.idea.maven
 
-package org.jetbrains.kotlin.idea.maven;
+import com.intellij.testFramework.RunAll
+import com.intellij.util.ThrowableRunnable
+import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 
-import com.intellij.testFramework.RunAll;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker;
+abstract class KotlinMavenImportingTestCase : MavenImportingTestCase() {
+  private var sdkCreationChecker: KotlinSdkCreationChecker? = null
 
-public abstract class KotlinMavenImportingTestCase extends MavenImportingTestCase {
-    protected KotlinSdkCreationChecker sdkCreationChecker;
+  override fun setUp() {
+    super.setUp()
+    sdkCreationChecker = KotlinSdkCreationChecker()
+  }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        sdkCreationChecker = new KotlinSdkCreationChecker();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        RunAll.runAll(
-                () -> sdkCreationChecker.removeNewKotlinSdk(),
-                () -> super.tearDown()
-        );
-    }
+  override fun tearDown() {
+    RunAll.runAll(
+      ThrowableRunnable { sdkCreationChecker!!.removeNewKotlinSdk() },
+      ThrowableRunnable { super.tearDown() },
+    )
+  }
 }
