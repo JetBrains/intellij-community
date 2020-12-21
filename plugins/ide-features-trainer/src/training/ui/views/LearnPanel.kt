@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.views
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsSafe
@@ -21,6 +20,7 @@ import training.ui.*
 import training.util.getNextLessonForCurrent
 import training.util.getPreviousLessonForCurrent
 import training.util.openLinkInBrowser
+import training.util.wrapWithUrlPanel
 import java.awt.*
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -104,17 +104,6 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     footer.isOpaque = false
     footer.layout = BoxLayout(footer, BoxLayout.Y_AXIS)
     footer.border = UISettings.instance.checkmarkShiftBorder
-  }
-
-  private fun LinkLabel<Any>.wrapWithUrlPanel(): JPanel {
-    val jPanel = JPanel()
-    jPanel.isOpaque = false
-    jPanel.layout = BoxLayout(jPanel, BoxLayout.LINE_AXIS)
-    jPanel.add(this, BorderLayout.CENTER)
-    jPanel.add(JLabel(AllIcons.Ide.External_link_arrow), BorderLayout.EAST)
-    jPanel.maximumSize = jPanel.preferredSize
-    jPanel.alignmentX = LEFT_ALIGNMENT
-    return jPanel
   }
 
   private fun initLessonPanel() {
