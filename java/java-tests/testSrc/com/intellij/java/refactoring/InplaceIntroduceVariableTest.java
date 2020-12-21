@@ -211,6 +211,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testHeavilyBrokenFile() {
     doTest(null);
   }
+  
+  public void testHeavilyBrokenFile2() {
+    doTest(null);
+  }
 
   public void testNullTypeAddCast() {
     doTestReplaceChoice("Replace all 0 occurrences");

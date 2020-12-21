@@ -260,6 +260,19 @@ final class VariableExtractor {
         }
       }
     }
+    else if (anchor.getParent() instanceof PsiCodeBlock && anchor.getParent().getParent() instanceof PsiClassInitializer) {
+      PsiElement element = anchor.getParent().getParent();
+      while (element != null) {
+        element = element.getPrevSibling();
+        if (element instanceof PsiErrorElement &&
+            ((PsiErrorElement)element).getErrorDescription().equals(JavaPsiBundle.message("expected.class.or.interface"))) {
+          prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
+          if (PsiUtil.isJavaToken(prev, JavaTokenType.RBRACE)) {
+            prev.delete();
+          }
+        }
+      }
+    }
   }
 
   private static @NotNull PsiType stripNullabilityAnnotationsFromTargetType(@NotNull SmartTypePointer selectedType,
