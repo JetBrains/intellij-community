@@ -154,6 +154,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName + "GameTools")
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: "AndroidGameDevelopmentTools")
