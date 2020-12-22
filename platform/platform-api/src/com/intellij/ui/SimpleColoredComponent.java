@@ -1056,7 +1056,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     Rectangle area = computePaintArea();
     //noinspection UnnecessaryLocalVariable
     int x = offset;
-    int y = area.y + (area.height - icon.getIconHeight() + 1) / 2;
+    int y = area.y + (area.height - icon.getIconHeight()) / 2;
     IconUtil.paintSelectionAwareIcon(icon, this, g, x, y, isSelection());
   }
 
