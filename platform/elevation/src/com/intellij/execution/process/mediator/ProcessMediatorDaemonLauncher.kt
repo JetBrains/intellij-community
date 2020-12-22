@@ -196,20 +196,23 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
           initStream(it.process.inputStream)
         }
       }
-    processHandler.addProcessListener(object : ProcessAdapter() {
-      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-        ElevationLogger.LOG.info("Daemon/launcher [$outputType]: ${event.text.removeSuffix("\n")}")
-      }
-
-      override fun processTerminated(event: ProcessEvent) {
-        val exitCodeString = ProcessTerminatedListener.stringifyExitCode(event.exitCode)
-        ElevationLogger.LOG.info("Daemon/launcher process terminated with exit code ${exitCodeString}")
-      }
-    })
-    return processHandler
+    return processHandler.apply {
+      addProcessListener(LoggingProcessListener)
+    }
   }
 }
 
+
+private object LoggingProcessListener : ProcessAdapter() {
+  override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+    ElevationLogger.LOG.info("Daemon/launcher [$outputType]: ${event.text.removeSuffix("\n")}")
+  }
+
+  override fun processTerminated(event: ProcessEvent) {
+    val exitCodeString = ProcessTerminatedListener.stringifyExitCode(event.exitCode)
+    ElevationLogger.LOG.info("Daemon/launcher process terminated with exit code ${exitCodeString}")
+  }
+}
 
 private fun <R> Deferred<R>.awaitWithCheckCanceled(): R = asCompletableFuture().awaitWithCheckCanceled()
 private fun <R> CompletableFuture<R>.awaitWithCheckCanceled(): R {
