@@ -11,14 +11,17 @@ import org.jetbrains.intellij.build.BuildMessages
 @CompileStatic
 final class KotlinRunConfigurationProperties extends RunConfigurationProperties {
   final String mainClassName
+  final String arguments
 
   KotlinRunConfigurationProperties(String name,
                                    String moduleName,
                                    String mainClassName,
+                                   String arguments,
                                    List<String> vmParameters,
                                    Map<String, String> envVariables) {
     super(name, moduleName, vmParameters, envVariables)
     this.mainClassName = mainClassName
+    this.arguments = arguments
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -38,9 +41,12 @@ final class KotlinRunConfigurationProperties extends RunConfigurationProperties 
     Map<String, String> options = configuration.option?.collectEntries { [it.@name, it.@value] }
     String mainClassName = options["MAIN_CLASS_NAME"]
     List<String> vmParameters = options["VM_PARAMETERS"].tokenize()
+    String arguments = options["PROGRAM_PARAMETERS"]
     def envVariables = first(configuration.envs)?.env?.collectEntries { [it.@name, it.@value] } ?: [:]
 
-    return new KotlinRunConfigurationProperties(configuration.@name, moduleName, mainClassName, vmParameters, envVariables)
+    return new KotlinRunConfigurationProperties(configuration.@name, moduleName,
+                                                mainClassName, arguments,
+                                                vmParameters, envVariables)
   }
 
 }
