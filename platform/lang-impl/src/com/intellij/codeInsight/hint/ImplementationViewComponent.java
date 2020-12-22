@@ -62,9 +62,9 @@ import java.util.function.Consumer;
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
+  private static final String IMPLEMENTATION_VIEW_PLACE = "ImplementationView";
   private final EditorFactory factory;
   private final Project project;
-  private final ActionButton myGearAction;
 
   private ImplementationViewElement[] myElements;
   private int myIndex;
@@ -122,48 +122,10 @@ public class ImplementationViewComponent extends JPanel {
 
     myBinaryPanel = new JPanel(new BorderLayout());
     myViewingPanel.add(myBinaryPanel, BINARY_PAGE_KEY);
-    myViewingPanel.setBorder(JBUI.Borders.empty(12, 6));
 
     add(myViewingPanel, BorderLayout.CENTER);
 
     myToolbar = createToolbar();
-    DefaultActionGroup gearActions = new DefaultActionGroup();
-    gearActions.setPopup(true);
-    EditSourceActionBase edit = new EditSourceAction();
-    edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getEditSource(), CommonShortcuts.ENTER), this);
-    gearActions.add(edit);
-    if (openUsageView != null) {
-      Icon icon = ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
-      gearActions.add(new AnAction(() -> IdeBundle.message("show.in.find.window.button.name"), icon) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          openUsageView.accept(ImplementationViewComponent.this);
-          if (myHint.isVisible()) {
-            myHint.cancel();
-          }
-        }
-      });
-    }
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-    myGearAction = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
-      @Override
-      protected DataContext getDataContext() {
-        return DataManager.getInstance().getDataContext(myGearAction);
-      }
-    };
-    myGearAction.setNoIconsInPopup(true);
-
-    final JPanel header = new JPanel(new BorderLayout());
-    header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.empty(3)));
-    final JPanel toolbarPanel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gc =
-      new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                             JBUI.insets(0), 0, 0);
-    JComponent component = myToolbar.getComponent();
-    component.setBorder(null);
-    toolbarPanel.add(component, gc);
 
     setPreferredSize(JBUI.size(600, 400));
 
@@ -179,9 +141,10 @@ public class ImplementationViewComponent extends JPanel {
         myEditor.setHighlighter(highlighter);
       }
 
-
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.weightx = 1;
+      final JPanel toolbarPanel = new JPanel(new GridBagLayout());
+      final GridBagConstraints gc =
+        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                               JBUI.insets(0), 0, 0);
 
       mySingleEntryPanel = new JPanel(new BorderLayout());
       toolbarPanel.add(mySingleEntryPanel, gc);
@@ -209,14 +172,52 @@ public class ImplementationViewComponent extends JPanel {
         }
       }
 
+      gc.fill = GridBagConstraints.NONE;
+      gc.weightx = 0;
+
+      JComponent component = myToolbar.getComponent();
+      component.setBorder(null);
+      toolbarPanel.add(component, gc);
+
+      final JPanel header = new JPanel(new BorderLayout());
+      header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.empty(3)));
       header.add(toolbarPanel, BorderLayout.CENTER);
-      header.add(myGearAction, BorderLayout.EAST);
+      header.add(createGearActionButton(openUsageView), BorderLayout.EAST);
 
       add(header, BorderLayout.NORTH);
 
       updateControls();
       return true;
     });
+  }
+
+  private ActionButton createGearActionButton(Consumer<ImplementationViewComponent> openUsageView) {
+    DefaultActionGroup gearActions = new DefaultActionGroup();
+    gearActions.setPopup(true);
+    EditSourceActionBase edit = new EditSourceAction();
+    edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getEditSource(), CommonShortcuts.ENTER), this);
+    gearActions.add(edit);
+    if (openUsageView != null) {
+      Icon icon = ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
+      gearActions.add(new AnAction(() -> IdeBundle.message("show.in.find.window.button.name"), icon) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          openUsageView.accept(ImplementationViewComponent.this);
+          if (myHint.isVisible()) {
+            myHint.cancel();
+          }
+        }
+      });
+    }
+    Presentation presentation = new Presentation();
+    presentation.setIcon(AllIcons.Actions.More);
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    return new ActionButton(gearActions, presentation, IMPLEMENTATION_VIEW_PLACE, new Dimension(20, 20)) {
+      @Override
+      protected DataContext getDataContext() {
+        return DataManager.getInstance().getDataContext(ImplementationViewComponent.this);
+      }
+    };
   }
 
   private  void updateSingleEntryLabel(VirtualFile virtualFile) {
@@ -241,8 +242,9 @@ public class ImplementationViewComponent extends JPanel {
     settings.setIndentGuidesShown(false);
     settings.setLineNumbersShown(false);
     settings.setFoldingOutlineShown(false);
+    settings.setCaretRowShown(false);
 
-    myEditor.setBorder(null);
+    myEditor.setBorder(JBUI.Borders.empty(12, 6));
     myEditor.getScrollPane().setViewportBorder(JBScrollPane.createIndentBorder());
 
     if (virtualFile != null) {
@@ -539,7 +541,7 @@ public class ImplementationViewComponent extends JPanel {
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
     group.add(forward);
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ImplementationView", group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     return toolbar;
   }
