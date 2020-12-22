@@ -2,7 +2,6 @@
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.configurationStore.*
