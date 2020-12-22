@@ -28,8 +28,6 @@ import org.jetbrains.jetCheck.ImperativeCommand;
 
 import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
-
 public class IntroduceVariableActionOnFile extends ActionOnFile {
   public IntroduceVariableActionOnFile(@NotNull PsiFile file) {
     super(file);
@@ -64,8 +62,10 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
       TemplateManagerImpl.setTemplateTesting(disposable);
       handler.invokeImpl(project, expression, editor);
       TemplateState state = TemplateManagerImpl.getTemplateState(editor);
-      assertNotNull(state);
-      state.gotoEnd(false);
+      if (state != null) {
+        // Could be null if template wasn't started (e.g. too many occurrences)
+        state.gotoEnd(false);
+      }
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException ignored) { }
     finally {

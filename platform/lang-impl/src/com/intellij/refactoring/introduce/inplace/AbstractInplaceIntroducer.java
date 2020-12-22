@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
@@ -167,11 +168,17 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
    */
   public boolean startInplaceIntroduceTemplate() {
     final boolean replaceAllOccurrences = isReplaceAllOccurrences();
-    final Ref<Boolean> result = new Ref<>();
+    final Ref<Boolean> result = new Ref<>(false);
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
       boolean started = false;
       try {
+        if (replaceAllOccurrences) {
+          int segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1);
+          // Too many occurrences: rename template won't start, see InplaceRefactoring.buildTemplateAndStart
+          // 2 = variable type + variable name
+          if (segmentsLimit != -1 && getOccurrences().length + 2 > segmentsLimit) return;
+        }
         final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
         if (variable != null) {
           int caretOffset = getCaretOffset();
