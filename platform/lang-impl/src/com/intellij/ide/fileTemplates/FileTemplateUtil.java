@@ -393,7 +393,7 @@ public final class FileTemplateUtil {
       String s = (String)e.nextElement();
 
       //noinspection UseOfPropertiesAsHashtable
-      props.putIfAbsent(s, p.get(s)); // DO NOT CALL getProperty() cause it returns STRING | NULL
+      props.putIfAbsent(s, p.containsKey(s) ? p.get(s) : p.getProperty(s)); // pass object for explicit values or string for defaults
     }
   }
 
