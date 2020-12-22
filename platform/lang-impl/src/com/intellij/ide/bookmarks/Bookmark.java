@@ -69,7 +69,7 @@ import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 
 public final class Bookmark implements Navigatable, Comparable<Bookmark> {
-  static final Icon DEFAULT_ICON = new IconWrapperWithToolTip(PlatformIcons.CHECK_ICON, IdeBundle.messagePointer("tooltip.bookmarked"));
+  static final Icon DEFAULT_ICON = bookmarked(new BookmarkPainter().asIcon(12));
 
   private OpenFileDescriptor myTarget;
   private Reference<RangeHighlighterEx> myHighlighterRef;
@@ -411,7 +411,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       if (index < 0 || index > cache.length-1)
         return new MnemonicIcon(mnemonic);
       if (cache[index] == null)
-        cache[index] = new MnemonicIcon(mnemonic);
+        cache[index] = bookmarked(new MnemonicPainter(mnemonic).asIcon(12));
       return cache[index];
     }
 
@@ -557,5 +557,9 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     StringBuilder sb = new StringBuilder().append(mnemonic);
     if (point) sb.append('.');
     return sb.toString(); //NON-NLS
+  }
+
+  private static @NotNull Icon bookmarked(@NotNull Icon icon) {
+    return new IconWrapperWithToolTip(icon, IdeBundle.messagePointer("tooltip.bookmarked"));
   }
 }
