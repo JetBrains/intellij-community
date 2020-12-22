@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules;
 
-import com.intellij.internal.statistic.eventLog.util.ContainerUtil;
+import com.intellij.internal.statistic.eventLog.util.ValidatorContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -14,7 +14,7 @@ public final class EventContext {
 
   private EventContext(@NotNull String eventId, @NotNull Map<String, Object> eventData) {
     this.eventId = eventId;
-    this.eventData = ContainerUtil.unmodifiableOrEmptyMap(eventData);
+    this.eventData = ValidatorContainerUtil.unmodifiableOrEmptyMap(eventData);
   }
 
   public static EventContext create(@NotNull String eventId, @NotNull Map<String, Object> eventData) {

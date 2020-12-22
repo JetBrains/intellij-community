@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-public abstract class CustomWhiteListRule extends PerformanceCareRule implements FUSRule {
+public abstract class CustomWhiteListRule extends PerformanceCareRule implements FUSRule, UtilValidationRule {
   public static final ExtensionPointName<CustomWhiteListRule> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.validation.customWhiteListRule");
 

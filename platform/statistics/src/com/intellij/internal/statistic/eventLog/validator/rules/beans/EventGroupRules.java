@@ -2,14 +2,15 @@
 package com.intellij.internal.statistic.eventLog.validator.rules.beans;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
 import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ public final class EventGroupRules {
 
   private final FUSRule[] eventIdRules;
   private final Map<String, FUSRule[]> eventDataRules = new ConcurrentHashMap<>();
+  private final ValidationSimpleRuleFactory myValidationRuleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer());
 
   private EventGroupRules(@Nullable Set<String> eventIdRules,
                           @Nullable Map<String, Set<String>> eventDataRules, @NotNull EventGroupContextData contextData) {
@@ -51,13 +53,13 @@ public final class EventGroupRules {
     return eventDataRules;
   }
 
-  private static FUSRule @NotNull [] getRules(@Nullable Set<String> rules,
-                                              @NotNull EventGroupContextData contextData) {
+  private FUSRule @NotNull [] getRules(@Nullable Set<String> rules,
+                                       @NotNull EventGroupContextData contextData) {
 
     if (rules == null) return FUSRule.EMPTY_ARRAY;
     List<FUSRule> fusRules = new SortedList<>(getRulesComparator());
     for (String rule : rules) {
-      ContainerUtil.addIfNotNull(fusRules, ValidationSimpleRuleFactory.createRule(rule, contextData));
+      ContainerUtil.addIfNotNull(fusRules, myValidationRuleFactory.createRule(rule, contextData));
     }
     return fusRules.toArray(FUSRule.EMPTY_ARRAY);
   }

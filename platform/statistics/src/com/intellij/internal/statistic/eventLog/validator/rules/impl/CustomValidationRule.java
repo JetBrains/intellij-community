@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see SensitiveDataValidator
  */
-public abstract class CustomValidationRule extends PerformanceCareRule implements FUSRule {
+public abstract class CustomValidationRule extends PerformanceCareRule implements FUSRule, UtilValidationRule {
   public static final ExtensionPointName<CustomValidationRule> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.validation.customValidationRule");
 

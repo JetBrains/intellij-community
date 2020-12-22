@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public final class ContainerUtil {
-  private ContainerUtil() {
+public final class ValidatorContainerUtil {
+  private ValidatorContainerUtil() {
   }
 
   @Contract(pure = true)
