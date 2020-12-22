@@ -187,11 +187,11 @@ object LessonUtil {
     return x != 0
   }
 
-  fun LessonContext.highlightBreakpointGutter(logicalPosition: LogicalPosition) {
+  fun LessonContext.highlightBreakpointGutter(logicalPosition: () -> LogicalPosition) {
     task {
       triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
-        val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition).line)
+        val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
         return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
       }
     }
