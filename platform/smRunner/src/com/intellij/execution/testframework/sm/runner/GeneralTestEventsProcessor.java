@@ -154,6 +154,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
     myBuildTreeRunnables.clear();
     processTreeBuildEvents(runnables);
+    myEventPublisher.onBuildTreeEnded(myTestsRootProxy);
   }
 
   public final void onDurationStrategyChanged(@NotNull final TestDurationStrategy durationStrategy) {

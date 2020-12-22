@@ -80,10 +80,12 @@ public interface SMTRunnerEventsListener {
   default void onSuiteTreeNodeAdded(SMTestProxy testProxy, @Nullable String nodeId, @Nullable String parentNodeId) {
     onSuiteTreeNodeAdded(testProxy);
   }
+  default void onSuiteTreeEnded(SMTestProxy.SMRootTestProxy testsRootProxy, String suiteName) {}
   void onSuiteTreeStarted(SMTestProxy suite);
   default void onSuiteTreeStarted(SMTestProxy suite, @Nullable String nodeId, @Nullable String parentNodeId) {
     onSuiteTreeStarted(suite);
   }
+  default void onBuildTreeEnded(SMTestProxy.SMRootTestProxy testsRootProxy) {}
   default void onRootPresentationAdded(@NotNull SMTestProxy.SMRootTestProxy testsRoot, String rootName, String comment, String rootLocation) {}
 
   default void onTestOutput(@NotNull SMTestProxy proxy, @NotNull TestOutputEvent event) {}
