@@ -25,17 +25,6 @@ import com.intellij.psi.PsiFile;
  */
 @Deprecated
 public abstract class JavaCodeStyleSettingsFacade {
-  /**
-   * @deprecated Use {@link JavaFileCodeStyleFacade#getNamesCountToUseImportOnDemand()}
-   */
-  @Deprecated
-  public abstract int getNamesCountToUseImportOnDemand();
-
-  /**
-   * @deprecated Use {@link JavaFileCodeStyleFacade#isToImportOnDemand(String)}
-   */
-  @Deprecated
-  public abstract boolean isToImportInDemand(String qualifiedName);
 
   /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#useFQClassNames()}

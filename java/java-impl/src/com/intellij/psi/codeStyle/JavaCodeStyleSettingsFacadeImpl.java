@@ -13,16 +13,6 @@ public final class JavaCodeStyleSettingsFacadeImpl extends JavaCodeStyleSettings
   }
 
   @Override
-  public int getNamesCountToUseImportOnDemand() {
-    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
-  }
-
-  @Override
-  public boolean isToImportInDemand(String qualifiedName) {
-    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(qualifiedName);
-  }
-
-  @Override
   public boolean useFQClassNames() {
     return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES;
   }

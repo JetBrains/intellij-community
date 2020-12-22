@@ -21,15 +21,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
  * @author yole
  */
 public class CoreJavaCodeStyleSettingsFacade extends JavaCodeStyleSettingsFacade {
-  @Override
-  public int getNamesCountToUseImportOnDemand() {
-    return 0;
-  }
-
-  @Override
-  public boolean isToImportInDemand(String qualifiedName) {
-    return false;
-  }
 
   @Override
   public boolean useFQClassNames() {
