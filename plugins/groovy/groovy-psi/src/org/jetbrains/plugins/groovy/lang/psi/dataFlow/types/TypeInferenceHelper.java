@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
@@ -43,6 +41,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDes
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.checkNestedContext;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
+import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getTupleComponentType;
 
 /**
  * @author ven
@@ -207,15 +206,12 @@ public final class TypeInferenceHelper {
       GrTupleAssignmentExpression assignment = list.getParent();
       if (assignment != null) {
         final GrExpression rValue = assignment.getRValue();
-        int idx = list.indexOf(element);
-        if (idx >= 0 && rValue != null) {
-          PsiType rType = rValue.getType();
-          if (rType instanceof GrTupleType) {
-            List<PsiType> componentTypes = ((GrTupleType)rType).getComponentTypes();
-            if (idx < componentTypes.size()) return componentTypes.get(idx);
-            return null;
+        if (rValue != null) {
+          int idx = list.indexOf(element);
+          if (idx >= 0) {
+            PsiType rType = rValue.getType();
+            return rType == null ? null : getTupleComponentType(idx, rType);
           }
-          return PsiUtil.extractIterableTypeParameter(rType, false);
         }
       }
     }
