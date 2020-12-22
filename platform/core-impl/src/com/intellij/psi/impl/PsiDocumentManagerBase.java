@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -104,7 +105,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
-    throw new UnsupportedOperationException();
+    if (file != null) {
+      VirtualFile vFile = file.getViewProvider().getVirtualFile();
+      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
+      if (cachedDocument != null && cachedDocument != document) {
+        throw new IllegalStateException("Can't replace existing document");
+      }
+
+      FileDocumentManagerBase.registerDocument(document, vFile);
+    }
   }
 
   @Override
