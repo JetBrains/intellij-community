@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public class ModifierRecordsTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/modifier14";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/modifierRecords";
   }
 
   @NotNull

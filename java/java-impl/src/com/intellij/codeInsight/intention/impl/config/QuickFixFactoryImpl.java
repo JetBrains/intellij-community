@@ -954,4 +954,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                      @NotNull PsiClass subClass) {
     return Arrays.asList(ImplementOrExtendFix.createActions(subclassRef, subClass, parentClass, false));
   }
+
+  @Override
+  public @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList) {
+    return new SealClassFromPermitsListAction(classFromPermitsList);
+  }
 }
