@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -12,14 +12,12 @@ import org.fest.swing.fixture.ContainerFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.lang.ref.WeakReference;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.fest.reflect.core.Reflection.field;
 
-@Nonnull
 public abstract class IdeaDialogFixture<T extends DialogWrapper> extends ComponentFixture<IdeaDialogFixture, JDialog> implements ContainerFixture<JDialog> {
   @NotNull private final T myDialogWrapper;
 
@@ -52,7 +50,7 @@ public abstract class IdeaDialogFixture<T extends DialogWrapper> extends Compone
 
   @NotNull
   public static <T extends DialogWrapper> DialogAndWrapper<T> find(@NotNull Robot robot, @NotNull final Class<? extends T> clz) {
-    return find(robot, clz, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    return find(robot, clz, new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog component) {
         return component.isShowing();
@@ -64,7 +62,7 @@ public abstract class IdeaDialogFixture<T extends DialogWrapper> extends Compone
   public static <T extends DialogWrapper> DialogAndWrapper<T> find(@NotNull Robot robot, @NotNull final Class<? extends T> clz,
                                                                    @NotNull final GenericTypeMatcher<JDialog> matcher) {
     final Ref<T> wrapperRef = new Ref<>();
-    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (matcher.matches(dialog)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework
 
 import com.intellij.diagnostic.MessagePool
@@ -72,7 +72,6 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceArray
-import javax.annotation.Nonnull
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
@@ -628,7 +627,7 @@ object GuiTestUtil {
 
   fun findRadioButton(container: Container?, text: String, timeout: Timeout): RadioButtonFixture {
     val radioButton = waitUntilFound(GuiRobotHolder.robot, container, object : GenericTypeMatcher<JRadioButton>(JRadioButton::class.java) {
-      override fun isMatching(@Nonnull button: JRadioButton): Boolean {
+      override fun isMatching(button: JRadioButton): Boolean {
         return button.text != null && button.text == text && button.isShowing
       }
     }, timeout)
@@ -637,7 +636,7 @@ object GuiTestUtil {
 
   fun findRadioButton(container: Container, text: String): RadioButtonFixture {
     val radioButton = waitUntilFound(GuiRobotHolder.robot, container, object : GenericTypeMatcher<JRadioButton>(JRadioButton::class.java) {
-      override fun isMatching(@Nonnull button: JRadioButton): Boolean {
+      override fun isMatching(button: JRadioButton): Boolean {
         return button.text != null && button.text == text
       }
     }, Timeouts.minutes02)

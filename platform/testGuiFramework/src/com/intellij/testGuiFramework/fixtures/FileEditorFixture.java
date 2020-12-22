@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -32,7 +30,6 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.*;
 
 public class FileEditorFixture extends EditorFixture {
-
   private final FileEditorManager myManager;
   private final IdeFrameFixture myFrame;
   private final EditorTabsFixture tabs;
@@ -59,9 +56,9 @@ public class FileEditorFixture extends EditorFixture {
   @Nullable
   public VirtualFile getCurrentFile() {
     return execute(new GuiQuery<VirtualFile>() {
-      @javax.annotation.Nullable
+      @Nullable
       @Override
-      protected VirtualFile executeInEDT() throws Throwable {
+      protected VirtualFile executeInEDT() {
         VirtualFile[] selectedFiles = myManager.getSelectedFiles();
         if (selectedFiles.length > 0) {
 
@@ -91,7 +88,7 @@ public class FileEditorFixture extends EditorFixture {
   public String getCurrentFileName() {
     return execute(new GuiQuery<String>() {
       @Override
-      protected String executeInEDT() throws Throwable {
+      protected String executeInEDT() {
         VirtualFile currentFile = getCurrentFile();
         return currentFile != null ? currentFile.getName() : null;
       }
@@ -362,7 +359,7 @@ public class FileEditorFixture extends EditorFixture {
   public void clickCenter() {
     Editor selectedTextEditor = execute(new GuiQuery<Editor>() {
                                           @Override
-                                          protected Editor executeInEDT() throws Throwable {
+                                          protected Editor executeInEDT() {
                                             return myManager.getSelectedTextEditor();
                                           }
                                         }

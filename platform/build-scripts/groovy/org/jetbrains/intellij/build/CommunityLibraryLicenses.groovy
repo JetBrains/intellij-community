@@ -464,7 +464,7 @@ class CommunityLibraryLicenses {
                        url: "http://json-schema.org/draft-07/schema#"),
     new LibraryLicense(name: "jsoup", libraryName: "jsoup", license: "MIT", url: "http://jsoup.org",
                        licenseUrl: "http://jsoup.org/license"),
-    new LibraryLicense(name: "jsr305", libraryName: "jsr305", version: "snapshot", license: "BSD", url: "http://code.google.com/p/jsr-305/",
+    new LibraryLicense(name: "jsr305", libraryName: "jsr305", license: "BSD", url: "http://code.google.com/p/jsr-305/",
                        licenseUrl: "http://code.google.com/p/jsr-305/source/browse/trunk/ri/LICENSE"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit3", license: "CPL 1.0", url: "http://junit.org/"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit4", license: "CPL 1.0", url: "http://junit.org/"),
