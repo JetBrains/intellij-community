@@ -135,7 +135,7 @@ open class HighlightingConfiguration(
         if (!renderParams) return ""
 
         val params = mutableListOf<String>()
-        if (renderSeverity)
+        if (renderSeverity) {
             params.add("severity='${highlightingCodeMetaInfo.highlightingInfo.severity}'")
         if (renderDescription)
             params.add("descr='${sanitizeLineBreaks(highlightingCodeMetaInfo.highlightingInfo.description)}'")
@@ -143,7 +143,7 @@ open class HighlightingConfiguration(
             highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributesKey?.apply {
                 params.add("textAttributesKey='${this}'")
             }
-        params.add(getAdditionalParams(highlightingCodeMetaInfo))
+            params.add(getAdditionalParams(highlightingCodeMetaInfo))
         val paramsString = params.filter { it.isNotEmpty() }.joinToString("; ")
 
         return if (paramsString.isEmpty()) "" else "(\"$paramsString\")"
