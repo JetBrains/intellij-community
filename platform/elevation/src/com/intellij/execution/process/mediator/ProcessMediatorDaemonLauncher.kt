@@ -62,38 +62,45 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
                                                                                ApplicationNamesInfo.getInstance().fullProductName))
         val sudoPath = if (launcherCommandLine !== daemonCommandLine) Path.of(launcherCommandLine.exePath) else null
 
-        val launcherProcessHandler = handshakeTransport.createDaemonProcessHandler(launcherCommandLine)
-        val handshake = launcherProcessHandler.withOutputCaptured(SynchronizedProcessOutput()) { launcherOutput ->
-          startNotify()
+        handshakeTransport.createDaemonProcessHandler(launcherCommandLine)
+          .withOutputCaptured(SynchronizedProcessOutput()) { launcherOutput ->
+            startNotify()
 
-          val handshakeAsync = async(Dispatchers.IO) { handshakeTransport.readHandshake() }
-          val finishedAsync = launcherOutput.onFinished().asDeferred()
+            val handshakeAsync = async(Dispatchers.IO) { handshakeTransport.readHandshake() }
+            val finishedAsync = launcherOutput.onFinished().asDeferred()
 
-          try {
-            select<Handshake?> {
-              handshakeAsync.onAwait { it }
-              finishedAsync.onAwait { handshakeFailed(it, sudoPath) }
+            val handshake = try {
+              select<Handshake?> {
+                handshakeAsync.onAwait { it }
+                finishedAsync.onAwait { handshakeFailed(it, sudoPath) }
+              }
+              // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
+              ?: select<Nothing> {
+                finishedAsync.onAwait { handshakeFailed(it, sudoPath) }
+                onTimeout(1000) { launcherOutput.setTimeout(); handshakeFailed(launcherOutput, sudoPath) }
+              }
             }
-            // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
-            ?: select<Nothing> {
-              finishedAsync.onAwait { handshakeFailed(it, sudoPath) }
-              onTimeout(1000) { launcherOutput.setTimeout(); handshakeFailed(launcherOutput, sudoPath) }
+            catch (e: IOException) {
+              handshakeFailed(launcherOutput, sudoPath, e)
             }
-          }
-          catch (e: IOException) {
-            handshakeFailed(launcherOutput, sudoPath, e)
-          }
-        }
-        val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
-                                  // Use the launcher process handle instead unless it's a short-living trampoline.
-                                  // In particular, this happens on Windows, where we can't access a process owned by another user.
-                                  ?: launcherProcessHandler.process.toHandle().takeUnless { daemonLaunchOptions.trampoline }
 
-        ProcessMediatorDaemonImpl(daemonProcessHandle,
-                                  handshake.port,
-                                  DaemonClientCredentials(handshake.token))
+            handshakeSucceeded(handshake, handshakeTransport, this)
+          }
       }
     }.awaitWithCheckCanceled()
+  }
+
+  private fun handshakeSucceeded(handshake: Handshake,
+                                 transport: HandshakeTransport,
+                                 processHandler: BaseOSProcessHandler): ProcessMediatorDaemonImpl {
+    val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
+                              // Use the launcher process handle instead unless it's a short-living trampoline.
+                              // In particular, this happens on Windows, where we can't access a process owned by another user.
+                              ?: processHandler.process.toHandle().takeUnless { transport.getDaemonLaunchOptions().trampoline }
+
+    return ProcessMediatorDaemonImpl(daemonProcessHandle,
+                                     handshake.port,
+                                     DaemonClientCredentials(handshake.token))
   }
 
   private fun handshakeFailed(output: ProcessOutput, sudoPath: Path?, error: IOException? = null): Nothing = synchronized(output) {
