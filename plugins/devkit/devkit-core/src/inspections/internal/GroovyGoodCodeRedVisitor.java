@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAccessibilityChecker;
-import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitorBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -33,12 +33,12 @@ public class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
     GroovyFileBase file = (GroovyFileBase)holder.getFile();
     Project project = holder.getProject();
     GrAccessibilityChecker accessibilityChecker = new GrAccessibilityChecker(file, project);
-    GroovyStaticTypeCheckVisitor typeCheckVisitor = new GroovyStaticTypeCheckVisitor() {
+    GroovyElementVisitor typeCheckVisitor = new GroovyStaticTypeCheckVisitorBase() {
       @Override
       protected void registerError(@NotNull PsiElement location,
                                    @NotNull @InspectionMessage String description,
                                    LocalQuickFix @Nullable [] fixes,
-                                   ProblemHighlightType highlightType) {
+                                   @NotNull ProblemHighlightType highlightType) {
         if (highlightType == ProblemHighlightType.GENERIC_ERROR) {
           holder.registerProblem(location, description);
         }

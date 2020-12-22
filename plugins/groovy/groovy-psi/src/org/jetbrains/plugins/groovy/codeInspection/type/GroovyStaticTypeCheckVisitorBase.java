@@ -1,22 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.lang.annotation.AnnotationBuilder;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -29,11 +19,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
-import java.util.ArrayList;
-import java.util.List;
+public abstract class GroovyStaticTypeCheckVisitorBase extends GroovyTypeCheckVisitor {
 
-public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
-  private AnnotationHolder myHolder;
+  @Override
+  public final void visitElement(@NotNull GroovyPsiElement element) {
+    // do nothing & disable recursion
+  }
+
+  @Override
+  protected abstract void registerError(@NotNull PsiElement location,
+                                        @InspectionMessage @NotNull String description,
+                                        LocalQuickFix @Nullable [] fixes,
+                                        @NotNull ProblemHighlightType highlightType);
 
   @Override
   public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
@@ -78,80 +75,6 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
       new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createMultipleAssignmentFix(leftCount)},
       ProblemHighlightType.GENERIC_ERROR
     );
-  }
-
-  @Override
-  protected void registerError(@NotNull final PsiElement location,
-                               @InspectionMessage @NotNull final String description,
-                               final LocalQuickFix @Nullable [] fixes,
-                               final ProblemHighlightType highlightType) {
-    if (highlightType != ProblemHighlightType.GENERIC_ERROR) return;
-    final List<IntentionAction> intentions = new ArrayList<>();
-    if (fixes != null) {
-      for (final LocalQuickFix fix : fixes) {
-        intentions.add(new IntentionAction() {
-          @NotNull
-          @Override
-          public String getText() {
-            return fix.getName();
-          }
-
-          @NotNull
-          @Override
-          public String getFamilyName() {
-            return fix.getFamilyName();
-          }
-
-          @Override
-          public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-            return true;
-          }
-
-          @Override
-          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-            final InspectionManager manager = InspectionManager.getInstance(project);
-            final ProblemDescriptor descriptor =
-              manager.createProblemDescriptor(location, description, fixes, highlightType, fixes.length == 1, false);
-            fix.applyFix(project, descriptor);
-          }
-
-          @Override
-          public boolean startInWriteAction() {
-            return true;
-          }
-        });
-      }
-    }
-    registerError(location, description, intentions.toArray(IntentionAction.EMPTY_ARRAY), highlightType);
-  }
-
-  protected void registerError(@NotNull final PsiElement location,
-                               @NotNull @InspectionMessage final String description,
-                               final IntentionAction @Nullable [] fixes,
-                               final ProblemHighlightType highlightType) {
-    if (highlightType != ProblemHighlightType.GENERIC_ERROR) return;
-    AnnotationBuilder builder = myHolder.newAnnotation(HighlightSeverity.ERROR, description).range(location);
-    if (fixes != null) {
-      for (IntentionAction intention : fixes) {
-        builder = builder.withFix(intention);
-      }
-    }
-    builder.create();
-  }
-
-  @Override
-  public void visitElement(@NotNull GroovyPsiElement element) {
-    // do nothing & disable recursion
-  }
-
-  public void accept(@NotNull GroovyPsiElement element, @NotNull AnnotationHolder holder) {
-    myHolder = holder;
-    try {
-      element.accept(this);
-    }
-    finally {
-      myHolder = null;
-    }
   }
 
   @Override
