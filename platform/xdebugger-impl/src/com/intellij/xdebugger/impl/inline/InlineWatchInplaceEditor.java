@@ -47,7 +47,7 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
   @Override
   protected JComponent createInplaceEditorComponent() {
     myInplaceEditor = new XDebuggerExpressionComboBox(mySession.getProject(), mySession.getDebugProcess().getEditorsProvider(), "inlineWatch",
-                                                      mySession.getCurrentPosition(), true, true);
+                                                      mySession.getCurrentPosition(), false, true);
     if (myInitialExpression != null) {
       myInplaceEditor.setExpression(myInitialExpression);
     }
@@ -76,6 +76,7 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
   @Override
   public void doOKAction() {
     XExpression expression = getExpression();
+    myInplaceEditor.saveTextInHistory();
     super.doOKAction();
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
       XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
