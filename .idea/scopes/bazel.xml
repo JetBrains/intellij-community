@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="bazel" pattern="src[group:Blaze]:*..*||test[group:Blaze]:*..*" />
-</component>

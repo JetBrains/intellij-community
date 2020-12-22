@@ -1,0 +1,24 @@
+{
+  parserClass="de.plushnikov.intellij.plugin.language.parser.LombokConfigParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="LombokConfig"
+  psiImplClassSuffix="Impl"
+  psiPackage="de.plushnikov.intellij.plugin.language.psi"
+  psiImplPackage="de.plushnikov.intellij.plugin.language.psi.impl"
+
+  elementTypeHolderClass="de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes"
+  elementTypeClass="de.plushnikov.intellij.plugin.language.psi.LombokConfigElementType"
+  tokenTypeClass="de.plushnikov.intellij.plugin.language.psi.LombokConfigTokenType"
+
+  psiImplUtilClass="de.plushnikov.intellij.plugin.language.psi.LombokConfigPsiUtil"
+}
+
+simpleFile ::= item_*
+
+private item_ ::= (property|cleaner|COMMENT|CRLF)
+
+property ::= (KEY operation VALUE) {methods=[getKey getValue]}
+operation ::= SIGN? SEPARATOR
+cleaner ::= (CLEAR KEY) {methods=[getKey]}

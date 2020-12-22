@@ -251,6 +251,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
       @Nullable
       private PsiType calcTypeByParent() {
+        if (!parent.isValid()) return null;
+
         PsiType type = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnType() : ((PsiVariable)parent).getType();
         if (type instanceof PsiArrayType) { //also, for c-style array, e.g. String args[]
           return type.getDeepComponentType();

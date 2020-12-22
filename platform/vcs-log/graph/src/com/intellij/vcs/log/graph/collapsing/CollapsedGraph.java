@@ -11,6 +11,7 @@ import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,8 +96,8 @@ public final class CollapsedGraph {
 
     @NotNull private final EdgeStorageWrapper myEdgesToAdd = EdgeStorageWrapper.createSimpleEdgeStorage();
     @NotNull private final EdgeStorageWrapper myEdgesToRemove = EdgeStorageWrapper.createSimpleEdgeStorage();
-    @NotNull private final IntOpenHashSet myNodesToHide = new IntOpenHashSet();
-    @NotNull private final IntOpenHashSet myNodesToShow = new IntOpenHashSet();
+    @NotNull private final IntSet myNodesToHide = new IntOpenHashSet();
+    @NotNull private final IntSet myNodesToShow = new IntOpenHashSet();
     private boolean myClearEdges = false;
     private boolean myClearVisibility = false;
 

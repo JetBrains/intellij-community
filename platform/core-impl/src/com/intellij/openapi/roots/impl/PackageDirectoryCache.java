@@ -25,7 +25,7 @@ public class PackageDirectoryCache {
   private static final Logger LOG = Logger.getInstance(PackageDirectoryCache.class);
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = new ConcurrentHashMap<>();
-  private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
+  private final Set<String> myNonExistentPackages = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public PackageDirectoryCache(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
     for (String prefix : rootsByPackagePrefix.keySet()) {

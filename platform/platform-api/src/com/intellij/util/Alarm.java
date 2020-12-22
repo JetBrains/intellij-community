@@ -295,6 +295,8 @@ public class Alarm implements Disposable {
    */
   @TestOnly
   public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+
     List<Request> requests;
     synchronized (LOCK) {
       requests = new ArrayList<>(myRequests);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
@@ -691,6 +691,10 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
                                                                         : settings.innerClassesOrderWeight() + 1;
     }
     return -1;
+  }
+
+  @NotNull public List<String> getSyntheticModifiers(@NotNull GrModifierList modifierList) {
+    return myCache.getSyntheticModifiers(modifierList);
   }
 
   @Nullable

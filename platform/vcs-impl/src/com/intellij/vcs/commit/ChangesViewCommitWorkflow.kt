@@ -2,19 +2,16 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.DumbService.isDumb
-import com.intellij.openapi.project.DumbService.isDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
-class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
+class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
@@ -42,21 +39,6 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =
     PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)
-
-  override fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    if (!handler.acceptExecutor(executor)) return CheckinHandler.ReturnResult.COMMIT
-    LOG.debug("CheckinHandler.beforeCheckin: $handler")
-
-    if (handler is CommitCheck) {
-      if (!handler.isEnabled())
-        return CheckinHandler.ReturnResult.COMMIT.also { LOG.debug("Commit check disabled $handler") }
-
-      if (isDumb(project) && !isDumbAware(handler))
-        return CheckinHandler.ReturnResult.COMMIT.also { LOG.debug("Skipped commit check in dumb mode $handler") }
-    }
-
-    return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-  }
 
   private fun doCommit() {
     LOG.debug("Do actual commit")

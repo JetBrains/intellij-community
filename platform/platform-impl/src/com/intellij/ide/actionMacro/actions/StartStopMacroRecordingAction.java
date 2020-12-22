@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class StartStopMacroRecordingAction extends AnAction implements DumbAware {
+final class StartStopMacroRecordingAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean isRecording = ActionMacroManager.getInstance().isRecording();

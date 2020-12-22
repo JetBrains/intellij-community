@@ -72,13 +72,14 @@ public final class CommandLineProcessor {
 
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(ioFile.toString()));
     if (file == null) {
-      Project lightEditProject = LightEditUtil.openFile(ioFile);
-      if (lightEditProject != null) {
-        return new CommandLineProcessorResult(lightEditProject, OK_FUTURE);
+      if (LightEditUtil.isForceOpenInLightEditMode()) {
+        Project lightEditProject = LightEditUtil.openFile(ioFile);
+        if (lightEditProject != null) {
+          Future<CliResult> future = shouldWait ? CommandLineWaitingManager.getInstance().addHookForPath(ioFile) : OK_FUTURE;
+          return new CommandLineProcessorResult(lightEditProject, future);
+        }
       }
-      else {
-        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()));
-      }
+      return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()));
     }
 
     if (projects.length == 0) {
@@ -91,14 +92,13 @@ public final class CommandLineProcessor {
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
-      Project project = findBestProject(file, projects);
-      if (project == null) {
-        project = LightEditService.getInstance().openFile(file, true);
-        if (project != null) {
-          LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
-        }
+      Project project;
+      if (LightEditUtil.isForceOpenInLightEditMode()) {
+        project = LightEditService.getInstance().openFile(file);
+        LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
       }
       else {
+        project = findBestProject(file, projects);
         Navigatable navigatable = line > 0
                                   ? new OpenFileDescriptor(project, file, line - 1, Math.max(column, 0))
                                   : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1);
@@ -111,16 +111,12 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @Nullable Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
+  private static @NotNull Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
     for (Project project : projects) {
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
         return project;
       }
-    }
-
-    if (LightEditService.getInstance().canOpen(file) && !LightEditUtil.isOpenInExistingProject()) {
-      return null;
     }
 
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
@@ -177,7 +173,7 @@ public final class CommandLineProcessor {
     int column = -1;
     boolean tempProject = false;
     boolean shouldWait = args.contains(OPTION_WAIT);
-    LightEditUtil.setForceOpenInExistingProject(false);
+    LightEditUtil.setForceOpenInLightEditMode(false);
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
@@ -206,8 +202,14 @@ public final class CommandLineProcessor {
         continue;
       }
 
+      if (arg.equals("-e") || arg.equals("--edit")) {
+        LightEditUtil.setForceOpenInLightEditMode(true);
+        continue;
+      }
+
       if (arg.equals("-p") || arg.equals("--project")) {
-        LightEditUtil.setForceOpenInExistingProject(true);
+        // Skip, replaced with the opposite option above
+        // TODO<rv>: Remove in future versions
         continue;
       }
 
@@ -251,6 +253,11 @@ public final class CommandLineProcessor {
         null,
         CliResult.error(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
       );
+    }
+
+    if (projectAndCallback == null && LightEditUtil.isForceOpenInLightEditMode()) {
+      LightEditService.getInstance().showEditorWindow();
+      return new CommandLineProcessorResult(LightEditService.getInstance().getProject(), OK_FUTURE);
     }
 
     return projectAndCallback == null ? new CommandLineProcessorResult(null, OK_FUTURE) : projectAndCallback;

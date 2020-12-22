@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.externalComponents;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import org.jetbrains.annotations.NotNull;
@@ -13,14 +14,15 @@ import java.util.*;
  * Registry for {@link ExternalComponentSource}s, used for integrating with the {@link UpdateChecker}.
  * Keeps track of the external components and component sources that can be updated.
  */
-public class ExternalComponentManager {
+@Service
+public final class ExternalComponentManager {
   @NotNull
   public static ExternalComponentManager getInstance() {
-    return ServiceManager.getService(ExternalComponentManager.class);
+    return ApplicationManager.getApplication().getService(ExternalComponentManager.class);
   }
 
   @NotNull
-  public Iterable<ExternalComponentSource> getEnabledComponentSources(@NotNull UpdateSettings updateSettings) {
+  public static Iterable<ExternalComponentSource> getEnabledComponentSources(@NotNull UpdateSettings updateSettings) {
     refreshKnownSources(updateSettings);
     Set<String> enabledSources = new HashSet<>(updateSettings.getEnabledExternalUpdateSources());
 
@@ -29,7 +31,7 @@ public class ExternalComponentManager {
     return res;
   }
 
-  private void refreshKnownSources(@NotNull UpdateSettings updateSettings) {
+  private static void refreshKnownSources(@NotNull UpdateSettings updateSettings) {
     List<ExternalComponentSource> unknownSources = new LinkedList<>(ExternalComponentSource.EP_NAME.getExtensionList());
     Set<String> knownSources = new HashSet<>(updateSettings.getKnownExternalUpdateSources());
     unknownSources.removeIf(source -> knownSources.contains(source.getName()));

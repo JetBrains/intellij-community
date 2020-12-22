@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.copyright;
 
@@ -54,12 +40,12 @@ public class UpdateGroovyCopyrightsProvider extends UpdateCopyrightsProvider {
       }
 
       @Override
-      protected void checkCommentsForTopClass(PsiClass topclass, int location, List<PsiComment> comments) {
-        if (!(topclass instanceof GroovyScriptClass)) {
-          super.checkCommentsForTopClass(topclass, location, comments);
+      protected void checkCommentsForTopClass(PsiClass topClass, int location, List<PsiComment> comments) {
+        if (!(topClass instanceof GroovyScriptClass)) {
+          super.checkCommentsForTopClass(topClass, location, comments);
           return;
         }
-        final GroovyFile containingFile = (GroovyFile)topclass.getContainingFile();
+        final GroovyFile containingFile = (GroovyFile)topClass.getContainingFile();
 
         PsiElement last = containingFile.getFirstChild();
         while (last != null && !(last instanceof GrStatement)) {

@@ -83,8 +83,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
           addOrIncrement(templates, template);
           collectRunConfigurationFeatures(runConfiguration, templates);
           if (runConfiguration instanceof FusAwareRunConfiguration) {
-            List<EventPair> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
-            pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData.toArray(new EventPair[0]))));
+            List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+            pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData)));
           }
         }
         Set<MetricEvent> metrics = new HashSet<>();

@@ -7,10 +7,10 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil
 
-class SingleValueModel<T>(initialValue: T) {
+class SingleValueModel<T>(initialValue: T) : com.intellij.util.ui.codereview.SingleValueModel<T> {
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  var value by GithubUtil.Delegates.observableField(initialValue, changeEventDispatcher)
+  override var value by GithubUtil.Delegates.observableField(initialValue, changeEventDispatcher)
 
   @RequiresEdt
   fun addAndInvokeValueChangedListener(listener: () -> Unit) =
@@ -23,6 +23,13 @@ class SingleValueModel<T>(initialValue: T) {
   @RequiresEdt
   fun addValueChangedListener(listener: () -> Unit) =
     SimpleEventListener.addListener(changeEventDispatcher, listener)
+
+  @RequiresEdt
+  override fun addValueUpdatedListener(listener: (newValue: T) -> Unit) {
+    SimpleEventListener.addListener(changeEventDispatcher) {
+      listener(value)
+    }
+  }
 
   fun <R> map(mapper: (T) -> R): SingleValueModel<R> {
     val mappedModel = SingleValueModel(value.let(mapper))

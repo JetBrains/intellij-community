@@ -16,7 +16,7 @@ import java.util.function.Predicate;
 public interface MessageBusEx extends MessageBus {
   void clearPublisherCache();
 
-  void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<? extends ListenerDescriptor> listenerDescriptors);
+  void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<ListenerDescriptor> listenerDescriptors);
 
   /**
    * Must be called only on a root bus.

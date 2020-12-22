@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public class GCRootReferringObject implements ReferringObject {
-  @NotNull private final MemoryAgentReferenceKind myKind;
+  private final MemoryAgentReferenceKind myKind;
 
   public GCRootReferringObject(@NotNull MemoryAgentReferenceKind kind) {
     this.myKind = kind;
@@ -80,6 +80,11 @@ public class GCRootReferringObject implements ReferringObject {
       public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
       }
     };
+  }
+
+  @NotNull
+  public MemoryAgentReferenceKind getKind() {
+    return myKind;
   }
 
   @NotNull

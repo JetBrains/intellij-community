@@ -472,7 +472,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                              @NotNull VirtualFileFilter filter,
                                              @NotNull Processor<? super VirtualFile> processor) {
     // ensure predictable order because result might be cached by consumer
-    IntArrayList sortedIds = new IntArrayList(ids);
+    IntList sortedIds = new IntArrayList(ids);
     sortedIds.sort(null);
 
     PersistentFS fs = PersistentFS.getInstance();

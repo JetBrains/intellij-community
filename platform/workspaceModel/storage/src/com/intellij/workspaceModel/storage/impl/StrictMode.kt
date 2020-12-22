@@ -4,6 +4,5 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.openapi.util.registry.Registry
 
 object StrictMode {
-  var enabled = Registry.`is`("ide.new.project.model.strict.mode", true)
   var rbsEnabled = Registry.`is`("ide.new.project.model.strict.mode.rbs", true)
 }

@@ -159,17 +159,14 @@ public class PluginManagerConfigurable
     return IdeBundle.message("title.plugins");
   }
 
-  @NotNull
   @Override
-  public Component getCenterComponent(@NotNull TopComponentController controller) {
+  public @NotNull JComponent getCenterComponent(@NotNull TopComponentController controller) {
     myPluginModel.setTopController(controller);
     return myTabHeaderComponent;
   }
 
-  @NotNull
-  public JComponent getTopComponent() {
-    myPluginModel.setTopController(TopComponentController.EMPTY);
-    return myTabHeaderComponent;
+  public @NotNull JComponent getTopComponent() {
+    return getCenterComponent(TopComponentController.EMPTY);
   }
 
   @Nullable
@@ -1665,7 +1662,7 @@ public class PluginManagerConfigurable
 
   @Override
   public void cancel() {
-    myPluginModel.removePluginsOnCancel(myCardPanel);
+    reset();
   }
 
   @Override
@@ -1685,7 +1682,7 @@ public class PluginManagerConfigurable
 
   @Override
   public void reset() {
-    myPluginModel.removePluginsOnCancel(myCardPanel);
+    myPluginModel.clear(myCardPanel);
   }
 
   @NotNull

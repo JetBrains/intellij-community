@@ -39,6 +39,7 @@ public abstract class GitChangesSaver {
 
   /**
    * Returns an instance of the proper GitChangesSaver depending on the given save changes policy.
+   *
    * @return {@link GitStashChangesSaver} or {@link GitShelveChangesSaver}.
    */
   @NotNull
@@ -67,6 +68,7 @@ public abstract class GitChangesSaver {
 
   /**
    * Saves local changes in stash or in shelf.
+   *
    * @param rootsToSave Save changes only from these roots.
    */
   public void saveLocalChanges(@Nullable Collection<? extends VirtualFile> rootsToSave) throws VcsException {
@@ -96,6 +98,7 @@ public abstract class GitChangesSaver {
 
   /**
    * Saves local changes - specific for chosen save strategy.
+   *
    * @param rootsToSave local changes should be saved on these roots.
    */
   protected abstract void save(Collection<? extends VirtualFile> rootsToSave) throws VcsException;
@@ -137,7 +140,8 @@ public abstract class GitChangesSaver {
   }
 
   protected final class ShowSavedChangesNotificationListener implements NotificationListener {
-    @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
         showSavedChanges();
       }

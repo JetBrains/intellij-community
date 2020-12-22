@@ -139,7 +139,7 @@ internal class JdkUpdatesCollector(
     val jdkFeed by lazy {
       JdkListDownloader
         .getInstance()
-        .downloadForUI(progress = indicator)
+        .downloadModelForJdkInstaller(progress = indicator)
         .associateBy { it.suggestedSdkName }
     }
 

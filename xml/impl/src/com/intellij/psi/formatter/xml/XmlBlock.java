@@ -122,7 +122,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   private boolean shouldKeepWhitespaces() {
-    if (myNode.getElementType() == XmlElementType.XML_TEXT) {
+    if (isTextNode(myNode.getElementType())) {
       if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
         return true;
       }
@@ -249,12 +249,12 @@ public class XmlBlock extends AbstractXmlBlock {
     final ASTNode node2 = ((AbstractBlock)child2).getNode();
     final IElementType type2 = node2.getElementType();
 
-    if ((isXmlTag(node2) || type2 == XmlTokenType.XML_END_TAG_START || type2 == XmlElementType.XML_TEXT) && myXmlFormattingPolicy
+    if ((isXmlTag(node2) || type2 == XmlTokenType.XML_END_TAG_START || isTextNode(type2)) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
       return Spacing.getReadOnlySpacing();
     }
 
-    if (elementType == XmlElementType.XML_TEXT) {
+    if (isTextNode(elementType)) {
       return getSpacesInsideText(type1, type2);
 
     }
@@ -319,7 +319,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
   @Override
   public boolean isTextElement() {
-    return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
+    return isTextNode(myNode.getElementType()) || myNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
            myNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF || myNode.getElementType() == XmlElementType.XML_ENTITY_REF;
   }
 

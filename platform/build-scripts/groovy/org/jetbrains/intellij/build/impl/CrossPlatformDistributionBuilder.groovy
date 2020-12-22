@@ -170,12 +170,13 @@ class CrossPlatformDistributionBuilder {
     def commonFiles = linuxFiles.keySet().intersect(macFiles.keySet() as Iterable<String>)
 
     def knownExceptions = [
-            "bin/idea\\.properties",
-            "bin/printenv\\.py",
-            "bin/\\w+\\.vmoptions",
-            "bin/format\\.sh",
-            "bin/inspect\\.sh",
-            "bin/fsnotifier",
+      "bin/idea\\.properties",
+      "bin/printenv\\.py",
+      "bin/\\w+\\.vmoptions",
+      "bin/format\\.sh",
+      "bin/inspect\\.sh",
+      "bin/ltedit\\.sh",
+      "bin/fsnotifier",
     ]
 
     def violations = new ArrayList<String>()

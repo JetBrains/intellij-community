@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -199,7 +199,8 @@ class FindInProjectTask {
       Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
       if (pair == null) return true;
 
-      Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ContainerUtil.newConcurrentSet());
+      Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile,
+                                                                            __ -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
       PsiFile psiFile = pair.first;
       VirtualFile sourceVirtualFile = pair.second;
       AtomicBoolean projectFileUsagesFound = new AtomicBoolean();

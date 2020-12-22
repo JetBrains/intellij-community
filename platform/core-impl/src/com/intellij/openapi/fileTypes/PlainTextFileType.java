@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public final class PlainTextFileType extends LanguageFileType implements PlainTextLikeFileType {
+public final class PlainTextFileType extends LanguageFileType implements PlainTextLikeFileType, OSFileIdeAssociation {
   public static final PlainTextFileType INSTANCE = new PlainTextFileType();
 
   private PlainTextFileType() {
@@ -32,5 +32,10 @@ public final class PlainTextFileType extends LanguageFileType implements PlainTe
   @Override
   public @NotNull Icon getIcon() {
     return AllIcons.FileTypes.Text;
+  }
+
+  @Override
+  public Mode getFileIdeAssociationMode() {
+    return Mode.ChooseExtensions;
   }
 }

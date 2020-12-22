@@ -441,6 +441,5 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
     }
   }
 
-  @SuppressWarnings("SameParameterValue")
-  private fun JoinerFunction.join(vararg items: String) = `fun`(items.toList())
+  fun JoinerFunction.join(vararg items: String): String = `fun`(items.toList())
 }

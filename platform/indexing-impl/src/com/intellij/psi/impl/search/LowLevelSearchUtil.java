@@ -17,6 +17,7 @@ import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
@@ -233,8 +234,7 @@ public final class LowLevelSearchUtil {
 
   // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
   // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
-  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache =
-    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = CollectionFactory.createConcurrentWeakIdentityMap();
 
   /**
    * @deprecated please use {@link #processTextOccurrences(CharSequence, int, int, StringSearcher, TIntProcedure)}

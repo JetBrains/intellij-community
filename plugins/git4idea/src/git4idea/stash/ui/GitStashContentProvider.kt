@@ -18,6 +18,7 @@ import git4idea.stash.GitStashTracker
 import git4idea.stash.isStashToolWindowAvailable
 import git4idea.stash.stashToolWindowRegistryOption
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 import javax.swing.JComponent
 
@@ -28,11 +29,16 @@ class GitStashContentProvider(private val project: Project) : ChangesViewContent
     project.service<GitStashTracker>().scheduleRefresh()
 
     disposable = Disposer.newDisposable("Git Stash Content Provider")
-    return GitStashUi(project, disposable!!).mainComponent
+    return GitStashUi(project, false, disposable!!).mainComponent
   }
 
   override fun disposeContent() {
     disposable?.let { Disposer.dispose(it) }
+  }
+
+  companion object {
+    @NonNls
+    val TAB_NAME = "Stash"
   }
 }
 

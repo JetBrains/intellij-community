@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.NSWorkspace;
 import com.intellij.util.io.jna.DisposableMemory;
@@ -23,7 +24,7 @@ import static org.junit.Assert.*;
 public class FoundationTest {
   @BeforeClass
   public static void assumeMac() {
-    Assume.assumeTrue("mac only", SystemInfo.isMac);
+    IoTestUtil.assumeMacOS();
   }
 
   @Test

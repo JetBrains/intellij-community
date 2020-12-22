@@ -23,10 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -190,7 +187,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testBrokenJarRoots() throws IOException {
     File jarFile = tempDirectory.newFile("empty.jar");
     VirtualFile local = find(jarFile);
-    String rootUrl = "jar://" + local.getPath() + "!/", entryUrl = rootUrl + JarFile.MANIFEST_NAME;
+    String rootUrl = "jar://" + local.getPath() + "!/";
+    String entryUrl = rootUrl + JarFile.MANIFEST_NAME;
 
     int[] logCount = {0};
     LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
@@ -495,7 +493,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testCreateNewDirectoryEntailsLoadingAllChildren() throws Exception {
     tempDirectory.newFile("d/d1/x.txt");
-    Path source = tempDirectory.getRootPath().resolve("d"), target = tempDirectory.getRootPath().resolve("target");
+    Path source = tempDirectory.getRootPath().resolve("d");
+    Path target = tempDirectory.getRootPath().resolve("target");
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
     vTemp.refresh(false, true);
@@ -520,7 +519,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testCreateNewDirectoryEntailsLoadingAllChildrenExceptExcluded() throws Exception {
     tempDirectory.newFile("d/d1/x.txt");
-    Path source = tempDirectory.getRootPath().resolve("d"), target = tempDirectory.getRootPath().resolve("target");
+    Path source = tempDirectory.getRootPath().resolve("d");
+    Path target = tempDirectory.getRootPath().resolve("target");
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
     vTemp.refresh(false, true);
@@ -529,7 +529,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     Project project = ProjectManager.getInstance().loadAndOpenProject(tempDirectory.getRoot().getPath());
     Disposer.register(getTestRootDisposable(), () -> ProjectManager.getInstance().closeAndDispose(project));
 
-    String imlPath = tempDirectory.getRootPath().resolve("temp.iml").toString(), url = VfsUtilCore.pathToUrl(target.resolve("d1").toString());
+    String imlPath = tempDirectory.getRootPath().resolve("temp.iml").toString();
+    String url = VfsUtilCore.pathToUrl(target.resolve("d1").toString());
     WriteAction.runAndWait(() -> {
       Module module = ModuleManager.getInstance(project).newModule(imlPath, ModuleTypeManager.getInstance().getDefaultModuleType().getId());
       ModuleRootModificationUtil.updateModel(module, model -> {
@@ -672,8 +673,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader()));
 
     try {
-      File generationDir = tempDirectory.newDirectory("gen"), testDir = tempDirectory.newDirectory("test");
-      String jarName = "test.jar", entryName = "Some.java";
+      File generationDir = tempDirectory.newDirectory("gen");
+      File testDir = tempDirectory.newDirectory("test");
+      String jarName = "test.jar";
+      String entryName = "Some.java";
       String[] contents = {"class Some {}", "class Some { void m() {} }", "class Some { void mmm() {} }"};
 
       File zipFile = zipWithEntry(jarName, generationDir, testDir, entryName, contents[0]);
@@ -715,8 +718,11 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader()));
 
     try {
-      File generationDir = tempDirectory.newDirectory("gen"), testDir = tempDirectory.newDirectory("test");
-      String jarName = "test.jar", entryName = "Some.java", content = "class Some {}";
+      File generationDir = tempDirectory.newDirectory("gen");
+      File testDir = tempDirectory.newDirectory("test");
+      String jarName = "test.jar";
+      String entryName = "Some.java";
+      String content = "class Some {}";
 
       File zipFile = zipWithEntry(jarName, generationDir, testDir, entryName, content);
       String url = "jar-wrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
@@ -742,6 +748,63 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     finally {
       runInEdtAndWait(() -> Disposer.dispose(disposable));
     }
+  }
+
+  @Test
+  public void testDeleteJarRootInsideJarMustCauseDeleteLocalJarFile() throws IOException {
+    File generationDir = tempDirectory.newDirectory("gen");
+    File testDir = tempDirectory.newDirectory("test");
+
+    File jarFile = zipWithEntry("test.jar", generationDir, testDir, "Some.java", "class Some {}");
+    VirtualFile vFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(jarFile.getPath()));
+    VirtualFile jarVFile = JarFileSystem.getInstance().getJarRootForLocalFile(vFile);
+    FileUtil.delete(jarFile);
+    List<VFileEvent> events = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> e) {
+        events.addAll(e);
+      }
+    });
+
+    jarVFile.refresh(false, false);
+    assertEquals(2, events.size());
+    for (VFileEvent event : events) {
+      assertTrue(event.toString(), event instanceof VFileDeleteEvent);
+    }
+    events.sort(Comparator.comparing((VFileEvent e) ->e.getFile().getUrl()));
+    assertEquals(vFile.getUrl(), events.get(0).getFile().getUrl());
+    assertEquals(jarVFile.getUrl(), events.get(1).getFile().getUrl());
+  }
+
+  @Test
+  public void testDeleteFileDeepInsideJarFileMustCauseContentChangeForLocalJar() throws IOException {
+    File generationDir = tempDirectory.newDirectory("gen");
+    File testDir = tempDirectory.newDirectory("test");
+
+    File jarFile = zipWithEntry("test.jar", generationDir, testDir, "web.xml", "<web/>");
+    VirtualFile vFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(jarFile.getPath()));
+    VirtualFile jarVFile = JarFileSystem.getInstance().getJarRootForLocalFile(vFile);
+    VirtualFile webXml = jarVFile.findChild("web.xml");
+    File newJarFile = zipWithEntry("test2.jar", generationDir, testDir, "x.java", "class X{}");
+    FileUtil.copy(newJarFile, jarFile);
+    List<VFileEvent> events = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> e) {
+        events.addAll(e);
+      }
+    });
+
+    ((JarFileSystemImpl)JarFileSystem.getInstance()).markDirtyAndRefreshVirtualFileDeepInsideJarForTest(webXml);
+
+    assertEquals(2, events.size());
+    VFileEvent event0 = events.get(0);
+    assertTrue(event0.toString(), event0 instanceof VFileDeleteEvent);
+    assertEquals(webXml.getUrl(), event0.getFile().getUrl());
+    VFileEvent event1 = events.get(1);
+    assertTrue(event1.toString(), event1 instanceof VFileContentChangeEvent);
+    assertEquals(vFile.getUrl(), event1.getFile().getUrl());
   }
 
   //<editor-fold desc="Helpers.">

@@ -6,6 +6,7 @@ import com.intellij.history.core.Content;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ public final class SelectionCalculator {
   private final List<? extends Revision> myRevisions;
   private final int myFromLine;
   private final int myToLine;
-  private final Int2ObjectOpenHashMap<Block> myCache = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<Block> myCache = new Int2ObjectOpenHashMap<>();
 
   public SelectionCalculator(IdeaGateway gw, List<? extends Revision> rr, int fromLine, int toLine) {
     myGateway = gw;

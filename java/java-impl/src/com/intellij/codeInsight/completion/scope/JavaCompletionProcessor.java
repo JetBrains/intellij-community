@@ -112,7 +112,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
   @ApiStatus.Internal
   public static boolean seemsInternal(PsiClass clazz) {
     String name = clazz.getName();
-    return name != null && name.contains("$");
+    return name != null && name.startsWith("$");
   }
 
   @Override

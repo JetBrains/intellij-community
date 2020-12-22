@@ -5,6 +5,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
 import com.intellij.workspaceModel.storage.impl.references.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.io.Serializable
 
 /**
@@ -15,7 +16,7 @@ import java.io.Serializable
  */
 
 @Suppress("unused")
-class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable {
+class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable, WithAssertableConsistency {
   lateinit var name: String
   var type: String? = null
   lateinit var dependencies: List<ModuleDependencyItem>
@@ -65,6 +66,15 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun persistentId(): ModuleId = ModuleId(name)
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    this.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>().forEach { libraryDependency ->
+      val tableId = libraryDependency.library.tableId
+      if (tableId is LibraryTableId.ModuleLibraryTableId) {
+        assert(tableId.moduleId.name == this.name)
+      }
+    }
+  }
 }
 
 class ModuleEntity(
@@ -447,7 +457,7 @@ sealed class LibraryTableId : Serializable {
 }
 
 @Suppress("unused")
-class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable {
+class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable, WithAssertableConsistency {
   lateinit var tableId: LibraryTableId
   lateinit var name: String
   lateinit var roots: List<LibraryRoot>
@@ -473,6 +483,14 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisTableId = tableId
+    if (thisTableId is LibraryTableId.ModuleLibraryTableId) {
+      val moduleId = thisTableId.moduleId
+      assert(storage.resolve(moduleId) != null) { "Module isn't found.\nPersistent id: $moduleId\nLibrary: $this" }
+    }
+  }
 }
 
 open class LibraryEntity(

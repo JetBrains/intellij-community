@@ -39,6 +39,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.Matcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,7 +173,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   private boolean processOptions(String pattern, Processor<? super MatchedValue> consumer, DataContext dataContext) {
-    Map<String, String> map = myModel.getConfigurablesNames();
+    Map<@NonNls String, @NlsContexts.ConfigurableName String> map = myModel.getConfigurablesNames();
     SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
 
     List<Object> options = new ArrayList<>();
@@ -202,7 +203,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     if (!StringUtil.isEmptyOrSpaces(pattern)) {
       Matcher matcher = buildMatcher(pattern);
       if (optionDescriptions == null) optionDescriptions = new THashSet<>();
-      for (Map.Entry<String, String> entry : map.entrySet()) {
+      for (Map.Entry<@NonNls String, @NlsContexts.ConfigurableName String> entry : map.entrySet()) {
         if (matcher.matches(entry.getValue())) {
           optionDescriptions.add(new OptionDescription(null, entry.getKey(), entry.getValue(), null, entry.getValue()));
         }

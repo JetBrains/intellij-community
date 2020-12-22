@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,8 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
   public GotoFileModel(@NotNull Project project) {
     super(project, ChooseByNameContributor.FILE_EP_NAME.getExtensionList());
-    myMaxSize = ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
+    Application application = ApplicationManager.getApplication();
+    myMaxSize = (application.isUnitTestMode() || application.isHeadlessEnvironment()) ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
   }
 
   public boolean isSlashlessMatchingEnabled() {

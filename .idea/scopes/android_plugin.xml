@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="android-plugin" pattern="file[android*]:*//*||file[intellij.android*]:*//*" />
-</component>

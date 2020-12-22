@@ -74,6 +74,10 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
       if (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD) return false;
       if (parent.getParent() instanceof PsiClass) {
         PsiClass psiClass = (PsiClass)parent.getParent();
+        if (psiClass.getPermitsList() == parent) {
+          if (myKind == CreateClassKind.INTERFACE && !psiClass.isInterface()) return false;
+          return true;
+        }
         if (psiClass.getExtendsList() == parent) {
           if (myKind == CreateClassKind.CLASS && !psiClass.isInterface()) return true;
           if (myKind == CreateClassKind.INTERFACE && psiClass.isInterface()) return true;

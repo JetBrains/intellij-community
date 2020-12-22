@@ -53,8 +53,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class ScopeEditorPanel {
-
+public final class ScopeEditorPanel {
   private JPanel myButtonsPanel;
   private RawCommandLineEditor myPatternField;
   private JPanel myTreeToolbar;
@@ -65,7 +64,7 @@ public class ScopeEditorPanel {
   private JPanel myLegendPanel;
 
   private final Project myProject;
-  private final TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor<?> myTreeExpansionMonitor;
   private final Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
@@ -311,7 +310,10 @@ public class ScopeEditorPanel {
   }
 
   @Nullable
-  static PackageSet processComplementaryScope(@NotNull PackageSet current, PackageSet added, boolean checkComplementSet, boolean[] append) {
+  private static PackageSet processComplementaryScope(@NotNull PackageSet current,
+                                                      PackageSet added,
+                                                      boolean checkComplementSet,
+                                                      boolean[] append) {
     final String text = added.getText();
     if (current instanceof ComplementPackageSet &&
         Comparing.strEqual(((ComplementPackageSet)current).getComplementarySet().getText(), text)) {
@@ -456,7 +458,7 @@ public class ScopeEditorPanel {
       }
     });
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(), ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions());
   }
 
   private ActionGroup createTreePopupActions() {

@@ -547,8 +547,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected String getText(@NotNull Side side) {
-      if (myModifiedSide == Side.RIGHT && isDiffForLocalChanges()) return DiffBundle.message("action.presentation.diff.revert.text");
-      return DiffBundle.message("action.presentation.diff.accept.text");
+      return SimpleDiffChangeUi.getApplyActionText(SimpleDiffViewer.this, myModifiedSide.other());
     }
 
     @Nullable

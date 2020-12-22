@@ -42,7 +42,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   @Override
   public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
-    assert extensionPoint != null;
+    if (extensionPoint == null) return;
 
     final String interfaceName = extensionPoint.getInterface().getStringValue();
     if (interfaceName != null) {

@@ -4,12 +4,12 @@ package com.intellij.execution.ui;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +37,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private @Nullable @Nls String myActionHint;
   private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
+  private boolean myCanBeHidden;
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -147,6 +148,17 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myRemovable = removable;
   }
 
+  /**
+   * Can be hidden by user even if {@link #isInitiallyVisible(Object)} returns true
+   */
+  public boolean isCanBeHidden() {
+    return myCanBeHidden;
+  }
+
+  public void setCanBeHidden(boolean canBeHidden) {
+    myCanBeHidden = canBeHidden;
+  }
+
   public void setSelected(boolean selected) {
     myComponent.setVisible(selected);
     if (myHintComponent != null) {
@@ -159,7 +171,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     setSelected(selected);
     if (selected) {
       myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
-      IdeFocusManager.getGlobalInstance().requestFocus(getEditorComponent(), false);
     }
   }
 
@@ -167,17 +178,16 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myEditorGetter = editorGetter;
   }
 
-  @NotNull
   public JComponent getEditorComponent() {
     JComponent component = component();
     if (myEditorGetter != null) return myEditorGetter.apply(component());
     if (component instanceof LabeledComponent) {
-      return ((LabeledComponent<?>)component).getComponent();
+      component = ((LabeledComponent<?>)component).getComponent();
     }
     else if (component instanceof  TagButton) {
       return ((TagButton)component).myButton;
     }
-    return component;
+    return component instanceof ComponentWithBrowseButton ? ((ComponentWithBrowseButton<?>)component).getChildComponent() : component;
   }
 
   public int getCommandLinePosition() {

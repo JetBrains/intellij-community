@@ -5,12 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 public class Enumerator<T> {
   private static final Logger LOG = Logger.getInstance(Enumerator.class);
-  private final Object2IntOpenHashMap<T> myNumbers;
+  private final Object2IntMap<T> myNumbers;
   private int myNextNumber = 1;
 
   public Enumerator(int expectNumber) {
@@ -75,8 +74,7 @@ public class Enumerator<T> {
   @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
-    for (ObjectIterator<Object2IntMap.Entry<T>> iterator = myNumbers.object2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
-      Object2IntMap.Entry<T> entry = iterator.next();
+    for (Object2IntMap.Entry<T> entry : myNumbers.object2IntEntrySet()) {
       buffer.append(entry.getIntValue()).append(": ").append(entry.getKey()).append("\n");
     }
     return buffer.toString();

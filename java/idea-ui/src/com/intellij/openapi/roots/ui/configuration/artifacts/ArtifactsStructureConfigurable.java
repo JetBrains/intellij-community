@@ -314,7 +314,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public void disposeUIResources() {
     myPackagingEditorContext.saveEditorSettings();
     super.disposeUIResources();
-    myPackagingEditorContext.disposeUIResources();
+    myPackagingEditorContext.resetModifiableModel();
   }
 
   @Override

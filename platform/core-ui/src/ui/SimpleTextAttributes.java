@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -59,7 +59,7 @@ public final class SimpleTextAttributes {
   public static final SimpleTextAttributes DARK_TEXT = new SimpleTextAttributes(STYLE_PLAIN, new Color(112, 112, 164));
   public static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, new JBColor(Gray._0, Gray._187));
   public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES =
-    new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground());
+    new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground(true));
   public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
 
   public static final SimpleTextAttributes LINK_PLAIN_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor());
@@ -164,7 +164,7 @@ public final class SimpleTextAttributes {
   public boolean isSearchMatch() {
     return BitUtil.isSet(myStyle, STYLE_SEARCH_MATCH);
   }
-  
+
   public boolean isSmaller() {
     return BitUtil.isSet(myStyle, STYLE_SMALLER);
   }

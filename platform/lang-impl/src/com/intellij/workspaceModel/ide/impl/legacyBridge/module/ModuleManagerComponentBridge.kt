@@ -34,7 +34,6 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.RootsChangeWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -131,10 +130,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
           }
 
-          if (!RootsChangeWatcher.getInstance(project).rootFilePointers.isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.beforeChanged(event)
-          }
+          rootsChangeListener.beforeChanged(event)
         }
 
         override fun changed(event: VersionedStorageChange) {
@@ -184,11 +180,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
           }
 
-          // Roots changed should be sent after syncing with legacy bridge
-          if (!RootsChangeWatcher.getInstance(project).rootFilePointers.isInsideFilePointersUpdate) {
-            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
-            rootsChangeListener.changed(event)
-          }
+          rootsChangeListener.changed(event)
         }
       })
     }
@@ -541,7 +533,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path {
     val entitySource = (moduleEntity.entitySource as? JpsFileDependentEntitySource)?.originalSource ?: moduleEntity.entitySource
     val directoryPath = when (entitySource) {
-      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.filePath!!
+      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.presentableUrl
       // TODO Is this fallback fake path ok?
       else -> outOfTreeModulesPath
     }

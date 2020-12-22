@@ -27,7 +27,8 @@ import java.awt.*;
 public interface StatusBar extends StatusBarInfo, Disposable {
   @SuppressWarnings("AbstractClassNeverImplemented")
   final class Info {
-    public static final Topic<StatusBarInfo> TOPIC = new Topic<>("IdeStatusBar.Text", StatusBarInfo.class);
+    @Topic.ProjectLevel
+    public static final Topic<StatusBarInfo> TOPIC = new Topic<>("IdeStatusBar.Text", StatusBarInfo.class, Topic.BroadcastDirection.NONE);
 
     private Info() {
     }
@@ -137,13 +138,6 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   default StatusBar createChild() {
     return this;
   }
-
-  /**
-   * @deprecated frame is immutable now
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  default void install(@NotNull IdeFrame frame) {}
 
   final class Anchors {
     public static final String DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL);

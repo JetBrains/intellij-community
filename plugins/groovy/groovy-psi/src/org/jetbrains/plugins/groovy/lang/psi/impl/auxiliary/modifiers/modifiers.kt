@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GrModifierListUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
 
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant
@@ -21,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isInterface
 import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 
@@ -41,8 +44,11 @@ internal fun hasExplicitModifier(modifierList: GrModifierList, @GrModifierConsta
   return modifierList.modifierFlags.hasMaskModifier(name)
 }
 
-internal fun hasModifierProperty(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String): Boolean {
-  return hasExplicitModifier(modifierList, name) || hasImplicitModifier(modifierList, name)
+@JvmOverloads
+internal fun hasModifierProperty(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String, includeSynthetic: Boolean = true): Boolean {
+  return hasExplicitModifier(modifierList, name) ||
+         hasImplicitModifier(modifierList, name) ||
+         (includeSynthetic && hasSyntheticModifier(modifierList, name))
 }
 
 private fun hasImplicitModifier(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String): Boolean {
@@ -52,6 +58,15 @@ private fun hasImplicitModifier(modifierList: GrModifierList, @GrModifierConstan
     PsiModifier.STATIC -> modifierList.isStatic()
     else -> name in visibilityModifiers && name == modifierList.getImplicitVisiblity()
   }
+}
+
+internal fun hasCodeModifierProperty(owner : PsiModifierListOwner, @GrModifierConstant @NonNls modifierName : String) : Boolean {
+  return (owner.modifierList as? GrModifierList)?.let { hasModifierProperty(it, modifierName, false) } ?: false
+}
+
+private fun hasSyntheticModifier(modifierList: GrModifierList, name: String) : Boolean {
+  val containingTypeDefinition = modifierList.parentOfType<GrTypeDefinition>() as? GrTypeDefinitionImpl ?: return false
+  return containingTypeDefinition.getSyntheticModifiers(modifierList).contains(name)
 }
 
 private fun GrModifierList.isAbstract(): Boolean {

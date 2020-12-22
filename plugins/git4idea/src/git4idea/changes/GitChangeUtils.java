@@ -353,12 +353,13 @@ public final class GitChangeUtils {
   @NotNull
   public static Collection<GitDiffChange> getUnstagedChanges(@NotNull Project project,
                                                              @NotNull VirtualFile root,
+                                                             @Nullable Collection<FilePath> paths,
                                                              boolean detectMoves) throws VcsException {
     if (detectMoves) {
-      return getLocalChanges(project, root, null, "-M");
+      return getLocalChanges(project, root, paths, "-M");
     }
     else {
-      return getLocalChanges(project, root, null, "--no-renames");
+      return getLocalChanges(project, root, paths, "--no-renames");
     }
   }
 

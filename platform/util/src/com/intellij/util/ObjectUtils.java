@@ -19,12 +19,9 @@ import java.util.function.Predicate;
  * @author peter
  */
 public final class ObjectUtils {
-  private ObjectUtils() {
-  }
+  private ObjectUtils() { }
 
-  /**
-   * @see NotNullizer
-   */
+  /** @see NotNullizer */
   public static final Object NULL = sentinel("ObjectUtils.NULL");
 
   /**
@@ -141,18 +138,12 @@ public final class ObjectUtils {
 
   @Contract(value = "null, _ -> null", pure = true)
   public static @Nullable <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
-    if (clazz.isInstance(obj)) {
-      return clazz.cast(obj);
-    }
-    return null;
+    return clazz.isInstance(obj) ? clazz.cast(obj) : null;
   }
 
-  public static @Nullable <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Convertor<? super T, ? extends S> convertor) {
-    if (clazz.isInstance(obj)) {
-      //noinspection unchecked
-      return convertor.convert((T)obj);
-    }
-    return null;
+  @SuppressWarnings("unchecked")
+  public static @Nullable <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, Convertor<? super T, ? extends S> convertor) {
+    return clazz.isInstance(obj) ? convertor.convert((T)obj) : null;
   }
 
   @Contract("null, _ -> null")
@@ -168,30 +159,24 @@ public final class ObjectUtils {
 
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<? super T> consumer) {
     if (clazz.isInstance(obj)) {
-      //noinspection unchecked
-      consumer.consume((T)obj);
+      @SuppressWarnings("unchecked") T t = (T)obj;
+      consumer.consume(t);
     }
   }
 
   @Contract("null, _ -> null")
   public static @Nullable <T> T nullizeByCondition(final @Nullable T obj, final @NotNull Predicate<? super T> condition) {
-    if (condition.test(obj)) {
-      return null;
-    }
-    return obj;
+    return condition.test(obj) ? null : obj;
   }
 
   @Contract("null, _ -> null")
   public static @Nullable <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
-    if (obj == defaultValue) {
-      return null;
-    }
-    return obj;
+    return obj != defaultValue ? obj : null;
   }
 
   /**
    * Performs binary search on the range [fromIndex, toIndex)
-   * @param indexComparator a comparator which receives a middle index and returns the result of comparision of the value at this index and the goal value
+   * @param indexComparator a comparator which receives a middle index and returns the result of comparison of the value at this index and the goal value
    *                        (e.g 0 if found, -1 if the value[middleIndex] < goal, or 1 if value[middleIndex] > goal)
    * @return index for which {@code indexComparator} returned 0 or {@code -insertionIndex-1} if wasn't found
    * @see java.util.Arrays#binarySearch(Object[], Object, Comparator)

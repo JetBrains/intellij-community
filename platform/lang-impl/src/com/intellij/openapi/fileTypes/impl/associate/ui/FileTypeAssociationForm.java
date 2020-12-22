@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl.associate.ui;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
+import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
@@ -31,8 +33,6 @@ import java.util.stream.Collectors;
 
 public class FileTypeAssociationForm {
 
-  public static final int SPLIT_EXTENSIONS_THRESHOLD = 5;
-
   private JPanel               myTopPanel;
   private JBScrollPane         myScrollPane;
   private JBLabel              myDescLabel;
@@ -54,6 +54,7 @@ public class FileTypeAssociationForm {
 
   private void createUIComponents() {
     myItems = createItems();
+    presetItems();
     DefaultListModel<JCheckBox> model = new DefaultListModel<>();
     CheckBoxList<MyFileTypeItem> checkBoxList = new CheckBoxList<>(model) {
       @Override
@@ -108,18 +109,16 @@ public class FileTypeAssociationForm {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (FileType fileType : fileTypeManager.getRegisteredFileTypes()) {
       if (isSupported(fileType)) {
-        int matchersCount = OSAssociateFileTypesUtil.getExtensionMatchers(fileType).size();
-        if (matchersCount > 0) {
-          if (matchersCount > SPLIT_EXTENSIONS_THRESHOLD) {
+        int extCount = OSAssociateFileTypesUtil.getExtensionMatchers(fileType).size();
+        if (extCount > 0) {
+          if (splitExtensions(fileType, extCount)) {
             items.add(new MyFileTypeItem(fileType, null, true));
             OSAssociateFileTypesUtil.createSubtypes(fileType).forEach(
               subtype -> items.add(new MyFileTypeItem(subtype, fileType, false))
             );
           }
           else {
-            if (!fileType.isReadOnly()) {
-              items.add(new MyFileTypeItem(fileType, null, false));
-            }
+            items.add(new MyFileTypeItem(fileType, null, false));
           }
         }
       }
@@ -128,8 +127,29 @@ public class FileTypeAssociationForm {
     return new ArrayList<>(items);
   }
 
+  private void presetItems() {
+    OSFileAssociationPreferences preferences = OSFileAssociationPreferences.getInstance();
+    myItems.forEach(
+      item -> {
+        boolean selected = preferences.contains(item.myFileType);
+        item.setSelected(selected);
+        onItemStateChange(item, selected);
+      }
+    );
+  }
+
+  private static boolean splitExtensions(@NotNull FileType fileType, int extCount) {
+    return extCount > 1 &&
+           fileType instanceof OSFileIdeAssociation &&
+           ((OSFileIdeAssociation)fileType).getFileIdeAssociationMode().equals(OSFileIdeAssociation.Mode.ChooseExtensions);
+  }
+
   private static boolean isSupported(@NotNull FileType fileType) {
-    return !(fileType instanceof NativeFileType);
+    return !(fileType instanceof NativeFileType) &&
+           !(fileType instanceof UserBinaryFileType) &&
+           !(fileType instanceof ArchiveFileType) &&
+           (!(fileType instanceof OSFileIdeAssociation) ||
+            !((OSFileIdeAssociation)fileType).getFileIdeAssociationMode().equals(OSFileIdeAssociation.Mode.Unsupported));
   }
 
   private void onItemStateChange(@NotNull MyFileTypeItem currItem, boolean isSelected) {

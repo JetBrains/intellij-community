@@ -417,7 +417,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val key = serviceClass.name
     val adapter = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
     val indicator = ProgressManager.getGlobalProgressIndicator()
-
     if (adapter != null) {
       if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
         adapter.throwAlreadyDisposedError(this, indicator)
@@ -472,10 +471,33 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     if (result != null || !createIfNeeded) {
       return result
     }
-    else {
-      synchronized(serviceClass) {
-        return getOrCreateLightService(serviceClass, lightServices)
+
+    if (isDisposed) {
+      val error = AlreadyDisposedException("Cannot create light service ${serviceClass.name} because container is already disposed (container=$this)")
+      if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+        throw error
       }
+      else {
+        throw ProcessCanceledException(error)
+      }
+    }
+
+    // assertion only for non-platform plugins
+    val classLoader = serviceClass.classLoader
+    if (classLoader is PluginAwareClassLoader && !isGettingServiceAllowedDuringPluginUnloading(classLoader.pluginDescriptor)) {
+      componentContainerIsReadonly?.let {
+        val error = AlreadyDisposedException("Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this")
+        if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+          throw error
+        }
+        else {
+          throw ProcessCanceledException(error)
+        }
+      }
+    }
+
+    synchronized(serviceClass) {
+      return getOrCreateLightService(serviceClass, lightServices)
     }
   }
 
@@ -873,7 +895,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   fun startDispose() {
     stopServicePreloading()
 
-    Disposer.disposeChildren(this)
+    Disposer.disposeChildren(this, null)
 
     val messageBus = messageBus
     // There is a chance that someone will try to connect to message bus and will get NPE because of disposed connection disposable,
@@ -1013,4 +1035,8 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   else {
     throw StartupAbortedException("Fatal error initializing '$componentClassName'", t)
   }
+}
+
+internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDescriptor): Boolean {
+  return descriptor.isRequireRestart || descriptor.pluginId == PluginManagerCore.CORE_ID || descriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -50,6 +51,11 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
       model.setFilterItems(myFilter.getSelectedElements());
     }
     return model;
+  }
+
+  @Override
+  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
+    return new SearchEverywhereCommandInfo("s", IdeBundle.message("search.everywhere.filter.symbols.description"), this);
   }
 
   @NotNull

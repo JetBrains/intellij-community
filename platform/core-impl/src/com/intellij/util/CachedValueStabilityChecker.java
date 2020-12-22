@@ -9,17 +9,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
@@ -61,7 +58,7 @@ import java.util.function.Supplier;
  */
 final class CachedValueStabilityChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueStabilityChecker.class);
-  private static final Set<String> ourReportedKeys = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourReportedKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private static final ConcurrentMap<Class<?>, List<Field>> ourFieldCache = ConcurrentFactoryMap.createMap(ReflectionUtil::collectFields);
   private static final boolean DO_CHECKS = shouldDoChecks();
 

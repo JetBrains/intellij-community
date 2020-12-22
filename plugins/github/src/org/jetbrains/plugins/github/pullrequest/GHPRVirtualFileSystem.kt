@@ -17,7 +17,7 @@ internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualF
 ) {
   override fun getProtocol() = PROTOCOL
 
-  override fun findFile(project: Project, path: GHPRFilePath): VirtualFile? {
+  override fun findOrCreateFile(project: Project, path: GHPRFilePath): VirtualFile? {
     val filesManager = GHPRDataContextRepository.getInstance(project).findContext(path.repository)?.filesManager ?: return null
     return if (path.isDiff) filesManager.findDiffFile(path.prId) else filesManager.findTimelineFile(path.prId)
   }

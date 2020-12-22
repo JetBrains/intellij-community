@@ -11,27 +11,21 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper
 abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.ComplexPath>(
   private val pathSerializer: ComplexPathSerializer<P>
 ) : DeprecatedVirtualFileSystem() {
-  protected abstract fun findFile(project: Project, path: P): VirtualFile?
+  protected abstract fun findOrCreateFile(project: Project, path: P): VirtualFile?
 
   fun getPath(path: P): String = pathSerializer.serialize(path)
 
   fun getComplexPath(path: String): P = pathSerializer.deserialize(path)
 
   override fun findFileByPath(path: String): VirtualFile? {
-    val parsedPath = try {
-      getComplexPath(path)
-    }
-    catch (e: Exception) {
-      LOG.warn("Cannot deserialize $path", e)
-      return null
-    }
+    val parsedPath = parsePath(path) ?: return null
     val project = ProjectManagerEx.getInstanceEx().findOpenProjectByHash(parsedPath.projectHash) ?: return null
-    return findFile(project, parsedPath)
+    return findOrCreateFile(project, parsedPath)
   }
 
   override fun refreshAndFindFileByPath(path: String) = findFileByPath(path)
 
-  override fun extractPresentableUrl(path: String) = (findFileByPath(path) as? VirtualFilePathWrapper)?.presentablePath ?: path
+  override fun extractPresentableUrl(path: String) = (refreshAndFindFileByPath(path) as? VirtualFilePathWrapper)?.presentablePath ?: path
 
   override fun refresh(asynchronous: Boolean) {}
 
@@ -53,6 +47,16 @@ abstract class ComplexPathVirtualFileSystem<P : ComplexPathVirtualFileSystem.Com
   interface ComplexPathSerializer<P : ComplexPath> {
     fun serialize(path: P): String
     fun deserialize(rawPath: String): P
+  }
+
+  private fun parsePath(path: String): P? {
+    return try {
+      getComplexPath(path)
+    }
+    catch (e: Exception) {
+      LOG.warn("Cannot deserialize $path", e)
+      return null
+    }
   }
 
   companion object {

@@ -13,8 +13,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -82,12 +82,9 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
                              ChangesBrowserWithRollback.this, ChangesBrowserWithRollback.this);
 
     private void doUpdate() {
-      myUpdateQueue.queue(new Update("update") {
-        @Override
-        public void run() {
-          myViewer.rebuildTree();
-        }
-      });
+      myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
+        myViewer.rebuildTree();
+      }));
     }
 
     @Override

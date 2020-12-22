@@ -32,6 +32,8 @@ import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.floats.FloatList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -119,9 +121,9 @@ public final class EditorPainter implements TextDrawingCallback {
     private final int mySeparatorHighlightersEndOffset;
     private final ClipDetector myClipDetector;
     private final IterationState.CaretData myCaretData;
-    private final Int2ObjectOpenHashMap<IntPair> myVirtualSelectionMap;
-    private final Int2ObjectOpenHashMap<List<LineExtensionData>> myExtensionData = new Int2ObjectOpenHashMap<>(); // key is visual line
-    private final Int2ObjectOpenHashMap<TextAttributes> myBetweenLinesAttributes = new Int2ObjectOpenHashMap<>(); // key is bottom visual line
+    private final Int2ObjectMap<IntPair> myVirtualSelectionMap;
+    private final Int2ObjectMap<List<LineExtensionData>> myExtensionData = new Int2ObjectOpenHashMap<>(); // key is visual line
+    private final Int2ObjectMap<TextAttributes> myBetweenLinesAttributes = new Int2ObjectOpenHashMap<>(); // key is bottom visual line
     private final int myLineHeight;
     private final int myAscent;
     private final int myDescent;
@@ -477,8 +479,8 @@ public final class EditorPainter implements TextDrawingCallback {
       }
     }
 
-    private static @NotNull Int2ObjectOpenHashMap<IntPair> createVirtualSelectionMap(Editor editor, int startVisualLine, int endVisualLine) {
-      Int2ObjectOpenHashMap<IntPair> map = new Int2ObjectOpenHashMap<>();
+    private static @NotNull Int2ObjectMap<IntPair> createVirtualSelectionMap(Editor editor, int startVisualLine, int endVisualLine) {
+      Int2ObjectMap<IntPair> map = new Int2ObjectOpenHashMap<>();
       for (Caret caret : editor.getCaretModel().getAllCarets()) {
         if (caret.hasSelection()) {
           VisualPosition selectionStart = caret.getSelectionStartPosition();
@@ -936,7 +938,7 @@ public final class EditorPainter implements TextDrawingCallback {
       VisualPosition endPosition = myView.offsetToVisualPosition(endOffset, false, true);
       if (startPosition.line == endPosition.line) {
         int y = myView.visualLineToY(startPosition.line) + myYShift;
-        FloatArrayList ranges = adjustedLogicalRangeToVisualRanges(startOffset, endOffset);
+        FloatList ranges = adjustedLogicalRangeToVisualRanges(startOffset, endOffset);
         for (int i = 0; i < ranges.size() - 1; i += 2) {
           float startX = myCorrector.singleLineBorderStart(ranges.getFloat(i));
           if (startX - margin >= myCorrector.startX(startPosition.line)) {
@@ -947,9 +949,9 @@ public final class EditorPainter implements TextDrawingCallback {
         }
       }
       else {
-        FloatArrayList leadingRanges = adjustedLogicalRangeToVisualRanges(
+        FloatList leadingRanges = adjustedLogicalRangeToVisualRanges(
           startOffset, myView.visualPositionToOffset(new VisualPosition(startPosition.line, Integer.MAX_VALUE, true)));
-        FloatArrayList trailingRanges = adjustedLogicalRangeToVisualRanges(
+        FloatList trailingRanges = adjustedLogicalRangeToVisualRanges(
           myView.visualPositionToOffset(new VisualPosition(endPosition.line, 0)), endOffset);
         if (!leadingRanges.isEmpty() && !trailingRanges.isEmpty()) {
           int minX = Math.min(myCorrector.minX(startPosition.line, endPosition.line), (int)leadingRanges.getFloat(0));
@@ -1055,8 +1057,8 @@ public final class EditorPainter implements TextDrawingCallback {
      * Returns ranges obtained from {@link #logicalRangeToVisualRanges(int, int)}, adjusted for painting range border - lines should
      * line inside target ranges (except for empty range). Target offsets are supposed to be located on the same visual line.
      */
-    private FloatArrayList adjustedLogicalRangeToVisualRanges(int startOffset, int endOffset) {
-      FloatArrayList ranges = logicalRangeToVisualRanges(startOffset, endOffset);
+    private FloatList adjustedLogicalRangeToVisualRanges(int startOffset, int endOffset) {
+      FloatList ranges = logicalRangeToVisualRanges(startOffset, endOffset);
       for (int i = 0; i < ranges.size() - 1; i += 2) {
         float startX = ranges.getFloat(i);
         float endX = ranges.getFloat(i + 1);
@@ -1083,9 +1085,9 @@ public final class EditorPainter implements TextDrawingCallback {
      * {@code startOffset == endOffset}, a pair of equal numbers is returned, corresponding to target position. Target offsets are
      * supposed to be located on the same visual line.
      */
-    private FloatArrayList logicalRangeToVisualRanges(int startOffset, int endOffset) {
+    private FloatList logicalRangeToVisualRanges(int startOffset, int endOffset) {
       assert startOffset <= endOffset;
-      FloatArrayList result = new FloatArrayList();
+      FloatList result = new FloatArrayList();
       if (myDocument.getTextLength() == 0) {
         int minX = myCorrector.emptyTextX();
         result.add(minX);

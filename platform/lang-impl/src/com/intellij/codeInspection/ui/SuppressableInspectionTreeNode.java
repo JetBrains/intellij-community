@@ -5,6 +5,7 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +26,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   @NotNull
   private final InspectionToolPresentation myPresentation;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
-  private volatile String myPresentableName;
+  private volatile @Nls String myPresentableName;
   private volatile Boolean myValid;
   private volatile NodeState myPreviousState;
 
@@ -124,9 +126,9 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       return "";
     }
     if (isAlreadySuppressedFromView()) {
-      return "Suppressed";
+      return LangBundle.message("suppressed");
     }
-    return !isValid() ? "No longer valid" : null;
+    return !isValid() ? LangBundle.message("no.longer.valid") : null;
   }
 
   @NotNull
@@ -155,6 +157,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       .collect(Collectors.toCollection(() -> ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy()))));
   }
 
+  @Nls
   protected abstract String calculatePresentableName();
 
   protected abstract boolean calculateIsValid();

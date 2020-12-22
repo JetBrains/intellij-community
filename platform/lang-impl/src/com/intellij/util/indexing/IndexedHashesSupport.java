@@ -5,10 +5,9 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.indexing.flavor.FileIndexingFlavorProvider;
 import com.intellij.util.indexing.flavor.HashBuilder;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,28 +21,25 @@ public final class IndexedHashesSupport {
   // TODO replace with sha-256
   private static final HashFunction INDEXED_FILE_CONTENT_HASHER = Hashing.sha1();
 
+  public static final int HASH_SIZE_IN_BYTES = INDEXED_FILE_CONTENT_HASHER.bits() / Byte.SIZE;
+
   public static int getVersion() {
     return 3;
   }
 
   public static byte @NotNull [] getOrInitIndexedHash(@NotNull FileContentImpl content) {
-    byte[] hash = content.getHash();
+    byte[] hash = content.getIndexedFileHash();
     if (hash != null) return hash;
-
-    byte[] contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
-    if (contentHash == null) {
-      contentHash = getBinaryContentHash(content.getContent());
-      // todo store content hash in FS
-    }
-
+    byte[] contentHash = getBinaryContentHash(content.getContent());
     hash = calculateIndexedHash(content, contentHash, false);
-    content.setHashes(hash);
+    content.setIndexedFileHash(hash);
     return hash;
   }
 
   public static byte @NotNull [] getBinaryContentHash(byte @NotNull [] content) {
-    //TODO: duplicate of com.intellij.openapi.vfs.newvfs.persistent.FSRecords.calculateHash
-    MessageDigest digest = FSRecords.getContentHashDigest();
+    // TODO: simplify to calculating content hash of only the content[].
+    // Shared Indexes that are already available on CDN will have their hashes invalidated after it.
+    MessageDigest digest = DigestUtil.sha1();
     digest.update(String.valueOf(content.length).getBytes(StandardCharsets.UTF_8));
     digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
     digest.update(content);

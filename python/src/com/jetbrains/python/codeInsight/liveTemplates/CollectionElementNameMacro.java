@@ -21,11 +21,6 @@ public class CollectionElementNameMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return "collectionElementName()";
-  }
-
-  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";

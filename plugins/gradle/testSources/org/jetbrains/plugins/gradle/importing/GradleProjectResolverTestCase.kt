@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.setRegistryPropertyForTest
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.util.isSupported
 
@@ -37,6 +38,8 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     application.replaceService(Environment::class.java, TestEnvironment(), testRootDisposable)
     application.replaceService(ExternalSystemJdkProvider::class.java, TestJdkProvider(), testRootDisposable)
 
+    setRegistryPropertyForTest("unknown.sdk.auto", false)
+    setRegistryPropertyForTest("use.jdk.vendor.in.suggested.jdk.name", false) //we have inconsistency between SDK names in JDK
     SdkType.EP_NAME.point.registerExtension(SdkTestCase.TestSdkType, testRootDisposable)
 
     environment.variables(ExternalSystemJdkUtil.JAVA_HOME to null)

@@ -29,11 +29,17 @@ public final class IconLoadMeasurer {
   public static final Counter loadFromUrl = new Counter("load-from-url");
   public static final Counter loadFromResources = new Counter("load-from-resource");
 
+  /**
+   * Get icon for action. Measured to understand impact.
+   */
+  public static final Counter actionIcon = new Counter("action-icon");
+
   public static @NotNull List<Counter> getStats() {
     return Arrays.asList(findIcon, findIconLoad,
                          loadFromUrl, loadFromResources,
                          svgLoading, svgDecoding, svgPreBuiltLoad, svgCacheRead, svgCacheWrite,
-                         pngLoading, pngDecoding);
+                         pngLoading, pngDecoding,
+                         actionIcon);
   }
 
   public static void addLoading(boolean isSvg, long start) {

@@ -32,6 +32,14 @@ data class RegisterToolWindowTask(
 
     @JvmStatic
     @JvmOverloads
+    fun closable(id: String, 
+                 stripeTitle: Supplier<@NlsContexts.TabTitle String>,
+                 icon: Icon, 
+                 anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, icon = icon, anchor = anchor, stripeTitle = stripeTitle)
+
+    @JvmStatic
+    @JvmOverloads
     fun closableSecondary(id: String,
                           stripeTitle: Supplier<@NlsContexts.TabTitle String>,
                           icon: Icon,

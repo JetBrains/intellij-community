@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -110,14 +110,11 @@ public final class ConfigurableExtensionPointUtil {
    * @return the root configurable group that represents a tree of settings
    */
   public static @NotNull ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
-    if (!withIdeSettings && project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-
-    Project finalProject = project;
-    return new EpBasedConfigurableGroup(finalProject, () -> {
-      return getConfigurableGroup(getConfigurables(finalProject, withIdeSettings), finalProject);
-    });
+    Project targetProject = withIdeSettings ? project : ProjectUtil.currentOrDefaultProject(project);
+    return new EpBasedConfigurableGroup(
+      targetProject,
+      () -> getConfigurableGroup(getConfigurables(targetProject, withIdeSettings), targetProject)
+    );
   }
 
   /**
@@ -352,7 +349,7 @@ public final class ConfigurableExtensionPointUtil {
   }
 
   /**
-   * @param project         a project used to load project settings or {@code null}
+   * @param project         a project used to load project settings for or {@code null}
    * @param withIdeSettings specifies whether to load application settings or not
    * @return the list of all valid settings according to parameters
    */

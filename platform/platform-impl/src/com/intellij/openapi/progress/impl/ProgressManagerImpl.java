@@ -21,13 +21,15 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
-  private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
+  private final Set<CheckCanceledHook> myHooks = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final CheckCanceledHook mySleepHook = __ -> sleepIfNeededToGivePriorityToAnotherThread();
 
   public ProgressManagerImpl() {
@@ -53,7 +55,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread()
-                             ? p -> { ((PingProgress)progress).interact(); return true; } 
+                             ? p -> { ((PingProgress)progress).interact(); return true; }
                              : null;
     if (hook != null) {
       addCheckCanceledHook(hook);

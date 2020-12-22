@@ -71,7 +71,6 @@ import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -83,7 +82,6 @@ public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance(VariableInplaceRenamer.class);
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls protected static final String OTHER_VARIABLE_NAME = "OtherVariable";
-  protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<>();
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
   private static boolean ourShowBalloonInHeadlessMode = false;
@@ -145,11 +143,11 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  public static void unableToStartWarning(Project project, Editor editor) {
-    final StartMarkAction startMarkAction = StartMarkAction.canStart(project);
+  public static void unableToStartWarning(Project project, @NotNull Editor editor) {
+    final StartMarkAction startMarkAction = StartMarkAction.canStart(editor);
     final String message = IdeBundle.message("dialog.message.command.not.finished.yet", startMarkAction.getCommandName());
     final Document oldDocument = startMarkAction.getDocument();
-    if (editor == null || oldDocument != editor.getDocument()) {
+    if (oldDocument != editor.getDocument()) {
       final int exitCode = Messages.showYesNoDialog(project, message,
                                                     RefactoringBundle.getCannotRefactorMessage(null),
                                                     RefactoringBundle.message("inplace.refactoring.continue.started"),
@@ -204,7 +202,6 @@ public abstract class InplaceRefactoring {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, containingFile)) return true;
 
     myEditor.putUserData(INPLACE_RENAMER, this);
-    ourRenamersStack.push(this);
 
     final List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
     collectAdditionalElementsToRename(stringUsages);
@@ -212,9 +209,6 @@ public abstract class InplaceRefactoring {
       return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
     }
     catch (Throwable e) {
-      if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
-        ourRenamersStack.pop();
-      }
       myEditor.putUserData(INPLACE_RENAMER, null);
       FinishMarkAction.finish(myProject, myEditor, myMarkAction);
       throw e;
@@ -350,14 +344,6 @@ public abstract class InplaceRefactoring {
         return true;
       }
       else {
-
-        if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
-          ourRenamersStack.pop();
-          if (!ourRenamersStack.empty()) {
-            myOldName = ourRenamersStack.peek().myOldName;
-          }
-        }
-
         revertState();
         final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
         if (templateState != null) {
@@ -685,9 +671,6 @@ public abstract class InplaceRefactoring {
   protected abstract @NlsContexts.Command String getCommandName();
 
   public void finish(boolean success) {
-    if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
-      ourRenamersStack.pop();
-    }
     if (myHighlighters != null) {
       if (!myProject.isDisposed()) {
         final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
@@ -790,16 +773,6 @@ public abstract class InplaceRefactoring {
     return file;
   }
 
-  @TestOnly
-  public static void checkCleared() {
-    try {
-      assert ourRenamersStack.isEmpty() : ourRenamersStack;
-    }
-    finally {
-      ourRenamersStack.clear();
-    }
-  }
-
   protected PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier,
                                                 final Collection<? extends PsiReference> refs,
                                                 Collection<? extends Pair<PsiElement, TextRange>> stringUsages,
@@ -846,9 +819,9 @@ public abstract class InplaceRefactoring {
     return isRestart != null && isRestart;
   }
 
-  public static boolean canStartAnotherRefactoring(Editor editor, Project project, RefactoringActionHandler handler, PsiElement... element) {
+  public static boolean canStartAnotherRefactoring(@NotNull Editor editor, RefactoringActionHandler handler, PsiElement... element) {
     final InplaceRefactoring inplaceRefactoring = getActiveInplaceRenamer(editor);
-    return StartMarkAction.canStart(project) == null ||
+    return StartMarkAction.canStart(editor) == null ||
            (inplaceRefactoring != null && inplaceRefactoring.startsOnTheSameElements(editor, handler, element));
   }
 

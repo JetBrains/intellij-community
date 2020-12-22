@@ -23,10 +23,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
@@ -167,7 +164,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     }
 
     progressIndicator.checkCanceled();
-    IntArrayList listToSort = new IntArrayList(priority.keySet());
+    IntList listToSort = new IntArrayList(priority.keySet());
     listToSort.sort(null);
     List<String> result = new ArrayList<>();
     for (IntListIterator iterator = listToSort.iterator(); iterator.hasNext(); ) {

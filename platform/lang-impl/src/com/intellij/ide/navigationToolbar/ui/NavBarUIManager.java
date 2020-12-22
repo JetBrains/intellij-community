@@ -11,7 +11,6 @@ public final class NavBarUIManager {
   public static final NavBarUI DARCULA = new DarculaNavBarUI();
 
   public static NavBarUI getUI() {
-    if (StartupUiUtil.isUnderDarcula()) return DARCULA;
-    return COMMON;
+    return StartupUiUtil.isUnderDarcula() ? DARCULA : COMMON;
   }
 }

@@ -11,6 +11,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 /**
+ * A decorator for {@link LookupElement}s, allowing to override various aspects of their behavior.
+ * Decorated lookup elements can be unwrapped with {@link LookupElement#as(Class)} method if needed.
+ * Please decorate only when necessary, e.g. when intercepting other contributors
+ * ({@link com.intellij.codeInsight.completion.CompletionResultSet#runRemainingContributors}).
+ * There's usually no point in doing so when you create them yourself in the same place of code.
  * @author peter
  *
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
@@ -99,6 +104,9 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate.hashCode();
   }
 
+  /**
+   * Wraps the given lookup element into a decorator that overrides its insertion behavior.
+   */
   @NotNull
   public static <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(@NotNull T element, @NotNull final InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
     return new InsertingDecorator<>(element, insertHandler);

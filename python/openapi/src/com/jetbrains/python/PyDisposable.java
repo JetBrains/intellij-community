@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,17 +12,12 @@ import org.jetbrains.annotations.NotNull;
  */
 @Service
 public final class PyDisposable implements Disposable {
-
   public static @NotNull Disposable getInstance() {
     return ServiceManager.getService(PyDisposable.class);
   }
 
   public static @NotNull Disposable getInstance(@NotNull Project project) {
     return project.getService(PyDisposable.class);
-  }
-
-  public static @NotNull Disposable getInstance(@NotNull Module module) {
-    return module.getService(PyDisposable.class);
   }
 
   @Override

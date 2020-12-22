@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -147,36 +147,6 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `check vfu sub tree`() {
-    val virtualFileUrl = virtualFileManager.add("/a/b")
-    var subTreeFileUrls = virtualFileUrl.subTreeFileUrls
-    assertTrue(subTreeFileUrls.isEmpty())
-
-    virtualFileManager.add("/a")
-    subTreeFileUrls = virtualFileUrl.subTreeFileUrls
-    assertTrue(subTreeFileUrls.isEmpty())
-
-    val firstVFU = virtualFileManager.add("/a/b/c")
-    subTreeFileUrls = virtualFileUrl.subTreeFileUrls
-    assertEquals(1, subTreeFileUrls.size)
-    assertEquals(firstVFU, subTreeFileUrls[0])
-
-    val secondVFU = virtualFileManager.add("/a/b/m.txt")
-    val thirdVFU = virtualFileManager.add("/a/b/l.txt")
-    subTreeFileUrls = virtualFileUrl.subTreeFileUrls
-    assertEquals(3, subTreeFileUrls.size)
-    assertEquals(firstVFU, subTreeFileUrls[0])
-    assertEquals(secondVFU, subTreeFileUrls[1])
-    assertEquals(thirdVFU, subTreeFileUrls[2])
-
-    virtualFileManager.remove("/a/b/l.txt")
-    subTreeFileUrls = virtualFileUrl.subTreeFileUrls
-    assertEquals(2, subTreeFileUrls.size)
-    assertEquals(firstVFU, subTreeFileUrls[0])
-    assertEquals(secondVFU, subTreeFileUrls[1])
-  }
-
-  @Test
   fun `check roundTrip`() {
     roundTrip("")
     roundTrip("/")
@@ -192,26 +162,13 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `check isEqualOrParentOf`() {
-    assertIsEqualOrParentOf(true, "temp:///src", "temp:///src/my")
-    assertIsEqualOrParentOf(true, "temp:///src", "temp:///src/my/")
-    assertIsEqualOrParentOf(false, "temp:///src", "temp:///srC/my")
-    assertIsEqualOrParentOf(false, "temp:///src/x", "temp:///src/y")
-    assertIsEqualOrParentOf(false, "file:///src/my", "temp:///src/my")
-    assertIsEqualOrParentOf(false, "file:///src/my", "temp:///src/my")
-    assertIsEqualOrParentOf(false, "", "temp:///src/my")
-    assertIsEqualOrParentOf(false, "temp:///src/my", "")
-    assertIsEqualOrParentOf(true, "temp://", "temp:///src/my")
-  }
-
-  @Test
   fun `check file path`() {
-    assertFilePath(null, "jar:///main/a.jar!/my/class.class")
     assertFilePath("/main/a.jar", "jar:///main/a.jar!/")
     assertFilePath("/main/a.jar", "jar:///main/a.jar!")
     assertFilePath("/main/a.jar", "jar:///main/a.jar")
     assertFilePath("/main/a.jar", "file:///main/a.jar")
-    assertFilePath(null, "")
+    assertFilePath("/main/a.jar!/my/class.class", "jar:///main/a.jar!/my/class.class")
+    assertFilePath("", "")
   }
 
   @Test
@@ -234,22 +191,10 @@ class VirtualFileUrlManagerTest {
   }
 
   private fun assertFilePath(expectedResult: String?, url: String) {
-    assertEquals(expectedResult, virtualFileManager.fromUrl(url).filePath)
-  }
-
-  private fun assertIsEqualOrParentOf(expectedResult: Boolean, parentString: String, childString: String) {
-    val parent = virtualFileManager.fromUrl(parentString)
-    val child = virtualFileManager.fromUrl(childString)
-    assertTrue("'$parent'.isEqualOrParentOf('$parent')", parent.isEqualOrParentOf(parent))
-    assertTrue("'$child'.isEqualOrParentOf('$child')", child.isEqualOrParentOf(child))
-    assertEquals(
-      "'$parent'.isEqualOrParentOf('$child') should be ${if (expectedResult) "true" else "false"}",
-      expectedResult,
-      parent.isEqualOrParentOf(child))
+    assertEquals(expectedResult, virtualFileManager.fromUrl(url).presentableUrl)
   }
 
   private fun roundTrip(url: String) {
     assertEquals(url, virtualFileManager.fromUrl(url).url)
   }
-
 }

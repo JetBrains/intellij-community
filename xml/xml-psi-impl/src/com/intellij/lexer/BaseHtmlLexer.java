@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.intellij.psi.xml.XmlTokenType.*;
@@ -55,6 +56,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     myEmbeddedContentProviders = supports.stream()
       .map(factory -> factory.createEmbeddedContentProviders(this))
       .flatMap(Collection::stream)
+      .filter(this::acceptEmbeddedContentProvider)
       .collect(Collectors.toUnmodifiableList());
     myTagEmbedmentStartTokens = createTagEmbedmentStartTokenSet();
     myAttributeEmbedmentTokens = createAttributeEmbedmentTokenSet();
@@ -190,6 +192,10 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     }
     supports.add(new HtmlDefaultEmbeddedContentSupport());
     return supports;
+  }
+
+  protected boolean acceptEmbeddedContentProvider(HtmlEmbeddedContentProvider provider) {
+    return true;
   }
 
   private static class HtmlLexerPosition implements LexerPosition {
@@ -360,7 +366,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     void handleElement(Lexer lexer);
   }
 
-  private static final Set<Class<? extends BaseHtmlLexer>> ourLegacyLexers = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<? extends BaseHtmlLexer>> ourLegacyLexers = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private static final Logger LOG = Logger.getInstance(BaseHtmlLexer.class);
 
   void logLegacyLexer() {

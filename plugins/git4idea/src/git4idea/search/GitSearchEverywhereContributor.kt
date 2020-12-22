@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.Processor
@@ -29,6 +30,7 @@ import com.intellij.vcs.log.ui.render.LabelIcon
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
@@ -49,9 +51,12 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
   private val TAG_PRIORITY = 0 - 40
   private val COMMIT_BY_MESSAGE_PRIORITY = 0 - 50
 
-  override fun fetchWeightedElements(pattern: String,
-                                     progressIndicator: ProgressIndicator,
-                                     consumer: Processor<in FoundItemDescriptor<Any>>) {
+  override fun fetchWeightedElements(
+    pattern: String,
+    progressIndicator: ProgressIndicator,
+    consumer: Processor<in FoundItemDescriptor<Any>>
+  ) {
+    if (!ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME)) return
 
     val logManager = VcsProjectLog.getInstance(project).logManager ?: return
     val dataManager = logManager.dataManager
@@ -112,8 +117,7 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
     do {
       indicator.checkCanceled()
       dataPack = dataManager.dataPack
-    }
-    while (!dataPack.isFull && Thread.sleep(1000) == Unit)
+    } while (!dataPack.isFull && Thread.sleep(1000) == Unit)
     return dataPack
   }
 
@@ -131,9 +135,11 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       add(rightLabel, BorderLayout.EAST)
     }
 
-    override fun getListCellRendererComponent(list: JList<out Any>?,
-                                              value: Any?, index: Int,
-                                              isSelected: Boolean, cellHasFocus: Boolean): Component {
+    override fun getListCellRendererComponent(
+      list: JList<out Any>?,
+      value: Any?, index: Int,
+      isSelected: Boolean, cellHasFocus: Boolean
+    ): Component {
       panel.background = UIUtil.getListBackground(isSelected, cellHasFocus)
       leftLabel.apply {
         text = when (value) {
@@ -203,7 +209,11 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
   // higher weight -> lower position
   override fun getSortWeight() = 500
   override fun showInFindResults() = false
-  override fun isShownInSeparateTab(): Boolean = true
+
+  override fun isShownInSeparateTab(): Boolean =
+    ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME) &&
+      VcsProjectLog.getInstance(project).logManager != null
+
   override fun getDataForItem(element: Any, dataId: String): Any? = null
 
   companion object {

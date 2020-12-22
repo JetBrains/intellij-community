@@ -60,6 +60,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -88,6 +89,8 @@ import java.util.function.Supplier;
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
     new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
+  private static final ExtensionPointName<DynamicActionConfigurationCustomizer> DYNAMIC_EP_NAME =
+    new ExtensionPointName<>("com.intellij.dynamicActionConfigurationCustomizer");
   private static final ExtensionPointName<EditorActionHandlerBean> EDITOR_ACTION_HANDLER_EP =
     new ExtensionPointName<>("com.intellij.editorActionHandler");
 
@@ -175,19 +178,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
-    DynamicActionConfigurationCustomizer.EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
-    DynamicActionConfigurationCustomizer.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<DynamicActionConfigurationCustomizer>() {
-        @Override
-        public void extensionAdded(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extension.registerActions(ActionManagerImpl.this);
-        }
+    DYNAMIC_EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
+    DYNAMIC_EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
+        extension.registerActions(ActionManagerImpl.this);
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extension.unregisterActions(ActionManagerImpl.this);
-        }
-      }, this);
+      @Override
+      public void extensionRemoved(@NotNull DynamicActionConfigurationCustomizer extension, @NotNull PluginDescriptor pluginDescriptor) {
+        extension.unregisterActions(ActionManagerImpl.this);
+      }
+    }, this);
     EDITOR_ACTION_HANDLER_EP.addChangeListener(this::updateAllHandlers, this);
   }
 
@@ -196,8 +198,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
-  @Nullable
-  static AnAction convertStub(@NotNull ActionStub stub) {
+  static @Nullable AnAction convertStub(@NotNull ActionStub stub) {
     AnAction anAction = instantiate(stub.getClassName(), stub.getPlugin(), AnAction.class);
     if (anAction == null) {
       return null;
@@ -205,7 +206,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     stub.initAction(anAction);
     updateIconFromStub(stub, anAction);
-
     return anAction;
   }
 
@@ -241,17 +241,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return (T)obj;
   }
 
-  private static void updateIconFromStub(@NotNull ActionStubBase stub, AnAction anAction) {
+  private static void updateIconFromStub(@NotNull ActionStubBase stub, @NotNull AnAction anAction) {
     String iconPath = stub.getIconPath();
-    if (iconPath == null) {
-      return;
+    if (iconPath != null) {
+      setIconFromClass(anAction.getClass(), stub.getPlugin(), iconPath, anAction.getTemplatePresentation());
     }
-
-    setIconFromClass(anAction.getClass(), stub.getPlugin(), iconPath, anAction.getTemplatePresentation());
   }
 
-  @Nullable
-  private static ActionGroup convertGroupStub(@NotNull ActionGroupStub stub, @NotNull ActionManager actionManager) {
+  private static @Nullable ActionGroup convertGroupStub(@NotNull ActionGroupStub stub, @NotNull ActionManager actionManager) {
     IdeaPluginDescriptor plugin = stub.getPlugin();
     ActionGroup group = instantiate(stub.getActionClass(), plugin, ActionGroup.class);
     if (group == null) {
@@ -283,52 +280,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return "true".equalsIgnoreCase(element.getAttributeValue(SECONDARY));
   }
 
-  private static void setIcon(@Nullable String iconPath,
-                              @NotNull String className,
-                              @NotNull PluginDescriptor pluginDescriptor,
-                              @NotNull Presentation presentation) {
-    if (iconPath == null) {
-      return;
-    }
-
-    try {
-      Class<?> actionClass = Class.forName(className, true, pluginDescriptor.getPluginClassLoader());
-      setIconFromClass(actionClass, pluginDescriptor, iconPath, presentation);
-    }
-    catch (ClassNotFoundException | NoClassDefFoundError e) {
-      LOG.error(e);
-      reportActionError(pluginDescriptor.getPluginId(), "class with name \"" + className + "\" not found");
-    }
-  }
-
-  private static void setIconFromClass(@NotNull Class<?> actionClass,
+  private static void setIconFromClass(@Nullable Class<?> actionClass,
                                        @NotNull PluginDescriptor pluginDescriptor,
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
-    //noinspection deprecation
-    presentation.setIcon(new IconLoader.LazyIcon() {
-      @NotNull
-      @Override
-      protected Icon compute() {
-        // try to find icon in idea class path
-        Icon icon = IconLoader.findIcon(iconPath, actionClass, true, false);
-        if (icon == null) {
-          icon = IconLoader.findIcon(iconPath, pluginDescriptor.getPluginClassLoader());
-        }
-
-        if (icon == null) {
-          reportActionError(pluginDescriptor.getPluginId(), "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
-          return AllIcons.Nodes.Unknown;
-        }
-
-        return icon;
-      }
-
-      @Override
-      public String toString() {
-        return "LazyIcon@ActionManagerImpl (path: " + iconPath + ", action class: " + actionClass + ")";
-      }
-    });
+    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+    Icon icon = IconLoader.findIcon(iconPath, actionClass, pluginDescriptor.getPluginClassLoader(), null, true);
+    if (icon == null) {
+      reportActionError(pluginDescriptor.getPluginId(), "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
+      icon = AllIcons.Nodes.Unknown;
+    }
+    IconLoadMeasurer.actionIcon.end(start);
+    presentation.setIcon(icon);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -434,7 +397,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private static String getPluginInfo(@Nullable PluginId id) {
     if (id != null) {
-      final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
+      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
       if (plugin != null) {
         String name = plugin.getName();
         if (name == null) {
@@ -809,8 +772,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (group instanceof ActionGroupStub) {
         ((ActionGroupStub)group).setIconPath(iconPath);
       }
-      else {
-        setIcon(iconPath, className, plugin, presentation);
+      else if (iconPath != null) {
+        setIconFromClass(null, plugin, iconPath, presentation);
       }
 
       // popup
@@ -876,11 +839,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private void processReferenceNode(final Element element,
-                                    final PluginId pluginId,
-                                    @Nullable ResourceBundle bundle) {
-    final AnAction action = processReferenceElement(element, pluginId);
-    if (action == null) return;
+  private void processReferenceNode(@NotNull Element element, @Nullable PluginId pluginId, @Nullable ResourceBundle bundle) {
+    AnAction action = processReferenceElement(element, pluginId);
+    if (action == null) {
+      return;
+    }
 
     for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
@@ -940,7 +903,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     AnAction parentGroup = getActionImpl(groupId, true);
     if (parentGroup == null) {
-      reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
+      reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group", null);
       parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true);
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
@@ -1100,24 +1063,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @Nullable
-  private AnAction processReferenceElement(Element element, PluginId pluginId) {
+  private @Nullable AnAction processReferenceElement(Element element, PluginId pluginId) {
     if (!REFERENCE_ELEMENT_NAME.equals(element.getName())) {
-      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"", null);
       return null;
     }
-    String ref = getReferenceActionId(element);
 
+    String ref = getReferenceActionId(element);
     if (ref == null || ref.isEmpty()) {
-      reportActionError(pluginId, "ID of reference element should be defined");
+      reportActionError(pluginId, "ID of reference element should be defined", null);
       return null;
     }
 
     AnAction action = getActionImpl(ref, true);
-
     if (action == null) {
       if (!myNotRegisteredInternalActionIds.contains(ref)) {
-        reportActionError(pluginId, "action specified by reference isn't registered (ID=" + ref + ")");
+        reportActionError(pluginId, "action specified by reference isn't registered (ID=" + ref + ")", null);
       }
       return null;
     }
@@ -1126,7 +1087,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private static String getReferenceActionId(@NotNull Element element) {
     String ref = element.getAttributeValue(REF_ATTR_NAME);
-
     if (ref == null) {
       // support old style references by id
       ref = element.getAttributeValue(ID_ATTR_NAME);
@@ -1166,6 +1126,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (elements == null) {
       return null;
     }
+
     for (Element element : elements) {
       if (!element.getName().equals(ACTION_ELEMENT_NAME) &&
           !(element.getName().equals(GROUP_ELEMENT_NAME) && canUnloadGroup(element)) &&
@@ -1514,13 +1475,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Language language = file != null ? file.getLanguage() : null;
-    final List<EventPair> customData = new ArrayList<>();
+    final List<EventPair<?>> customData = new ArrayList<>();
     customData.add(EventFields.CurrentFile.with(language));
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     customData.add(EventFields.Language.with(getHostFileLanguage(dataContext, project)));
     if (action instanceof FusAwareAction) {
-      List<EventPair> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
-      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData.toArray(new EventPair[0]))));
+      List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
+      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
     }
     ActionsCollectorImpl.recordActionInvoked(project, action, event, customData);
     for (AnActionListener listener : myActionListeners) {

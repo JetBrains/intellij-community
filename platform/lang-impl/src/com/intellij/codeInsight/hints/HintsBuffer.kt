@@ -54,10 +54,8 @@ class HintsBuffer {
   }
 }
 
-private fun <V> mergeIntoThis(one: Int2ObjectOpenHashMap<MutableList<V>>, another: Int2ObjectOpenHashMap<MutableList<V>>) {
-  val bIterator = another.int2ObjectEntrySet().fastIterator()
-  while (bIterator.hasNext()) {
-    val otherEntry = bIterator.next()
+private fun <V> mergeIntoThis(one: Int2ObjectMap<MutableList<V>>, another: Int2ObjectMap<MutableList<V>>) {
+  for (otherEntry in another.int2ObjectEntrySet()) {
     val otherOffset = otherEntry.intKey
     val current = one.get(otherOffset)
     if (current == null) {

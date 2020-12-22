@@ -8,7 +8,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.injected.editor.EditorWindow;
@@ -103,7 +103,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public void showParameterInfo(@NotNull final PsiExpressionList element, @NotNull final CreateParameterInfoContext context) {
     int offset = element.getTextRange().getStartOffset();
     if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
-      ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(context.getEditor(), offset);
+      ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(context.getEditor(), offset);
       PsiElement parent = element.getParent();
       if (parent instanceof PsiCall && controller != null && controller.isHintShown(false)) {
         Object highlighted = controller.getHighlighted();

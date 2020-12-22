@@ -55,6 +55,9 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
   companion object {
 
     @JvmStatic
+    fun <T> empty(): Plow<T> = of { true }
+
+    @JvmStatic
     fun <T> of(processorCall: (Processor<T>) -> Boolean): Plow<T> = Plow(processorCall)
 
     @JvmStatic

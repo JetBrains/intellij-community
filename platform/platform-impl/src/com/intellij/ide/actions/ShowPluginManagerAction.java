@@ -10,11 +10,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.ProjectUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowPluginManagerAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), PluginManagerConfigurable.class);
+    ShowSettingsUtil.getInstance().showSettingsDialog(
+      ProjectUtil.currentOrDefaultProject(e.getProject()),
+      PluginManagerConfigurable.class
+    );
   }
 }

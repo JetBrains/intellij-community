@@ -20,7 +20,7 @@ Android Studio: removed by Change I4fd91d66 */
       '-XX:-OmitStackTraceInFastThrow',
       '-ea',
 Android Studio: removed by Change Ie7351d92 */
-      '-Dsun.io.useCanonPrefixCache=false',
+      '-Dsun.io.useCanonCaches=false',
       '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-Djdk.attach.allowAttachSelf=true',
       '-Djdk.module.illegalAccess.silent=true',

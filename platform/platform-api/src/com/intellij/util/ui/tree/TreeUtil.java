@@ -23,6 +23,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -54,6 +55,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static com.intellij.util.ReflectionUtil.getField;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
@@ -1630,6 +1632,21 @@ public final class TreeUtil {
       if (LOG.isTraceEnabled()) LOG.debug("cannot scroll to: ", path);
       return false;
     }
+    internalScroll(tree, bounds, centered);
+    // notify screen readers that they should notify the user that the visual appearance of the component has changed
+    AccessibleContext context = tree.getAccessibleContext();
+    if (context != null) context.firePropertyChange(AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, false, true);
+    // try to scroll later when the tree is ready
+    long stamp = 1L + getScrollTimeStamp(tree);
+    tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, stamp);
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
+      Rectangle boundsLater = stamp != getScrollTimeStamp(tree) ? null : tree.getPathBounds(path);
+      if (boundsLater != null) internalScroll(tree, boundsLater, centered);
+    }, 5, MILLISECONDS);
+    return true;
+  }
+
+  private static void internalScroll(@NotNull JTree tree, @NotNull Rectangle bounds, boolean centered) {
     Container parent = tree.getParent();
     if (parent instanceof JViewport) {
       int width = parent.getWidth();
@@ -1660,14 +1677,12 @@ public final class TreeUtil {
         if (y > 0) bounds.height -= y;
       }
     }
-    scrollToVisibleWithAccessibility(tree, bounds);
-    return true;
+    tree.scrollRectToVisible(bounds);
   }
 
-  private static void scrollToVisibleWithAccessibility(@NotNull JTree tree, @NotNull Rectangle bounds) {
-    tree.scrollRectToVisible(bounds);
-    AccessibleContext context = tree.getAccessibleContext();
-    if (context != null) context.firePropertyChange(AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, false, true);
+  private static long getScrollTimeStamp(@NotNull JTree tree) {
+    Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+    return property instanceof Long ? (Long)property : Long.MIN_VALUE;
   }
 
   /**

@@ -68,13 +68,11 @@ import java.util.*;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * Git utility/helper methods
  */
 public final class GitUtil {
-
   public static final String DOT_GIT = ".git";
 
   /**
@@ -861,7 +859,8 @@ public final class GitUtil {
 
   @Nullable
   public static GitRemote getDefaultOrFirstRemote(@NotNull Collection<GitRemote> remotes) {
-    return chooseNotNull(getDefaultRemote(remotes), ContainerUtil.getFirstItem(remotes));
+    GitRemote result = getDefaultRemote(remotes);
+    return result == null ? ContainerUtil.getFirstItem(remotes) : result;
   }
 
   @NotNull

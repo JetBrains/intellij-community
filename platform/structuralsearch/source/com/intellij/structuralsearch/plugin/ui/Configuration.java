@@ -1,19 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
@@ -31,7 +36,7 @@ public abstract class Configuration implements JDOMExternalizable {
   @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
   @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
 
-  private String name;
+  private @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name;
   private String category;
   private boolean predefined;
   private long created;
@@ -40,6 +45,7 @@ public abstract class Configuration implements JDOMExternalizable {
   private String suppressId;
   private String problemDescriptor;
   private int order;
+  private @NonNls String refName;
 
   private transient String myCurrentVariableName;
 
@@ -49,7 +55,7 @@ public abstract class Configuration implements JDOMExternalizable {
     created = -1L;
   }
 
-  public Configuration(@NotNull String name, @NotNull String category) {
+  public Configuration(@NotNull @Nls String name, @NotNull String category) {
     this.name = name;
     this.category = category;
     created = -1L;
@@ -65,12 +71,13 @@ public abstract class Configuration implements JDOMExternalizable {
     suppressId = configuration.suppressId;
     problemDescriptor = configuration.problemDescriptor;
     order = configuration.order;
+    refName = configuration.refName;
   }
 
   @NotNull
   public abstract Configuration copy();
 
-  @NotNull @NlsSafe
+  @NotNull @Nls
   public String getName() {
     return name;
   }
@@ -82,8 +89,12 @@ public abstract class Configuration implements JDOMExternalizable {
     name = value;
   }
 
-  @NonNls
-  public abstract String getTailText();
+  @NotNull @Nls
+  public String getTypeText() {
+    final LanguageFileType type = getFileType();
+    return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", type.getLanguage().getDisplayName())
+                          : SSRBundle.message("predefined.configuration.type.text.user.defined", type.getLanguage().getDisplayName());
+  }
 
   @NotNull
   public String getCategory() {
@@ -243,5 +254,23 @@ public abstract class Configuration implements JDOMExternalizable {
   @Override
   public int hashCode() {
     return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
+  }
+
+  @NotNull
+  public Icon getIcon() {
+    final LanguageFileType type = getFileType();
+    return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Any_type : type.getIcon();
+  }
+
+  public abstract LanguageFileType getFileType();
+
+  @NotNull @NonNls
+  public String getRefName() {
+    return refName == null ? name : refName;
+  }
+
+  public void setRefName(String refName) {
+    if (isPredefined())
+      this.refName = refName;
   }
 }

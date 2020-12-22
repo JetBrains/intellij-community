@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -1450,23 +1451,26 @@ public final class TrackingRunner extends DataFlowRunner {
             LongRangeSet fromType = Objects.requireNonNull(LongRangeSet.fromType(type));
             LongRangeSet leftRange = leftSet.myFact.intersect(fromType);
             LongRangeSet rightRange = rightSet.myFact.intersect(fromType);
-            LongRangeSet result = leftRange.binOpFromToken(binOp.getOperationTokenType(), rightRange, isLong);
-            if (range.equals(result)) {
-              String sign = binOp.getOperationSign().getText();
-              CauseItem cause = new CauseItem(new RangeDfaProblemType(
-                JavaAnalysisBundle.message("dfa.find.cause.result.of.numeric.operation.template", sign.equals("%") ? "%%" : sign),
-                range, ObjectUtils.tryCast(type, PsiPrimitiveType.class)), factUse);
-              CauseItem leftCause = null, rightCause = null;
-              if (!leftRange.equals(fromType)) {
-                leftCause = findRangeCause(leftPush, leftVal, leftRange,
-                                           JavaAnalysisBundle.message("dfa.find.cause.left.operand.range.template"));
+            LongRangeBinOp op = LongRangeBinOp.fromToken(binOp.getOperationTokenType());
+            if (op != null) {
+              LongRangeSet result = op.eval(leftRange, rightRange, isLong);
+              if (range.equals(result)) {
+                String sign = binOp.getOperationSign().getText();
+                CauseItem cause = new CauseItem(new RangeDfaProblemType(
+                  JavaAnalysisBundle.message("dfa.find.cause.result.of.numeric.operation.template", sign.equals("%") ? "%%" : sign),
+                  range, ObjectUtils.tryCast(type, PsiPrimitiveType.class)), factUse);
+                CauseItem leftCause = null, rightCause = null;
+                if (!leftRange.equals(fromType)) {
+                  leftCause = findRangeCause(leftPush, leftVal, leftRange,
+                                             JavaAnalysisBundle.message("dfa.find.cause.left.operand.range.template"));
+                }
+                if (!rightRange.equals(fromType)) {
+                  rightCause = findRangeCause(rightPush, rightVal, rightRange,
+                                              JavaAnalysisBundle.message("dfa.find.cause.right.operand.range.template"));
+                }
+                cause.addChildren(leftCause, rightCause);
+                return cause;
               }
-              if (!rightRange.equals(fromType)) {
-                rightCause = findRangeCause(rightPush, rightVal, rightRange,
-                                            JavaAnalysisBundle.message("dfa.find.cause.right.operand.range.template"));
-              }
-              cause.addChildren(leftCause, rightCause);
-              return cause;
             }
           }
         }

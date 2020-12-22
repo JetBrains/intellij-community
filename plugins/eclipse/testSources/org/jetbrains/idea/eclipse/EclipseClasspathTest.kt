@@ -174,7 +174,7 @@ class EclipseClasspathTest {
 
 
   private fun doTest(eclipseProjectDirPath: String = "test", setupPathVariables: Boolean = false, testDataParentDir: String = "round") {
-    val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath() / "testData"
+    val testDataRoot = eclipseTestDataRoot
     val testRoot = testDataRoot / testDataParentDir / testName.methodName.removePrefix("test").decapitalize()
     val commonRoot = testDataRoot / "common" / "testModuleWithClasspathStorage"
     val modulePath = "$eclipseProjectDirPath/${PathUtil.getFileName(eclipseProjectDirPath)}"
@@ -185,13 +185,6 @@ class EclipseClasspathTest {
     @JvmField
     @ClassRule
     val appRule = ApplicationRule()
-
-    @JvmStatic
-    fun doTest(relativePath: String, project: Project) {
-      val path = project.basePath + relativePath
-      checkModule(path, setUpModule(path, project))
-    }
-
 
     @JvmStatic
     fun setUpModule(path: String, project: Project): Module {

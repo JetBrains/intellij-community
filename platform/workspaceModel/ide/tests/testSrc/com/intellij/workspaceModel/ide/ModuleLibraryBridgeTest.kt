@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
@@ -316,6 +317,35 @@ class ModuleLibraryBridgeTest {
 
     StoreUtil.saveDocumentsAndProjectSettings(project)
     assertTrue(!moduleFile.readText().contains(antLibraryName))
+  }
+
+  @Test
+  fun `test module dispose`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val antLibraryName = "ant-lib"
+
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+      moduleModel.commit()
+      module
+    }
+    ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName,
+                                                listOf(File(project.basePath, "$antLibraryName.jar").path),
+                                                emptyList())
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+    assertTrue(moduleFile.readText().contains(antLibraryName))
+
+    ModuleManager.getInstance(project).disposeModule(module)
+
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+
+
+    ModuleManager.getInstance(project).modules.forEach { existingModule ->
+      ModuleRootManager.getInstance(existingModule).orderEntries.filterIsInstance<LibraryOrSdkOrderEntry>().forEach { orderEntry ->
+        orderEntry.getRootFiles(OrderRootType.SOURCES)
+      }
+    }
   }
 
   private fun assertModuleLibraryDependency(moduleRootManager: ModuleRootManager, libraryName: String) {

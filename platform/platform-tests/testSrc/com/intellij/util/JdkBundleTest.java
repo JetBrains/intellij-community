@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.junit.Test;
 
@@ -57,7 +58,7 @@ public class JdkBundleTest {
 
   @Test
   public void testStandardMacOsBundles() {
-    assumeTrue("Mac-only", SystemInfo.isMac);
+    IoTestUtil.assumeMacOS();
     for (File vm : Objects.requireNonNull(new File("/Library/Java/JavaVirtualMachines").listFiles())) {
       if (new File(vm, "Contents/Home/bin/java").isFile()) {
         JdkBundle bundle = JdkBundle.createBundle(vm);

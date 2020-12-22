@@ -138,13 +138,15 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     if (componentManager.isDisposed) {
       throwAlreadyDisposedError(componentManager, indicator)
     }
-    componentManager.componentContainerIsReadonly?.let {
-      val error = AlreadyDisposedException("Cannot create ${toString()} because container in read-only mode (reason: $it, container=${componentManager})")
-      if (indicator == null) {
-        throw error
-      }
-      else {
-        throw ProcessCanceledException(error)
+    if (!isGettingServiceAllowedDuringPluginUnloading(pluginDescriptor)) {
+      componentManager.componentContainerIsReadonly?.let {
+        val error = AlreadyDisposedException("Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})")
+        if (indicator == null) {
+          throw error
+        }
+        else {
+          throw ProcessCanceledException(error)
+        }
       }
     }
   }

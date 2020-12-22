@@ -14,15 +14,15 @@ import com.intellij.util.AlarmFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
@@ -498,5 +498,15 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     return myUiActivity;
+  }
+
+  @TestOnly
+  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) {
+    try {
+      myWaiterForMerge.waitForAllExecuted(timeout, unit);
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

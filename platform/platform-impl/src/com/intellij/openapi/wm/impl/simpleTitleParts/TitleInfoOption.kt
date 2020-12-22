@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.simpleTitleParts
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -14,7 +15,9 @@ open class TitleInfoOption {
 
   var isActive: Boolean = true
     set(value) {
-      if(field == value) return
+      if (field == value) {
+        return
+      }
       field = value
       update()
     }
@@ -26,13 +29,13 @@ open class TitleInfoOption {
   }
 }
 
-class RegistryOption(var key: String, disposable: Disposable) : TitleInfoOption() {
+class RegistryOption(var key: String, disposable: Disposable?) : TitleInfoOption() {
   init {
     Registry.get(key).addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         checkState()
       }
-    }, disposable)
+    }, disposable ?: ApplicationManager.getApplication())
 
     checkState()
   }

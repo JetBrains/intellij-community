@@ -6,11 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 
-class ProductTitleInfoProvider(project: Project) : SimpleTitleInfoProvider(VMOOption("ide.ui.version.in.title")) {
+private class ProductTitleInfoProvider : SimpleTitleInfoProvider(VMOOption("ide.ui.version.in.title")) {
   override fun isEnabled(): Boolean {
-    return super.isEnabled() && if(IdeFrameDecorator.isCustomDecorationActive()) true else !SystemInfo.isMac && !SystemInfo.isGNOME
+    return super.isEnabled() && if (IdeFrameDecorator.isCustomDecorationActive()) true else !SystemInfo.isMac && !SystemInfo.isGNOME
   }
 
-  override val value: String = ApplicationNamesInfo.getInstance().fullProductName
-  override val borderlessPrefix: String = " - "
+  override fun getValue(project: Project): String = ApplicationNamesInfo.getInstance().fullProductName
+  override val borderlessPrefix = " - "
 }

@@ -227,6 +227,10 @@
       "description": "Background for the selected tab"
     },
     {
+      "key": "EditorTabs.tabInsets",
+      "description": "Inner insets around each editor tab"
+    },
+    {
       "key": "FileColor.Blue",
       "description": "Settings | Appearance & Behavior | File colors"
     },
@@ -247,61 +251,80 @@
     },
     {
       "key": "FlameGraph.frameForeground",
-      "description": "Java profiler flame graph"
+      "description": "Java profiler flame graph",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.JVMBackground"
+      "key": "FlameGraph.JVMBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.JVMFocusBackground"
+      "key": "FlameGraph.JVMFocusBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.JVMFocusedFrameForeground"
+      "key": "FlameGraph.JVMFocusedFrameForeground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.JVMFocusSearchNotMatchedBackground"
+      "key": "FlameGraph.JVMFocusSearchNotMatchedBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.JVMFrameForeground"
+      "key": "FlameGraph.JVMFrameForeground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.JVMSearchNotMatchedBackground"
+      "key": "FlameGraph.JVMSearchNotMatchedBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.nativeBackground"
+      "key": "FlameGraph.nativeBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.nativeFocusBackground"
+      "key": "FlameGraph.nativeFocusBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.nativeFocusedFrameForeground"
+      "key": "FlameGraph.nativeFocusedFrameForeground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.nativeFocusSearchNotMatchedBackground"
+      "key": "FlameGraph.nativeFocusSearchNotMatchedBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.nativeFrameForeground"
+      "key": "FlameGraph.nativeFrameForeground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.nativeSearchNotMatchedBackground"
+      "key": "FlameGraph.nativeSearchNotMatchedBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.parentBackground"
+      "key": "FlameGraph.parentBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.parentFocusBackground"
+      "key": "FlameGraph.parentFocusBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.parentFocusedFrameForeground"
+      "key": "FlameGraph.parentFocusedFrameForeground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.parentFocusSearchNotMatchedBackground"
+      "key": "FlameGraph.parentFocusSearchNotMatchedBackground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.parentFrameForeground"
+      "key": "FlameGraph.parentFrameForeground",
+      "deprecated": true
     },
     {
-      "key": "FlameGraph.parentSearchNotMatchedBackground"
+      "key": "FlameGraph.parentSearchNotMatchedBackground",
+      "deprecated": true
     },
     {
       "key": "Group.disabledSeparatorColor"
@@ -392,20 +415,24 @@
       "description": "Notification that appears in in bottom-right corner. Use the \"Add Test Notification\" action in internal mode to show notifications on demand."
     },
     {
-      "key": "Notification.borderColor"
+      "key": "Notification.borderColor",
+      "description": "Color of the border around notification balloon"
     },
     {
       "key": "Notification.errorBackground",
       "description": "Exception notifications. Use the \"Drop an error\" action in internal mode to show notifications on demand."
     },
     {
-      "key": "Notification.errorBorderColor"
+      "key": "Notification.errorBorderColor",
+      "description": "Color of the border around exception notification balloon"
     },
     {
-      "key": "Notification.errorForeground"
+      "key": "Notification.errorForeground",
+      "description": "Color of the text in exception notification balloon"
     },
     {
-      "key": "Notification.foreground"
+      "key": "Notification.foreground",
+      "description": "Color of the text in notification balloon"
     },
     {
       "key": "Notification.MoreButton.background",
@@ -517,6 +544,10 @@
     {
       "key": "Plugins.lightSelectionBackground",
       "description": "Selection background"
+    },
+    {
+      "key": "Plugins.hoverBackground",
+      "description": "A background of a hovered plugin row."
     },
     {
       "key": "Plugins.SearchField.background"

@@ -47,7 +47,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.siyeh.ig.psiutils.ClassUtils.isImmutable;
 
@@ -258,7 +257,7 @@ public class MismatchedCollectionQueryUpdateInspection
         if (method != null &&
             (!PsiType.VOID.equals(method.getReturnType()) &&
              !PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression)) ||
-             Stream.of(method.getParameterList().getParameters()).anyMatch(p -> LambdaUtil.isFunctionalType(p.getType())))) {
+             ContainerUtil.or(method.getParameterList().getParameters(), p -> LambdaUtil.isFunctionalType(p.getType())))) {
           makeQueried();
         }
       }

@@ -39,6 +39,8 @@ import java.awt.event.FocusEvent;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
+
 /**
  * @author peter
  */

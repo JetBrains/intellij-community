@@ -18,11 +18,15 @@ class Groovy25HighlightingTest extends LightGroovyTestCase implements Highlighti
   final String basePath = TestUtils.testDataPath + 'highlighting/v25/'
 
   void 'test duplicating named params'() { fileHighlightingTest() }
+
   void 'test duplicating named params with setter'() { fileHighlightingTest() }
+
   void 'test two identical named delegates'() { fileHighlightingTest() }
+
   void 'test duplicating named delegates with usual parameter'() { fileHighlightingTest() }
 
   void 'test named params type check'() { fileHighlightingTest() }
+
   void 'test named params type check with setter'() { fileHighlightingTest() }
 
   void 'test named params unused check'() {
@@ -54,7 +58,7 @@ class C {
   }
 
   void 'test getter in immutable'() {
-    highlightingTest'''\
+    highlightingTest '''\
 import groovy.transform.Immutable
 
 @Immutable
@@ -69,7 +73,7 @@ class A {
   }
 
   void 'test getter in immutable 2'() {
-    highlightingTest'''\
+    highlightingTest '''\
 import groovy.transform.Immutable
 
 @Immutable
@@ -82,7 +86,7 @@ class A {
   }
 
   void 'test tuple constructor in immutable'() {
-    highlightingTest'''\
+    highlightingTest '''\
 @groovy.transform.Immutable 
 class Foo { int a; String b }
 
@@ -96,7 +100,7 @@ def m() {
   }
 
 
-  void  'test copy with in immutable'(){
+  void 'test copy with in immutable'() {
     highlightingTest '''
 @groovy.transform.ImmutableBase(copyWith = true)
 class CopyWith {

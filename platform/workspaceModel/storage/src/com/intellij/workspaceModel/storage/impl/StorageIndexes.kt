@@ -158,11 +158,14 @@ internal class MutableStorageIndexes(
       }
     }
 
-    entitySourceIndex.index(pid, entityData.entitySource)
+    val entitySource = entityData.entitySource
+    entitySourceIndex.index(pid, entitySource)
 
     entityData.persistentId(builder)?.let { persistentId ->
       persistentIdIndex.index(pid, persistentId)
     }
+
+    entitySource.virtualFileUrl?.let { virtualFileIndex.index(pid, "entitySource", listOf(it)) }
   }
 
   fun updateSoftLinksIndex(softLinkable: SoftLinkable) {
@@ -193,9 +196,9 @@ internal class MutableStorageIndexes(
   }
 
   fun removeFromIndices(entityId: EntityId) {
-    virtualFileIndex.index(entityId)
     entitySourceIndex.index(entityId)
     persistentIdIndex.index(entityId)
+    virtualFileIndex.removeRecordsByEntityId(entityId)
     externalMappings.values.forEach { it.remove(entityId) }
   }
 

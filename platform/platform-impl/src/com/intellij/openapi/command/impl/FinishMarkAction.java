@@ -61,7 +61,7 @@ public final class FinishMarkAction extends BasicUndoableAction {
     CommandProcessor.getInstance().executeCommand(project, () -> {
       DocumentReference reference = DocumentReferenceManager.getInstance().create(editor.getDocument());
       UndoManager.getInstance(project).undoableActionPerformed(new FinishMarkAction(reference, startAction));
-      StartMarkAction.markFinished(project);
+      StartMarkAction.markFinished(editor);
     }, IdeBundle.message("command.finish"), null);
   }
 }

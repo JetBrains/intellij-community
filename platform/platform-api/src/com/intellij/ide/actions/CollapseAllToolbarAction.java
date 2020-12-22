@@ -6,9 +6,15 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link CollapseAllAction} instead
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
 public class CollapseAllToolbarAction extends TreeCollapseAllActionBase {
   private TreeExpander myTreeExpander;
 

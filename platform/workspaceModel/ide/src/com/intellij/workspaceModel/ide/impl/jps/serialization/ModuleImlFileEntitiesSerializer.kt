@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.diagnostic.AttachmentFactory
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -10,12 +11,18 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.io.exists
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -41,6 +48,7 @@ private val STANDARD_MODULE_OPTIONS = setOf(
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
                                                     override val internalEntitySource: JpsFileEntitySource,
+                                                    private val virtualFileManager: VirtualFileUrlManager,
                                                     private val internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     private val externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
@@ -66,8 +74,17 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val moduleEntity = externalSerializer?.loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
                          ?: loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
       if (moduleEntity != null) {
-        createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
-        externalSerializer?.createFacetSerializer()?.loadFacetEntities(builder, moduleEntity, reader)
+        // "res" is a temporal solution to catch the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
+        var res = true
+        res = res && createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
+        res = res && externalSerializer?.createFacetSerializer()?.loadFacetEntities(builder, moduleEntity, reader) ?: true
+        if (!res) {
+          LOG.error(
+            "Facets are loaded with issues",
+            fileUrl.virtualFile?.let { AttachmentFactory.createAttachment(it).also { att -> att.isIncluded = true } },
+            externalSerializer?.fileUrl?.virtualFile?.let { AttachmentFactory.createAttachment(it).also { att -> att.isIncluded = true } },
+          )
+        }
       }
     }
   }
@@ -76,10 +93,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                builder: WorkspaceEntityStorageBuilder,
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager): ModuleEntity? {
-    if (skipLoadingIfFileDoesNotExist) {
-      val fileExists = fileUrl.file?.exists() ?: false
-      if (!fileExists) return null
-    }
+    if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) return null
 
     val moduleOptions = readModuleOptions(reader)
     val (externalSystemOptions, externalSystemId) = readExternalSystemOptions(reader, moduleOptions)
@@ -208,21 +222,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         }
       }
 
-      if (orderOfItems.size > 1) {
-        // Save the order in which sourceRoots appear in the module
-        val orderingEntity = contentRootEntity.getSourceRootOrder()
-        if (orderingEntity == null) {
-          builder.addEntity(ModifiableSourceRootOrderEntity::class.java, contentRootEntity.entitySource) {
-            this.contentRootEntity = contentRootEntity
-            this.orderOfSourceRoots = orderOfItems
-          }
-        }
-        else {
-          builder.modifyEntity(ModifiableSourceRootOrderEntity::class.java, orderingEntity) {
-            orderOfSourceRoots = orderOfItems
-          }
-        }
-      }
+      storeSourceRootsOrder(orderOfItems, contentRootEntity, builder)
     }
     fun Element.readScope(): ModuleDependencyItem.DependencyScope {
       val attributeValue = getAttributeValue(SCOPE_ATTRIBUTE) ?: return ModuleDependencyItem.DependencyScope.COMPILE
@@ -362,7 +362,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val serializer = CUSTOM_ROOTS_SERIALIZER_EP.extensions().filter { it.id == customSerializerId }.findAny().orElse(null)
       if (serializer != null) {
         val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
-        serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage)
+        serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage, virtualFileManager)
       }
       else {
         LOG.warn("Classpath storage provider $customSerializerId not found")
@@ -399,16 +399,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val contentRootTag = Element(CONTENT_TAG)
       contentRootTag.setAttribute(URL_ATTRIBUTE, contentEntry.url.url)
 
-      // SourceRoot.url -> SourceRoot
-      val sourceRoots = contentEntry.sourceRoots.associateByTo(HashMap()) { it.url }
-      // Save the source roots where the order is known
-      contentEntry.getSourceRootOrder()?.orderOfSourceRoots?.forEach {
-        sourceRoots.remove(it)?.let { sourceRoot ->
-          contentRootTag.addContent(saveSourceRoot(sourceRoot))
-        }
+      contentEntry.sourceRoots.sortedWith(contentEntry.getSourceRootsComparator()).forEach {
+        contentRootTag.addContent(saveSourceRoot(it))
       }
-      // Save the roots with unknown ordering
-      sourceRoots.values.sortedBy { it.url.url }.forEach { contentRootTag.addContent(saveSourceRoot(it)) }
 
       contentEntry.excludedUrls.forEach {
         contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, it.url))
@@ -609,6 +602,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 }
 
 internal open class ModuleListSerializerImpl(override val fileUrl: String,
+                                             private val virtualFileManager: VirtualFileUrlManager,
                                              private val externalModuleListSerializer: JpsModuleListSerializer? = null,
                                              private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
   : JpsModuleListSerializer {
@@ -616,10 +610,12 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl,
                                                 moduleGroup: String?,
                                                 source: JpsFileEntitySource,
+                                                virtualFileManager: VirtualFileUrlManager,
                                                 internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) =
-      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), moduleGroup), fileUrl, source,
+      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.url), moduleGroup),
+                                      fileUrl, source, virtualFileManager,
                                       internalModuleListSerializer,
                                       externalModuleListSerializer,
                                       externalStorageConfigurationManager)
@@ -640,7 +636,8 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
-    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, this, externalModuleListSerializer, externalStorageConfigurationManager)
+    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, virtualFileManager, this, externalModuleListSerializer,
+                                          externalStorageConfigurationManager)
   }
 
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
@@ -692,4 +689,29 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
 
   private fun getModuleFileUrl(source: JpsFileEntitySource.FileInDirectory,
                                module: ModuleEntity) = source.directory.url + "/" + module.name + ".iml"
+}
+
+fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,
+                          contentRootEntity: ContentRootEntity,
+                          builder: WorkspaceEntityStorageBuilder) {
+  if (orderOfItems.size > 1) {
+    // Save the order in which sourceRoots appear in the module
+    val orderingEntity = contentRootEntity.getSourceRootOrder()
+    if (orderingEntity == null) {
+      builder.addEntity(ModifiableSourceRootOrderEntity::class.java, contentRootEntity.entitySource) {
+        this.contentRootEntity = contentRootEntity
+        this.orderOfSourceRoots = orderOfItems
+      }
+    }
+    else {
+      builder.modifyEntity(ModifiableSourceRootOrderEntity::class.java, orderingEntity) {
+        orderOfSourceRoots = orderOfItems
+      }
+    }
+  }
+}
+
+fun ContentRootEntity.getSourceRootsComparator(): Comparator<SourceRootEntity> {
+  val order = (getSourceRootOrder()?.orderOfSourceRoots ?: emptyList()).withIndex().associateBy({ it.value }, { it.index })
+  return compareBy<SourceRootEntity> { order[it.url] ?: order.size }.thenBy { it.url.url }
 }

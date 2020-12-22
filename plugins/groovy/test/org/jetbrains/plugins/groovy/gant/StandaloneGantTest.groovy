@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -33,8 +34,15 @@ class StandaloneGantTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   @Override protected void tearDown() {
-    GantSettings.getInstance(getProject()).loadState new SdkHomeBean()
-    super.tearDown()
+    try {
+      Project project = getProject()
+      if (project != null) {
+        GantSettings.getInstance(project).loadState new SdkHomeBean()
+      }
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   void checkVariants(String text, String... items) {

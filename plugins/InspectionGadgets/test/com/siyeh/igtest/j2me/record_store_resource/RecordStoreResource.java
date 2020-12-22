@@ -3,7 +3,7 @@ import javax.microedition.rms.RecordStore;
 class RecordStoreResource {
 
   void f() {
-    RecordStore rs = RecordStore.<warning descr="'RecordStore' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">openRecordStore</warning>("popeye", true);
+    RecordStore rs = RecordStore.openRecordStore("popeye", true);
     rs.getRecord(1);
     rs.closeRecordStore();
   }

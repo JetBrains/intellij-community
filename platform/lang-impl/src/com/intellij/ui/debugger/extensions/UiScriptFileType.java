@@ -53,11 +53,6 @@ public final class UiScriptFileType implements FileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
   public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }

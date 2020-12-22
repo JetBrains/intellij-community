@@ -176,8 +176,8 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
 
     importProject(
       GradleBuildScriptBuilderEx()
+        .withJavaPlugin()
         .withMavenCentral()
-        .applyPlugin("'java'")
         .addPostfix("""
           
           task printArgs(type: JavaExec) {

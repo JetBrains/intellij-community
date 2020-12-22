@@ -234,5 +234,10 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
         initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
     }
+
+    @Override
+    public @NotNull SearchEverywhereTabDescriptor getTab() {
+      return SearchEverywhereTabDescriptor.IDE;
+    }
   }
 }

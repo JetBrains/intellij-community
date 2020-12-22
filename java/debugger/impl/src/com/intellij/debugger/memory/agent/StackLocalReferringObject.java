@@ -9,7 +9,7 @@ public class StackLocalReferringObject extends GCRootReferringObject {
   private final String myMethodName;
 
   public StackLocalReferringObject(@NotNull MemoryAgentReferenceKind kind,
-                                   String methodName,
+                                   @NotNull String methodName,
                                    long tid, long depth) {
     super(kind);
     this.myTid = tid;
@@ -20,8 +20,6 @@ public class StackLocalReferringObject extends GCRootReferringObject {
   @NotNull
   @Override
   protected String getAdditionalInfo() {
-    return String.format("%sTID: %d DEPTH: %d",
-                         myMethodName != null ? String.format("from method: \"%s\" ", myMethodName) : "",
-                         myTid, myDepth);
+    return String.format("in method: \"%s\" TID: %d DEPTH: %d", myMethodName, myTid, myDepth);
   }
 }

@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="aosp-code" pattern="test[group:android-sdk]:*..*||src[group:android-sdk]:*..*" />
-</component>

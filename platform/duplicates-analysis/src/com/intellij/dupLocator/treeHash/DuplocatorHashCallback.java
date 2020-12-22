@@ -36,7 +36,7 @@ import java.util.*;
 public class DuplocatorHashCallback implements FragmentsCollector {
   private static final Logger LOG = Logger.getInstance(DuplocatorHashCallback.class);
 
-  private Int2ObjectOpenHashMap<List<List<PsiFragment>>> myDuplicates = new Int2ObjectOpenHashMap<>();
+  private Int2ObjectMap<List<List<PsiFragment>>> myDuplicates = new Int2ObjectOpenHashMap<>();
   private final int myBound;
   private boolean myReadOnly = false;
   private final int myDiscardCost;
@@ -159,9 +159,8 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   }
 
   public DupInfo getInfo() {
-    Object2IntOpenHashMap<PsiFragment[]> duplicateList = new Object2IntOpenHashMap<>();
-    for (ObjectIterator<Int2ObjectMap.Entry<List<List<PsiFragment>>>> iterator = myDuplicates.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
-      Int2ObjectMap.Entry<List<List<PsiFragment>>> entry = iterator.next();
+    Object2IntMap<PsiFragment[]> duplicateList = new Object2IntOpenHashMap<>();
+    for (Int2ObjectMap.Entry<List<List<PsiFragment>>> entry : myDuplicates.int2ObjectEntrySet()) {
       for (List<PsiFragment> list : entry.getValue()) {
         int len = list.size();
         if (len > 1) {
@@ -178,7 +177,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
 
     myDuplicates = null;
 
-    for (ObjectIterator<Object2IntMap.Entry<PsiFragment[]>> iterator = duplicateList.object2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
+    for (ObjectIterator<Object2IntMap.Entry<PsiFragment[]>> iterator = duplicateList.object2IntEntrySet().iterator(); iterator.hasNext(); ) {
       Object2IntMap.Entry<PsiFragment[]> entry = iterator.next();
       PsiFragment[] fragments = entry.getKey();
       LOG.assertTrue(fragments.length > 1);
@@ -199,7 +198,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     Arrays.sort(duplicates, (x, y) -> y[0].getCost() - x[0].getCost());
 
     return new DupInfo() {
-      private final Int2ObjectOpenHashMap<GroupNodeDescription> myPattern2Description = new Int2ObjectOpenHashMap<>();
+      private final Int2ObjectMap<GroupNodeDescription> myPattern2Description = new Int2ObjectOpenHashMap<>();
 
       @Override
       public int getPatterns() {

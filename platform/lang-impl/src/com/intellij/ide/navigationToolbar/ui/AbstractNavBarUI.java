@@ -8,11 +8,11 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.*;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,14 +23,11 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.ui.RelativeFont.SMALL;
-
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class AbstractNavBarUI implements NavBarUI {
-
-  private final static Map<NavBarItem, Map<ImageType, ScaleContext.Cache<BufferedImage>>> myCache = new THashMap<>();
+  private final static Map<NavBarItem, Map<ImageType, ScaleContext.Cache<BufferedImage>>> cache = new HashMap<>();
 
   private enum ImageType {
     INACTIVE, NEXT_ACTIVE, ACTIVE, INACTIVE_FLOATING, NEXT_ACTIVE_FLOATING, ACTIVE_FLOATING,
@@ -50,7 +47,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
     Font font = UIUtil.getLabelFont();
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? SMALL.derive(font) : font;
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
   }
 
   @Override
@@ -61,7 +58,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Nullable
   @Override
   public Color getForeground(boolean selected, boolean focused, boolean inactive) {
-    return (selected && focused) ? UIUtil.getListSelectionForeground()
+    return (selected && focused) ? UIUtil.getListSelectionForeground(true)
                                  : inactive ? UIUtil.getInactiveTextColor() : null;
   }
 
@@ -77,24 +74,30 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     final boolean selected = item.isSelected() && item.isFocused();
     boolean nextSelected = item.isNextSelected() && navbar.isFocused();
 
-
     ImageType type;
     if (floating) {
       type = selected ? ImageType.ACTIVE_FLOATING : nextSelected ? ImageType.NEXT_ACTIVE_FLOATING : ImageType.INACTIVE_FLOATING;
-    } else {
+    }
+    else {
       if (toolbarVisible) {
         type = selected ? ImageType.ACTIVE : nextSelected ? ImageType.NEXT_ACTIVE : ImageType.INACTIVE;
-      } else {
+      }
+      else {
         type = selected ? ImageType.ACTIVE_NO_TOOLBAR : nextSelected ? ImageType.NEXT_ACTIVE_NO_TOOLBAR : ImageType.INACTIVE_NO_TOOLBAR;
       }
     }
 
     // see: https://github.com/JetBrains/intellij-community/pull/1111
-    Map<ImageType, ScaleContext.Cache<BufferedImage>> cache = myCache.computeIfAbsent(item, k -> new HashMap<>());
-    ScaleContext.Cache<BufferedImage> imageCache = cache.computeIfAbsent(type, k -> new ScaleContext.Cache<>((ctx) ->
-      drawToBuffer(item, ctx, floating, toolbarVisible, selected, navbar)));
+    Map<ImageType, ScaleContext.Cache<BufferedImage>> cache = AbstractNavBarUI.cache.computeIfAbsent(item, k -> new HashMap<>());
+    ScaleContext.Cache<BufferedImage> imageCache = cache.computeIfAbsent(type, k -> {
+      return new ScaleContext.Cache<>(ctx -> {
+        return drawToBuffer(item, ctx, floating, toolbarVisible, selected, navbar);
+      });
+    });
     BufferedImage image = imageCache.getOrProvide(ScaleContext.create(g));
-    if (image == null) return;
+    if (image == null) {
+      return;
+    }
 
     StartupUiUtil.drawImage(g, image, 0, 0, null);
 
@@ -232,12 +235,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   @Override
-  public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
-  }
-
-  @Override
   public void clearItems() {
-    myCache.clear();
+    cache.clear();
   }
 
   @Override

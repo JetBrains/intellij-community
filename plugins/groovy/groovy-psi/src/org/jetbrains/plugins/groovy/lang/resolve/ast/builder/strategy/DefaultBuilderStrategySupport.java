@@ -157,7 +157,7 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
     fieldSetter.addModifier(PsiModifier.PUBLIC);
     fieldSetter.addParameter(name, type);
     fieldSetter.setContainingClass(builderClass);
-    fieldSetter.setMethodReturnType(JavaPsiFacade.getElementFactory(builderClass.getProject()).createType(builderClass));
+    fieldSetter.setMethodReturnType(JavaPsiFacade.getElementFactory(builderClass.getProject()).createType(builderClass, PsiSubstitutor.EMPTY));
     fieldSetter.setNavigationElement(navigationElement);
     fieldSetter.setOriginInfo(ORIGIN_INFO);
     return fieldSetter;

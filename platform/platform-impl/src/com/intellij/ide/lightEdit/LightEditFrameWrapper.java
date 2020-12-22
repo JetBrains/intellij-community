@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
@@ -70,7 +72,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   }
 
   @Override
-  protected void initTitleInfoProviders(@NotNull Project project) {
+  protected @NotNull List<TitleInfoProvider> getTitleInfoProviders() {
+    return Collections.emptyList();
   }
 
   @NotNull

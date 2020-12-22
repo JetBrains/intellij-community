@@ -27,6 +27,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,8 +153,8 @@ public abstract class XmlAttributeDelegate {
       valueTextRange = new TextRange(child.getTextLength(), valueTextRange.getEndOffset());
       child = child.getTreeNext();
     }
-    final IntArrayList gapsStarts = new IntArrayList();
-    final IntArrayList gapsShifts = new IntArrayList();
+    final IntList gapsStarts = new IntArrayList();
+    final IntList gapsShifts = new IntArrayList();
     StringBuilder buffer = new StringBuilder(myAttribute.getTextLength());
     while (child != null) {
       final int start = buffer.length();

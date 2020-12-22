@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -78,7 +79,7 @@ public final class DateChangeListGroupingStrategy implements ChangeListGroupingS
   }
 
   private static final class MonthsCache {
-    private final Int2ObjectOpenHashMap<String> myCache = new Int2ObjectOpenHashMap<>(12);
+    private final Int2ObjectMap<String> myCache = new Int2ObjectOpenHashMap<>(12);
 
     private MonthsCache(Calendar calendarForInit) {
       SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
@@ -94,7 +95,7 @@ public final class DateChangeListGroupingStrategy implements ChangeListGroupingS
   }
 
   private static final class WeekDayFormatCache {
-    private final Int2ObjectOpenHashMap<String> myCache = new Int2ObjectOpenHashMap<>(7);
+    private final Int2ObjectMap<String> myCache = new Int2ObjectOpenHashMap<>(7);
 
     private WeekDayFormatCache(final Calendar calendarForInit) {
       SimpleDateFormat weekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);

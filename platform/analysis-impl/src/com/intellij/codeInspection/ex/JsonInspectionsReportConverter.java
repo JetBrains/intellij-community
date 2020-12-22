@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.DefaultInspectionToolResultExporter.INSPECTION_RESULTS_LANGUAGE;
 import static com.intellij.codeInspection.reference.SmartRefElementPointerImpl.*;
 
 public class JsonInspectionsReportConverter implements InspectionsReportConverter {
@@ -213,6 +214,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     }
 
     writer.name(HIGHLIGHTED_ELEMENT).value(problem.getChildText(HIGHLIGHTED_ELEMENT));
+    writer.name(INSPECTION_RESULTS_LANGUAGE).value(problem.getChildText(INSPECTION_RESULTS_LANGUAGE));
     writer.name(DESCRIPTION).value(problem.getChildText(DESCRIPTION));
     writer.endObject();
   }

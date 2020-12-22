@@ -2005,6 +2005,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void reattach(final DebugEnvironment environment) {
+    reattach(environment, () -> {});
+  }
+
+  public void reattach(final DebugEnvironment environment, Runnable vmReadyCallback) {
     if (!myIsStopped.get()) {
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
@@ -2026,6 +2030,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             myConnection = environment.getRemoteConnection();
             getManagerThread().restartIfNeeded();
             createVirtualMachine(environment);
+            vmReadyCallback.run();
           });
         }
       });

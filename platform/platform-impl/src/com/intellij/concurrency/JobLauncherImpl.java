@@ -27,7 +27,7 @@ import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class JobLauncherImpl extends JobLauncher {
+public final class JobLauncherImpl extends JobLauncher {
   static final int CORES_FORK_THRESHOLD = 1;
   private static final Logger LOG = Logger.getInstance(JobLauncher.class);
   private final boolean logAllExceptions = System.getProperty("idea.job.launcher.log.all.exceptions", "false").equals("true");
@@ -171,7 +171,7 @@ public class JobLauncherImpl extends JobLauncher {
     private final Consumer<? super Future<?>> myOnDoneCallback;
     private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
     private volatile Status myStatus;
-    private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<Void>() {
+    private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<>() {
       @Override
       public Void getRawResult() {
         return null;

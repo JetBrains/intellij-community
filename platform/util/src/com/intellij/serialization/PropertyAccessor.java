@@ -23,7 +23,7 @@ public final class PropertyAccessor implements MutableAccessor {
   private final Method myWriteMethod;
   private final Type myGenericType;
 
-  public PropertyAccessor(@NotNull String name, @NotNull Class<?> type, @NotNull Method readMethod, @Nullable Method writeMethod) {
+  PropertyAccessor(@NotNull String name, @NotNull Class<?> type, @NotNull Method readMethod, @Nullable Method writeMethod) {
     myName = name;
     myType = type;
     myReadMethod = readMethod;

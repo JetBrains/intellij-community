@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.utils;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,7 +10,7 @@ import java.util.Collection;
 
 public final class IntIntMultiMap {
   private final static int[] EMPTY = new int[0];
-  private final Int2ObjectOpenHashMap<int[]> myKeyToArrayMap = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<int[]> myKeyToArrayMap = new Int2ObjectOpenHashMap<>();
 
   public void putValue(int key, int value) {
     int[] values = myKeyToArrayMap.get(key);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 final class ObjectNode {
   private final ObjectTree myTree;
@@ -61,7 +62,7 @@ final class ObjectNode {
   }
 
   void getAndRemoveRecursively(@NotNull List<? super Disposable> result) {
-    getAndRemoveChildrenRecursively(result);
+    getAndRemoveChildrenRecursively(result, null);
     myTree.removeObjectFromTree(this);
     // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
     if (myTree.rememberDisposedTrace(myObject) == null) {
@@ -70,11 +71,17 @@ final class ObjectNode {
     myChildren = null;
     myParent = null;
   }
-  void getAndRemoveChildrenRecursively(@NotNull List<? super Disposable> result) {
+
+  /**
+   * {@code predicate} is used only for direct children.
+   */
+  void getAndRemoveChildrenRecursively(@NotNull List<? super Disposable> result, @Nullable Predicate<? super Disposable> predicate) {
     if (myChildren != null) {
       for (int i = myChildren.size() - 1; i >= 0; i--) {
         ObjectNode childNode = myChildren.get(i);
-        childNode.getAndRemoveRecursively(result);
+        if (predicate == null || predicate.test(childNode.getObject())) {
+          childNode.getAndRemoveRecursively(result);
+        }
       }
     }
   }

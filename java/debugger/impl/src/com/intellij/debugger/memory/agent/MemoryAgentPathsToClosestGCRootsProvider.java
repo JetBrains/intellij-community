@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.ReferringObject;
 import com.intellij.debugger.engine.ReferringObjectsProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,9 @@ public class MemoryAgentPathsToClosestGCRootsProvider implements ReferringObject
       throw new UnsupportedOperationException();
     }
 
-    return memoryAgent.findPathsToClosestGCRoots(evaluationContext, value, myPathsToRequestLimit, myObjectsToRequestLimit);
+    MemoryAgentActionResult<ReferringObjectsInfo> result = memoryAgent.findPathsToClosestGCRoots(
+      evaluationContext, value, myPathsToRequestLimit, myObjectsToRequestLimit, Registry.get("debugger.memory.agent.action.timeout").asInteger()
+    );
+    return result.getResult();
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -177,5 +178,21 @@ private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
 inline fun <T> runInAutoSaveDisabledMode(task: () -> T): T {
   SaveAndSyncHandler.getInstance().disableAutoSave().use {
     return task()
+  }
+}
+
+inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
+  val app = ApplicationManagerEx.getApplicationEx()
+  if (isSaveAllowed == app.isSaveAllowed) {
+    task()
+    return
+  }
+
+  app.isSaveAllowed = isSaveAllowed
+  try {
+    task()
+  }
+  finally {
+    app.isSaveAllowed = !isSaveAllowed
   }
 }

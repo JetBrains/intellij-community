@@ -219,55 +219,45 @@ public final class MethodBytecodeUtil {
 
   @Nullable
   public static Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByNameProvider classesByName) {
-    Ref<Method> methodRef = Ref.create();
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
       if (applicableMethods.size() == 1) {
-        visit(applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
-          @Override
-          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            ReferenceType cls = ContainerUtil.getFirstItem(classesByName.get(owner));
-            if (cls != null) {
-              Method method = DebuggerUtils.findMethod(cls, name, desc);
-              if (method != null) {
-                methodRef.setIfNull(method);
-              }
-            }
-          }
-        }, false);
+        return getFirstCalledMethod(applicableMethods.get(0), classesByName);
       }
     }
-    return methodRef.get();
+    return null;
   }
 
   @Nullable
   public static Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
+    return method.isBridge() ? getFirstCalledMethod(method, classesByName) : null;
+  }
+
+  private static Method getFirstCalledMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
     Ref<Method> methodRef = Ref.create();
-    if (method.isBridge()) {
-      visit(method, new MethodVisitor(Opcodes.API_VERSION) {
-        @Override
-        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-          if ("java/lang/AbstractMethodError".equals(owner)) {
-            return;
-          }
-          ReferenceType declaringType = method.declaringType();
-          ReferenceType cls;
-          owner = owner.replace("/", ".");
-          if (declaringType.name().equals(owner)) {
-            cls = declaringType;
-          }
-          else {
-            cls = ContainerUtil.getFirstItem(classesByName.get(owner));
-          }
-          if (cls != null) {
-            Method method = DebuggerUtils.findMethod(cls, name, desc);
-            if (method != null) {
-              methodRef.setIfNull(method);
-            }
+    visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+      @Override
+      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+        if ("java/lang/AbstractMethodError".equals(owner)) {
+          return;
+        }
+        ReferenceType declaringType = method.declaringType();
+        ReferenceType cls;
+        owner = Type.getObjectType(owner).getClassName();
+        if (declaringType.name().equals(owner)) {
+          cls = declaringType;
+        }
+        else {
+          cls = ContainerUtil.getFirstItem(classesByName.get(owner));
+        }
+        if (cls != null) {
+          Method method = DebuggerUtils.findMethod(cls, name, desc);
+          if (method != null) {
+            methodRef.setIfNull(method);
           }
         }
-      }, false);
-    }
+      }
+    }, false);
     return methodRef.get();
   }
 

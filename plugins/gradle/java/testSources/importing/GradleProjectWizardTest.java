@@ -90,7 +90,8 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     assertNotNull(buildScript);
     assertEquals("plugins {\n" +
                  "    id 'java'\n" +
-                 "}\n\n" +
+                 "}\n" +
+                 "\n" +
                  "version '1.0-SNAPSHOT'\n" +
                  "\n" +
                  "repositories {\n" +
@@ -98,8 +99,13 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "}\n" +
                  "\n" +
                  "dependencies {\n" +
-                 "    testCompile group: 'junit', name: 'junit', version: '4.12'\n" +
-                 "}\n",
+                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'\n" +
+                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'\n" +
+                 "}\n" +
+                 "\n" +
+                 "test {\n" +
+                 "    useJUnitPlatform()\n" +
+                 "}",
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
 
     Module childModule = createModuleFromTemplate("Gradle", null, project, step -> {

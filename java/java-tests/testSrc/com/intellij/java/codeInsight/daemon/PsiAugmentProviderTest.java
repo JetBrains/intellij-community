@@ -15,10 +15,7 @@ import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String AUGMENTED_FIELD = "augmented";
@@ -79,6 +76,30 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
 
       PsiUtilCore.ensureValid(psiClass.findFieldByName(AUGMENTED_FIELD, false));
     });
+  }
+
+  public void testPassNameHintToAugmenter() {
+    PsiClass psiClass = myFixture.addClass("class C {}");
+
+    List<String> hints = new ArrayList<>();
+    PsiAugmentProvider.EP_NAME.getPoint().registerExtension(new PsiAugmentProvider() {
+      @Override
+      protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                                        @NotNull Class<Psi> type,
+                                                                        @Nullable String nameHint) {
+        if (element == psiClass) {
+          hints.add(nameHint);
+        }
+        return Collections.emptyList();
+      }
+    }, myFixture.getTestRootDisposable());
+
+    assertNotNull(psiClass.findFieldByName(AUGMENTED_FIELD, true));
+    assertNull(psiClass.findFieldByName("another", false));
+    assertSize(1, psiClass.getFields());
+    assertSize(2, psiClass.getAllFields());
+
+    assertOrderedEquals(hints, AUGMENTED_FIELD, "another", null);
   }
 
   private static class TestAugmentProvider extends PsiAugmentProvider {

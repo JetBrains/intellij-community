@@ -17,18 +17,17 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.extractVisibility
 import org.jetbrains.plugins.groovy.lang.resolve.ast.getVisibility
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
-import org.jetbrains.plugins.groovy.transformations.impl.synch.isStatic
 
 class NamedVariantTransformationSupport : AstTransformationSupport {
   override fun applyTransformation(context: TransformationContext) {
     context.codeClass.codeMethods.forEach {
       if (!it.hasAnnotation(GROOVY_TRANSFORM_NAMED_VARIANT)) return@forEach
-      val method = constructNamedMethod(it) ?: return@forEach
+      val method = constructNamedMethod(it, context) ?: return@forEach
       context.addMethod(method)
     }
   }
 
-  private fun constructNamedMethod(method: GrMethod): GrLightMethodBuilder? {
+  private fun constructNamedMethod(method: GrMethod, context: TransformationContext): GrLightMethodBuilder? {
     val parameters = mutableListOf<GrParameter>()
     val namedVariantAnnotation = method.getAnnotation(GROOVY_TRANSFORM_NAMED_VARIANT) ?: return null
     val mapType = TypesUtil.createType(JAVA_UTIL_MAP, method)
@@ -47,12 +46,15 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
       parameters.addAll(requiredParameters)
     }
 
-    return buildMethod(parameters, method, namedVariantAnnotation)
+    return buildMethod(parameters, method, namedVariantAnnotation, context)
   }
 
   internal class NamedVariantGeneratedMethod(manager: PsiManager?, name: @NlsSafe String?) : GrLightMethodBuilder(manager, name)
 
-  private fun buildMethod(parameters: List<GrParameter>, method: GrMethod, namedVariantAnnotation : PsiAnnotation): GrLightMethodBuilder? {
+  private fun buildMethod(parameters: List<GrParameter>,
+                          method: GrMethod,
+                          namedVariantAnnotation: PsiAnnotation,
+                          context: TransformationContext): GrLightMethodBuilder? {
     val builder = NamedVariantGeneratedMethod(method.manager, method.name + "")
     val psiClass = method.containingClass ?: return null
     builder.containingClass = psiClass
@@ -61,7 +63,7 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
     val defaultVisibility = extractVisibility(method)
     val requiredVisibility = getVisibility(namedVariantAnnotation, builder, defaultVisibility)
     builder.modifierList.addModifier(requiredVisibility.toString())
-    if (method.isStatic()) {
+    if (context.hasModifierProperty(method.modifierList, PsiModifier.STATIC)) {
       builder.modifierList.addModifier(PsiModifier.STATIC)
     }
     builder.isConstructor = method.isConstructor

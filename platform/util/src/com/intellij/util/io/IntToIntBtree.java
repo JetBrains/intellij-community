@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public final class IntToIntBtree {
   final int hashPageCapacity;
 
   private static final boolean hasCachedMappings = false;
-  private Int2IntOpenHashMap myCachedMappings;
+  private Int2IntMap myCachedMappings;
   private final int myCachedMappingsSize;
   private static final int UNDEFINED_ADDRESS = -1;
 
@@ -556,7 +557,7 @@ public final class IntToIntBtree {
     private static final class HashLeafData {
       final BtreeIndexNodeView nodeView;
       final int[] keys;
-      final Int2IntOpenHashMap values;
+      final Int2IntMap values;
 
       HashLeafData(BtreeIndexNodeView _nodeView, int recordCount) {
         nodeView = _nodeView;
@@ -665,7 +666,7 @@ public final class IntToIntBtree {
         if (defaultSplit) {
           hashLeafData.clean();
 
-          final Int2IntOpenHashMap map = hashLeafData.values;
+          final Int2IntMap map = hashLeafData.values;
 
           final int avg = keys.length / 2;
           medianKey = keys[avg];
@@ -786,7 +787,7 @@ public final class IntToIntBtree {
 
           final int childrenCount = getChildrenCount();
           final int[] keys = hashLeafData.keys;
-          final Int2IntOpenHashMap map = hashLeafData.values;
+          final Int2IntMap map = hashLeafData.values;
 
           for(int i = 0; i < numberOfKeysToMove; ++i) {
             final int key = keys[i];
@@ -840,7 +841,7 @@ public final class IntToIntBtree {
         }
 
         final int[] keys = hashLeafData.keys;
-        final Int2IntOpenHashMap map = hashLeafData.values;
+        final Int2IntMap map = hashLeafData.values;
 
         final int childrenCount = getChildrenCount();
         final int lastChildIndex = childrenCount - numberOfKeysToMove;

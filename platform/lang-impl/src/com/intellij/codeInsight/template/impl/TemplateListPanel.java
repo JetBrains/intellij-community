@@ -417,7 +417,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return rows != null && rows.length == 1 ? rows[0] : -1;
   }
 
-  private void removeRows() {
+  void removeRows() {
     TreeNode toSelect = null;
 
     TreePath[] paths = myTree.getSelectionPaths();
@@ -770,6 +770,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         group.add(revert);
         group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
         group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE));
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE));
         ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
     });

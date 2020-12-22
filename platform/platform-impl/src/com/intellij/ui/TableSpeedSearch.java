@@ -151,7 +151,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
   @NotNull
   private IntList findAllFilteredRows(String s) {
-    IntArrayList rows = new IntArrayList();
+    IntList rows = new IntArrayList();
     String _s = s.trim();
 
     for (int row = 0; row < myComponent.getRowCount(); row++) {

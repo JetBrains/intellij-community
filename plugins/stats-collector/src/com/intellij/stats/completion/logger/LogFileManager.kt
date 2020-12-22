@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,17 @@ class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogge
 
     private var storage = LineStorage()
 
-    override fun println(message: String) {
+    override fun printLines(lines: List<String>) {
         synchronized(this) {
-            if (storage.size > 0 && storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
+            if (storage.size > 0 && storage.sizeWithNewLines(lines) > MAX_SIZE_BYTE) {
                 flushImpl()
             }
-            storage.appendLine(message)
+            for (line in lines) {
+                storage.appendLine(line)
+            }
+            if (storage.size > MAX_SIZE_BYTE) {
+                flushImpl()
+            }
         }
     }
 

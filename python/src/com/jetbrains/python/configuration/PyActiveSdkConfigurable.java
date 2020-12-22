@@ -17,6 +17,7 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -116,7 +117,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       @Override
       public void setSelectedItem(Object item) {
         if (getShowAll().equals(item)) {
-          onShowAllSelected.run();
+          ApplicationManager.getApplication().invokeLater(onShowAllSelected);
         }
         else if (!PySdkListCellRenderer.SEPARATOR.equals(item)) {
           super.setSelectedItem(item);

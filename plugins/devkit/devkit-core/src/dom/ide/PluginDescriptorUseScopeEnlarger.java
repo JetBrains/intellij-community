@@ -51,7 +51,7 @@ public class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
   private static SearchScope createAllPluginDescriptorFilesSearchScope(PsiElement element) {
     final Project project = element.getProject();
     final Collection<VirtualFile> pluginXmlFiles =
-      DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project,
+      DomService.getInstance().getDomFileCandidates(IdeaPlugin.class,
                                                     GlobalSearchScope.allScope(project));
     return GlobalSearchScope.filesScope(project, pluginXmlFiles);
   }

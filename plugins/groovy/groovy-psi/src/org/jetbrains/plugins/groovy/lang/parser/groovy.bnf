@@ -659,7 +659,7 @@ tuple_variable ::= weak_keyword | IDENTIFIER
 {
   elementType = variable
 }
-private tuple_initializer ::= '=' mb_nl expression
+private tuple_initializer ::= '=' mb_nl expression_or_application
 {
   pin = 1
 }

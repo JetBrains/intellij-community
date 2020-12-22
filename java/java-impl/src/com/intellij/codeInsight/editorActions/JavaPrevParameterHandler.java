@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -39,15 +39,15 @@ public class JavaPrevParameterHandler extends EditorActionHandler {
     if (project != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file instanceof PsiJavaFile) {
-        PsiElement exprList = ParameterInfoController.findArgumentList(file, offset, -1);
+        PsiElement exprList = ParameterInfoControllerBase.findArgumentList(file, offset, -1);
         if (exprList instanceof PsiExpressionList) {
           CharSequence text = editor.getDocument().getImmutableCharSequence();
           int next = CharArrayUtil.shiftForward(text, offset, " \t");
           int prev = CharArrayUtil.shiftBackward(text, offset - 1, " \t");
           int rParOffset = exprList.getTextRange().getEndOffset() - 1;
           if (offset == rParOffset + 1 || next == rParOffset && prev >= 0 && prev < text.length() && text.charAt(prev) == ',') {
-            ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor,
-                                                                                                exprList.getTextRange().getStartOffset());
+            ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor,
+                                                                                                        exprList.getTextRange().getStartOffset());
             if (controller != null) {
               Object[] objects = controller.getObjects();
               Object highlighted = controller.getHighlighted();

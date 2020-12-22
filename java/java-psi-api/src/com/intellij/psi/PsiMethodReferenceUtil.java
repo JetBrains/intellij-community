@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
@@ -161,12 +160,6 @@ public final class PsiMethodReferenceUtil {
       PsiType methodReturnType = getMethodReferenceReturnType(expression, result);
       if (methodReturnType == null) {
         return false;
-      }
-
-      PsiElement element = result.getElement();
-      if (element instanceof PsiMethod && 
-          AnnotationUtil.isAnnotated(((PsiMethod)element), CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
-        return true;
       }
 
       if (TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) {

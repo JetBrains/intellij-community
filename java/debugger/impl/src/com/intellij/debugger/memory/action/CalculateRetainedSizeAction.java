@@ -9,11 +9,13 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.debugger.memory.agent.MemoryAgentActionResult;
 import com.intellij.debugger.memory.agent.ui.RetainedSizeDialog;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -46,11 +48,19 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
         try {
           EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
           MemoryAgent memoryAgent = MemoryAgent.get(debugProcess);
-          Pair<Long, ObjectReference[]> sizeAndHeldObjects = memoryAgent.estimateObjectSize(evaluationContext, reference);
-          dialog.setHeldObjectsAndRetainedSize(
-            Arrays.asList(sizeAndHeldObjects.getSecond()),
-            sizeAndHeldObjects.getFirst()
+          MemoryAgentActionResult<Pair<long[], ObjectReference[]>> result = memoryAgent.estimateObjectSize(
+            evaluationContext, reference, Registry.get("debugger.memory.agent.action.timeout").asInteger()
           );
+          if (result.executedSuccessfully()) {
+            Pair<long[], ObjectReference[]> sizesAndHeldObjects = result.getResult();
+            dialog.setHeldObjectsAndSizes(
+              Arrays.asList(sizesAndHeldObjects.getSecond()),
+              sizesAndHeldObjects.getFirst()[0],
+              sizesAndHeldObjects.getFirst()[1]
+            );
+          } else {
+            dialog.setCalculationTimeout();
+          }
         }
         catch (EvaluateException e) {
           XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(JavaDebuggerBundle.message("action.failed"), NotificationType.ERROR);

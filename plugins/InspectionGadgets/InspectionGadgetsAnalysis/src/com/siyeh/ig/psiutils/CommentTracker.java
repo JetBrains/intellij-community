@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -9,7 +9,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -270,6 +273,28 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull PsiElement replacement) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiPolyadicExpression && replacement instanceof PsiPolyadicExpression) {
+      // flatten nested polyadic expressions
+      PsiPolyadicExpression parentPolyadic = (PsiPolyadicExpression)parent;
+      PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
+      IElementType parentTokenType = parentPolyadic.getOperationTokenType();
+      IElementType childTokenType = childPolyadic.getOperationTokenType();
+      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType) &&
+          !PsiPrecedenceUtil.areParenthesesNeeded(childPolyadic, parentPolyadic, false)) {
+        PsiElement[] children = parentPolyadic.getChildren();
+        int idx = ArrayUtil.indexOf(children, element);
+        if (idx > 0 || (idx == 0 && parentTokenType == childTokenType)) {
+          StringBuilder text = new StringBuilder();
+          for (int i = 0; i < children.length; i++) {
+            PsiElement child = children[i];
+            text.append(text((i == idx) ? replacement : child));
+          }
+          replacement = JavaPsiFacade.getElementFactory(parent.getProject()).createExpressionFromText(text.toString(), parent);
+          element = parent;
+        }
+      }
+    }
     markUnchanged(replacement);
     grabComments(element);
     return element.replace(replacement);
@@ -290,7 +315,7 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull @NlsSafe String text) {
-    PsiElement replacement = createElement(element, text);
+    PsiElement replacement = createElementFromText(text, element);
     return replace(element, replacement);
   }
 
@@ -423,29 +448,29 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull @NlsSafe String text) {
-    PsiElement replacement = createElement(element, text);
+    PsiElement replacement = createElementFromText(text, element);
     return replaceAndRestoreComments(element, replacement);
   }
 
-  private static @NotNull PsiElement createElement(@NotNull PsiElement element, @NotNull String text) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    if (element instanceof PsiExpression) {
-      return factory.createExpressionFromText(text, element);
+  private static @NotNull PsiElement createElementFromText(@NotNull String text, @NotNull PsiElement context) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+    if (context instanceof PsiExpression) {
+      return factory.createExpressionFromText(text, context);
     }
-    else if (element instanceof PsiStatement) {
-      return factory.createStatementFromText(text, element);
+    else if (context instanceof PsiStatement) {
+      return factory.createStatementFromText(text, context);
     }
-    else if (element instanceof PsiTypeElement) {
-      return factory.createTypeElementFromText(text, element);
+    else if (context instanceof PsiTypeElement) {
+      return factory.createTypeElementFromText(text, context);
     }
-    else if (element instanceof PsiIdentifier) {
+    else if (context instanceof PsiIdentifier) {
       return factory.createIdentifier(text);
     }
-    else if (element instanceof PsiComment) {
-      return factory.createCommentFromText(text, element);
+    else if (context instanceof PsiComment) {
+      return factory.createCommentFromText(text, context);
     }
     else {
-      throw new IllegalArgumentException("Unsupported element type: " + element);
+      throw new IllegalArgumentException("Unsupported element type: " + context);
     }
   }
 

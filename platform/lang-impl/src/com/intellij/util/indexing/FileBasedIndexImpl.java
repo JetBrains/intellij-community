@@ -4,7 +4,6 @@ package com.intellij.util.indexing;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -63,6 +62,7 @@ import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +73,7 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -103,7 +104,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final SimpleMessageBusConnection myConnection;
   private final FileDocumentManager myFileDocumentManager;
 
-  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = ContainerUtil.newConcurrentSet();
+  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   private final boolean myIsUnitTestMode;
@@ -113,7 +114,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
-  private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
+  private final Set<Project> myProjectsBeingUpdated = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   private final Lock myReadLock;
   final Lock myWriteLock;
@@ -142,7 +143,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
-    connection.subscribe(DynamicPluginListener.TOPIC, new FileBasedIndexPluginListener(this));
 
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
@@ -802,7 +802,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         long start = System.currentTimeMillis();
 
-        IntArrayList fileSet = new IntArrayList();
+        IntList fileSet = new IntArrayList();
         iterateIndexableFiles(fileOrDir -> {
           if (fileOrDir instanceof VirtualFileWithId) {
             fileSet.add(((VirtualFileWithId)fileOrDir).getId());
@@ -951,7 +951,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
 
-  private static final Key<WeakReference<FileContentImpl>> ourFileContentKey = Key.create("unsaved.document.index.content");
+  private static final Key<WeakReference<Pair<FileContentImpl, Long>>> ourFileContentKey = Key.create("unsaved.document.index.content");
 
   // returns false if doc was not indexed because it is already up to date
   // return true if document was indexed
@@ -984,15 +984,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         if (!isTooLarge(vFile, (long)contentText.length())) {
           // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
-          WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
-          FileContentImpl previousContent = com.intellij.reference.SoftReference.dereference(previousContentRef);
+          WeakReference<Pair<FileContentImpl, Long>> previousContentAndStampRef = document.getUserData(ourFileContentKey);
+          Pair<FileContentImpl, Long> previousContentAndStamp = com.intellij.reference.SoftReference.dereference(previousContentAndStampRef);
           final FileContentImpl newFc;
-          if (previousContent != null && previousContent.getStamp() == currentDocStamp) {
-            newFc = previousContent;
+          if (previousContentAndStamp != null && currentDocStamp == previousContentAndStamp.getSecond()) {
+            newFc = previousContentAndStamp.getFirst();
           }
           else {
-            newFc = new FileContentImpl(vFile, contentText, currentDocStamp);
-            document.putUserData(ourFileContentKey, new WeakReference<>(newFc));
+            newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText);
+            document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
           }
 
           initFileContent(newFc, project, dominantContentFile);
@@ -1039,8 +1039,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (psiFile != null) {
       Map<ID, Map> indexValues = CachedValuesManager.getCachedValue(psiFile, () -> {
         try {
-          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? FileContentImpl.createByFile(virtualFile, null)
-                                                                : new FileContentImpl(virtualFile, psiFile.getViewProvider().getContents(), 0);
+          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? (FileContentImpl)FileContentImpl.createByFile(virtualFile)
+                                                                : (FileContentImpl)FileContentImpl.createByText(virtualFile, psiFile.getViewProvider().getContents());
           initFileContent(fc, project, psiFile);
           Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
           return CachedValueProvider.Result.createSingleDependency(result, psiFile);
@@ -1317,7 +1317,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           ProgressManager.checkCanceled();
 
           if (fc == null) {
-            fc = new LazyFileContentImpl(file, () -> getBytesOrNull(content));
+            fc = (FileContentImpl)FileContentImpl.createByContent(file, () -> getBytesOrNull(content));
 
             ProgressManager.checkCanceled();
 
@@ -1431,6 +1431,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
+
+    if (currentFC instanceof FileContentImpl && FileBasedIndex.ourSnapshotMappingsEnabled) {
+      // Optimization: initialize indexed file hash eagerly. The hash is calculated by raw content bytes.
+      // If we pass the currentFC to an indexer that calls "FileContentImpl.getContentAsText",
+      // the raw bytes will be converted to text and assigned to null.
+      // Then, to compute the hash, the reverse conversion will be necessary.
+      // To avoid this extra conversion, let's initialize the hash eagerly.
+      IndexedHashesSupport.getOrInitIndexedHash((FileContentImpl)currentFC);
+    }
 
     markFileIndexed(file);
     try {

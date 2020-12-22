@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -64,7 +63,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThrowableRunnable;
@@ -73,11 +71,10 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFilePointersTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -109,6 +106,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
 
+  private LegacyBridgeTestFilePointersTracker myLegacyBridgeTestFilePointersTracker;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
@@ -249,6 +247,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
+      myLegacyBridgeTestFilePointersTracker = new LegacyBridgeTestFilePointersTracker(getProject());
+      myLegacyBridgeTestFilePointersTracker.startTrackPointersCreatedInTest();
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     });
   }
@@ -372,10 +372,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       },
       () -> {
-        StartMarkAction.checkCleared(project);
-        InplaceRefactoring.checkCleared();
-      },
-      () -> {
         if (project != null) {
           TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
@@ -407,6 +403,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
       },
+      () -> myLegacyBridgeTestFilePointersTracker.disposePointersCreatedInTest(),
       () -> {
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();

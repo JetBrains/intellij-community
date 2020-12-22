@@ -19,8 +19,7 @@
     <registryKey key="ide.new.project.model.indicator" defaultValue="false" restartRequired="true"
                  description="Show an icon in the status bar indicating whether the workspace model is enabled or not"/>
 
-
-    <projectService serviceInterface="com.intellij.workspaceModel.storage.VirtualFileUrlManager"
-                    serviceImplementation="com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl" />
+    <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl" />
   </extensions>
 </idea-plugin>

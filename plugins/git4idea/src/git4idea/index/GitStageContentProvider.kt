@@ -4,12 +4,12 @@ package git4idea.index
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
-import git4idea.i18n.GitBundle
 import git4idea.index.ui.GitStagePanel
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
@@ -47,9 +47,7 @@ class GitStageContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
 }
 
 class GitStageDisplayNameSupplier : Supplier<String> {
-  override fun get(): @Nls String {
-    return GitBundle.message("stage.tab.name")
-  }
+  override fun get(): @Nls String = VcsBundle.message("tab.title.commit")
 }
 
 private fun isCommitToolWindow(project: Project) = ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindow == true

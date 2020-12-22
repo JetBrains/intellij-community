@@ -29,7 +29,6 @@ class UnknownSdkTrackerTestKt : LightPlatformTestCase() {
       }
     }
     ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, listOf(auto), testRootDisposable)
-    setSystemPropertyForTest("unknown.sdk", true)
 
     runWriteActionAndWait {
       ModuleRootManager.getInstance(module).modifiableModel.also {

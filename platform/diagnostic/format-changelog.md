@@ -1,3 +1,7 @@
+# 24
+
+* add `icons.action-icon`.
+
 # 23
 
 * `svg-decode` doesn't include `svg-cache-read` anymore.

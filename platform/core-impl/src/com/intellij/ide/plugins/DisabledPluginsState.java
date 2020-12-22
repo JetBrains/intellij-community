@@ -3,11 +3,11 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +43,22 @@ public final class DisabledPluginsState {
       return;
     }
 
-    List<String> requiredPlugins = StringUtil.split(System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, ""), ",");
-    List<String> suppressedPlugins = StringUtil.split(System.getProperty("idea.suppressed.plugins.id", ""), ",");
-    List<String> nonEssentialSuppressedPlugins =
-      ContainerUtil.filter(suppressedPlugins, it -> !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it));
+    List<String> requiredPlugins = Arrays.asList(System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, "").split(","));
+    String[] suppressedPlugins = System.getProperty("idea.suppressed.plugins.id", "").split(",");
+    List<String> nonEssentialSuppressedPlugins;
+    if (suppressedPlugins.length == 0) {
+      nonEssentialSuppressedPlugins = Collections.emptyList();
+    }
+    else {
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      List<String> result = new ArrayList<>(suppressedPlugins.length);
+      for (String t : suppressedPlugins) {
+        if (!appInfo.isEssentialPlugin(t)) {
+          result.add(t);
+        }
+      }
+      nonEssentialSuppressedPlugins = result;
+    }
 
     try {
       boolean updateDisablePluginsList = false;

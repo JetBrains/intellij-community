@@ -173,7 +173,7 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
         append(buf, SSRBundle.message("hierarchy.tooltip.message"));
       }
       if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
-        final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
+        final String text = StringUtil.unquoteString(constraint.getReferenceConstraintName());
         append(buf, SSRBundle.message("reference.target.tooltip.message", constraint.isInvertReference() ? 1 : 0, text));
       }
 

@@ -42,7 +42,7 @@ internal fun CommitWorkflowUi.getIncludedPaths(): List<FilePath> =
 
 @get:ApiStatus.Internal
 val CheckinProjectPanel.isNonModalCommit: Boolean
-  get() = commitWorkflowHandler is ChangesViewCommitWorkflowHandler
+  get() = commitWorkflowHandler is NonModalCommitWorkflowHandler<*, *>
 
 private val VCS_COMPARATOR = compareBy<AbstractVcs, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
@@ -185,7 +185,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
 
-  protected fun refreshChanges(callback: () -> Unit) =
+  protected open fun refreshChanges(callback: () -> Unit) =
     ChangeListManager.getInstance(project).invokeAfterUpdate(
       {
         ui.refreshData()

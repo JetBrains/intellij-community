@@ -6,9 +6,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
+import it.unimi.dsi.fastutil.ints.*;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -77,10 +75,10 @@ public final class TracingData {
 
   public static void main(String[] args) throws IOException {
     PersistentHashMap<Integer, Integer> lKeys = createOrOpenMap();
-    IntArrayList mapping = new IntArrayList();
+    IntList mapping = new IntArrayList();
     lKeys.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(mapping));
     System.out.println(mapping.size());
-    Int2IntOpenHashMap map = new Int2IntOpenHashMap(mapping.size());
+    Int2IntMap map = new Int2IntOpenHashMap(mapping.size());
     for (IntListIterator iterator = mapping.iterator(); iterator.hasNext(); ) {
       int i = iterator.nextInt();
       map.put(i, lKeys.get(i).intValue());

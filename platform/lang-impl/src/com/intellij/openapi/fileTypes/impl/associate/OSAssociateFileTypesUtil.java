@@ -45,6 +45,7 @@ public class OSAssociateFileTypesUtil {
               try {
                 callback.beforeStart();
                 associator.associateFileTypes(fileTypes);
+                OSFileAssociationPreferences.getInstance().updateFileTypes(fileTypes);
                 callback.onSuccess(associator.isOsRestartRequired());
               }
               catch (OSFileAssociationException exception) {

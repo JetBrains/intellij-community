@@ -2,24 +2,71 @@
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.PathMacros
+import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.loadProject
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
+
+internal val eclipseTestDataRoot: Path
+  get() = PluginPathManager.getPluginHome("eclipse").toPath() / "testData"
 
 internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
                                     tempDirectory: TempDirectory,
                                     setupPathVariables: Boolean = false,
                                     imlFilePaths: List<Pair<String, String>>) {
+  loadEditSaveAndCheck(testDataDirs, tempDirectory, setupPathVariables, imlFilePaths, {}, {})
+}
+
+internal fun checkEmlFileGeneration(testDataDirs: List<Path>,
+                                    tempDirectory: TempDirectory,
+                                    imlFilePaths: List<Pair<String, String>>,
+                                    edit: (Project) -> Unit = {},
+                                    updateExpectedDir: (Path) -> Unit = {}) {
+  val emlFileName = "${imlFilePaths.first().second.substringAfterLast('/')}.eml"
+  loadEditSaveAndCheck(testDataDirs, tempDirectory, false, imlFilePaths, edit, updateExpectedDir, listOf(emlFileName))
+}
+
+internal fun checkConvertToStandardStorage(testDataDirs: List<Path>,
+                                           tempDirectory: TempDirectory,
+                                           expectedIml: Path,
+                                           setupPathVariables: Boolean,
+                                           imlFilePaths: List<Pair<String, String>>) {
+  fun edit(project: Project) {
+    val moduleName = imlFilePaths.first().second.substringAfterLast('/')
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: error("Cannot find module '$moduleName'")
+    module.clearOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE)
+    module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE)
+  }
+
+  fun updateExpectedDir(projectDir: Path) {
+    expectedIml.copy(projectDir / "${imlFilePaths.first().second}.iml")
+  }
+
+  loadEditSaveAndCheck(testDataDirs, tempDirectory, setupPathVariables, imlFilePaths, ::edit, ::updateExpectedDir)
+}
+
+
+internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
+                                  tempDirectory: TempDirectory,
+                                  setupPathVariables: Boolean = false,
+                                  imlFilePaths: List<Pair<String, String>>,
+                                  edit: (Project) -> Unit,
+                                  updateExpectedDir: (Path) -> Unit,
+                                  fileSuffixesToCheck: List<String> = listOf("/.classpath", ".iml")) {
   val originalProjectDir = tempDirectory.newDirectory("original").toPath()
   testDataDirs.forEach {
     FileUtil.copyDir(it.toFile(), originalProjectDir.toFile())
@@ -44,11 +91,20 @@ internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
   for ((name, relativePath) in pathVariables) {
     PathMacros.getInstance().setMacro(name, projectDir.resolve(relativePath).toAbsolutePath().toString())
   }
+  val junitUrls = mapOf(
+    "JUNIT3_PATH" to EclipseClasspathReader.getJunitClsUrl(false),
+    "JUNIT4_PATH" to EclipseClasspathReader.getJunitClsUrl(true)
+  )
+  for ((name, url) in junitUrls) {
+    PathMacros.getInstance().setMacro(name, FileUtil.toSystemIndependentName(PathUtil.getLocalPath(VfsUtil.urlToPath(url))))
+  }
 
+  updateExpectedDir(originalProjectDir)
   try {
     runBlocking {
       loadProject(projectDir) { project ->
         runWriteActionAndWait {
+          edit(project)
           ModuleManager.getInstance(project).modules.forEach {
             it.moduleFile!!.delete(this)
             it.stateStore.clearCaches()
@@ -59,8 +115,8 @@ internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
         }
         project.stateStore.save(true)
         projectDir.assertMatches(directoryContentOf(originalProjectDir), filePathFilter = { path ->
-          path.endsWith("/.classpath") || path.endsWith(".iml")
-        })
+          fileSuffixesToCheck.any { path.endsWith(it) }
+        }, fileTextMatcher = FileTextMatcher.ignoreXmlFormatting())
       }
     }
   }
@@ -68,6 +124,8 @@ internal fun checkLoadSaveRoundTrip(testDataDirs: List<Path>,
     pathVariables.keys.forEach {
       PathMacros.getInstance().setMacro(it, null)
     }
+    junitUrls.keys.forEach {
+      PathMacros.getInstance().setMacro(it, null)
+    }
   }
 }
-

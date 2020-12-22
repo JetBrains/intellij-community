@@ -40,11 +40,6 @@ public abstract class BaseCompleteMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return myName + "()";
-  }
-
-  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";

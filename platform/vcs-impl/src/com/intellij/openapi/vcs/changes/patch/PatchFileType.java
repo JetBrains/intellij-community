@@ -55,11 +55,6 @@ public class PatchFileType implements FileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
   @Nullable
   @NonNls
   public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {

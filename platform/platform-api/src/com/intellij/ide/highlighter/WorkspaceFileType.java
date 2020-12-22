@@ -47,11 +47,6 @@ public final class WorkspaceFileType implements InternalFileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return true;
-  }
-
-  @Override
   public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }

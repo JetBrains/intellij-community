@@ -217,6 +217,27 @@ class DirectoryContentSpecTest {
       file("a.txt", "b")
     }, FileTextMatcher.ignoreBlankLines())
   }
+
+  @Test
+  fun `ignore xml formatting`() {
+    val dir = directoryContent {
+      file("a.xml", "<root attr=\"value\"></root>")
+      file("b.txt", "foo")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.xml", "  <root   attr = \"value\" >  </root> ")
+      file("b.txt", "foo")
+    }, FileTextMatcher.ignoreXmlFormatting())
+    dir.assertNotMatches(directoryContent {
+      file("a.xml", "<root attr=\"value2\"></root>")
+      file("b.txt", "foo")
+    }, FileTextMatcher.ignoreXmlFormatting())
+    dir.assertNotMatches(directoryContent {
+      file("a.xml", "<root attr=\"value\"></root>")
+      file("b.txt", " foo ")
+    }, FileTextMatcher.ignoreXmlFormatting())
+  }
 }
 
 private fun Path.assertNotMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),

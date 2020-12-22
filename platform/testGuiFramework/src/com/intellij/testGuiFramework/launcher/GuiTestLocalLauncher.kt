@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
@@ -266,7 +266,7 @@ object GuiTestLocalLauncher {
       .plus("-ea")
       .plus("-Xbootclasspath/p:${GuiTestOptions.bootClasspath}")
       .plus("-Dsun.awt.disablegrab=true")
-      .plus("-Dsun.io.useCanonPrefixCache=false")
+      .plus("-Dsun.io.useCanonCaches=false")
       .plus("-Djava.net.preferIPv4Stack=true")
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal}")

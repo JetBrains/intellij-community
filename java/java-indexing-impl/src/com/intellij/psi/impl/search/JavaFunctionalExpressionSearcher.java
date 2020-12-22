@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
@@ -258,7 +259,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       if (psi == null) {
         StubTextInconsistencyException.checkStubTextConsistency(file);
         throw new RuntimeExceptionWithAttachments(
-          "No functional expression at " + entry + ", file will be indexed",
+          "No functional expression at " + entry + ", file will be reindexed",
           new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
       }
       return psi;
@@ -275,7 +276,14 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   private static PsiFile createMemberCopyFromText(@NotNull PsiMember member, @NotNull TextRange memberRange) {
     PsiFile file = member.getContainingFile();
-    String contextText = memberRange.subSequence(file.getViewProvider().getContents()).toString();
+    CharSequence contents = file.getViewProvider().getContents();
+    if (memberRange.getEndOffset() > contents.length()) {
+      StubTextInconsistencyException.checkStubTextConsistency(file);
+      throw new RuntimeExceptionWithAttachments(
+        "Range from the index " + memberRange + " exceeds the actual file length " + contents.length() + ", file will be reindexed",
+        new Attachment(file.getVirtualFile().getPath(), contents.toString()));
+    }
+    String contextText = memberRange.subSequence(contents).toString();
     Project project = file.getProject();
     return member instanceof PsiEnumConstant
            ? PsiElementFactory.getInstance(project).createEnumConstantFromText(contextText, member).getContainingFile()
@@ -448,7 +456,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     private final AtomicInteger contextsConsidered = new AtomicInteger();
     private final AtomicInteger sureExprsAfterLightCheck = new AtomicInteger();
     private final AtomicInteger exprsToHeavyCheck = new AtomicInteger();
-    private final Set<VirtualFile> filesLookedInside = ContainerUtil.newConcurrentSet();
+    private final Set<VirtualFile> filesLookedInside = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
       this.consumer = consumer;

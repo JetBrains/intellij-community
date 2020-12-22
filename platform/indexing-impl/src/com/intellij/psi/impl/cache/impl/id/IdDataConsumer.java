@@ -3,6 +3,7 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.util.text.CharArrayCharSequence;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 
 public class IdDataConsumer {
   @NotNull
-  private final Object2IntOpenHashMap<IdIndexEntry> myResult = new Object2IntOpenHashMap<>();
+  private final Object2IntMap<IdIndexEntry> myResult = new Object2IntOpenHashMap<>();
 
   @NotNull
   public Map<IdIndexEntry, Integer> getResult() {

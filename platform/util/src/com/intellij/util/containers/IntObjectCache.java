@@ -2,6 +2,8 @@
 
 package com.intellij.util.containers;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import java.util.EventListener;
 import java.util.Iterator;
 
@@ -93,7 +95,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
   }
 
   public void removeAll() {
-    final it.unimi.dsi.fastutil.ints.IntArrayList keys = new it.unimi.dsi.fastutil.ints.IntArrayList(count());
+    final IntList keys = new it.unimi.dsi.fastutil.ints.IntArrayList(count());
     int current = myTop;
     while (current > 0) {
       if (myCache[current].value != null) {

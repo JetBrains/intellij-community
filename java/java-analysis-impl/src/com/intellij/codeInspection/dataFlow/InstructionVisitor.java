@@ -165,21 +165,6 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, state);
   }
 
-  public DfaInstructionState[] visitUnwrapField(UnwrapSpecialFieldInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    DfaValue value = state.pop();
-    DfaValue field = instruction.getSpecialField().createValue(runner.getFactory(), value);
-    state.push(field);
-    return nextInstruction(instruction, runner, state);
-  }
-
-  public DfaInstructionState[] visitConvertPrimitive(PrimitiveConversionInstruction instruction,
-                                                     DataFlowRunner runner,
-                                                     DfaMemoryState state) {
-    state.pop();
-    pushExpressionResult(runner.getFactory().getUnknown(), instruction, state);
-    return nextInstruction(instruction, runner, state);
-  }
-
   protected void flushArrayOnUnknownAssignment(AssignInstruction instruction,
                                                DfaValueFactory factory,
                                                DfaValue dest,
@@ -217,11 +202,6 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, state);
   }
 
-  public DfaInstructionState[] visitResultOf(ResultOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    pushExpressionResult(state.pop(), instruction, state);
-    return nextInstruction(instruction, runner, state);
-  }
-
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
   }
@@ -231,13 +211,6 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    memState.pop();
-    memState.pop();
-    pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
-    return nextInstruction(instruction, runner, memState);
-  }
-
-  public DfaInstructionState[] visitIsAssignableFromInstruction(IsAssignableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
     memState.pop();
     pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
@@ -307,12 +280,6 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction, DataFlowRunner runner, 
-                                         DfaMemoryState memState, DfaValue value) {
-    pushExpressionResult(value, instruction, memState);
-    return nextInstruction(instruction, runner, memState);
-  }
-
   public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop(); // index
     memState.pop(); // array reference
@@ -327,5 +294,14 @@ public abstract class InstructionVisitor {
 
   public DfaInstructionState[] visitClosureInstruction(ClosureInstruction instruction, DataFlowRunner runner, DfaMemoryState before) {
     return nextInstruction(instruction, runner, before);
+  }
+  
+  public DfaInstructionState[] visitEval(EvalInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    int operands = instruction.getOperands();
+    for (int i = 0; i < operands; i++) {
+      memState.pop();
+    }
+    pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
+    return nextInstruction(instruction, runner, memState);
   }
 }

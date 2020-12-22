@@ -26,6 +26,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.PicoContainer;
 
 import java.util.List;
@@ -105,7 +106,15 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public void dispose() {
+    if (!ApplicationManager.getApplication().isDisposed()) {
+      throw new IllegalStateException("Must not dispose default project");
+    }
     Disposer.dispose(myDelegate);
+  }
+
+  @TestOnly
+  void disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myDelegate));
   }
 
   private @NotNull Project getDelegate() {

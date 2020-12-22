@@ -60,7 +60,7 @@ fun path(sdk: Sdk, sdkModificator: SdkModificator? = null): String? {
  * Result is wrapped with [AllIcons.Actions.Cancel]
  * if the sdk is local and does not exist, or remote and incomplete or has invalid credentials, or is not supported.
  *
- * @see PythonSdkType.isInvalid
+ * @see PythonSdkUtil.isInvalid
  * @see PythonSdkType.isIncompleteRemote
  * @see PythonSdkType.hasInvalidRemoteCredentials
  * @see LanguageLevel.SUPPORTED_LEVELS
@@ -92,9 +92,9 @@ fun icon(sdk: Sdk): Icon? {
  * All the others are considered as [PyRenderedSdkType.SYSTEM].
  *
  * @see Sdk.isAssociatedWithAnotherModule
- * @see PythonSdkType.isVirtualEnv
- * @see PythonSdkType.isCondaVirtualEnv
- * @see PythonSdkType.isRemote
+ * @see PythonSdkUtil.isVirtualEnv
+ * @see PythonSdkUtil.isCondaVirtualEnv
+ * @see PythonSdkUtil.isRemote
  * @see PyRenderedSdkType
  */
 fun groupModuleSdksByTypes(allSdks: List<Sdk>, module: Module?, invalid: (Sdk) -> Boolean): Map<PyRenderedSdkType, List<Sdk>> {

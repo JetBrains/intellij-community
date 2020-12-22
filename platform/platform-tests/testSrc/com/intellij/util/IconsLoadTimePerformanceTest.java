@@ -7,6 +7,7 @@ import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TestScaleHelper;
 import org.junit.After;
 import org.junit.Before;
@@ -67,7 +68,12 @@ public class IconsLoadTimePerformanceTest {
       String iconPath;
       while ((iconPath = br.readLine()) != null) {
         URL url = new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL();
-        ImageLoader.loadFromUrl(url, true, false /* do not use global cache */, null, ScaleContext.create());
+        /* do not use global cache */
+        int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
+        if (StartupUiUtil.isUnderDarcula()) {
+          flags |= ImageLoader.USE_DARK;
+        }
+        ImageLoader.loadFromUrl(url.toString(), null, flags, null, ScaleContext.create());
       }
     }
     StatData svgData = IconsLoadTime.getStatData(false, true);

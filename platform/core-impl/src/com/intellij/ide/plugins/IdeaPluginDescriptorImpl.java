@@ -322,18 +322,20 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private void readModule(Element child) {
     String moduleName = child.getAttributeValue("value");
-    if (moduleName != null) {
-      if (myModules == null) {
-        myModules = Collections.singletonList(PluginId.getId(moduleName));
+    if (moduleName == null) {
+      return;
+    }
+
+    if (myModules == null) {
+      myModules = Collections.singletonList(PluginId.getId(moduleName));
+    }
+    else {
+      if (myModules.size() == 1) {
+        List<PluginId> singleton = myModules;
+        myModules = new ArrayList<>(4);
+        myModules.addAll(singleton);
       }
-      else {
-        if (myModules.size() == 1) {
-          List<PluginId> singleton = myModules;
-          myModules = new ArrayList<>(4);
-          myModules.addAll(singleton);
-        }
-        myModules.add(PluginId.getId(moduleName));
-      }
+      myModules.add(PluginId.getId(moduleName));
     }
   }
 

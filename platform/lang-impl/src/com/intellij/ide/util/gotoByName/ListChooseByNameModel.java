@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.project.Project;
@@ -97,7 +97,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         if (value instanceof ChooseByNameItem) {
           final ChooseByNameItem item = (ChooseByNameItem) value;
 
-          final Color fg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
+          final Color fg = isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
 
           final JLabel actionLabel = new JLabel(item.getName(), null, LEFT);
           actionLabel.setBackground(bg);

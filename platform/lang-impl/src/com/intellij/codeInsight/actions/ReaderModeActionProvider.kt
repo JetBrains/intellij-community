@@ -28,70 +28,7 @@ import javax.swing.plaf.FontUIResource
 
 class ReaderModeActionProvider : InspectionWidgetActionProvider {
   override fun createAction(editor: Editor): AnAction {
-    val action = object : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
-                                                   LangBundle.messagePointer("action.ReaderModeProvider.description"), null), CustomComponentAction {
-      override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
-        object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
-          override fun iconTextSpace() = JBUI.scale(2)
-
-          override fun updateToolTipText() {
-            val project = editor.project
-            if (Registry.`is`("ide.helptooltip.enabled") && project != null) {
-              HelpTooltip.dispose(this)
-              HelpTooltip()
-                .setTitle(myPresentation.description)
-                .setDescription(LangBundle.message("action.ReaderModeProvider.description"))
-                .setLink(LangBundle.message("action.ReaderModeProvider.link.configure"))
-                { ShowSettingsUtil.getInstance().showSettingsDialog(project, ReaderModeConfigurable::class.java) }
-                .installOn(this)
-            }
-            else {
-              toolTipText = myPresentation.description
-            }
-          }
-
-          override fun getInsets(): Insets = JBUI.insets(2)
-          override fun getMargins(): Insets = if (myPresentation.icon == AllIcons.General.ReaderMode) JBUI.emptyInsets() else JBUI.insetsRight(5)
-
-          override fun updateUI() {
-            super.updateUI()
-            if (!SystemInfo.isWindows) {
-              font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
-            }
-          }
-        }.
-        apply {
-          foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
-          if (!SystemInfo.isWindows) {
-            font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
-          }
-        }
-
-      override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project?: return
-
-        ReaderModeSettings.instance(project).enabled = !ReaderModeSettings.instance(project).enabled
-        project.messageBus.syncPublisher(READER_MODE_TOPIC).modeChanged(project)
-      }
-
-      override fun update(e: AnActionEvent) {
-        val project = editor.project?: return
-        val presentation = e.presentation
-
-        if (!ReaderModeSettings.instance(project).enabled) {
-          presentation.text = null
-          presentation.icon = AllIcons.General.ReaderMode
-          presentation.hoveredIcon = null
-          presentation.description = LangBundle.message("action.ReaderModeProvider.text.enter")
-        }
-        else {
-          presentation.text = LangBundle.message("action.ReaderModeProvider.text")
-          presentation.icon = EmptyIcon.ICON_16
-          presentation.hoveredIcon = AllIcons.Actions.CloseDarkGrey
-          presentation.description = LangBundle.message("action.ReaderModeProvider.text.exit")
-        }
-      }
-    }
+    val action = ReaderModeAction(editor)
 
      return object : DefaultActionGroup(action, Separator.create()) {
       override fun update(e: AnActionEvent) {
@@ -108,6 +45,72 @@ class ReaderModeActionProvider : InspectionWidgetActionProvider {
             e.presentation.isEnabledAndVisible = false
           }
         }
+      }
+    }
+  }
+
+  class ReaderModeAction(private val editor: Editor) : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
+                                                                       LangBundle.messagePointer("action.ReaderModeProvider.description"),
+                                                                       null), CustomComponentAction {
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
+      object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
+        override fun iconTextSpace() = JBUI.scale(2)
+
+        override fun updateToolTipText() {
+          val project = editor.project
+          if (Registry.`is`("ide.helptooltip.enabled") && project != null) {
+            HelpTooltip.dispose(this)
+            HelpTooltip()
+              .setTitle(myPresentation.description)
+              .setDescription(LangBundle.message("action.ReaderModeProvider.description"))
+              .setLink(LangBundle.message("action.ReaderModeProvider.link.configure"))
+              { ShowSettingsUtil.getInstance().showSettingsDialog(project, ReaderModeConfigurable::class.java) }
+              .installOn(this)
+          }
+          else {
+            toolTipText = myPresentation.description
+          }
+        }
+
+        override fun getInsets(): Insets = JBUI.insets(2)
+        override fun getMargins(): Insets = if (myPresentation.icon == AllIcons.General.ReaderMode) JBUI.emptyInsets()
+        else JBUI.insetsRight(5)
+
+        override fun updateUI() {
+          super.updateUI()
+          if (!SystemInfo.isWindows) {
+            font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
+          }
+        }
+      }.apply {
+        foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
+        if (!SystemInfo.isWindows) {
+          font = FontUIResource(font.deriveFont(font.style, font.size - JBUIScale.scale(2).toFloat()))
+        }
+      }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project ?: return
+
+      ReaderModeSettings.instance(project).enabled = !ReaderModeSettings.instance(project).enabled
+      project.messageBus.syncPublisher(READER_MODE_TOPIC).modeChanged(project)
+    }
+
+    override fun update(e: AnActionEvent) {
+      val project = editor.project ?: return
+      val presentation = e.presentation
+
+      if (!ReaderModeSettings.instance(project).enabled) {
+        presentation.text = null
+        presentation.icon = AllIcons.General.ReaderMode
+        presentation.hoveredIcon = null
+        presentation.description = LangBundle.message("action.ReaderModeProvider.text.enter")
+      }
+      else {
+        presentation.text = LangBundle.message("action.ReaderModeProvider.text")
+        presentation.icon = EmptyIcon.ICON_16
+        presentation.hoveredIcon = AllIcons.Actions.CloseDarkGrey
+        presentation.description = LangBundle.message("action.ReaderModeProvider.text.exit")
       }
     }
   }

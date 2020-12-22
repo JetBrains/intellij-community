@@ -538,8 +538,8 @@ public final class MVStore implements AutoCloseable {
             return Int2ObjectMaps.emptyMap();
         }
 
-        Int2ObjectOpenHashMap<MapMetadata> idToMetadata = new Int2ObjectOpenHashMap<>(size);
-        Int2ObjectOpenHashMap<AsciiString> idToName = new Int2ObjectOpenHashMap<>(size);
+        Int2ObjectMap<MapMetadata> idToMetadata = new Int2ObjectOpenHashMap<>(size);
+        Int2ObjectMap<AsciiString> idToName = new Int2ObjectOpenHashMap<>(size);
 
         int maxMapId = lastMapId.get();
         Cursor<AsciiString, MapMetadata> cursor = mapNameToMetadata.cursor(null);
@@ -961,7 +961,7 @@ public final class MVStore implements AutoCloseable {
                     validChunksById.put(chunk.id, chunk);
                 }
                 quickRecovery = findLastChunkWithCompleteValidChunkSet(lastChunkCandidates, validChunksByLocation,
-                        validChunksById, false);
+                                                                       validChunksById, false);
             }
 
             if (!quickRecovery) {
@@ -2375,7 +2375,7 @@ public final class MVStore implements AutoCloseable {
                 Queue<Chunk> old = findOldChunks(writeLimit, targetFillRate);
                 int oldSize = old.size();
                 if (oldSize != 0) {
-                    IntOpenHashSet idSet = new IntOpenHashSet(oldSize);
+                    IntSet idSet = new IntOpenHashSet(oldSize);
                     for (Chunk c : old) {
                         idSet.add(c.id);
                     }
@@ -3009,7 +3009,7 @@ public final class MVStore implements AutoCloseable {
             // find out which chunks to remove,
             // and which is the newest chunk to keep
             // (the chunk list can have gaps)
-            IntArrayList remove = new IntArrayList();
+            IntList remove = new IntArrayList();
             Chunk keep = null;
             serializationLock.lock();
             try {
@@ -3258,17 +3258,20 @@ public final class MVStore implements AutoCloseable {
     //    return m == null ? -1 : m;
     //}
 
+    public void triggerAutoSave() {
+        triggerAutoSave(false);
+    }
     /**
      * Commit and save all changes, if there are any, and compact the store if
      * needed. Some part of work is executed asynchronously.
      */
-    public void triggerAutoSave() {
+    public void triggerAutoSave(boolean force) {
         try {
             if (!isOpenOrStopping() || isReadOnly()) {
                 return;
             }
 
-            if (getTimeSinceCreation() <= (lastCommitTime + autoCommitDelay)) {
+            if (!force && (getTimeSinceCreation() <= (lastCommitTime + autoCommitDelay))) {
                 return;
             }
 

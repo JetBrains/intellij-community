@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -6,7 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
@@ -54,7 +54,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
     void dispose();
 
-    void setTitle(String title);
+    void setTitle(@Nullable String title);
 
     void updateView();
 
@@ -89,7 +89,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   }
 
   @Override
-  public void setTitle(String title) {
+  public void setTitle(@Nullable String title) {
     if (myFrameHelper == null) {
       super.setTitle(title);
     }
@@ -130,7 +130,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @NotNull
   @Override
   public Insets getInsets() {
-    return SystemInfo.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
+    return SystemInfoRt.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
   }
 
   @Override

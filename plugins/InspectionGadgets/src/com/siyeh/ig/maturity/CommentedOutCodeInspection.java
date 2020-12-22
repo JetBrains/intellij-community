@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -32,7 +31,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class CommentedOutCodeInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public class CommentedOutCodeInspection extends BaseInspection {
 
   public int minLines = 2;
 

@@ -11,21 +11,22 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
-  private final @NotNull PluginDescriptor myPluginDescriptor;
-  @NotNull Object myImplementationClassOrName; // Class or String
+  private final @NotNull PluginDescriptor pluginDescriptor;
+  // Class or String
+  @NotNull Object implementationClassOrName;
 
-  private final String myOrderId;
-  private final LoadingOrder myOrder;
+  private final String orderId;
+  private final LoadingOrder order;
 
   ExtensionComponentAdapter(@NotNull String implementationClassName,
                             @NotNull PluginDescriptor pluginDescriptor,
                             @Nullable String orderId,
                             @NotNull LoadingOrder order) {
-    myImplementationClassOrName = implementationClassName;
-    myPluginDescriptor = pluginDescriptor;
+    implementationClassOrName = implementationClassName;
+    this.pluginDescriptor = pluginDescriptor;
 
-    myOrderId = orderId;
-    myOrder = order;
+    this.orderId = orderId;
+    this.order = order;
   }
 
   abstract boolean isInstanceCreated();
@@ -36,43 +37,43 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
       aClass = getImplementationClass();
     }
     catch (ClassNotFoundException e) {
-      throw componentManager.createError(e, myPluginDescriptor.getPluginId());
+      throw componentManager.createError(e, pluginDescriptor.getPluginId());
     }
 
     T instance = instantiateClass(aClass, componentManager);
     if (instance instanceof PluginAware) {
-      ((PluginAware)instance).setPluginDescriptor(myPluginDescriptor);
+      ((PluginAware)instance).setPluginDescriptor(pluginDescriptor);
     }
     return instance;
   }
 
   protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
-    return componentManager.instantiateClass(aClass, myPluginDescriptor.getPluginId());
+    return componentManager.instantiateClass(aClass, pluginDescriptor.getPluginId());
   }
 
   @Override
   public final LoadingOrder getOrder() {
-    return myOrder;
+    return order;
   }
 
   @Override
   public final String getOrderId() {
-    return myOrderId;
+    return orderId;
   }
 
   public final @NotNull PluginDescriptor getPluginDescriptor() {
-    return myPluginDescriptor;
+    return pluginDescriptor;
   }
 
   public final @NotNull <T> Class<T> getImplementationClass() throws ClassNotFoundException {
-    Object implementationClassOrName = myImplementationClassOrName;
+    Object implementationClassOrName = this.implementationClassOrName;
     if (implementationClassOrName instanceof String) {
-      ClassLoader classLoader = myPluginDescriptor.getPluginClassLoader();
+      ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
       if (classLoader == null) {
         classLoader = getClass().getClassLoader();
       }
       implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
-      myImplementationClassOrName = implementationClassOrName;
+      this.implementationClassOrName = implementationClassOrName;
     }
     //noinspection unchecked
     return (Class<T>)implementationClassOrName;
@@ -80,7 +81,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
 
   // used externally - cannot be package-local
   public final @NotNull String getAssignableToClassName() {
-    Object implementationClassOrName = myImplementationClassOrName;
+    Object implementationClassOrName = this.implementationClassOrName;
     if (implementationClassOrName instanceof String) {
       return (String)implementationClassOrName;
     }
@@ -89,6 +90,6 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
 
   @Override
   public String toString() {
-    return "ExtensionComponentAdapter(impl=" + getAssignableToClassName() + ", plugin=" + myPluginDescriptor + ")";
+    return "ExtensionComponentAdapter(impl=" + getAssignableToClassName() + ", plugin=" + pluginDescriptor + ")";
   }
 }

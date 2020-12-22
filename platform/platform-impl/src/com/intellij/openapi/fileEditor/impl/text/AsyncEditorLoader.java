@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -22,17 +22,19 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AsyncEditorLoader {
+public final class AsyncEditorLoader {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader Pool", 2);
   private static final Key<AsyncEditorLoader> ASYNC_LOADER = Key.create("ASYNC_LOADER");
   private static final int SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200;
   private static final int DOCUMENT_COMMIT_WAITING_TIME_MS = 5_000;
+
   @NotNull private final Editor myEditor;
   @NotNull private final Project myProject;
   @NotNull private final TextEditorImpl myTextEditor;
@@ -80,22 +82,23 @@ public class AsyncEditorLoader {
     }
   }
 
-  private Future<Runnable> scheduleLoading() {
+  private @NotNull Future<Runnable> scheduleLoading() {
     long commitDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DOCUMENT_COMMIT_WAITING_TIME_MS);
 
     // we can't return the result of "nonBlocking" call below because it's only finished on EDT later,
     // but we need to get the result of bg calculation in the same EDT event, if it's quick
     CompletableFuture<Runnable> future = new CompletableFuture<>();
-
     ReadAction
       .nonBlocking(() -> {
         waitForCommit(commitDeadline);
         Runnable runnable = ProgressManager.getInstance().computePrioritized(() -> {
           try {
             return myTextEditor.loadEditorInBackground();
-          } catch (ProcessCanceledException e) {
+          }
+          catch (ProcessCanceledException e) {
             throw e;
-          } catch (IndexOutOfBoundsException e) {
+          }
+          catch (IndexOutOfBoundsException e) {
             // EA-232290 investigation
             Attachment filePathAttachment = new Attachment("filePath.txt", myTextEditor.getFile().toString());
             Attachment threadDumpAttachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
@@ -103,7 +106,8 @@ public class AsyncEditorLoader {
             Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e,
                                                               filePathAttachment, threadDumpAttachment);
             return null;
-          } catch (Exception e) {
+          }
+          catch (Exception e) {
             Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e);
             return null;
           }
@@ -153,11 +157,15 @@ public class AsyncEditorLoader {
     return null;
   }
 
-  private void loadingFinished(Runnable continuation) {
-    if (!myLoadingFinished.compareAndSet(false, true)) return;
+  private void loadingFinished(@Nullable Runnable continuation) {
+    if (!myLoadingFinished.compareAndSet(false, true)) {
+      return;
+    }
     myEditor.putUserData(ASYNC_LOADER, null);
 
-    if (myEditorComponent.isDisposed()) return;
+    if (myEditorComponent.isDisposed()) {
+      return;
+    }
 
     if (continuation != null) {
       continuation.run();

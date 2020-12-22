@@ -4,7 +4,6 @@ package org.jetbrains.idea.eclipse.config
 import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -15,6 +14,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.references.ManyToOne
 import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
 import com.intellij.workspaceModel.storage.impl.references.OneToOneParent
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 data class EclipseProjectFile(
   val classpathFile: VirtualFileUrl,
@@ -34,8 +34,7 @@ class EclipseProjectPropertiesEntity(
   val knownCons: Set<String>,
   val forceConfigureJdk: Boolean,
   val expectedModuleSourcePlace: Int,
-  val srcPlace: Map<String, Int>,
-  val invalidJdk: String?
+  val srcPlace: Map<String, Int>
 
 ) : WorkspaceEntityBase() {
   val module: ModuleEntity by moduleDelegate
@@ -54,10 +53,9 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   var forceConfigureJdk = false
   var expectedModuleSourcePlace = 0
   lateinit var srcPlace: Map<String, Int>
-  var invalidJdk: String? = null
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): EclipseProjectPropertiesEntity {
-    return EclipseProjectPropertiesEntity(variablePaths, eclipseUrls, unknownCons, knownCons, forceConfigureJdk, expectedModuleSourcePlace, srcPlace, invalidJdk).also { addMetaData(it, snapshot) }
+    return EclipseProjectPropertiesEntity(variablePaths, eclipseUrls, unknownCons, knownCons, forceConfigureJdk, expectedModuleSourcePlace, srcPlace).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -69,7 +67,6 @@ class ModifiableEclipseProjectPropertiesEntity : ModifiableWorkspaceEntityBase<E
   var forceConfigureJdk: Boolean by EntityDataDelegation()
   var expectedModuleSourcePlace: Int by EntityDataDelegation()
   var srcPlace: MutableMap<String, Int> by EntityDataDelegation()
-  var invalidJdk: String? by EntityDataDelegation()
   var module: ModuleEntity by MutableOneToOneChild.NotNull(EclipseProjectPropertiesEntity::class.java, ModuleEntity::class.java, true)
 }
 

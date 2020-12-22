@@ -24,7 +24,7 @@ final class ProgressSlidePainter {
   private final AtomicInteger myPrefetchSlideIndex;
   private volatile int myNextSlideIndex = 0;
 
-  private static class Slide {
+  private static final class Slide {
     private static final Slide Empty = new Slide(0, null);
 
     public final double progress;
@@ -59,7 +59,7 @@ final class ProgressSlidePainter {
             Thread.onSpinWait();
 
           var slide = myProgressSlides.get(slideIndex);
-          var image = SplashSlideLoader.loadImage(slide.url);
+          var image = Splash.doLoadImage(slide.url);
           if (image == null) {
             Logger.getInstance(ProgressSlidePainter.class).error("Cannot load slide by url: " + slide.url);
             myPrefetchedSlides.set(slideIndex, Slide.Empty);

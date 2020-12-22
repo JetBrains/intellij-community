@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +166,7 @@ public final class ProcessListUtil {
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
 
-    Int2ObjectOpenHashMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
     for (MacProcessInfo each : commands) {
       idToCommand.put(each.pid, each.commandLine);
     }
@@ -190,7 +191,7 @@ public final class ProcessListUtil {
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
 
-    Int2ObjectOpenHashMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
     for (MacProcessInfo each : commands) {
       idToCommand.put(each.pid, each.commandLine);
     }

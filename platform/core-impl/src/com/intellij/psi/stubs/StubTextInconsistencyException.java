@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -15,7 +14,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
-import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -92,7 +90,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
 
   @NotNull
   private static List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
-    FileContentImpl fc = new FileContentImpl(viewProvider.getVirtualFile(), viewProvider.getContents(), 0);
+    FileContentImpl fc = (FileContentImpl)FileContentImpl.createByText(viewProvider.getVirtualFile(), viewProvider.getContents());
     fc.setProject(viewProvider.getManager().getProject());
     PsiFileStubImpl copyTree = (PsiFileStubImpl) StubTreeBuilder.buildStubTree(fc);
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());

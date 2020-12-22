@@ -230,7 +230,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   private void setStartState() {
     myIndentStack.clear();
-    myIndentStack.add(0);
+    myIndentStack.push(0);
     myBraceLevel = 0;
     adjustBraceLevel();
     myLineHasSignificantTokens = false;

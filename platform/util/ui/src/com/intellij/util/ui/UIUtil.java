@@ -457,7 +457,7 @@ public final class UIUtil {
   }
 
   public static boolean isRetina(@NotNull Graphics2D graphics) {
-    return SystemInfo.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
+    return SystemInfoRt.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
   //public static boolean isMacRetina(Graphics2D g) {
@@ -527,7 +527,7 @@ public final class UIUtil {
    * @return {@code true} if the property of the specified component is set to {@code true}
    */
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
-    return Boolean.TRUE.equals(getClientProperty(component, key));
+    return Boolean.TRUE.equals(component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null);
   }
 
   /**
@@ -2789,7 +2789,7 @@ public final class UIUtil {
   }
 
   public static void setAutoRequestFocus(@NotNull Window window, boolean value) {
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       window.setAutoRequestFocus(value);
     }
   }
@@ -3080,8 +3080,9 @@ public final class UIUtil {
 
   public static void setCursor(@NotNull Component component, Cursor cursor) {
     // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
-    if(component.isCursorSet() && component.getCursor() == cursor) return;
-    component.setCursor(cursor);
+    if (!component.isCursorSet() || component.getCursor() != cursor) {
+      component.setCursor(cursor);
+    }
   }
 
   public static boolean haveCommonOwner(Component c1, Component c2) {
@@ -3156,7 +3157,7 @@ public final class UIUtil {
   }
 
   private static final class FocusedHover {
-    private static final Color BACKGROUND = new JBColor(0xE9EEF5, 0x464A4D);
+    private static final Color BACKGROUND = new JBColor(0xEDF5FC, 0x464A4D);
     private static final Color LIST_BACKGROUND = JBColor.namedColor("List.hoverBackground", BACKGROUND);
     private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.hoverBackground", BACKGROUND);
     private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.hoverBackground", BACKGROUND);
@@ -3262,7 +3263,6 @@ public final class UIUtil {
   public static @NotNull Color getListSelectionForeground() {
     return getListSelectionForeground(true);
   }
-
 
   // Tree
 

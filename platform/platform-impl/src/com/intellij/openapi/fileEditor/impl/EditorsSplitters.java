@@ -240,8 +240,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return fileElement;
   }
 
-  @Nullable
-  Ref<JPanel> restoreEditors() {
+  @Nullable Ref<JPanel> restoreEditors() {
     Element element = mySplittersElement;
     if (element == null) {
       return null;
@@ -457,20 +456,22 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
     Project project = myManager.getProject();
     IdeFrameEx frame = getFrame(project);
-    if (frame != null) {
-      String fileTitle = null;
-      Path ioFile = null;
-      VirtualFile file = getCurrentFile();
-      if (file != null) {
-        try {
-          ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
-        }
-        catch (InvalidPathException ignored) {
-        }
-        fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
-      }
-      frame.setFileTitle(fileTitle, ioFile);
+    if (frame == null) {
+      return;
     }
+
+    String fileTitle = null;
+    Path ioFile = null;
+    VirtualFile file = getCurrentFile();
+    if (file != null) {
+      try {
+        ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
+      }
+      catch (InvalidPathException ignored) {
+      }
+      fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
+    }
+    frame.setFileTitle(fileTitle, ioFile);
   }
 
   protected @Nullable IdeFrameEx getFrame(@NotNull Project project) {
@@ -940,8 +941,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             .withReopeningEditorsOnStartup();
           try {
             virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
-            Document document =
-              ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+            Document document = ReadAction.compute(() -> {
+              return virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+            });
 
             boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
 
@@ -1087,11 +1089,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     return null;
   }
-  
+
   @Nullable
   public EditorWindow openInRightSplit(@NotNull VirtualFile file) {
     EditorWindow window = getCurrentWindow();
-    
+
     if (window == null) {
       return null;
     }
@@ -1107,7 +1109,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
       }
     }
-    
+
     return window.split(SwingConstants.VERTICAL, true, file, true);
   }
 

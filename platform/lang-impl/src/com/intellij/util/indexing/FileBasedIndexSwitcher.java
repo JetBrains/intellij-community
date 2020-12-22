@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public final class FileBasedIndexSwitcher {
@@ -66,16 +67,17 @@ public final class FileBasedIndexSwitcher {
         myFileBasedIndex.dropRegisteredIndexes();
         IndexingStamp.flushCaches();
       }
-    } finally {
+    }
+    finally {
       myNestedLevelCount++;
     }
   }
 
   public void turnOn() {
-    turnOn(() -> {});
+    turnOn(null);
   }
 
-  public void turnOn(@NotNull Runnable beforeIndexTasksStarted) {
+  public void turnOn(@Nullable Runnable beforeIndexTasksStarted) {
     LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
 
     myNestedLevelCount--;
@@ -92,7 +94,9 @@ public final class FileBasedIndexSwitcher {
         myDumbModeSemaphore.up();
       }
 
-      beforeIndexTasksStarted.run();
+      if (beforeIndexTasksStarted != null) {
+        beforeIndexTasksStarted.run();
+      }
 
       FileBasedIndexImpl.cleanupProcessedFlag();
       for (Project project : ProjectUtil.getOpenProjects()) {

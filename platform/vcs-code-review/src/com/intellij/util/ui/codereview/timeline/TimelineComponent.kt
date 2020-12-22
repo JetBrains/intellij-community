@@ -13,8 +13,9 @@ import javax.swing.event.ListDataListener
 open class TimelineComponent<in T : TimelineItem>(
   private val model: ListModel<T>,
   protected val itemComponentFactory: TimelineItemComponentFactory<T>,
-  private val title: JComponent? = null
-) : JPanel(VerticalLayout(UI.scale(20))) {
+  private val title: JComponent? = null,
+  offset: Int = UI.scale(20)
+) : JPanel(VerticalLayout(offset)) {
 
   init {
     isOpaque = false

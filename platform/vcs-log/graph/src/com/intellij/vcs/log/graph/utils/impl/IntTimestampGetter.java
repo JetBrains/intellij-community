@@ -4,6 +4,7 @@ package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
+import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,14 +54,14 @@ public final class IntTimestampGetter implements TimestampGetter {
   // myDeltas[i] = getTimestamp(i + 1) - getTimestamp(i)
   private final IntList myDeltas;
 
-  @NotNull private final Int2LongOpenHashMap myBrokenDeltas;
+  private final @NotNull Int2LongMap myBrokenDeltas;
 
   private final int myBlockSize;
 
   // saved 0, blockSize, 2 * blockSize, etc.
   private final long[] mySaveTimestamps;
 
-  private IntTimestampGetter(final int[] deltas, int blockSize, long[] saveTimestamps, @NotNull Int2LongOpenHashMap brokenDeltas) {
+  private IntTimestampGetter(final int[] deltas, int blockSize, long[] saveTimestamps, @NotNull Int2LongMap brokenDeltas) {
     myDeltas = SmartDeltaCompressor.newInstance(new FullIntList(deltas));
     myBlockSize = blockSize;
     mySaveTimestamps = saveTimestamps;

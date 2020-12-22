@@ -141,7 +141,6 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     if (myRCStorageUi != null) {
       // editing a template run configuration
       myRCStorageUi.apply(settings);
-      RunManagerImpl.getInstanceImpl(settings.getConfiguration().getProject()).addConfiguration(settings);
     }
   }
 

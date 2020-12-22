@@ -32,6 +32,7 @@ final class ApproveRemovedMappingsActivity implements StartupActivity {
       for (RemovedMappingTracker.RemovedMapping mapping : list) {
         FileNameMatcher matcher = mapping.getFileNameMatcher();
         FileType fileType = FileTypeManager.getInstance().findFileTypeByName(mapping.getFileTypeName());
+        String fileTypeName = fileType.getName();
         Notification notification = new Notification(NotificationGroup.createIdWithTitle("File type recognized", FileTypesBundle.message("notification.title.file.type.recognized")),
                                                      FileTypesBundle.message("notification.title.file.type.recognized"),
                                                      FileTypesBundle.message("notification.file.extension.0.was.reassigned.to.1.revert", matcher.getPresentableString(), fileType.getName()),
@@ -40,7 +41,7 @@ final class ApproveRemovedMappingsActivity implements StartupActivity {
           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
             ApplicationManager.getApplication().runWriteAction(() -> {
               FileTypeManager.getInstance().associate(PlainTextFileType.INSTANCE, matcher);
-              removedMappings.add(matcher, fileType.getName(), true);
+              removedMappings.add(matcher, fileTypeName, true);
             });
             notification.expire();
           }

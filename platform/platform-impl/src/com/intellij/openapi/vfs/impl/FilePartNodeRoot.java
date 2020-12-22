@@ -52,7 +52,7 @@ final class FilePartNodeRoot extends FilePartNode {
     int nameId = getNameId(file);
     NewVirtualFileSystem fs = (NewVirtualFileSystem)file.getFileSystem();
     VirtualFile parent = getParentThroughJar(file, fs);
-    return matchById(parent, file, nameId, new MultiMap<>(), true, fs);
+    return matchById(parent, file, nameId, new MultiMap<>(), true, true, fs);
   }
 
   /**
@@ -67,8 +67,9 @@ final class FilePartNodeRoot extends FilePartNode {
                                @NotNull List<? super NodeToUpdate> toUpdateNodes,
                                boolean addSubdirectoryPointers,
                                @NotNull NewVirtualFileSystem fs,
+                               boolean addRecursiveDirectoryPointers,
                                @NotNull VFileEvent event) {
-    NodeToUpdate toUpdate = matchById(parent, file, childNameId, toFirePointers, false, fs);
+    NodeToUpdate toUpdate = matchById(parent, file, childNameId, toFirePointers, false, addRecursiveDirectoryPointers, fs);
     if (toUpdate != null) {
       toUpdate.myEvent = event;
       toUpdateNodes.add(toUpdate);
@@ -92,12 +93,13 @@ final class FilePartNodeRoot extends FilePartNode {
    * Tries to match the given path (parent, childNameId) with the trie structure of FilePartNodes
    * <p>Recursive nodes (i.e. the nodes containing VFP with recursive==true) will be added to outDirs.
    */
-  @Contract("_, _, _, _, true, _ -> !null")
+  @Contract("_, _, _, _, true, _, _ -> !null")
   private NodeToUpdate matchById(@Nullable VirtualFile parent,
                                  @Nullable VirtualFile file,
                                  int childNameId,
                                  @NotNull MultiMap<? super VirtualFilePointerListener, ? super VirtualFilePointerImpl> toFirePointers,
                                  boolean createIfNotFound,
+                                 boolean addRecursiveDirectoryPtr,
                                  @NotNull NewVirtualFileSystem fs) {
     if (childNameId <= 0 && childNameId != JAR_SEPARATOR_NAME_ID) throw new IllegalArgumentException("invalid argument childNameId: " + childNameId);
     List<VirtualFile> hierarchy = parent == null ? Collections.emptyList() : getHierarchy(parent, fs);
@@ -111,8 +113,10 @@ final class FilePartNodeRoot extends FilePartNode {
         // by some strange accident there is UrlPartNode when the corresponding file is alive and kicking - replace with proper FPPN
         child = child.replaceWithFPPN(part, node);
       }
-      // recursive pointers must be fired even for events deep under them
-      child.addRecursiveDirectoryPtrTo(toFirePointers);
+      if (addRecursiveDirectoryPtr) {
+        // recursive pointers must be fired even for events deep under them
+        child.addRecursiveDirectoryPtrTo(toFirePointers);
+      }
       node = child;
     }
 

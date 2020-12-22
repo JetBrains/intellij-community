@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -33,7 +33,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
 
   public InspectionListCellRenderer() {
     mySelected = new SimpleTextAttributes(UIUtil.getListSelectionBackground(true),
-                                          UIUtil.getListSelectionForeground(),
+                                          UIUtil.getListSelectionForeground(true),
                                           JBColor.RED,
                                           SimpleTextAttributes.STYLE_PLAIN);
     myPlain = new SimpleTextAttributes(UIUtil.getListBackground(),
@@ -55,7 +55,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
     panel.setOpaque(true);
 
     final Color bg = sel ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground();
-    final Color fg = sel ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
+    final Color fg = sel ? UIUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
     panel.setBackground(bg);
     panel.setForeground(fg);
     if (value instanceof InspectionElement) {

@@ -19,7 +19,7 @@ public class PluginRelatedLocatorsUtils {
       .uniteWith(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
 
     Collection<VirtualFile> candidates = DomService.getInstance()
-      .getDomFileCandidates(IdeaPlugin.class, project, scope);
+      .getDomFileCandidates(IdeaPlugin.class, scope);
     return GlobalSearchScope.filesWithLibrariesScope(project, candidates);
   }
 }

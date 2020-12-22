@@ -37,11 +37,11 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerCom
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.toBuilder
-import com.intellij.workspaceModel.storage.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -166,9 +166,9 @@ class ModuleBridgesTest {
       assertSame(module, moduleManager.findModuleByName(newModuleName))
       assertEquals(newModuleName, module.name)
 
-      val moduleFile = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.file
-      assertNotNull(moduleFile)
-      assertEquals(newNameFile, moduleFile)
+      val moduleFilePath = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.presentableUrl
+      assertNotNull(moduleFilePath)
+      assertEquals(newNameFile, File(moduleFilePath!!))
       assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
@@ -450,7 +450,7 @@ class ModuleBridgesTest {
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager), virtualFileManager)
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {

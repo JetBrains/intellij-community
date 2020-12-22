@@ -913,7 +913,7 @@
                      key="non.final.field.of.exception.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.NonFinalFieldOfExceptionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="ReturnInsideFinallyBlock" shortName="ReturnFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="UAST" suppressId="ReturnInsideFinallyBlock" shortName="ReturnFromFinallyBlock" bundle="messages.InspectionGadgetsBundle"
                      key="return.from.finally.block.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.ReturnFromFinallyBlockInspection"/>
@@ -1531,7 +1531,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="CommentedOutCode" bundle="messages.InspectionGadgetsBundle"
                      key="inspection.commented.out.code.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="com.siyeh.ig.maturity.CommentedOutCodeInspection" cleanupTool="true"/>
+                     implementationClass="com.siyeh.ig.maturity.CommentedOutCodeInspection"/>
 
     <!--group.names.memory.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnonymousInnerClassMayBeStatic" bundle="messages.InspectionGadgetsBundle"

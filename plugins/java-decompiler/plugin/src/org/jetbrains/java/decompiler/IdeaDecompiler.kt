@@ -178,7 +178,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         throw AssertionError(file.url, e)
       }
       else {
-        throw CannotDecompileException(e)
+        throw CannotDecompileException(file.url, e)
       }
     }
   }

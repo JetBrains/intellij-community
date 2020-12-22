@@ -100,7 +100,7 @@ public final class Switcher extends AnAction implements DumbAware {
   private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
 
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
-  private static final Color ON_MOUSE_OVER_BG_COLOR = new JBColor(new Color(231, 242, 249), new Color(77, 80, 84));
+  private static final Color ON_MOUSE_OVER_BG_COLOR = UIUtil.getListHoverBackground(true);
   private static int CTRL_KEY;
   @Nullable public static final Runnable CHECKER = () -> {
     synchronized (Switcher.class) {

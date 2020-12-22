@@ -19,9 +19,14 @@ import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -55,7 +60,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val enabledModuleListSerializers = moduleListSerializers.filter { enableExternalStorage || !it.isExternalStorage }
     val moduleFiles = enabledModuleListSerializers.flatMap { it.loadFileList(reader, virtualFileManager) }
     for ((moduleFile, moduleGroup) in moduleFiles) {
-      val internalSource = createFileInDirectorySource(moduleFile.parent!!, moduleFile.file!!.name)
+      val internalSource = createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(moduleFile)!!, moduleFile.fileName)
       for (moduleListSerializer in enabledModuleListSerializers) {
         val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile, moduleGroup)
         moduleSerializers[moduleSerializer] = moduleListSerializer
@@ -133,7 +138,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val obsoleteSerializersForFactory = oldSerializers.filter { it.fileUrl !in newFileUrlsSet }
         obsoleteSerializersForFactory.forEach { moduleSerializers.remove(it, serializerFactory) }
         val newFileSerializersForFactory = newFileUrls.filter { it.first !in oldFileUrls }.map {
-          serializerFactory.createSerializer(createFileInDirectorySource(it.first.parent!!, it.first.file!!.name), it.first, it.second)
+          serializerFactory.createSerializer(createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(it.first)!!,
+                                                                         it.first.fileName), it.first, it.second)
         }
         newFileSerializersForFactory.associateWithTo(moduleSerializers) { serializerFactory }
         obsoleteSerializers.addAll(obsoleteSerializersForFactory)
@@ -205,25 +211,19 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
   // This fancy logic allows to reduce the time spared by addDiff. This can be removed if addDiff won't do toStorage at the start of the method
   private fun squash(builders: List<Future<WorkspaceEntityStorageBuilder>>): WorkspaceEntityStorageBuilder {
-    val builder = byPairs(builders.map { it.get() })
-    return builder.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()
-  }
+    var result = builders.map { it.get() }
 
-  private tailrec fun byPairs(builders: List<WorkspaceEntityStorageBuilder>): List<WorkspaceEntityStorageBuilder> {
-    if (builders.isEmpty() || builders.size == 1) return builders
-    val resBuilder = ArrayList<WorkspaceEntityStorageBuilder>()
-    var i = 0
-    while (i < builders.size - 1) {
-      val left = builders[i]
-      left.addDiff(builders[i+1])
-      resBuilder += left
-      i += 2
-    }
-    if (i == builders.lastIndex) {
-      resBuilder += builders.last()
+    // Apply diffs by pairs
+    // E.g: [diff1, diff2, diff3, diff4, diff5] -> [diff1+2, diff3+4, diff5] -> [diff1+2+3+4, diff5] -> [diff1+2+3+4+5]
+    while (result.size > 1) {
+      result = result.chunked(2) { list ->
+        val res = list.first()
+        if (list.size == 2) res.addDiff(list.last())
+        res
+      }
     }
 
-    return byPairs(resBuilder)
+    return result.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()
   }
 
   @TestOnly

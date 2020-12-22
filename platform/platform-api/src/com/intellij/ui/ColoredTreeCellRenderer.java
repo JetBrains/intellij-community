@@ -122,7 +122,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     if (!myUsedCustomSpeedSearchHighlighting && !AbstractTreeUi.isLoadingNode(value)) {
-      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
+      SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, true, selected);
     }
   }
 

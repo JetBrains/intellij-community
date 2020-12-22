@@ -615,8 +615,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     //select here!
 
-
-
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 
     if (project != null) {

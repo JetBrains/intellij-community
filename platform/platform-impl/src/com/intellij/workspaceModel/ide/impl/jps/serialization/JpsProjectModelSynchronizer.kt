@@ -16,10 +16,9 @@ import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.workspaceModel.ide.*
@@ -29,6 +28,8 @@ import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -135,6 +136,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
             }
           }
         }
+      }
+    })
+    project.messageBus.connect().subscribe(VirtualFilePointerListener.TOPIC, object : VirtualFilePointerListener {
+      override fun beforeUrlChanged(pointers: Array<out VirtualFilePointer>) {
+        val virtualFileUrlIndex = WorkspaceModel.getInstance(project).entityStorage.current.getVirtualFileUrlIndex()
+        pointers.forEach { virtualFileUrlIndex.findEntitiesByUrl(it as VirtualFileUrl).forEach { sourcesToSave.add(it.first.entitySource) } }
       }
     })
   }

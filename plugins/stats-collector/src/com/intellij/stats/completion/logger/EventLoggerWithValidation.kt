@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,7 @@ class EventLoggerWithValidation(private val fileLogger: FileLogger, private val 
 
     private fun validateAndLog(session: List<LogEvent>) {
         validator.validate(session)
-        for (event in session) {
-            fileLogger.println(LogEventSerializer.toString(event))
-        }
+        val lines = session.map { LogEventSerializer.toString(it) }
+        fileLogger.printLines(lines)
     }
 }

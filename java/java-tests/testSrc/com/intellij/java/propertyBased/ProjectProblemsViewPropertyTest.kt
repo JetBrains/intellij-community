@@ -201,9 +201,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
           else -> null
         }
       }
-      val collector = MemberUsageCollector(name, member.containingFile, usageExtractor)
-      PsiSearchHelper.getInstance(myProject).processAllFilesWithWord(name, scope, collector, true)
-      val memberUsages = collector.collectedUsages ?: return null
+      val memberUsages = MemberUsageCollector.collect(name, member.containingFile, scope, usageExtractor) ?: return null
       usages.addAll(memberUsages)
     }
     return usages

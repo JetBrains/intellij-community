@@ -10,7 +10,6 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.DetectRetinaKit;
 import com.intellij.util.ui.JBScalableIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +61,7 @@ public final class JBUIScale {
       log.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
     }
 
-    if (SystemInfo.isLinux) {
+    if (SystemInfoRt.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
       if (isScaleVerbose) {
         log.info(String.format("gnome.Xft/DPI: %s", value));
@@ -88,8 +87,7 @@ public final class JBUIScale {
         }
       }
     }
-    else if (SystemInfo.isWindows) {
-      @SuppressWarnings("SpellCheckingInspection")
+    else if (SystemInfoRt.isWindows) {
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
         font = winFont; // comes scaled
@@ -106,7 +104,7 @@ public final class JBUIScale {
   });
 
   @ApiStatus.Internal
-  public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<Float>() {
+  public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<>() {
     @Nullable
     @Override
     public Float initialize() {
@@ -239,7 +237,7 @@ public final class JBUIScale {
     }
 
     // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
-    if (SystemInfo.isLinux && scale == 1.25f && DEF_SYSTEM_FONT_SIZE == 12) {
+    if (SystemInfoRt.isLinux && scale == 1.25f && DEF_SYSTEM_FONT_SIZE == 12) {
       // Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
@@ -273,13 +271,8 @@ public final class JBUIScale {
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
   public static float sysScale(@Nullable GraphicsConfiguration gc) {
-    if (JreHiDpiUtil.isJreHiDPIEnabled() && gc != null) {
-      if (gc.getDevice().getType() != GraphicsDevice.TYPE_PRINTER) {
-        if (SystemInfoRt.isMac && JreHiDpiUtil.isJreHiDPI_earlierVersion()) {
-          return DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
-        }
-        return (float)gc.getDefaultTransform().getScaleX();
-      }
+    if (JreHiDpiUtil.isJreHiDPIEnabled() && gc != null && gc.getDevice().getType() != GraphicsDevice.TYPE_PRINTER) {
+      return (float)gc.getDefaultTransform().getScaleX();
     }
     return sysScale();
   }

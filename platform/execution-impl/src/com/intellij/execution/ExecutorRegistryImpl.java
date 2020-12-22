@@ -150,7 +150,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     else {
       unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
     }
-    unregisterAction(executor.getContextActionId(), RDC_GROUP, myRunDebugIdToAction);
+    unregisterAction(RunDebugConfigManager.generateActionID(executor), RDC_GROUP, myRunDebugIdToAction);
   }
 
   private static void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
@@ -160,11 +160,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return;
     }
 
-    group.remove(actionManager.getAction(actionId), actionManager);
     AnAction action = map.get(actionId);
     if (action != null) {
+      group.remove(action, actionManager);
       actionManager.unregisterAction(actionId);
       map.remove(actionId);
+    }
+    else {
+      action = ActionManager.getInstance().getAction(actionId);
+      if (action != null) {
+        group.remove(action, actionManager);
+      }
     }
   }
 

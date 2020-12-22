@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Objects;
 
 @ApiStatus.Experimental
 public interface LightEditService {
@@ -40,10 +39,8 @@ public interface LightEditService {
 
   Project getProject();
 
-  boolean canOpen(@NotNull VirtualFile file);
-
-  @Nullable
-  Project openFile(@NotNull VirtualFile file, boolean force);
+  @NotNull
+  Project openFile(@NotNull VirtualFile file);
 
   boolean isAutosaveMode();
 
@@ -67,8 +64,4 @@ public interface LightEditService {
    */
   void saveNewDocuments();
 
-  @NotNull
-  LightEditFilePatterns getSupportedFilePatterns();
-
-  void setSupportedFilePatterns(@NotNull LightEditFilePatterns filePatterns);
 }

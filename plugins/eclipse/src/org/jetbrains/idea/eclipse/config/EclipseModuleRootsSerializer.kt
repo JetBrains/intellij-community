@@ -15,10 +15,15 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Function
 import com.intellij.util.SystemProperties
+import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jdom.output.EclipseJDOMUtil
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader
@@ -57,18 +62,19 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                   customDir: String?,
                                   virtualFileManager: VirtualFileUrlManager): EntitySource? {
     val storageRootUrl = getStorageRoot(imlFileUrl, customDir, virtualFileManager)
-    val classpathUrl = storageRootUrl.append(EclipseXml.CLASSPATH_FILE)
+    val classpathUrl = storageRootUrl.append(EclipseXml.CLASSPATH_FILE, virtualFileManager)
     return EclipseProjectFile(classpathUrl, internalEntitySource)
   }
 
   override fun loadRoots(builder: WorkspaceEntityStorageBuilder,
-                         moduleEntity: ModuleEntity,
+                         originalModuleEntity: ModuleEntity,
                          reader: JpsFileContentReader,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
                          internalModuleListSerializer: JpsModuleListSerializer?,
                          errorReporter: ErrorReporter,
                          virtualFileManager: VirtualFileUrlManager) {
+    var moduleEntity = originalModuleEntity
     val storageRootUrl = getStorageRoot(imlFileUrl, customDir, virtualFileManager)
     val entitySource = moduleEntity.entitySource as EclipseProjectFile
     val contentRootEntity = builder.addContentRootEntity(storageRootUrl, emptyList(), emptyList(), moduleEntity)
@@ -76,11 +82,11 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     val classpathTag = reader.loadComponent(entitySource.classpathFile.url, "", null)
     if (classpathTag != null) {
       val relativePathResolver = ModuleRelativePathResolver(internalModuleListSerializer, reader, virtualFileManager)
-      loadClasspathTags(classpathTag, builder, contentRootEntity, storageRootUrl, reader, relativePathResolver, errorReporter, imlFileUrl,
-                        virtualFileManager)
+      moduleEntity = loadClasspathTags(classpathTag, builder, contentRootEntity, storageRootUrl, reader, relativePathResolver, errorReporter, imlFileUrl,
+                                       virtualFileManager)
     }
     else {
-      builder.addJavaModuleSettingsEntity(false, true, storageRootUrl.append("bin"), null,
+      builder.addJavaModuleSettingsEntity(false, true, storageRootUrl.append("bin", virtualFileManager), null,
                                           moduleEntity, entitySource)
     }
 
@@ -88,7 +94,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     val emlTag = reader.loadComponent(emlUrl, "", null)
     if (emlTag != null) {
       reader.getExpandMacroMap(imlFileUrl.url).substitute(emlTag, SystemInfo.isFileSystemCaseSensitive)
-      EmlFileLoader(moduleEntity, builder, reader.getExpandMacroMap(emlUrl), errorReporter, virtualFileManager).loadEml(emlTag, contentRootEntity)
+      EmlFileLoader(moduleEntity, builder, reader.getExpandMacroMap(emlUrl), virtualFileManager).loadEml(emlTag, contentRootEntity)
     }
     else {
       val javaSettings = moduleEntity.javaSettings
@@ -113,12 +119,12 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                 relativePathResolver: ModuleRelativePathResolver,
                                 errorReporter: ErrorReporter,
                                 imlFileUrl: VirtualFileUrl,
-                                virtualUrlManager: VirtualFileUrlManager) {
+                                virtualUrlManager: VirtualFileUrlManager): ModuleEntity {
     fun reportError(message: String) {
-      errorReporter.reportError(message, storageRootUrl.append(EclipseXml.CLASSPATH_FILE))
+      errorReporter.reportError(message, storageRootUrl.append(EclipseXml.CLASSPATH_FILE, virtualUrlManager))
     }
     fun getUrlByRelativePath(path: String): VirtualFileUrl {
-      return if (path.isEmpty()) storageRootUrl else storageRootUrl.append(FileUtil.toSystemIndependentName(path))
+      return if (path.isEmpty()) storageRootUrl else storageRootUrl.append(FileUtil.toSystemIndependentName(path), virtualUrlManager)
     }
 
     val moduleEntity = contentRootEntity.module
@@ -134,6 +140,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     val libraryNames = HashSet<String>()
     val expandMacroMap = reader.getExpandMacroMap(imlFileUrl.url)
 
+    val sourceRoots = mutableListOf<VirtualFileUrl>()
     val dependencies = ArrayList<ModuleDependencyItem>()
     dependencies.add(ModuleDependencyItem.ModuleSourceDependency)
 
@@ -159,10 +166,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           else {
             val linkedPath = expandLinkedResourcesPath(storageRootPath, expandMacroMap, path)
             val srcUrl: VirtualFileUrl
-            if (linkedPath == null) {
+            val sourceRoot = if (linkedPath == null) {
               srcUrl = getUrlByRelativePath(path)
-              builder.addSourceRootEntity(contentRootEntity, srcUrl, false, JAVA_SOURCE_ROOT_TYPE_ID,
-                                          contentRootEntity.entitySource)
+              builder.addSourceRootEntity(contentRootEntity, srcUrl, false, JAVA_SOURCE_ROOT_TYPE_ID, contentRootEntity.entitySource)
             }
             else {
               srcUrl = convertToRootUrl(linkedPath, virtualUrlManager)
@@ -173,6 +179,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                    ?: builder.addContentRootEntity(srcUrl, emptyList(), emptyList(), moduleEntity)
               builder.addSourceRootEntity(newContentRoot, srcUrl, false, JAVA_SOURCE_ROOT_TYPE_ID, newContentRoot.entitySource)
             }
+            builder.addJavaSourceRootEntity(sourceRoot, false, "")
+            sourceRoots.add(sourceRoot.url)
             dependencies.removeIf { it is ModuleDependencyItem.ModuleSourceDependency }
             dependencies.add(ModuleDependencyItem.ModuleSourceDependency)
             editEclipseProperties {
@@ -231,7 +239,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           val nativeRoot = AbstractEclipseClasspathReader.getNativeLibraryRoot(entryTag)?.let {
             convertRelativePathToUrl(it, contentRootEntity, relativePathResolver, virtualUrlManager)
           }
-          val name = AbstractEclipseClasspathReader.getPresentableName(path, libraryNames)
+          val name = generateUniqueLibraryName(path, libraryNames)
           val roots = createLibraryRoots(url, srcUrl, nativeRoot, entryTag, moduleEntity, relativePathResolver, virtualUrlManager)
           val libraryEntity = builder.addLibraryEntity(name, LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()), roots,
                                                        emptyList(), contentRootEntity.entitySource)
@@ -244,7 +252,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             reportError("'${EclipseXml.PATH_ATTR}' attribute format is incorrect for '${EclipseXml.VAR_KIND}': $path")
             return@forEachIndexed
           }
-          val libName = AbstractEclipseClasspathReader.getPresentableName(path, libraryNames)
+          val libName = generateUniqueLibraryName(path, libraryNames)
           val url = convertVariablePathToUrl(expandMacroMap, path, 0, virtualUrlManager)
           editEclipseProperties {
             it.setVariable("", path, url.url)
@@ -255,7 +263,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             srcUrl = convertVariablePathToUrl(expandMacroMap, srcPath, AbstractEclipseClasspathReader.srcVarStart(srcPath),
                                               virtualUrlManager)
             editEclipseProperties {
-              it.setVariable(EclipseModuleManagerImpl.SRC_LINK_PREFIX, srcPath, srcUrl.url)
+              it.setVariable(EclipseModuleManagerImpl.SRC_PREFIX, srcPath, srcUrl.url)
             }
           }
           else {
@@ -331,10 +339,18 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       }
       dependencies.add(0, ModuleDependencyItem.InheritedSdkDependency)
     }
-
-    builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    storeSourceRootsOrder(sourceRoots, contentRootEntity, builder)
+    return builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
       this.dependencies = dependencies
     }
+  }
+
+  private fun generateUniqueLibraryName(path: String, libraryNames: MutableSet<String>): String {
+    val pathComponent = AbstractEclipseClasspathReader.getLastPathComponent(path)
+    if (pathComponent != null && libraryNames.add(pathComponent)) return pathComponent
+    val name = UniqueNameGenerator.generateUniqueName(path, libraryNames)
+    libraryNames.add(name)
+    return name
   }
 
   private fun createLibraryRoots(url: VirtualFileUrl,
@@ -365,7 +381,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                          writer: JpsFileContentWriter,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
-                         storage: WorkspaceEntityStorage) {
+                         storage: WorkspaceEntityStorage,
+                         virtualFileManager: VirtualFileUrlManager) {
     fun saveXmlFile(path: Path, root: Element) {
       //todo get rid of WriteAction here
       WriteAction.runAndWait<RuntimeException> {
@@ -385,12 +402,13 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     if (oldClasspath != null || !entities[SourceRootEntity::class.java].isNullOrEmpty() || module.dependencies.size > 2) {
       val newClasspath = saveClasspathTags(module, entities, entitySource, oldClasspath, pathShortener)
       if (oldClasspath == null || !JDOMUtil.areElementsEqual(newClasspath, oldClasspath)) {
-        saveXmlFile(Paths.get(entitySource.classpathFile.filePath!!), newClasspath)
+        saveXmlFile(entitySource.classpathFile.toPath(), newClasspath)
       }
     }
 
     val emlFileUrl = getEmlFileUrl(imlFileUrl)
-    val emlRoot = EmlFileSaver(module, entities, pathShortener, writer.getReplacePathMacroMap(imlFileUrl.url)).saveEml()
+    val emlRoot = EmlFileSaver(module, entities, pathShortener, writer.getReplacePathMacroMap(imlFileUrl.url),
+                               writer.getReplacePathMacroMap(emlFileUrl)).saveEml()
     if (emlRoot != null) {
       saveXmlFile(Paths.get(JpsPathUtil.urlToPath(emlFileUrl)), emlRoot)
     }
@@ -432,7 +450,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       when (item) {
         ModuleDependencyItem.ModuleSourceDependency -> {
           val shouldPlaceSeparately = eclipseProperties?.expectedModuleSourcePlace == itemIndex
-          for (sourceRoot in sourceRoots) {
+          val comparator = module.mainContentRoot?.getSourceRootsComparator() ?: compareBy<SourceRootEntity> { it.url.url }
+          for (sourceRoot in sourceRoots.sortedWith(comparator)) {
             var relativePath = convertToEclipsePath(sourceRoot.url, module, entitySource, pathShortener)
             if (sourceRoot.contentRoot.url != module.mainContentRoot?.url) {
               val linkedPath = eclipseProperties?.getVariable(EclipseModuleManagerImpl.SRC_LINK_PREFIX, sourceRoot.url.url)

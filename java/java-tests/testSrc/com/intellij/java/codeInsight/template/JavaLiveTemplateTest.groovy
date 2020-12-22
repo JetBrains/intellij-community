@@ -460,6 +460,27 @@ class Foo {
 '''
   }
 
+  void "test ritar template in expression lambda"() {
+    myFixture.configureByText 'a.java', '''class Foo {
+  void test(int[] arr) {
+    Runnable r = () -> itar<caret>
+  }
+}
+'''
+    myFixture.type('\t')
+    myFixture.checkResult '''class Foo {
+  void test(int[] arr) {
+    Runnable r = () -> {
+        for (int i = 0; i < arr.length; i++) {
+            int i1 = arr[i];
+            
+        }
+    }
+  }
+}
+'''
+  }
+
   void "test iterate over list with wildcard component type"() {
     myFixture.configureByText 'a.java', '''class C {{
 java.util.List<? extends Integer> list;
@@ -545,4 +566,52 @@ class A {
     }
 }'''
   }
+
+  void "test subtypes macro works with text argument"() {
+    myFixture.configureByText "a.java", """
+
+class Foo {
+  {
+    <caret>
+  }
+}
+
+class Bar1 extends Foo {}
+class Bar2 extends Foo {}
+"""
+    Template template = templateManager.createTemplate("xxx", "user", '$T$ var = new $ST$();')
+    template.addVariable('T', new EmptyNode(), true)
+    template.addVariable('ST', 'subtypes(T)', '', true)
+
+    startTemplate(template)
+
+    myFixture.type('Foo')
+    state.nextTab()
+
+    assert myFixture.editor.document.text.contains('Foo var = new Foo();')
+    assertSameElements(myFixture.lookupElementStrings, 'Foo', 'Bar1', 'Bar2')
+  }
+
+  void "test methodParameterTypes"() {
+    myFixture.configureByText "a.java", """
+class X {
+  void test(int a, String b, double[] c) {
+    <caret>
+  }
+}
+"""
+    Template template = templateManager.createTemplate("xxx", "user", 'System.out.println("$TYPES$");')
+    template.addVariable('TYPES', 'methodParameterTypes()', '', true)
+
+    startTemplate(template)
+
+    myFixture.checkResult("""
+class X {
+  void test(int a, String b, double[] c) {
+    System.out.println("[int, java.lang.String, double[]]");
+  }
+}
+""")
+  }
+
 }

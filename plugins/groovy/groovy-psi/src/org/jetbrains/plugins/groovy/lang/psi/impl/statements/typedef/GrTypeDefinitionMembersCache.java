@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.psi.PsiClass;
@@ -8,6 +8,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -19,6 +20,8 @@ import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
@@ -95,6 +98,14 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
       PsiClassType[] implementsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getImplementsClause());
       return CachedValueProvider.Result.create(implementsTypes, myDependencies);
     }).clone();
+  }
+
+  @NotNull List<String> getSyntheticModifiers(@NotNull GrModifierList modifierList) {
+    var modifierMap =  CachedValuesManager.getCachedValue(myDefinition, () -> {
+      Map<GrModifierList, List<String>> modifiers = getTransformationResult().getModifiers();
+      return CachedValueProvider.Result.create(modifiers, myDependencies);
+    });
+    return modifierMap.getOrDefault(modifierList, List.of());
   }
 
   @NotNull

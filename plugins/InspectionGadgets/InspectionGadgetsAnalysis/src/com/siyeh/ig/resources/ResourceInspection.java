@@ -15,10 +15,12 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.stream.Stream;
 
 public abstract class ResourceInspection extends BaseInspection {
 
@@ -48,10 +49,13 @@ public abstract class ResourceInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean anyMethodMayClose = true;
 
+  public boolean ignoreResourcesWithClose = true;
+
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    defaultWriteSettings(node, "anyMethodMayClose");
+    defaultWriteSettings(node, "anyMethodMayClose", "ignoreResourcesWithClose");
     writeBooleanOption(node, "anyMethodMayClose", true);
+    writeBooleanOption(node, "ignoreResourcesWithClose", true);
   }
 
   @NotNull
@@ -111,6 +115,15 @@ public abstract class ResourceInspection extends BaseInspection {
 
   @Contract(pure = true)
   protected abstract boolean isResourceCreation(PsiExpression expression);
+
+  /**
+   *  When passed to constructor of resource like object this parameter may take over ownership, so no need to track resource created by
+   *  this constructor
+   */
+  @Contract(pure = true)
+  protected boolean canTakeOwnership(@NotNull PsiExpression expression) {
+    return isResourceCreation(expression);
+  }
 
   protected boolean isResourceFactoryClosed(PsiExpression expression) {
     return false;
@@ -307,6 +320,7 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   boolean isResourceEscaping(@Nullable PsiVariable boundVariable, @NotNull PsiExpression resourceCreationExpression) {
+    if (boundVariable instanceof PsiField) return true;
     if (isSystemErrOrOutUse(resourceCreationExpression)) {
       return true;
     }
@@ -355,21 +369,14 @@ public abstract class ResourceInspection extends BaseInspection {
   private boolean resourcePotentiallyCreatedFromOther(@NotNull PsiExpression resourceCreationExpression) {
     if (resourceCreationExpression instanceof PsiCallExpression) {
       PsiExpressionList argumentList = ((PsiCallExpression)resourceCreationExpression).getArgumentList();
-      if (argumentList != null && ContainerUtil.or(argumentList.getExpressions(), this::isResourceCreation)) {
+      if (argumentList != null && ContainerUtil.or(argumentList.getExpressions(), this::canTakeOwnership)) {
         // resource was created from other, potentially leaking resource
         return true;
       }
       if (resourceCreationExpression instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression call = (PsiMethodCallExpression)resourceCreationExpression;
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-        if (qualifier == null) {
-          PsiClass currentClass = PsiTreeUtil.getNonStrictParentOfType(call, PsiClass.class);
-          PsiMethod method = call.resolveMethod();
-          if (currentClass != null && method != null && method.getContainingClass() == currentClass) {
-            return true;
-          }
-        }
-        else if (isResourceCreation(qualifier)) {
+        if (qualifier != null && isResourceCreation(qualifier)) {
           return true;
         }
       }
@@ -548,8 +555,38 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      // Case: variable.close()
+      if (!ignoreResourcesWithClose) {
+        return;
+      }
+      if (!ExpressionUtils.isReferenceTo(expression, boundVariable)) return;
+      PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
+      if (call == null) return;
+      String callName = call.getMethodExpression().getReferenceName();
+      if ("close".equals(callName)) {
+        escaped = true;
+      }
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!ignoreResourcesWithClose) {
+        return;
+      }
+      String name = expression.getMethodExpression().getReferenceName();
+      if (name == null) return;
+      if (StringUtil.containsIgnoreCase(name, "close") || StringUtil.containsIgnoreCase(name, "cleanup")) {
+        escaped = true;
+      }
+    }
+
+    @Override
     public void visitCallExpression(PsiCallExpression callExpression) {
-      if (!anyMethodMayClose && !isResourceCreation(callExpression)) {
+      super.visitCallExpression(callExpression);
+      if (!anyMethodMayClose) {
         return;
       }
       final PsiExpressionList argumentList = callExpression.getArgumentList();
@@ -570,6 +607,14 @@ public abstract class ResourceInspection extends BaseInspection {
           escaped = true;
           break;
         }
+      }
+    }
+
+    @Override
+    public void visitResourceVariable(PsiResourceVariable variable) {
+      super.visitResourceVariable(variable);
+      if (ExpressionUtils.isReferenceTo(variable.getInitializer(), boundVariable)) {
+        escaped = true;
       }
     }
 

@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -47,7 +47,7 @@ class InferenceCache {
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
   private final SharedVariableInferenceCache mySharedVariableInferenceCache;
-  private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
+  private final Set<Instruction> myTooComplexInstructions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;

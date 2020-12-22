@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.util.Processor;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,7 @@ public final class MatchResult {
 
   public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
     List<JsonSchemaObject> schemas = new ArrayList<>();
-    Int2ObjectOpenHashMap<List<JsonSchemaObject>> oneOfGroups = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<List<JsonSchemaObject>> oneOfGroups = new Int2ObjectOpenHashMap<>();
     iterateTree(root, node -> {
       if (node.isAny()) return true;
       int groupNumber = node.getExcludingGroupNumber();

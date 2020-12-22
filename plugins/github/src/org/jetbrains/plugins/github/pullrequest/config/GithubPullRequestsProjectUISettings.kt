@@ -10,6 +10,7 @@ class GithubPullRequestsProjectUISettings : PersistentStateComponentWithModifica
 
   class SettingsState : BaseState() {
     var hiddenUrls by stringSet()
+    var recentSearchFilters by list<String>()
   }
 
   fun getHiddenUrls(): Set<String> = state.hiddenUrls.toSet()
@@ -26,14 +27,31 @@ class GithubPullRequestsProjectUISettings : PersistentStateComponentWithModifica
     }
   }
 
+  fun getRecentSearchFilters(): List<String> = state.recentSearchFilters.toList()
+
+  fun addRecentSearchFilter(searchFilter: String) {
+    val addExisting = state.recentSearchFilters.remove(searchFilter)
+    state.recentSearchFilters.add(0, searchFilter)
+
+    if (state.recentSearchFilters.size > RECENT_SEARCH_FILTERS_LIMIT) {
+      state.recentSearchFilters.removeLastOrNull()
+    }
+
+    if (!addExisting) {
+      state.intIncrementModificationCount()
+    }
+  }
+
   override fun getStateModificationCount() = state.modificationCount
   override fun getState() = state
-  override fun loadState(state: GithubPullRequestsProjectUISettings.SettingsState) {
+  override fun loadState(state: SettingsState) {
     this.state = state
   }
 
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<GithubPullRequestsProjectUISettings>()
+
+    private const val RECENT_SEARCH_FILTERS_LIMIT = 10
   }
 }

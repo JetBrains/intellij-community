@@ -109,6 +109,8 @@ interface FileTextMatcher {
     fun ignoreBlankLines(): FileTextMatcher = FileTextMatchers.ignoreBlankLines
     @JvmStatic
     fun exact(): FileTextMatcher = FileTextMatchers.exact
+    @JvmStatic
+    fun ignoreXmlFormatting(): FileTextMatcher = FileTextMatchers.ignoreXmlFormatting
   }
   fun matches(actualText: String, expectedText: String): Boolean
 }

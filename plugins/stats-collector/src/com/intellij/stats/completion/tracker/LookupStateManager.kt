@@ -83,6 +83,10 @@ class LookupStateManager {
 
     private fun calculateRelevance(lookup: LookupImpl, items: List<LookupElement>): Map<LookupElement, Map<String, String>> {
         val lookupStorage = LookupStorage.get(lookup)
+        if (lookupStorage?.shouldComputeFeatures() == false) {
+            return items.associateBy({ it }, { emptyMap() })
+        }
+
         val result = mutableMapOf<LookupElement, Map<String, String>>()
         if (lookupStorage != null) {
             for (item in items) {

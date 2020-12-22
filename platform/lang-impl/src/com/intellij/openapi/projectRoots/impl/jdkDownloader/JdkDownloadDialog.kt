@@ -27,7 +27,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 
 private class JdkDownloaderModel(
-  val versionGroups : List<JdkVersionItem>,
+  val versionGroups: List<JdkVersionItem>,
   val defaultItem: JdkItem,
   val defaultVersion: JdkVersionItem,
   val defaultVersionVendor: JdkVersionVendorItem
@@ -46,7 +46,7 @@ private class JdkVersionItem(
   //we reuse model to keep selected element in-memory!
   val model: ComboBoxModel<JdkVersionVendorElement> by lazy {
     require(this.includedItems.isNotEmpty()) { "No included items for $jdkVersion" }
-    require(this.defaultSelectedItem in this.includedItems) { "Dedfault selected item must be in the list of items for $jdkVersion" }
+    require(this.defaultSelectedItem in this.includedItems) { "Default selected item must be in the list of items for $jdkVersion" }
 
     val allItems = when {
       this.excludedItems.isNotEmpty() -> this.includedItems + JdkVersionVendorGroupSeparator + this.excludedItems
@@ -68,7 +68,6 @@ private class JdkVersionVendorItem(
   var parent: JdkVersionItem? = null
   val selectItem get() = parent?.includedItems?.find { it.item == item } ?: this
 
-  val showItemVersion: Boolean get() = parent != null
   val canBeSelected: Boolean get() = parent == null
 }
 
@@ -122,8 +121,9 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
 
         append(value.item.product.packagePresentationText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
-        if (value.showItemVersion) {
-          append(" " + value.item.jdkVersion, SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
+        val jdkVersion = value.item.jdkVersion
+        if (jdkVersion != value.parent?.jdkVersion) {
+          append(" $jdkVersion", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
         }
       }
     }
@@ -134,7 +134,7 @@ private fun List<JdkVersionVendorItem>.sortedForUI() = this.sortedBy { it.item.p
 
 private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel {
   @NlsSafe
-  fun JdkItem.versionGroupId() = this.jdkVersion
+  fun JdkItem.versionGroupId() = this.presentableMajorVersionString
 
   val groups =  allItems
     .groupBy { it.versionGroupId() }
@@ -156,11 +156,11 @@ private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel
           //first try to find closest newer version
           jdkItems
             .filter { it.jdkMajorVersion >= majorVersion }
-            .minWith(comparator)
+            .minWithOrNull(comparator)
           // if not, let's try an older version too
           ?: jdkItems
             .filter { it.jdkMajorVersion < majorVersion }
-            .maxWith(comparator)
+            .maxWithOrNull(comparator)
 
         }
         //we assume the initial order of feed items contains vendors in the right order
@@ -197,7 +197,11 @@ private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel
 }
 
 private val jdkVersionItemRenderer = object: ColoredListCellRenderer<JdkVersionItem>() {
-  override fun customizeCellRenderer(list: JList<out JdkVersionItem>, value: JdkVersionItem?, index: Int, selected: Boolean, hasFocus: Boolean) {
+  override fun customizeCellRenderer(list: JList<out JdkVersionItem>,
+                                     value: JdkVersionItem?,
+                                     index: Int,
+                                     selected: Boolean,
+                                     hasFocus: Boolean) {
     append(value?.jdkVersion ?: return, SimpleTextAttributes.REGULAR_ATTRIBUTES)
   }
 }

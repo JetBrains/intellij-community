@@ -17,6 +17,7 @@ import com.intellij.util.PathMappingSettings
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PyProjectSynchronizerProvider
@@ -80,7 +81,7 @@ class PyAddExistingSdkPanel(project: Project?,
       }
     }
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PyBundle.message("interpreter"), sdkChooserCombo)
+      .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkChooserCombo)
       .addComponent(remotePathField.mainPanel)
       .panel
     add(formPanel, BorderLayout.NORTH)

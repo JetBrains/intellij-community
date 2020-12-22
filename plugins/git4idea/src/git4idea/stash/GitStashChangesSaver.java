@@ -154,7 +154,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
         }
       );
     }
-
   }
 
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {

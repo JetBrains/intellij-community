@@ -53,7 +53,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   @Override
   public String getText() {
     if (myCandidates == null || myCandidates.isEmpty()) {
-      if(ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return "";
       }
       throw new IllegalStateException();

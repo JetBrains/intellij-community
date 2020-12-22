@@ -80,6 +80,7 @@ public class InstalledPackagesPanel extends JPanel {
         return tableCellRenderer;
       }
     };
+    myPackagesTable.setShowGrid(false);
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
     new TableSpeedSearch(myPackagesTable);
 

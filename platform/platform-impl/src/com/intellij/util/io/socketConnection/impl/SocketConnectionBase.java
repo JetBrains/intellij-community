@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.socketConnection.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
   private final List<Thread> myThreadsToInterrupt = new ArrayList<>();
   private final RequestResponseExternalizerFactory<Request, Response> myExternalizerFactory;
   private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<>();
-  private final Int2ObjectOpenHashMap<TimeoutInfo> myTimeouts = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<TimeoutInfo> myTimeouts = new Int2ObjectOpenHashMap<>();
   private final ResponseProcessor<Response> myResponseProcessor;
 
   public SocketConnectionBase(@NotNull RequestResponseExternalizerFactory<Request, Response> factory) {

@@ -73,7 +73,7 @@ public final class ClassUtil {
   private static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass, @NotNull final PsiClass containingClass) {
     Object2IntMap<PsiClass> indices =
       CachedValuesManager.getCachedValue(containingClass, () -> {
-        Object2IntOpenHashMap<PsiClass> map = new Object2IntOpenHashMap<>();
+        Object2IntMap<PsiClass> map = new Object2IntOpenHashMap<>();
         int index = 0;
         for (PsiClass aClass : SyntaxTraverser.psiTraverser().withRoot(containingClass).postOrderDfsTraversal().filter(PsiClass.class)) {
           if (aClass.getQualifiedName() == null) {

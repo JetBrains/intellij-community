@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.classCanBeRecord;
 
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -88,9 +89,11 @@ public class ClassCanBeRecordInspection extends BaseInspection {
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
       PsiIdentifier classIdentifier = aClass.getNameIdentifier();
+      if (classIdentifier == null) return;
       RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming);
-      if (classIdentifier == null || recordCandidate == null) return;
+      if (recordCandidate == null) return;
       if (!myRenameIfWeakenVisibility && !ConvertToRecordProcessor.findWeakenVisibilityUsages(recordCandidate).isEmpty()) return;
+      if (UnusedSymbolUtil.isImplicitUsage(aClass.getProject(), aClass)) return;
       registerError(classIdentifier);
     }
   }

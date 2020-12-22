@@ -33,6 +33,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,7 +86,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     while (true) {
       int firstLineStart = DocumentUtil.getLineStartOffset(startOffset, document);
       FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(firstLineStart - 1);
-      if (collapsedAt == null) break;
+      if (collapsedAt == null || isInvisibleRegionAtLineStart(collapsedAt) /* rendered doc case */) break;
       int regionStartOffset = collapsedAt.getStartOffset();
       if (regionStartOffset >= startOffset) break;
       startOffset = regionStartOffset;
@@ -133,7 +134,13 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     currentBlock.caretUpdate = startingNewLineComment ? CaretUpdate.PUT_AT_COMMENT_START :
                                !hasSelection ? CaretUpdate.SHIFT_DOWN :
                                wholeLinesSelected ? CaretUpdate.RESTORE_SELECTION : null;
-    }
+  }
+
+  private static boolean isInvisibleRegionAtLineStart(@NotNull FoldRegion region) {
+    if (!region.getPlaceholderText().isEmpty()) return false;
+    int startOffset = region.getStartOffset();
+    return startOffset == DocumentUtil.getLineStartOffset(startOffset, region.getDocument());
+  }
 
   private static boolean shouldCommentInHostFile(@NotNull PsiFile file, @NotNull PsiElement context) {
     if (file.getUserData(INJECTION_FORBIDS_LINE_COMMENTS) != null) {
@@ -571,8 +578,8 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
       return true;
     }
 
-    IntArrayList prefixes = new IntArrayList();
-    IntArrayList suffixes = new IntArrayList();
+    IntList prefixes = new IntArrayList();
+    IntList suffixes = new IntArrayList();
     for (int position = 0; position < text.length(); ) {
       int prefixPos = text.indexOf(prefix, position);
       if (prefixPos == -1) {
@@ -671,8 +678,8 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
         return true;
       }
       final String text = chars.subSequence(offset, endOffset).toString();
-      final IntArrayList prefixes = new IntArrayList();
-      final IntArrayList suffixes = new IntArrayList();
+      final IntList prefixes = new IntArrayList();
+      final IntList suffixes = new IntArrayList();
       final String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
       final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
       for (int position = 0; position < text.length(); ) {

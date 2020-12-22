@@ -73,13 +73,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   public void init(History history) {
     myHistory = history;
-
-    for (ModuleConfigurationEditor each : myEditors) {
-      if (each instanceof ModuleElementsEditor) {
-        ((ModuleElementsEditor)each).setHistory(myHistory);
-      }
-    }
-
     restoreSelectedEditor();
   }
 

@@ -33,7 +33,7 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     """
     import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper    
     gradle.taskGraph.whenReady { taskGraph ->
-      def debugAllIsEnabled = Boolean.valueOf(System.properties["ij.gradle.debug.all"])
+      def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
       def taskPathsList = []
       if (!debugAllIsEnabled) {
         def currentPath = gradle.getStartParameter().getCurrentDir().path
@@ -54,7 +54,6 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
           task.maxParallelForks = 1
           task.forkEvery = 0
         }
-        task.path
         if (task instanceof JavaForkOptions && (debugAllIsEnabled || taskPathsList.contains(task.path))) {
           task.doFirst {
             def moduleDir = task.project.projectDir.path

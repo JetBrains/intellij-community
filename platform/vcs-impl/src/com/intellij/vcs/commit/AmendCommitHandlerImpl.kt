@@ -75,7 +75,10 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
     // if initial message set - only update commit message if user hasn't changed it
     if (initialMessage == null || beforeAmendMessage == initialMessage) {
-      val amendMessage = loadLastCommitMessage(project, resolveAmendRoots())
+      val roots = resolveAmendRoots()
+      val messages = LoadCommitMessagesTask(project, roots).load() ?: return
+
+      val amendMessage = messages.distinct().joinToString(separator = "\n").takeIf { it.isNotBlank() }
       amendMessage?.let { setAmendMessage(beforeAmendMessage, it) }
     }
   }
@@ -111,7 +114,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
     ui.commitMessageUi.focus()
   }
 
-  internal class LoadCommitMessagesTask(project: Project, private val roots: Collection<VcsRoot>) :
+  private class LoadCommitMessagesTask(project: Project, private val roots: Collection<VcsRoot>) :
     Task.WithResult<List<String>, VcsException>(project, VcsBundle.message("amend.commit.load.message.task.title"), true) {
 
     fun load(): List<String>? {
@@ -138,9 +141,4 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
     override fun onCancel() = Unit
     override fun onFailure() = setAmendPrefix(false)
   }
-}
-
-fun loadLastCommitMessage(project: Project, roots: Collection<VcsRoot>): String? {
-  val messages = AmendCommitHandlerImpl.LoadCommitMessagesTask(project, roots).load() ?: return null
-  return messages.distinct().joinToString(separator = "\n").takeIf { it.isNotBlank() }
 }

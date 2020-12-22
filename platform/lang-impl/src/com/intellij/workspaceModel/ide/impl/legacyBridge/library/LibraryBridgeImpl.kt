@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
@@ -20,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.storage.CachedValue
@@ -29,6 +29,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.impl.asAttachment
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -49,8 +50,6 @@ internal class LibraryBridgeImpl(
 ) : LibraryBridge, RootProvider, TraceableDisposable(true) {
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
-
-  val filePointerProvider: FilePointerProvider = FilePointerProvider.getInstance(project)
 
   var entityStorage: VersionedEntityStorage = initialEntityStorage
     internal set(value) {
@@ -74,7 +73,6 @@ internal class LibraryBridgeImpl(
   private val librarySnapshotCached = CachedValue { storage ->
     LibraryStateSnapshot(
       libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
-      filePointerProvider = filePointerProvider,
       storage = storage,
       libraryTable = libraryTable,
       parentDisposable = this
@@ -147,7 +145,15 @@ internal class LibraryBridgeImpl(
 
   private fun checkDisposed() {
     if (isDisposed) {
-      throwDisposalError("library $entityId already disposed: $stackTrace")
+      val message = "library $entityId already disposed: $stackTrace"
+      try {
+        throwDisposalError(message)
+      }
+      catch (e: Exception) {
+        val attachment = entityStorage.current.asAttachment("Storage", "Serializer version of entity storage")
+        thisLogger().error(message, e, attachment)
+        throw e
+      }
     }
   }
 

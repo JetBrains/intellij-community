@@ -47,6 +47,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -359,7 +360,7 @@ public class InspectionTree extends Tree {
       LOG.error("groupPath is empty for tool: " + toolWrapper.getShortName() + ", class: " + toolWrapper.getTool().getClass());
     }
 
-    for (String subGroup : groupPath) {
+    for (@Nls String subGroup : groupPath) {
       currentNode = myModel.createGroupNode(subGroup, currentNode);
     }
 

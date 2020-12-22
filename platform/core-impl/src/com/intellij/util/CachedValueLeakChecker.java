@@ -13,7 +13,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.DebugReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
@@ -29,7 +29,7 @@ import java.util.function.Predicate;
 final class CachedValueLeakChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueLeakChecker.class);
   private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
-  private static final Set<String> ourCheckedKeys = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourCheckedKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   static void checkProvider(@NotNull CachedValueProvider<?> provider, @NotNull Key<?> key, @NotNull UserDataHolder userDataHolder) {
     if (!DO_CHECKS || ApplicationInfoImpl.isInStressTest()) return;

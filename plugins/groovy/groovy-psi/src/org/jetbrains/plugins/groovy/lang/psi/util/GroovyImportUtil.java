@@ -156,13 +156,11 @@ public final class GroovyImportUtil {
             if (anImport.isAliasedImport()) {
               aliased.put(symbolName, importedName);
             }
-            else {
-              if (anImport.isStatic()) {
-                staticallyImportedMembers.add(symbolName);
-              }
-              else {
-                importedClasses.add(symbolName);
-              }
+            else if (anImport.isStatic()) {
+              staticallyImportedMembers.add(symbolName);
+            }
+            else if (!isAnnotatedImport(anImport)) {
+              importedClasses.add(symbolName);
             }
           }
         }

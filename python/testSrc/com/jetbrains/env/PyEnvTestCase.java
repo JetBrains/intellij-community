@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static com.jetbrains.env.PyEnvTestToolsKt.replaceServicesWithMocks;
 
 /**
  * <p>

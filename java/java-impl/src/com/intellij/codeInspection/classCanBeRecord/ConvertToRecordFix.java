@@ -8,8 +8,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
-import com.intellij.lang.jvm.types.JvmReferenceType;
-import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
@@ -195,7 +193,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     }
 
     private static boolean throwsOnlyUncheckedExceptions(@NotNull PsiMethod psiMethod) {
-      for (JvmReferenceType throwsType : psiMethod.getThrowsTypes()) {
+      for (PsiClassType throwsType : psiMethod.getThrowsList().getReferencedTypes()) {
         PsiClassType throwsClassType = ObjectUtils.tryCast(throwsType, PsiClassType.class);
         if (throwsClassType == null) continue;
         if (!ExceptionUtil.isUncheckedException(throwsClassType)) {
@@ -242,10 +240,15 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         myCanonical = false;
         return;
       }
-      Map<String, JvmType> ctorParams =
-        Arrays.stream(myConstructor.getParameters()).collect(Collectors.toMap(param -> param.getName(), param -> param.getType()));
+      PsiParameter[] ctorParams = myConstructor.getParameterList().getParameters();
+      Map<String, PsiType> ctorParamsWithType = Arrays.stream(ctorParams)
+        .collect(Collectors.toMap(param -> param.getName(), param -> param.getType(), (first, second) -> first));
+      if (ctorParams.length != ctorParamsWithType.size()) {
+        myCanonical = false;
+        return;
+      }
       for (PsiField instanceField : instanceFields) {
-        PsiType ctorParamType = ObjectUtils.tryCast(ctorParams.get(instanceField.getName()), PsiType.class);
+        PsiType ctorParamType = ObjectUtils.tryCast(ctorParamsWithType.get(instanceField.getName()), PsiType.class);
         if (ctorParamType instanceof PsiEllipsisType) {
           ctorParamType = ((PsiEllipsisType)ctorParamType).toArrayType();
         }

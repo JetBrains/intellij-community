@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -39,6 +39,8 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
+import static com.intellij.openapi.projectRoots.JdkUtil.PROPERTY_DYNAMIC_CLASSPATH;
+
 public final class ExecutionUtil {
   private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
@@ -71,9 +73,9 @@ public final class ExecutionUtil {
 
     String description = e.getMessage();
     HyperlinkListener listener = null;
-    if (isProcessNotCreated(e) && !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
+    if (isProcessNotCreated(e) && !PropertiesComponent.getInstance(project).isTrueValue(PROPERTY_DYNAMIC_CLASSPATH)) {
       description = ExecutionBundle.message("dialog.message.command.line.too.long.notification");
-      listener = event -> PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
+      listener = event -> PropertiesComponent.getInstance(project).setValue(PROPERTY_DYNAMIC_CLASSPATH, "true");
     }
 
     handleExecutionError(project, toolWindowId, taskName, e, description, listener);

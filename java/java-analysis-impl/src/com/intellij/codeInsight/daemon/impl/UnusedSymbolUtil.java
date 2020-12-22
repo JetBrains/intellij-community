@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.DaemonTooltipsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -9,6 +10,8 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -25,6 +28,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,11 +81,32 @@ public final class UnusedSymbolUtil {
     return EntryPointsManager.getInstance(project).isImplicitWrite(element);
   }
 
+  /**
+   * @deprecated pass inspection's shortName to provide correct inspection description
+   */
+  @Deprecated
   @Nullable
   public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
                                                      @NotNull @NlsContexts.DetailedDescription String message,
                                                      @NotNull final HighlightInfoType highlightInfoType) {
-    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).group(
+    return createUnusedSymbolInfo(element, message, highlightInfoType, null);
+  }
+
+  @Nullable
+  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
+                                                     @NotNull @NlsContexts.DetailedDescription String message,
+                                                     @NotNull final HighlightInfoType highlightInfoType,
+                                                     @Nullable String shortName) {
+    String tooltip;
+    if (shortName != null) {
+      tooltip = DaemonTooltipsUtil.getWrappedTooltip(message, shortName, "(" + KeymapUtil.getShortcutsText(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION).getShortcuts()) + ")", true);
+    }
+    else {
+      tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    }
+
+    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element)
+      .description(message).escapedToolTip(tooltip).group(
       GeneralHighlightingPass.POST_UPDATE_ALL).create();
     if (info == null) {
       return null; //filtered out

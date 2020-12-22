@@ -313,6 +313,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     protected boolean isVisible(@NotNull ThreeSide side) {
+      if (side != myModifiedSide && side != mySourceSide) return false;
       if (!isEditable(myModifiedSide)) return false;
       return !isBothEditable() || side == mySourceSide;
     }
@@ -335,7 +336,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     @NotNull
     @Override
     protected String getText(@NotNull ThreeSide side) {
-      return DiffBundle.message("action.presentation.diff.accept.text");
+      return SimpleThreesideDiffChange.getApplyActionText(SimpleThreesideDiffViewer.this, mySourceSide, myModifiedSide);
     }
 
     @Nullable

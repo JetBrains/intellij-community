@@ -87,13 +87,14 @@ public abstract class AppIcon {
    * (this is the case on Windows, where focus stealing can only be enabled using {@link WinFocusStealer}).
    */
   public void requestFocus(IdeFrame frame) {
-    Window window = frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent());
-    requestFocus(window);
+    requestFocus(frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent()));
   }
 
-  protected void requestFocus(Window window) {
+  protected void requestFocus(@Nullable Window window) {
     requestFocus();
-    if (window != null) window.toFront();
+    if (window != null) {
+      window.toFront();
+    }
   }
 
   public void requestFocus() {
@@ -261,10 +262,14 @@ public abstract class AppIcon {
     public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
       EDT.assertIsEdt();
 
-      if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
+      if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) {
+        return false;
+      }
 
       BufferedImage appImage = getAppImage();
-      if (appImage == null) return false;
+      if (appImage == null) {
+        return false;
+      }
 
       setDockIcon(appImage);
       myProgressImagesCache.remove(myCurrentProcessId);
@@ -278,7 +283,9 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       BufferedImage appImage = getAppImage();
-      if (appImage == null) return;
+      if (appImage == null) {
+        return;
+      }
 
       Pair<BufferedImage, Graphics2D> img = createAppImage(appImage);
 
@@ -393,7 +400,7 @@ public abstract class AppIcon {
   }
 
   @SuppressWarnings("UseJBColor")
-  private static class Win7AppIcon extends BaseIcon {
+  private static final class Win7AppIcon extends BaseIcon {
     @Override
     public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       myCurrentProcessId = processId;
@@ -656,7 +663,7 @@ public abstract class AppIcon {
     }
   }
 
-  private static class XAppIcon extends BaseIcon {
+  private static final class XAppIcon extends BaseIcon {
     @Override
     public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       return false;

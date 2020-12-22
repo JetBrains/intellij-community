@@ -33,7 +33,7 @@ public class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePr
     if (DumbService.isDumb(project) || !PsiUtil.isIdeaProject(project)) return Collections.emptyList();
 
     final Collection<VirtualFile> pluginDescriptorFiles =
-      DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScopesCore.projectProductionScope(project));
+      DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, GlobalSearchScopesCore.projectProductionScope(project));
     GlobalSearchScope scope = GlobalSearchScope.filesScope(project, pluginDescriptorFiles);
     return Collections.singletonList(new DelegatingGlobalSearchScope(scope) {
       @NotNull

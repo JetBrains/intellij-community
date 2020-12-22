@@ -2,23 +2,31 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule
+import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import kotlin.system.measureTimeMillis
 
 class ImlSerializationTest {
+  @Rule
+  @JvmField
+  val projectModel = ProjectModelRule(true)
+
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
   }
 
   @Test
@@ -29,10 +37,15 @@ class ImlSerializationTest {
 
   @Test
   fun sizeCheck() {
+    val expectedSize = 48_000
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     val bytes = loadProjectAndCheck(projectDir)
 
-    checkSerializationSize(bytes, 42_620, 2_000)
+    checkSerializationSize(bytes, expectedSize, 2_000)
+
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl(), true)
+    assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
+               48_000 == expectedSize && "v4" == serializer.serializerDataFormatVersion)
   }
 
   @Test

@@ -4,7 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
@@ -252,7 +252,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   public static boolean startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
     if (method.getParameterList().isEmpty() ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
-        !ParameterInfoController.areParameterTemplatesEnabledOnCompletion()) {
+        !ParameterInfoControllerBase.areParameterTemplatesEnabledOnCompletion()) {
       return false;
     }
 
@@ -338,8 +338,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     setCompletionMode(methodCall, true);
     context.setLaterRunnable(() -> {
-      ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
-                                                                       methodCall.getArgumentList(), handler, false, false);
+      Object[] itemsToShow = infoContext.getItemsToShow();
+      PsiExpressionList methodCallArgumentList = methodCall.getArgumentList();
+      ParameterInfoControllerBase controller =
+        ParameterInfoControllerBase.createParameterInfoController(project, editor, braceOffset, itemsToShow, null,
+                                                                  methodCallArgumentList, handler, false, false);
       Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
       if (Disposer.isDisposed(controller)) {
         Disposer.dispose(hintsDisposal);

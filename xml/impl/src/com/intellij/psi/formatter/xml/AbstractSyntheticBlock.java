@@ -110,12 +110,16 @@ public abstract class AbstractSyntheticBlock implements Block {
     return isAttributeElementType(type1) && type2 == XmlTokenType.XML_TAG_END;
   }
 
+  protected boolean isTextNode(IElementType nodeType) {
+    return nodeType == XmlElementType.XML_TEXT ||
+           nodeType == XmlElementType.HTML_RAW_TEXT;
+  }
+
   public boolean endsWithText() {
-    return myEndTreeNode.getElementType() == XmlElementType.XML_TEXT ||
+    return isTextNode(myEndTreeNode.getElementType()) ||
            myEndTreeNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
            myEndTreeNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF ||
            myEndTreeNode.getElementType() == XmlElementType.XML_ENTITY_REF;
-
   }
 
   public boolean isTagDescription() {
@@ -128,7 +132,7 @@ public abstract class AbstractSyntheticBlock implements Block {
   }
 
   public boolean startsWithText() {
-    return myStartTreeNode.getElementType() == XmlElementType.XML_TEXT ||
+    return isTextNode(myStartTreeNode.getElementType()) ||
            myStartTreeNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
            myStartTreeNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF ||
            myStartTreeNode.getElementType() == XmlElementType.XML_ENTITY_REF;

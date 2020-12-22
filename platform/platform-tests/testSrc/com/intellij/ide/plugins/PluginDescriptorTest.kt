@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -113,7 +114,8 @@ class PluginDescriptorTest {
 
   @Test
   fun testProductionPlugins() {
-    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
+    IoTestUtil.assumeMacOS()
+    assumeNotUnderTeamcity()
     val descriptors = loadAndInitDescriptors(Paths.get("/Applications/Idea.app/Contents/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
     assertThat(descriptors).isNotEmpty()
     assertThat(descriptors.find { it!!.pluginId.idString == "com.intellij.java" }).isNotNull
@@ -121,7 +123,8 @@ class PluginDescriptorTest {
 
   @Test
   fun testProductionProductLib() {
-    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
+    IoTestUtil.assumeMacOS()
+    assumeNotUnderTeamcity()
     val urls = ArrayList<URL>()
     Paths.get("/Applications/Idea.app/Contents/lib").directoryStreamIfExists {
       for (path in it) {
@@ -135,9 +138,15 @@ class PluginDescriptorTest {
 
   @Test
   fun testProduction2() {
-    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
+    IoTestUtil.assumeMacOS()
+
+    assumeNotUnderTeamcity()
     val descriptors = loadAndInitDescriptors(Paths.get("/Volumes/data/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
     assertThat(descriptors).isNotEmpty()
+  }
+
+  private fun assumeNotUnderTeamcity() {
+    assumeTrue("Must not be run under TeamCity", !UsefulTestCase.IS_UNDER_TEAMCITY)
   }
 
   @Test

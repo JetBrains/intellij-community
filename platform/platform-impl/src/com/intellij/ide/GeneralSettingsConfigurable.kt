@@ -6,13 +6,16 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ui.UIUtil
 
 // @formatter:off
 private val model = GeneralSettings.getInstance()
@@ -113,7 +116,11 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
         row {
           checkBox(myChkSyncOnFrameActivation)
         }
-        commentRow(IdeBundle.message("label.autosave.comment"))
+        createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(IdeBundle.message("label.autosave.comment"), true, -1, true)).apply {
+          link(IdeBundle.message("label.autosave.comment.how.it.works"), UIUtil.ComponentStyle.SMALL) {
+            HelpManager.getInstance().invokeHelp("autosave")
+          }
+        }
       }
 
       for (configurable in configurables) {

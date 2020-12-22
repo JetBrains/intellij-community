@@ -6,6 +6,7 @@ import com.intellij.util.io.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public final class TestModuleIndex {
 
     @Override
     public IntList read(@NotNull DataInput dataInput) throws IOException {
-      IntOpenHashSet result = new IntOpenHashSet();
+      IntSet result = new IntOpenHashSet();
       while (((InputStream)dataInput).available() > 0) {
         result.add(DataInputOutputUtil.readINT(dataInput));
       }

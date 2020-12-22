@@ -15,6 +15,7 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 
 public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
@@ -29,5 +30,10 @@ public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   @Override
   protected boolean isHtmlTagState(int state) {
     return state == __XmlLexer.TAG || state == __XmlLexer.END_TAG;
+  }
+
+  @Override
+  protected boolean acceptEmbeddedContentProvider(HtmlEmbeddedContentProvider provider) {
+    return !(provider instanceof HtmlRawTextTagContentProvider);
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -37,7 +36,7 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public boolean myAttachToSubprocess = true;
     public boolean mySaveCallSignatures = false;
     public boolean mySupportGeventDebugging = false;
-    public boolean myDropIntoDebuggerOnFailedTests = true;
+    public boolean myDropIntoDebuggerOnFailedTests = false;
     public boolean mySupportQtDebugging = true;
     public String myPyQtBackend = PyBundle.message("python.debugger.qt.backend.auto");
     public String myAttachProcessFilter = "python";

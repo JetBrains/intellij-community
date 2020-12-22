@@ -4,7 +4,6 @@ package com.intellij.execution.ui;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunConfigurationStorageUi;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -58,7 +57,6 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     if (myRCStorageUi != null) {
       // editing a template run configuration
       myRCStorageUi.apply(s);
-      RunManagerImpl.getInstanceImpl(s.getConfiguration().getProject()).addConfiguration(s);
     }
   }
 

@@ -330,13 +330,6 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     }
 
     @Override
-    public void repaint(long tm, int x, int y, int width, int height) {
-      if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
-        super.repaint(tm, x, y, width, height);
-      }
-    }
-
-    @Override
     public void updateUI() {
       super.updateUI();
       // dynamically update ui for stolen header

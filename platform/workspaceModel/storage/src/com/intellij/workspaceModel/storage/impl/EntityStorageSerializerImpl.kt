@@ -14,11 +14,11 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.*
-import com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap
-import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import org.objenesis.instantiator.ObjectInstantiator
@@ -40,15 +40,15 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   @set:TestOnly
-  override var serializerDataFormatVersion: String = "v2"
+  override var serializerDataFormatVersion: String = SERIALIZER_VERSION
 
-  private fun createKryo(): Kryo {
+  internal fun createKryo(): Kryo {
     val kryo = Kryo()
 
     kryo.isRegistrationRequired = registrationRequired
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
-    kryo.register(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
+    kryo.addDefaultSerializer(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
       override fun write(kryo: Kryo, output: Output, obj: VirtualFileUrl) {
         // TODO Write IDs only
         output.writeString(obj.url)
@@ -236,6 +236,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableSet<TypeInfo>, objectClasses: MutableSet<TypeInfo>) {
     val kClass = entity::class
     if (registerKClass(kClass, kryo, objectClasses, simpleClasses)) return
+    if (entity is VirtualFileUrl) return
 
     kClass.memberProperties.forEach {
       val retType = (it.returnType as Any).toString()
@@ -423,7 +424,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
 
       val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
-      storage.assertConsistencyInStrictMode()
       val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
 
       builder.entitiesByType.entityFamilies.forEach { family ->
@@ -498,5 +498,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
   companion object {
     val logger = logger<EntityStorageSerializerImpl>()
+
+    const val SERIALIZER_VERSION = "v4"
   }
 }

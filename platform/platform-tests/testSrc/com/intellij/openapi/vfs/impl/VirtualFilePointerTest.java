@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.idea.Bombed;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +30,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +46,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -492,7 +491,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     LOG.debug("i = " + i);
   }
 
-  @Bombed(month = Calendar.OCTOBER, day = 12, user = "Alexey Kudravtsev", description = "Test for IDEA-251779")
   @Test
   public void updateJarFilePointerWhenJarFileIsRestored() throws IOException {
     File jarParent = new File(tempDir.getRoot(), "jarParent");
@@ -500,7 +498,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
     FileUtil.copy(originalJar, jar);
     String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
-    getVirtualFile(jar);
+    assertNotNull(getVirtualFile(jar));
     VirtualFile jarFile1 = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl);
     assertNotNull(jarFile1);
     FileUtil.delete(jar);
@@ -514,7 +512,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertNull(jarPointer.getFile());
 
     FileUtil.copy(originalJar, jar);
-    getVirtualFile(jar);
+    assertNotNull(getVirtualFile(jar));
     VirtualFile jarFile2 = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl);
     assertNotNull(jarFile2);
     assertTrue(jarPointer.isValid());
@@ -559,7 +557,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<?>> reads = ContainerUtil.newConcurrentSet();
+    Collection<Job<?>> reads = Collections.newSetFromMap(new ConcurrentHashMap<>());
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {

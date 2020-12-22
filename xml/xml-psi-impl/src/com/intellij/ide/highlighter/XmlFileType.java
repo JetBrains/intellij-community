@@ -3,13 +3,14 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.fileTypes.OSFileIdeAssociation;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public final class XmlFileType extends XmlLikeFileType implements DomSupportEnabled {
+public final class XmlFileType extends XmlLikeFileType implements DomSupportEnabled, OSFileIdeAssociation {
   public static final XmlFileType INSTANCE = new XmlFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "xml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
@@ -39,5 +40,10 @@ public final class XmlFileType extends XmlLikeFileType implements DomSupportEnab
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Xml;
+  }
+
+  @Override
+  public Mode getFileIdeAssociationMode() {
+    return Mode.ChooseExtensions;
   }
 }

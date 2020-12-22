@@ -24,11 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class VcsCherryPickManager {
   private static final Logger LOG = Logger.getInstance(VcsCherryPickManager.class);
   @NotNull private final Project myProject;
-  @NotNull private final Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
+  @NotNull private final Set<CommitId> myIdsInProgress = Collections.newSetFromMap(new ConcurrentHashMap<>());
   @NotNull private final BackgroundTaskQueue myTaskQueue;
 
   public VcsCherryPickManager(@NotNull Project project) {

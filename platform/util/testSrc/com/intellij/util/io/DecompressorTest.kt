@@ -181,7 +181,7 @@ class DecompressorTest {
       writeEntry(it, "links/ok", link = "../f")
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
-    Decompressor.Tar(tar).withSymlinks().extract(dir)
+    Decompressor.Tar(tar).extract(dir)
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
   }
 
@@ -357,11 +357,37 @@ class DecompressorTest {
     assertThat(dir.resolve("missed")).doesNotExist()
   }
 
+  @Test fun fileOverwrite() {
+    val zip = tempDir.newFile("test.zip")
+    ZipOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/file.txt") }
+    val dir = tempDir.newDirectory("unpacked")
+    val file = tempDir.newFile("unpacked/a/file.txt", byteArrayOf(0))
+    Decompressor.Zip(zip).extract(dir)
+    assertThat(file).hasBinaryContent(TestContent)
+  }
+
+  @Test fun symlinkOverwrite() {
+    assumeNioSymLinkCreationIsSupported()
+
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "a/file")
+      writeEntry(it, "a/link", link = "file")
+    }
+    val dir = tempDir.newDirectory("unpacked")
+    val link = tempDir.rootPath.resolve("unpacked/a/link")
+    val target = tempDir.newFile("unpacked/a/target", byteArrayOf(0)).toPath()
+    Files.createSymbolicLink(link, target)
+    Decompressor.Tar(tar).extract(dir)
+    assertThat(link).isSymbolicLink().hasBinaryContent(TestContent)
+  }
+
+  //<editor-fold desc="Helpers.">
   private fun writeEntry(zip: ZipOutputStream, name: String) {
     val entry = ZipEntry(name)
     entry.time = System.currentTimeMillis()
     zip.putNextEntry(entry)
-    zip.write('-'.toInt())
+    zip.write(TestContent)
     zip.closeEntry()
   }
 
@@ -376,10 +402,10 @@ class DecompressorTest {
     else {
       val entry = TarArchiveEntry(name)
       entry.modTime = Date()
-      entry.size = 1
+      entry.size = TestContent.size.toLong()
       if (mode != 0) entry.mode = mode
       tar.putArchiveEntry(entry)
-      tar.write('-'.toInt())
+      tar.write(TestContent)
     }
     tar.closeArchiveEntry()
   }
@@ -387,18 +413,16 @@ class DecompressorTest {
   private fun writeEntry(zip: ZipArchiveOutputStream, name: String, mode: Int = 0, link: String? = null) {
     val entry = ZipArchiveEntry(name)
     entry.lastModifiedTime = FileTime.from(Instant.now())
-
     if (link != null) {
       entry.lastModifiedTime = FileTime.from(Instant.now())
       entry.unixMode = UnixStat.LINK_FLAG
       zip.putArchiveEntry(entry)
-      zip.write(link.toByteArray(Charsets.UTF_8))
+      zip.write(link.toByteArray())
     }
     else {
-      entry.size = 1
       if (mode != 0) entry.unixMode = mode
       zip.putArchiveEntry(entry)
-      zip.write('-'.toInt())
+      zip.write(TestContent)
     }
     zip.closeArchiveEntry()
   }
@@ -415,7 +439,9 @@ class DecompressorTest {
   }
 
   companion object {
+    private val TestContent = "...".toByteArray()
     private val Writable = Condition<Path>(Predicate { Files.isWritable(it) }, "writable")
     private val Executable = Condition<Path>(Predicate { Files.isExecutable(it) }, "executable")
   }
+  //</editor-fold>
 }

@@ -86,16 +86,15 @@ final class RefreshWorker {
 
     checkAndScheduleChildRefresh(fs, persistence, root.getParent(), root, attributes);
 
-    if (root.isDirty()) {
-      if (myRefreshQueue.isEmpty()) {
-        queueDirectory(root);
-      }
-      try {
-        processQueue(fs, persistence);
-      }
-      catch (RefreshCancelledException e) {
-        LOG.trace("refresh cancelled");
-      }
+    if (root.isDirty() && root.isDirectory() && myRefreshQueue.isEmpty()) {
+      queueDirectory(root);
+    }
+
+    try {
+      processQueue(fs, persistence);
+    }
+    catch (RefreshCancelledException e) {
+      LOG.trace("refresh cancelled");
     }
   }
 

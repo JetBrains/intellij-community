@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
                                    private val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
-                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager) {
+                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager, StartUpPerformanceReporter.VERSION) {
   val publicStatMetrics = Object2IntOpenHashMap<String>()
 
   init {

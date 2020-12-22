@@ -210,7 +210,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
 
-    assertEverythingCommitted();
+    LOG.assertTrue(!hasEventSystemEnabledUncommittedDocuments(), myUncommittedDocuments);
   }
 
   @Override
@@ -244,10 +244,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(commitAllDocumentsRunnable,
                                                                              CoreBundle.message("progress.title.processing.documents"),
                                                                              true, myProject);
-  }
-
-  private void assertEverythingCommitted() {
-    LOG.assertTrue(!hasUncommitedDocuments(), myUncommittedDocuments);
   }
 
   @VisibleForTesting

@@ -17,12 +17,13 @@ import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyEvent
+import java.lang.Long.parseLong
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
 import kotlin.math.*
 
-class CalculatorSEContributor : SearchEverywhereContributor<EvaluationResult> {
+class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {
 
   class Factory : SearchEverywhereContributorFactory<EvaluationResult> {
     override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<EvaluationResult> {
@@ -33,18 +34,20 @@ class CalculatorSEContributor : SearchEverywhereContributor<EvaluationResult> {
   class EvaluationResult(val value: Double)
 
   override fun getSearchProviderId(): String = javaClass.name
-  override fun getGroupName(): String = ""
+  override fun getGroupName(): String = LangBundle.message("search.everywhere.calculator.group.name")
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = false
 
-  override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in EvaluationResult>) {
+  override fun fetchWeightedElements(pattern: String,
+                                     progressIndicator: ProgressIndicator,
+                                     consumer: Processor<in FoundItemDescriptor<EvaluationResult>>) {
     val result = try {
       evaluate(pattern)
     }
     catch (_: Throwable) {
       return
     }
-    consumer.process(EvaluationResult(result))
+    consumer.process(FoundItemDescriptor(EvaluationResult(result), 0x8000))
   }
 
   override fun getDataForItem(element: EvaluationResult, dataId: String): Any? = null
@@ -70,7 +73,7 @@ class CalculatorSEContributor : SearchEverywhereContributor<EvaluationResult> {
       resultComponent.icon = AllIcons.Debugger.EvaluateExpression
       val foreground = if (isSelected) list.selectionForeground else list.foreground
       val attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground)
-      resultComponent.append(LangBundle.message("search.everywhere.calculator.result.0", item.value), attributes)
+      resultComponent.append(LangBundle.message("search.everywhere.calculator.result.0", item.value.toString()), attributes)
 
       shortcutComponent.clear()
       val shortcutText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
@@ -162,9 +165,17 @@ class CalculatorSEContributor : SearchEverywhereContributor<EvaluationResult> {
           x = parseExpression()
           eat(')')
         }
+        else if (eat('0')) {
+          x = when {
+            eat('x') || eat('X') -> parseHex()
+            eat('b') || eat('B') -> parseBinary()
+            else -> parseDecimalOrOctal()
+          }
+        }
         else {
           val startPos = pos
-          if (ch in '0'..'9' || ch == '.') { // numbers
+          if (ch in '1'..'9' || ch == '.') { // numbers
+            nextChar()
             while (ch in '0'..'9' || ch == '.') {
               nextChar()
             }
@@ -192,6 +203,38 @@ class CalculatorSEContributor : SearchEverywhereContributor<EvaluationResult> {
           x = x.pow(parseFactor()) // exponentiation
         }
         return x
+      }
+
+      private fun parseHex(): Double {
+        val startPos = pos
+        while (ch in '0'..'9' || ch in 'a'..'f' || ch in 'A'..'F') {
+          nextChar()
+        }
+        return parseLong(str.substring(startPos, pos), 16).toDouble()
+      }
+
+      private fun parseBinary(): Double {
+        val startPos = pos
+        while (ch == '0' || ch == '1') {
+          nextChar()
+        }
+        return parseLong(str.substring(startPos, pos), 2).toDouble()
+      }
+
+      private fun parseDecimalOrOctal(): Double {
+        val startPos = pos
+        if (eat('.')) {
+          while (ch in '0'..'9' || ch == '.') {
+            nextChar()
+          }
+          return str.substring(startPos, pos).toDouble()
+        }
+        else {
+          while (ch in '0'..'7') {
+            nextChar()
+          }
+          return parseLong(str.substring(startPos, pos), 8).toDouble()
+        }
       }
 
       fun parse(): Double {

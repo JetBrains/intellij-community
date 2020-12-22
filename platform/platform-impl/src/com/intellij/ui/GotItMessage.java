@@ -45,7 +45,7 @@ public final class GotItMessage {
         .toString();
   }
 
-  public static GotItMessage createMessage(@NotNull @NlsContexts.PopupTitle String title, @NotNull @NlsContexts.PopupContent String message) {
+  public static GotItMessage createMessage(@NotNull @NlsContexts.PopupContent String title, @NotNull @NlsContexts.PopupContent String message) {
     return new GotItMessage(title, message);
   }
 

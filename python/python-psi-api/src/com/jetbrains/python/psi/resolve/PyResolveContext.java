@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -59,17 +57,6 @@ public final class PyResolveContext {
   @NotNull
   public static PyResolveContext implicitContext() {
     return ourImplicitsContext;
-  }
-
-  /**
-   * @deprecated Use {@link #defaultContext()} instead, now it doesn't contain implicit results.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static PyResolveContext noImplicits() {
-    Logger.getInstance(PyResolveContext.class).warn("Deprecated method used: 'noImplicits'. This method will be dropped soon." +
-                                                    "Consider migrate to the new one");
-    return defaultContext();
   }
 
   public static PyResolveContext noProperties() {

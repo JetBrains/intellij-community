@@ -95,6 +95,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       myListener.beforeValidityChanged(myPointers);
     }
 
+    private void fireBeforeUrlChanged() {
+      myListener.beforeUrlChanged(myPointers);
+    }
+
     private void fireAfter() {
       myListener.validityChanged(myPointers);
     }
@@ -117,7 +121,20 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                    boolean addSubdirectoryPointers,
                                    @NotNull NewVirtualFileSystem fs,
                                    @NotNull VFileEvent event) {
-    getRoot(fs).addRelevantPointersFrom(parent, file, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs, event);
+    addRelevantPointers(file, parent, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs, true, event);
+  }
+
+  private void addRelevantPointers(@Nullable VirtualFile file,
+                                   @NotNull VirtualFileSystemEntry parent,
+                                   int childNameId,
+                                   @NotNull MultiMap<? super VirtualFilePointerListener, ? super VirtualFilePointerImpl> toFirePointers,
+                                   @NotNull List<? super NodeToUpdate> toUpdateNodes,
+                                   boolean addSubdirectoryPointers,
+                                   @NotNull NewVirtualFileSystem fs,
+                                   boolean addRecursiveDirectoryPointers,
+                                   @NotNull VFileEvent event) {
+    getRoot(fs).addRelevantPointersFrom(parent, file, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs,
+                                        addRecursiveDirectoryPointers, event);
   }
 
   @NotNull
@@ -161,7 +178,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
       if (fileSystem == null) {
         // will always be null
-        return new LightFilePointer(url);
+        return new LightFilePointerUrl(url);
       }
     }
     else {
@@ -177,7 +194,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       // so for now we create normal pointers only when there are listeners.
       // maybe, later we'll fix all those tests
       VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
-      return found == null ? new LightFilePointer(url) : new LightFilePointer(found);
+      return found == null ? new LightFilePointerUrl(url) : new LightFilePointerUrl(found);
     }
 
     if (!(fileSystem instanceof VirtualFilePointerCapableFileSystem)) {
@@ -231,23 +248,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                                                       @Nullable VirtualFilePointerListener listener) {
     IdentityVirtualFilePointer pointer = myUrlToIdentity.get(url);
     if (pointer == null) {
-      pointer = new IdentityVirtualFilePointer(found, url, listener) {
-        @Override
-        public void dispose() {
-          //noinspection SynchronizeOnThis
-          synchronized (VirtualFilePointerManagerImpl.this) {
-            super.dispose();
-            myUrlToIdentity.remove(url);
-          }
-        }
-
-        @Override
-        public String toString() {
-          return "identity: url='"+url+"'; file="+found;
-        }
-      };
+      pointer = new IdentityVirtualFilePointer(found, url, myUrlToIdentity, this, listener);
       myUrlToIdentity.put(url, pointer);
-
       DelegatingDisposable.registerDisposable(parentDisposable, pointer);
     }
     pointer.incrementUsageCount(1);
@@ -423,18 +425,21 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private static class CollectedEvents {
     private final @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers;
     private final List<? extends NodeToUpdate> toUpdateNodes;
-    private final List<? extends EventDescriptor> eventList;
+    private final List<EventDescriptor> eventList;
+    private final List<EventDescriptor> eventListForPointersWithChangingUrls;
     private final long startModCount;
     private final long prepareElapsedMs;
 
     CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
                     @NotNull List<? extends NodeToUpdate> toUpdateNodes,
-                    @NotNull List<? extends EventDescriptor> eventList,
+                    @NotNull List<EventDescriptor> eventList,
+                    @NotNull List<EventDescriptor> eventListForPointersWithChangingUrls,
                     long startModCount,
                     long prepareElapsedMs) {
       this.toFirePointers = toFirePointers;
       this.toUpdateNodes = toUpdateNodes;
       this.eventList = eventList;
+      this.eventListForPointersWithChangingUrls = eventListForPointersWithChangingUrls;
       this.startModCount = startModCount;
       this.prepareElapsedMs = prepareElapsedMs;
     }
@@ -455,11 +460,14 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private CollectedEvents collectEvents(@NotNull List<? extends VFileEvent> events) {
     long start = System.currentTimeMillis();
     MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers = MultiMap.create();
+    MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> pointersWithChangingUrls = new MultiMap<>();
     List<NodeToUpdate> toUpdateNodes = new ArrayList<>();
 
     long startModCount;
     List<EventDescriptor> eventList;
+    List<EventDescriptor> pointersWithChangingUrlsEventList;
     List<VirtualFilePointer> allPointersToFire;
+    List<VirtualFilePointer> pointersWithChangingUrlsToFire;
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
@@ -509,6 +517,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
           if (parent != null) {
             addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
+            addRelevantPointers(eventFile, parent, newNameId, pointersWithChangingUrls, new ArrayList<>(), true, fs, false, event);
           }
         }
         else if (event instanceof VFilePropertyChangeEvent) {
@@ -522,7 +531,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
               addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
 
               // old pointers remain valid after rename, no need to fire
-              addRelevantPointers(eventFile, parent, FilePartNode.getNameId(eventFile), new MultiMap<>(), toUpdateNodes, true, fs, event);
+              addRelevantPointers(eventFile, parent, FilePartNode.getNameId(eventFile), pointersWithChangingUrls, toUpdateNodes, true, fs, false, event);
             }
           }
         }
@@ -531,14 +540,22 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       eventList = new ArrayList<>();
       allPointersToFire = new ArrayList<>();
       groupPointersToFire(toFirePointers, eventList, allPointersToFire);
+
+      pointersWithChangingUrlsEventList = new ArrayList<>();
+      pointersWithChangingUrlsToFire = new ArrayList<>();
+      groupPointersToFire(pointersWithChangingUrls, pointersWithChangingUrlsEventList, pointersWithChangingUrlsToFire);
     }
     if (!allPointersToFire.isEmpty()) {
       VirtualFilePointer[] allPointers = allPointersToFire.toArray(VirtualFilePointer.EMPTY_ARRAY);
       eventList.add(new EventDescriptor(myPublisher, allPointers));
     }
+    if (!pointersWithChangingUrlsToFire.isEmpty()) {
+      VirtualFilePointer[] allPointers = pointersWithChangingUrlsToFire.toArray(VirtualFilePointer.EMPTY_ARRAY);
+      pointersWithChangingUrlsEventList.add(new EventDescriptor(myPublisher, allPointers));
+    }
     long prepareElapsedMs = System.currentTimeMillis() - start;
 
-    return new CollectedEvents(toFirePointers, toUpdateNodes, eventList, startModCount, prepareElapsedMs);
+    return new CollectedEvents(toFirePointers, toUpdateNodes, eventList, pointersWithChangingUrlsEventList, startModCount, prepareElapsedMs);
   }
 
   // converts multimap with pointers to fire into a convenient
@@ -579,6 +596,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
         for (EventDescriptor descriptor : collected.eventList) {
           descriptor.fireBefore();
+        }
+
+        for (EventDescriptor descriptor : collected.eventListForPointersWithChangingUrls) {
+          descriptor.fireBeforeUrlChanged();
         }
 
         assertConsistency();

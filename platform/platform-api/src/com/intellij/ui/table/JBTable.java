@@ -582,10 +582,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setStriped(boolean striped) {
     myStriped = striped;
     if (striped) {
-      getColumnModel().setColumnMargin(0);
-      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
       setShowGrid(false);
     }
+  }
+
+  @Override
+  public void setShowVerticalLines(boolean showVerticalLines) {
+    if (!showVerticalLines) {
+      getColumnModel().setColumnMargin(0);
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+    }
+    super.setShowVerticalLines(showVerticalLines);
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.CollectionFactory
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.CategoryId
+import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
 
 object LangTool : GrazieStateLifecycle {
@@ -73,6 +74,10 @@ object LangTool : GrazieStateLifecycle {
         allRules.distinctBy { it.id }.onEach { rule ->
           rulesToLanguages.getOrPut(rule.id, {CollectionFactory.createSmallMemoryFootprintSet()}).add(lang)
         }
+
+        //Fix problem with Authenticator installed by LT
+        this.language.disambiguator
+        Authenticator.setDefault(null)
       }
     }
   }

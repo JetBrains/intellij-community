@@ -19,7 +19,6 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -44,11 +43,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import icons.PythonIcons
@@ -383,13 +380,7 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
         catch (e: RunCanceledByUserException) {
         }
         catch (e: ExecutionException) {
-          runInEdt {
-            val error = PyPackageManagementService.toErrorDescription(listOf(e), module.pythonSdk)
-            if (error != null) {
-              PackagesNotificationPanel.showError(
-                PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"), error)
-            }
-          }
+          showSdkExecutionException(sdk, e, PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"))
         }
         finally {
           PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)

@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ public final class ChainCompletionContext {
   @NotNull
   private final PsiResolveHelper myResolveHelper;
   @NotNull
-  private final Int2ObjectOpenHashMap<PsiClass> myQualifierClassResolver;
+  private final Int2ObjectMap<PsiClass> myQualifierClassResolver;
   @NotNull
   private final Map<MethodCall, PsiMethod[]> myResolver;
   @NotNull

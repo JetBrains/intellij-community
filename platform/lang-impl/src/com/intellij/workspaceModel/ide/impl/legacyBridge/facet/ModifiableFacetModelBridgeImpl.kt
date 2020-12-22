@@ -91,7 +91,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
     facetsChanged()
   }
 
-  override fun getNewName(facet: Facet<*>): String? {
+  override fun getNewName(facet: Facet<*>): String {
     val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
     return entity.name
   }
@@ -112,9 +112,13 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
 
   override fun prepareForCommit() {
     // In some cases configuration for newly added facets changes before the actual commit e.g. MavenProjectImportHandler#configureFacet.
+    val moduleEntity = getModuleEntity()
     val changes = ArrayList<Triple<FacetEntity, FacetEntity, Facet<*>>>()
+
     diff.facetMapping().forEach { facetEntity, facet ->
       facetEntity as FacetEntity
+      // Check facets which belong to the this module
+      if (facetEntity.module != moduleEntity) return@forEach
       val newFacetConfiguration = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       if (facetEntity.configurationXmlTag == newFacetConfiguration) return@forEach
       val newEntity = diff.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {

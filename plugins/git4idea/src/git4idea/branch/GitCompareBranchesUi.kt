@@ -32,30 +32,37 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoot
+import git4idea.GitUtil.HEAD
 import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundleExtensions.html
 import git4idea.repo.GitRepository
 import java.util.*
 import javax.swing.JComponent
 
-internal class GitCompareBranchesUi @JvmOverloads constructor(internal val project: Project,
-                                                              repositories: List<GitRepository>,
-                                                              branchName: String,
-                                                              otherBranchName: String = "") {
-  internal val rangeFilter: VcsLogRangeFilter
-  internal val rootFilter: VcsLogRootFilter?
+internal class GitCompareBranchesUi(internal val project: Project,
+                                    internal val rangeFilter: VcsLogRangeFilter,
+                                    internal val rootFilter: VcsLogRootFilter?) {
+  @JvmOverloads
+  constructor(project: Project,
+              repositories: List<GitRepository>,
+              branchName: String,
+              otherBranchName: String = "") : this(project, createRangeFilter(repositories, branchName, otherBranchName),
+                                                   createRootFilter(repositories))
 
-  init {
-    val oneRepo = repositories.size == 1
-    val firstRepo = repositories[0]
-    val currentBranchName = firstRepo.currentBranchName
-    val secondRef = when {
-      otherBranchName.isNotBlank() -> otherBranchName
-      oneRepo && !currentBranchName.isNullOrBlank() -> currentBranchName
-      else -> "HEAD"
+  companion object {
+    private fun createRangeFilter(repositories: List<GitRepository>, branchName: String, otherBranchName: String = ""): VcsLogRangeFilter {
+      val currentBranchName = repositories.first().currentBranchName
+      val secondRef = when {
+        otherBranchName.isNotBlank() -> otherBranchName
+        repositories.size == 1 && !currentBranchName.isNullOrBlank() -> currentBranchName
+        else -> HEAD
+      }
+      return fromRange(secondRef, branchName)
     }
-    rangeFilter = fromRange(secondRef, branchName)
-    rootFilter = if (oneRepo) fromRoot(firstRepo.root) else null
+
+    private fun createRootFilter(repositories: List<GitRepository>): VcsLogRootFilter? {
+      return repositories.singleOrNull()?.let { fromRoot(it.root) }
+    }
   }
 
   fun open() {
@@ -77,11 +84,6 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(internal val proje
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)
     }
-  }
-
-  internal fun getEditorTabName(): String {
-    val (start, end) = rangeFilter.getRange()
-    return getEditorTabName(end, start)
   }
 
   private class MyLogUiFactory(val logId: String,
@@ -171,10 +173,12 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(internal val proje
   }
 }
 
-private fun getEditorTabName(branch1Name: String, branch2Name: String) =
-  ContentUtilEx.getFullName(GitBundle.message("git.compare.branches.tab.name"),
-                            StringUtil.shortenTextWithEllipsis(
-                              GitBundle.message("git.compare.branches.tab.suffix", branch1Name, branch2Name), 150, 20))
+internal fun getEditorTabName(rangeFilter: VcsLogRangeFilter): String {
+  val (start, end) = rangeFilter.getRange()
+  return ContentUtilEx.getFullName(GitBundle.message("git.compare.branches.tab.name"),
+                                   StringUtil.shortenTextWithEllipsis(GitBundle.message("git.compare.branches.tab.suffix", end, start),
+                                                                      150, 20))
+}
 
 private fun VcsLogRangeFilter?.getRange(): VcsLogRangeFilter.RefRange {
   check(this != null && ranges.size == 1) {

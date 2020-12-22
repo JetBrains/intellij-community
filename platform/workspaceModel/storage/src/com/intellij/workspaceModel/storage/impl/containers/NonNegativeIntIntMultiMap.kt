@@ -99,7 +99,7 @@ sealed class MutableNonNegativeIntIntMultiMap(
   protected var freezed: Boolean
 ) : NonNegativeIntIntMultiMap() {
 
-  internal val modifiableValues = HashMap<Int, IntArrayList>()
+  internal val modifiableValues = HashMap<Int, IntList>()
 
   class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutableNonNegativeIntIntMultiMap(values, links,
                                                                                                                              freezed) {
@@ -130,7 +130,7 @@ sealed class MutableNonNegativeIntIntMultiMap(
       })
 
       modifiableValues.forEach { (key, value) ->
-        if (value.isEmpty) return@forEach
+        if (value.isEmpty()) return@forEach
         if (value.size == 1) {
           newLinks[key] = value.single()
         }
@@ -198,7 +198,7 @@ sealed class MutableNonNegativeIntIntMultiMap(
     val index = values.indexOf(value)
     return if (index >= 0) {
       values.removeInt(index)
-      if (values.isEmpty) {
+      if (values.isEmpty()) {
         modifiableValues.remove(key)
       }
       true
@@ -211,7 +211,7 @@ sealed class MutableNonNegativeIntIntMultiMap(
     it.addAll(modifiableValues.keys)
   }
 
-  private fun startModifyingKey(key: Int): IntArrayList {
+  private fun startModifyingKey(key: Int): IntList {
     if (key in modifiableValues) return modifiableValues.getValue(key)
     return if (links.containsKey(key)) {
       var valueOrLink = links.get(key)

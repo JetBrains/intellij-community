@@ -15,6 +15,7 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -173,7 +174,7 @@ public final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return false;
     }
 
-    Int2ObjectOpenHashMap<List<PsiElement>> hashToElement = new Int2ObjectOpenHashMap<>(elements1.size());
+    Int2ObjectMap<List<PsiElement>> hashToElement = new Int2ObjectOpenHashMap<>(elements1.size());
     for (PsiElement element : elements1) {
       TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
       if (result != null) {

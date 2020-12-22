@@ -220,7 +220,7 @@ public final class SelectBranchPopup {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (isSelected || cellHasFocus) {
         setBackground(UIUtil.getListSelectionBackground(true));
-        Color selectedForegroundColor = UIUtil.getListSelectionForeground();
+        Color selectedForegroundColor = UIUtil.getListSelectionForeground(true);
         myUrlLabel.setForeground(selectedForegroundColor);
         myDateLabel.setForeground(selectedForegroundColor);
         setForeground(selectedForegroundColor);

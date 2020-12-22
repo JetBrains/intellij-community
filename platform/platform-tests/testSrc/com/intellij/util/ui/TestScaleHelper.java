@@ -31,7 +31,7 @@ import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 /**
  * @author tav
  */
-public class TestScaleHelper {
+public final class TestScaleHelper {
   private static final String STANDALONE_PROP = "intellij.test.standalone";
 
   private static final Map<String, String> originalSysProps = new HashMap<>();
@@ -141,7 +141,11 @@ public class TestScaleHelper {
 
   public static BufferedImage loadImage(String path, ScaleContext ctx) {
     try {
-      Image img = ImageLoader.loadFromUrl(new File(path).toURI().toURL(), true, false, null, ctx);
+      int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
+      if (StartupUiUtil.isUnderDarcula()) {
+        flags |= ImageLoader.USE_DARK;
+      }
+      Image img = ImageLoader.loadFromUrl(new File(path).toURI().toURL().toString(), null, flags, null, ctx);
       return ImageUtil.toBufferedImage(img);
     }
     catch (MalformedURLException e) {

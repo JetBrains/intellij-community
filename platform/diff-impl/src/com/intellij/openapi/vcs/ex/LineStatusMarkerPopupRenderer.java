@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.DiffApplicationSettings;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
@@ -147,6 +149,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     Range newRange = myTracker.findRange(range);
     if (newRange != null) {
       showHintAt(editor, newRange, mousePosition);
+    } else {
+      HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_SCROLLING, false, false);
     }
   }
 

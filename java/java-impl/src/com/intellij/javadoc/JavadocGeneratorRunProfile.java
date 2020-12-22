@@ -2,6 +2,7 @@
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -13,8 +14,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.module.Module;
@@ -24,13 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -40,18 +37,16 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.charset.Charset;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -220,191 +215,151 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
         parameters.add(myConfiguration.OUTPUT_DIRECTORY.replace('/', File.separatorChar));
       }
 
-      Set<Module> modules = new LinkedHashSet<>();  // Android Studio: moved out for use at end of method
-      try {
-        File argsFile = FileUtil.createTempFile("javadoc_args", null);
-        Charset cs = CharsetToolkit.getPlatformCharset();
+      Set<Module> modules = new LinkedHashSet<>();
+      Set<VirtualFile> sources = new HashSet<>();
+      Runnable r = () -> myGenerationOptions.accept(new MyContentIterator(myProject, modules, sources));
+      String title = JavaBundle.message("javadoc.generate.sources.progress");
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(r, title, true, myProject)) {
+        return;
+      }
+      if (sources.isEmpty()) {
+        throw new CantRunException(JavaBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
+      }
 
-        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(argsFile), cs))) {
-/* Android Studio: See Change Ic0e27ac6 / commit 85eff73
-          Set<Module> modules = new LinkedHashSet<>();
-Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
-          Set<VirtualFile> sources = new HashSet<>();
-          Runnable r = () -> myGenerationOptions.accept(new MyContentIterator(myProject, modules, sources));
-          String title = JavaBundle.message("javadoc.generate.sources.progress");
-          if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(r, title, true, myProject)) {
-            return;
-          }
-          if (sources.isEmpty()) {
-            throw new CantRunException(JavaBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
-          }
+      Set<Module> modulesWithoutDescriptor = new SmartHashSet<>(modules);
+      Map<Module, VirtualFile> moduleDescriptors = new SmartHashMap<>();
+      boolean hasJavaModules = false;
+      for (VirtualFile source : sources) {
+        if (!PsiJavaModule.MODULE_INFO_FILE.equals(source.getName())) continue;
+        hasJavaModules = true;
+        Module module = ModuleUtilCore.findModuleForFile(source, myProject);
+        if (module != null) {
+          moduleDescriptors.put(module, source);
+          modulesWithoutDescriptor.remove(module);
+        }
+      }
+      if (hasJavaModules && !modulesWithoutDescriptor.isEmpty()) {
+        // So far we can't generate javadoc for each module independently as we have to merge the results into common files,
+        // e.g index.html, index-all.html and so on. Moreover, the final javadoc seems obscured in the case when one module contains
+        // module-info file but another one is not.
+        throw new CantRunException(JavaBundle.message("javadoc.gen.error.modules.without.module.info", modulesWithoutDescriptor.stream()
+          .map(m -> StringUtil.SINGLE_QUOTER.fun(m.getName())).collect(Collectors.joining(","))));
+      }
 
-          boolean hasJavaModules = sources.stream().anyMatch(f -> PsiJavaModule.MODULE_INFO_FILE.equals(f.getName()));
-          if (hasJavaModules && modules.size() > 1) {
-            throw new CantRunException(JavaBundle.message("javadoc.gen.error.multiple.modules.with.module.info"));
-          }
+      File argsFile = createTempArgsFile();
+      List<VirtualFile> sourceRoots = findSourceRoots(modules);
+      List<VirtualFile> classRoots = findClassRoots(modules, jdk);
 
-          OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
-          if (!myConfiguration.OPTION_INCLUDE_LIBS) {
-            sourcePathEnumerator = sourcePathEnumerator.withoutSdk().withoutLibraries();
-          } else {
-            // Android Studio: Don't attempt to compile the source files;
-            // they won't compile (they reference @hide classes and methods etc which
-            // are not present in android.jar)
-            sourcePathEnumerator = sourcePathEnumerator.withoutSdk();
-          }
-          if (!myGenerationOptions.isIncludeTestSource()) {
-            sourcePathEnumerator = sourcePathEnumerator.productionOnly();
-          }
-          List<VirtualFile> sourceRoots = sourcePathEnumerator.getSourcePathsList().getRootDirs();
-
-          OrderEnumerator classPathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules).withoutModuleSourceEntries();
-          if (jdk.getSdkType() instanceof JavaSdk) {
-            classPathEnumerator = classPathEnumerator.withoutSdk();
-          }
-          if (!myGenerationOptions.isIncludeTestSource()) {
-            classPathEnumerator = classPathEnumerator.productionOnly();
-          }
-          List<VirtualFile> classRoots = classPathEnumerator.getPathsList().getRootDirs();
-
-          if (sourceRoots.size() + classRoots.size() > 0) {
-            if (hasJavaModules && JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
-              if (!sourceRoots.isEmpty()) {
-                String path = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
-                writer.println("--source-path");
-                writer.println(StringUtil.wrapWithDoubleQuote(path));
+      Charset cs = CharsetToolkit.getPlatformCharset();
+      try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(argsFile), cs))) {
+        if (sourceRoots.size() + classRoots.size() > 0) {
+          if (hasJavaModules && JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
+            if (modules.size() > 1) {
+              writer.println("--module-source-path");
+              String moduleSourcePath = computeModuleSourcePath(moduleDescriptors);
+              if (moduleSourcePath == null) {
+                throw new CantRunException(JavaBundle.message("javadoc.gen.error.module.source.path.is.not.evaluated"));
               }
-              if (!classRoots.isEmpty()) {
-                String path = classRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
-                writer.println("--module-path");
-                writer.println(StringUtil.wrapWithDoubleQuote(path));
-              }
+              writer.println(StringUtil.wrapWithDoubleQuote(moduleSourcePath));
             }
-            else {
-              // placing source roots on a classpath is perfectly legal and allows generating correct Javadoc
-              // when a module without a module-info.java file depends on another module that has one
-              Stream<VirtualFile> roots = Stream.concat(sourceRoots.stream(), classRoots.stream());
-              String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
-              writer.println("-classpath");
+            else if (!sourceRoots.isEmpty()) {
+              String path = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+              writer.println("--source-path");
+              writer.println(StringUtil.wrapWithDoubleQuote(path));
+            }
+
+            if (!classRoots.isEmpty()) {
+              String path = classRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+              writer.println("--module-path");
               writer.println(StringUtil.wrapWithDoubleQuote(path));
             }
           }
-
-          for (VirtualFile source : sources) {
-            writer.println(StringUtil.wrapWithDoubleQuote(source.getPath()));
+          else {
+            // placing source roots on a classpath is perfectly legal and allows generating correct Javadoc
+            // when a module without a module-info.java file depends on another module that has one
+            Stream<VirtualFile> roots = Stream.concat(sourceRoots.stream(), classRoots.stream());
+            String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+            writer.println("-classpath");
+            writer.println(StringUtil.wrapWithDoubleQuote(path));
           }
         }
 
-        myArgFileFilter.setPath(argsFile.getPath(), cs);
-        parameters.add("@" + argsFile.getPath());
-        OSProcessHandler.deleteFileOnTermination(cmdLine, argsFile);
-        cmdLine.setCharset(cs);
+        for (VirtualFile source : sources) {
+          writer.println(StringUtil.wrapWithDoubleQuote(source.getPath()));
+        }
+      }
+      catch (FileNotFoundException e) {
+        throw new CantRunException(JavaBundle.message("javadoc.generate.temp.file.does.not.exist"), e);
+      }
+      catch (CantRunException e) {
+        FileUtil.delete(argsFile);
+        throw e;
+      }
+
+      myArgFileFilter.setPath(argsFile.getPath(), cs);
+      parameters.add("@" + argsFile.getPath());
+      OSProcessHandler.deleteFileOnTermination(cmdLine, argsFile);
+      cmdLine.setCharset(cs);
+    }
+
+    @NotNull
+    private static File createTempArgsFile() throws CantRunException {
+      File argsFile;
+      try {
+        argsFile = FileUtil.createTempFile("javadoc_args", null);
       }
       catch (IOException e) {
         throw new CantRunException(JavaBundle.message("javadoc.generate.temp.file.error"), e);
       }
-
-      // Android Studio: Add custom parameters to handle generating javadoc with the Android SDK
-      addAndroidParameters(cmdLine, parameters, modules);
+      return argsFile;
     }
 
-    // Android Studio: We'll need to make some tweaks to make the javadoc
-    // generation work for Android. In particular, we need to point to
-    // the Android SDK's android.jar file with a -bootclasspath argument.
-    // We only do this if at least one Android module is part of the javadoc
-    // code generation scope (since otherwise the user may have a Java library
-    // in their Gradle project, for example for an annotation processor, that
-    // they're generating javadoc for.)
-    //
-    // This code is pretty clumsy; looking up the Android SDKs and the Android
-    // Facet by string names instead of using the AndroidSDk and AndroidFacet
-    // classes. The reason for that is that this is in the core Java support
-    // in IntelliJ, and we don't have access to any of the Android plugin APIs
-    // (and we don't want to introduce a dependency), so we stab around by using
-    // well known names.
-    private void addAndroidParameters(GeneralCommandLine cmdLine, ParametersList parameters, Set<Module> modules) {
-      boolean haveAndroidModule = false;
-      for (Module module : modules) {
-        for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
-          if ("Android".equals(facet.getName())) {
-            haveAndroidModule = true;
-            break;
-          }
-        }
+    @NotNull
+    private List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
+      OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
+      if (!myConfiguration.OPTION_INCLUDE_LIBS) {
+        sourcePathEnumerator = sourcePathEnumerator.withoutSdk().withoutLibraries();
       }
-      if (!haveAndroidModule) {
-        return;
+      if (!myGenerationOptions.isIncludeTestSource()) {
+        sourcePathEnumerator = sourcePathEnumerator.productionOnly();
       }
-
-      Sdk sdk = null;
-      for (SdkType type : SdkType.getAllTypes()) {
-        if ("Android SDK".equals(type.getName())) {
-          int sdkApi = 0;
-          // Pick the best one
-          Pattern pattern = Pattern.compile("Android API (\\d+) Platform");
-          for (Sdk s : ProjectJdkTable.getInstance().getSdksOfType(type)) {
-            String name = s.toString();
-            Matcher matcher = pattern.matcher(name);
-            if (matcher.find()) {
-              try {
-                int api = Integer.parseInt(matcher.group(1));
-                if (api > sdkApi) {
-                  sdk = s;
-                  sdkApi = api;
-                }
-              }
-              catch (NumberFormatException ignore) {
-              }
-            }
-          }
-          break;
-        }
-      }
-      if (sdk == null) {
-        return;
-      }
-
-      SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
-      if (additionalData == null) {
-        return;
-      }
-
-      String path = sdk.getHomePath();
-      if (path == null) {
-        return;
-      }
-      File sdkDir = new File(FileUtil.toSystemDependentName(path));
-
-      String buildTarget = null;
-      try {
-        Field field = additionalData.getClass().getDeclaredField("myBuildTarget");
-        field.setAccessible(true);
-        buildTarget = (String)field.get(additionalData);
-      } catch (Throwable ignore) {
-      }
-      if (buildTarget == null) {
-        return;
-      }
-
-      File androidJar = new File(sdkDir, "platforms" + File.separator + buildTarget + File.separator + "android.jar");
-      if (androidJar.isFile()) {
-        cmdLine.addParameter("-bootclasspath");
-        cmdLine.addParameter(androidJar.getPath());
-        // aapt generates javadocs that don't pass doclint
-        cmdLine.addParameter("-Xdoclint:none");
-
-        if (myConfiguration.OPTION_LINK_TO_JDK_DOCS) {
-          File reference = new File(sdkDir, "docs" + File.separator + "reference");
-          if (reference.exists()) {
-            parameters.add("-linkoffline");
-            parameters.add("https://developer.android.com/reference");
-            parameters.add(reference.getPath());
-          }
-        }
-      }
+      return sourcePathEnumerator.getSourcePathsList().getRootDirs();
     }
 
-    private static String localPath(VirtualFile root) {
+    @NotNull
+    private List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
+      OrderEnumerator classPathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules).withoutModuleSourceEntries();
+      if (jdk.getSdkType() instanceof JavaSdk) {
+        classPathEnumerator = classPathEnumerator.withoutSdk();
+      }
+      if (!myGenerationOptions.isIncludeTestSource()) {
+        classPathEnumerator = classPathEnumerator.productionOnly();
+      }
+      return classPathEnumerator.getPathsList().getRootDirs();
+    }
+
+    /**
+     * If a project contains multiple jpms modules then we have to form --module-source-path.
+     *
+     * @see https://docs.oracle.com/javase/9/tools/javadoc.htm
+     */
+    @Nullable
+    private static String computeModuleSourcePath(@NotNull Map<Module, VirtualFile> moduleDescriptors) {
+      if (moduleDescriptors.isEmpty()) return null;
+      Set<String> moduleSourcePathParts = new SmartHashSet<>();
+      for (var entry : moduleDescriptors.entrySet()) {
+        String descriptorParentPath = PathUtil.getParentPath(entry.getValue().getPath());
+        VirtualFile modulePath = ContainerUtil.find(ModuleRootManager.getInstance(entry.getKey()).getContentRoots(),
+                                                    f -> descriptorParentPath.contains(f.getName()));
+        if (modulePath == null) return null;
+        String moduleSourcePathPart = descriptorParentPath.replace(modulePath.getName(), "*");
+        moduleSourcePathParts.add(moduleSourcePathPart);
+      }
+      return String.join(File.pathSeparator, moduleSourcePathParts);
+    }
+
+    @NotNull
+    private static String localPath(@NotNull VirtualFile root) {
       // @argfile require forward slashes in quoted paths
       return VfsUtil.getLocalFile(root).getPath();
     }

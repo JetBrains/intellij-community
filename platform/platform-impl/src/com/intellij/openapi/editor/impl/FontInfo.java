@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import sun.font.CompositeGlyphMapper;
@@ -21,7 +22,7 @@ public final class FontInfo {
   private final Font myFont;
   private final int mySize;
   @JdkConstants.FontStyle private final int myStyle;
-  private final IntOpenHashSet mySafeCharacters = new IntOpenHashSet();
+  private final IntSet mySafeCharacters = new IntOpenHashSet();
   private final FontRenderContext myContext;
   private FontMetrics myFontMetrics = null;
 

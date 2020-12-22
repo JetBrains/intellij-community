@@ -39,6 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -202,6 +203,12 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     LOG.assertTrue(!bus.isDisposed());
     LOG.assertTrue(myDefaultProject.isCached());
     return myDefaultProject;
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public void disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests() {
+    myDefaultProject.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests();
   }
 
   @Override
@@ -587,8 +594,19 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     }
   }
 
+  private Runnable myGetAllExcludedUrlsCallback;
+  @TestOnly
+  public void testOnlyGetExcludedUrlsCallback(@NotNull Disposable parentDisposable, @NotNull Runnable callback) {
+    if (myGetAllExcludedUrlsCallback != null) {
+      throw new IllegalStateException("This method is not reentrant. Expected null but got " + myGetAllExcludedUrlsCallback);
+    }
+    myGetAllExcludedUrlsCallback = callback;
+    Disposer.register(parentDisposable, () -> myGetAllExcludedUrlsCallback = null);
+  }
   @Override
   public @NotNull List<String> getAllExcludedUrls() {
+    Runnable callback = myGetAllExcludedUrlsCallback;
+    if (callback != null) callback.run();
     return myExcludeRootsCache.getExcludedUrls();
   }
 }

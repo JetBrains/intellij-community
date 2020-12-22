@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.Language;
@@ -31,7 +31,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
   @NotNull
   private final Class myTemplateFileViewProviderClass;
 
-  private final Set<Language> knownLanguageSet;
+  private final Set<String> knownLanguageIdSet = new HashSet<>();
 
   private static final Key<FileViewProvider> TOP_LEVEL_VIEW_PROVIDER = Key.create("TOP_LEVEL_VIEW_PROVIDER");
 
@@ -49,16 +49,9 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     myTemplateExpressionEdgeTokens = TokenSet.create(templateExpressionEdgeTokens.getTypes());
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
 
-    List<String> knownSubLanguageList = new ArrayList<>(Arrays.asList(knownSubLanguageNames));
-    knownSubLanguageList.add("JavaScript");
-    knownSubLanguageList.add("CSS");
-    knownLanguageSet = new HashSet<>();
-    for (String name : knownSubLanguageList) {
-      final Language language = Language.findLanguageByID(name);
-      if (language != null) {
-        knownLanguageSet.add(language);
-      }
-    }
+    Collections.addAll(knownLanguageIdSet, knownSubLanguageNames);
+    knownLanguageIdSet.add("JavaScript");
+    knownLanguageIdSet.add("CSS");
   }
 
   @Override
@@ -149,8 +142,9 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
    * @return whether errors in PSI with the given language should be considered for suppression
    */
   protected boolean isKnownSubLanguage(@NotNull final Language language) {
-    for (Language knownLanguage : knownLanguageSet) {
-      if (language.is(knownLanguage) || knownLanguage.getDialects().contains(language)) {
+    for (String knownLanguageId : knownLanguageIdSet) {
+      Language knownLanguage = Language.findLanguageByID(knownLanguageId);
+      if (knownLanguage != null && (language.is(knownLanguage) || knownLanguage.getDialects().contains(language))) {
         return true;
       }
     }

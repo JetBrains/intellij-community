@@ -2,13 +2,14 @@
 package org.intellij.lang.regexp;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
  * @author Bas Leijdekkers
  */
 public class RegExpMatch {
 
-  private final IntArrayList groups = new IntArrayList();
+  private final IntList groups = new IntArrayList();
 
   public void add(int start, int end) {
     groups.add(start);

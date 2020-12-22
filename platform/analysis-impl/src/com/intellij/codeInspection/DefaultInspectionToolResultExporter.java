@@ -60,6 +60,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public static final @NonNls String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
   public static final @NonNls String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
   public static final @NonNls String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
+  public static final @NonNls String INSPECTION_RESULTS_LANGUAGE = "language";
   protected final @NotNull InspectionToolWrapper myToolWrapper;
   protected final @NotNull GlobalInspectionContextEx myContext;
 
@@ -231,6 +232,10 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       Element highLightedElement = new Element("highlighted_element");
       highLightedElement.addContent(sanitizeIllegalXmlChars(highlightedText));
       element.addContent(highLightedElement);
+
+      Element language = new Element(INSPECTION_RESULTS_LANGUAGE);
+      language.addContent(psiElement != null ? psiElement.getLanguage().getID() : "");
+      element.addContent(language);
 
       if (descriptor instanceof ProblemDescriptorBase) {
         TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRangeForNavigation();

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
@@ -31,9 +33,11 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -42,6 +46,7 @@ import java.util.stream.Collectors;
 public class MavenEnvironmentForm implements PanelWithAnchor {
   private JPanel panel;
   private LabeledComponent<ComponentWithBrowseButton<TextFieldWithHistory>> mavenHomeComponent;
+  private ContextHelpLabel mavenHomeOnTargetHelpLabel;
   private TextFieldWithHistory mavenHomeField;
   private LabeledComponent<JBLabel> mavenVersionLabelComponent;
   private LabeledComponent<TextFieldWithBrowseButton> settingsFileComponent;
@@ -115,6 +120,10 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     mavenHomeField.setHistory(foundMavenHomes);
     mavenHomeComponent = LabeledComponent.create(
       new ComponentWithBrowseButton<>(mavenHomeField, null), MavenConfigurableBundle.message("maven.settings.environment.home.directory"));
+    mavenHomeOnTargetHelpLabel = ContextHelpLabel.create(MavenConfigurableBundle.message("maven.settings.on.targets.environment.home.directory.context.help"));
+    mavenHomeOnTargetHelpLabel.setVisible(false);
+    mavenHomeOnTargetHelpLabel.setOpaque(true);
+    mavenHomeComponent.add(mavenHomeOnTargetHelpLabel, BorderLayout.EAST);
 
     final JBLabel versionLabel = new JBLabel();
     versionLabel.setOpaque(true);
@@ -159,10 +168,12 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   }
 
   private void updateMavenVersionLabel() {
+    boolean localTarget = myTargetName == null;
     String version = MavenUtil.getMavenVersion(MavenServerManager.getMavenHomeFile(getMavenHome()));
-    String versionText = version == null ? MavenProjectBundle.message("label.invalid.maven.home.directory")
-                                         : MavenProjectBundle.message("label.invalid.maven.home.version", version);
-    mavenVersionLabelComponent.getComponent().setText(versionText);
+    String versionText = version == null && !localTarget
+                         ? MavenProjectBundle.message("label.invalid.maven.home.directory")
+                         : !localTarget ? null : MavenProjectBundle.message("label.invalid.maven.home.version", version);
+    mavenVersionLabelComponent.getComponent().setText(StringUtil.notNullize(versionText));
   }
 
   @Nullable
@@ -212,7 +223,29 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     boolean targetChanged = !Objects.equals(myTargetName, targetName);
     if (targetChanged) {
       myTargetName = targetName;
-      mavenHomeComponent.getComponent().getButton().setEnabled(localTarget);
+      mavenHomeComponent.getComponent().getButton().setVisible(localTarget);
+      mavenHomeOnTargetHelpLabel.setVisible(!localTarget);
+      String mavenHomeInputLabel;
+      if (localTarget) {
+        mavenHomeInputLabel = MavenConfigurableBundle.message("maven.settings.environment.home.directory");
+      }
+      else {
+        TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+        String typeId = targetEnvironmentConfiguration != null ? targetEnvironmentConfiguration.getTypeId() : null;
+        TargetEnvironmentType<?> targetEnvironmentType = null;
+        if (typeId != null) {
+          targetEnvironmentType = TargetEnvironmentType.EXTENSION_NAME.findFirstSafe(type -> type.getId() == typeId);
+        }
+        if (targetEnvironmentType != null) {
+          // wrap the text to avoid label ellipsis
+          mavenHomeInputLabel = MessageFormat.format("<html><body><nobr>{0}</nobr></body></html>",
+                                                     MavenConfigurableBundle.message("maven.settings.on.targets.environment.home.directory",
+                                                                                     targetEnvironmentType.getDisplayName()));
+        } else {
+          mavenHomeInputLabel = MavenConfigurableBundle.message("maven.settings.environment.home.directory");
+        }
+      }
+      mavenHomeComponent.setText(mavenHomeInputLabel);
       reloadMavenHomeComponents(targetName);
     }
     else if (!localTarget) {

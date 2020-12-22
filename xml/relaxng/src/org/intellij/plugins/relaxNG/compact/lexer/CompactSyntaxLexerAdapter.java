@@ -23,6 +23,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
   private IElementType myCurrentTokenType;
   private CharSequence myBuffer;
   private int myEndOffset;
-  private Int2IntOpenHashMap myLengthMap;
+  private Int2IntMap myLengthMap;
 
   @Override
   public void advance() {

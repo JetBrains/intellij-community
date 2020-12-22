@@ -23,6 +23,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import java.awt.BorderLayout
@@ -44,7 +45,7 @@ class PyAddExistingVirtualEnvPanel(private val project: Project?,
   init {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PyBundle.message("interpreter"), sdkComboBox)
+      .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)

@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsSafe;
@@ -56,7 +55,6 @@ import java.util.function.Consumer;
  */
 public class PluginDetailsPageComponent extends MultiPanel {
 
-  private static final Logger LOG = Logger.getInstance(PluginDetailsPageComponent.class);
   private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
 
   private final MyPluginModel myPluginModel;

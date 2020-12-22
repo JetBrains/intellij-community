@@ -197,7 +197,11 @@
     </group>
 
     <action id="Vcs.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
-      <add-to-group group-id="VcsNavBarToolbarActionsLight" anchor="first"/>
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
+    </action>
+
+    <action id="Vcs.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup" icon="AllIcons.Actions.More">
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
 
     <!--This group is empty and unused, left for plugins compatibility.-->

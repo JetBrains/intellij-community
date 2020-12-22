@@ -6,7 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.util.ObjectUtils.notNull;
+import java.util.Objects;
 
 /**
  * @author Maxim.Mossienko
@@ -50,7 +50,7 @@ public class HtmlLexer extends BaseHtmlLexer {
     if (embedment != null) {
       skipEmbedment(embedment);
       myTokenEnd = embedment.getRange().getEndOffset();
-      myTokenType = notNull(embedment.getElementType(), XmlTokenType.XML_DATA_CHARACTERS);
+      myTokenType = Objects.requireNonNullElse(embedment.getElementType(), XmlTokenType.XML_DATA_CHARACTERS);
     } else {
       myTokenType = tokenType;
     }

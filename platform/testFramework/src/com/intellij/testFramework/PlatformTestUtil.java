@@ -254,11 +254,9 @@ public final class PlatformTestUtil {
   public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
     String treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
-      for (String line : treeStringPresentation.split("\n")) {
-        if (!expected.contains(line + "\n")) {
-          fail("Missing node: " + line + "\n" + "actual tree:\n" + treeStringPresentation + "\nexpected:\n" + expected);
-        }
-      }
+      final Set<String> actualLines = Set.of(treeStringPresentation.split("\n"));
+      final Set<String> expectedLines = Set.of(expected.split("\n"));
+      assertEquals("Expected:\n" + expected + "\nActual\n:" + treeStringPresentation, expectedLines, actualLines);
     }
     else {
       assertEquals(expected.trim(), treeStringPresentation.trim());

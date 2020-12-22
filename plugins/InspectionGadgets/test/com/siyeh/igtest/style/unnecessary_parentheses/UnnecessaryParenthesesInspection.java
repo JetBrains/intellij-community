@@ -6,6 +6,15 @@ import java.util.ArrayList;
 public class UnnecessaryParenthesesInspection
 {
 
+  void concatenations() {
+    System.out.println("a" + <warning descr="Parentheses around '(1 + \"b\" + \"c\")' are unnecessary">(1 + "b" + "c")</warning>);
+    System.out.println("a" + (1 + 2 + "b" + "c"));
+    System.out.println("a" + <warning descr="Parentheses around '(\"b\" + 1 + 2 + \"c\")' are unnecessary">("b" + 1 + 2 + "c")</warning>);
+
+    // test no exception on incomplete code
+    System.out.println("a" + ("b" +<error descr="Expression expected"> </error>));
+  }
+
     void switchExpressions() {
       String s = (switch(1) {
         case 1 -> "one";

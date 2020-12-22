@@ -18,6 +18,7 @@ public class AllIcons {
   }
 
   public static final class Actions {
+    /** 16x16 */ public static final @NotNull Icon AddFile = load("/actions/addFile.svg", 8630828675481524949L, 2);
     /** 16x16 */ public static final @NotNull Icon AddMulticaret = load("/actions/AddMulticaret.svg", -1417925245974412498L, 2);
     /** 16x16 */ public static final @NotNull Icon AddToDictionary = load("/actions/addToDictionary.svg", 6748693087544996573L, 2);
     /** 16x16 */ public static final @NotNull Icon Annotate = load("/actions/annotate.svg", 7018280457980935152L, 2);
@@ -354,6 +355,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Custom = load("/fileTypes/custom.svg", -9085020248910575542L, 0);
     /** 16x16 */ public static final @NotNull Icon Diagram = load("/fileTypes/diagram.svg", 2878252828662988838L, 0);
     /** 16x16 */ public static final @NotNull Icon Dtd = load("/fileTypes/dtd.svg", 1512744705207344987L, 0);
+    /** 16x16 */ public static final @NotNull Icon Hprof = load("/fileTypes/hprof.svg", -917121733692257803L, 0);
     /** 16x16 */ public static final @NotNull Icon Htaccess = load("/fileTypes/htaccess.svg", 8172243446327886417L, 0);
     /** 16x16 */ public static final @NotNull Icon Html = load("/fileTypes/html.svg", -3878444809017733799L, 0);
     /** 16x16 */ public static final @NotNull Icon Idl = load("/fileTypes/idl.svg", -3673761919827134848L, 0);
@@ -361,6 +363,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon JavaClass = load("/fileTypes/javaClass.svg", 1537034655787663158L, 0);
     /** 16x16 */ public static final @NotNull Icon JavaOutsideSource = load("/fileTypes/javaOutsideSource.svg", -1332262268381891224L, 0);
     /** 16x16 */ public static final @NotNull Icon JavaScript = load("/fileTypes/javaScript.svg", -4186188120721108429L, 0);
+    /** 16x16 */ public static final @NotNull Icon Jfr = load("/fileTypes/jfr.svg", 1504098668566506408L, 0);
     /** 16x16 */ public static final @NotNull Icon Json = load("/fileTypes/json.svg", 7047330769488036116L, 2);
     /** 16x16 */ public static final @NotNull Icon JsonSchema = load("/fileTypes/jsonSchema.svg", -637530520441570990L, 2);
     /** 16x16 */ public static final @NotNull Icon Jsp = load("/fileTypes/jsp.svg", 3865835302853651631L, 0);
@@ -1186,8 +1189,8 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Chromium = load("/xml/browsers/chromium.svg", -7081442337296232892L, 0);
       /** 16x16 */ public static final @NotNull Icon Edge = load("/xml/browsers/edge.svg", 4874271553205110419L, 0);
       /** 16x16 */ public static final @NotNull Icon Explorer = load("/xml/browsers/explorer.svg", -4372873914323702410L, 0);
-      /** 16x16 */ public static final @NotNull Icon Firefox = load("/xml/browsers/firefox.svg", -2524501536712631077L, 0);
-      /** 16x16 */ public static final @NotNull Icon FirefoxDeveloper = load("/xml/browsers/firefoxDeveloper.svg", 9112049540794631526L, 0);
+      /** 16x16 */ public static final @NotNull Icon Firefox = load("/xml/browsers/firefox.svg", 4341403554532214734L, 0);
+      /** 16x16 */ public static final @NotNull Icon FirefoxDeveloper = load("/xml/browsers/firefoxDeveloper.svg", 108432636050637848L, 0);
       /** 16x16 */ public static final @NotNull Icon Nwjs = load("/xml/browsers/nwjs.svg", 1516966057897524993L, 0);
       /** 16x16 */ public static final @NotNull Icon Opera = load("/xml/browsers/opera.svg", 5091184097709676906L, 0);
       /** 16x16 */ public static final @NotNull Icon Safari = load("/xml/browsers/safari.svg", 4960499538926108019L, 0);

@@ -14,6 +14,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -357,7 +358,7 @@ public final class ControlFlowUtil {
   @SafeVarargs
   @NotNull
   public static Collection<PsiStatement> findExitPointsAndStatements(@NotNull ControlFlow flow, final int start, final int end,
-                                                                     @NotNull IntArrayList exitPoints,
+                                                                     @NotNull IntList exitPoints,
                                                                      Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
@@ -412,7 +413,7 @@ public final class ControlFlowUtil {
 
   @SafeVarargs
   private static void processGoto(@NotNull ControlFlow flow, int start, int end,
-                                  @NotNull IntArrayList exitPoints,
+                                  @NotNull IntList exitPoints,
                                   @NotNull Collection<? super PsiStatement> exitStatements,
                                   @NotNull BranchingInstruction instruction,
                                   final PsiStatement statement, Class<? extends PsiStatement> @NotNull ... classesFilter) {
@@ -513,14 +514,14 @@ public final class ControlFlowUtil {
     final List<Instruction> instructions = flow.getInstructions();
     class Worker {
       @NotNull
-      private Map<PsiVariable, IntArrayList> getWritesOffsets() {
-        final Map<PsiVariable, IntArrayList> writeOffsets = new THashMap<>();
+      private Map<PsiVariable, IntList> getWritesOffsets() {
+        final Map<PsiVariable, IntList> writeOffsets = new THashMap<>();
         for (int i = flowStart; i < flowEnd; i++) {
           Instruction instruction = instructions.get(i);
           if (instruction instanceof WriteVariableInstruction) {
             final PsiVariable variable = ((WriteVariableInstruction)instruction).variable;
             if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
-              IntArrayList offsets = writeOffsets.get(variable);
+              IntList offsets = writeOffsets.get(variable);
               if (offsets == null) writeOffsets.put(variable, offsets = new IntArrayList());
               offsets.add(i);
             }
@@ -531,8 +532,8 @@ public final class ControlFlowUtil {
       }
 
       @NotNull
-      private Map<PsiVariable, IntArrayList> getVisibleReadsOffsets(@NotNull Map<PsiVariable, IntArrayList> writeOffsets, @NotNull PsiCodeBlock tryBlock) {
-        final Map<PsiVariable, IntArrayList> visibleReadOffsets = new THashMap<>();
+      private Map<PsiVariable, IntList> getVisibleReadsOffsets(@NotNull Map<PsiVariable, IntList> writeOffsets, @NotNull PsiCodeBlock tryBlock) {
+        final Map<PsiVariable, IntList> visibleReadOffsets = new THashMap<>();
         for (PsiVariable variable : writeOffsets.keySet()) {
           if (!PsiTreeUtil.isAncestor(tryBlock, variable, true)) {
             visibleReadOffsets.put(variable, new IntArrayList());
@@ -544,7 +545,7 @@ public final class ControlFlowUtil {
           final Instruction instruction = instructions.get(i);
           if (instruction instanceof ReadVariableInstruction) {
             final PsiVariable variable = ((ReadVariableInstruction)instruction).variable;
-            final IntArrayList readOffsets = visibleReadOffsets.get(variable);
+            final IntList readOffsets = visibleReadOffsets.get(variable);
             if (readOffsets != null) {
               readOffsets.add(i);
             }
@@ -555,8 +556,8 @@ public final class ControlFlowUtil {
       }
 
       @NotNull
-      private Map<PsiVariable, Set<PsiElement>> getReachableAfterWrite(@NotNull Map<PsiVariable, IntArrayList> writeOffsets,
-                                                                       @NotNull Map<PsiVariable, IntArrayList> visibleReadOffsets) {
+      private Map<PsiVariable, Set<PsiElement>> getReachableAfterWrite(@NotNull Map<PsiVariable, IntList> writeOffsets,
+                                                                       @NotNull Map<PsiVariable, IntList> visibleReadOffsets) {
         final Map<PsiVariable, Set<PsiElement>> afterWrite = new THashMap<>();
         for (PsiVariable variable : visibleReadOffsets.keySet()) {
           final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator();
@@ -586,8 +587,8 @@ public final class ControlFlowUtil {
       }
 
       @NotNull
-      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<? extends PsiTryStatement> tryStatements, @NotNull List<? extends PsiClassType> thrownExceptions) {
-        final IntArrayList catchOrFinallyOffsets = new IntArrayList();
+      private IntList getCatchOrFinallyOffsets(@NotNull List<? extends PsiTryStatement> tryStatements, @NotNull List<? extends PsiClassType> thrownExceptions) {
+        final IntList catchOrFinallyOffsets = new IntArrayList();
         for (PsiTryStatement tryStatement : tryStatements) {
           final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
           if (finallyBlock != null) {
@@ -614,7 +615,7 @@ public final class ControlFlowUtil {
         return catchOrFinallyOffsets;
       }
 
-      private boolean isAnyReadOffsetReachableFrom(@Nullable IntArrayList readOffsets, @NotNull IntArrayList fromOffsets) {
+      private boolean isAnyReadOffsetReachableFrom(@Nullable IntList readOffsets, @NotNull IntList fromOffsets) {
         if (readOffsets != null && !readOffsets.isEmpty()) {
           final int[] readOffsetsArray = readOffsets.toIntArray();
           for (int j = 0; j < fromOffsets.size(); j++) {
@@ -650,7 +651,7 @@ public final class ControlFlowUtil {
     }
 
     final Worker worker = new Worker();
-    final Map<PsiVariable, IntArrayList> writeOffsets = worker.getWritesOffsets();
+    final Map<PsiVariable, IntList> writeOffsets = worker.getWritesOffsets();
     if (writeOffsets.isEmpty()) return false;
 
     final PsiElement commonParent = elements.length != 1 ? PsiTreeUtil.findCommonParent(elements) : elements[0].getParent();
@@ -659,7 +660,7 @@ public final class ControlFlowUtil {
     final PsiCodeBlock tryBlock = tryStatements.get(0).getTryBlock();
     if (tryBlock == null) return false;
 
-    final Map<PsiVariable, IntArrayList> visibleReadOffsets = worker.getVisibleReadsOffsets(writeOffsets, tryBlock);
+    final Map<PsiVariable, IntList> visibleReadOffsets = worker.getVisibleReadsOffsets(writeOffsets, tryBlock);
     if (visibleReadOffsets.isEmpty()) return false;
 
     final Map<PsiVariable, Set<PsiElement>> afterWrite = worker.getReachableAfterWrite(writeOffsets, visibleReadOffsets);
@@ -671,7 +672,7 @@ public final class ControlFlowUtil {
       final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownExceptions(psiElements);
 
       if (!thrownExceptions.isEmpty()) {
-        final IntArrayList catchOrFinallyOffsets = worker.getCatchOrFinallyOffsets(tryStatements, thrownExceptions);
+        final IntList catchOrFinallyOffsets = worker.getCatchOrFinallyOffsets(tryStatements, thrownExceptions);
         if (worker.isAnyReadOffsetReachableFrom(visibleReadOffsets.get(variable), catchOrFinallyOffsets)) {
           return true;
         }
@@ -2375,7 +2376,7 @@ public final class ControlFlowUtil {
     startOffset = Math.max(startOffset, 0);
     endOffset = Math.min(endOffset, instructions.size());
 
-    IntArrayList locationOffsetList = new IntArrayList();
+    IntList locationOffsetList = new IntArrayList();
     for (PsiElement location : locations) {
       int offset = flow.getStartOffset(location);
       if (offset >= startOffset && offset < endOffset) {

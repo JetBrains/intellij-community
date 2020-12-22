@@ -26,11 +26,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-class DetailExceptionsPredicate implements PsiElementPredicate {
+final class DetailExceptionsPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    PsiTryStatement tryStatement = ObjectUtils.chooseNotNull(getTryStatementIfKeyword(element), getTryStatementIfParameter(element));
-    if (tryStatement == null) return false;
+    PsiTryStatement tryStatement = getTryStatementIfKeyword(element);
+    if (tryStatement == null) {
+      tryStatement = getTryStatementIfParameter(element);
+    }
+    if (tryStatement == null) {
+      return false;
+    }
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
     ExceptionUtils.calculateExceptionsThrown(tryStatement.getResourceList(), exceptionsThrown);

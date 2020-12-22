@@ -7,8 +7,11 @@
 
     <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="AllIcons.Actions.Commit">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
-    <action id="ChangesView.ToggleCommitUi" class="com.intellij.vcs.commit.ToggleChangesViewCommitUiAction" use-shortcut-of="CheckinProject" />
+    <action id="ChangesView.ToggleCommitUi" class="com.intellij.vcs.commit.ToggleChangesViewCommitUiAction" use-shortcut-of="CheckinProject">
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
+    </action>
     <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.CommonCheckinFilesAction"/>
     <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction"/>
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
@@ -33,6 +36,7 @@
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
     <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
       <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
     <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true">
       <add-to-group group-id="VersionControlsGroup" />
@@ -350,18 +354,6 @@
       <separator/>
       <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>
-
-    <action id="Vcs.Toolbar.QuickListPopupAction"
-            class="com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup" icon="AllIcons.Actions.More"/>
-
-    <!-- New light VCS toolbar for the root toolbar instead of navbar -->
-    <group id="VcsNavBarToolbarActionsLight">
-       <reference ref="Vcs.UpdateProject"/>
-       <reference ref="CheckinProject"/>
-       <reference ref="ChangesView.ToggleCommitUi"/>
-       <reference ref="Vcs.Toolbar.QuickListPopupAction"/>
-       <add-to-group group-id="NavBarVcsGroupLight" anchor="first"/>
-     </group>
 
  <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">

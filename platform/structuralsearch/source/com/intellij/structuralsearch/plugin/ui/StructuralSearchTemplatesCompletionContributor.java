@@ -11,7 +11,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +65,8 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
 
         LookupElementBuilder element = LookupElementBuilder.create(configuration, configuration.getMatchOptions().getSearchPattern())
           .withLookupString(configuration.getName())
-          .withTailText(configuration.getTailText(), true)
+          .withTypeText(configuration.getTypeText(), true)
+          .withIcon(configuration.getIcon())
           .withCaseSensitivity(false)
           .withPresentableText(configuration.getName());
 

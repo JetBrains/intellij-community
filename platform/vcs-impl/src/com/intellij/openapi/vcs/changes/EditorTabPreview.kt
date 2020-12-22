@@ -18,8 +18,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.Processor
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -85,9 +85,8 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   private fun installSelectionChangedHandler(tree: ChangesTree, handler: () -> Unit) =
     tree.addSelectionListener(
       Runnable {
-        updatePreviewQueue.queue(Update.create(this) {
-          if (skipPreviewUpdate()) return@create
-          handler()
+        updatePreviewQueue.queue(DisposableUpdate.createDisposable(updatePreviewQueue, this) {
+          if (!skipPreviewUpdate()) handler()
         })
       },
       updatePreviewQueue

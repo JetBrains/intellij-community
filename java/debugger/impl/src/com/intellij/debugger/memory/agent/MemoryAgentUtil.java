@@ -137,7 +137,11 @@ public final class MemoryAgentUtil {
       return objects;
     }
     try {
-      long[] sizes = agent.estimateObjectsSizes(context, ContainerUtil.map(objects, x -> x.getObjectReference()));
+      long[] sizes = agent.estimateObjectsSizes(
+        context,
+        ContainerUtil.map(objects, x -> x.getObjectReference()),
+        Registry.get("debugger.memory.agent.action.timeout").asInteger()
+      ).getResult();
       return IntStreamEx.range(0, objects.size())
         .mapToObj(i -> new SizedReferenceInfo(objects.get(i).getObjectReference(), sizes[i]))
         .reverseSorted(Comparator.comparing(x -> x.size()))
@@ -194,7 +198,7 @@ public final class MemoryAgentUtil {
     }
 
     return ApplicationManager.getApplication()
-      .executeOnPooledThread(() -> new AgentExtractor().extract(detectAgentKind(jdkPath), getAgentDirectory()))
+      .executeOnPooledThread(() -> AgentExtractor.INSTANCE.extract(detectAgentKind(jdkPath), getAgentDirectory()))
       .get(1, TimeUnit.SECONDS);
   }
 

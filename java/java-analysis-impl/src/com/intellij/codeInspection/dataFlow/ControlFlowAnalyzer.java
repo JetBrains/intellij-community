@@ -886,7 +886,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void processSwitch(@NotNull PsiSwitchBlock switchBlock) {
     PsiExpression selector = PsiUtil.skipParenthesizedExprDown(switchBlock.getExpression());
-    Set<PsiEnumConstant> enumValues = null;
     DfaVariableValue expressionValue = null;
     boolean syntheticVar = true;
     if (selector != null) {
@@ -907,17 +906,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       selector.accept(this);
       generateBoxingUnboxingInstructionFor(selector, targetType);
-      final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(targetType);
-      if (psiClass != null) {
-        if (psiClass.isEnum()) {
-          enumValues = new HashSet<>();
-          for (PsiField f : psiClass.getFields()) {
-            if (f instanceof PsiEnumConstant) {
-              enumValues.add((PsiEnumConstant)f);
-            }
-          }
-        }
-      }
       if (syntheticVar) {
         addInstruction(new AssignInstruction(null, null));
       }
@@ -928,7 +916,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
-      ControlFlowOffset offset = null;
+      ControlFlowOffset offset;
       PsiSwitchLabelStatementBase defaultLabel = null;
       for (PsiStatement statement : statements) {
         if (statement instanceof PsiSwitchLabelStatementBase) {
@@ -943,14 +931,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
               if (values != null) {
                 for (PsiExpression caseValue : values.getExpressions()) {
 
-                  boolean enumConstant = false;
-                  if (enumValues != null && caseValue instanceof PsiReferenceExpression) {
-                    PsiEnumConstant target = ObjectUtils.tryCast(((PsiReferenceExpression)caseValue).resolve(), PsiEnumConstant.class);
-                    if (target != null) {
-                      enumValues.remove(target);
-                      enumConstant = true;
-                    }
-                  }
+                  boolean enumConstant = caseValue instanceof PsiReferenceExpression &&
+                                         ((PsiReferenceExpression)caseValue).resolve() instanceof PsiEnumConstant;
 
                   if (caseValue != null && expressionValue != null && (enumConstant || PsiUtil.isConstantExpression(caseValue))) {
                     addInstruction(new PushInstruction(expressionValue, null));
@@ -974,10 +956,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      if (offset == null || enumValues == null || !enumValues.isEmpty()) {
-        offset = defaultLabel != null ? getStartOffset(defaultLabel) : getEndOffset(body);
-      } // else default label goes to the last switch label making it always true
-      addInstruction(new GotoInstruction(offset));
+      if (defaultLabel != null) {
+        addInstruction(new GotoInstruction(getStartOffset(defaultLabel)));
+      }
+      else if (switchBlock instanceof PsiSwitchExpression) {
+        throwException(myExceptionCache.get("java.lang.IncompatibleClassChangeError"), null);
+      }
+      else {
+        addInstruction(new GotoInstruction(getEndOffset(body)));
+      }
 
       body.accept(this);
     }
@@ -2107,7 +2094,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @return true if some inliner may add constraints on the precise type of given expression
    */
   public static boolean inlinerMayInferPreciseType(PsiExpression expression) {
-    return Arrays.stream(INLINERS).anyMatch(inliner -> inliner.mayInferPreciseType(expression));
+    return ContainerUtil.exists(INLINERS, inliner -> inliner.mayInferPreciseType(expression));
   }
 
   private static final class Synthetic implements VariableDescriptor {

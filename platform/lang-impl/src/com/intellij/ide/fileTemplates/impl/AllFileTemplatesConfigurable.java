@@ -295,7 +295,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
         e.getPresentation().setEnabled(!(myCurrentTab == myCodeTemplatesList || myCurrentTab == myOtherTemplatesList));
       }
     };
-    AnAction addChildAction = new DumbAwareAction(IdeBundle.message("action.create.child.template"), null, AllIcons.FileTypes.AddAny) {
+    AnAction addChildAction = new DumbAwareAction(IdeBundle.message("action.create.child.template"), null, AllIcons.Actions.AddFile) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         onAdd(true);

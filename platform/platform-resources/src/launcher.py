@@ -66,6 +66,8 @@ def process_args(argv):
             args.append('--wait')
         elif arg == '-p' or arg == '--project':
             args.append(arg)
+        elif arg == '-e' or arg == '--edit':
+            args.append(arg)
         elif skip_next:
             args.append(arg)
             skip_next = False
@@ -127,6 +129,8 @@ def start_new_instance(args):
     if sys.platform == 'darwin':
         if len(args) > 0:
             args.insert(0, '--args')
+        if '--wait' in args:
+            args.insert(0, '-W')
         os.execv('/usr/bin/open', ['open', '-na', RUN_PATH] + args)
     else:
         bin_file = os.path.split(RUN_PATH)[1]

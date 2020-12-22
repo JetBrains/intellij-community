@@ -39,6 +39,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -295,7 +296,7 @@ public final class RenameUtil {
   }
 
   public static void renameNonCodeUsages(@NotNull Project project, NonCodeUsageInfo @NotNull [] usages) {
-    Map<Document, Int2ObjectOpenHashMap<UsageOffset>> docsToOffsetsMap = CollectionFactory.createSmallMemoryFootprintMap();
+    Map<Document, Int2ObjectMap<UsageOffset>> docsToOffsetsMap = CollectionFactory.createSmallMemoryFootprintMap();
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (NonCodeUsageInfo usage : usages) {
       PsiElement element = usage.getElement();
@@ -325,7 +326,7 @@ public final class RenameUtil {
       }
       int fileOffset = replaceRange.getStartOffset();
 
-      Int2ObjectOpenHashMap<UsageOffset> offsetMap = docsToOffsetsMap.get(document);
+      Int2ObjectMap<UsageOffset> offsetMap = docsToOffsetsMap.get(document);
       if (offsetMap == null) {
         offsetMap = new Int2ObjectOpenHashMap<>();
         docsToOffsetsMap.put(document, offsetMap);

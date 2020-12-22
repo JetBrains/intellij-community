@@ -11,20 +11,22 @@ import org.intellij.markdown.parser.MarkdownParser;
 import org.intellij.plugins.markdown.extensions.CodeFencePluginFlavourDescriptor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class MarkdownParserManager {
   public static final Key<MarkdownFlavourDescriptor> FLAVOUR_DESCRIPTION = Key.create("Markdown.Flavour");
 
   public static final GFMCommentAwareFlavourDescriptor FLAVOUR = new GFMCommentAwareFlavourDescriptor();
   public static final CodeFencePluginFlavourDescriptor CODE_FENCE_PLUGIN_FLAVOUR = new CodeFencePluginFlavourDescriptor();
 
-  private static final ThreadLocal<ParsingInfo> ourLastParsingResult = new ThreadLocal<>();
+  private static final AtomicReference<ParsingInfo> ourLastParsingResult = new AtomicReference<>();
 
   static {
     ApplicationManager.getApplication().getMessageBus().connect()
       .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
         public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          ourLastParsingResult.remove();
+          ourLastParsingResult.set(null);
         }
       });
   }

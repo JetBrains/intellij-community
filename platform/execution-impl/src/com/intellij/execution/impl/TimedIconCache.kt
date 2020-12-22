@@ -11,7 +11,9 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.ui.IconDeferrer
+import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import java.lang.ref.WeakReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
 import kotlin.concurrent.read
@@ -20,8 +22,8 @@ import kotlin.concurrent.write
 internal class TimedIconCache {
   private val idToIcon = HashMap<String, Icon>()
   private val idToInvalid = HashMap<String, Boolean>()
-  private val iconCheckTimes = Object2LongOpenHashMap<String>()
-  private val iconCalcTime = Object2LongOpenHashMap<String>()
+  private val iconCheckTimes: Object2LongMap<String> = Object2LongOpenHashMap()
+  private val iconCalcTime: Object2LongMap<String> = Object2LongOpenHashMap()
 
   private val lock = ReentrantReadWriteLock()
 
@@ -38,22 +40,24 @@ internal class TimedIconCache {
     }
   }
 
-  fun get(id: String, settings: RunnerAndConfigurationSettings, project: Project, runManagerImpl: RunManagerImpl): Icon {
+  fun get(id: String, settings: RunnerAndConfigurationSettings, project: Project): Icon {
     return lock.read { idToIcon.get(id) } ?: lock.write {
       idToIcon.get(id)?.let {
         return it
       }
 
-      val icon = deferIcon(id, settings.configuration.icon, project.hashCode() xor settings.hashCode(), project, runManagerImpl)
+      val icon = deferIcon(id, settings.configuration.icon, project.hashCode() xor settings.hashCode(), project)
 
       set(id, icon)
       icon
     }
   }
 
-  private fun deferIcon(id: String, baseIcon: Icon?, hash: Int, project: Project, runManagerImpl: RunManagerImpl): Icon {
+  private fun deferIcon(id: String, baseIcon: Icon?, hash: Int, project: Project): Icon {
+    val projectRef = WeakReference(project)
     return IconDeferrer.getInstance().deferAutoUpdatable(baseIcon, hash) {
-      if (project.isDisposed) {
+      @Suppress("NAME_SHADOWING") val project = projectRef.get()
+      if (project == null || project.isDisposed) {
         return@deferAutoUpdatable null
       }
 
@@ -63,7 +67,7 @@ internal class TimedIconCache {
 
       val startTime = System.currentTimeMillis()
       val iconToValid = try {
-        calcIcon(id, baseIcon, runManagerImpl)
+        calcIcon(id, baseIcon, RunManagerImpl.getInstanceImpl(project))
       }
       catch (e: ProcessCanceledException) {
         return@deferAutoUpdatable null

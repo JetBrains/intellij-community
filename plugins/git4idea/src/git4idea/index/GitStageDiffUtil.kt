@@ -10,6 +10,8 @@ import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -116,7 +118,10 @@ private class UnStagedProducer constructor(private val project: Project, file: G
   override fun processImpl(): DiffRequest {
     return StagedDiffRequest(stagedDiffContent(project, statusNode), localDiffContent(project, statusNode),
                              GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
-                             getTitle(statusNode))
+                             getTitle(statusNode)).apply {
+      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_ACTION_TEXT, GitBundle.message("action.label.add.unstaged.range"))
+      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT, DiffBundle.message("action.presentation.diff.revert.text"))
+    }
   }
 }
 
@@ -125,7 +130,9 @@ private class StagedProducer constructor(private val project: Project, file: Git
   override fun processImpl(): DiffRequest {
     return StagedDiffRequest(headDiffContent(project, statusNode), stagedDiffContent(project, statusNode),
                              GitUtil.HEAD, GitBundle.message("stage.content.staged"),
-                             getTitle(statusNode))
+                             getTitle(statusNode)).apply {
+      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT, GitBundle.message("action.label.reset.staged.range"))
+    }
   }
 }
 
@@ -141,6 +148,9 @@ class ThreeSidesProducer(private val project: Project,
                              title).apply {
       putUserData(DiffUserDataKeys.THREESIDE_DIFF_COLORS_MODE,
                   DiffUserDataKeys.ThreeSideDiffColors.LEFT_TO_RIGHT)
+      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.add.unstaged.range"))
+      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT, DiffBundle.message("action.presentation.diff.revert.text"))
+      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.reset.staged.range"))
     }
   }
 }

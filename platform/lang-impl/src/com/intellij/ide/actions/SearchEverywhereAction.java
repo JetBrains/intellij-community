@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -71,7 +72,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction implement
     return null;
   }
 
-  private static String getShortcut() {
+  protected static String getShortcut() {
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     if (shortcuts.length == 0) {
       return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift"); //NON-NLS
@@ -89,7 +90,10 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction implement
       }
     }
 
-    showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, e, true, true);
+    String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
+                              ? SearchEverywhereTabDescriptor.PROJECT.getId()
+                              : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
+    showInSearchEverywherePopup(searchProviderID, e, true, true);
   }
 }
 

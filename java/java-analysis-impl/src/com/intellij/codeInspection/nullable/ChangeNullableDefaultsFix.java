@@ -21,8 +21,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.util.ArrayUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 class ChangeNullableDefaultsFix implements LocalQuickFix {
   private final NullableNotNullManager myManager;
@@ -55,9 +59,17 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (myNotNullName != null) {
+      List<String> notNulls = myManager.getNotNulls();
+      if (!notNulls.contains(myNotNullName)) {
+        myManager.setNotNulls(StreamEx.of(notNulls).append(myNotNullName).toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+      }
       myManager.setDefaultNotNull(myNotNullName);
     }
     else {
+      List<String> nullables = myManager.getNullables();
+      if (!nullables.contains(myNullableName)) {
+        myManager.setNullables(StreamEx.of(nullables).append(myNullableName).toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+      }
       myManager.setDefaultNullable(myNullableName);
     }
   }

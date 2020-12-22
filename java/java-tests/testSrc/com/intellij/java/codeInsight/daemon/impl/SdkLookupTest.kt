@@ -275,6 +275,35 @@ class SdkLookupTest : LightPlatformTestCase() {
     )
   }
 
+  fun `test local fix with unregistered SDK prototype`() {
+    val prototypeSdk = newUnregisteredSdk("prototype")
+    val auto = object : UnknownSdkResolver {
+      override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
+      override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
+        override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? = null
+        override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator) = object : UnknownSdkLocalSdkFix {
+          val home = createTempDir("our home for ${sdk.sdkName}")
+          override fun configureSdk(sdk: Sdk) { log += "configure: ${sdk.name}" }
+          override fun getExistingSdkHome() = home.toString()
+          override fun getVersionString() = "1.2.3"
+          override fun getSuggestedSdkName() = sdk.sdkName!!
+          override fun getRegisteredSdkPrototype() = prototypeSdk
+        }
+      }
+    }
+    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, listOf(auto), testRootDisposable)
+
+    runInThreadAndPumpMessages {
+      lookup
+        .lookupBlocking()
+    }
+
+    assertLog(
+      "sdk-name: null",
+      "sdk: null",
+    )
+  }
+
   fun `test local fix should not clash with SDK name`() {
     val prototypeSdk = newSdk("prototype")
     val auto = object : UnknownSdkResolver {

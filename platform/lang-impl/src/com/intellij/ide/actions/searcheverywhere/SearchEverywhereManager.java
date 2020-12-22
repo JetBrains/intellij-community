@@ -19,12 +19,12 @@ public interface SearchEverywhereManager {
 
   boolean isShown();
 
-  void show(@NotNull String contributorID, @Nullable String searchText, @NotNull AnActionEvent initEvent); //todo change to contributor??? UX-1
+  void show(@NotNull String contributorID, @Nullable String searchText, @NotNull AnActionEvent initEvent);
 
   @NotNull
-  String getSelectedContributorID();
+  String getSelectedTabID();
 
-  void setSelectedContributor(@NotNull String contributorID); //todo change to contributor??? UX-1
+  void setSelectedTabID(@NotNull String tabID);
 
   void toggleEverywhereFilter();
 

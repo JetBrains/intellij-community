@@ -5,17 +5,21 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
 
 internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
+                                                       virtualFileManager: VirtualFileUrlManager,
                                                        internalEntitySource: JpsFileEntitySource,
                                                        internalModuleListSerializer: JpsModuleListSerializer)
-  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, internalModuleListSerializer) {
+  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, virtualFileManager, internalModuleListSerializer) {
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
@@ -94,8 +98,9 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   }
 }
 
-internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl) :
-  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url) {
+internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl,
+                                            private val virtualFileManager: VirtualFileUrlManager) :
+  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml", virtualFileManager).url, virtualFileManager) {
   override val isExternalStorage: Boolean
     get() = true
 
@@ -116,12 +121,12 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
     val fileName = PathUtil.getFileName(fileUrl.url)
     val actualFileUrl = if (PathUtil.getFileExtension(fileName) == "iml") {
-      externalStorageRoot.append("modules/${fileName.substringBeforeLast('.')}.xml")
+      externalStorageRoot.append("modules/${fileName.substringBeforeLast('.')}.xml", virtualFileManager)
     }
     else {
       fileUrl
     }
-    val filePath = JpsPathUtil.urlToPath(fileUrl.filePath)
-    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, internalSource, this)
+    val filePath = JpsPathUtil.urlToPath(fileUrl.url)
+    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, virtualFileManager, internalSource, this)
   }
 }

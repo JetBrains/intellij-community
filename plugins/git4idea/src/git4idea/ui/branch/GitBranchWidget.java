@@ -147,7 +147,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isEnabledByDefault() {
-      return !UISettings.getInstance().getShowNewNavbarVcsGroup();
+      return !Registry.is("ide.new.navbar.vcs.group", false);
     }
 
     @Override

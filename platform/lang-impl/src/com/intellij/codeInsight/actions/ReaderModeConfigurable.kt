@@ -5,15 +5,13 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.codeInsight.actions.ReaderMode.*
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
+import com.intellij.util.PlatformUtils
 
 class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable(LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
   private val settings get() = ReaderModeSettings.instance(project)
@@ -37,9 +35,6 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
           checkBox(cdRenderedDocs).enableIf(enabled.selected)
         }
         row {
-          checkBox(cdInlays).enableIf(enabled.selected)
-        }
-        row {
           checkBox(cdBreadcrumbs).enableIf(enabled.selected)
         }
         row {
@@ -50,6 +45,9 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
         }
         row {
           checkBox(cdLineSpacing).enableIf(enabled.selected)
+        }
+        row {
+          checkBox(cdInlays).enableIf(enabled.selected).visible(PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaEducational() || PlatformUtils.isIdeaUltimate())
         }
       }.enableIf(enabled.selected)
     }
@@ -65,7 +63,7 @@ enum class ReaderMode {
   LIBRARIES, READ_ONLY, LIBRARIES_AND_READ_ONLY
 }
 
-@State(name = "ReaderModeSettings", storages = [Storage("editor.xml")])
+@State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
   companion object {
     @JvmStatic
@@ -83,7 +81,7 @@ class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
     var showRenderedDocs: Boolean = true,
     var showInlayHints: Boolean = true,
     var showWarnings: Boolean = false,
-    var enabled: Boolean = false,
+    var enabled: Boolean = true,
     var mode: ReaderMode = LIBRARIES_AND_READ_ONLY
   )
 

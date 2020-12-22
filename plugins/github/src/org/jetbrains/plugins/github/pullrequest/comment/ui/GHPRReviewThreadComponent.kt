@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.util.ui.codereview.ToggleableContainer
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -216,14 +217,16 @@ object GHPRReviewThreadComponent {
                      }, null)
     }
 
-    return GHPRToggleableContainer.create(toggleModel,
-                                          { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
-                                          {
-                                            GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
-                                                                                                 GithubBundle.message(
-                                                                                                   "pull.request.review.thread.reply"),
-                                                                                                 onCancel = { toggleModel.value = false })
-                                          })
+    return ToggleableContainer.create(
+      toggleModel,
+      { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
+      {
+        GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
+                                                             GithubBundle.message(
+                                                               "pull.request.review.thread.reply"),
+                                                             onCancel = { toggleModel.value = false })
+      }
+    )
   }
 
   private fun createThreadActionsComponent(model: GHPRReviewThreadModel,

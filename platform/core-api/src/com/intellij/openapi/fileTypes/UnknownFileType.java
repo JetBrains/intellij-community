@@ -42,11 +42,6 @@ public final class UnknownFileType implements FileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
   public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return null;
   }

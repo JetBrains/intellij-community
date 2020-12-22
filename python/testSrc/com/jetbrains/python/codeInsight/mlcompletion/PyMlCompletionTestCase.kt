@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.lang.Language
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.fixtures.PyTestCase
 import org.junit.Assert
@@ -13,7 +14,7 @@ open class PyMlCompletionTestCase: PyTestCase() {
   fun doContextFeaturesTest(vararg expected: Pair<String, MLFeatureValue>) = doContextFeaturesTest(listOf(*expected), emptyList())
 
   fun doContextFeaturesTest(expectedDefined: List<Pair<String, MLFeatureValue>>, expectedUndefined: List<String>) {
-    doWithInstalledProviders { contextFeaturesProvider, _ ->
+    doWithInstalledProviders(PyContextFeatureProvider(), PyElementFeatureProvider(), PythonLanguage.INSTANCE) { contextFeaturesProvider, _ ->
       invokeCompletion()
       assertHasFeatures(contextFeaturesProvider.features, expectedDefined)
       assertHasNotFeatures(contextFeaturesProvider.features, expectedUndefined)
@@ -40,7 +41,7 @@ open class PyMlCompletionTestCase: PyTestCase() {
   private fun doElementFeaturesInternalTest(selector: (LookupElement) -> Boolean,
                                             expectedDefined: List<Pair<String, MLFeatureValue>>,
                                             expectedUndefined: List<String>) {
-    doWithInstalledProviders { _, elementFeaturesProvider ->
+    doWithInstalledProviders(PyContextFeatureProvider(), PyElementFeatureProvider(), PythonLanguage.INSTANCE) { _, elementFeaturesProvider ->
       invokeCompletion()
 
       val selected = myFixture.lookupElements!!.find(selector)
@@ -53,21 +54,6 @@ open class PyMlCompletionTestCase: PyTestCase() {
     }
   }
 
-  fun doWithInstalledProviders(action: (contextFeaturesProvider: PyAdapterContextFeatureProvider,
-                                                elementFeaturesProvider: PyAdapterElementFeatureProvider) -> Unit) {
-    val contextFeaturesProvider = PyAdapterContextFeatureProvider(PyContextFeatureProvider())
-    val elementFeaturesProvider = PyAdapterElementFeatureProvider(PyElementFeatureProvider())
-    try {
-      ContextFeatureProvider.EP_NAME.addExplicitExtension(PythonLanguage.INSTANCE, contextFeaturesProvider)
-      ElementFeatureProvider.EP_NAME.addExplicitExtension(PythonLanguage.INSTANCE, elementFeaturesProvider)
-      action(contextFeaturesProvider, elementFeaturesProvider)
-    }
-    finally {
-      ContextFeatureProvider.EP_NAME.removeExplicitExtension(PythonLanguage.INSTANCE, contextFeaturesProvider)
-      ElementFeatureProvider.EP_NAME.removeExplicitExtension(PythonLanguage.INSTANCE, elementFeaturesProvider)
-    }
-  }
-
   fun kwId(kw: String) = PyMlCompletionHelpers.getKeywordId(kw)!!
 
   fun invokeCompletion() {
@@ -75,17 +61,41 @@ open class PyMlCompletionTestCase: PyTestCase() {
     myFixture.completeBasic()
   }
 
-  fun assertHasFeatures(actual: Map<String, MLFeatureValue>,
-                                expectedDefined: List<Pair<String, MLFeatureValue>>) {
-    for (pair in expectedDefined) {
-      Assert.assertTrue("Assert has feature: ${pair.first}", actual.containsKey(pair.first))
-      Assert.assertEquals("Check feature value: ${pair.first}", pair.second.toString(), actual[pair.first].toString())
+  companion object {
+    fun doWithInstalledProviders(contextFeatureProvider: ContextFeatureProvider,
+                                 elementFeatureProvider: ElementFeatureProvider,
+                                 vararg languages: Language,
+                                 action: (contextFeaturesProvider: PyAdapterContextFeatureProvider,
+                                                                      elementFeaturesProvider: PyAdapterElementFeatureProvider) -> Unit) {
+      val contextFeaturesProvider = PyAdapterContextFeatureProvider(contextFeatureProvider)
+      val elementFeaturesProvider = PyAdapterElementFeatureProvider(elementFeatureProvider)
+      try {
+        for (language in languages) {
+          ContextFeatureProvider.EP_NAME.addExplicitExtension(language, contextFeaturesProvider)
+          ElementFeatureProvider.EP_NAME.addExplicitExtension(language, elementFeaturesProvider)
+        }
+        action(contextFeaturesProvider, elementFeaturesProvider)
+      }
+      finally {
+        for (language in languages) {
+          ContextFeatureProvider.EP_NAME.removeExplicitExtension(language, contextFeaturesProvider)
+          ElementFeatureProvider.EP_NAME.removeExplicitExtension(language, elementFeaturesProvider)
+        }
+      }
     }
-  }
 
-  fun assertHasNotFeatures(actual: Map<String, MLFeatureValue>, expected: List<String>) {
-    for (value in expected) {
-      Assert.assertFalse("Assert has not feature: $value", actual.containsKey(value))
+    fun assertHasFeatures(actual: Map<String, MLFeatureValue>,
+                          expectedDefined: List<Pair<String, MLFeatureValue>>) {
+      for (pair in expectedDefined) {
+        Assert.assertTrue("Assert has feature: ${pair.first}", actual.containsKey(pair.first))
+        Assert.assertEquals("Check feature value: ${pair.first}", pair.second.toString(), actual[pair.first].toString())
+      }
+    }
+
+    fun assertHasNotFeatures(actual: Map<String, MLFeatureValue>, expected: List<String>) {
+      for (value in expected) {
+        Assert.assertFalse("Assert has not feature: $value", actual.containsKey(value))
+      }
     }
   }
 }

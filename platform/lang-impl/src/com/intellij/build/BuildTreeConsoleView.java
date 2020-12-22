@@ -57,7 +57,6 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Invoker;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -119,7 +118,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final ExecutionNode myBuildProgressRootNode;
   private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
   private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
-  private final Set<BuildEvent> myDeferredEvents = ContainerUtil.newConcurrentSet();
+  private final Set<BuildEvent> myDeferredEvents = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
@@ -129,7 +128,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor
                         ? (DefaultBuildDescriptor)buildDescriptor
                         : new DefaultBuildDescriptor(buildDescriptor);
-    myNodeFilters = ContainerUtil.newConcurrentSet();
+    myNodeFilters = Collections.newSetFromMap(new ConcurrentHashMap<>());
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
     myNavigateToTheFirstErrorLocation = project.getService(BuildWorkspaceConfiguration.class).isShowFirstErrorInEditor();
 

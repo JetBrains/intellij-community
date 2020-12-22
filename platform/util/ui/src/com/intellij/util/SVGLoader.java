@@ -115,7 +115,8 @@ public final class SVGLoader {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Image loadFromClassResource(@NotNull Class<?> resourceClass,
+  public static @Nullable Image loadFromClassResource(@Nullable Class<?> resourceClass,
+                                                      @Nullable ClassLoader classLoader,
                                                       @NotNull String path,
                                                       long rasterizedCacheKey,
                                                       float scale,
@@ -151,8 +152,7 @@ public final class SVGLoader {
           }
         }
 
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        stream = resourceClass.getResourceAsStream(path);
+        stream = ImageLoader.getResourceData(path, resourceClass, classLoader);
         if (stream == null) {
           return null;
         }
@@ -180,8 +180,7 @@ public final class SVGLoader {
     }
 
     if (stream == null) {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      stream = resourceClass.getResourceAsStream(path);
+      stream = ImageLoader.getResourceData(path, resourceClass, classLoader);
       if (stream == null) {
         return null;
       }

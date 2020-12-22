@@ -25,12 +25,16 @@ import java.util.*;
 public class APIWrappers {
 
   public static Processor newProcessorWrapper(final Processor delegate, JpsJavacFileManager fileManager) {
-    return wrap(Processor.class, new ProcessorWrapper(delegate, fileManager), delegate);
+    return wrap(Processor.class, new ProcessorWrapper(delegate, fileManager));
   }
 
   @SuppressWarnings("unchecked")
   public static <T> DiagnosticListener<T> newDiagnosticListenerWrapper(final DiagnosticListener<T> delegate, @NotNull Iterable<Processor> processors) {
     return wrap(DiagnosticListener.class, new DiagnosticListenerWrapper<T>(delegate, processors), DynamicWrapper.class, delegate);
+  }
+
+  public interface WrapperDelegateAccessor<T> {
+    T getWrapperDelegate();
   }
 
   abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
@@ -89,10 +93,6 @@ public class APIWrappers {
     }
   }
 
-  interface WrapperDelegateAccessor<T> {
-    T getWrapperDelegate();
-  }
-
   static class ProcessorWrapper extends DynamicWrapper<Processor> {
     private final JpsJavacFileManager myFileManager;
 
@@ -102,7 +102,7 @@ public class APIWrappers {
     }
 
     public void init(ProcessingEnvironment processingEnv) {
-      getWrapperDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager), processingEnv));
+      getWrapperDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
     }
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -123,7 +123,7 @@ public class APIWrappers {
       Filer impl = myFilerImpl;
       if (impl == null) {
         final Filer delegateFiler = getWrapperDelegate().getFiler();
-        myFilerImpl = impl = wrap(Filer.class, new FilerWrapper(delegateFiler, myFileManager, getWrapperDelegate().getElementUtils()), delegateFiler);
+        myFilerImpl = impl = wrap(Filer.class, new FilerWrapper(delegateFiler, myFileManager, getWrapperDelegate().getElementUtils()));
       }
       return impl;
     }
@@ -197,8 +197,8 @@ public class APIWrappers {
   }
 
   @NotNull
-  private static <T, W extends DynamicWrapper<T>> T wrap(@NotNull Class<T> ifaceClass, @NotNull final W wrapper, @NotNull final T delegateTo) {
-    return wrap(ifaceClass, wrapper, DynamicWrapper.class, delegateTo);
+  private static <T, W extends DynamicWrapper<T>> T wrap(@NotNull Class<T> ifaceClass, @NotNull final W wrapper) {
+    return wrap(ifaceClass, wrapper, DynamicWrapper.class, wrapper.getWrapperDelegate());
   }
   
   @NotNull

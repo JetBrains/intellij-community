@@ -107,7 +107,8 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
       List<Throwable> exceptions = null;
       boolean hasHandlers = false;
 
-      List<L> handlers = bus.computeHandlers(topic, topic1 -> bus.computeSubscribers(topic1));
+      //noinspection unchecked
+      List<L> handlers = (List<L>)bus.subscriberCache.computeIfAbsent(topic, topic1 -> bus.computeSubscribers((Topic<L>)topic1));
       if (!handlers.isEmpty()) {
         exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null);
         hasHandlers = true;
@@ -119,10 +120,12 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
           continue;
         }
 
-        handlers = childBus.computeHandlers(topic, topic1 -> {
+        //noinspection unchecked
+        handlers = (List<L>)childBus.subscriberCache.computeIfAbsent(topic, topic1 -> {
           List<L> result = new ArrayList<>();
-          childBus.doComputeSubscribers(topic1, result, /* subscribeLazyListeners = */ !childBus.owner.isParentLazyListenersIgnored());
-          return result.isEmpty() ? Collections.emptyList() : result;
+          //noinspection unchecked
+          childBus.doComputeSubscribers((Topic<L>)topic1, result, /* subscribeLazyListeners = */ !childBus.owner.isParentLazyListenersIgnored());
+          return (result.isEmpty() ? Collections.emptyList() : result);
         });
         if (handlers.isEmpty()) {
           continue;
@@ -179,6 +182,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     Map<PluginId, List<L>> listenerMap = new LinkedHashMap<>();
     for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
       try {
+        //noinspection unchecked
         listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor.getPluginId(), __ -> new ArrayList<>())
           .add((L)owner.createListener(listenerDescriptor));
       }
@@ -258,7 +262,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  public final void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<? extends ListenerDescriptor> listenerDescriptors) {
+  public final void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<ListenerDescriptor> listenerDescriptors) {
     topicClassToListenerDescriptor.values().removeIf(descriptors -> {
       if (descriptors.removeIf(descriptor -> descriptor.pluginDescriptor.getPluginId().equals(pluginId))) {
         return descriptors.isEmpty();
