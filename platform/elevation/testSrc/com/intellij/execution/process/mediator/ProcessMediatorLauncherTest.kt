@@ -6,6 +6,6 @@ import org.junit.jupiter.api.TestInfo
 
 internal class ProcessMediatorLauncherTest : ProcessMediatorTest() {
   override fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
-    return ProcessMediatorDaemonLauncher.launchDaemon(sudo = false)
+    return ProcessMediatorDaemonLauncher(sudo = false).launchDaemon()
   }
 }

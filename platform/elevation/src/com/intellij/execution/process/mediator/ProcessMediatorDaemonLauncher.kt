@@ -48,8 +48,8 @@ private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-object ProcessMediatorDaemonLauncher {
-  fun launchDaemon(sudo: Boolean): ProcessMediatorDaemon {
+class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
+  fun launchDaemon(): ProcessMediatorDaemon {
     return GlobalScope.async(Dispatchers.IO) {
       createHandshakeTransport().use { handshakeTransport ->
         ensureActive()

@@ -76,7 +76,7 @@ class ProcessMediatorClientManager : Disposable {
 
   private fun launchDaemon(): ProcessMediatorDaemon {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      ProcessMediatorDaemonLauncher.launchDaemon(sudo = true)
+      ProcessMediatorDaemonLauncher(sudo = true).launchDaemon()
     }, ElevationBundle.message("progress.title.starting.elevation.daemon"), true, null)
   }
 
