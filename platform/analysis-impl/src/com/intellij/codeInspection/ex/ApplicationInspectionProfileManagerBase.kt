@@ -28,6 +28,19 @@ import java.util.function.Function
 
 open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(
   ApplicationManager.getApplication().messageBus), InspectionProfileManager {
+
+  init {
+    val app = ApplicationManager.getApplication()
+    app.messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectOpened(project: Project) {
+        val appScopeListener = NamedScopesHolder.ScopeListener {
+          profiles.forEach { it.scopesChanged() }
+        }
+        NamedScopeManager.getInstance(project).addScopeListener(appScopeListener, project)
+      }
+    })
+  }
+
   override val schemeManager = schemeManagerFactory.create(InspectionProfileManager.INSPECTION_DIR, object : InspectionProfileProcessor() {
     override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String) = fileNameWithoutExtension
 
@@ -59,15 +72,6 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
         DEFAULT_PROFILE_NAME,
         InspectionToolRegistrar.getInstance(), this))
     }
-
-    app.messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-      override fun projectOpened(project: Project) {
-        val appScopeListener = NamedScopesHolder.ScopeListener {
-          profiles.forEach { it.scopesChanged() }
-        }
-        NamedScopeManager.getInstance(project).addScopeListener(appScopeListener, project)
-      }
-    })
   }
 
   @Volatile
