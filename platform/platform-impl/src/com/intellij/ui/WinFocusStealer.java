@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.User32Ex;
@@ -23,16 +24,24 @@ import java.awt.event.AWTEventListener;
 public class WinFocusStealer implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance(WinFocusStealer.class);
   private static final int DEFAULT_TIMEOUT_MS = 200000; // default registry value on Windows 10 as of time this code is written
+  private final boolean myEnabled;
   private Boolean myUpdateScheduled;
 
   private WinFocusStealer() {
-    doUpdate(false); // make sure to restore the default state if IDE crashed after enabling focus stealing
-    SwingUtilities.invokeLater(() -> Toolkit.getDefaultToolkit().addAWTEventListener(this,
-                                                                                     AWTEvent.KEY_EVENT_MASK |
-                                                                                     AWTEvent.MOUSE_EVENT_MASK |
-                                                                                     AWTEvent.MOUSE_MOTION_EVENT_MASK |
-                                                                                     AWTEvent.MOUSE_WHEEL_EVENT_MASK |
-                                                                                     AWTEvent.INPUT_METHOD_EVENT_MASK));
+    if (JnaLoader.isLoaded()) {
+      myEnabled = true;
+      doUpdate(false); // make sure to restore the default state if IDE crashed after enabling focus stealing
+      SwingUtilities.invokeLater(() -> Toolkit.getDefaultToolkit().addAWTEventListener(this,
+                                                                                       AWTEvent.KEY_EVENT_MASK |
+                                                                                       AWTEvent.MOUSE_EVENT_MASK |
+                                                                                       AWTEvent.MOUSE_MOTION_EVENT_MASK |
+                                                                                       AWTEvent.MOUSE_WHEEL_EVENT_MASK |
+                                                                                       AWTEvent.INPUT_METHOD_EVENT_MASK));
+    }
+    else {
+      myEnabled = false;
+      LOG.info("JNA isn't available, focus stealing logic is disabled");
+    }
   }
 
   /**
@@ -51,7 +60,7 @@ public class WinFocusStealer implements AWTEventListener {
    */
   public static void setFocusStealingEnabled(boolean value) {
     WinFocusStealer stealer = ApplicationManager.getApplication().getService(WinFocusStealer.class);
-    if (stealer != null) stealer.update(value); // the service is null on non-Windows machines
+    if (stealer != null && stealer.myEnabled) stealer.update(value); // the service is null on non-Windows machines
   }
 
   private void update(boolean enabled) {
