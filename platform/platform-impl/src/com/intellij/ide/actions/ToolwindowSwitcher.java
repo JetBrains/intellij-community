@@ -11,12 +11,13 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
@@ -37,10 +38,20 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ToolwindowSwitcher extends DumbAwareAction {
+  private static JBPopup popup;
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
+    invokePopup(project);
+  }
+
+  private static void invokePopup(Project project) {
+    if (popup != null) {
+      gotoNextElement(popup);
+      return;
+    }
     List<ToolWindow> toolWindows = new ArrayList<>();
     final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
     for (String id : toolWindowManager.getToolWindowIds()) {
@@ -55,8 +66,7 @@ public class ToolwindowSwitcher extends DumbAwareAction {
     IPopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(toolWindows);
     ToolWindow selected = toolWindowManager.getActiveToolWindowId() == null ? toolWindows.get(0) : toolWindows.get(1);
 
-    Ref<JBPopup> popup = Ref.create();
-    popup.set(builder
+    popup = builder
                 .setRenderer(new ToolWindowsWidgetCellRenderer())
                 .setAutoselectOnMouseMove(true)
                 .setRequestFocus(true)
@@ -64,13 +74,21 @@ public class ToolwindowSwitcher extends DumbAwareAction {
                 .setMinSize(new Dimension(300, -1))
                 .setNamerForFiltering(x -> x.getStripeTitle())
                 .setItemChosenCallback((selectedValue) -> {
-                  if (popup.get() != null) {
-                    popup.get().closeOk(null);
+                  if (popup != null) {
+                    popup.closeOk(null);
                   }
                   toolWindowManager.activateToolWindow(selectedValue.getId(), null, true, ToolWindowEventSource.ToolWindowSwitcher);
-                }).createPopup());
+                }).createPopup();
 
-    popup.get().showCenteredInCurrentWindow(project);
+    Disposer.register(popup, () -> popup = null);
+    popup.showCenteredInCurrentWindow(project);
+  }
+
+  private static void gotoNextElement(JBPopup popup) {
+    JList list = UIUtil.findComponentOfType(popup.getContent(), JList.class);
+    if (list != null) {
+      ScrollingUtil.moveDown(list, 0);
+    }
   }
 
   @Override
