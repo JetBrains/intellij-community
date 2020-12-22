@@ -23,6 +23,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleGroupPathEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -396,14 +397,26 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
       val url = actualFileSource?.let { getActualFileUrl(it) }
       val internalSource = getInternalFileSource(source)
-      if (url != null && internalSource != null && url !in fileSerializersByUrl.keys
-          && (ModuleEntity::class.java in entities || FacetEntity::class.java in entities)) {
-        moduleListSerializersByUrl.values.forEach { moduleListSerializer ->
-          if (moduleListSerializer.entitySourceFilter(source)) {
-            val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.fromUrl(url), null)
-            fileSerializersByUrl.put(url, newSerializer)
-            moduleSerializers[newSerializer] = moduleListSerializer
-            affectedFileFactories.add(moduleListSerializer)
+      if (url != null && internalSource != null
+          && (ModuleEntity::class.java in entities || FacetEntity::class.java in entities || ModuleGroupPathEntity::class.java in entities)) {
+        val existingSerializers = fileSerializersByUrl.getValues(url)
+        val moduleGroup = (entities[ModuleGroupPathEntity::class.java]?.first() as? ModuleGroupPathEntity)?.path?.joinToString("/")
+        if (existingSerializers.isEmpty() || existingSerializers.any { it is ModuleImlFileEntitiesSerializer && it.modulePath.group != moduleGroup }) {
+          moduleListSerializersByUrl.values.forEach { moduleListSerializer ->
+            if (moduleListSerializer.entitySourceFilter(source)) {
+              if (existingSerializers.isNotEmpty()) {
+                existingSerializers.forEach {
+                  if (it is ModuleImlFileEntitiesSerializer) {
+                    moduleSerializers.remove(it)
+                    fileSerializersByUrl.remove(url, it)
+                  }
+                }
+              }
+              val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.fromUrl(url), moduleGroup)
+              fileSerializersByUrl.put(url, newSerializer)
+              moduleSerializers[newSerializer] = moduleListSerializer
+              affectedFileFactories.add(moduleListSerializer)
+            }
           }
         }
       }
