@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -92,6 +93,7 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
 
             relevantFunction?.accept(object : KtVisitorVoid() {
                 override fun visitKtElement(element: KtElement) {
+                    ProgressIndicatorProvider.checkCanceled()
                     element.acceptChildren(this)
                 }
 
