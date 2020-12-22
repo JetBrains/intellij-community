@@ -5,7 +5,9 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.PayloadKey;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.PluginType;
 import com.intellij.lang.Language;
@@ -33,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class CustomValidationRule extends PerformanceCareRule implements FUSRule {
   public static final ExtensionPointName<CustomValidationRule> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.validation.customValidationRule");
+
+  public static final PayloadKey<PluginInfo> PLUGIN_INFO = new PayloadKey<>("plugin_info");
 
   public abstract boolean acceptRuleId(@Nullable @NonNls String ruleId);
 

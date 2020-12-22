@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroup
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorage;
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorageProvider;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,8 +165,9 @@ public class SensitiveDataValidator {
     boolean containsPluginInfo = validatedData.containsKey("plugin") ||
                                  validatedData.containsKey("plugin_type") ||
                                  validatedData.containsKey("plugin_version");
-    if (context.pluginInfo != null && !containsPluginInfo) {
-      addPluginInfoTo(context.pluginInfo, validatedData);
+    PluginInfo pluginInfo = context.getPayload(CustomValidationRule.PLUGIN_INFO);
+    if (pluginInfo != null && !containsPluginInfo) {
+      addPluginInfoTo(pluginInfo, validatedData);
     }
     return validatedData;
   }

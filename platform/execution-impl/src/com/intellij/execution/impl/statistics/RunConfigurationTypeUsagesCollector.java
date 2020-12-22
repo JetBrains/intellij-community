@@ -236,7 +236,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
         final ConfigurationFactory factory = configurationAndFactory.getSecond();
         if (configuration != null && (StringUtil.isEmpty(factoryId) || factory != null)) {
           final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(configuration.getClass());
-          context.setPluginInfo(info);
+          context.setPayload(PLUGIN_INFO, info);
           return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
       }

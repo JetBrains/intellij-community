@@ -53,7 +53,7 @@ public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      PluginInfo info = context.pluginInfo;
+      PluginInfo info = context.getPayload(PLUGIN_INFO);
       if (info != null) {
         return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
       }
@@ -63,7 +63,7 @@ public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
         TipAndTrickBean tip = TipAndTrickBean.findByFileName((String)filename);
         if (tip != null) {
           PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(tip.getPluginDescriptor());
-          context.setPluginInfo(pluginInfo);
+          context.setPayload(PLUGIN_INFO, pluginInfo);
           return pluginInfo.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
       }
