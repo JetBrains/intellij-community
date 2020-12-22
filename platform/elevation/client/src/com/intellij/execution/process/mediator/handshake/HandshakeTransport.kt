@@ -29,9 +29,14 @@ interface ProcessStdoutHandshakeTransport : HandshakeTransport {
   fun initStream(inputStream: InputStream)
 }
 
-fun HandshakeTransport.Companion.createProcessStdoutTransport(): ProcessStdoutHandshakeTransport = StdoutTransport()
-fun HandshakeTransport.Companion.createUnixFifoTransport(path: Path): HandshakeTransport = UnixFifoTransport(path)
-fun HandshakeTransport.Companion.createSocketTransport(port: Int = 0): HandshakeTransport = SocketTransport(port)
+fun HandshakeTransport.Companion.createProcessStdoutTransport(launchOptions: DaemonLaunchOptions): ProcessStdoutHandshakeTransport =
+  StdoutTransport(launchOptions)
+
+fun HandshakeTransport.Companion.createUnixFifoTransport(launchOptions: DaemonLaunchOptions, path: Path): HandshakeTransport =
+  UnixFifoTransport(launchOptions, path)
+
+fun HandshakeTransport.Companion.createSocketTransport(launchOptions: DaemonLaunchOptions, port: Int = 0): HandshakeTransport =
+  SocketTransport(launchOptions, port)
 
 fun HandshakeTransport.encrypted(): HandshakeTransport = EncryptedHandshakeTransport(this)
 
@@ -57,10 +62,10 @@ private class EncryptedHandshakeTransport(private val delegate: HandshakeTranspo
 }
 
 
-private abstract class AbstractHandshakeTransport : HandshakeTransport {
+private abstract class AbstractHandshakeTransport(private val launchOptions: DaemonLaunchOptions) : HandshakeTransport {
   protected abstract val handshakeReader: HandshakeReader
 
-  override fun getDaemonLaunchOptions() = DaemonLaunchOptions(handshakeOption = getHandshakeOption())
+  override fun getDaemonLaunchOptions() = launchOptions.copy(handshakeOption = getHandshakeOption())
   abstract fun getHandshakeOption(): DaemonLaunchOptions.HandshakeOption
 
   override fun readHandshake(): Handshake? {
@@ -71,13 +76,15 @@ private abstract class AbstractHandshakeTransport : HandshakeTransport {
 }
 
 private class SocketTransport(
+  launchOptions: DaemonLaunchOptions,
   port: Int = 0
-) : AbstractHandshakeTransport() {
+) : AbstractHandshakeTransport(launchOptions) {
   override val handshakeReader = HandshakeSocketReader(port)
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Port(handshakeReader.port)
 }
 
-private class StdoutTransport : AbstractHandshakeTransport(), ProcessStdoutHandshakeTransport {
+private class StdoutTransport(launchOptions: DaemonLaunchOptions) : AbstractHandshakeTransport(launchOptions),
+                                                                    ProcessStdoutHandshakeTransport {
   override lateinit var handshakeReader: HandshakeStreamReader
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Stdout
 
@@ -87,12 +94,14 @@ private class StdoutTransport : AbstractHandshakeTransport(), ProcessStdoutHands
 }
 
 private open class FileTransport(
+  launchOptions: DaemonLaunchOptions,
   override val handshakeReader: HandshakeFileReader
-) : AbstractHandshakeTransport() {
+) : AbstractHandshakeTransport(launchOptions) {
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.File(handshakeReader.path.toAbsolutePath())
 }
 
 private class UnixFifoTransport(
+  launchOptions: DaemonLaunchOptions,
   path: Path
-) : FileTransport(HandshakeUnixFifoReader(path))
+) : FileTransport(launchOptions, HandshakeUnixFifoReader(path))
 

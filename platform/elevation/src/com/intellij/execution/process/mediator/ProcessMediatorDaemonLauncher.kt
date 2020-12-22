@@ -54,11 +54,7 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
       createHandshakeTransport().use { handshakeTransport ->
         ensureActive()
 
-        val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions().let {
-          if (SystemInfo.isWindows) it else it.copy(trampoline = sudo, daemonize = sudo, leaderPid = ProcessHandle.current().pid())
-        }.let {
-          if (!SystemInfo.isMac) it else it.copy(machNamespaceUid = LibC.INSTANCE.getuid())
-        }
+        val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions()
         val daemonCommandLine = createLauncherCommandLine(daemonLaunchOptions)
         val launcherCommandLine =
           if (!sudo) daemonCommandLine
@@ -141,7 +137,7 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
     // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
     // we want it to finish as soon as possible.
     return if (SystemInfo.isWindows) {
-      HandshakeTransport.createProcessStdoutTransport()
+      HandshakeTransport.createProcessStdoutTransport(DaemonLaunchOptions())
     }
     else try {
       openUnixHandshakeTransport()
@@ -152,13 +148,16 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
   }
 
   private fun openUnixHandshakeTransport(): HandshakeTransport {
+    val launchOptions = DaemonLaunchOptions(trampoline = sudo, daemonize = sudo,
+                                            leaderPid = ProcessHandle.current().pid(),
+                                            machNamespaceUid = if (SystemInfo.isMac) LibC.INSTANCE.getuid() else null)
     return try {
-      HandshakeTransport.createUnixFifoTransport(path = FileUtil.generateRandomTemporaryPath().toPath())
+      HandshakeTransport.createUnixFifoTransport(launchOptions, path = FileUtil.generateRandomTemporaryPath().toPath())
     }
     catch (e0: IOException) {
       ElevationLogger.LOG.warn("Unable to create file-based handshake channel; falling back to socket streams", e0)
       try {
-        HandshakeTransport.createSocketTransport()
+        HandshakeTransport.createSocketTransport(launchOptions)
       }
       catch (e1: IOException) {
         e1.addSuppressed(e0)
