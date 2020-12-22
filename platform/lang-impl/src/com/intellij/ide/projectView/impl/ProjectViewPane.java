@@ -29,6 +29,7 @@ import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -101,6 +102,15 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
           font = font.deriveFont(font.getSize() + 1.0f);
         }
         super.setFont(font);
+      }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = super.getAccessibleContext();
+          accessibleContext.setAccessibleName(IdeBundle.message("project.structure.tree.accessible.name"));
+        }
+        return accessibleContext;
       }
     };
   }
