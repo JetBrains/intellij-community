@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -488,6 +489,38 @@ public class Py3CompletionTest extends PyTestCase {
       assertNotNull(variants);
       assertTrue(variants.length > 0);
       assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("my_expr")));
+    });
+  }
+
+  // PY-46056
+  public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
+    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+  }
+
+  // PY-46056
+  public void testImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
+    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+  }
+
+  // PY-46056
+  public void testFromImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
+    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+  }
+
+  // PY-46056
+  public void testFromImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
+    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+  }
+
+  private void doTestVariantTailText(@NotNull String entryFilePath, @NotNull String variantName, @Nullable String tailText) {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile(entryFilePath);
+      LookupElement[] variants = myFixture.completeBasic();
+      assertNotNull(variants);
+      LookupElement lookupElement = ContainerUtil.find(variants, v -> v.getLookupString().equals(variantName));
+      assertNotNull(lookupElement);
+      assertEquals(tailText, TestLookupElementPresentation.renderElement(lookupElement).getTailText());
     });
   }
 
