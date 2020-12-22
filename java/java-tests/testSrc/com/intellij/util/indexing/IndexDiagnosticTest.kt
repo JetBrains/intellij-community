@@ -118,6 +118,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           JsonScanningStatistics(
             "providerName",
             333,
+            11,
             55,
             33,
             JsonDuration(123),
