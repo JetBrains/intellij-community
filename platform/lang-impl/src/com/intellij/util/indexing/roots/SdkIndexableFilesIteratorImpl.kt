@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 import org.jetbrains.annotations.ApiStatus
 
@@ -24,11 +23,15 @@ class SdkIndexableFilesIteratorImpl(val sdk: Sdk) : IndexableFilesIterator {
   override fun getRootsScanningProgressText() = IndexingBundle.message("indexable.files.provider.scanning.sdk", sdkPresentableName,
                                                                        sdk.name)
 
-  override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
+  override fun iterateFiles(
+    project: Project,
+    fileIterator: ContentIterator,
+    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
+  ): Boolean {
     val roots = runReadAction {
       val rootProvider = sdk.rootProvider
       rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
     }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, visitedFileSet)
+    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, indexableFilesDeduplicateFilter)
   }
 }

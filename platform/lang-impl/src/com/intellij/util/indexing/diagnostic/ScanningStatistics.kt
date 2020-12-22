@@ -5,6 +5,14 @@ import com.intellij.util.indexing.UnindexedFileStatus
 
 class ScanningStatistics(val fileSetName: String) {
   var numberOfScannedFiles: Int = 0
+
+  /**
+   * Number of files that have been scanned (iterated) by a different iterator than the one used to iterate this [fileSetName].
+   * If multiple "file iterators" would iterate the same file, only one of the iterators actually "scans" the file
+   * (and increments [numberOfScannedFiles] in his statistics).
+   */
+  var numberOfSkippedFiles: Int = 0
+
   var numberOfFilesForIndexing: Int = 0
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
 

@@ -4,9 +4,6 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.util.containers.ConcurrentBitSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NonNls;
@@ -46,20 +43,17 @@ public interface IndexableFilesIterator {
   String getRootsScanningProgressText();
 
   /**
-   * Iterates through all files and directories corresponding to this provider.
+   * Iterates through all files and directories corresponding to this iterator.
    * <br />
-   * The {@param visitedFileSet} is used to store positive {@link VirtualFileWithId#getId()} of Virtual Files,
-   * the implementation is free to skip other {@link VirtualFile} implementations and
-   * non-positive {@link VirtualFileWithId#getId()}.
-   * The {@param visitedFileSet} is used to implement filtering to skip already visited files by looking to [visitedFileSet].
+   * The {@code indexableFilesDeduplicateFilter} is used to not visit files twice
+   * when several {@code IndexableFilesIterator}-s would iterate the same roots (probably in different threads).
    * <br />
-   * The {@param fileIterator} should be invoked on every new file (with respect to {@oaram visitedFileSet},
-   * should the {@link ContentIterator#processFile(VirtualFile)} returns false, the processing should be
-   * stopped and the {@code false} should be returned from the method.
+   * The {@code fileIterator} should be invoked on every new file (with respect to {@code indexableFilesDeduplicateFilter}).
+   * If the {@code fileIterator} returns false, the iteration should be stopped and this method should return {@code false}.
    *
-   * @return `false` if [fileIterator] has stopped iteration by returning `false`, `true` otherwise.
+   * @return {@code false} if the {@code fileIterator} has stopped the iteration by returning {@code false}, {@code true} otherwise.
    */
   boolean iterateFiles(@NotNull Project project,
                        @NotNull ContentIterator fileIterator,
-                       @NotNull ConcurrentBitSet visitedFileSet);
+                       @NotNull IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter);
 }

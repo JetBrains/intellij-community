@@ -5,10 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
-class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile): ProjectIndexableFilesIterator {
+class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : ProjectIndexableFilesIterator {
   override fun getDebugName(): String = "Files under `${fileOrDir.path}`"
 
   override fun getIndexingProgressText(): String {
@@ -19,9 +18,11 @@ class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile): Pro
     return IndexingBundle.message("indexable.files.provider.scanning.fileOrDir.name", fileOrDir.name)
   }
 
-  override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
-    return ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, fileIterator)
-  }
+  override fun iterateFiles(
+    project: Project,
+    fileIterator: ContentIterator,
+    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
+  ): Boolean = ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, fileIterator, indexableFilesDeduplicateFilter)
 
   override fun getFileOrDir(): VirtualFile {
     return fileOrDir

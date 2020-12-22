@@ -136,6 +136,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr {
             th("Provider name")
             th("Number of scanned files")
+            th("Number of skipped files, which are already iterated for a different entity")
             th("Number of files scheduled for indexing")
             th("Number of up-to-date files")
             th("Number of files indexed by infrastructure extensions")
@@ -150,6 +151,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             tr {
               td(scanningStats.providerName)
               td(scanningStats.numberOfScannedFiles.toString())
+              td(scanningStats.numberOfSkippedFiles.toString())
               td(scanningStats.numberOfFilesForIndexing.toString())
               td(scanningStats.numberOfUpToDateFiles.toString())
               td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())

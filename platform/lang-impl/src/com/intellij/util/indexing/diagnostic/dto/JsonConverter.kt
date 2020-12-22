@@ -15,6 +15,7 @@ fun ScanningStatistics.toJsonStatistics() =
     providerName = fileSetName,
     numberOfScannedFiles = numberOfScannedFiles,
     numberOfFilesForIndexing = numberOfFilesForIndexing,
+    numberOfSkippedFiles = numberOfSkippedFiles,
     numberOfUpToDateFiles = numberOfScannedFiles - numberOfFilesForIndexing,
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
     scanningTime = JsonDuration(scanningTime),

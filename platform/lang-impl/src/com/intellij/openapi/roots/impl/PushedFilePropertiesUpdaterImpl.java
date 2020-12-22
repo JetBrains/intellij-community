@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.roots.*;
@@ -198,7 +197,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       applyPushersToFile(fileOrDir, pushers, null);
       applyScannersToFile(fileOrDir, sessions);
       return true;
-    }, ConcurrentBitSet.create());
+    }, IndexableFilesDeduplicateFilter.create());
   }
 
   private void queueTasks(@NotNull List<? extends Runnable> actions) {
@@ -299,7 +298,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   public static void scanProject(@NotNull Project project, @NotNull Function<? super ModuleIndexableFilesIterator, ? extends ContentIteratorEx> iteratorProducer) {
     Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
-    ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
+    IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
     List<Runnable> tasks = Arrays.stream(modules)
       .flatMap(module -> {
         return ReadAction.compute(() -> {
@@ -311,7 +310,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
           })
             .stream()
             .map(pair -> (Runnable)() -> {
-            pair.files.iterateFiles(project, pair.iterator, visitedFileSet);
+            pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
           });
         });
       })

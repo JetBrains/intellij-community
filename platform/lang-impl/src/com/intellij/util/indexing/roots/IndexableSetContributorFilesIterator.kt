@@ -5,7 +5,6 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
 
@@ -36,13 +35,13 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
-    visitedFileSet: ConcurrentBitSet
+    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
   ): Boolean {
     val allRoots = runReadAction {
       if (projectAware) indexableSetContributor.getAdditionalProjectRootsToIndex(project)
       else indexableSetContributor.additionalRootsToIndex
     }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, allRoots, fileIterator, visitedFileSet)
+    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, allRoots, fileIterator, indexableFilesDeduplicateFilter)
   }
 
 }

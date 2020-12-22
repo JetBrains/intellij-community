@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
 class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryIndexableFilesIterator {
@@ -24,7 +23,11 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
   }
 
-  override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
+  override fun iterateFiles(
+    project: Project,
+    fileIterator: ContentIterator,
+    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
+  ): Boolean {
     @Suppress("DuplicatedCode")
     val roots = runReadAction {
       if (Disposer.isDisposed(library)) {
@@ -35,8 +38,7 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
         rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
       }
     }
-
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, visitedFileSet)
+    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, indexableFilesDeduplicateFilter)
   }
 
   override fun getLibrary(): Library {

@@ -23,13 +23,13 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
+import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl;
 import com.intellij.util.messages.MessageBusConnection;
@@ -290,7 +290,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex, myRunExtensionsForFilesMarkedAsIndexed);
 
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
-    ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
+    IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
 
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
     indicator.setIndeterminate(false);
@@ -305,6 +305,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       providerToFiles.put(provider, files);
       List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors =
         ContainerUtil.mapNotNull(sessions, s -> s.createVisitor(provider));
+
+      IndexableFilesDeduplicateFilter thisProviderDeduplicateFilter =
+        IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter);
 
       ContentIterator collectingIterator = fileOrDir -> {
         if (subTaskIndicator.isCanceled()) {
@@ -332,9 +335,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       return () -> {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
         try {
-          provider.iterateFiles(project, collectingIterator, visitedFileSet);
+          provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
         }
         finally {
+          scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
           synchronized (projectIndexingHistory) {
             projectIndexingHistory.addScanningStatistics(scanningStatistics);
           }

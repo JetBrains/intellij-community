@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.SyntheticLibrary
-import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
 internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticLibrary: SyntheticLibrary) : SyntheticLibraryIndexableFilesIterator {
@@ -32,9 +31,13 @@ internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticL
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
   }
 
-  override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
+  override fun iterateFiles(
+    project: Project,
+    fileIterator: ContentIterator,
+    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
+  ): Boolean {
     val roots = runReadAction { syntheticLibrary.allRoots }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, visitedFileSet)
+    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, indexableFilesDeduplicateFilter)
   }
 
   override fun getSyntheticLibrary(): SyntheticLibrary = syntheticLibrary

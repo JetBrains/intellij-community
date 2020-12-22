@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -19,12 +18,15 @@ import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import junit.framework.TestCase
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.TestName
+import kotlin.test.assertEquals
 
 @RunsInEdt
 abstract class IndexableFilesBaseTest {
@@ -65,14 +67,18 @@ abstract class IndexableFilesBaseTest {
   }
 
   protected fun assertIndexableFiles(vararg expectedFiles: VirtualFile) {
+    assertIndexableFiles(expectedNumberOfSkippedFiles = 0, expectedFiles = expectedFiles)
+  }
+
+  protected fun assertIndexableFiles(expectedNumberOfSkippedFiles: Int, vararg expectedFiles: VirtualFile) {
     val actualIndexed = hashSetOf<VirtualFile>()
     val collector = { fileOrDir: VirtualFile ->
       if (!actualIndexed.add(fileOrDir)) {
-        TestCase.fail("$fileOrDir is indexed twice")
+        TestCase.fail("$fileOrDir is scheduled for indexing twice")
       }
       true
     }
-    FileBasedIndex.getInstance().iterateIndexableFiles(collector, project, EmptyProgressIndicator())
+    iterateIndexableFiles(collector, project, expectedNumberOfSkippedFiles)
     val actualFiles = actualIndexed.filter { !it.isDirectory || it.`is`(VFileProperty.SYMLINK) }
     if (expectedFiles.isEmpty()) {
       Assertions.assertThat(actualFiles).isEmpty()
@@ -80,6 +86,16 @@ abstract class IndexableFilesBaseTest {
     else {
       Assertions.assertThat(actualFiles).containsExactlyInAnyOrderElementsOf(expectedFiles.toList())
     }
+  }
+
+  private fun iterateIndexableFiles(processor: (VirtualFile) -> Boolean, project: Project, expectedNumberOfSkippedFiles: Int) {
+    val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
+    val providers = fileBasedIndexEx.getOrderedIndexableFilesProviders (project)
+    val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
+    for (provider in providers) {
+      provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)
+    }
+    assertEquals(expectedNumberOfSkippedFiles, indexableFilesDeduplicateFilter.numberOfSkippedFiles)
   }
 
   protected fun maskIndexableSetContributors(vararg indexableSetContributor: IndexableSetContributor) {

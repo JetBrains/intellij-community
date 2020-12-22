@@ -85,6 +85,47 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
   }
 
   @Test
+  fun `indexing files of two libraries pointing to the same files must skip the same files`() {
+    val commonRoot = tempDirectory.newVirtualDirectory("library")
+    lateinit var classFile: FileSpec
+    lateinit var classesDir: DirectorySpec
+    lateinit var excludedClassesDir: DirectorySpec
+
+    lateinit var sourceFile: FileSpec
+    lateinit var sourcesDir: DirectorySpec
+    lateinit var excludedSourcesDir: DirectorySpec
+
+    buildDirectoryContent(commonRoot) {
+      dir("library") {
+        classesDir = dir("classes") {
+          excludedClassesDir = dir("excluded") {
+            file("ExcludedClassFile.java", "class ExcludedClassFile {}")
+          }
+          classFile = file("ClassFile.java", "class ClassFile {}")
+        }
+        sourcesDir = dir("sources") {
+          excludedSourcesDir = dir("excluded") {
+            file("ExcludedSourceFile.java", "class ExcludedSourceFile {}")
+          }
+          sourceFile = file("SourceFile.java", "class SourceFile {}")
+        }
+      }
+    }
+    val module = projectModelRule.createModule()
+    for (libraryName in listOf("libraryOne", "libraryTwo")) {
+      projectModelRule.addModuleLevelLibrary(module, libraryName) { model ->
+        model.addRoot(classesDir.file, OrderRootType.CLASSES)
+        model.addRoot(sourcesDir.file, OrderRootType.SOURCES)
+        model.addExcludedRoot(excludedClassesDir.file.url)
+        model.addExcludedRoot(excludedSourcesDir.file.url)
+      }
+    }
+    // ClassFile.java and SourceFile.java are iterated by only one of the "file iterators"
+    // So they must be skipped when iterating for the second time.
+    assertIndexableFiles(expectedNumberOfSkippedFiles = 2, expectedFiles = arrayOf(classFile.file, sourceFile.file))
+  }
+
+  @Test
   fun `indexing files of an SDK`() {
     val sdkRoot = tempDirectory.newVirtualDirectory("sdkRoot")
     lateinit var classFile: FileSpec

@@ -22,12 +22,12 @@ import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
+import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -419,7 +419,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
     List<IndexableFilesIterator> providers = getOrderedIndexableFilesProviders(project);
-    ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
+    IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
     boolean wasIndeterminate = false;
     if (indicator != null) {
       wasIndeterminate = indicator.isIndeterminate();
@@ -433,7 +433,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
           indicator.checkCanceled();
         }
         IndexableFilesIterator provider = providers.get(i);
-        if (!provider.iterateFiles(project, processor, visitedFileSet)) {
+        if (!provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)) {
           break;
         }
         if (indicator != null) {
