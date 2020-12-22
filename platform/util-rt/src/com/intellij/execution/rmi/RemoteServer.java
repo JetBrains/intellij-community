@@ -58,7 +58,7 @@ public class RemoteServer {
   private static Remote ourRemote;
 
   protected static void start(Remote remote) throws Exception {
-    start(remote, false, false);
+    start(remote, false, true);
   }
 
   /**
