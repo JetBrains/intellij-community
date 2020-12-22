@@ -146,7 +146,8 @@ open class ImportSettingsAction : AnAction(), DumbAware {
   private fun doImportFromDirectory(saveFile: Path) {
     val confirmationMessage =
       ConfigurationStoreBundle.message("import.settings.confirmation.message", saveFile) + "\n\n" +
-      ConfigurationStoreBundle.message("restore.default.settings.confirmation.message", ConfigImportHelper.getBackupPath())
+      ConfigurationStoreBundle.message("restore.default.settings.confirmation.message", ConfigBackup.getNextBackupPath(
+        PathManager.getConfigDir()))
 
     if (confirmRestart(confirmationMessage)) {
       CustomConfigMigrationOption.MigrateFromCustomPlace(saveFile).writeConfigMarkerFile()
