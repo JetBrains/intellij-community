@@ -8,18 +8,39 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class FloatingToolbarComponentImpl(
+  override val provider: FloatingToolbarProvider,
   parentComponent: JComponent,
   contextComponent: JComponent,
-  actionGroup: ActionGroup,
-  autoHideable: Boolean,
   parentDisposable: Disposable
 ) : JPanel(), FloatingToolbarComponent {
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated("Use primary constructor instead")
+  constructor(
+    parentComponent: JComponent,
+    contextComponent: JComponent,
+    actionGroup: ActionGroup,
+    autoHideable: Boolean,
+    parentDisposable: Disposable
+  ) : this(
+    object : FloatingToolbarProvider {
+      override val id = "Deprecated"
+      override val priority = 0
+      override val autoHideable = autoHideable
+      override val actionGroup = actionGroup
+    },
+    parentComponent,
+    contextComponent,
+    parentDisposable
+  )
 
   private val actionToolbar: ActionToolbar
   private val visibilityController: VisibilityController
@@ -75,7 +96,7 @@ class FloatingToolbarComponentImpl(
     isOpaque = false
     isVisible = false
 
-    actionToolbar = ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true)
+    actionToolbar = ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, provider.actionGroup, true)
     actionToolbar.setTargetComponent(contextComponent)
     actionToolbar.setMinimumButtonSize(Dimension(22, 22))
     actionToolbar.setSkipWindowAdjustments(true)
@@ -83,7 +104,7 @@ class FloatingToolbarComponentImpl(
     actionToolbar.isOpaque = false
     add(actionToolbar, BorderLayout.CENTER)
 
-    visibilityController = ToolbarVisibilityController(autoHideable, parentComponent, actionToolbar, this)
+    visibilityController = ToolbarVisibilityController(provider.autoHideable, parentComponent, actionToolbar, this)
     visibilityController.scheduleHide()
 
     Disposer.register(parentDisposable, visibilityController)

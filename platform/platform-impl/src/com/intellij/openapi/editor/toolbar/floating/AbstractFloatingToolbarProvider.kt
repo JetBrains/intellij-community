@@ -2,14 +2,17 @@
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProviderBean.Companion.resolveActionGroup
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.reflect.jvm.jvmName
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@Deprecated("Use FloatingToolbarProviderBean instead")
 abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : FloatingToolbarProvider {
+
+  override val id by lazy { this::class.jvmName }
 
   override val actionGroup = resolveActionGroup(actionGroupId)
 
@@ -26,20 +29,5 @@ abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : Floating
 
   fun scheduleHideAllToolbarComponents() {
     toolbars.forEach { it.scheduleHide() }
-  }
-
-  companion object {
-
-    private val LOG = Logger.getInstance("#com.intellij.openapi.editor.toolbar.floating")
-
-    private fun resolveActionGroup(actionGroupId: String): ActionGroup {
-      val actionManager = ActionManager.getInstance()
-      val action = actionManager.getAction(actionGroupId)
-      if (action is ActionGroup) return action
-      LOG.warn("Cannot initialize action group using (${action::class.java})")
-      val defaultActionGroup = DefaultActionGroup()
-      actionManager.registerAction(actionGroupId, defaultActionGroup)
-      return defaultActionGroup
-    }
   }
 }

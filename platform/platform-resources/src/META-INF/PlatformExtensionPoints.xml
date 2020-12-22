@@ -143,7 +143,9 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.EditorActionHandler"/>
     </extensionPoint>
 
-    <extensionPoint name="editorFloatingToolbarProvider" interface="com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider" dynamic="true"/>
+    <extensionPoint name="editorFloatingToolbarProvider"
+                    beanClass="com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProviderBean"
+                    dynamic="true"/>
 
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
 

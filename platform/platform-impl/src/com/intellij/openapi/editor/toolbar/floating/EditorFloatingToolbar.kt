@@ -21,23 +21,21 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     val targetComponent = editor.contentComponent
     val container = editor.scrollPane
     val parentDisposable = editor.disposable
-    val toolbarComponents = ArrayList<Pair<FloatingToolbarProvider, FloatingToolbarComponentImpl>>()
+    val toolbarComponents = ArrayList<FloatingToolbarComponentImpl>()
     EP_NAME.forEachExtensionSafe { provider ->
-      val actionGroup = provider.actionGroup
-      val autoHideable = provider.autoHideable
-      val component = FloatingToolbarComponentImpl(this, targetComponent, actionGroup, autoHideable, parentDisposable)
-      provider.register(component, parentDisposable)
-      toolbarComponents.add(provider to component)
+      toolbarComponents.add(FloatingToolbarComponentImpl(provider, this, targetComponent, parentDisposable))
     }
-    toolbarComponents.sortBy { it.first.priority }
-    toolbarComponents.forEach { add(it.second) }
+    toolbarComponents.sortBy { it.provider.priority }
+    toolbarComponents.forEach { add(it) }
 
     editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
       override fun mouseMoved(e: EditorMouseEvent) {
-        if (!isInsideActivationArea(container, e.mouseEvent.point)) return
-        for ((provider, component) in toolbarComponents) {
-          if (!provider.autoHideable) continue
-          component.scheduleShow()
+        if (isInsideActivationArea(container, e.mouseEvent.point)) {
+          for (component in toolbarComponents) {
+            if (component.provider.autoHideable) {
+              component.scheduleShow()
+            }
+          }
         }
       }
     })
@@ -45,6 +43,10 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
 
   companion object {
     val EP_NAME = ExtensionPointName.create<FloatingToolbarProvider>("com.intellij.editorFloatingToolbarProvider")
+
+    fun getProvider(id: String): FloatingToolbarProvider {
+      return EP_NAME.findFirstSafe { it.id == id }!!
+    }
 
     private fun isInsideActivationArea(container: JScrollPane, p: Point): Boolean {
       val viewport = container.viewport
