@@ -313,6 +313,14 @@ final class VariableExtractor {
         expr = (PsiExpression)anchor;
       }
     }
+    while (anchor instanceof PsiExpressionListStatement && anchor.getParent() instanceof PsiCodeBlock) {
+      // ExpressionListStatement inside the code block signals about significant syntax errors
+      // Let's try to find more valid statement
+      PsiStatement prev = PsiTreeUtil.getPrevSiblingOfType(anchor, PsiStatement.class);
+      if (prev != null) {
+        anchor = prev;
+      }
+    }
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
     if (HighlightingFeature.PATTERNS.isAvailable(anchor)) {
