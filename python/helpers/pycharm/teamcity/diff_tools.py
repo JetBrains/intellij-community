@@ -31,9 +31,9 @@ def patch_unittest_diff(test_filter=None):
         try:
             old(self, first, second, msg)
             return
-        except AssertionError:
+        except AssertionError as e:
             if not test_filter or test_filter(self):
-                error = EqualsAssertionError(first, second, msg)
+                error = EqualsAssertionError(first, second, msg, real_exception=e)
                 if error.can_be_serialized():
                     from .jb_local_exc_store import store_exception
                     store_exception(error)
@@ -51,7 +51,9 @@ class EqualsAssertionError(AssertionError):
     MESSAGE_SEP = " :: "
     NOT_EQ_SEP = " != "
 
-    def __init__(self, expected, actual, msg=None, preformated=False):
+    # Real exception could be provided, but not serialized
+    def __init__(self, expected, actual, msg=None, preformated=False, real_exception=None):
+        self.real_exception = real_exception
         self.expected = expected
         self.actual = actual
         self.msg = text_type(msg)

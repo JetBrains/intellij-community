@@ -94,7 +94,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                              "Actual   :B\n" +
                                              "<Click to see difference>";
           assertThat("No diff", runner.getAllConsoleText(), containsString(expectedConsoleText));
-          assertThat("Wrong line", runner.getAllConsoleText(), containsString("test_diff.py:7"));
+          assertThat("Wrong line", runner.getAllConsoleText(), containsString("test_diff.py:7: AssertionError"));
         }
       });
   }
