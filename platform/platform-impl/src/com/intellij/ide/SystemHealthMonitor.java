@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
@@ -45,7 +46,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
   private static final String DISPLAY_ID = "System Health";
-  private static final int MIN_RESERVED_CODE_CACHE_SIZE = SystemInfo.is64Bit ? 512 : 384;
+  private static final int MIN_RESERVED_CODE_CACHE_SIZE = PluginManagerCore.isRunningFromSources() ? 240 : SystemInfo.is64Bit ? 512 : 384;
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
