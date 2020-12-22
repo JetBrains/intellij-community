@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.EditableModel;
@@ -109,11 +107,6 @@ class TreeToolbarDecorator extends ToolbarDecorator {
         }
       }
     };
-  }
-
-  @Override
-  public @NotNull ToolbarDecorator initPosition() {
-    return setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
   }
 
   @Override
