@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
+import static com.intellij.ide.macro.CompilerContextMakeMacro.COMPILER_CONTEXT_MAKE_KEY;
+
 class AntBeforeCompileTask implements CompileTask {
   @Override
   public boolean execute(CompileContext context) {
@@ -49,7 +51,7 @@ class AntBeforeCompileTask implements CompileTask {
       dataMap.put(LangDataKeys.MODULE.getName(), modules[0]);
     }
     dataMap.put(LangDataKeys.MODULE_CONTEXT_ARRAY.getName(), modules);
-    dataMap.put("COMPILER_CONTEXT_MAKE", context.isMake());
+    dataMap.put(COMPILER_CONTEXT_MAKE_KEY.getName(), context.isMake());
     return SimpleDataContext.getSimpleContext(dataMap, null);
   }
 

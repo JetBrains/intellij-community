@@ -18,9 +18,13 @@ package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompilerContextMakeMacro extends Macro {
+
+  public static final DataKey<Boolean> COMPILER_CONTEXT_MAKE_KEY = DataKey.create("COMPILER_CONTEXT_MAKE");
+
   @NotNull
   @Override
   public String getName() {
@@ -35,10 +39,7 @@ public final class CompilerContextMakeMacro extends Macro {
 
   @Override
   public String expand(@NotNull DataContext dataContext) {
-    Object make = dataContext.getData("COMPILER_CONTEXT_MAKE");
-    if (make instanceof Boolean) {
-      return make.toString();
-    }
-    return null;
+    Boolean make = dataContext.getData(COMPILER_CONTEXT_MAKE_KEY);
+    return make != null ? make.toString() : null;
   }
 }

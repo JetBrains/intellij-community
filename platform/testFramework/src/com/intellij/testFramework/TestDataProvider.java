@@ -69,7 +69,7 @@ public class TestDataProvider implements DataProvider, DataContext {
       return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
     }
     else {
-      Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
+      Editor editor = getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         Object managerData = manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
         if (managerData != null) {

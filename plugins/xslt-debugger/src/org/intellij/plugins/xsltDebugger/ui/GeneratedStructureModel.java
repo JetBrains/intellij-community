@@ -298,7 +298,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
     @Override
     public void navigate(boolean requestFocus) {
       final OutputEventQueue.NodeEvent event = getUserObject();
-      final Project project = (Project)DataManager.getInstance().getDataContext().getData(CommonDataKeys.PROJECT.getName());
+      final Project project = DataManager.getInstance().getDataContext().getData(CommonDataKeys.PROJECT);
       XsltDebuggerSession.openLocation(project, event.getURI(), event.getLineNumber() - 1);
     }
 
