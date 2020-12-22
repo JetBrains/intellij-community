@@ -2128,6 +2128,7 @@ interface RegisterToolWindowTaskProvider {
   fun getTasks(project: Project): Collection<ToolWindowEP>
 }
 
+//Adding or removing items? Don't forget to increment the version in ToolWindowEventLogGroup.GROUP
 enum class ToolWindowEventSource {
   StripeButton, ToolWindowHeader, ToolWindowHeaderAltClick, Content, Switcher, SwitcherSearch,
   ToolWindowsWidget, RemoveStripeButtonAction,
