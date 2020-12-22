@@ -17,6 +17,8 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,11 +34,7 @@ abstract class ChangeViewTypeActionBase extends ChangeHierarchyViewActionBase {
   }
 
   @Override
-  protected TypeHierarchyBrowserBase getHierarchyBrowser(final DataContext context) {
-    return getTypeHierarchyBrowser(context);
-  }
-
-  static TypeHierarchyBrowserBase getTypeHierarchyBrowser(final DataContext context) {
-    return TypeHierarchyBrowserBase.DATA_KEY.getData(context);
+  protected TypeHierarchyBrowserBase getHierarchyBrowser(DataContext context) {
+    return UIUtil.getParentOfType(TypeHierarchyBrowserBase.class, context.getData(PlatformDataKeys.CONTEXT_COMPONENT));
   }
 }

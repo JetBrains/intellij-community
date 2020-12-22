@@ -48,6 +48,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -229,9 +230,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @NotNull
   protected abstract String getActionPlace();
-
-  @NotNull
-  protected abstract String getBrowserDataKey();
 
   @Nullable
   protected Color getFileColorForNode(Object node) {
@@ -551,9 +549,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @Override
   public Object getData(@NotNull final String dataId) {
-    if (getBrowserDataKey().equals(dataId)) {
-      return this;
-    }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
@@ -651,27 +646,31 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   protected static class BaseOnThisElementAction extends AnAction {
-    private final String myBrowserDataKey;
+    private final Class<? extends HierarchyBrowserBaseEx> myBrowserClass;
     private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
     protected BaseOnThisElementAction(@NotNull String text,
-                                      @NotNull String browserDataKey,
+                                      @NotNull Class<? extends HierarchyBrowserBaseEx> browserClass,
                                       @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
-      this(() -> text, browserDataKey, providerLanguageExtension);
+      this(() -> text, browserClass, providerLanguageExtension);
     }
 
     protected BaseOnThisElementAction(@NotNull Supplier<String> text,
-                                      @NotNull String browserDataKey,
+                                      @NotNull Class<? extends HierarchyBrowserBaseEx> browserClass,
                                       @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
       super(text);
-      myBrowserDataKey = browserDataKey;
+      myBrowserClass = browserClass;
       myProviderLanguageExtension = providerLanguageExtension;
+    }
+
+    @Nullable
+    private HierarchyBrowserBaseEx getHierarchyBrowser(@NotNull AnActionEvent event) {
+      return UIUtil.getParentOfType(myBrowserClass, event.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     }
 
     @Override
     public final void actionPerformed(@NotNull final AnActionEvent event) {
-      final DataContext dataContext = event.getDataContext();
-      final HierarchyBrowserBaseEx browser = (HierarchyBrowserBaseEx)dataContext.getData(myBrowserDataKey);
+      HierarchyBrowserBaseEx browser = getHierarchyBrowser(event);
       if (browser == null) return;
 
       final PsiElement selectedElement = browser.getSelectedElement();
@@ -696,8 +695,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     public final void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
 
-      final DataContext dataContext = event.getDataContext();
-      final HierarchyBrowserBaseEx browser = (HierarchyBrowserBaseEx)dataContext.getData(myBrowserDataKey);
+      HierarchyBrowserBaseEx browser = getHierarchyBrowser(event);
       if (browser == null) {
         presentation.setEnabledAndVisible(false);
         return;

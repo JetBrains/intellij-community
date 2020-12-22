@@ -4,7 +4,6 @@ package com.intellij.ide.hierarchy.method;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -17,7 +16,9 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +30,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
   @Override
   public final void actionPerformed(@NotNull final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)MethodHierarchyBrowserBase.DATA_KEY.getData(dataContext);
+    MethodHierarchyBrowser methodHierarchyBrowser = getMethodHierarchyBrowser(event);
     if (methodHierarchyBrowser == null) return;
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
@@ -77,7 +78,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
 
-    final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)MethodHierarchyBrowserBase.DATA_KEY.getData(dataContext);
+    MethodHierarchyBrowser methodHierarchyBrowser = getMethodHierarchyBrowser(e);
     if (methodHierarchyBrowser == null) {
       presentation.setEnabledAndVisible(false);
       return;
@@ -119,6 +120,11 @@ abstract class OverrideImplementMethodAction extends AnAction {
     presentation.setVisible(true);
 
     update(presentation, toImplement, toOverride);
+  }
+
+  @Nullable
+  private static MethodHierarchyBrowser getMethodHierarchyBrowser(@NotNull AnActionEvent event) {
+    return UIUtil.getParentOfType(MethodHierarchyBrowser.class, event.getData(PlatformDataKeys.CONTEXT_COMPONENT));
   }
 
   protected abstract void update(Presentation presentation, int toImplement, int toOverride);
