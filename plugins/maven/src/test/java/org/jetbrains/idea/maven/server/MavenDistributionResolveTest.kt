@@ -6,6 +6,7 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.replaceService
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.ZipUtil
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
@@ -18,7 +19,7 @@ import java.net.InetSocketAddress
 import java.util.zip.ZipOutputStream
 
 class MavenDistributionResolveTest : MavenImportingTestCase() {
-  private val myEvents: MutableList<BuildEvent> = ArrayList()
+  private val myEvents: MutableList<Pair<BuildEvent, Throwable>> = ArrayList()
   private lateinit var mySyncViewManager: SyncViewManager;
 
   @Throws(Exception::class)
@@ -27,7 +28,7 @@ class MavenDistributionResolveTest : MavenImportingTestCase() {
     mySyncViewManager = object : SyncViewManager(myProject) {
       override fun onEvent(buildId: Any,
                            event: BuildEvent) {
-        myEvents.add(event)
+        myEvents.add(event to Exception())
       }
     }
     myProject.replaceService(SyncViewManager::class.java, mySyncViewManager, testRootDisposable)
@@ -103,7 +104,7 @@ class MavenDistributionResolveTest : MavenImportingTestCase() {
     importProject()
     val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
     assertEquals(MavenServerManager.resolveEmbeddedMavenHome().mavenHome.canonicalPath, connector.mavenDistribution.mavenHome.canonicalPath)
-    assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }
+    assertContains<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }
   }
 
 
@@ -127,16 +128,28 @@ class MavenDistributionResolveTest : MavenImportingTestCase() {
     finally {
       server.stop(0)
     }
+
   }
 
-  private inline fun <reified T: BuildEvent> assertContainsOnce(predicate: (T) -> Boolean) {
-    val filteredList = myEvents.filter { it is T && predicate(it) }
+  private inline fun <reified T: BuildEvent> assertContains(predicate: (T) -> Boolean) {
+    val filteredList = myEvents.filter { val event = it.first; event is T && predicate(event) }
     assertFalse("Expected event not found", filteredList.isEmpty())
-    assertEquals("Event was received several times", 1, filteredList.size)
+  }
+
+
+  private inline fun <reified T: BuildEvent> assertContainsOnce(predicate: (T) -> Boolean) {
+    val filteredList = myEvents.filter { val event = it.first; event is T && predicate(event) }
+    assertFalse("Expected event not found", filteredList.isEmpty())
+    assertEquals("Event was received several times: See stacktraces \n ${getStacktraces(filteredList.map { it.second })}", 1, filteredList.size)
   }
 
   private inline fun <reified T: BuildEvent> assertNotContains(predicate: (T) -> Boolean) {
-    assertFalse("Event found but not expected", myEvents.any { it is T && predicate(it) })
+    val filtered = myEvents.filter {val event = it.first; event is T && predicate(event)}
+    assertEmpty("Event found but not expected: stacktraces: ${getStacktraces(filtered.map { it.second })}",filtered)
+  }
+
+  private fun getStacktraces(exceptions: List<Throwable>): String {
+    return exceptions.asSequence().map(ExceptionUtil::getThrowableText).joinToString("\n-------------------\n");
   }
 
 
