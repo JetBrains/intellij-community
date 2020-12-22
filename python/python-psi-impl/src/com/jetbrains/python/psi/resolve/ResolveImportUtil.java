@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -47,7 +48,8 @@ public final class ResolveImportUtil {
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
         if (pyFile.getLanguageLevel().isPy3K()) {
-          if (foothold.getManager().isInProject(foothold) && Registry.is("python.explicit.namespace.packages")) {
+          PsiElement originalFoothold = CompletionUtilCoreImpl.getOriginalOrSelf(foothold);
+          if (foothold.getManager().isInProject(originalFoothold) && Registry.is("python.explicit.namespace.packages")) {
             return false;
           }
           return true;

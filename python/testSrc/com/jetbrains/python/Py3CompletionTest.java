@@ -491,6 +491,16 @@ public class Py3CompletionTest extends PyTestCase {
     });
   }
 
+  // PY-46054
+  public void testFromImportFromSameDirectoryModule() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile("foo_bar/sample.py");
+      myFixture.completeBasic();
+      myFixture.checkResultByFile(getTestName(true) + "/foo_bar/sample.after.py");
+    });
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
