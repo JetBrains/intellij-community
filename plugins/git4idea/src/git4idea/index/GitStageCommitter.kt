@@ -40,7 +40,7 @@ internal class GitStageCommitter(
       try {
         val toStageInRoot = toStage[root]
         if (toStageInRoot?.isNotEmpty() == true) {
-          addPaths(project, root, toStageInRoot)
+          addPaths(project, root, toStageInRoot, true)
         }
 
         val repository = getRepositoryForFile(project, root)
