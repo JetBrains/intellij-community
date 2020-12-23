@@ -13,7 +13,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
 
-class ProjectNotificationAware : Disposable {
+class ProjectNotificationAware(private val project: Project) : Disposable {
   private var isHidden = false
   private val projectsWithNotification = HashSet<ExternalSystemProjectId>()
 
@@ -45,8 +45,8 @@ class ProjectNotificationAware : Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val toolbarProvider = EditorFloatingToolbar.getProvider("ExternalSystem.ProjectRefreshFloatingProvider")
     when (isNotificationVisible()) {
-      true -> toolbarProvider.scheduleShowAllToolbarComponents()
-      else -> toolbarProvider.scheduleHideAllToolbarComponents()
+      true -> toolbarProvider.scheduleShowAllToolbarComponents(project)
+      else -> toolbarProvider.scheduleHideAllToolbarComponents(project)
     }
   }
 
