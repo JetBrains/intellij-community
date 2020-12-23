@@ -36,7 +36,6 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
     val jvmData = FeatureUsageData().
       addVersion(Version(1, JavaVersion.current().feature, 0)).
-      addData("bit", if (SystemInfo.is32Bit) "32" else "64").
       addData("arch", CpuArch.CURRENT.name.toLowerCase(Locale.ENGLISH)).
       addData("vendor", getJavaVendor())
     result.add(newMetric("jvm", jvmData))
