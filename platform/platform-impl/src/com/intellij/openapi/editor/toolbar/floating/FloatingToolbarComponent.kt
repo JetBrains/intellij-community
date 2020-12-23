@@ -8,7 +8,7 @@ interface FloatingToolbarComponent {
   val provider: FloatingToolbarProvider
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated("Floating toolbar component should has auto-update")
+  @Deprecated("Floating toolbar component should have auto-update")
   fun update() {
   }
 
