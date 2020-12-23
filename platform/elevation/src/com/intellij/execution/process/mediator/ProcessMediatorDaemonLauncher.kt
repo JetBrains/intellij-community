@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ExceptionUtil
@@ -41,6 +42,8 @@ import java.io.Reader
 import java.net.InetAddress
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 private typealias Port = Int
 
@@ -48,7 +51,7 @@ private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
+open class ProcessMediatorDaemonLauncher {
   fun launchDaemon(): ProcessMediatorDaemon {
     return GlobalScope.async(Dispatchers.IO) {
       createHandshakeTransport().use { handshakeTransport ->
@@ -100,40 +103,77 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
 
   private fun handshakeFailed(processHandler: BaseOSProcessHandler,
                               output: ProcessOutput,
-                              error: IOException? = null): Nothing = synchronized(output) {
-    val stderr = output.stderr
-    val errorExit =
+                              exception: IOException? = null): Nothing = synchronized(output) {
+    val errorExitCodeString =
       if (output.isExitCodeSet && output.exitCode != 0) ProcessTerminatedListener.stringifyExitCode(output.exitCode)
       else null
 
-    ElevationLogger.LOG.warn("Reading handshake failed", error)
-    if (errorExit != null) {
-      ElevationLogger.LOG.warn("Daemon process finished with exit code $errorExit")
+    ElevationLogger.LOG.warn("Reading handshake failed", exception)
+    if (errorExitCodeString != null) {
+      ElevationLogger.LOG.warn("Daemon process finished with exit code $errorExitCodeString")
     }
-    ElevationLogger.LOG.warn("Daemon process stderr:\n$stderr")
-
-    val sudoPath: Path? = processHandler.getUserData(SUDO_PATH_KEY)
-    if (SystemInfo.isMac) {
-      if (output.isExitCodeSet && output.exitCode == 1 &&
-          sudoPath != null && "osascript" in sudoPath.fileName.toString() &&
-          "execution error: User cancelled" in stderr) {
-        throw ProcessCanceledException()
-      }
-    }
+    ElevationLogger.LOG.warn("Daemon process stderr:\n${output.stderr}")
 
     val reason = when {
-      errorExit != null -> IdeBundle.message("finished.with.exit.code.text.message", errorExit)
-      error == null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.eof")
+      errorExitCodeString != null -> IdeBundle.message("finished.with.exit.code.text.message", errorExitCodeString)
+      exception == null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.eof")
       else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.ioe")
     }
-    val message = when (sudoPath) {
-      null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
-      else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.with.sudo", sudoPath.fileName, reason)
-    }
+    handshakeFailed(processHandler, output, reason)
+  }
+
+  protected open fun handshakeFailed(processHandler: BaseOSProcessHandler,
+                                     output: ProcessOutput,
+                                     reason: @NlsContexts.DialogMessage String?): Nothing {
+    val message = ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
     throw ExecutionException(message)
   }
 
-  private fun createHandshakeTransport(): HandshakeTransport {
+  protected open fun createHandshakeTransport(): HandshakeTransport {
+    return HandshakeTransport.createProcessStdoutTransport(createBaseLaunchOptions())
+  }
+
+  protected open fun createBaseLaunchOptions(): DaemonLaunchOptions {
+    return DaemonLaunchOptions(leaderPid = ProcessHandle.current().pid().takeIf { SystemInfo.isUnix })
+  }
+
+  protected fun createCommandLine(transport: HandshakeTransport): GeneralCommandLine {
+    val daemonLaunchOptions = transport.getDaemonLaunchOptions()
+    return createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
+                                   ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+      .withParameters(daemonLaunchOptions.asCmdlineArgs())
+  }
+
+  protected open fun createProcessHandler(transport: HandshakeTransport): BaseOSProcessHandler {
+    val commandLine = createCommandLine(transport)
+    return createProcessHandler(transport, commandLine)
+  }
+
+  protected fun createProcessHandler(transport: HandshakeTransport,
+                                     commandLine: GeneralCommandLine): OSProcessHandler.Silent {
+    val processHandler =
+      if (transport !is ProcessStdoutHandshakeTransport) {
+        OSProcessHandler.Silent(commandLine)
+      }
+      else {
+        object : OSProcessHandler.Silent(commandLine) {
+          override fun createProcessOutReader(): Reader {
+            return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
+          }
+        }.also {
+          transport.initStream(it.process.inputStream)
+        }
+      }
+    return processHandler.apply {
+      addProcessListener(LoggingProcessListener)
+    }
+  }
+}
+
+
+class ElevationDaemonLauncher : ProcessMediatorDaemonLauncher() {
+  override fun createHandshakeTransport(): HandshakeTransport {
     // Unix sudo may take different forms, and not all of them are reliable in terms of process lifecycle management,
     // input/output redirection, and so on. To overcome the limitations we use an RSA-secured channel for initial communication
     // instead of process stdio, and launch it in a trampoline mode. In this mode the sudo'ed process forks the real daemon process,
@@ -142,7 +182,7 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
     // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
     // we want it to finish as soon as possible.
     return if (SystemInfo.isWindows) {
-      HandshakeTransport.createProcessStdoutTransport(createBaseLaunchOptions())
+      super.createHandshakeTransport()
     }
     else try {
       openUnixHandshakeTransport()
@@ -171,55 +211,44 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
       .encrypted()
   }
 
-  private fun createBaseLaunchOptions(): DaemonLaunchOptions {
-    return if (SystemInfo.isWindows)
-      DaemonLaunchOptions()
-    else
-      DaemonLaunchOptions(trampoline = sudo, daemonize = sudo,
-                          leaderPid = ProcessHandle.current().pid(),
-                          machNamespaceUid = if (SystemInfo.isMac) LibC.INSTANCE.getuid() else null)
+  override fun createBaseLaunchOptions(): DaemonLaunchOptions {
+    return super.createBaseLaunchOptions().let {
+      if (SystemInfo.isWindows) it
+      else it.copy(trampoline = true, daemonize = true,
+                   machNamespaceUid = if (SystemInfo.isMac) LibC.INSTANCE.getuid() else null)
+    }
   }
 
-  private fun createCommandLine(transport: HandshakeTransport): GeneralCommandLine {
-    val daemonLaunchOptions = transport.getDaemonLaunchOptions()
-    return createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
-                                   ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
-      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
-      .withParameters(daemonLaunchOptions.asCmdlineArgs())
-  }
+  override fun createProcessHandler(transport: HandshakeTransport): BaseOSProcessHandler {
+    val commandLine = createCommandLine(transport)
+    val sudoCommandLine = ExecUtil.sudoCommand(commandLine,
+                                               ElevationBundle.message("dialog.title.sudo.prompt.product.elevation.daemon",
+                                                                       ApplicationNamesInfo.getInstance().fullProductName))
+    val sudoPath = if (sudoCommandLine !== commandLine) Path.of(sudoCommandLine.exePath) else null
 
-  private fun createProcessHandler(transport: HandshakeTransport): BaseOSProcessHandler {
-    val daemonCommandLine = createCommandLine(transport)
-    val sudoCommandLine =
-      if (!sudo) daemonCommandLine
-      else ExecUtil.sudoCommand(daemonCommandLine, ElevationBundle.message("dialog.title.sudo.prompt.product.elevation.daemon",
-                                                                           ApplicationNamesInfo.getInstance().fullProductName))
-    val sudoPath = if (sudoCommandLine !== daemonCommandLine) Path.of(sudoCommandLine.exePath) else null
-
-    val processHandler = createProcessHandler(transport, sudoCommandLine)
-    return processHandler.apply {
+    return createProcessHandler(transport, sudoCommandLine).apply {
       putUserData(SUDO_PATH_KEY, sudoPath)
     }
   }
 
-  private fun createProcessHandler(transport: HandshakeTransport,
-                                   commandLine: GeneralCommandLine): OSProcessHandler.Silent {
-    val processHandler =
-      if (transport !is ProcessStdoutHandshakeTransport) {
-        OSProcessHandler.Silent(commandLine)
+  override fun handshakeFailed(processHandler: BaseOSProcessHandler,
+                               output: ProcessOutput,
+                               reason: @NlsContexts.DialogMessage String?): Nothing {
+    val sudoPath: Path? = processHandler.getUserData(SUDO_PATH_KEY)
+
+    if (SystemInfo.isMac) {
+      if (output.isExitCodeSet && output.exitCode == 1 &&
+          sudoPath != null && "osascript" in sudoPath.fileName.toString() &&
+          "execution error: User cancelled" in output.stderr) {
+        throw ProcessCanceledException()
       }
-      else {
-        object : OSProcessHandler.Silent(commandLine) {
-          override fun createProcessOutReader(): Reader {
-            return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
-          }
-        }.also {
-          transport.initStream(it.process.inputStream)
-        }
-      }
-    return processHandler.apply {
-      addProcessListener(LoggingProcessListener)
     }
+
+    val message = when (sudoPath) {
+      null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
+      else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.with.sudo", sudoPath.fileName, reason)
+    }
+    throw ExecutionException(message)
   }
 
   companion object {
