@@ -9,10 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
@@ -92,6 +89,21 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     val result = updater(builder)
     entityStorage.replaceSilently(builder.toStorage())
     return result
+  }
+
+  override fun getBuilderSnapshot(): BuilderSnapshot {
+    val current = entityStorage.pointer
+    return BuilderSnapshot(current.version, current.storage)
+  }
+
+  override fun replaceProjectModel(replacement: StorageReplacement): Boolean {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+
+    if (entityStorage.version != replacement.version) return false
+
+    entityStorage.replace(replacement.snapshot, replacement.changes, this::onBeforeChanged, this::onChanged)
+
+    return true
   }
 
   override fun dispose() = Unit

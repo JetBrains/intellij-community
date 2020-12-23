@@ -9,6 +9,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import junit.framework.Assert.*
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
@@ -35,8 +39,47 @@ class WorkspaceModelTest {
     })
     disposable.use {
       runWriteActionAndWait {
-        WorkspaceModel.getInstance(projectModel.project).updateProjectModel {  }
+        WorkspaceModel.getInstance(projectModel.project).updateProjectModel { }
       }
     }
+  }
+
+  @Test
+  fun `async model update`() {
+    val model = WorkspaceModel.getInstance(projectModel.project)
+    val builderSnapshot = model.getBuilderSnapshot()
+    builderSnapshot.builder.addModuleEntity("MyModule", emptyList(), object : EntitySource {})
+
+    val replacement = builderSnapshot.getStorageReplacement()
+
+    val updated = runWriteActionAndWait {
+      model.replaceProjectModel(replacement)
+    }
+
+    assertTrue(updated)
+
+    val moduleEntity = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.entities(ModuleEntity::class.java).single()
+    assertEquals("MyModule", moduleEntity.name)
+  }
+
+  @Test
+  fun `async model update with fail`() {
+    val model = WorkspaceModel.getInstance(projectModel.project)
+    val builderSnapshot = model.getBuilderSnapshot()
+    builderSnapshot.builder.addModuleEntity("MyModule", emptyList(), object : EntitySource {})
+
+    val replacement = builderSnapshot.getStorageReplacement()
+
+    runWriteActionAndWait {
+      model.updateProjectModel {
+        it.addModuleEntity("AnotherModule", emptyList(), object : EntitySource {})
+      }
+    }
+
+    val updated = runWriteActionAndWait {
+      WorkspaceModel.getInstance(projectModel.project).replaceProjectModel(replacement)
+    }
+
+    assertFalse(updated)
   }
 }
