@@ -503,6 +503,11 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
 
     @Override
+    public @NotNull Alignment getAlignment() {
+      return Alignment.RIGHT;
+    }
+
+    @Override
     @NotNull
     public Icon getIcon() {
       return myBookmark.getIcon();
