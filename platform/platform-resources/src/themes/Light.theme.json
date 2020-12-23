@@ -117,8 +117,11 @@
 
     "Popup": {
       "separatorColor": "lightBorder",
-      "Advertiser.borderColor": "border",
-      "borderColor": "windowsPopupBorder"
+      "borderColor": "windowsPopupBorder",
+      "Advertiser": {
+        "borderColor": "border",
+        "foreground": "infoPanelForeground"
+      }
     },
 
     "ProgressBar": {
@@ -127,6 +130,8 @@
       "indeterminateStartColor": "#91C5F2",
       "indeterminateEndColor": "#1E82E6"
     },
+
+    "SearchEverywhere.Advertiser.foreground": "infoPanelForeground",
 
     "StatusBar.borderColor": "border",
 
