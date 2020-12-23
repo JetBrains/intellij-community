@@ -27,6 +27,11 @@ public interface GrVariable extends PsiVariable, GrNamedElement {
   @Override
   @NlsSafe @NotNull String getName();
 
+  default @Nullable PsiType getInitializerType() {
+    GrExpression initializer = getInitializerGroovy();
+    return initializer == null ? null : initializer.getType();
+  }
+
   @Nullable
   GrExpression getInitializerGroovy();
 

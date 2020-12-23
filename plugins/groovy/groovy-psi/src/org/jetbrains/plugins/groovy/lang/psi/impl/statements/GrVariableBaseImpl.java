@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStubBase;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getTupleComponentType;
+import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentType;
 
 /**
  * @author ilyas
@@ -157,7 +157,8 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
     return declaredType;
   }
 
-  private @Nullable PsiType getInitializerType() {
+  @Override
+  public @Nullable PsiType getInitializerType() {
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration) {
       GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
@@ -166,15 +167,11 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
         if (rValue == null) {
           return null;
         }
-        PsiType rType = rValue.getType();
-        if (rType == null) {
-          return null;
-        }
         int position = ArrayUtil.indexOf(declaration.getVariables(), this);
         if (position < 0) {
           return null;
         }
-        return getTupleComponentType(position, rType);
+        return getMultiAssignmentType(rValue, position);
       }
     }
     GrExpression rValue = getInitializerGroovy();

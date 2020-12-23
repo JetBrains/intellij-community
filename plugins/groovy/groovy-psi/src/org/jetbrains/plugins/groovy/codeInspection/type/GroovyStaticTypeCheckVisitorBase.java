@@ -6,21 +6,19 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.typing.TuplesKt;
+
+import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentTypesCountCS;
 
 public abstract class GroovyStaticTypeCheckVisitorBase extends GroovyTypeCheckVisitor {
 
@@ -56,7 +54,7 @@ public abstract class GroovyStaticTypeCheckVisitorBase extends GroovyTypeCheckVi
   }
 
   private void checkTupleAssignment(@NotNull GrExpression initializer, int leftCount) {
-    Integer componentCount = getComponentCountOrNull(initializer);
+    Integer componentCount = getMultiAssignmentTypesCountCS(initializer);
     if (componentCount == null) {
       registerError(
         initializer,
@@ -73,29 +71,6 @@ public abstract class GroovyStaticTypeCheckVisitorBase extends GroovyTypeCheckVi
         ProblemHighlightType.GENERIC_ERROR
       );
     }
-  }
-
-  private static @Nullable Integer getComponentCountOrNull(@NotNull GrExpression initializer) {
-    if (initializer instanceof GrListOrMap) {
-      GrListOrMap listOrMap = (GrListOrMap)initializer;
-      if (listOrMap.isMap()) {
-        return null;
-      }
-      else {
-        return listOrMap.getInitializers().length;
-      }
-    }
-    else if (isAtLeastGroovy3(initializer)) {
-      PsiType initializerType = initializer.getType();
-      return initializerType == null ? null : TuplesKt.getTupleComponentCountOrNull(initializerType);
-    }
-    else {
-      return null;
-    }
-  }
-
-  private static boolean isAtLeastGroovy3(@NotNull GroovyPsiElement element) {
-    return GroovyConfigUtils.getInstance().getSDKVersion(element).compareTo(GroovyConfigUtils.GROOVY3_0) >= 0;
   }
 
   @Override

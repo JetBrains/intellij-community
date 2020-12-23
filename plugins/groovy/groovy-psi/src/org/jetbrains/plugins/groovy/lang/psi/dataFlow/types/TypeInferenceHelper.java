@@ -41,7 +41,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDes
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.checkNestedContext;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
-import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getTupleComponentType;
+import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentType;
 
 /**
  * @author ven
@@ -209,8 +209,7 @@ public final class TypeInferenceHelper {
         if (rValue != null) {
           int idx = list.indexOf(element);
           if (idx >= 0) {
-            PsiType rType = rValue.getType();
-            return rType == null ? null : getTupleComponentType(idx, rType);
+            return getMultiAssignmentType(rValue, idx);
           }
         }
       }

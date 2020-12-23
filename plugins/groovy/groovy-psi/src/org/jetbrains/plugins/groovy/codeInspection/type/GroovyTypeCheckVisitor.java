@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -50,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.typing.MultiAssignmentTypes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,6 +60,7 @@ import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
+import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentTypes;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
@@ -269,16 +270,21 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       }
     }
     else {
-      PsiType type = initializer.getType();
-      PsiType rType = extractIterableTypeParameter(type, false);
-
-      for (GrExpression lValue : lValues) {
-        PsiType lType = lValue.getNominalType();
+      MultiAssignmentTypes multiAssignmentTypes = getMultiAssignmentTypes(initializer);
+      if (multiAssignmentTypes == null) {
+        return;
+      }
+      for (int position = 0; position < lValues.length; position++) {
+        PsiType rType = multiAssignmentTypes.getComponentType(position);
+        GrExpression lValue = lValues[position];
         // For assignments with spread dot
         if (PsiImplUtil.isSpreadAssignment(lValue)) {
-          final PsiType argType = extractIterableTypeParameter(lType, false);
-          if (argType != null && rType != null) {
-            processAssignment(argType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
+          if (rType != null) {
+            PsiType lType = lValue.getNominalType();
+            final PsiType argType = extractIterableTypeParameter(lType, false);
+            if (argType != null) {
+              processAssignment(argType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
+            }
           }
           return;
         }
@@ -287,8 +293,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           return;
         }
 
-        if (lType != null && rType != null) {
-          processAssignment(lType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
+        if (rType != null) {
+          PsiType lType = lValue.getNominalType();
+          if (lType != null) {
+            processAssignment(lType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
+          }
         }
       }
     }
@@ -601,24 +610,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         parent instanceof GrForInClause) {
       return;
     }
-    else if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).isTuple()) {
-      //check tuple assignment:  def (int x, int y) = foo()
-      final GrVariableDeclaration tuple = (GrVariableDeclaration)parent;
-      final GrExpression initializer = tuple.getTupleInitializer();
-      if (initializer == null) return;
-      if (!(initializer instanceof GrListOrMap) && !PsiUtil.isCompileStatic(variable)) {
-        PsiType type = initializer.getType();
-        if (type == null) return;
-        PsiType valueType = extractIterableTypeParameter(type, false);
-        processAssignment(varType, valueType, tuple, variable.getNameIdentifierGroovy());
-        return;
-      }
-    }
-
     GrExpression initializer = variable.getInitializerGroovy();
-    if (initializer == null) return;
-
-    processAssignment(varType, initializer, variable.getNameIdentifierGroovy(), variable);
+    if (initializer != null) {
+      processAssignment(varType, initializer, variable.getNameIdentifierGroovy(), variable);
+    }
+    else {
+      PsiType initializerType = variable.getInitializerType();
+      processAssignment(varType, initializerType, variable, variable.getNameIdentifierGroovy());
+    }
   }
 
   @Override

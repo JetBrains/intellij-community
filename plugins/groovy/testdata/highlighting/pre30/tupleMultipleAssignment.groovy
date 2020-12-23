@@ -43,4 +43,9 @@ class Usage {
     (t) = <error descr="Multiple assignments without list expressions on the right hand side are unsupported in static type checking mode">i.tuple()</error>
     (s) = <error descr="Multiple assignments without list expressions on the right hand side are unsupported in static type checking mode">""</error>
   }
+
+  void wrongTyping(I i) {
+    def (int s) = <error descr="Multiple assignments without list expressions on the right hand side are unsupported in static type checking mode">i.tuple1()</error>
+    (s) = <error descr="Multiple assignments without list expressions on the right hand side are unsupported in static type checking mode">i.tuple1()</error>
+  }
 }

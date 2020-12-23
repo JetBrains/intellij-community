@@ -43,4 +43,9 @@ class Usage {
     (t) = <error descr="Multiple assignments without list expressions on the right hand side are unsupported in static type checking mode">i.tuple()</error>
     (s) = <error descr="Multiple assignments without list expressions on the right hand side are unsupported in static type checking mode">""</error>
   }
+
+  void wrongTyping(I i) {
+    def (int <error descr="Cannot assign 'String' to 'int'">s</error>) = i.tuple1()
+    (<error descr="Cannot assign 'String' to 'int'">s</error>) = i.tuple1()
+  }
 }
