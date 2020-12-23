@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -216,6 +217,15 @@ public final class PyResolveUtil {
   public static List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
                                                              @NotNull ScopeOwner scopeOwner,
                                                              @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), (param) -> {
+      return doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond());
+    });
+  }
+
+  @NotNull
+  private static List<PsiElement> doResolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
+                                                                @NotNull ScopeOwner scopeOwner,
+                                                                @NotNull TypeEvalContext context) {
     final String firstName = qualifiedName.getFirstComponent();
     if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
 
@@ -277,7 +287,7 @@ public final class PyResolveUtil {
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
         }));
 
-    return PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new));
+    return Collections.unmodifiableList(PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new)));
   }
 
   @Nullable
