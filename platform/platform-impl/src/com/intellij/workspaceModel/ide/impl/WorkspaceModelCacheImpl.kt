@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable) : Disposable {
   private val cacheFile: Path
+  private val invalidateProjectCacheMarkerFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
@@ -45,6 +46,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     Disposer.register(parentDisposable, this)
 
     cacheFile = initCacheFile()
+    invalidateProjectCacheMarkerFile = project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate").toFile()
 
     LOG.debug("Project Model Cache at $cacheFile")
 
@@ -70,8 +72,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
 
   private val saveAlarm = pooledThreadSingleAlarm(1000, this) {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
-
-    if (!storage.isConsistent) invalidateCaches()
+    if (!storage.isConsistent) invalidateProjectCache()
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
@@ -89,7 +90,8 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     try {
       if (!cacheFile.exists()) return null
 
-      if (invalidateCachesMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateCachesMarkerFile.lastModified()) {
+      if (invalidateCachesMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateCachesMarkerFile.lastModified() ||
+          invalidateProjectCacheMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateProjectCacheMarkerFile.lastModified()) {
         LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
         FileUtil.delete(cacheFile)
         return null
@@ -131,6 +133,20 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     }
   }
 
+  private fun invalidateProjectCache() {
+    LOG.info("Invalidating project model cache by creating $invalidateProjectCacheMarkerFile")
+
+    cachesInvalidated.set(true)
+
+    try {
+      FileUtil.createParentDirs(invalidateProjectCacheMarkerFile)
+      FileUtil.writeToFile(invalidateProjectCacheMarkerFile, System.currentTimeMillis().toString())
+    }
+    catch (t: Throwable) {
+      LOG.warn("Cannot update the project invalidation marker file", t)
+    }
+  }
+
   object PluginAwareEntityTypesResolver : EntityTypesResolver {
     override fun getPluginId(clazz: Class<*>): String? = PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.name)?.idString
 
@@ -159,7 +175,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     private val invalidateCachesMarkerFile = File(appSystemDir.resolve("projectModelCache").toFile(), ".invalidate")
 
     fun invalidateCaches() {
-      LOG.info("Invalidating project model caches by creating $invalidateCachesMarkerFile")
+      LOG.info("Invalidating caches by creating $invalidateCachesMarkerFile")
 
       cachesInvalidated.set(true)
 
