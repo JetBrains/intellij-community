@@ -1451,50 +1451,48 @@ public final class UIUtil {
     }
   }
 
-  @SuppressWarnings("UnregisteredNamedColor")
+  @SuppressWarnings({"UnregisteredNamedColor", "UseJBColor"})
   public static void drawSearchMatch(@NotNull Graphics2D g,
                                      final float startX,
                                      final float endX,
                                      final int height) {
-    Color c1 = JBColor.namedColor("SearchMatch.startBackground", JBColor.namedColor("SearchMatch.startColor", 0xffeaa2));
-    Color c2 = JBColor.namedColor("SearchMatch.endBackground", JBColor.namedColor("SearchMatch.endColor", 0xffd042));
+    Color c1 = JBColor.namedColor("SearchMatch.startBackground", JBColor.namedColor("SearchMatch.startColor", new Color(0xb3ffeaa2, true)));
+    Color c2 = JBColor.namedColor("SearchMatch.endBackground", JBColor.namedColor("SearchMatch.endColor", new Color(0xb3ffd042, true)));
     drawSearchMatch(g, startX, endX, height, c1, c2);
   }
 
   public static void drawSearchMatch(@NotNull Graphics2D g, float startXf, float endXf, int height, Color c1, Color c2) {
-    GraphicsConfig config = new GraphicsConfig(g);
-    float alpha = JBUI.getInt("SearchMatch.transparency", 70) / 100f;
-    alpha = alpha < 0 || alpha > 1 ? 0.7f : alpha;
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-    g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
-    if (JreHiDpiUtil.isJreHiDPI(g)) {
-      GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
-      g.fill(new RoundRectangle2D.Float(startXf, 2, endXf - startXf, height - 4, 5, 5));
-      c.restore();
-      config.restore();
-      return;
+      if (JreHiDpiUtil.isJreHiDPI(g2)) {
+        GraphicsUtil.setupRoundedBorderAntialiasing(g2);
+        g2.fill(new RoundRectangle2D.Float(startXf, 2, endXf - startXf, height - 4, 5, 5));
+      }
+      else {
+        int startX = (int)startXf;
+        int endX = (int)endXf;
+
+        g2.fillRect(startX, 3, endX - startX, height - 5);
+
+        boolean drawRound = endXf - startXf > 4;
+        if (drawRound) {
+          LinePainter2D.paint(g2, startX - 1, 4, startX - 1, height - 4);
+          LinePainter2D.paint(g2, endX, 4, endX, height - 4);
+
+          g2.setColor(new Color(100, 100, 100, 50));
+          LinePainter2D.paint(g2, startX - 1, 4, startX - 1, height - 4);
+          LinePainter2D.paint(g2, endX, 4, endX, height - 4);
+
+          LinePainter2D.paint(g2, startX, 3, endX - 1, 3);
+          LinePainter2D.paint(g2, startX, height - 3, endX - 1, height - 3);
+        }
+      }
     }
-
-    int startX = (int)startXf;
-    int endX = (int)endXf;
-
-    g.fillRect(startX, 3, endX - startX, height - 5);
-
-    final boolean drawRound = endXf - startXf > 4;
-    if (drawRound) {
-      LinePainter2D.paint(g, startX - 1, 4, startX - 1, height - 4);
-      LinePainter2D.paint(g, endX, 4, endX, height - 4);
-
-      g.setColor(new Color(100, 100, 100, 50));
-      LinePainter2D.paint(g, startX - 1, 4, startX - 1, height - 4);
-      LinePainter2D.paint(g, endX, 4, endX, height - 4);
-
-      LinePainter2D.paint(g, startX, 3, endX - 1, 3);
-      LinePainter2D.paint(g, startX, height - 3, endX - 1, height - 3);
+    finally {
+      g2.dispose();
     }
-
-    config.restore();
   }
 
   private static void drawBoringDottedLine(final @NotNull Graphics2D g,
