@@ -80,4 +80,5 @@ public interface XmlElementDescriptor extends PsiMetaData {
 
   @Nullable
   String getDefaultValue();
+
 }
