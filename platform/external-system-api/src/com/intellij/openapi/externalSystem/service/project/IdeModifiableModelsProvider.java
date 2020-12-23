@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -44,10 +43,10 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserData
     ExtensionPointName.create("com.intellij.externalSystem.modifiableModelsProvider");
 
   @NotNull
-  Pair<Module, String> newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
+  Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
 
   @NotNull
-  Pair<Module, String> newModule(@NotNull ModuleData moduleData);
+  Module newModule(@NotNull ModuleData moduleData);
 
   @NotNull
   ModifiableModuleModel getModifiableModuleModel();

@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ClassMap
@@ -85,21 +84,21 @@ class IdeModifiableModelsProviderBridge(val project: Project,
     return legacyBridgeModuleManagerComponent.findModuleByName(ideModuleName)
   }
 
-  override fun newModule(filePath: String, moduleTypeId: String?): Pair<Module, String> {
+  override fun newModule(filePath: String, moduleTypeId: String?): Module {
     if (moduleTypeId == null) {
       throw IllegalArgumentException("moduleTypeId")
     }
     val modifiableModel = modifiableModuleModel.value
     legacyBridgeModuleManagerComponent.incModificationCount()
     val module = modifiableModel.newModule(filePath, moduleTypeId)
-    return Pair.create(module, module.name)
+    return module
   }
 
-  override fun newModule(moduleData: ModuleData): Pair<Module, String> {
+  override fun newModule(moduleData: ModuleData): Module {
     val modifiableModel = modifiableModuleModel.value
     legacyBridgeModuleManagerComponent.incModificationCount()
     val newModule = modifiableModel.newModule(moduleData.moduleFileDirectoryPath, moduleData.moduleTypeId)
-    return Pair.create(newModule, newModule.name)
+    return newModule
   }
 
   override fun getModifiableProjectLibrariesModel(): LibraryTable.ModifiableModel {

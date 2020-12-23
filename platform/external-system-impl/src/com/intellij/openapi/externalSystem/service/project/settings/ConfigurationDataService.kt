@@ -99,8 +99,8 @@ class ConfigurationDataService : AbstractProjectDataService<ConfigurationData, V
 
         val moduleDataNode = ExternalSystemApiUtil.findParent(node, ProjectKeys.MODULE)
         if (moduleDataNode != null) {
-          val actualModuleName = moduleDataNode.getUserData(MODULE_KEY)
-          val module = actualModuleName?.first ?: modelsProvider.findIdeModule(moduleDataNode.data)
+          var module = moduleDataNode.getUserData<Module>(MODULE_KEY)
+          module = module ?: modelsProvider.findIdeModule(moduleDataNode.data)
 
           if (module == null) {
             LOG.warn(String.format(

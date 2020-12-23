@@ -62,7 +62,7 @@ class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>
     val useDefaultsIfCan = ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)
     for (sdkDataNode in toImport) {
       val moduleNode = sdkDataNode.getParent(ModuleData::class.java) ?: continue
-      val module = moduleNode.getUserData(AbstractModuleDataService.MODULE_KEY)?.first ?: continue
+      val module = moduleNode.getUserData(AbstractModuleDataService.MODULE_KEY) ?: continue
 
       importModuleSdk(module, sdkDataNode.data, modelsProvider, useDefaultsIfCan)
     }

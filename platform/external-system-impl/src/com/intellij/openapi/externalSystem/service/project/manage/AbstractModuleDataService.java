@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractModuleDataService<E extends ModuleData> extends AbstractProjectDataService<E, Module> {
 
   public static final Key<ModuleData> MODULE_DATA_KEY = Key.create("MODULE_DATA_KEY");
-  public static final Key<Pair<Module, String>> MODULE_KEY = Key.create("LINKED_MODULE");
+  public static final Key<Module> MODULE_KEY = Key.create("LINKED_MODULE");
   public static final Key<Map<OrderEntry, OrderAware>> ORDERED_DATA_MAP_KEY = Key.create("ORDER_ENTRY_DATA_MAP");
   private static final Key<Set<Path>> ORPHAN_MODULE_FILES = Key.create("ORPHAN_FILES");
   private static final Key<AtomicInteger> ORPHAN_MODULE_HANDLERS_COUNTER = Key.create("ORPHAN_MODULE_HANDLERS_COUNTER");
@@ -93,10 +93,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
 
     for (DataNode<E> node : toImport) {
-      Pair<Module, String> moduleToActualName = node.getUserData(MODULE_KEY);
-      if (moduleToActualName != null) {
+      Module module = node.getUserData(MODULE_KEY);
+      if (module != null) {
         ProjectCoordinate publication = node.getData().getPublication();
-        Module module = moduleToActualName.first;
         if (publication != null) {
           modelsProvider.registerModulePublication(module, publication);
         }
@@ -112,29 +111,29 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
 
     for (DataNode<E> node : toImport) {
-      Pair<Module, String> moduleToActualName = node.getUserData(MODULE_KEY);
-      if (moduleToActualName != null) {
+      Module module = node.getUserData(MODULE_KEY);
+      if (module != null) {
         final String[] groupPath;
         groupPath = node.getData().getIdeModuleGroup();
         final ModifiableModuleModel modifiableModel = modelsProvider.getModifiableModuleModel();
-        modifiableModel.setModuleGroupPath(moduleToActualName.first, groupPath);
+        modifiableModel.setModuleGroupPath(module, groupPath);
       }
     }
   }
 
   @NotNull
-  protected Pair<Module, String> createModule(@NotNull DataNode<E> module, @NotNull IdeModifiableModelsProvider modelsProvider) {
+  protected Module createModule(@NotNull DataNode<E> module, @NotNull IdeModifiableModelsProvider modelsProvider) {
     ModuleData data = module.getData();
     return modelsProvider.newModule(data);
   }
 
   private void createModules(@NotNull Collection<? extends DataNode<E>> toCreate, @NotNull IdeModifiableModelsProvider modelsProvider) {
     for (DataNode<E> module : toCreate) {
-      Pair<Module, String> moduleToActualName = createModule(module, modelsProvider);
-      module.putUserData(MODULE_KEY, moduleToActualName);
+      Module created = createModule(module, modelsProvider);
+      module.putUserData(MODULE_KEY, created);
 
       // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via external system)
-      final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(moduleToActualName.first);
+      final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(created);
 
       RootPolicy<Object> visitor = new RootPolicy<Object>() {
         @Override
@@ -171,7 +170,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         markExistedModulesWithSameRoot(node, modelsProvider);
       }
       else {
-        node.putUserData(MODULE_KEY, Pair.create(module, module.getName()));
+        node.putUserData(MODULE_KEY, module);
       }
     }
     return result;
@@ -431,11 +430,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
                           @NotNull Project project,
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
     for (DataNode<E> moduleDataNode : toImport) {
-      final Pair<Module, String> moduleToActualName = moduleDataNode.getUserData(MODULE_KEY);
-      if (moduleToActualName == null) continue;
+      final Module module = moduleDataNode.getUserData(MODULE_KEY);
+      if (module == null) continue;
       final Map<OrderEntry, OrderAware> orderAwareMap = moduleDataNode.getUserData(ORDERED_DATA_MAP_KEY);
       if (orderAwareMap != null) {
-        rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(moduleToActualName.first));
+        rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(module));
       }
       moduleDataNode.putUserData(MODULE_KEY, null);
       moduleDataNode.putUserData(ORDERED_DATA_MAP_KEY, null);
