@@ -411,6 +411,14 @@ class ExternalSystemStorageTest {
   }
 
   @Test
+  fun `test facet and libraries saved in internal store after IDE reload`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("singleModuleFacetAndLibFromExternalSystemInInternalStorage", "singleModuleFacetAndLibFromExternalSystem") { project ->
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
+    }
+  }
+
+  @Test
   fun `clean up facet tag in iml file if we start store project model at external storage`() {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("importedFacetInImportedModule", "importedFacetAfterStoreExternallyPropertyChanged") { project ->
