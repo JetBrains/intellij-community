@@ -7,7 +7,7 @@ import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 
-internal class MarkdownDateSearchingVisitor : MarkdownRecursiveElementVisitor() {
+internal class MarkdownTextsCollectingVisitor : MarkdownRecursiveElementVisitor() {
   val texts = mutableListOf<TextWithOffset>()
 
   override fun visitElement(element: PsiElement) {

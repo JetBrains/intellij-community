@@ -10,6 +10,6 @@ fun findDates(texts: Collection<String>): Collection<Collection<TextRange>> {
 
   return annotationArrays.map {
     it.filter { annotation -> annotation.label.toLowerCase() == "date" }
-      .map { TextRange.create(it.start, it.end) }
+      .map { annotation -> TextRange.create(annotation.start, annotation.end) }
   }
 }

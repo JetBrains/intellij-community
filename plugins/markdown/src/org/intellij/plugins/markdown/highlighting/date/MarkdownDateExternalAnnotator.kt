@@ -39,7 +39,7 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
       file.findElementsIntersectingRange(it)
     }?.toSet() ?: setOf(file)
 
-    val visitor = MarkdownDateSearchingVisitor()
+    val visitor = MarkdownTextsCollectingVisitor()
     for (element in elementsToVisit) {
       visitor.visitElement(element)
     }
