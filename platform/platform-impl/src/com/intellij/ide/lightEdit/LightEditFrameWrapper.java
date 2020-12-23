@@ -2,9 +2,6 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.RecentProjectMetaInfo;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
 import com.intellij.ide.lightEdit.statusBar.*;
 import com.intellij.openapi.Disposable;
@@ -22,28 +19,33 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
 final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, LightEditFrame {
+  private final Project myProject;
   private final BooleanSupplier myCloseHandler;
 
   private LightEditPanel myEditPanel;
 
   private boolean myFrameTitleUpdateEnabled = true;
 
-  LightEditFrameWrapper(@NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
+  LightEditFrameWrapper(@NotNull Project project, @NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
     super(frame, null);
+    myProject = project;
     myCloseHandler = closeHandler;
+  }
+
+  @Override
+  public @NotNull Project getProject() {
+    return myProject;
   }
 
   @NotNull
@@ -54,7 +56,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   @NotNull
   @Override
   protected IdeRootPane createIdeRootPane() {
-    return new LightEditRootPane(getFrame(), this, this);
+    return new LightEditRootPane(requireNotNullFrame(), this, this);
   }
 
   @Override
@@ -97,6 +99,28 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   @Override
   public void dispose() {
     Disposer.dispose(myEditPanel);
+  }
+
+  public @NotNull IdeFrameImpl requireNotNullFrame() {
+    IdeFrameImpl frame = getFrame();
+    if (frame != null) {
+      return frame;
+    }
+    if (Disposer.isDisposed(this)) {
+      throw new AssertionError(LightEditFrameWrapper.class.getSimpleName() + " is already disposed");
+    }
+    throw new AssertionError("Frame is null, but " + LightEditFrameWrapper.class.getSimpleName() + " is not disposed yet");
+  }
+
+  public void closeAndDispose(@NotNull LightEditServiceImpl lightEditServiceImpl) {
+    IdeFrameImpl frame = requireNotNullFrame();
+    FrameInfo frameInfo = ProjectFrameBounds.getInstance(myProject).getActualFrameInfoInDeviceSpace$intellij_platform_ide_impl(
+      this, frame, (WindowManagerImpl)WindowManager.getInstance()
+    );
+    lightEditServiceImpl.setFrameInfo(frameInfo);
+
+    frame.setVisible(false);
+    Disposer.dispose(this);
   }
 
   private class LightEditRootPane extends IdeRootPane {
@@ -151,25 +175,12 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
   }
 
-  static @NotNull LightEditFrameWrapper allocate(@NotNull Project project, @NotNull BooleanSupplier closeHandler) {
+  static @NotNull LightEditFrameWrapper allocate(@NotNull Project project,
+                                                 @Nullable FrameInfo frameInfo,
+                                                 @NotNull BooleanSupplier closeHandler) {
     return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(project, () -> {
-      FrameInfo info = getFrameInfo(project);
-      return new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false, info), closeHandler);
+      return new LightEditFrameWrapper(project, ProjectFrameAllocatorKt.createNewProjectFrame(false, frameInfo), closeHandler);
     });
-  }
-
-  private static @Nullable FrameInfo getFrameInfo(@NotNull Project project) {
-    RecentProjectsManagerBase projectsManagerBase = ObjectUtils.tryCast(RecentProjectsManager.getInstance(), RecentProjectsManagerBase.class);
-    if (projectsManagerBase != null) {
-      String projectPath = projectsManagerBase.getProjectPath(project);
-      if (projectPath != null) {
-        RecentProjectMetaInfo metaInfo = projectsManagerBase.getProjectMetaInfo(Paths.get(projectPath));
-        if (metaInfo != null) {
-          return metaInfo.getFrame$intellij_platform_ide_impl();
-        }
-      }
-    }
-    return null;
   }
 
   void setFrameTitleUpdateEnabled(boolean frameTitleUpdateEnabled) {

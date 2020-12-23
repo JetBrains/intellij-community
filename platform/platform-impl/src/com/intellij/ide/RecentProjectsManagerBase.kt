@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
@@ -224,7 +225,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   override fun updateLastProjectPath() {
-    val openProjects = ProjectUtil.getOpenProjects(true)
+    val openProjects = ProjectUtil.getOpenProjects()
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
         info.opened = false
@@ -328,7 +329,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     private val manager = instanceEx
 
     override fun projectOpened(project: Project) {
-      if (manager.disableUpdatingRecentInfo.get()) {
+      if (manager.disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
         return
       }
 
@@ -668,7 +669,7 @@ int32 "extendedState"
         return
       }
 
-      val openProjects = ProjectUtil.getOpenProjects(true)
+      val openProjects = ProjectUtil.getOpenProjects()
       // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
       if (openProjects.isEmpty()) {
         if (!isUseProjectFrameAsSplash()) {

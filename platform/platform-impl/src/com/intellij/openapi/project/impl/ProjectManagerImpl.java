@@ -8,8 +8,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.lightEdit.LightEditService;
-import com.intellij.ide.lightEdit.LightEditServiceImpl;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -284,7 +284,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   @Override
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
     Project[] projects = getOpenProjects();
-    Project lightEditProject = ((LightEditServiceImpl)LightEditService.getInstance()).getProjectAndClearIfCreated();
+    Project lightEditProject = LightEditUtil.getProjectIfCreated();
     if (lightEditProject != null) {
       projects = ArrayUtil.append(projects, lightEditProject);
     }
@@ -320,7 +320,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       }
       projectImpl.setTemporarilyDisposed(false);
     }
-    else if (!isProjectOpened(project)) {
+    else if (!isProjectOpened(project) && !LightEdit.owns(project)) {
       if (dispose) {
         if (project instanceof ComponentManagerImpl) {
           ((ComponentManagerImpl)project).stopServicePreloading();

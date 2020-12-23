@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +33,24 @@ public final class LightEditProjectManager {
         project = myProject;
       }
       if (created) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
+        fireProjectOpened(project);
+        ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+          @Override
+          public void projectClosed(@NotNull Project project) {
+            if (project == myProject) {
+              synchronized (LOCK) {
+                myProject = null;
+              }
+            }
+          }
+        });
       }
     }
     return project;
+  }
+
+  private static void fireProjectOpened(@NotNull Project project) {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectManager.TOPIC).projectOpened(project);
   }
 
   private static @NotNull LightEditProjectImpl createProject() {
@@ -42,13 +58,5 @@ public final class LightEditProjectManager {
     LightEditProjectImpl project = new LightEditProjectImpl();
     LOG.info(LightEditProjectImpl.class.getSimpleName() + " loaded in " + TimeoutUtil.getDurationMillis(start) + " ms");
     return project;
-  }
-
-  public @Nullable Project getProjectAndClearIfCreated() {
-    synchronized (LOCK) {
-      Project project = myProject;
-      myProject = null;
-      return project;
-    }
   }
 }

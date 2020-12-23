@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -39,7 +38,10 @@ import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.*;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.*;
@@ -460,16 +462,6 @@ public final class ProjectUtil {
   public static @NotNull Project @NotNull [] getOpenProjects() {
     ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
     return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
-  }
-
-  public static @NotNull Project @NotNull [] getOpenProjects(boolean withLightEditProject) {
-    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
-    if (projectManager == null) {
-      return new Project[0];
-    }
-    Project[] projects = projectManager.getOpenProjects();
-    Project lightEditProject = withLightEditProject ? LightEditUtil.getProjectIfCreated() : null;
-    return lightEditProject != null ? ArrayUtil.append(projects, lightEditProject) : projects;
   }
 
   public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {

@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.wm.impl.FrameInfo;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -84,15 +86,16 @@ public final class LightEditServiceImpl implements LightEditService,
       boolean notify = false;
       if (myFrameWrapper == null) {
         mySaveSession = restoreSession;
-        myFrameWrapper = LightEditFrameWrapper.allocate(project, () -> closeEditorWindow());
+        myFrameWrapper = LightEditFrameWrapper.allocate(project, myConfiguration.frameInfo, () -> closeEditorWindow());
         LOG.info("Frame created");
         if (restoreSession) {
           restoreSession();
         }
         notify = true;
       }
-      if (!myFrameWrapper.getFrame().isVisible()) {
-        myFrameWrapper.getFrame().setVisible(true);
+      IdeFrameImpl frame = myFrameWrapper.requireNotNullFrame();
+      if (!frame.isVisible()) {
+        frame.setVisible(true);
         LOG.info("Window opened");
         notify = true;
       }
@@ -236,8 +239,8 @@ public final class LightEditServiceImpl implements LightEditService,
   @Override
   public boolean closeEditorWindow() {
     if (canClose()) {
-      Project project = Objects.requireNonNull(myFrameWrapper.getProject());
-      myFrameWrapper.getFrame().setVisible(false);
+      Project project = myFrameWrapper.getProject();
+      myFrameWrapper.requireNotNullFrame().setVisible(false);
       saveSession();
       myEditorWindowClosing = true;
       try {
@@ -249,7 +252,7 @@ public final class LightEditServiceImpl implements LightEditService,
       LOG.info("Window closed");
       ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowClosed(project);
       if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
-        disposeFrameWrapper();
+        closeAndDisposeFrame();
         LOG.info("No open projects or welcome frame, exiting");
         try {
           Disposer.dispose(myEditorManager);
@@ -346,12 +349,12 @@ public final class LightEditServiceImpl implements LightEditService,
   @Override
   public void dispose() {
     if (myFrameWrapper != null) {
-      disposeFrameWrapper();
+      closeAndDisposeFrame();
     }
   }
 
-  private void disposeFrameWrapper() {
-    Disposer.dispose(myFrameWrapper);
+  private void closeAndDisposeFrame() {
+    myFrameWrapper.closeAndDispose(this);
     myFrameWrapper = null;
     LOG.info("Frame disposed");
   }
@@ -450,7 +453,7 @@ public final class LightEditServiceImpl implements LightEditService,
   @TestOnly
   public void disposeCurrentSession() {
     myEditorManager.releaseEditors();
-    Project project = myLightEditProjectManager.getProjectAndClearIfCreated();
+    Project project = myLightEditProjectManager.getProject();
     if (project != null) {
       ProjectManagerEx.getInstanceEx().forceCloseProject(project);
     }
@@ -482,12 +485,15 @@ public final class LightEditServiceImpl implements LightEditService,
     });
   }
 
+  void setFrameInfo(@NotNull FrameInfo frameInfo) {
+    myConfiguration.frameInfo = frameInfo;
+  }
+
   @Override
   public void appClosing() {
     ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
     if (myFrameWrapper != null) {
-      myFrameWrapper.getFrame().setVisible(false);
-      disposeFrameWrapper();
+      closeAndDisposeFrame();
     }
     Disposer.dispose(myEditorManager);
   }
@@ -506,9 +512,5 @@ public final class LightEditServiceImpl implements LightEditService,
         }
       }
     }
-  }
-
-  public @Nullable Project getProjectAndClearIfCreated() {
-    return myLightEditProjectManager.getProjectAndClearIfCreated();
   }
 }
