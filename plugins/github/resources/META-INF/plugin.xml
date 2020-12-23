@@ -34,7 +34,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubImageResizer"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager"/>

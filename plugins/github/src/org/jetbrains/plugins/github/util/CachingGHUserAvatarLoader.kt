@@ -17,8 +17,8 @@ import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-class CachingGithubUserAvatarLoader : Disposable {
-  private val LOG = logger<CachingGithubUserAvatarLoader>()
+class CachingGHUserAvatarLoader : Disposable {
+  private val LOG = logger<CachingGHUserAvatarLoader>()
 
   private val indicatorProvider = ProgressIndicatorsProvider().also {
     Disposer.register(this, it)
@@ -56,7 +56,7 @@ class CachingGithubUserAvatarLoader : Disposable {
 
   companion object {
     @JvmStatic
-    fun getInstance(): CachingGithubUserAvatarLoader = service()
+    fun getInstance(): CachingGHUserAvatarLoader = service()
 
     private const val MAXIMUM_ICON_SIZE = 40
 

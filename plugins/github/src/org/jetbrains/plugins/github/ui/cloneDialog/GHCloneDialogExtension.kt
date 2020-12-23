@@ -30,7 +30,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.authentication.isOAuthEnabled
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
-import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUtil
 import javax.swing.JButton
@@ -54,7 +54,7 @@ private class GHCloneDialogExtensionComponent(project: Project) : GHCloneDialogE
   GithubAuthenticationManager.getInstance(),
   GithubApiRequestExecutorManager.getInstance(),
   GithubAccountInformationProvider.getInstance(),
-  CachingGithubUserAvatarLoader.getInstance(),
+  CachingGHUserAvatarLoader.getInstance(),
   GithubImageResizer.getInstance()
 ) {
 

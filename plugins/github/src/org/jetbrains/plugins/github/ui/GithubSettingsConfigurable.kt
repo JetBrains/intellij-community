@@ -15,7 +15,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanel
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSettings
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -27,7 +27,8 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     val settings = GithubSettings.getInstance()
     return panel {
       row {
-        val accountsPanel = GHAccountsPanel(project, GithubApiRequestExecutor.Factory.getInstance(), CachingGithubUserAvatarLoader.getInstance(), GithubImageResizer.getInstance()).apply {
+        val accountsPanel = GHAccountsPanel(project, GithubApiRequestExecutor.Factory.getInstance(),
+                                            CachingGHUserAvatarLoader.getInstance(), GithubImageResizer.getInstance()).apply {
           Disposer.register(disposable!!, this)
         }
         component(accountsPanel)

@@ -57,7 +57,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.avatars.CachingGHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.*
 import java.awt.FlowLayout
@@ -73,7 +73,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager,
   private val accountInformationProvider: GithubAccountInformationProvider,
-  private val avatarLoader: CachingGithubUserAvatarLoader,
+  private val avatarLoader: CachingGHUserAvatarLoader,
   private val imageResizer: GithubImageResizer
 ) : VcsCloneDialogExtensionComponent(),
     AccountRemovedListener,
@@ -261,7 +261,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
       override fun run(indicator: ProgressIndicator) {
         user = accountInformationProvider.getInformation(executor, indicator, account)
-        iconProvider = CachingGithubAvatarIconsProvider
+        iconProvider = CachingGHAvatarIconsProvider
           .Factory(avatarLoader, imageResizer, executor)
           .create(avatarSizeUiInt, accountsPanel)
       }

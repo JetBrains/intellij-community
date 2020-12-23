@@ -33,11 +33,11 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.avatars.CachingGHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.JListHoveredRowMaterialiser
-import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import java.awt.*
 import javax.swing.*
@@ -47,7 +47,7 @@ private val actionManager: ActionManager get() = ActionManager.getInstance()
 internal class GHAccountsPanel(
   private val project: Project,
   private val executorFactory: GithubApiRequestExecutor.Factory,
-  private val avatarLoader: CachingGithubUserAvatarLoader,
+  private val avatarLoader: CachingGHUserAvatarLoader,
   private val imageResizer: GithubImageResizer
 ) : BorderLayoutPanel(), GHAccountsHost, Disposable, DataProvider {
 
@@ -168,7 +168,7 @@ internal class GHAccountsPanel(
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
           details = loadedDetails
-          iconProvider = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, executor)
+          iconProvider = CachingGHAvatarIconsProvider.Factory(avatarLoader, imageResizer, executor)
             .create(GHUIUtil.avatarSize, accountList)
           if (correctScopes) {
             errorText = null
