@@ -79,10 +79,10 @@
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
-      <option name="Bookmark.background" value="F4AF3D"/>
-      <option name="Mnemonic.foreground" value="000000"/>
-      <option name="Mnemonic.background" value="FEF7EC"/>
-      <option name="Mnemonic.borderColor" value="F4AF3D"/>
+      <option name="BookmarkIcon.background" value="F4AF3D"/>
+      <option name="MnemonicIcon.foreground" value="000000"/>
+      <option name="MnemonicIcon.background" value="FEF7EC"/>
+      <option name="MnemonicIcon.borderColor" value="F4AF3D"/>
       <option name="ScrollBar.background" value="F5F5F5"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
       <option name="ScrollBar.thumbColor" value="73737333"/>
@@ -1326,10 +1326,10 @@
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
-      <option name="Bookmark.background" value="D9A343"/>
-      <option name="Mnemonic.foreground" value="BBBBBB"/>
-      <option name="Mnemonic.background" value="5B5341"/>
-      <option name="Mnemonic.borderColor" value="D9A343"/>
+      <option name="BookmarkIcon.background" value="D9A343"/>
+      <option name="MnemonicIcon.foreground" value="BBBBBB"/>
+      <option name="MnemonicIcon.background" value="5B5341"/>
+      <option name="MnemonicIcon.borderColor" value="D9A343"/>
       <option name="ScrollBar.background" value="3F4244"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
       <option name="ScrollBar.thumbColor" value="A6A6A647"/>

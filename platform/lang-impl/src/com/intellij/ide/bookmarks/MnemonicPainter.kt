@@ -13,9 +13,9 @@ import com.intellij.util.ui.RegionPaintIcon
 import java.awt.Component
 import javax.swing.Icon
 
-private val FOREGROUND = EditorColorsUtil.createColorKey("Mnemonic.foreground", JBColor(0x000000, 0xBBBBBB))
-private val BACKGROUND = EditorColorsUtil.createColorKey("Mnemonic.background", JBColor(0xFEF7EC, 0x5B5341))
-private val BORDER_COLOR = EditorColorsUtil.createColorKey("Mnemonic.borderColor", JBColor(0xF4AF3D, 0xD9A343))
+private val FOREGROUND = EditorColorsUtil.createColorKey("MnemonicIcon.foreground", JBColor(0x000000, 0xBBBBBB))
+private val BACKGROUND = EditorColorsUtil.createColorKey("MnemonicIcon.background", JBColor(0xFEF7EC, 0x5B5341))
+private val BORDER_COLOR = EditorColorsUtil.createColorKey("MnemonicIcon.borderColor", JBColor(0xF4AF3D, 0xD9A343))
 
 internal class MnemonicPainter(ch: Char) : RegionPainter<Component?> {
   private val string = ch.toString()

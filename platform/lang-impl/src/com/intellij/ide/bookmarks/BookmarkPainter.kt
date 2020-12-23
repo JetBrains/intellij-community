@@ -11,7 +11,7 @@ import java.awt.RenderingHints
 import java.awt.geom.Path2D
 import javax.swing.Icon
 
-private val BACKGROUND = EditorColorsUtil.createColorKey("Bookmark.background", JBColor(0xF7C777, 0xAA8542))
+private val BACKGROUND = EditorColorsUtil.createColorKey("BookmarkIcon.background", JBColor(0xF7C777, 0xAA8542))
 
 internal class BookmarkPainter : RegionPainter<Component?> {
 

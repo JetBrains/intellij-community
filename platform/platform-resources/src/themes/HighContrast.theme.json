@@ -281,6 +281,15 @@
       "passedEndColor": "#15451E"
     },
 
+    "BookmarkIcon": {
+      "background": "#E0861F"
+    },
+    "MnemonicIcon": {
+      "foreground": "#FFFFFF",
+      "background": "#000000",
+      "borderColor": "#E0861F"
+    },
+
     "ScrollBar": {
       "Transparent": {
         "thumbColor": "#b3b3b3",
