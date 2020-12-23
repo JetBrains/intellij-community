@@ -63,7 +63,7 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
     myFixture.addClass(runnableInterface)
     myFixture.configureByText(JavaFileType.INSTANCE, testText)
 
-    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer(project))
+    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer())
     CompletionFactorsInitializer.isEnabledInTests = true
   }
 

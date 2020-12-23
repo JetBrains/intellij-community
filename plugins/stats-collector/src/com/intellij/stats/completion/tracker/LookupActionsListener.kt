@@ -4,12 +4,26 @@ package com.intellij.stats.completion.tracker
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 
 private val LOG = logger<LookupActionsListener>()
 
-class LookupActionsListener : AnActionListener {
+internal class LookupActionsListener private constructor(): AnActionListener {
+  companion object {
+    private var subscribed = false
+    private val instance = LookupActionsListener()
+
+    fun getInstance(): LookupActionsListener {
+      if (!subscribed && CompletionLoggerInitializer.shouldInitialize()) {
+        ApplicationManager.getApplication().messageBus.connect().subscribe(AnActionListener.TOPIC, instance)
+        subscribed = true
+      }
+      return instance
+    }
+  }
+
   private val down by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
   private val up by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP) }
   private val backspace by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE) }

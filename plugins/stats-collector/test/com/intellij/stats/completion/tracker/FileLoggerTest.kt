@@ -38,7 +38,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
       `when`(getUniqueFile()).thenReturn(logFile)
     }
 
-    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer(project))
+    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer())
   }
 
   override fun tearDown() {

@@ -11,12 +11,10 @@ import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.storage.MutableLookupStorage
-import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.CompletionStatsPolicy
 import kotlin.random.Random
 
-class CompletionLoggerInitializer(project: Project) : LookupTracker() {
+class CompletionLoggerInitializer : LookupTracker() {
   companion object {
     fun shouldInitialize(): Boolean =
       (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()) || ApplicationManager.getApplication().isUnitTestMode
@@ -34,13 +32,7 @@ class CompletionLoggerInitializer(project: Project) : LookupTracker() {
       "go" to 0.4
     )
   }
-  private val actionListener: LookupActionsListener = LookupActionsListener()
-
-  init {
-    if (shouldInitialize()) {
-      project.messageBus.connect().subscribe(AnActionListener.TOPIC, actionListener)
-    }
-  }
+  private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
   override fun lookupClosed() {
     actionListener.listener = CompletionPopupListener.Adapter()
