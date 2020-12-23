@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
@@ -156,19 +157,22 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
     if (valueElement == null) return Collections.emptyList();
 
     PsiReference[] references = ourProvider.getReferencesByElement(valueElement, new ProcessingContext());
-    JBIterable<String> superClasses = JBIterable.of(references)
+    String[] superClasses = JBIterable.of(references)
       .filter(JavaClassReference.class)
       .unique(o -> o.getProvider())
       .flatten(o -> o.getSuperClasses())
-      .unique();
-    for (String className : superClasses) {
-      final List<DomElementProblemDescriptor> problemDescriptors =
-        checkExtendClass(element, ((PsiClass)valueObject), new String[]{className}, false, false, true, false, true, true, holder);
-      if (!problemDescriptors.isEmpty()) {
-        return problemDescriptors;
-      }
-    }
-    return Collections.emptyList();
+      .unique()
+      .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    return checkExtendClass(element,
+                            ((PsiClass)valueObject),
+                            superClasses,
+                            false,
+                            false,
+                            true,
+                            false,
+                            true,
+                            true,
+                            holder);
   }
 
   private static boolean isPsiClassType(GenericDomValue element) {
