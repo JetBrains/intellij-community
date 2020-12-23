@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,22 +58,32 @@ public class CyclomaticComplexityVisitor extends JavaRecursiveElementWalkingVisi
   }
 
   @Override
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    super.visitSwitchExpression(expression);
+    visitSwitchBlock(expression);
+  }
+
+  @Override
   public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
+    visitSwitchBlock(statement);
+  }
+
+  private void visitSwitchBlock(PsiSwitchBlock statement) {
     final PsiCodeBlock body = statement.getBody();
     if (body == null) {
       return;
     }
-    final PsiStatement[] statements = body.getStatements();
     boolean pendingLabel = false;
-    for (final PsiStatement child : statements) {
+    for (final PsiStatement child : body.getStatements()) {
       if (child instanceof PsiSwitchLabelStatement) {
-        if (!pendingLabel) {
-          m_complexity++;
-        }
-        pendingLabel = true;
+        pendingLabel = !((PsiSwitchLabelStatement)child).isDefaultCase();
       }
-      else {
+      else if (child instanceof PsiSwitchLabeledRuleStatement && !((PsiSwitchLabeledRuleStatement)child).isDefaultCase()) {
+        m_complexity++;
+      }
+      else if (pendingLabel) {
+        m_complexity++;
         pendingLabel = false;
       }
     }
