@@ -30,15 +30,15 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 
 intellij {
-    version 'IU-192.6603.28'
+    version 'IU-193.6015.39'
     plugins = [
-            'com.jetbrains.php:192.6603.42',
+            'com.jetbrains.php:193.6015.48',
             'JavaScriptLanguage',
             'yaml',
-            'org.jetbrains.plugins.go:192.6603.23.335',
+            'org.jetbrains.plugins.go:193.5662.53.103',
             'Docker',
-            'pythonid:2019.2.192.6603.23',
-            'org.jetbrains.plugins.ruby:2019.2.20190829',
+            'pythonid:193.6015.28',
+            'org.jetbrains.plugins.ruby:193.6015.9',
             'coverage',
             'CSS',
             'java-i18n',
@@ -49,8 +49,12 @@ intellij {
 }
 
 patchPluginXml {
-    sinceBuild '192'
+    sinceBuild '193'
     untilBuild '203.*'
+}
+
+buildSearchableOptions {
+    enabled = false
 }
 
 group 'ru.adelf'
