@@ -10,7 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
@@ -615,7 +615,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private PsiElement bindToClass(@NotNull PsiClass aClass, @NotNull PsiFile containingFile) throws IncorrectOperationException {
     String qName = aClass.getQualifiedName();
     Project project = containingFile.getProject();
-    boolean preserveQualification = JavaCodeStyleSettingsFacade.getInstance(project).useFQClassNames() && isFullyQualified(containingFile);
+    boolean preserveQualification = JavaFileCodeStyleFacade.forContext(containingFile).useFQClassNames() && isFullyQualified(containingFile);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     if (qName == null) {
       qName = aClass.getName();
