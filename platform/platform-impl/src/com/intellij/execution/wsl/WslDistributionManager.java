@@ -122,6 +122,9 @@ public final class WslDistributionManager implements Disposable {
   private static List<WSLDistribution> loadInstalledDistributions() {
     checkEdtAndReadAction();
     List<WSLDistribution> wslCliDistributions = fetchDistributionsFromWslCli();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return wslCliDistributions;
+    }
     List<WSLDistribution> oldDistributionsWithExecutable = WSLUtil.getAvailableDistributions();
     List<WSLDistribution> result = new ArrayList<>(oldDistributionsWithExecutable);
     // Prefer distributions with executables as it allows to switch to the old execution schema.
