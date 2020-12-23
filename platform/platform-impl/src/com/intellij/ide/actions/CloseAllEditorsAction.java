@@ -28,7 +28,6 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
         if (window != null){
           final VirtualFile[] files = window.getFiles();
           for (final VirtualFile file : files) {
-            if (window.isFilePinned(file)) continue;
             window.closeFile(file);
           }
           return;
