@@ -1265,8 +1265,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     else if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
       Pair<@NotNull PsiElement, @Nullable String> target = getTarget(psiElement, url);
       if (target != null) {
-        cancelAndFetchDocInfo(component,
-                              new MyCollector(myProject, target.first, null, target.second, false, false));
+        cancelAndFetchDocInfoByLink(component,
+                                    new MyCollector(myProject, target.first, null, target.second, false, false));
       }
     }
     else {
@@ -1280,7 +1280,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           if (externalHandler.canFetchDocumentationLink(url)) {
             String ref = externalHandler.extractRefFromLink(url);
             PsiElement finalPsiElement = psiElement;
-            cancelAndFetchDocInfo(component, new DocumentationCollector(finalPsiElement, url, ref, p, false) {
+            cancelAndFetchDocInfoByLink(component, new DocumentationCollector(finalPsiElement, url, ref, p, false) {
               @Override
               public String getDocumentation() {
                 return externalHandler.fetchExternalDocumentation(url, finalPsiElement);
@@ -1296,7 +1296,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
 
       if (!processed) {
-        cancelAndFetchDocInfo(component, new DocumentationCollector(psiElement, url, null, provider, false) {
+        cancelAndFetchDocInfoByLink(component, new DocumentationCollector(psiElement, url, null, provider, false) {
           @Override
           public String getDocumentation() {
             if (BrowserUtil.isAbsoluteURL(url)) {
@@ -1312,6 +1312,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+  }
+
+  protected ActionCallback cancelAndFetchDocInfoByLink(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
+    return cancelAndFetchDocInfo(component, provider);
   }
 
   public Project getProject() {
@@ -1440,7 +1444,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myTestDocumentationComponent = documentationComponent;
   }
 
-  private abstract static class DocumentationCollector {
+  protected abstract static class DocumentationCollector {
     private final CompletableFuture<PsiElement> myElementFuture;
     final String ref;
     final boolean onAutoUpdate;
