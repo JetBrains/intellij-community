@@ -22,6 +22,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.propertyBased.ActionOnFile;
 import com.intellij.testFramework.propertyBased.RandomActivityInterceptor;
 import com.intellij.ui.UiInterceptors;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
@@ -44,12 +45,13 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
     if (element == null) return;
     List<PsiExpression> expressions = PsiTreeUtil.collectParents(element, PsiExpression.class, true, e -> false);
     if (expressions.isEmpty()) return;
-    PsiExpression expression = env.generateValue(Generator.sampledFrom(expressions), "Expression");
+    PsiExpression expression = env.generateValue(Generator.sampledFrom(expressions), null);
     TextRange range = expression.getTextRange();
     editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-    if (env.generateValue(Generator.booleans(), "inline")) {
+    if (env.generateValue(Generator.booleans(), null)) {
       introduceVariableInline(env, project, editor, expression);
-    } else {
+    }
+    else {
       introduceVariableNoInline(env, project, editor, expression);
     }
   }
@@ -57,6 +59,8 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
   private static void introduceVariableInline(Environment env, Project project, Editor editor, PsiExpression expression) {
     var handler = new InplaceIntroduceVariableTest.MyIntroduceVariableHandler();
     Disposable disposable = Disposer.newDisposable();
+    env.logMessage(String.format("Introduce variable using inline introducer; expression: %s at %d", 
+                                 expression.getText(), expression.getTextRange().getStartOffset()));
     try {
       UiInterceptors.register(new RandomActivityInterceptor(env, disposable));
       TemplateManagerImpl.setTemplateTesting(disposable);
@@ -67,7 +71,9 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
         state.gotoEnd(false);
       }
     }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException ignored) { }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException hint) {
+      env.logMessage("Introduce variable failed gracefully with: " + hint.getMessage());
+    }
     finally {
       Disposer.dispose(disposable);
     }
@@ -75,15 +81,25 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
 
 
   private static void introduceVariableNoInline(@NotNull Environment env, Project project, Editor editor, PsiExpression expression) {
-    IntroduceVariableBase handler = new MockIntroduceVariableHandler(env.generateValue(Generator.asciiIdentifiers(), "var name"),
-                                                                     env.generateValue(Generator.booleans(), "replaceAll"),
-                                                                     env.generateValue(Generator.booleans(), "replaceFinal"),
-                                                                     env.generateValue(Generator.booleans(), "replaceVar"),
-                                                                     env.generateValue(Generator.booleans(), "replaceLValues"));
+    String varName = env.generateValue(Generator.asciiIdentifiers(), null);
+    boolean replaceAll = env.generateValue(Generator.booleans(), null);
+    boolean declareFinal = env.generateValue(Generator.booleans(), null);
+    boolean declareVar = env.generateValue(Generator.booleans(), null);
+    boolean replaceLValues = env.generateValue(Generator.booleans(), null);
+    String flags = EntryStream.of("replaceAll", replaceAll,
+                                  "declareFinal", declareFinal,
+                                  "declareVar", declareVar,
+                                  "replaceLValues", replaceLValues)
+      .filterValues(x -> x).keys().joining(" | ");
+    env.logMessage(String.format("Introduce variable; flags: %s; expression: %s at %d", 
+                                 flags, expression.getText(), expression.getTextRange().getStartOffset()));
+    IntroduceVariableBase handler = new MockIntroduceVariableHandler(varName, replaceAll, declareFinal, declareVar, replaceLValues);
     try {
       handler.invoke(project, expression, editor);
     }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException ignored) { }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException hint) {
+      env.logMessage("Introduce variable failed gracefully with: " + hint.getMessage());
+    }
   }
 
   static class MockIntroduceVariableHandler extends IntroduceVariableBase {
