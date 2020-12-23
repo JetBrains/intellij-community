@@ -71,8 +71,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
   public static final Key<PyInspection> INSPECTION = Key.create("PyUnresolvedReferencesVisitor.inspection");
 
-  PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
-                                @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
+  protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
+                                          @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
     super(holder, session);
     myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
   }
@@ -1032,7 +1032,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return result;
   }
 
-  Iterable<LocalQuickFix> getAutoImportFixes(PyElement node, PsiReference reference, PsiElement element) {
+  protected Iterable<LocalQuickFix> getAutoImportFixes(PyElement node, PsiReference reference, PsiElement element) {
     return Collections.emptyList();
   }
 

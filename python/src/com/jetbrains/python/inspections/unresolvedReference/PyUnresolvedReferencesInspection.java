@@ -131,7 +131,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
     }
 
     @Override
-    public Iterable<LocalQuickFix> getAutoImportFixes(PyElement node, PsiReference reference, PsiElement element) {
+    protected Iterable<LocalQuickFix> getAutoImportFixes(PyElement node, PsiReference reference, PsiElement element) {
       // look in other imported modules for this whole name
       if (!PythonImportUtils.isImportable(element)) {
         return Collections.emptyList();
