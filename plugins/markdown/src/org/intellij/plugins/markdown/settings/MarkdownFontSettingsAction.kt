@@ -53,8 +53,9 @@ class MarkdownFontSettingsAction : ComboBoxAction() {
     newFontSize)
 
   override fun update(e: AnActionEvent) {
+    val isCustomCssEnabled = markdownCssSettings.isTextEnabled && markdownCssSettings.customStylesheetText.isNotEmpty()
     if (MarkdownActionUtil.findSplitEditor(e) != null) {
-      e.presentation.isEnabledAndVisible = MarkdownActionUtil.findSplitEditor(e)!!.currentEditorLayout.showSecond
+      e.presentation.isEnabledAndVisible = MarkdownActionUtil.findSplitEditor(e)!!.currentEditorLayout.showSecond && !isCustomCssEnabled
     }
   }
 }
