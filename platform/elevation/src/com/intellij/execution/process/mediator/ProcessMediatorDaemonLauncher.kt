@@ -142,7 +142,7 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
     // In particular, this is a workaround for high CPU consumption of the osascript (used on macOS instead of sudo) process;
     // we want it to finish as soon as possible.
     return if (SystemInfo.isWindows) {
-      HandshakeTransport.createProcessStdoutTransport(DaemonLaunchOptions())
+      HandshakeTransport.createProcessStdoutTransport(createBaseLaunchOptions())
     }
     else try {
       openUnixHandshakeTransport()
@@ -153,9 +153,7 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
   }
 
   private fun openUnixHandshakeTransport(): HandshakeTransport {
-    val launchOptions = DaemonLaunchOptions(trampoline = sudo, daemonize = sudo,
-                                            leaderPid = ProcessHandle.current().pid(),
-                                            machNamespaceUid = if (SystemInfo.isMac) LibC.INSTANCE.getuid() else null)
+    val launchOptions = createBaseLaunchOptions()
     return try {
       HandshakeTransport.createUnixFifoTransport(launchOptions, path = FileUtil.generateRandomTemporaryPath().toPath())
     }
@@ -171,6 +169,15 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
     }
       // neither a named pipe nor an open port is safe from prying eyes
       .encrypted()
+  }
+
+  private fun createBaseLaunchOptions(): DaemonLaunchOptions {
+    return if (SystemInfo.isWindows)
+      DaemonLaunchOptions()
+    else
+      DaemonLaunchOptions(trampoline = sudo, daemonize = sudo,
+                          leaderPid = ProcessHandle.current().pid(),
+                          machNamespaceUid = if (SystemInfo.isMac) LibC.INSTANCE.getuid() else null)
   }
 
   private fun createCommandLine(transport: HandshakeTransport): GeneralCommandLine {
