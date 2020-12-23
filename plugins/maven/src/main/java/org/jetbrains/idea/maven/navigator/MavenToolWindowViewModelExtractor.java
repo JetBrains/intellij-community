@@ -2,10 +2,11 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.Content;
@@ -15,6 +16,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.viewModel.definition.*;
 import com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -59,27 +61,9 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     final ArrayList<ActionViewModel> iconActions = new ArrayList<>();
 
     for (AnAction action : childrenActions) {
-      Icon icon = action.getTemplatePresentation().getIcon();
-      if (icon == null) {
-        //todo this is stub
-        icon = EmptyIcon.ICON_0;
-      }
 
-      ActionViewModel actionViewModel;
-      if (action instanceof ToggleAction) {
-        //todo lazy tooltip text
-        actionViewModel = new ToggleIconAction(icon, action.getTemplatePresentation().getText(), () -> {
-          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
-        }, true);
-      }
-      else if (action instanceof Separator) {
-        actionViewModel = new com.intellij.ui.viewModel.definition.Separator();
-      }
-      else {
-        actionViewModel = new IconAction(icon, action.getTemplatePresentation().getText(), () -> {
-          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
-        });
-      }
+
+      ActionViewModel actionViewModel = getActionViewModel(context, action);
 
       iconActions.add(actionViewModel);
     }
@@ -87,12 +71,49 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     return new ActionBarViewModel(true, iconActions);
   }
 
+  @NotNull
+  private static ActionViewModel getActionViewModel(DataContext context, AnAction action) {
+    Icon icon = action.getTemplatePresentation().getIcon();
+
+    if (action instanceof ActionStub) {
+      ActionStub actionStub = (ActionStub)action;
+      String iconPath = actionStub.getIconPath();
+      if (iconPath != null) {
+        icon = IconLoader.findIcon(iconPath, action.getClass(), actionStub.getPlugin().getPluginClassLoader(), null, true);
+      }
+      action = ActionManager.getInstance().getAction(actionStub.getId());
+    }
+
+    if (icon == null) {
+      //todo this is stub
+      icon = EmptyIcon.ICON_0;
+    }
+
+    ActionViewModel actionViewModel;
+    final AnAction tooltipAction = action;
+    if (action instanceof ToggleAction) {
+      //todo lazy tooltip text
+      actionViewModel = new ToggleIconAction(icon, action.getTemplatePresentation().getText(), () -> {
+        tooltipAction.actionPerformed(AnActionEvent.createFromAnAction(tooltipAction, null, "", context));
+      }, true);
+    }
+    else if (action instanceof Separator) {
+      actionViewModel = new com.intellij.ui.viewModel.definition.Separator();
+    }
+    else {
+      actionViewModel = new IconAction(icon, action.getTemplatePresentation().getText(), () -> {
+        tooltipAction.actionPerformed(AnActionEvent.createFromAnAction(tooltipAction, null, "", context));
+      });
+    }
+    return actionViewModel;
+  }
+
   // TODO also seems like could be made more generic @see SimpleNode
   private TreeViewModel extractViewModel(SimpleTree tree) {
     PatchedDefaultMutableTreeNode rawRoot = (PatchedDefaultMutableTreeNode)tree.getModel().getRoot();
     MavenProjectsStructure.MavenSimpleNode mavenRoot = (MavenProjectsStructure.MavenSimpleNode) rawRoot.getUserObject();
     ViewModelNode viewModelRoot = new ViewModelNode(mavenRoot.getName(), () -> {
-    // TODO
+      //do nothing
     }, true, mavenRoot.getIcon());
 
     processRecursive(mavenRoot, viewModelRoot);
@@ -106,7 +127,6 @@ public class MavenToolWindowViewModelExtractor implements ToolWindowViewModelExt
     List<ViewModelNode> childrenViewModel = new ArrayList<>();
     for (SimpleNode child : children) {
       ViewModelNode childViewModelNode = new ViewModelNode(child.getName(), () -> {
-      // TODO
       }, hasChildren(child), child.getIcon());
       childrenViewModel.add(childViewModelNode);
 
