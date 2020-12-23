@@ -177,7 +177,7 @@ class JdkInstaller {
       error("Archive file name contains invalid characters: ${item.archiveFileName}")
     }
     val fullMatchPath = item.packageRootPrefix.removePrefix("./").trim('/')
-    if (!fullMatchPath.split('/').all { it.matches(Regex("[A-Za-z0-9._\\-]*")) }) {
+    if (!fullMatchPath.split('/').all { it.matches(Regex("[A-Za-z0-9._\\-+]*")) }) {
       error("Package root prefix contains invalid characters: ${item.packageRootPrefix}")
     }
 
