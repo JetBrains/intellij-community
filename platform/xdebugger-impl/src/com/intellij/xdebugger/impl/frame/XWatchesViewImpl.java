@@ -76,6 +76,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
+    this(session, watchesInVariables, vertical, true);
+  }
+
+  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
     super(session);
     myWatchesInVariables = watchesInVariables;
     inlineWatchesEnabled = Registry.is("debugger.watches.inline.enabled");
@@ -107,19 +111,21 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       }
     }.registerCustomShortcutSet(CommonShortcuts.getPaste(), tree, myDisposables);
 
-    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.DEBUGGER_TOOLBAR,
-      DebuggerSessionTabBase.getCustomizedActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP),
-      !vertical);
-    toolbar.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0,
-                                           vertical ? 0 : 1,
-                                           vertical ? 1 : 0));
-    toolbar.setTargetComponent(tree);
+    if (withToolbar) {
+      ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
+        ActionPlaces.DEBUGGER_TOOLBAR,
+        DebuggerSessionTabBase.getCustomizedActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP),
+        !vertical);
+      toolbar.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0,
+                                             vertical ? 0 : 1,
+                                             vertical ? 1 : 0));
+      toolbar.setTargetComponent(tree);
+      getPanel().add(toolbar.getComponent(), vertical ? BorderLayout.WEST : BorderLayout.NORTH);
+    }
 
     if (!myWatchesInVariables) {
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
-    getPanel().add(toolbar.getComponent(), vertical ? BorderLayout.WEST : BorderLayout.NORTH);
     installEditListeners();
   }
 

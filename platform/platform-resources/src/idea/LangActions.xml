@@ -994,6 +994,31 @@
       <reference ref="EvaluateExpression" />
     </group>
 
+    <group id="XDebugger.ToolWindow.TopToolbar3">
+      <reference ref="Resume"/>
+      <reference ref="StepOver"/>
+      <reference ref="StepInto"/>
+      <reference ref="StepOut"/>
+      <separator/>
+      <reference ref="Rerun"/>
+      <reference ref="Stop"/>
+      <separator/>
+      <reference ref="ViewBreakpoints"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+      <group id="XDebugger.ToolWindow.TopToolbar3.Extra" icon="AllIcons.Actions.More" popup="true">
+        <reference ref="ForceStepOver"/>
+        <reference ref="ForceStepInto"/>
+        <reference ref="SmartStepInto"/>
+        <separator/>
+        <reference ref="RunToCursor"/>
+        <reference ref="ForceRunToCursor"/>
+        <separator/>
+        <reference ref="Pause"/>
+        <reference ref="ShowExecutionPoint"/>
+        <separator/>
+      </group>
+    </group>
+
     <group id="XDebugger.ToolWindow.LeftToolbar">
       <separator/>
       <reference ref="Resume"/>

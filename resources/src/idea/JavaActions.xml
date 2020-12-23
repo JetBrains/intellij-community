@@ -399,6 +399,7 @@
       <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ForceRunToCursor"/>
       <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
 
     <group id="ToggleBreakpointAction">
@@ -418,6 +419,7 @@
     </action>
     <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
 
     <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction">
@@ -498,11 +500,13 @@
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction">
@@ -512,6 +516,7 @@
       <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction"
               icon="AllIcons.Actions.StepOutCodeBlock">
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra" anchor="after" relative-to-action="SmartStepInto"/>
       </action>
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">

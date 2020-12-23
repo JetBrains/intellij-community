@@ -47,6 +47,7 @@
             class="com.intellij.debugger.streams.action.TraceStreamAction"
             icon="JavaDebuggerStreamsIcons.Stream_debugger">
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
   </actions>
 </idea-plugin>
