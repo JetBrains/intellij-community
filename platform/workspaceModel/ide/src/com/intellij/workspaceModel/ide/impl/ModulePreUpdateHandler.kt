@@ -17,15 +17,16 @@ class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
     val removedModulePersistentIds = changes[ModuleEntity::class.java]
       ?.asSequence()
       ?.filterIsInstance<EntityChange.Removed<*>>()
-      ?.map { (it.entity as ModuleEntity).persistentId() }?.toList() ?: return false
+      ?.map { (it.entity as ModuleEntity).persistentId() }?.toSet() ?: return false
 
     if (removedModulePersistentIds.isEmpty()) return false
 
     val librariesToRemove = builder
       .entities(LibraryEntity::class.java)
-      .filter { it.tableId.let { it is LibraryTableId.ModuleLibraryTableId && it.moduleId in removedModulePersistentIds } }
+      .filter { lib -> lib.tableId.let { it is LibraryTableId.ModuleLibraryTableId && it.moduleId in removedModulePersistentIds } }
+      .toList()
 
-    if (librariesToRemove.none()) return false
+    if (librariesToRemove.isEmpty()) return false
 
     librariesToRemove.forEach(builder::removeEntity)
 
