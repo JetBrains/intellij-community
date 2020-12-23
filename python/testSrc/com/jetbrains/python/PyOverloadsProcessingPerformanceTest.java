@@ -76,8 +76,10 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   public void testNavigatingToDefinition() {
     configureAndGetCallExprUnderCaret("mainQualified.py");
-    PsiElement element = GotoDeclarationAction.findTargetElement(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
-    assertInstanceOf(element, PyFunction.class);
+    doPerformanceTestResettingCaches("Navigating to definition", 100, () -> {
+      PsiElement element = GotoDeclarationAction.findTargetElement(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
+      assertInstanceOf(element, PyFunction.class);
+    });
   }
 
   public void testQuickDocumentationRendering() {
