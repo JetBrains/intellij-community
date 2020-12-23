@@ -15,9 +15,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -43,34 +40,17 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IconWithToolTip;
-import com.intellij.ui.IconWrapperWithToolTip;
-import com.intellij.ui.JBColor;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.JBCachingScalableIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphVector;
-import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
-import java.util.function.Function;
-
-import static com.intellij.ide.ui.UISettings.setupAntialiasing;
-import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 
 public final class Bookmark implements Navigatable, Comparable<Bookmark> {
-  static final Icon DEFAULT_ICON = bookmarked(new BookmarkPainter().asIcon(12));
-
   private OpenFileDescriptor myTarget;
   private Reference<RangeHighlighterEx> myHighlighterRef;
 
@@ -224,7 +204,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   public Icon getIcon() {
-    return myMnemonic == 0 ? DEFAULT_ICON : MnemonicIcon.getIcon(myMnemonic);
+    return IconHelper.getIcon(myMnemonic);
   }
 
   public @NotNull @NlsSafe String getDescription() {
@@ -393,108 +373,6 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return result.toString();
   }
 
-  static final class MnemonicIcon extends JBCachingScalableIcon<MnemonicIcon> implements IconWithToolTip {
-    private static final Icon[] cache = new Icon[36];//0..9  + A..Z
-    private final char myMnemonic;
-
-    @NotNull
-    @Override
-    public MnemonicIcon copy() {
-      return new MnemonicIcon(myMnemonic);
-    }
-
-    @NotNull
-    static Icon getIcon(char mnemonic) {
-      int index = mnemonic - 48;
-      if (index > 9)
-        index -= 7;
-      if (index < 0 || index > cache.length-1)
-        return new MnemonicIcon(mnemonic);
-      if (cache[index] == null)
-        cache[index] = bookmarked(new MnemonicPainter(mnemonic).asIcon(12));
-      return cache[index];
-    }
-
-    private static @NotNull Color getBackground(Component component) {
-      Function<ColorKey, Color> function = UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY);
-      Color color = function == null ? JBUI.CurrentTheme.Tree.BACKGROUND : function.apply(EditorColors.GUTTER_BACKGROUND);
-      //noinspection UseJBColor
-      return !ColorUtil.isDark(color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor())
-             ? new Color(0xffffcc)
-             : new Color(0x675133);
-    }
-
-    private static @NotNull Color getForeground(Component component) {
-      return null != UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY)
-             ? EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground()
-             : JBUI.CurrentTheme.Label.foreground();
-    }
-
-    private MnemonicIcon(char mnemonic) {
-      myMnemonic = mnemonic;
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      int width = getIconWidth();
-      int height = getIconHeight();
-
-      g.setColor(getBackground(c));
-      g.fillRect(x, y, width, height);
-
-      g.setColor(JBColor.GRAY);
-      g.drawRect(x, y, width, height);
-
-      g.setColor(getForeground(c));
-      setupAntialiasing(g);
-
-      float startingFontSize = 40f;  // large font for smaller rounding error
-      Font font = getBookmarkFont().deriveFont(startingFontSize);
-      FontRenderContext fontRenderContext = ((Graphics2D)g).getFontRenderContext();
-      double height40 = font.createGlyphVector(fontRenderContext, new char[]{'A'}).getVisualBounds().getHeight();
-      font = font.deriveFont((float)(startingFontSize * height / height40 * 0.7));
-
-      GlyphVector gv = font.createGlyphVector(fontRenderContext, new char[]{myMnemonic});
-      Rectangle2D bounds = gv.getVisualBounds();
-      ((Graphics2D)g).drawGlyphVector(gv, (float)(x + (width - bounds.getWidth())/2 - bounds.getX()),
-                                      (float)(y + (height - bounds.getHeight())/2 - bounds.getY()));
-    }
-
-    @Override
-    public int getIconWidth() {
-      return scale(DEFAULT_ICON.getIconWidth());
-    }
-
-    private int scale(int width) {
-      return (int)Math.ceil(scaleVal(width, OBJ_SCALE));
-    }
-
-    @Override
-    public int getIconHeight() {
-      return scale(DEFAULT_ICON.getIconHeight());
-    }
-
-    @Override
-    public String getToolTip(boolean composite) {
-      return IdeBundle.message("tooltip.bookmarked");
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MnemonicIcon that = (MnemonicIcon)o;
-
-      return myMnemonic == that.myMnemonic;
-    }
-
-    @Override
-    public int hashCode() {
-      return myMnemonic;
-    }
-  }
-
   private static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     private final Bookmark myBookmark;
 
@@ -510,7 +388,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     @Override
     @NotNull
     public Icon getIcon() {
-      return myBookmark.getIcon();
+      return IconHelper.getGutterIcon(myBookmark.myMnemonic);
     }
 
     @Override
@@ -562,9 +440,5 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     StringBuilder sb = new StringBuilder().append(mnemonic);
     if (point) sb.append('.');
     return sb.toString(); //NON-NLS
-  }
-
-  private static @NotNull Icon bookmarked(@NotNull Icon icon) {
-    return new IconWrapperWithToolTip(icon, IdeBundle.messagePointer("tooltip.bookmarked"));
   }
 }
