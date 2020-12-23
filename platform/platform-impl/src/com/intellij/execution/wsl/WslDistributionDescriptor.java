@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,8 @@ import static com.intellij.execution.wsl.WSLUtil.LOG;
  */
 @Tag("descriptor")
 final class WslDistributionDescriptor {
+  private static final int PROBE_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 60_000);
+
   @Tag("id")
   private @NlsSafe String myId;
   @Tag("microsoft-id")
@@ -127,7 +130,7 @@ final class WslDistributionDescriptor {
       return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
     }
 
-    WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false).withTimeout(60_000);
+    WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
     String wslCurrentDirectory = readWslOutputLine(options, Collections.singletonList("pwd"));
     if (wslCurrentDirectory == null) return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
 
@@ -160,7 +163,7 @@ final class WslDistributionDescriptor {
 
     ProcessOutput output;
     try {
-      output = distribution.executeOnWsl(command, options, options.getTimeout(), null);
+      output = distribution.executeOnWsl(command, options, PROBE_TIMEOUT, null);
     }
     catch (ExecutionException e) {
       LOG.warn("Start failed on " + getId(), e);
@@ -183,6 +186,6 @@ final class WslDistributionDescriptor {
   }
 
   @Nullable String getEnvironmentVariable(String name) {
-    return readWslOutputLine(new WSLCommandLineOptions().withTimeout(60_000), Arrays.asList("printenv", name));
+    return readWslOutputLine(new WSLCommandLineOptions(), Arrays.asList("printenv", name));
   }
 }

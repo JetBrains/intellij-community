@@ -15,7 +15,6 @@ public final class WSLCommandLineOptions {
   private String myRemoteWorkingDirectory;
   private boolean myPassEnvVarsUsingInterop = false;
   private final List<String> myInitShellCommands = new ArrayList<>();
-  private int myTimeout = -1;
 
   public boolean isLaunchWithWslExe() {
     return myLaunchWithWslExe && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe");
@@ -99,18 +98,6 @@ public final class WSLCommandLineOptions {
     return this;
   }
 
-  /**
-   * Specifies a timeout for WSL command execution, in milliseconds. Default value is -1 (meaning no timeout).
-   */
-  public int getTimeout() {
-    return myTimeout;
-  }
-
-  public WSLCommandLineOptions withTimeout(int timeout) {
-    myTimeout = timeout;
-    return this;
-  }
-
   @Override
   public String toString() {
     return "launchWithWslExe=" + myLaunchWithWslExe +
@@ -118,7 +105,6 @@ public final class WSLCommandLineOptions {
            ", sudo=" + mySudo +
            ", remoteWorkingDirectory='" + myRemoteWorkingDirectory + '\'' +
            ", passEnvVarsUsingInterop=" + myPassEnvVarsUsingInterop +
-           ", initCommands=" + myInitShellCommands +
-           ", timeout=" + myTimeout;
+           ", initCommands=" + myInitShellCommands;
   }
 }
