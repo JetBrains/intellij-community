@@ -14,6 +14,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.RawCommandLineEditor;
@@ -632,6 +633,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     @Override
     public void disposeUIResources() {
+        Disposer.dispose(this);
     }
 
     @Nls
