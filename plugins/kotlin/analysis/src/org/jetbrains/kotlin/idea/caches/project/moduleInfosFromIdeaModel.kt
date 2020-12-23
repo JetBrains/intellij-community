@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.JdkOrderEntry
@@ -84,6 +85,7 @@ private fun Library.wrap() = LibraryWrapper(this.asLibraryEx())
 internal val LibraryEx.allRootUrls: Set<String>
     get() = mutableSetOf<String>().apply {
         for (orderRootType in OrderRootType.getAllTypes()) {
+            ProgressManager.checkCanceled()
             addAll(rootProvider.getUrls(orderRootType))
         }
     }
