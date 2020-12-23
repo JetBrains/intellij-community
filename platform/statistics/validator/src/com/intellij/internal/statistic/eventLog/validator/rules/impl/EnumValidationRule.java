@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper;
+import com.intellij.internal.statistic.eventLog.util.ContainerUtil;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
@@ -41,7 +41,9 @@ public class EnumValidationRule extends PerformanceCareRule implements FUSRegexp
   @NotNull
   @Override
   public String asRegexp() {
-    return  StringUtil.join(ContainerUtil.map(myEnumValues, s -> RegexpValidationRule.escapeText(s)), "|");
+    return myEnumValues.stream()
+      .map(s -> RegexpValidationRule.escapeText(s))
+      .collect(Collectors.joining("|"));
   }
 
   @Override
