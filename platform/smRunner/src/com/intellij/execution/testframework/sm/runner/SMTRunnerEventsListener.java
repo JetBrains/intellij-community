@@ -77,7 +77,7 @@ public interface SMTRunnerEventsListener {
   void onCustomProgressTestFinished();
 
   void onSuiteTreeNodeAdded(SMTestProxy testProxy);
-  default void onSuiteTreeNodeAdded(SMTestProxy testProxy, @Nullable String nodeId, @Nullable String parentNodeId) {
+  default void onSuiteTreeNodeAdded(SMTestProxy testProxy, boolean isSuite, @Nullable String nodeId, @Nullable String parentNodeId) {
     onSuiteTreeNodeAdded(testProxy);
   }
   default void onSuiteTreeEnded(SMTestProxy.SMRootTestProxy testsRootProxy, String suiteName) {}
