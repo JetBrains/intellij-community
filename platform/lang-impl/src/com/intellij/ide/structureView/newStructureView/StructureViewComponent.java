@@ -3,6 +3,7 @@ package com.intellij.ide.structureView.newStructureView;
 
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
@@ -61,6 +62,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
@@ -893,6 +895,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     public void processMouseEvent(MouseEvent event) {
       IdeMouseEventDispatcher.requestFocusInNonFocusedWindow(event);
       super.processMouseEvent(event);
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = super.getAccessibleContext();
+        accessibleContext.setAccessibleName(IdeBundle.message("structure.view.tree.accessible.name"));
+      }
+      return accessibleContext;
     }
   }
 
