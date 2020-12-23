@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="libraryTable">
   <library name="grpc-netty-shaded" type="repository">
-    <properties maven-id="io.grpc:grpc-netty-shaded:1.32.2">
+    <properties maven-id="io.grpc:grpc-netty-shaded:1.34.1">
       <exclude>
         <dependency maven-id="io.grpc:grpc-core" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.32.2/grpc-netty-shaded-1.32.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.34.1/grpc-netty-shaded-1.34.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.32.2/grpc-netty-shaded-1.32.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.34.1/grpc-netty-shaded-1.34.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
