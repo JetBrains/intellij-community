@@ -986,17 +986,24 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                                                  Color fg,
                                                  boolean selected) {
       SimpleTextAttributes plain = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fg);
-      SimpleTextAttributes highlighted = new SimpleTextAttributes(null, fg, null, SimpleTextAttributes.STYLE_SEARCH_MATCH);
-      List<TextRange> fragments = new ArrayList<>();
+
+      if (name.startsWith("<html>")) {
+        new HtmlToSimpleColoredComponentConverter(HtmlToSimpleColoredComponentConverter.DEFAULT_TAG_HANDLER).appendHtml(nameComponent, name, plain);
+        name = nameComponent.getCharSequence(false).toString();
+      }
+      else {
+        nameComponent.append(name, plain);
+      }
+
       nameComponent.setDynamicSearchMatchHighlighting(false);
       if (selected) {
         int matchStart = StringUtil.indexOfIgnoreCase(name, pattern, 0);
         if (matchStart >= 0) {
           nameComponent.setDynamicSearchMatchHighlighting(true);
-          fragments.add(TextRange.from(matchStart, pattern.length()));
+          List<TextRange> fragments = Collections.singletonList(TextRange.from(matchStart, pattern.length()));
+          SpeedSearchUtil.applySpeedSearchHighlighting(nameComponent, fragments, true);
         }
       }
-      SpeedSearchUtil.appendColoredFragments(nameComponent, name, fragments, plain, highlighted);
     }
   }
 }
