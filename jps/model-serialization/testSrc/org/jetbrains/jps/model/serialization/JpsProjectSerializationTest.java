@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -239,5 +240,12 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertTrue(myProject.getModules().size() > 0);
     System.out.println("JpsProjectSerializationTest: " + myProject.getModules().size() + " modules, " + myProject.getLibraryCollection().getLibraries().size() + " libraries and " +
                        JpsArtifactService.getInstance().getArtifacts(myProject).size() + " artifacts loaded in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms");
+  }
+
+  public void testExcludesInLibraries() {
+    loadProject("/jps/model-serialization/testData/excludesInLibraries");
+    JpsLibrary library = assertOneElement(myProject.getLibraryCollection().getLibraries());
+    assertEquals("junit", library.getName());
+    assertEquals(JpsPathUtil.getLibraryRootUrl(new File(getAbsolutePath("lib/junit.jar"))), assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
   }
 }

@@ -72,7 +72,7 @@ public final class JpsLibraryTableSerializer {
     }
     for (Element rootsElement : libraryElement.getChildren()) {
       final String rootTypeId = rootsElement.getName();
-      if (!rootTypeId.equals(JAR_DIRECTORY_TAG) && !rootTypeId.equals(PROPERTIES_TAG)) {
+      if (!rootTypeId.equals(JAR_DIRECTORY_TAG) && !rootTypeId.equals(PROPERTIES_TAG) && !rootTypeId.equals("excluded")) {
         final JpsOrderRootType rootType = getRootType(rootTypeId);
         for (Element rootElement : JDOMUtil.getChildren(rootsElement, ROOT_TAG)) {
           String url = pathMapper.mapUrl(rootElement.getAttributeValue(URL_ATTRIBUTE));
