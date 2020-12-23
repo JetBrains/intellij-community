@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -95,8 +96,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     filterAndReportDuplicatingContentRoots(byModule, project);
 
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
-      Module module = entry.getKey().getUserData(AbstractModuleDataService.MODULE_KEY);
-      module = module != null ? module : modelsProvider.findIdeModule(entry.getKey().getData());
+      Pair<Module, String> moduleToActualName = entry.getKey().getUserData(AbstractModuleDataService.MODULE_KEY);
+      Module module = moduleToActualName != null ? moduleToActualName.first : modelsProvider.findIdeModule(entry.getKey().getData());
       if (module == null) {
         LOG.warn(String.format(
           "Can't import content roots. Reason: target module (%s) is not found at the ide. Content roots: %s",

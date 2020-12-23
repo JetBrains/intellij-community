@@ -27,9 +27,10 @@ class JavaModuleDataService : AbstractProjectDataService<JavaModuleData, Project
     if (projectData == null) return
     for (javaModuleNode in toImport) {
       val moduleNode = javaModuleNode.getParent(ModuleData::class.java) ?: continue
-      val module = moduleNode.getUserData(AbstractModuleDataService.MODULE_KEY) ?: continue
+      val moduleToActualName = moduleNode.getUserData(AbstractModuleDataService.MODULE_KEY) ?: continue
       val javaModuleData = javaModuleNode.data
 
+      val module = moduleToActualName.first
       importLanguageLevel(module, javaModuleData, modelsProvider)
       importTargetBytecodeVersion(module, javaModuleData)
     }

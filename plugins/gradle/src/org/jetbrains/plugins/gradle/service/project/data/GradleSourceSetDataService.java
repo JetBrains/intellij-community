@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
@@ -65,21 +66,23 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
   }
 
   @Override
-  protected @NotNull Module createModule(@NotNull DataNode<GradleSourceSetData> sourceSetModuleNode,
-                                         @NotNull IdeModifiableModelsProvider modelsProvider) {
+  protected @NotNull Pair<Module, String> createModule(@NotNull DataNode<GradleSourceSetData> sourceSetModuleNode,
+                                                       @NotNull IdeModifiableModelsProvider modelsProvider) {
     //noinspection unchecked
     DataNode<ModuleData> parentModuleNode = (DataNode<ModuleData>)sourceSetModuleNode.getParent();
     assert parentModuleNode != null;
-    Module parentModule = parentModuleNode.getUserData(MODULE_KEY);
-    assert parentModule != null;
+    Pair<Module, String> moduleToActualName = parentModuleNode.getUserData(MODULE_KEY);
+    assert moduleToActualName != null;
 
+    Module parentModule = moduleToActualName.first;
+    String actualModuleName = moduleToActualName.second;
     String projectPath = sourceSetModuleNode.getData().getLinkedExternalProjectPath();
     ExternalProjectSettings settings = getSettings(parentModule.getProject(), SYSTEM_ID).getLinkedProjectSettings(projectPath);
     if (settings != null && settings.isUseQualifiedModuleNames()) {
       String sourceSetModuleInternalName = sourceSetModuleNode.getData().getInternalName();
-      if (!sourceSetModuleInternalName.startsWith(parentModule.getName())) {
+      if (!sourceSetModuleInternalName.startsWith(actualModuleName)) {
         String sourceSetName = sourceSetModuleNode.getData().getModuleName();
-        String adjustedInternalName = findDeduplicatedModuleName(parentModule.getName() + "." + sourceSetName, modelsProvider);
+        String adjustedInternalName = findDeduplicatedModuleName(actualModuleName + "." + sourceSetName, modelsProvider);
         sourceSetModuleNode.getData().setInternalName(adjustedInternalName);
       }
     }

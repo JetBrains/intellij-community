@@ -115,7 +115,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @NotNull
   @Override
-  public Module newModule(@NotNull final String filePath, final String moduleTypeId) {
+  public Pair<Module, String> newModule(@NotNull final String filePath, final String moduleTypeId) {
     Module module = getModifiableModuleModel().newModule(filePath, moduleTypeId);
     final String moduleName = FileUtilRt.getNameWithoutExtension(new File(filePath).getName());
     if (!module.getName().equals(moduleName)) {
@@ -129,12 +129,12 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
     // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
     module.setModuleType(moduleTypeId);
-    return module;
+    return Pair.create(module, moduleName);
   }
 
   @NotNull
   @Override
-  public Module newModule(@NotNull ModuleData moduleData) {
+  public Pair<Module, String> newModule(@NotNull ModuleData moduleData) {
     String imlName = null;
     for (String candidate: suggestModuleNameCandidates(moduleData)) {
       Module module = findIdeModule(candidate);
