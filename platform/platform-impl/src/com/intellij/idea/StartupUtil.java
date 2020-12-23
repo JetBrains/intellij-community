@@ -437,7 +437,9 @@ public final class StartupUtil {
       }
     }
 
-    if ("true".equals(System.getProperty("idea.64bit.check")) && CpuArch.CURRENT != CpuArch.X86_64 && PlatformUtils.isCidr()) {
+    if ("true".equals(System.getProperty("idea.64bit.check")) &&
+        !(CpuArch.CURRENT == CpuArch.X86_64 || CpuArch.CURRENT == CpuArch.ARM64) &&
+        PlatformUtils.isCidr()) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.jvm"),
                        BootstrapBundle.message("bootstrap.error.message.use.64.jvm.instead.of.32"), true);
       return false;
