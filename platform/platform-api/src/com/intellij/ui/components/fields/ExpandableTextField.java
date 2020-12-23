@@ -52,16 +52,9 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
         int height = metrics == null ? 16 : metrics.getHeight();
         Dimension size = new Dimension(height * 32, height * 16);
 
-        JTextArea area = new JTextArea(onShow.fun(field.getText()));
-        area.putClientProperty(Expandable.class, this);
-        area.setEditable(field.isEditable());
-        area.setBackground(field.getBackground());
-        area.setForeground(field.getForeground());
-        area.setFont(font);
-        area.setWrapStyleWord(true);
-        area.setLineWrap(true);
+        JTextArea area = createTextArea(onShow.fun(field.getText()), field.isEditable(), field.getBackground(), field.getForeground(), font);
+
         copyCaretPosition(field, area);
-        UIUtil.addUndoRedoActions(area);
 
         JLabel label = createLabel(createCollapseExtension());
         label.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
@@ -110,6 +103,23 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     };
     setMonospaced(true);
     setExtensions(createExtensions());
+  }
+
+  @NotNull
+  protected JTextArea createTextArea(@Nls @NotNull String text, boolean editable, Color background, Color foreground, Font font) {
+    JTextArea area = new JTextArea(text);
+
+    area.putClientProperty(Expandable.class, this);
+    area.setEditable(editable);
+    area.setBackground(background);
+    area.setForeground(foreground);
+    area.setFont(font);
+    area.setWrapStyleWord(true);
+    area.setLineWrap(true);
+
+    UIUtil.addUndoRedoActions(area);
+
+    return area;
   }
 
   public void setMonospaced(boolean monospaced) {
