@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
 import io.methvin.watcher.DirectoryChangeListener
@@ -21,6 +20,7 @@ import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URI
+import java.nio.file.ClosedWatchServiceException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -146,15 +146,21 @@ class BuildServer(val homePath: Path) {
 
         val moduleName = p.substring(moduleNamePathOffset, p.indexOf(File.separatorChar, moduleNamePathOffset))
         if (moduleName != "intellij.platform.ide.impl" && moduleName != "intellij.platform.ide") {
-          platformPrefixToPluginBuilder.values.forEach { it.moduleChanged(moduleName, path) }
+          for (ideBuilder in platformPrefixToPluginBuilder.values) {
+            ideBuilder.moduleChanged(moduleName, path)
+          }
         }
       })
       .build()
-    watcher.watchAsync(AppExecutorUtil.getAppExecutorService())
-    Runtime.getRuntime().addShutdownHook(object : Thread() {
-      override fun run() {
-        watcher.close()
+    Thread {
+      try {
+        watcher.watch()
       }
+      catch (ignored: ClosedWatchServiceException) {
+      }
+    }.start()
+    Runtime.getRuntime().addShutdownHook(Thread {
+      watcher.close()
     })
   }
 }

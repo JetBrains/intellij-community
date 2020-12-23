@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.ResourcesGenerator
@@ -45,9 +46,13 @@ final class PluginLayout extends BaseLayout {
    * to include such a library to the plugin distribution.</p>
    * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
    */
-  static PluginLayout plugin(String mainModuleName, @DelegatesTo(PluginLayoutSpec) Closure body = {}) {
-    def layout = new PluginLayout(mainModuleName)
-    def spec = new PluginLayoutSpec(layout)
+  static PluginLayout plugin(@NotNull String mainModuleName, @DelegatesTo(PluginLayoutSpec) Closure body = {}) {
+    if (mainModuleName.isEmpty()) {
+      throw new IllegalArgumentException("mainModuleName must be not empty")
+    }
+
+    PluginLayout layout = new PluginLayout(mainModuleName)
+    PluginLayoutSpec spec = new PluginLayoutSpec(layout)
     body.delegate = spec
     body()
     layout.directoryName = spec.directoryName
@@ -71,7 +76,7 @@ final class PluginLayout extends BaseLayout {
     return "Plugin '$mainModule'"
   }
 
-  static class PluginLayoutSpec extends BaseLayoutSpec {
+  static final class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
     private String directoryName
     private String mainJarName

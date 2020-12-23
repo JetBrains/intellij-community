@@ -844,12 +844,17 @@ final class DistributionJARsBuilder {
   }
 
   void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
-    // Don't check modules which are not direct children of lib/ directory
-    def modulesWithPluginXml = moduleJars.entrySet().stream()
-      .filter { !it.key.contains("/") }
-      .flatMap { it.value.stream() }
-      .filter { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
-      .collect(Collectors.toList()) as List<String>
+    // don't check modules which are not direct children of lib/ directory
+    List<String> modulesWithPluginXml = new ArrayList<>()
+    for (Map.Entry<String, Collection<String>> entry : moduleJars.entrySet()) {
+      if (!entry.key.contains("/")) {
+        for (String  moduleName : entry.value) {
+          if (containsFileInOutput(moduleName, "META-INF/plugin.xml", moduleExcludes.get(moduleName))) {
+            modulesWithPluginXml.add(moduleName)
+          }
+        }
+      }
+    }
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
     }
@@ -857,10 +862,12 @@ final class DistributionJARsBuilder {
       buildContext.messages.error("No module from '$mainPluginModule' plugin contains plugin.xml")
     }
 
-    moduleJars.values().each {
-      if (it != "intellij.java.guiForms.rt" && containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(it))) {
-        buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$it' module in '$mainPluginModule' plugin, because they are included into a platform JAR. " +
-                                    "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
+    for (moduleJar in moduleJars.values()) {
+      if (moduleJar != "intellij.java.guiForms.rt" &&
+          containsFileInOutput(moduleJar, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(moduleJar))) {
+        buildContext.messages.error(
+          "Runtime classes of GUI designer must not be packaged to '$moduleJar' module in '$mainPluginModule' plugin, because they are included into a platform JAR. " +
+          "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
       }
     }
   }

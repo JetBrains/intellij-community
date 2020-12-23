@@ -23,7 +23,7 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
                  builder: DistributionJARsBuilder,
                  homePath: Path,
                  runDir: Path,
-                 private val moduleNameToPlugin: HashMap<String, BuildItem>) {
+                 private val moduleNameToPlugin: Map<String, BuildItem>) {
   fun moduleChanged(moduleName: String, reason: Any) {
     val plugin = moduleNameToPlugin.get(moduleName) ?: return
     pluginBuilder.addDirtyPluginDir(plugin, reason)
@@ -49,32 +49,16 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
                                                 ProprietaryBuildTools.DUMMY, createBuildOptions(homePath))
   val pluginsDir = runDir.resolve("plugins")
 
-  val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(allNonTrivialPlugins.size)
-  val moduleNameToPlugin = HashMap<String, BuildItem>()
+  val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
   for (plugin in allNonTrivialPlugins) {
-    if (skippedPluginModules.contains(plugin.mainModule)) {
-      continue
+    if (bundledMainModuleNames.contains(plugin.mainModule)) {
+      val item = BuildItem(pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(plugin, buildContext)), plugin)
+      mainModuleToNonTrivialPlugin.put(plugin.mainModule, item)
     }
-
-    val item = BuildItem(pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(plugin, buildContext)), plugin)
-    mainModuleToNonTrivialPlugin.put(plugin.mainModule, item)
-    moduleNameToPlugin.put(plugin.mainModule, item)
-
-    plugin.moduleJars.entrySet()
-      .asSequence()
-      .filter { !it.key.contains('/') }
-      .forEach {
-        for (name in it.value) {
-          moduleNameToPlugin.put(name, item)
-        }
-      }
   }
 
+  val moduleNameToPlugin = HashMap<String, BuildItem>()
   val pluginLayouts = bundledMainModuleNames.mapNotNull { mainModuleName ->
-    if (skippedPluginModules.contains(mainModuleName)) {
-      return@mapNotNull null
-    }
-
     // by intention we don't use buildContext.findModule as getPluginsByModules does - module name must match
     // (old module names are not supported)
     var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
@@ -82,8 +66,17 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
       val pluginLayout = PluginLayout.plugin(mainModuleName)
       val pluginDir = pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(pluginLayout, buildContext))
       item = BuildItem(pluginDir, PluginLayout.plugin(mainModuleName))
-      moduleNameToPlugin.put(mainModuleName, item)
     }
+    else {
+      for (entry in item.layout.moduleJars.entrySet()) {
+        if (!entry.key.contains('/')) {
+          for (name in entry.value) {
+            moduleNameToPlugin.put(name, item)
+          }
+        }
+      }
+    }
+    moduleNameToPlugin.put(mainModuleName, item)
     item
   }
 
@@ -139,11 +132,12 @@ private fun createLibClassPath(buildContext: BuildContext,
   return classPath.joinToString(separator = "\n")
 }
 
-private fun getBundledMainModuleNames(productProperties: ProductProperties): List<String> {
-  val bundledPlugins = productProperties.productLayout.bundledPluginModules
+private fun getBundledMainModuleNames(productProperties: ProductProperties): Set<String> {
+  val bundledPlugins = LinkedHashSet(productProperties.productLayout.bundledPluginModules)
   getAdditionalModules()?.let {
-    return bundledPlugins + it
+    bundledPlugins.addAll(it)
   }
+  bundledPlugins.removeAll(skippedPluginModules)
   return bundledPlugins
 }
 
@@ -151,6 +145,7 @@ fun getAdditionalModules(): Sequence<String>? {
   return (System.getProperty("additional.modules") ?: System.getProperty("additional.plugins") ?: return null)
     .splitToSequence(',')
     .map(String::trim)
+    .filter { it.isNotEmpty() }
 }
 
 private fun createRunDirForProduct(homePath: Path, platformPrefix: String): Path {
