@@ -238,8 +238,7 @@ public class APIWrappers {
 
   @NotNull
   public static <T> T wrap(@NotNull Class<T> ifaceClass, @NotNull final Object wrapper, @NotNull final Class<?> parentToStopSearchAt, @NotNull final T delegateTo) {
-    final Class<?>[] implemented = wrapper instanceof WrapperDelegateAccessor? new Class<?>[]{ifaceClass, WrapperDelegateAccessor.class} : new Class<?>[]{ifaceClass};
-    return ifaceClass.cast(Proxy.newProxyInstance(wrapper.getClass().getClassLoader(), implemented, new InvocationHandler() {
+    return ifaceClass.cast(Proxy.newProxyInstance(APIWrappers.class.getClassLoader(), new Class<?>[]{ifaceClass, WrapperDelegateAccessor.class}, new InvocationHandler() {
       private final Map<Method, Pair<Method, Object>> myCallHandlers = Collections.synchronizedMap(new HashMap<Method, Pair<Method, Object>>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -258,7 +257,12 @@ public class APIWrappers {
         Pair<Method, Object> pair = myCallHandlers.get(method);
         if (pair == null) {
           if (WrapperDelegateAccessor.class.equals(method.getDeclaringClass())) {
-            pair = Pair.create(method, wrapper);
+            pair = wrapper instanceof WrapperDelegateAccessor? Pair.create(method, wrapper) : Pair.<Method, Object>create(method, new WrapperDelegateAccessor<T>() {
+              @Override
+              public T getWrapperDelegate() {
+                return delegateTo;
+              }
+            });
           }
           else {
             // important: look for implemented methods starting from the actual class
