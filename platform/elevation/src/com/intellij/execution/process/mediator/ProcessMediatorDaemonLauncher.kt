@@ -54,16 +54,8 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
       createHandshakeTransport().use { handshakeTransport ->
         ensureActive()
 
-        val daemonLaunchOptions = handshakeTransport.getDaemonLaunchOptions()
-        val daemonCommandLine = createLauncherCommandLine(daemonLaunchOptions)
-        val launcherCommandLine =
-          if (!sudo) daemonCommandLine
-          else ExecUtil.sudoCommand(daemonCommandLine, ElevationBundle.message("dialog.title.sudo.prompt.product.elevation.daemon",
-                                                                               ApplicationNamesInfo.getInstance().fullProductName))
-        val sudoPath = if (launcherCommandLine !== daemonCommandLine) Path.of(launcherCommandLine.exePath) else null
-
-        handshakeTransport.createDaemonProcessHandler(launcherCommandLine)
-          .withOutputCaptured(SynchronizedProcessOutput()) { launcherOutput ->
+        createProcessHandler(handshakeTransport)
+          .withOutputCaptured(SynchronizedProcessOutput()) processHandler@{ launcherOutput ->
             startNotify()
 
             val handshakeAsync = async(Dispatchers.IO) { handshakeTransport.readHandshake() }
@@ -72,16 +64,19 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
             val handshake = try {
               select<Handshake?> {
                 handshakeAsync.onAwait { it }
-                finishedAsync.onAwait { handshakeFailed(it, sudoPath) }
+                finishedAsync.onAwait { handshakeFailed(this@processHandler, launcherOutput) }
               }
               // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
               ?: select<Nothing> {
-                finishedAsync.onAwait { handshakeFailed(it, sudoPath) }
-                onTimeout(1000) { launcherOutput.setTimeout(); handshakeFailed(launcherOutput, sudoPath) }
+                finishedAsync.onAwait { handshakeFailed(this@processHandler, launcherOutput) }
+                onTimeout(1000) {
+                  launcherOutput.setTimeout()
+                  handshakeFailed(this@processHandler, launcherOutput)
+                }
               }
             }
             catch (e: IOException) {
-              handshakeFailed(launcherOutput, sudoPath, e)
+              handshakeFailed(this, launcherOutput, e)
             }
 
             handshakeSucceeded(handshake, handshakeTransport, this)
@@ -103,7 +98,9 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
                                      DaemonClientCredentials(handshake.token))
   }
 
-  private fun handshakeFailed(output: ProcessOutput, sudoPath: Path?, error: IOException? = null): Nothing = synchronized(output) {
+  private fun handshakeFailed(processHandler: BaseOSProcessHandler,
+                              output: ProcessOutput,
+                              error: IOException? = null): Nothing = synchronized(output) {
     val stderr = output.stderr
     val errorExit =
       if (output.isExitCodeSet && output.exitCode != 0) ProcessTerminatedListener.stringifyExitCode(output.exitCode)
@@ -115,6 +112,7 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
     }
     ElevationLogger.LOG.warn("Daemon process stderr:\n$stderr")
 
+    val sudoPath: Path? = processHandler.getUserData(SUDO_PATH_KEY)
     if (SystemInfo.isMac) {
       if (output.isExitCodeSet && output.exitCode == 1 &&
           sudoPath != null && "osascript" in sudoPath.fileName.toString() &&
@@ -175,30 +173,50 @@ class ProcessMediatorDaemonLauncher(val sudo: Boolean) {
       .encrypted()
   }
 
-  private fun createLauncherCommandLine(daemonLaunchOptions: DaemonLaunchOptions): GeneralCommandLine {
+  private fun createCommandLine(transport: HandshakeTransport): GeneralCommandLine {
+    val daemonLaunchOptions = transport.getDaemonLaunchOptions()
     return createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
                                    ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
       .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
       .withParameters(daemonLaunchOptions.asCmdlineArgs())
   }
 
-  private fun HandshakeTransport.createDaemonProcessHandler(daemonCommandLine: GeneralCommandLine): BaseOSProcessHandler {
+  private fun createProcessHandler(transport: HandshakeTransport): BaseOSProcessHandler {
+    val daemonCommandLine = createCommandLine(transport)
+    val sudoCommandLine =
+      if (!sudo) daemonCommandLine
+      else ExecUtil.sudoCommand(daemonCommandLine, ElevationBundle.message("dialog.title.sudo.prompt.product.elevation.daemon",
+                                                                           ApplicationNamesInfo.getInstance().fullProductName))
+    val sudoPath = if (sudoCommandLine !== daemonCommandLine) Path.of(sudoCommandLine.exePath) else null
+
+    val processHandler = createProcessHandler(transport, sudoCommandLine)
+    return processHandler.apply {
+      putUserData(SUDO_PATH_KEY, sudoPath)
+    }
+  }
+
+  private fun createProcessHandler(transport: HandshakeTransport,
+                                   commandLine: GeneralCommandLine): OSProcessHandler.Silent {
     val processHandler =
-      if (this !is ProcessStdoutHandshakeTransport) {
-        OSProcessHandler.Silent(daemonCommandLine)
+      if (transport !is ProcessStdoutHandshakeTransport) {
+        OSProcessHandler.Silent(commandLine)
       }
       else {
-        object : OSProcessHandler.Silent(daemonCommandLine) {
+        object : OSProcessHandler.Silent(commandLine) {
           override fun createProcessOutReader(): Reader {
             return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
           }
         }.also {
-          initStream(it.process.inputStream)
+          transport.initStream(it.process.inputStream)
         }
       }
     return processHandler.apply {
       addProcessListener(LoggingProcessListener)
     }
+  }
+
+  companion object {
+    private val SUDO_PATH_KEY: Key<Path> = Key.create("SUDO_PATH_KEY")
   }
 }
 
