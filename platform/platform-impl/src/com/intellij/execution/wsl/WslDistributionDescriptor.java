@@ -13,8 +13,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,6 +44,7 @@ final class WslDistributionDescriptor {
   /**
    * Necessary for serializer
    */
+  @SuppressWarnings("unused")
   WslDistributionDescriptor() { }
 
   WslDistributionDescriptor(@NotNull String msId) {
@@ -131,7 +130,7 @@ final class WslDistributionDescriptor {
     }
 
     WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
-    String wslCurrentDirectory = readWslOutputLine(options, Collections.singletonList("pwd"));
+    String wslCurrentDirectory = readWslOutputLine(options, List.of("pwd"));
     if (wslCurrentDirectory == null) return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
 
     String currentPathSuffix = WSLDistribution.convertWindowsPath(windowsCurrentDirectory);
@@ -186,6 +185,6 @@ final class WslDistributionDescriptor {
   }
 
   @Nullable String getEnvironmentVariable(String name) {
-    return readWslOutputLine(new WSLCommandLineOptions(), Arrays.asList("printenv", name));
+    return readWslOutputLine(new WSLCommandLineOptions(), List.of("printenv", name));
   }
 }
