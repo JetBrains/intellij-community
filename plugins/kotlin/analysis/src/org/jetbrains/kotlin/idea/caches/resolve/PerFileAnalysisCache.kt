@@ -73,6 +73,8 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         }
     }
 
+    internal val isValid: Boolean get() = moduleDescriptor.isValid
+
     internal fun fetchAnalysisResults(element: KtElement): AnalysisResult? {
         check(element)
 

@@ -75,6 +75,11 @@ internal class ProjectResolutionFacade(
                 override fun get(key: KtFile?): PerFileAnalysisCache {
                     lock.lock()
                     try {
+                        val cache = super.get(key)
+                        if (cache.isValid) {
+                            return cache
+                        }
+                        remove(key)
                         return super.get(key)
                     } finally {
                         lock.unlock()
