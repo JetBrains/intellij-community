@@ -51,10 +51,7 @@ public abstract class InspectionTreeTailRenderer<E extends Exception> {
           attrs = attrs.derive(-1, levelAndCount.getLevel() == HighlightDisplayLevel.ERROR && !myContext.getUIOptions().GROUP_BY_SEVERITY
                                    ? TREE_RED
                                    : TREE_GRAY, null, null);
-          String presentableName = levelAndCount.getCount() > 1 ?
-                                    levelAndCount.getLevel().getSeverity().getDisplayLowercasePluralName() :
-                                    levelAndCount.getLevel().getSeverity().getDisplayLowercaseName();
-          appendText(levelAndCount.getCount() + " " + presentableName + " ", attrs);
+          appendText(levelAndCount.getLevel().getSeverity().getCountMessage(levelAndCount.getCount()) + " ", attrs);
         }
       }
     }

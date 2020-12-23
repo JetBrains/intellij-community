@@ -14,10 +14,10 @@ import java.util.Optional;
 
 public abstract class LombokRedundantModifierInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private final Class<?> supportedAnnotation;
+  private final String supportedAnnotation;
   private final RedundantModifiersInfo[] redundantModifiersInfo;
 
-  public LombokRedundantModifierInspection(@Nullable Class<?> supportedAnnotation, RedundantModifiersInfo... redundantModifiersInfo) {
+  public LombokRedundantModifierInspection(@Nullable String supportedAnnotation, RedundantModifiersInfo... redundantModifiersInfo) {
     this.supportedAnnotation = supportedAnnotation;
     this.redundantModifiersInfo = redundantModifiersInfo;
   }
@@ -83,7 +83,7 @@ public abstract class LombokRedundantModifierInspection extends AbstractBaseJava
           || (infoType != RedundantModifiersInfoType.VARIABLE && !(parentModifierListOwner instanceof PsiClass))) {
           continue;
         }
-        if ((supportedAnnotation == null || parentModifierListOwner.hasAnnotation(supportedAnnotation.getName())) &&
+        if ((supportedAnnotation == null || parentModifierListOwner.hasAnnotation(supportedAnnotation)) &&
           redundantModifiersInfo.getType().getSupportedClass().isAssignableFrom(psiModifierListOwner.getClass())) {
           PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
           if (psiModifierList == null ||

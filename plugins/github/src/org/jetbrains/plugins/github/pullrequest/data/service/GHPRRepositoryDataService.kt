@@ -10,7 +10,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import java.util.concurrent.CompletableFuture
 
 interface GHPRRepositoryDataService : Disposable {
-  val collaboratorsWithPushAccess: CompletableFuture<List<GHUser>>
+  val collaborators: CompletableFuture<List<GHUser>>
   val teams: CompletableFuture<List<GHTeam>>
   val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>
   val issuesAssignees: CompletableFuture<List<GHUser>>

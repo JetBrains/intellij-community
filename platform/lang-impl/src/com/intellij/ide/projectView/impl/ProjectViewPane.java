@@ -17,6 +17,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -93,6 +94,10 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @Override
   protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
+      {
+        putClientProperty(FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB, true);
+      }
+
       @Override
       public String toString() {
         return getTitle() + " " + super.toString();

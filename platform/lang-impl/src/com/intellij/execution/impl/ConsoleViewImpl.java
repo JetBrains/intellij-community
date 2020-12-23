@@ -501,7 +501,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @TestOnly
   public void waitAllRequests() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       while (true) {
         try {
           myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
@@ -625,7 +625,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @Override
   public int getContentSize() {
     synchronized (LOCK) {
-      return (myEditor == null ? 0 : myEditor.getDocument().getTextLength())
+      return (myEditor == null || CLEAR.hasRequested() ? 0 : myEditor.getDocument().getTextLength())
              + myDeferredBuffer.length();
     }
   }
@@ -1630,6 +1630,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     void clearRequested() {
       requested.set(false);
+    }
+    
+    boolean hasRequested() {
+      return requested.get();
     }
 
     @Override

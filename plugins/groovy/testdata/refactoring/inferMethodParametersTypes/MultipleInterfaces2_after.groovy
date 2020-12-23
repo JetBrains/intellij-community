@@ -1,4 +1,4 @@
-Object foo(List<? extends X> a) {
+Object foo(ArrayList<? extends X> a) {
   bar(a)
 }
 

@@ -8,17 +8,19 @@ import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBase {
   @NotNull
   protected abstract Sdk applyLocalFix();
 
-  private void runWithEvents() {
+  private Sdk runWithEvents() {
     Listener multicaster = getMulticaster();
     try {
       var sdk = applyLocalFix();
       multicaster.onSdkNameResolved(sdk);
       multicaster.onSdkResolved(sdk);
-
+      return sdk;
     } catch (Throwable t) {
       multicaster.onResolveFailed();
       throw t;
@@ -36,10 +38,14 @@ public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBa
     });
   }
 
+  @NotNull
   @Override
-  public final void applySuggestionBlocking(@NotNull ProgressIndicator indicator) {
+  public final Sdk applySuggestionBlocking(@NotNull ProgressIndicator indicator) {
+    var sdk = new AtomicReference<Sdk>(null);
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      runWithEvents();
+      var r = runWithEvents();
+      sdk.set(r);
     });
+    return sdk.get();
   }
 }

@@ -46,6 +46,7 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     private final boolean myReadOnly;
 
     FileContext(Path path, boolean readOnly) throws IOException {
+      myReadOnly = readOnly;
       myFile = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<FileChannel, IOException>() {
         boolean parentWasCreated;
 
@@ -74,7 +75,6 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
           }
         }
       });
-      myReadOnly = readOnly;
     }
 
     @Override

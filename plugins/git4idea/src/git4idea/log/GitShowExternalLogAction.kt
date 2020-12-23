@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileChooser.FileChooser
@@ -133,7 +133,7 @@ private fun createManagerAndContent(project: Project,
   for (root in roots) {
     repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable, true))
   }
-  val manager = VcsLogManager(project, ServiceManager.getService(GitExternalLogTabsProperties::class.java),
+  val manager = VcsLogManager(project, ApplicationManager.getApplication().getService(GitExternalLogTabsProperties::class.java),
                               roots.map { VcsRoot(vcs, it) })
   Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
   val ui = manager.createLogUi(calcLogId(roots),

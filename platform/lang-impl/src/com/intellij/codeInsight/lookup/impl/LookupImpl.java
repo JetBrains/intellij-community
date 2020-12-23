@@ -138,7 +138,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
-    myCellRenderer = new LookupCellRenderer(this);
+    myCellRenderer = new LookupCellRenderer(this, myEditor.getContentComponent());
     myList.setCellRenderer(myCellRenderer);
 
     myList.setFocusable(false);
@@ -528,7 +528,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
-    //noinspection deprecation,unchecked
     if (item == null || !item.isValid() || item instanceof EmptyLookupItem) {
       hideWithItemSelected(null, completionChar);
       return;
@@ -781,10 +780,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     JComponent editorComponent = myEditor.getContentComponent();
     if (editorComponent.isShowing()) {
       Disposer.register(this, new UiNotifyConnector(editorComponent, new Activatable() {
-        @Override
-        public void showNotify() {
-        }
-
         @Override
         public void hideNotify() {
           hideLookup(false);
@@ -1163,7 +1158,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public boolean isLookupDisposed() {
-    return Disposer.isDisposed(this);
+    return disposeTrace != null;
   }
 
   public void checkValid() {

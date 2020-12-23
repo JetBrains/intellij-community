@@ -40,4 +40,9 @@ public class ConfigIndexKey {
     result = 31 * result + (configKey != null ? configKey.toLowerCase().hashCode() : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "ConfigIndexKey {" + directoryName + ", " + configKey + "}";
+  }
 }

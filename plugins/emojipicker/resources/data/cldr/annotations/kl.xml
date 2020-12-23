@@ -1,0 +1,2355 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+
+Warnings: All cp values have U+FE0F characters removed. See /annotationsDerived/ for derived annotations.
+-->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="kl"/>
+	</identity>
+	<annotations>
+		<annotation cp="😀">glad | grinende ansigt | smilende ansigt | smiley</annotation>
+		<annotation cp="😀" type="tts">grinende ansigt</annotation>
+		<annotation cp="😃">glad | smilende ansigt med åben mund | smiler | smiley</annotation>
+		<annotation cp="😃" type="tts">smilende ansigt med åben mund</annotation>
+		<annotation cp="😄">glad | smil | smilende ansigt med åben mund og smilende øjne | smileøjne | smiley</annotation>
+		<annotation cp="😄" type="tts">smilende ansigt med åben mund og smilende øjne</annotation>
+		<annotation cp="😁">ansigt der griner | glad | grinende ansigt med smilende øjne | smiley</annotation>
+		<annotation cp="😁" type="tts">grinende ansigt med smilende øjne</annotation>
+		<annotation cp="😆">glad | lukkede øjne | smil | smil med lukkede øjne | smilende ansigt med åben mund og lukkede øjne</annotation>
+		<annotation cp="😆" type="tts">smilende ansigt med åben mund og lukkede øjne</annotation>
+		<annotation cp="😅">smil med koldsved | smilende ansigt med åben mund og koldsved</annotation>
+		<annotation cp="😅" type="tts">smilende ansigt med åben mund og koldsved</annotation>
+		<annotation cp="🤣">ansigt | grine | griner | gulv | latter | ler | ruller | ruller rundt på gulvet af grin | vrider sig</annotation>
+		<annotation cp="🤣" type="tts">ruller rundt på gulvet af grin</annotation>
+		<annotation cp="😂">ansigt med glædestårer | glad | glæde | tårer</annotation>
+		<annotation cp="😂" type="tts">ansigt med glædestårer</annotation>
+		<annotation cp="🙂">ansigt | let smilende ansigt | smil</annotation>
+		<annotation cp="🙂" type="tts">let smilende ansigt</annotation>
+		<annotation cp="🙃">ansigt | omvendt</annotation>
+		<annotation cp="🙃" type="tts">omvendt ansigt</annotation>
+		<annotation cp="😉">ansigt | ansigt der blinker | blink | blinkende ansigt</annotation>
+		<annotation cp="😉" type="tts">blinkende ansigt</annotation>
+		<annotation cp="😊">smil med smileøjne | smilende ansigt og øjne | smileøjne</annotation>
+		<annotation cp="😊" type="tts">smilende ansigt og øjne</annotation>
+		<annotation cp="😇">ansigt | glorie | smil | smilende ansigt med glorie</annotation>
+		<annotation cp="😇" type="tts">smilende ansigt med glorie</annotation>
+		<annotation cp="😍">hjerteøjne | hjerter | kærlighed | smilende ansigt med hjertøjne</annotation>
+		<annotation cp="😍" type="tts">smilende ansigt med hjertøjne</annotation>
+		<annotation cp="😘">ansigt | kyssende ansigt | sender kys</annotation>
+		<annotation cp="😘" type="tts">kyssende ansigt</annotation>
+		<annotation cp="😗">ansigt | kys | kysseansigt | kysser</annotation>
+		<annotation cp="😗" type="tts">kysseansigt</annotation>
+		<annotation cp="☺">smil | smilende ansigt</annotation>
+		<annotation cp="☺" type="tts">smilende ansigt</annotation>
+		<annotation cp="😚">ansigt | kys | kysseansigt med lukkede øjne | lukkede øjne</annotation>
+		<annotation cp="😚" type="tts">kysseansigt med lukkede øjne</annotation>
+		<annotation cp="😙">ansigt | kysseansigt med smilende øjne | smilende øjne</annotation>
+		<annotation cp="😙" type="tts">kysseansigt med smilende øjne</annotation>
+		<annotation cp="😋">ansigt | god mad | nydende ansigt | smil</annotation>
+		<annotation cp="😋" type="tts">nydende ansigt</annotation>
+		<annotation cp="😛">ansigt | ansigt med tungen ude</annotation>
+		<annotation cp="😛" type="tts">ansigt med tungen ude</annotation>
+		<annotation cp="😜">ansigt | ansigt med tungen ude og blinkende øje | blink | driller</annotation>
+		<annotation cp="😜" type="tts">ansigt med tungen ude og blinkende øje</annotation>
+		<annotation cp="😝">ansigt | ansigt med tungen ude og sammenknebne øjne | rækker tunge</annotation>
+		<annotation cp="😝" type="tts">ansigt med tungen ude og sammenknebne øjne</annotation>
+		<annotation cp="🤑">ansigt | ansigt med dollartegn | mund | penge</annotation>
+		<annotation cp="🤑" type="tts">ansigt med dollartegn</annotation>
+		<annotation cp="🤗">ansigt | knus | knuser | kram | kramme | krammende ansigt</annotation>
+		<annotation cp="🤗" type="tts">krammende ansigt</annotation>
+		<annotation cp="🤔">ansigt | tænkende | tanker</annotation>
+		<annotation cp="🤔" type="tts">tænkende ansigt</annotation>
+		<annotation cp="🤐">ansigt | ansigt med lynlåsmund | lynlås | mund</annotation>
+		<annotation cp="🤐" type="tts">ansigt med lynlåsmund</annotation>
+		<annotation cp="😐">ingen kommentar | neutralt ansigt | pokeransigt</annotation>
+		<annotation cp="😐" type="tts">neutralt ansigt</annotation>
+		<annotation cp="😑">ingen kommentar | pokeransigt | udtryksløst ansigt</annotation>
+		<annotation cp="😑" type="tts">udtryksløst ansigt</annotation>
+		<annotation cp="😶">ansigt | ansigt uden mund | mund | stille | tavs</annotation>
+		<annotation cp="😶" type="tts">ansigt uden mund</annotation>
+		<annotation cp="😏">ansigt | ansigt med smørret grin | smørret</annotation>
+		<annotation cp="😏" type="tts">ansigt med smørret grin</annotation>
+		<annotation cp="😒">ansigt | ikke glad | uimponeret ansigt</annotation>
+		<annotation cp="😒" type="tts">uimponeret ansigt</annotation>
+		<annotation cp="🙄">ansigt | ansigt med rullende øjne | øjne | rullende</annotation>
+		<annotation cp="🙄" type="tts">ansigt med rullende øjne</annotation>
+		<annotation cp="😬">ansigt | lave grimasse | sammenbidt ansigt</annotation>
+		<annotation cp="😬" type="tts">sammenbidt ansigt</annotation>
+		<annotation cp="🤥">ansigt | lang næse | løgn | løgneransigt | lyver | pinocchio</annotation>
+		<annotation cp="🤥" type="tts">løgneransigt</annotation>
+		<annotation cp="😌">ansigt | lettelse | lettet ansigt</annotation>
+		<annotation cp="😌" type="tts">lettet ansigt</annotation>
+		<annotation cp="😔">ansigt | eftertænksom | eftertænksomt ansigt | nedslået</annotation>
+		<annotation cp="😔" type="tts">eftertænksomt ansigt</annotation>
+		<annotation cp="😪">ansigt | dyb søvn | træt</annotation>
+		<annotation cp="😪" type="tts">dyb søvn</annotation>
+		<annotation cp="🤤">ansigt | savl | savlende ansigt | savler</annotation>
+		<annotation cp="🤤" type="tts">savlende ansigt</annotation>
+		<annotation cp="😴">ansigt | sove | sovende ansigt | søvn</annotation>
+		<annotation cp="😴" type="tts">sovende ansigt</annotation>
+		<annotation cp="😷">ansigt | ansigt med maske | doktor | forkølelse | maske | medicin | syg</annotation>
+		<annotation cp="😷" type="tts">ansigt med maske</annotation>
+		<annotation cp="🤒">ansigt | ansigt med termometer | syg | termometer</annotation>
+		<annotation cp="🤒" type="tts">ansigt med termometer</annotation>
+		<annotation cp="🤕">ansigt | ansigt med bandage | bandage | skade | smerte</annotation>
+		<annotation cp="🤕" type="tts">ansigt med bandage</annotation>
+		<annotation cp="🤢">ansigt | ansigt med kvalme | bræk | kaster op | kvalme | kvalmeansigt | opkast | syg | sygdom</annotation>
+		<annotation cp="🤢" type="tts">ansigt med kvalme</annotation>
+		<annotation cp="🤧">forkølet | lommetørklæde | nys | nysende ansigt | nyser | prosit | pudser næse | syg | sygdom</annotation>
+		<annotation cp="🤧" type="tts">nysende ansigt</annotation>
+		<annotation cp="😵">ansigt | ør | svimmel | svimmelt ansigt</annotation>
+		<annotation cp="😵" type="tts">svimmelt ansigt</annotation>
+		<annotation cp="🤠">ansigt | cowboyhat | cowgirl | hat</annotation>
+		<annotation cp="🤠" type="tts">cowboyhat ansigt</annotation>
+		<annotation cp="😎">ansigt | sej | smil med solbriller | smilende ansigt med solbriller | solbriller</annotation>
+		<annotation cp="😎" type="tts">smilende ansigt med solbriller</annotation>
+		<annotation cp="🤓">ansigt | nørd | nørdansigt</annotation>
+		<annotation cp="🤓" type="tts">nørdansigt</annotation>
+		<annotation cp="😕">ansigt | forvirret ansigt</annotation>
+		<annotation cp="😕" type="tts">forvirret ansigt</annotation>
+		<annotation cp="😟">ansigt | bekymret | bekymring</annotation>
+		<annotation cp="😟" type="tts">bekymret ansigt</annotation>
+		<annotation cp="🙁">ansigt | lidt trist ansigt | trist</annotation>
+		<annotation cp="🙁" type="tts">lidt trist ansigt</annotation>
+		<annotation cp="☹">ansigt | trist</annotation>
+		<annotation cp="☹" type="tts">trist ansigt</annotation>
+		<annotation cp="😮">ansigt | ansigt med åben mund</annotation>
+		<annotation cp="😮" type="tts">ansigt med åben mund</annotation>
+		<annotation cp="😯">stille ansigt | tavst ansigt</annotation>
+		<annotation cp="😯" type="tts">tavst ansigt</annotation>
+		<annotation cp="😲">chokeret | overrasket ansigt</annotation>
+		<annotation cp="😲" type="tts">overrasket ansigt</annotation>
+		<annotation cp="😳">røde kinder | rødmende ansigt</annotation>
+		<annotation cp="😳" type="tts">rødmende ansigt</annotation>
+		<annotation cp="😦">åben mund | ansigt | måbende ansigt med åben mund | rynkede bryn</annotation>
+		<annotation cp="😦" type="tts">måbende ansigt med åben mund</annotation>
+		<annotation cp="😧">ansigt | forpint ansigt | lider | smerte</annotation>
+		<annotation cp="😧" type="tts">forpint ansigt</annotation>
+		<annotation cp="😨">bange ansigt | frygt</annotation>
+		<annotation cp="😨" type="tts">bange ansigt</annotation>
+		<annotation cp="😰">åben mund | ansigt med åben mund og koldsved | blå i ansigtet | koldsved</annotation>
+		<annotation cp="😰" type="tts">ansigt med åben mund og koldsved</annotation>
+		<annotation cp="😥">skuffet men lettet | skuffet men lettet ansigt</annotation>
+		<annotation cp="😥" type="tts">skuffet men lettet ansigt</annotation>
+		<annotation cp="😢">ansigt | grædende ansigt | ked af det | tårer</annotation>
+		<annotation cp="😢" type="tts">grædende ansigt</annotation>
+		<annotation cp="😭">grådkvalt ansigt | græder | tårer</annotation>
+		<annotation cp="😭" type="tts">grådkvalt ansigt</annotation>
+		<annotation cp="😱">angst | skrigende ansigt</annotation>
+		<annotation cp="😱" type="tts">skrigende ansigt</annotation>
+		<annotation cp="😖">ansigt | forbandet | forbistret ansigt</annotation>
+		<annotation cp="😖" type="tts">forbistret ansigt</annotation>
+		<annotation cp="😣">stædigt ansigt | udholdenhed</annotation>
+		<annotation cp="😣" type="tts">stædigt ansigt</annotation>
+		<annotation cp="😞">ansigt | skuffet ansigt</annotation>
+		<annotation cp="😞" type="tts">skuffet ansigt</annotation>
+		<annotation cp="😓">ansigt | ansigt med koldsved</annotation>
+		<annotation cp="😓" type="tts">ansigt med koldsved</annotation>
+		<annotation cp="😩">udkørt | udmattet | udmattet ansigt</annotation>
+		<annotation cp="😩" type="tts">udmattet ansigt</annotation>
+		<annotation cp="😫">ansigt | træt ansigt</annotation>
+		<annotation cp="😫" type="tts">træt ansigt</annotation>
+		<annotation cp="😤">fnysende ansigt | jeg vandt</annotation>
+		<annotation cp="😤" type="tts">fnysende ansigt</annotation>
+		<annotation cp="😡">rød | surt ansigt | vred | vredt ansigt</annotation>
+		<annotation cp="😡" type="tts">surt ansigt</annotation>
+		<annotation cp="😠">ansigt | vredt ansigt</annotation>
+		<annotation cp="😠" type="tts">vredt ansigt</annotation>
+		<annotation cp="😈">ansigt | horn | smil | smilende ansigt med horn</annotation>
+		<annotation cp="😈" type="tts">smilende ansigt med horn</annotation>
+		<annotation cp="👿">lilla djævel | lille djævel</annotation>
+		<annotation cp="👿" type="tts">lilla djævel</annotation>
+		<annotation cp="💀">dødningehoved | kranium</annotation>
+		<annotation cp="💀" type="tts">kranium</annotation>
+		<annotation cp="☠">ansigt | død | korslagte knogler | kranie | kranie og korslagte knogler | kranium | krop | monster</annotation>
+		<annotation cp="☠" type="tts">kranie og korslagte knogler</annotation>
+		<annotation cp="💩">bæ | bunke bæ</annotation>
+		<annotation cp="💩" type="tts">bæ</annotation>
+		<annotation cp="🤡">ansigt | klovn | klovneansigt</annotation>
+		<annotation cp="🤡" type="tts">klovneansigt</annotation>
+		<annotation cp="👹">japansk uhyre | monster | trold</annotation>
+		<annotation cp="👹" type="tts">trold</annotation>
+		<annotation cp="👺">ånd | japansk ånd</annotation>
+		<annotation cp="👺" type="tts">ånd</annotation>
+		<annotation cp="👻">ansigt | eventyr | fantasi | gespenst | monster | spøgelse | væsen</annotation>
+		<annotation cp="👻" type="tts">spøgelse</annotation>
+		<annotation cp="👽">rumvæsen</annotation>
+		<annotation cp="👽" type="tts">rumvæsen</annotation>
+		<annotation cp="👾">alien | alien-monster | ansigt | eventyr | fantasi | rummet | rumvæsen | ufo</annotation>
+		<annotation cp="👾" type="tts">alien-monster</annotation>
+		<annotation cp="🤖">ansigt | monster | robotansigt</annotation>
+		<annotation cp="🤖" type="tts">robotansigt</annotation>
+		<annotation cp="😺">glad kat | kat smiler</annotation>
+		<annotation cp="😺" type="tts">kat smiler</annotation>
+		<annotation cp="😸">kat | kat griner</annotation>
+		<annotation cp="😸" type="tts">kat griner</annotation>
+		<annotation cp="😹">kat | kat med glædestårer</annotation>
+		<annotation cp="😹" type="tts">kat med glædestårer</annotation>
+		<annotation cp="😻">glad kat med hjerter | kat smiler</annotation>
+		<annotation cp="😻" type="tts">glad kat med hjerter</annotation>
+		<annotation cp="😼">ironisk kat | kat med ironisk smil</annotation>
+		<annotation cp="😼" type="tts">kat med ironisk smil</annotation>
+		<annotation cp="😽">kat | kyssende kat med lukkede øjne | kysser</annotation>
+		<annotation cp="😽" type="tts">kyssende kat med lukkede øjne</annotation>
+		<annotation cp="🙀">overrasket kat | træt kat</annotation>
+		<annotation cp="🙀" type="tts">træt kat</annotation>
+		<annotation cp="😿">grædende kat | kat græder</annotation>
+		<annotation cp="😿" type="tts">grædende kat</annotation>
+		<annotation cp="😾">sur kat | surmulende kat</annotation>
+		<annotation cp="😾" type="tts">sur kat</annotation>
+		<annotation cp="🙈">ikke se | tre vise aber</annotation>
+		<annotation cp="🙈" type="tts">ikke se</annotation>
+		<annotation cp="🙉">ikke høre | tre vise aber</annotation>
+		<annotation cp="🙉" type="tts">ikke høre</annotation>
+		<annotation cp="🙊">ikke tale | tre vise aber</annotation>
+		<annotation cp="🙊" type="tts">ikke tale</annotation>
+		<annotation cp="💋">læbeaftryk | læber | romantik</annotation>
+		<annotation cp="💋" type="tts">læbeaftryk</annotation>
+		<annotation cp="💌">brev med hjerte | kærlighedsbrev</annotation>
+		<annotation cp="💌" type="tts">kærlighedsbrev</annotation>
+		<annotation cp="💘">følelser | hjerte | hjerte med pil | kærlighed | pil</annotation>
+		<annotation cp="💘" type="tts">hjerte med pil</annotation>
+		<annotation cp="💝">bånd | følelser | hjerte | hjerte med bånd</annotation>
+		<annotation cp="💝" type="tts">hjerte med bånd</annotation>
+		<annotation cp="💖">følelser | gnister | hjerte med stjerner | kærlighed</annotation>
+		<annotation cp="💖" type="tts">hjerte med stjerner</annotation>
+		<annotation cp="💗">følelser | hjerte | kærlighed | nervøs | voksende hjerte</annotation>
+		<annotation cp="💗" type="tts">voksende hjerte</annotation>
+		<annotation cp="💓">bankende hjerte | hjerte | kærlighed | romantik</annotation>
+		<annotation cp="💓" type="tts">bankende hjerte</annotation>
+		<annotation cp="💞">følelser | hjerter | roterende hjerter</annotation>
+		<annotation cp="💞" type="tts">roterende hjerter</annotation>
+		<annotation cp="💕">kærlighed | romantik | to hjerter</annotation>
+		<annotation cp="💕" type="tts">to hjerter</annotation>
+		<annotation cp="💟">hjerte | hjertedekoration</annotation>
+		<annotation cp="💟" type="tts">hjertedekoration</annotation>
+		<annotation cp="❣">hjerte | hjerte som udråbstegn | tegnsætning | udråbstegn</annotation>
+		<annotation cp="❣" type="tts">hjerte som udråbstegn</annotation>
+		<annotation cp="💔">knust hjerte | ulykkelig kærlighed</annotation>
+		<annotation cp="💔" type="tts">knust hjerte</annotation>
+		<annotation cp="❤">hjerte | rødt hjerte</annotation>
+		<annotation cp="❤" type="tts">rødt hjerte</annotation>
+		<annotation cp="💛">følelser | gul | gult hjerte | hjerte</annotation>
+		<annotation cp="💛" type="tts">gult hjerte</annotation>
+		<annotation cp="💚">følelser | grøn | grønt hjerte | hjerte</annotation>
+		<annotation cp="💚" type="tts">grønt hjerte</annotation>
+		<annotation cp="💙">blå | blåt hjerte | følelser | hjerte</annotation>
+		<annotation cp="💙" type="tts">blåt hjerte</annotation>
+		<annotation cp="💜">følelser | hjerte | violet</annotation>
+		<annotation cp="💜" type="tts">violet hjerte</annotation>
+		<annotation cp="🖤">hjerte | ondskab | ondt | sort</annotation>
+		<annotation cp="🖤" type="tts">sort hjerte</annotation>
+		<annotation cp="💯">100 point | alle rigtige | hundrede | point</annotation>
+		<annotation cp="💯" type="tts">100 point</annotation>
+		<annotation cp="💢">følelse | tegn for vrede | vrede</annotation>
+		<annotation cp="💢" type="tts">vrede</annotation>
+		<annotation cp="💥">følelser | kollision | kollitionstegn</annotation>
+		<annotation cp="💥" type="tts">kollision</annotation>
+		<annotation cp="💫">følelser | se stjerner | svimmel</annotation>
+		<annotation cp="💫" type="tts">svimmel</annotation>
+		<annotation cp="💦">følelser | sveddråber</annotation>
+		<annotation cp="💦" type="tts">sveddråber</annotation>
+		<annotation cp="💨">er løbet | følelser | løber væk | smutter</annotation>
+		<annotation cp="💨" type="tts">smutter</annotation>
+		<annotation cp="🕳">hul | sort</annotation>
+		<annotation cp="🕳" type="tts">hul</annotation>
+		<annotation cp="💣">bombe | følelse</annotation>
+		<annotation cp="💣" type="tts">bombe</annotation>
+		<annotation cp="💬">tale | taleboble</annotation>
+		<annotation cp="💬" type="tts">taleboble</annotation>
+		<annotation cp="👁‍🗨">øje | øje i taleboble | se | taleboble | vidne</annotation>
+		<annotation cp="👁‍🗨" type="tts">øje i taleboble</annotation>
+		<annotation cp="🗨">dialog | snak | tale | taleboble til venstre</annotation>
+		<annotation cp="🗨" type="tts">taleboble til venstre</annotation>
+		<annotation cp="🗯">ballon | boble | mad | vred | vred taleboble til højre</annotation>
+		<annotation cp="🗯" type="tts">vred taleboble til højre</annotation>
+		<annotation cp="💭">tanke | tankeboble</annotation>
+		<annotation cp="💭" type="tts">tankeboble</annotation>
+		<annotation cp="💤">følelse | snorke | sove | søvnig</annotation>
+		<annotation cp="💤" type="tts">søvnig</annotation>
+		<annotation cp="👋">hånd | vinker</annotation>
+		<annotation cp="👋" type="tts">vinker</annotation>
+		<annotation cp="🤚">baghånd | hånd | krop | løftet</annotation>
+		<annotation cp="🤚" type="tts">løftet baghånd</annotation>
+		<annotation cp="🖐">hånd | hånd med spredte fingre | krop | spredte</annotation>
+		<annotation cp="🖐" type="tts">hånd med spredte fingre</annotation>
+		<annotation cp="✋">hånd | krop | løftet hånd</annotation>
+		<annotation cp="✋" type="tts">løftet hånd</annotation>
+		<annotation cp="🖖">finger | hånd | krop | vulcan-hilsen</annotation>
+		<annotation cp="🖖" type="tts">vulcan-hilsen</annotation>
+		<annotation cp="👌">OK-håndtegn | ok-tegn | OK-tegn</annotation>
+		<annotation cp="👌" type="tts">ok-tegn</annotation>
+		<annotation cp="✌">v-tegn | V-tegn | yeah</annotation>
+		<annotation cp="✌" type="tts">v-tegn</annotation>
+		<annotation cp="🤞">finger | håb | hånd | held og lykke | krop | krydsede fingre | krydser fingre</annotation>
+		<annotation cp="🤞" type="tts">krydsede fingre</annotation>
+		<annotation cp="🤘">djævletegn | finger | hånd | heavy metal | horn | krop</annotation>
+		<annotation cp="🤘" type="tts">djævletegn</annotation>
+		<annotation cp="🤙">hånd | krop | opringning | ring til mig-hånd | ringer | telefonhånd</annotation>
+		<annotation cp="🤙" type="tts">ring til mig-hånd</annotation>
+		<annotation cp="👈">finger | finger peger til venstre | pegefinger | peger til venstre | venstre</annotation>
+		<annotation cp="👈" type="tts">venstre</annotation>
+		<annotation cp="👉">finger | finger peger til højre | højre | pegefinger | peger til højre</annotation>
+		<annotation cp="👉" type="tts">højre</annotation>
+		<annotation cp="👆">finger | finger peger op | pegefinger | peger op</annotation>
+		<annotation cp="👆" type="tts">finger peger op</annotation>
+		<annotation cp="🖕">finger | hånd | krop | langefinger</annotation>
+		<annotation cp="🖕" type="tts">langefinger</annotation>
+		<annotation cp="👇">finger | finger peger ned | ned | pegefinger | peger ned</annotation>
+		<annotation cp="👇" type="tts">ned</annotation>
+		<annotation cp="☝">finger | hånd | krop | op | opadvendt | pege | pegefinger</annotation>
+		<annotation cp="☝" type="tts">opadvendt pegefinger</annotation>
+		<annotation cp="👍">håndtegn | tommelfinger op</annotation>
+		<annotation cp="👍" type="tts">tommelfinger op</annotation>
+		<annotation cp="👎">håndtegn | tommelfinger ned</annotation>
+		<annotation cp="👎" type="tts">tommelfinger ned</annotation>
+		<annotation cp="✊">hånd | knytnæve | knyttet | krop | løftet knytnæve | slå</annotation>
+		<annotation cp="✊" type="tts">løftet knytnæve</annotation>
+		<annotation cp="👊">hånd | knytnæve | knyttet hånd</annotation>
+		<annotation cp="👊" type="tts">knytnæve</annotation>
+		<annotation cp="🤛">hånd | hånd knyttet mod venstre | knytnæve | knyttet hånd | krop | venstre | venstrevendt</annotation>
+		<annotation cp="🤛" type="tts">venstrevendt knytnæve</annotation>
+		<annotation cp="🤜">hånd | hånd knyttet mod højre | højre | højrevendt | knytnæve | knyttet hånd | krop</annotation>
+		<annotation cp="🤜" type="tts">højrevendt knytnæve</annotation>
+		<annotation cp="👏">hænder klapper | håndtegn | klapper</annotation>
+		<annotation cp="👏" type="tts">hænder klapper</annotation>
+		<annotation cp="🙌">begge hænder oppe | hurra</annotation>
+		<annotation cp="🙌" type="tts">hurra</annotation>
+		<annotation cp="👐">åbne hænder | åbne hænder-tegn | håndtegn</annotation>
+		<annotation cp="👐" type="tts">åbne hænder</annotation>
+		<annotation cp="🤝">enighed | hænder | hånd | håndtryk | hilsen | hilser | krop | mødes</annotation>
+		<annotation cp="🤝" type="tts">håndtryk</annotation>
+		<annotation cp="🙏">bøn | foldede hænder</annotation>
+		<annotation cp="🙏" type="tts">foldede hænder</annotation>
+		<annotation cp="✍">hånd | krop | skrive | skrivende hånd</annotation>
+		<annotation cp="✍" type="tts">skrivende hånd</annotation>
+		<annotation cp="💅">kosmetik | negle | neglelak</annotation>
+		<annotation cp="💅" type="tts">neglelak</annotation>
+		<annotation cp="🤳">arm | foto | fotograf | fotograferer | fotografi | kamera | mobil | mobiltelefon | selfie | tager billeder | telefon</annotation>
+		<annotation cp="🤳" type="tts">selfie</annotation>
+		<annotation cp="💪">armmuskler | muskel | stærk</annotation>
+		<annotation cp="💪" type="tts">armmuskler</annotation>
+		<annotation cp="👂">høre | krop | øre</annotation>
+		<annotation cp="👂" type="tts">øre</annotation>
+		<annotation cp="👃">dufte | krop | lugte ansigt | næse</annotation>
+		<annotation cp="👃" type="tts">næse</annotation>
+		<annotation cp="👀">ansigt | øjne | se</annotation>
+		<annotation cp="👀" type="tts">øjne</annotation>
+		<annotation cp="👁">krop | øje</annotation>
+		<annotation cp="👁" type="tts">øje</annotation>
+		<annotation cp="👅">krop | smage | tunge</annotation>
+		<annotation cp="👅" type="tts">tunge</annotation>
+		<annotation cp="👄">ansigt | krop | læber | mund</annotation>
+		<annotation cp="👄" type="tts">mund</annotation>
+		<annotation cp="👶">baby | barn | menneske</annotation>
+		<annotation cp="👶" type="tts">baby</annotation>
+		<annotation cp="👦">dreng | menneske | person</annotation>
+		<annotation cp="👦" type="tts">dreng</annotation>
+		<annotation cp="👧">menneske | person | pige</annotation>
+		<annotation cp="👧" type="tts">pige</annotation>
+		<annotation cp="👱">blond person | menneske | person</annotation>
+		<annotation cp="👱" type="tts">person</annotation>
+		<annotation cp="👨">mand | menneske | person</annotation>
+		<annotation cp="👨" type="tts">mand</annotation>
+		<annotation cp="👱‍♂">blond | lyshåret | mand</annotation>
+		<annotation cp="👱‍♂" type="tts">blond mand</annotation>
+		<annotation cp="👩">kvinde | menneske | person</annotation>
+		<annotation cp="👩" type="tts">kvinde</annotation>
+		<annotation cp="👱‍♀">blond kvinde | blondine | kvinde | lyshåret</annotation>
+		<annotation cp="👱‍♀" type="tts">blond kvinde</annotation>
+		<annotation cp="👴">gammel mand | mand | menneske</annotation>
+		<annotation cp="👴" type="tts">gammel mand</annotation>
+		<annotation cp="👵">gammel kvinde | kvinde | menneske</annotation>
+		<annotation cp="👵" type="tts">gammel kvinde</annotation>
+		<annotation cp="🙍">rynkede bryn | udtryk | utilfreds</annotation>
+		<annotation cp="🙍" type="tts">rynkede bryn</annotation>
+		<annotation cp="🙍‍♂">mand | mand rynker panden | rynke panden | rynkede bryn | rynket pande | utilfreds</annotation>
+		<annotation cp="🙍‍♂" type="tts">mand rynker panden</annotation>
+		<annotation cp="🙍‍♀">kvinde | kvinde rynker panden | rynke panden | rynkede bryn | rynket pande | utilfreds</annotation>
+		<annotation cp="🙍‍♀" type="tts">kvinde rynker panden</annotation>
+		<annotation cp="🙎">gestus | surmule | surmulende person</annotation>
+		<annotation cp="🙎" type="tts">surmulende person</annotation>
+		<annotation cp="🙎‍♂">mand | mand surmuler | sur | surmule | utilfreds</annotation>
+		<annotation cp="🙎‍♂" type="tts">mand surmuler</annotation>
+		<annotation cp="🙎‍♀">kvinde | kvinde surmuler | sur | surmule | utilfreds</annotation>
+		<annotation cp="🙎‍♀" type="tts">kvinde surmuler</annotation>
+		<annotation cp="🙅">forbudt | nej | signalerer nej</annotation>
+		<annotation cp="🙅" type="tts">signalerer nej</annotation>
+		<annotation cp="🙅‍♂">forbudt | gestus | ikke i orden | mand | mand signalerer nej | nej</annotation>
+		<annotation cp="🙅‍♂" type="tts">mand signalerer nej</annotation>
+		<annotation cp="🙅‍♀">forbudt | gestus | ikke i orden | kvinde | kvinde signalerer nej | nej</annotation>
+		<annotation cp="🙅‍♀" type="tts">kvinde signalerer nej</annotation>
+		<annotation cp="🙆">allright | ansigt | signalerer ok</annotation>
+		<annotation cp="🙆" type="tts">signalerer ok</annotation>
+		<annotation cp="🙆‍♂">gestus | i orden | mand | mand signalerer ok | ok | tilladt</annotation>
+		<annotation cp="🙆‍♂" type="tts">mand signalerer ok</annotation>
+		<annotation cp="🙆‍♀">gestus | i orden | kvinde | kvinde signalerer ok | ok | tilladt</annotation>
+		<annotation cp="🙆‍♀" type="tts">kvinde signalerer ok</annotation>
+		<annotation cp="💁">hjælp | information</annotation>
+		<annotation cp="💁" type="tts">information</annotation>
+		<annotation cp="💁‍♂">flabet | hjælp | information | mand | mand vender håndfladen op</annotation>
+		<annotation cp="💁‍♂" type="tts">mand vender håndfladen op</annotation>
+		<annotation cp="💁‍♀">flabet | håndflade | hjælp | information | kvinde | kvinde vender håndfladen op</annotation>
+		<annotation cp="💁‍♀" type="tts">kvinde vender håndfladen op</annotation>
+		<annotation cp="🙋">glad person | hej | løftet hånd</annotation>
+		<annotation cp="🙋" type="tts">glad person</annotation>
+		<annotation cp="🙋‍♂">gestus | hej | hilsen | løftet hånd | mand | mand med løftet hånd</annotation>
+		<annotation cp="🙋‍♂" type="tts">mand med løftet hånd</annotation>
+		<annotation cp="🙋‍♀">gestus | hej | hilsen | kvinde | kvinde med løftet hånd | løftet hånd</annotation>
+		<annotation cp="🙋‍♀" type="tts">kvinde med løftet hånd</annotation>
+		<annotation cp="🙇‍♂">buk | mand | mand bukker dybt | undskyld | undskyldning</annotation>
+		<annotation cp="🙇‍♂" type="tts">mand bukker dybt</annotation>
+		<annotation cp="🙇‍♀">buk | kvinde | kvinde bukker dybt | undskyld | undskyldning</annotation>
+		<annotation cp="🙇‍♀" type="tts">kvinde bukker dybt</annotation>
+		<annotation cp="🤦">ansigt | dumt | facepalm | hånd | håndflade | irritation | irriteret | skepsis</annotation>
+		<annotation cp="🤦" type="tts">facepalm</annotation>
+		<annotation cp="🤦‍♂">facepalm | græmmes | håndflade | irritation | irriteret | mand | mand slår sig for panden | skepsis</annotation>
+		<annotation cp="🤦‍♂" type="tts">mand slår sig for panden</annotation>
+		<annotation cp="🤦‍♀">facepalm | græmmes | håndflade | irritation | irriteret | kvinde | kvinde slår sig for panden | skepsis</annotation>
+		<annotation cp="🤦‍♀" type="tts">kvinde slår sig for panden</annotation>
+		<annotation cp="🤷">aner det ikke | ligeglad | ligegyldighed | ligegyldigt | pas | skulder | skuldre | træk | trækker på skuldrene | tvivl | uvidenhed | ved det ikke | ved ikke</annotation>
+		<annotation cp="🤷" type="tts">trækker på skuldrene</annotation>
+		<annotation cp="🤷‍♂">ingen anelse | ligeglad | ligegyldighed | mand | mand trækker på skuldrene | pas | skuldre | tvivl | uvidenhed</annotation>
+		<annotation cp="🤷‍♂" type="tts">mand trækker på skuldrene</annotation>
+		<annotation cp="🤷‍♀">ingen anelse | kvinde | kvinde trækker på skuldrene | ligeglad | ligegyldighed | pas | skuldre | tvivl | uvidenhed</annotation>
+		<annotation cp="🤷‍♀" type="tts">kvinde trækker på skuldrene</annotation>
+		<annotation cp="👨‍⚕">kittel | læge | mand | mandlig sundhedsperson | sygeplejerske</annotation>
+		<annotation cp="👨‍⚕" type="tts">mandlig sundhedsperson</annotation>
+		<annotation cp="👩‍⚕">kittel | kvinde | kvindelig sundhedsperson | læge | sygeplejerske</annotation>
+		<annotation cp="👩‍⚕" type="tts">kvindelig sundhedsperson</annotation>
+		<annotation cp="👨‍🎓">dimittend | eksamenshat | mand | studerende</annotation>
+		<annotation cp="👨‍🎓" type="tts">studerende</annotation>
+		<annotation cp="👩‍🎓">dimittend | eksamenshat | kvinde | kvindelig studerende | studerende</annotation>
+		<annotation cp="👩‍🎓" type="tts">kvindelig studerende</annotation>
+		<annotation cp="👨‍🏫">lærer | mand | professor | underviser</annotation>
+		<annotation cp="👨‍🏫" type="tts">lærer</annotation>
+		<annotation cp="👩‍🏫">kvinde | kvindelig lærer | lærerinde | professor | underviser</annotation>
+		<annotation cp="👩‍🏫" type="tts">kvindelig lærer</annotation>
+		<annotation cp="👨‍⚖">dommer | jura | lov | mand | retfærdighed</annotation>
+		<annotation cp="👨‍⚖" type="tts">dommer</annotation>
+		<annotation cp="👩‍⚖">jura | kvinde | kvindelig dommer | lov | retfærdighed</annotation>
+		<annotation cp="👩‍⚖" type="tts">kvindelig dommer</annotation>
+		<annotation cp="👨‍🌾">bonde | bondemand | gartner | landmand | mand</annotation>
+		<annotation cp="👨‍🌾" type="tts">landmand</annotation>
+		<annotation cp="👩‍🌾">bonde | gartner | kvinde | kvindelig landmand | landmand</annotation>
+		<annotation cp="👩‍🌾" type="tts">kvindelig landmand</annotation>
+		<annotation cp="👨‍🍳">kok | madlavning | mand | stegepande</annotation>
+		<annotation cp="👨‍🍳" type="tts">kok</annotation>
+		<annotation cp="👩‍🍳">kok | kvinde | kvindelig kok | madlavning | stegepande</annotation>
+		<annotation cp="👩‍🍳" type="tts">kvindelig kok</annotation>
+		<annotation cp="👨‍🔧">håndværker | mand | mekaniker | skruenøgle | værktøj</annotation>
+		<annotation cp="👨‍🔧" type="tts">mekaniker</annotation>
+		<annotation cp="👩‍🔧">håndværker | kvinde | kvindelig mekaniker | mekaniker | skruenøgle | værktøj</annotation>
+		<annotation cp="👩‍🔧" type="tts">kvindelig mekaniker</annotation>
+		<annotation cp="👨‍🏭">arbejder | fabrik | fabriksarbejder | industri | mand</annotation>
+		<annotation cp="👨‍🏭" type="tts">fabriksarbejder</annotation>
+		<annotation cp="👩‍🏭">arbejder | fabrik | industri | kvinde | kvindelig fabriksarbejder</annotation>
+		<annotation cp="👩‍🏭" type="tts">kvindelig fabriksarbejder</annotation>
+		<annotation cp="👨‍💼">business | jakkesæt | kontor | kontoransat | kontormand | mappe</annotation>
+		<annotation cp="👨‍💼" type="tts">kontoransat</annotation>
+		<annotation cp="👩‍💼">business | kontor | kvinde | kvindelig kontoransat | mappe</annotation>
+		<annotation cp="👩‍💼" type="tts">kvindelig kontoransat</annotation>
+		<annotation cp="👨‍🔬">forsker | naturvidenskab | naturvidenskabsmand | videnskab | videnskabsmand</annotation>
+		<annotation cp="👨‍🔬" type="tts">forsker</annotation>
+		<annotation cp="👩‍🔬">kvinde | kvindelig forsker | naturvidenskab | videnskab | videnskabsmand</annotation>
+		<annotation cp="👩‍🔬" type="tts">kvindelig forsker</annotation>
+		<annotation cp="👨‍💻">computer | it | IT-medarbejder | mand | pc | programmør | skærm | software | teknologi | udvikler</annotation>
+		<annotation cp="👨‍💻" type="tts">IT-medarbejder</annotation>
+		<annotation cp="👩‍💻">computer | it | kvinde | kvindelig IT-medarbejder | pc | programmør | skærm | software | udvikler</annotation>
+		<annotation cp="👩‍💻" type="tts">kvindelig IT-medarbejder</annotation>
+		<annotation cp="👨‍🎤">entertainer | karaoke | mand | sang | sanger | skuespiller | stjerne | synge</annotation>
+		<annotation cp="👨‍🎤" type="tts">sanger</annotation>
+		<annotation cp="👩‍🎤">entertainer | karaoke | kvinde | sang | sangerinde | skuespiller | stjerne | synge</annotation>
+		<annotation cp="👩‍🎤" type="tts">sangerinde</annotation>
+		<annotation cp="👨‍🎨">billedkunstner | kreativ | kunstmaler | kunstner | palet | pensler</annotation>
+		<annotation cp="👨‍🎨" type="tts">kunstner</annotation>
+		<annotation cp="👩‍🎨">billedkunstner | kunstmaler | kvinde | kvindelig kunstner | palet | pensler</annotation>
+		<annotation cp="👩‍🎨" type="tts">kvindelig kunstner</annotation>
+		<annotation cp="👨‍✈">fly | mand | pilot</annotation>
+		<annotation cp="👨‍✈" type="tts">pilot</annotation>
+		<annotation cp="👩‍✈">fly | kvinde | kvindelig pilot | pilot</annotation>
+		<annotation cp="👩‍✈" type="tts">kvindelig pilot</annotation>
+		<annotation cp="👨‍🚀">astronaut | mand | raket | rumdragt | rumfartøj | rummet | rumskib</annotation>
+		<annotation cp="👨‍🚀" type="tts">astronaut</annotation>
+		<annotation cp="👩‍🚀">kvinde | kvindelig astronaut | raket | rumdragt | rumfartøj | rummet | rumskib</annotation>
+		<annotation cp="👩‍🚀" type="tts">kvindelig astronaut</annotation>
+		<annotation cp="👨‍🚒">brand | brandbil | brandmand | hjelm | mand</annotation>
+		<annotation cp="👨‍🚒" type="tts">brandmand</annotation>
+		<annotation cp="👩‍🚒">brand | brandbil | hjelm | kvinde | kvindelig brandmand</annotation>
+		<annotation cp="👩‍🚒" type="tts">kvindelig brandmand</annotation>
+		<annotation cp="👮">betjent | politi | politibetjent</annotation>
+		<annotation cp="👮" type="tts">politibetjent</annotation>
+		<annotation cp="👮‍♂">betjent | mand | mandlig politibetjent | politi | politimand</annotation>
+		<annotation cp="👮‍♂" type="tts">mandlig politibetjent</annotation>
+		<annotation cp="👮‍♀">betjent | kvinde | kvindelig politibetjent | politi</annotation>
+		<annotation cp="👮‍♀" type="tts">kvindelig politibetjent</annotation>
+		<annotation cp="🕵">detektiv | spion</annotation>
+		<annotation cp="🕵" type="tts">detektiv</annotation>
+		<annotation cp="💂">garder | garderofficer | gardist</annotation>
+		<annotation cp="💂" type="tts">garder</annotation>
+		<annotation cp="💂‍♂">bevogtning | livgarde | mand | mandlig garder | sikkerhed | vagt</annotation>
+		<annotation cp="💂‍♂" type="tts">mandlig garder</annotation>
+		<annotation cp="💂‍♀">bevogtning | kvinde | kvindelig garder | livgarde | sikkerhed | vagt</annotation>
+		<annotation cp="💂‍♀" type="tts">kvindelig garder</annotation>
+		<annotation cp="👷">arbejder | byggearbejder | byggeri</annotation>
+		<annotation cp="👷" type="tts">byggearbejder</annotation>
+		<annotation cp="👷‍♂">arbejder | byggearbejder | byggeri | bygningsarbejder | hammer | mand</annotation>
+		<annotation cp="👷‍♂" type="tts">bygningsarbejder</annotation>
+		<annotation cp="👷‍♀">arbejder | byggearbejder | byggeri | hammer | kvinde | kvindelig bygningsarbejder</annotation>
+		<annotation cp="👷‍♀" type="tts">kvindelig bygningsarbejder</annotation>
+		<annotation cp="🤴">kongelig | kongesøn | krone | prins | royal</annotation>
+		<annotation cp="🤴" type="tts">prins</annotation>
+		<annotation cp="👸">eventyr | menneske | prinsesse</annotation>
+		<annotation cp="👸" type="tts">prinsesse</annotation>
+		<annotation cp="👳‍♂">mand | mand med turban | turban</annotation>
+		<annotation cp="👳‍♂" type="tts">mand med turban</annotation>
+		<annotation cp="👳‍♀">kvinde | kvinde med turban | turban</annotation>
+		<annotation cp="👳‍♀" type="tts">kvinde med turban</annotation>
+		<annotation cp="👲">mand med kinesisk hat | menneske</annotation>
+		<annotation cp="👲" type="tts">mand med kinesisk hat</annotation>
+		<annotation cp="🤵">brudgom | festdeltager | festtøj | gom | mand | mand i smoking | smoking</annotation>
+		<annotation cp="🤵" type="tts">mand i smoking</annotation>
+		<annotation cp="👰">brud | brud med slør</annotation>
+		<annotation cp="👰" type="tts">brud</annotation>
+		<annotation cp="🤰">gravid | kvinde | mave | mor | vordende mor</annotation>
+		<annotation cp="🤰" type="tts">gravid kvinde</annotation>
+		<annotation cp="👼">babyengel | engel</annotation>
+		<annotation cp="👼" type="tts">babyengel</annotation>
+		<annotation cp="🎅">jul | julemand | nisse</annotation>
+		<annotation cp="🎅" type="tts">julemand</annotation>
+		<annotation cp="🤶">dame | fru julemand | jul | juledame | julekvinde | julemandinde | kvinde</annotation>
+		<annotation cp="🤶" type="tts">juledame</annotation>
+		<annotation cp="💆">ansigtsmassage | salon</annotation>
+		<annotation cp="💆" type="tts">ansigtsmassage</annotation>
+		<annotation cp="💆‍♂">ansigt | mand | mand får ansigtsmassage | massage</annotation>
+		<annotation cp="💆‍♂" type="tts">mand får ansigtsmassage</annotation>
+		<annotation cp="💆‍♀">ansigt | kvinde | kvinde får ansigtsmassage | massage</annotation>
+		<annotation cp="💆‍♀" type="tts">kvinde får ansigtsmassage</annotation>
+		<annotation cp="💇">frisør | hår | klipning</annotation>
+		<annotation cp="💇" type="tts">frisør</annotation>
+		<annotation cp="💇‍♂">frisør | hår | klipning | klippe | mand | mand bliver klippet</annotation>
+		<annotation cp="💇‍♂" type="tts">mand bliver klippet</annotation>
+		<annotation cp="💇‍♀">frisør | hår | klipning | klippe | kvinde | kvinde bliver klippet</annotation>
+		<annotation cp="💇‍♀" type="tts">kvinde bliver klippet</annotation>
+		<annotation cp="🚶">fodgænger | gå | gang | hike | vandre | vandring</annotation>
+		<annotation cp="🚶" type="tts">fodgænger</annotation>
+		<annotation cp="🚶‍♂">fodgænger | gå | gang | gåtur | hike | mand | mand går | vandre | vandretur | vandring</annotation>
+		<annotation cp="🚶‍♂" type="tts">mand går</annotation>
+		<annotation cp="🚶‍♀">fodgænger | gå | gang | gåtur | hike | kvinde | kvinde går | vandre | vandretur | vandring</annotation>
+		<annotation cp="🚶‍♀" type="tts">kvinde går</annotation>
+		<annotation cp="🏃">løber | løbetræning | maraton | sport</annotation>
+		<annotation cp="🏃" type="tts">løber</annotation>
+		<annotation cp="🏃‍♂">løb | løbetræning | løbetur | mand | mand løber | maraton</annotation>
+		<annotation cp="🏃‍♂" type="tts">mand løber</annotation>
+		<annotation cp="🏃‍♀">kvinde | kvinde løber | løb | løbetræning | løbetur | maraton</annotation>
+		<annotation cp="🏃‍♀" type="tts">kvinde løber</annotation>
+		<annotation cp="💃">dans | danser</annotation>
+		<annotation cp="💃" type="tts">danser</annotation>
+		<annotation cp="🕺">dans | dansende mand | danser | mand</annotation>
+		<annotation cp="🕺" type="tts">dansende mand</annotation>
+		<annotation cp="🕴">forretning | forretningsmand | jakkesæt | mand | svævende forretningsmand</annotation>
+		<annotation cp="🕴" type="tts">svævende forretningsmand</annotation>
+		<annotation cp="👯">kvinder | kvinder med kaninører | ører</annotation>
+		<annotation cp="👯" type="tts">kvinder med kaninører</annotation>
+		<annotation cp="👯‍♂">dans | fest | kaninører | mænd | mænd fester</annotation>
+		<annotation cp="👯‍♂" type="tts">mænd fester</annotation>
+		<annotation cp="👯‍♀">dans | fest | kaninører | kvinder | kvinder fester</annotation>
+		<annotation cp="👯‍♀" type="tts">kvinder fester</annotation>
+		<annotation cp="🤺">fægter | fægtning | person | sport | sværd</annotation>
+		<annotation cp="🤺" type="tts">fægter</annotation>
+		<annotation cp="🏇">galop | hest | hestesport | hestevæddeløb | væddeløbshest</annotation>
+		<annotation cp="🏇" type="tts">hestevæddeløb</annotation>
+		<annotation cp="⛷">skiløber | sne</annotation>
+		<annotation cp="⛷" type="tts">skiløber</annotation>
+		<annotation cp="🏂">snowboarder | sport</annotation>
+		<annotation cp="🏂" type="tts">snowboarder</annotation>
+		<annotation cp="🏌">bold | golfspiller</annotation>
+		<annotation cp="🏌" type="tts">golfspiller</annotation>
+		<annotation cp="🏄">sport | surfing</annotation>
+		<annotation cp="🏄" type="tts">surfing</annotation>
+		<annotation cp="🏄‍♂">mand | surfer | surfing</annotation>
+		<annotation cp="🏄‍♂" type="tts">surfer</annotation>
+		<annotation cp="🏄‍♀">kvinde | kvindelig surfer | surfer | surfing</annotation>
+		<annotation cp="🏄‍♀" type="tts">kvindelig surfer</annotation>
+		<annotation cp="🚣">båd | robåd</annotation>
+		<annotation cp="🚣" type="tts">robåd</annotation>
+		<annotation cp="🚣‍♂">båd | mand | mand i robåd | roer | roning</annotation>
+		<annotation cp="🚣‍♂" type="tts">mand i robåd</annotation>
+		<annotation cp="🚣‍♀">båd | kvinde | kvinde i robåd | roer | roning</annotation>
+		<annotation cp="🚣‍♀" type="tts">kvinde i robåd</annotation>
+		<annotation cp="🏊">sport | svømme | svømmer | svømning</annotation>
+		<annotation cp="🏊" type="tts">svømmer</annotation>
+		<annotation cp="🏊‍♂">mand | mandlig svømmer | svømning</annotation>
+		<annotation cp="🏊‍♂" type="tts">mandlig svømmer</annotation>
+		<annotation cp="🏊‍♀">kvinde | kvindelig svømmer | svømmepige | svømning</annotation>
+		<annotation cp="🏊‍♀" type="tts">kvindelig svømmer</annotation>
+		<annotation cp="⛹">bold | person med bold</annotation>
+		<annotation cp="⛹" type="tts">person med bold</annotation>
+		<annotation cp="🏋">løfter | vægt | vægtløfter</annotation>
+		<annotation cp="🏋" type="tts">vægtløfter</annotation>
+		<annotation cp="🚴">cykel | cyklist</annotation>
+		<annotation cp="🚴" type="tts">cyklist</annotation>
+		<annotation cp="🚴‍♂">cykel | cykelrytter | cykle | mand | mandlig cyklist</annotation>
+		<annotation cp="🚴‍♂" type="tts">mandlig cyklist</annotation>
+		<annotation cp="🚴‍♀">cykel | cykelrytter | cykle | cyklist | kvinde | kvindelig cyklist</annotation>
+		<annotation cp="🚴‍♀" type="tts">kvindelig cyklist</annotation>
+		<annotation cp="🚵">bjerg | cykel | cyklist | mountainbike | mountainbikerytter</annotation>
+		<annotation cp="🚵" type="tts">mountainbikerytter</annotation>
+		<annotation cp="🚵‍♂">cykelrytter | mand | mand på mountainbike | mountainbike</annotation>
+		<annotation cp="🚵‍♂" type="tts">mand på mountainbike</annotation>
+		<annotation cp="🚵‍♀">cykelrytter | kvinde | kvinde på mountainbike | mountainbike</annotation>
+		<annotation cp="🚵‍♀" type="tts">kvinde på mountainbike</annotation>
+		<annotation cp="🤸">gymnastik | menneske | person | sport | vejrmølle</annotation>
+		<annotation cp="🤸" type="tts">vejrmølle</annotation>
+		<annotation cp="🤸‍♂">gymnastik | mand | mand slår vejrmøller | vejrmølle</annotation>
+		<annotation cp="🤸‍♂" type="tts">mand slår vejrmøller</annotation>
+		<annotation cp="🤸‍♀">gymnastik | kvinde | kvinde slår vejrmøller | vejrmølle</annotation>
+		<annotation cp="🤸‍♀" type="tts">kvinde slår vejrmøller</annotation>
+		<annotation cp="🤼">bryder | brydere | brydning | personer | sport</annotation>
+		<annotation cp="🤼" type="tts">brydere</annotation>
+		<annotation cp="🤼‍♂">brydere | brydning | mænd | mandlige brydere | wrestling</annotation>
+		<annotation cp="🤼‍♂" type="tts">mandlige brydere</annotation>
+		<annotation cp="🤼‍♀">brydere | brydning | kvindelige brydere | kvinder | wrestling</annotation>
+		<annotation cp="🤼‍♀" type="tts">kvindelige brydere</annotation>
+		<annotation cp="🤽">sport | vand | vandpolo | vandsport</annotation>
+		<annotation cp="🤽" type="tts">vandpolo</annotation>
+		<annotation cp="🤽‍♂">mand | vandpolo | vandpolospiller</annotation>
+		<annotation cp="🤽‍♂" type="tts">vandpolospiller</annotation>
+		<annotation cp="🤽‍♀">kvinde | kvindelig vandpolospiller | vandpolo</annotation>
+		<annotation cp="🤽‍♀" type="tts">kvindelig vandpolospiller</annotation>
+		<annotation cp="🤾">bold | håndbold | person | sport</annotation>
+		<annotation cp="🤾" type="tts">håndbold</annotation>
+		<annotation cp="🤾‍♂">håndbold | håndboldspiller | mand</annotation>
+		<annotation cp="🤾‍♂" type="tts">håndboldspiller</annotation>
+		<annotation cp="🤾‍♀">håndbold | håndboldspiller | kvinde | kvindelig håndboldspiller</annotation>
+		<annotation cp="🤾‍♀" type="tts">kvindelig håndboldspiller</annotation>
+		<annotation cp="🤹">balance | behændighed | dygtighed | jonglere | jonglerer | jonglør | multitaske | multitasking</annotation>
+		<annotation cp="🤹" type="tts">jonglerer</annotation>
+		<annotation cp="🤹‍♂">bolde | jonglere | jonglør | mand | multitakse | multitasking</annotation>
+		<annotation cp="🤹‍♂" type="tts">jonglør</annotation>
+		<annotation cp="🤹‍♀">bolde | jonglere | kvinde | kvindelig jonglør | multitaske | multitasking</annotation>
+		<annotation cp="🤹‍♀" type="tts">kvindelig jonglør</annotation>
+		<annotation cp="🛀">bad | badekar</annotation>
+		<annotation cp="🛀" type="tts">bad</annotation>
+		<annotation cp="🛌">person i seng | sove</annotation>
+		<annotation cp="🛌" type="tts">person i seng</annotation>
+		<annotation cp="👭">par | to kvinder</annotation>
+		<annotation cp="👭" type="tts">to kvinder</annotation>
+		<annotation cp="👫">man og kvinde | par</annotation>
+		<annotation cp="👫" type="tts">man og kvinde</annotation>
+		<annotation cp="👬">par | to mænd</annotation>
+		<annotation cp="👬" type="tts">to mænd</annotation>
+		<annotation cp="💏">kærlighed | kys | par med hjerte | romantik</annotation>
+		<annotation cp="💏" type="tts">kys</annotation>
+		<annotation cp="💑">kærlighed | par med hjerte | romantik</annotation>
+		<annotation cp="💑" type="tts">par med hjerte</annotation>
+		<annotation cp="👪">barn | familie | far | menneske | mor</annotation>
+		<annotation cp="👪" type="tts">familie</annotation>
+		<annotation cp="🗣">ansigt | hoved | silhuet | tale | talende</annotation>
+		<annotation cp="🗣" type="tts">talende hoved</annotation>
+		<annotation cp="👤">buste | buste i silhuet</annotation>
+		<annotation cp="👤" type="tts">buste i silhuet</annotation>
+		<annotation cp="👥">buster | buster i silhuet</annotation>
+		<annotation cp="👥" type="tts">buster i silhuet</annotation>
+		<annotation cp="👣">fødder | fodspor</annotation>
+		<annotation cp="👣" type="tts">fodspor</annotation>
+		<annotation cp="🐵">abe | abeansigt | dyr | hoved</annotation>
+		<annotation cp="🐵" type="tts">abeansigt</annotation>
+		<annotation cp="🐒">abe | dyr</annotation>
+		<annotation cp="🐒" type="tts">abe</annotation>
+		<annotation cp="🦍">abe | ansigt | dyr | gorilla</annotation>
+		<annotation cp="🦍" type="tts">gorilla</annotation>
+		<annotation cp="🐶">dyr | hoved | hund | hundeansigt</annotation>
+		<annotation cp="🐶" type="tts">hundeansigt</annotation>
+		<annotation cp="🐕">dyr | hund</annotation>
+		<annotation cp="🐕" type="tts">hund</annotation>
+		<annotation cp="🐩">dyr | hund | puddel</annotation>
+		<annotation cp="🐩" type="tts">puddel</annotation>
+		<annotation cp="🐺">dyr | hoved | ræv | ulvehoved</annotation>
+		<annotation cp="🐺" type="tts">ulvehoved</annotation>
+		<annotation cp="🦊">ansigt | dyr | listig | ræv | rævehoved | snedig</annotation>
+		<annotation cp="🦊" type="tts">rævehoved</annotation>
+		<annotation cp="🐱">dyr | hoved | kat | katteansigt</annotation>
+		<annotation cp="🐱" type="tts">katteansigt</annotation>
+		<annotation cp="🐈">dyr | kat</annotation>
+		<annotation cp="🐈" type="tts">kat</annotation>
+		<annotation cp="🦁">hoved | løve | løvehoved | løven | stjernetegn</annotation>
+		<annotation cp="🦁" type="tts">løvehoved</annotation>
+		<annotation cp="🐯">dyr | hoved | tigeransigt</annotation>
+		<annotation cp="🐯" type="tts">tigeransigt</annotation>
+		<annotation cp="🐅">dyr | tiger</annotation>
+		<annotation cp="🐅" type="tts">tiger</annotation>
+		<annotation cp="🐆">dyr | leopard</annotation>
+		<annotation cp="🐆" type="tts">leopard</annotation>
+		<annotation cp="🐴">dyr | hest | hestehoved</annotation>
+		<annotation cp="🐴" type="tts">hestehoved</annotation>
+		<annotation cp="🐎">dyr | hest</annotation>
+		<annotation cp="🐎" type="tts">hest</annotation>
+		<annotation cp="🦄">enhjørning | hoved</annotation>
+		<annotation cp="🦄" type="tts">enhjørning</annotation>
+		<annotation cp="🦌">ansigt | dyr | gevir | hjort | hjortetakker</annotation>
+		<annotation cp="🦌" type="tts">hjort</annotation>
+		<annotation cp="🐮">dyr | hoved | ko | koansigt</annotation>
+		<annotation cp="🐮" type="tts">koansigt</annotation>
+		<annotation cp="🐂">dyr | okse</annotation>
+		<annotation cp="🐂" type="tts">okse</annotation>
+		<annotation cp="🐃">bøffel | dyr | vandbøffel</annotation>
+		<annotation cp="🐃" type="tts">vandbøffel</annotation>
+		<annotation cp="🐄">dyr | ko</annotation>
+		<annotation cp="🐄" type="tts">ko</annotation>
+		<annotation cp="🐷">dyr | gris | griseansigt | hoved</annotation>
+		<annotation cp="🐷" type="tts">griseansigt</annotation>
+		<annotation cp="🐖">dyr | gris</annotation>
+		<annotation cp="🐖" type="tts">gris</annotation>
+		<annotation cp="🐗">dyr | vildsvin</annotation>
+		<annotation cp="🐗" type="tts">vildsvin</annotation>
+		<annotation cp="🐽">dyr | grisetryne | hoved | tryne</annotation>
+		<annotation cp="🐽" type="tts">grisetryne</annotation>
+		<annotation cp="🐏">dyr | vædder</annotation>
+		<annotation cp="🐏" type="tts">vædder</annotation>
+		<annotation cp="🐑">dyr | får</annotation>
+		<annotation cp="🐑" type="tts">får</annotation>
+		<annotation cp="🐐">dyr | ged</annotation>
+		<annotation cp="🐐" type="tts">ged</annotation>
+		<annotation cp="🐪">dromedar | dyr | pukkel</annotation>
+		<annotation cp="🐪" type="tts">dromedar</annotation>
+		<annotation cp="🐫">dyr | kamel | to pukler</annotation>
+		<annotation cp="🐫" type="tts">kamel</annotation>
+		<annotation cp="🐘">dyr | elefant</annotation>
+		<annotation cp="🐘" type="tts">elefant</annotation>
+		<annotation cp="🦏">dyr | horn | næsehorn</annotation>
+		<annotation cp="🦏" type="tts">næsehorn</annotation>
+		<annotation cp="🐭">dyr | hoved | mus | museansigt</annotation>
+		<annotation cp="🐭" type="tts">museansigt</annotation>
+		<annotation cp="🐁">dyr | mus</annotation>
+		<annotation cp="🐁" type="tts">mus</annotation>
+		<annotation cp="🐀">dyr | rotte</annotation>
+		<annotation cp="🐀" type="tts">rotte</annotation>
+		<annotation cp="🐹">dyr | hamsteransigt | hoved</annotation>
+		<annotation cp="🐹" type="tts">hamsteransigt</annotation>
+		<annotation cp="🐰">dyr | hoved | kanin | kaninansigt</annotation>
+		<annotation cp="🐰" type="tts">kaninansigt</annotation>
+		<annotation cp="🐇">dyr | kanin</annotation>
+		<annotation cp="🐇" type="tts">kanin</annotation>
+		<annotation cp="🐿">jordegern</annotation>
+		<annotation cp="🐿" type="tts">jordegern</annotation>
+		<annotation cp="🦇">dyr | flagermus | nat | vampyr</annotation>
+		<annotation cp="🦇" type="tts">flagermus</annotation>
+		<annotation cp="🐻">bjørn | bjørneansigt | dyr | hoved</annotation>
+		<annotation cp="🐻" type="tts">bjørneansigt</annotation>
+		<annotation cp="🐨">dyr | koala</annotation>
+		<annotation cp="🐨" type="tts">koala</annotation>
+		<annotation cp="🐼">dyr | hoved | pandaansigt</annotation>
+		<annotation cp="🐼" type="tts">pandaansigt</annotation>
+		<annotation cp="🐾">dyr | poteaftryk | spor</annotation>
+		<annotation cp="🐾" type="tts">poteaftryk</annotation>
+		<annotation cp="🦃">kalkun</annotation>
+		<annotation cp="🦃" type="tts">kalkun</annotation>
+		<annotation cp="🐔">dyr | høne</annotation>
+		<annotation cp="🐔" type="tts">høne</annotation>
+		<annotation cp="🐓">dyr | hane</annotation>
+		<annotation cp="🐓" type="tts">hane</annotation>
+		<annotation cp="🐣">dyr | kylling | ny udklækket kylling</annotation>
+		<annotation cp="🐣" type="tts">ny udklækket kylling</annotation>
+		<annotation cp="🐤">dyr | kylling</annotation>
+		<annotation cp="🐤" type="tts">kylling</annotation>
+		<annotation cp="🐥">dyr | kylling forfra | kylling set forfra</annotation>
+		<annotation cp="🐥" type="tts">kylling forfra</annotation>
+		<annotation cp="🐦">dyr | fugl</annotation>
+		<annotation cp="🐦" type="tts">fugl</annotation>
+		<annotation cp="🐧">dyr | pingvin</annotation>
+		<annotation cp="🐧" type="tts">pingvin</annotation>
+		<annotation cp="🕊">due | flyve | fred | fugl</annotation>
+		<annotation cp="🕊" type="tts">due</annotation>
+		<annotation cp="🦅">dyr | fugl | ørn</annotation>
+		<annotation cp="🦅" type="tts">ørn</annotation>
+		<annotation cp="🦆">and | andrik | dyr | fugl | svømmefugl</annotation>
+		<annotation cp="🦆" type="tts">and</annotation>
+		<annotation cp="🦉">dyr | fugl | klog | klogskab | ugle | vis | visdom</annotation>
+		<annotation cp="🦉" type="tts">ugle</annotation>
+		<annotation cp="🐸">dyr | frø | frøansigt | hoved</annotation>
+		<annotation cp="🐸" type="tts">frøansigt</annotation>
+		<annotation cp="🐊">dyr | krokodille</annotation>
+		<annotation cp="🐊" type="tts">krokodille</annotation>
+		<annotation cp="🐢">dyr | skildpadde</annotation>
+		<annotation cp="🐢" type="tts">skildpadde</annotation>
+		<annotation cp="🦎">dyr | firben | krybdyr | reptil</annotation>
+		<annotation cp="🦎" type="tts">firben</annotation>
+		<annotation cp="🐍">dyr | slange</annotation>
+		<annotation cp="🐍" type="tts">slange</annotation>
+		<annotation cp="🐲">drage | drageansigt | hoved</annotation>
+		<annotation cp="🐲" type="tts">drageansigt</annotation>
+		<annotation cp="🐉">drage | eventyr</annotation>
+		<annotation cp="🐉" type="tts">drage</annotation>
+		<annotation cp="🐳">dyr | hval | hval med vandsprøjt</annotation>
+		<annotation cp="🐳" type="tts">hval med vandsprøjt</annotation>
+		<annotation cp="🐋">dyr | hval</annotation>
+		<annotation cp="🐋" type="tts">hval</annotation>
+		<annotation cp="🐬">delfin | dyr</annotation>
+		<annotation cp="🐬" type="tts">delfin</annotation>
+		<annotation cp="🐟">dyr | fisk</annotation>
+		<annotation cp="🐟" type="tts">fisk</annotation>
+		<annotation cp="🐠">dyr | fisk | tropisk fisk</annotation>
+		<annotation cp="🐠" type="tts">tropisk fisk</annotation>
+		<annotation cp="🐡">dyr | fisk | kuglefisk</annotation>
+		<annotation cp="🐡" type="tts">kuglefisk</annotation>
+		<annotation cp="🦈">dyr | fisk | haj</annotation>
+		<annotation cp="🦈" type="tts">haj</annotation>
+		<annotation cp="🐙">blæksprutte | dyr</annotation>
+		<annotation cp="🐙" type="tts">blæksprutte</annotation>
+		<annotation cp="🐚">dyr | konkylie</annotation>
+		<annotation cp="🐚" type="tts">konkylie</annotation>
+		<annotation cp="🐌">dyr | snegl</annotation>
+		<annotation cp="🐌" type="tts">snegl</annotation>
+		<annotation cp="🦋">dyr | insekt | sommer | sommerfugl | vinger</annotation>
+		<annotation cp="🦋" type="tts">sommerfugl</annotation>
+		<annotation cp="🐛">dyr | larve | sommerfuglelarve | tusindben</annotation>
+		<annotation cp="🐛" type="tts">larve</annotation>
+		<annotation cp="🐜">dyr | myre</annotation>
+		<annotation cp="🐜" type="tts">myre</annotation>
+		<annotation cp="🐝">bi | dyr | honningbi</annotation>
+		<annotation cp="🐝" type="tts">honningbi</annotation>
+		<annotation cp="🐞">dyr | mariehøne</annotation>
+		<annotation cp="🐞" type="tts">mariehøne</annotation>
+		<annotation cp="🕷">edderkop | insekt</annotation>
+		<annotation cp="🕷" type="tts">edderkop</annotation>
+		<annotation cp="🕸">edderkop | edderkoppespind | spind</annotation>
+		<annotation cp="🕸" type="tts">edderkoppespind</annotation>
+		<annotation cp="🦂">skorpion | skorpionen | stjernetegn</annotation>
+		<annotation cp="🦂" type="tts">skorpion</annotation>
+		<annotation cp="💐">blomster | blomsterbuket | buket</annotation>
+		<annotation cp="💐" type="tts">blomsterbuket</annotation>
+		<annotation cp="🌸">blomst | blomstrende kirsebær | kirsebær | kirsebærblomst</annotation>
+		<annotation cp="🌸" type="tts">kirsebærblomst</annotation>
+		<annotation cp="💮">blomsterstempel | stempel</annotation>
+		<annotation cp="💮" type="tts">blomsterstempel</annotation>
+		<annotation cp="🏵">plante | roset</annotation>
+		<annotation cp="🏵" type="tts">roset</annotation>
+		<annotation cp="🌹">blomst | rose</annotation>
+		<annotation cp="🌹" type="tts">rose</annotation>
+		<annotation cp="🥀">afblomstret | blomst | visnet | vissen</annotation>
+		<annotation cp="🥀" type="tts">vissen blomst</annotation>
+		<annotation cp="🌺">blomst | hawaiiblomst | hibiscus</annotation>
+		<annotation cp="🌺" type="tts">hibiscus</annotation>
+		<annotation cp="🌻">blomst | solsikke</annotation>
+		<annotation cp="🌻" type="tts">solsikke</annotation>
+		<annotation cp="🌼">blomst | gul blomst</annotation>
+		<annotation cp="🌼" type="tts">blomst</annotation>
+		<annotation cp="🌷">blomst | tulipan</annotation>
+		<annotation cp="🌷" type="tts">tulipan</annotation>
+		<annotation cp="🌱">plantespire | spire</annotation>
+		<annotation cp="🌱" type="tts">spire</annotation>
+		<annotation cp="🌲">grantræ | stedsegrøn | træ</annotation>
+		<annotation cp="🌲" type="tts">grantræ</annotation>
+		<annotation cp="🌳">løvfældende træ | træ</annotation>
+		<annotation cp="🌳" type="tts">træ</annotation>
+		<annotation cp="🌴">palme | palmetræ</annotation>
+		<annotation cp="🌴" type="tts">palme</annotation>
+		<annotation cp="🌵">kaktus | kaktusplante | plante</annotation>
+		<annotation cp="🌵" type="tts">kaktus</annotation>
+		<annotation cp="🌾">ris | risplante</annotation>
+		<annotation cp="🌾" type="tts">risplante</annotation>
+		<annotation cp="🌿">blade | urt</annotation>
+		<annotation cp="🌿" type="tts">urt</annotation>
+		<annotation cp="☘">kløver | plante</annotation>
+		<annotation cp="☘" type="tts">kløver</annotation>
+		<annotation cp="🍀">firkløver | held | heldig | kløver</annotation>
+		<annotation cp="🍀" type="tts">firkløver</annotation>
+		<annotation cp="🍁">ahorn | ahornblad | blad | efterår | efterårsblad</annotation>
+		<annotation cp="🍁" type="tts">blad</annotation>
+		<annotation cp="🍂">blade | efterårsblade | faldende blade</annotation>
+		<annotation cp="🍂" type="tts">faldende blade</annotation>
+		<annotation cp="🍃">blad | blad i vinden | blæst | vind</annotation>
+		<annotation cp="🍃" type="tts">blad i vinden</annotation>
+		<annotation cp="🍇">frugt | vin | vindruer</annotation>
+		<annotation cp="🍇" type="tts">vindruer</annotation>
+		<annotation cp="🍈">frugt | melon</annotation>
+		<annotation cp="🍈" type="tts">melon</annotation>
+		<annotation cp="🍉">frugt | sommer | vandmelon</annotation>
+		<annotation cp="🍉" type="tts">vandmelon</annotation>
+		<annotation cp="🍊">appelsin | citrus | frugt</annotation>
+		<annotation cp="🍊" type="tts">appelsin</annotation>
+		<annotation cp="🍋">citron | frugt | gul</annotation>
+		<annotation cp="🍋" type="tts">citron</annotation>
+		<annotation cp="🍌">banan | frugt</annotation>
+		<annotation cp="🍌" type="tts">banan</annotation>
+		<annotation cp="🍍">ananas | frugt</annotation>
+		<annotation cp="🍍" type="tts">ananas</annotation>
+		<annotation cp="🍎">æble | frugt | rød | rødt æble</annotation>
+		<annotation cp="🍎" type="tts">rødt æble</annotation>
+		<annotation cp="🍏">æble | frugt | grøn | grønt æble</annotation>
+		<annotation cp="🍏" type="tts">grønt æble</annotation>
+		<annotation cp="🍐">frugt | pære</annotation>
+		<annotation cp="🍐" type="tts">pære</annotation>
+		<annotation cp="🍑">fersken | frugt</annotation>
+		<annotation cp="🍑" type="tts">fersken</annotation>
+		<annotation cp="🍒">frugt | kirsebær</annotation>
+		<annotation cp="🍒" type="tts">kirsebær</annotation>
+		<annotation cp="🍓">bær | frugt | jordbær</annotation>
+		<annotation cp="🍓" type="tts">jordbær</annotation>
+		<annotation cp="🥝">frugt | kiwifrugt | mad</annotation>
+		<annotation cp="🥝" type="tts">kiwifrugt</annotation>
+		<annotation cp="🍅">grøntsag | tomat</annotation>
+		<annotation cp="🍅" type="tts">tomat</annotation>
+		<annotation cp="🥑">avokado | frugt | mad</annotation>
+		<annotation cp="🥑" type="tts">avokado</annotation>
+		<annotation cp="🍆">aubergine | grøntsag</annotation>
+		<annotation cp="🍆" type="tts">aubergine</annotation>
+		<annotation cp="🥔">grøntsag | kartoffel | mad | rodfrugt</annotation>
+		<annotation cp="🥔" type="tts">kartoffel</annotation>
+		<annotation cp="🥕">grøntsag | gulerod | mad | rodfrugt</annotation>
+		<annotation cp="🥕" type="tts">gulerod</annotation>
+		<annotation cp="🌽">majs | majskolbe</annotation>
+		<annotation cp="🌽" type="tts">majs</annotation>
+		<annotation cp="🌶">chili | peber | plante | stærk</annotation>
+		<annotation cp="🌶" type="tts">chili</annotation>
+		<annotation cp="🥒">agurk | grøntsag | mad</annotation>
+		<annotation cp="🥒" type="tts">agurk</annotation>
+		<annotation cp="🍄">plante | svamp</annotation>
+		<annotation cp="🍄" type="tts">svamp</annotation>
+		<annotation cp="🥜">mad | mellemmåltid | nød | nødder | peanuts | snack</annotation>
+		<annotation cp="🥜" type="tts">peanuts</annotation>
+		<annotation cp="🌰">kastanje | plante</annotation>
+		<annotation cp="🌰" type="tts">kastanje</annotation>
+		<annotation cp="🍞">bage | brød</annotation>
+		<annotation cp="🍞" type="tts">brød</annotation>
+		<annotation cp="🥐">brød | croissant | fransk | mad | morgenbrød | morgenmad</annotation>
+		<annotation cp="🥐" type="tts">croissant</annotation>
+		<annotation cp="🥖">brød | flute | franskbrød | mad</annotation>
+		<annotation cp="🥖" type="tts">flute</annotation>
+		<annotation cp="🥞">crêpe | mad | pandekage | pandekager</annotation>
+		<annotation cp="🥞" type="tts">pandekager</annotation>
+		<annotation cp="🧀">et stykke ost | ost</annotation>
+		<annotation cp="🧀" type="tts">et stykke ost</annotation>
+		<annotation cp="🍖">kød | kødben</annotation>
+		<annotation cp="🍖" type="tts">kød</annotation>
+		<annotation cp="🍗">kylling | kyllingelår</annotation>
+		<annotation cp="🍗" type="tts">kyllingelår</annotation>
+		<annotation cp="🥓">bacon | gris | kød | mad | svinekød</annotation>
+		<annotation cp="🥓" type="tts">bacon</annotation>
+		<annotation cp="🍔">hamburger</annotation>
+		<annotation cp="🍔" type="tts">hamburger</annotation>
+		<annotation cp="🍟">pomfrit | pomfritter | pommes frites</annotation>
+		<annotation cp="🍟" type="tts">pomfritter</annotation>
+		<annotation cp="🍕">pizza | pizzastykke | stykke pizza</annotation>
+		<annotation cp="🍕" type="tts">pizza</annotation>
+		<annotation cp="🌭">frankfurter | hotdog | pølse</annotation>
+		<annotation cp="🌭" type="tts">hotdog</annotation>
+		<annotation cp="🌮">mexicansk | taco</annotation>
+		<annotation cp="🌮" type="tts">taco</annotation>
+		<annotation cp="🌯">burrito | mexicansk</annotation>
+		<annotation cp="🌯" type="tts">burrito</annotation>
+		<annotation cp="🥙">fladbrød | fladbrød med fyld | fyld | fyldt | gyros | mad | pandekage med fyld | pita</annotation>
+		<annotation cp="🥙" type="tts">fladbrød med fyld</annotation>
+		<annotation cp="🥚">æg | mad</annotation>
+		<annotation cp="🥚" type="tts">æg</annotation>
+		<annotation cp="🍳">madlavning | stegepande | stegepande med æg</annotation>
+		<annotation cp="🍳" type="tts">stegepande</annotation>
+		<annotation cp="🥘">mad | pande | pande med mad | pandestegt | steger</annotation>
+		<annotation cp="🥘" type="tts">pande med mad</annotation>
+		<annotation cp="🍲">gryde | gryde med mad | gryderet | suppe</annotation>
+		<annotation cp="🍲" type="tts">gryde med mad</annotation>
+		<annotation cp="🥗">grøn | mad | salat</annotation>
+		<annotation cp="🥗" type="tts">grøn salat</annotation>
+		<annotation cp="🍿">popcorn</annotation>
+		<annotation cp="🍿" type="tts">popcorn</annotation>
+		<annotation cp="🍱">bento | bentoboks | boks</annotation>
+		<annotation cp="🍱" type="tts">bento</annotation>
+		<annotation cp="🍘">kiks | riskiks</annotation>
+		<annotation cp="🍘" type="tts">riskiks</annotation>
+		<annotation cp="🍙">ris | riskugle</annotation>
+		<annotation cp="🍙" type="tts">riskugle</annotation>
+		<annotation cp="🍚">restaurant | ris | skål ris</annotation>
+		<annotation cp="🍚" type="tts">ris</annotation>
+		<annotation cp="🍛">ris | ris og karry</annotation>
+		<annotation cp="🍛" type="tts">ris og karry</annotation>
+		<annotation cp="🍜">nudler | ramen-nudler | restaurant | skål nudler</annotation>
+		<annotation cp="🍜" type="tts">nudler</annotation>
+		<annotation cp="🍝">pasta | restaurant | spaghetti</annotation>
+		<annotation cp="🍝" type="tts">spaghetti</annotation>
+		<annotation cp="🍠">kartoffel | sød | stegt</annotation>
+		<annotation cp="🍠" type="tts">sød kartoffel</annotation>
+		<annotation cp="🍢">fisk | grillspyd | kebab | mad på spyd | pind | skaldyr | spyd</annotation>
+		<annotation cp="🍢" type="tts">mad på spyd</annotation>
+		<annotation cp="🍣">sushi | sushi-restaurant</annotation>
+		<annotation cp="🍣" type="tts">sushi</annotation>
+		<annotation cp="🍤">dybstegt reje | reje</annotation>
+		<annotation cp="🍤" type="tts">dybstegt reje</annotation>
+		<annotation cp="🍥">fiskebolle | fiskebolle med spiral</annotation>
+		<annotation cp="🍥" type="tts">fiskebolle</annotation>
+		<annotation cp="🍡">iskugler | iskugler på pind</annotation>
+		<annotation cp="🍡" type="tts">iskugler på pind</annotation>
+		<annotation cp="🦀">krabbe | krebsen | stjernetegn</annotation>
+		<annotation cp="🦀" type="tts">krabbe</annotation>
+		<annotation cp="🦐">dyr | havdyr | mad | reje | skaldyr</annotation>
+		<annotation cp="🦐" type="tts">reje</annotation>
+		<annotation cp="🦑">arme | blæk | blæksprutte | bløddyr | dyr | flerarmet | havdyr | mad | multitasking | sprutte</annotation>
+		<annotation cp="🦑" type="tts">sprutte</annotation>
+		<annotation cp="🍦">is | softice</annotation>
+		<annotation cp="🍦" type="tts">softice</annotation>
+		<annotation cp="🍧">is | isdessert | snedessert</annotation>
+		<annotation cp="🍧" type="tts">snedessert</annotation>
+		<annotation cp="🍨">is | isdessert</annotation>
+		<annotation cp="🍨" type="tts">is</annotation>
+		<annotation cp="🍩">donut | kage</annotation>
+		<annotation cp="🍩" type="tts">donut</annotation>
+		<annotation cp="🍪">cookie | kage | småkage</annotation>
+		<annotation cp="🍪" type="tts">cookie</annotation>
+		<annotation cp="🎂">fødselsdagskage | kage | lagkage</annotation>
+		<annotation cp="🎂" type="tts">fødselsdagskage</annotation>
+		<annotation cp="🍰">et stykke kage | kage | lagkage</annotation>
+		<annotation cp="🍰" type="tts">lagkage</annotation>
+		<annotation cp="🍫">chokolade | et stykke chokolade</annotation>
+		<annotation cp="🍫" type="tts">chokolade</annotation>
+		<annotation cp="🍬">bolsje | slik</annotation>
+		<annotation cp="🍬" type="tts">bolsje</annotation>
+		<annotation cp="🍭">slik | slikpind</annotation>
+		<annotation cp="🍭" type="tts">slikpind</annotation>
+		<annotation cp="🍮">budding | dessert</annotation>
+		<annotation cp="🍮" type="tts">dessert</annotation>
+		<annotation cp="🍯">honning | honningkrukke | krukke honning</annotation>
+		<annotation cp="🍯" type="tts">honning</annotation>
+		<annotation cp="🍼">flaske | mælk | sutteflaske</annotation>
+		<annotation cp="🍼" type="tts">sutteflaske</annotation>
+		<annotation cp="🥛">drik | drikke | glas | mælk</annotation>
+		<annotation cp="🥛" type="tts">glas mælk</annotation>
+		<annotation cp="☕">dampende | drik | drikkevare | kaffe | te | varm</annotation>
+		<annotation cp="☕" type="tts">varm drik</annotation>
+		<annotation cp="🍵">kop | te | tekop | varm te</annotation>
+		<annotation cp="🍵" type="tts">tekop</annotation>
+		<annotation cp="🍶">flaske sake | sake | sakeflaske | sakekop</annotation>
+		<annotation cp="🍶" type="tts">sake</annotation>
+		<annotation cp="🍾">bar | drik | flaske | flaske med flyvende prop | prop</annotation>
+		<annotation cp="🍾" type="tts">flaske med flyvende prop</annotation>
+		<annotation cp="🍷">et glas vin | hvidvin | rødvin | vin</annotation>
+		<annotation cp="🍷" type="tts">vin</annotation>
+		<annotation cp="🍸">cocktailglas</annotation>
+		<annotation cp="🍸" type="tts">cocktailglas</annotation>
+		<annotation cp="🍹">cocktail | tropisk drink</annotation>
+		<annotation cp="🍹" type="tts">tropisk drink</annotation>
+		<annotation cp="🍺">krus | krus øl | ølglas | ølkrus</annotation>
+		<annotation cp="🍺" type="tts">ølkrus</annotation>
+		<annotation cp="🍻">krus | krus øl | ølglas | ølkrus | skål | skålende ølkrus</annotation>
+		<annotation cp="🍻" type="tts">skålende ølkrus</annotation>
+		<annotation cp="🥂">alkohol | drikke | drikker | fejrer | fejring | fest | glas | skål | skåler</annotation>
+		<annotation cp="🥂" type="tts">skål</annotation>
+		<annotation cp="🥃">drikke | drikker | fladbundet | glas | shot | shotglas | spiritus | spiritusglas | sprut | whiskyglas</annotation>
+		<annotation cp="🥃" type="tts">fladbundet glas</annotation>
+		<annotation cp="🍽">gaffel | kniv | kniv og gaffel med tallerken | madlavning | tallerken</annotation>
+		<annotation cp="🍽" type="tts">kniv og gaffel med tallerken</annotation>
+		<annotation cp="🍴">bestik | gaffel | kniv | kniv og gaffel</annotation>
+		<annotation cp="🍴" type="tts">kniv og gaffel</annotation>
+		<annotation cp="🥄">bestik | ske</annotation>
+		<annotation cp="🥄" type="tts">ske</annotation>
+		<annotation cp="🔪">kniv | køkkenkniv</annotation>
+		<annotation cp="🔪" type="tts">køkkenkniv</annotation>
+		<annotation cp="🏺">amphora | drik | kande | krukke | madlavning | stjernetegn | våben | værktøj</annotation>
+		<annotation cp="🏺" type="tts">amphora</annotation>
+		<annotation cp="🌍">Afrika | Europa | globus med europa og afrika | jorden</annotation>
+		<annotation cp="🌍" type="tts">globus med europa og afrika</annotation>
+		<annotation cp="🌎">Amerika | globus med nord- og sydamerika | jorden | Nord- og Sydamerika</annotation>
+		<annotation cp="🌎" type="tts">globus med nord- og sydamerika</annotation>
+		<annotation cp="🌏">Asien | Australien | globus med asien og australien | jorden</annotation>
+		<annotation cp="🌏" type="tts">globus med asien og australien</annotation>
+		<annotation cp="🌐">globus med længdegrader | meridianer</annotation>
+		<annotation cp="🌐" type="tts">globus med længdegrader</annotation>
+		<annotation cp="🗺">kort | verden | verdenskort</annotation>
+		<annotation cp="🗺" type="tts">verdenskort</annotation>
+		<annotation cp="🗾">Japan | kort over Japan</annotation>
+		<annotation cp="🗾" type="tts">Japan</annotation>
+		<annotation cp="🏔">bjerg | koldt | sne | sneklædt bjerg</annotation>
+		<annotation cp="🏔" type="tts">sneklædt bjerg</annotation>
+		<annotation cp="⛰">bjerg</annotation>
+		<annotation cp="⛰" type="tts">bjerg</annotation>
+		<annotation cp="🌋">vulkan | vulkanudbrud</annotation>
+		<annotation cp="🌋" type="tts">vulkan</annotation>
+		<annotation cp="🗻">bjerg | Fuji | Fuji-bjerget | Mount Fuji</annotation>
+		<annotation cp="🗻" type="tts">Mount Fuji</annotation>
+		<annotation cp="🏕">camping | telt</annotation>
+		<annotation cp="🏕" type="tts">camping</annotation>
+		<annotation cp="🏖">parasol | strand | strand med parasol</annotation>
+		<annotation cp="🏖" type="tts">strand med parasol</annotation>
+		<annotation cp="🏜">kaktus | ørken | sol</annotation>
+		<annotation cp="🏜" type="tts">ørken</annotation>
+		<annotation cp="🏝">ø | øde</annotation>
+		<annotation cp="🏝" type="tts">øde ø</annotation>
+		<annotation cp="🏞">nationalpark</annotation>
+		<annotation cp="🏞" type="tts">nationalpark</annotation>
+		<annotation cp="🏟">stadion</annotation>
+		<annotation cp="🏟" type="tts">stadion</annotation>
+		<annotation cp="🏛">bygning | klassisk</annotation>
+		<annotation cp="🏛" type="tts">klassisk bygning</annotation>
+		<annotation cp="🏗">bygning | bygningskonstruktion | konstruktion</annotation>
+		<annotation cp="🏗" type="tts">bygningskonstruktion</annotation>
+		<annotation cp="🏘">bygning | hus | huse</annotation>
+		<annotation cp="🏘" type="tts">huse</annotation>
+		<annotation cp="🏚">bygning | faldefærdig | faldefærdigt hus | hus</annotation>
+		<annotation cp="🏚" type="tts">faldefærdigt hus</annotation>
+		<annotation cp="🏠">bygning | hjem | hus</annotation>
+		<annotation cp="🏠" type="tts">hus</annotation>
+		<annotation cp="🏡">have | hjem | hus med have</annotation>
+		<annotation cp="🏡" type="tts">hus med have</annotation>
+		<annotation cp="🏢">bygning | kontor | kontorbygning</annotation>
+		<annotation cp="🏢" type="tts">kontorbygning</annotation>
+		<annotation cp="🏣">japansk | posthus | postkontor</annotation>
+		<annotation cp="🏣" type="tts">japansk posthus</annotation>
+		<annotation cp="🏤">europæisk posthus | posthus</annotation>
+		<annotation cp="🏤" type="tts">posthus</annotation>
+		<annotation cp="🏥">bygning | doktor | hospital | læge | medicin</annotation>
+		<annotation cp="🏥" type="tts">hospital</annotation>
+		<annotation cp="🏦">bank | bygning</annotation>
+		<annotation cp="🏦" type="tts">bank</annotation>
+		<annotation cp="🏨">bygning | hotel</annotation>
+		<annotation cp="🏨" type="tts">hotel</annotation>
+		<annotation cp="🏩">hotel | kærlighedshotel | romantik</annotation>
+		<annotation cp="🏩" type="tts">kærlighedshotel</annotation>
+		<annotation cp="🏪">døgnkiosk | kiosk | købmand</annotation>
+		<annotation cp="🏪" type="tts">døgnkiosk</annotation>
+		<annotation cp="🏫">bygning | skole</annotation>
+		<annotation cp="🏫" type="tts">skole</annotation>
+		<annotation cp="🏬">butik | stormagasin | varehus</annotation>
+		<annotation cp="🏬" type="tts">stormagasin</annotation>
+		<annotation cp="🏭">bygning | fabrik</annotation>
+		<annotation cp="🏭" type="tts">fabrik</annotation>
+		<annotation cp="🏯">bygning | japansk slot | slot</annotation>
+		<annotation cp="🏯" type="tts">japansk slot</annotation>
+		<annotation cp="🏰">bygning | slot</annotation>
+		<annotation cp="🏰" type="tts">slot</annotation>
+		<annotation cp="💒">bryllup | kærlighed | kirke | romantik</annotation>
+		<annotation cp="💒" type="tts">bryllup</annotation>
+		<annotation cp="🗼">Tokyo | Tokyo Tower</annotation>
+		<annotation cp="🗼" type="tts">Tokyo Tower</annotation>
+		<annotation cp="🗽">frihed | Frihedsgudinden | gudinde</annotation>
+		<annotation cp="🗽" type="tts">Frihedsgudinden</annotation>
+		<annotation cp="⛪">bygning | kirke | kors | kristen | religion</annotation>
+		<annotation cp="⛪" type="tts">kirke</annotation>
+		<annotation cp="🕌">islam | moské | muslim | religion</annotation>
+		<annotation cp="🕌" type="tts">moské</annotation>
+		<annotation cp="🕍">jøde | jødisk | religion | synagoge | tempel</annotation>
+		<annotation cp="🕍" type="tts">synagoge</annotation>
+		<annotation cp="⛩">alter | religion | shinto | shinto-alter</annotation>
+		<annotation cp="⛩" type="tts">shinto-alter</annotation>
+		<annotation cp="🕋">islam | kaaba | muslim | religion</annotation>
+		<annotation cp="🕋" type="tts">kaaba</annotation>
+		<annotation cp="⛲">fontæne | springvand</annotation>
+		<annotation cp="⛲" type="tts">springvand</annotation>
+		<annotation cp="⛺">telt</annotation>
+		<annotation cp="⛺" type="tts">telt</annotation>
+		<annotation cp="🌁">tåge | tåget</annotation>
+		<annotation cp="🌁" type="tts">tåget</annotation>
+		<annotation cp="🌃">stjernehimmel | stjerner</annotation>
+		<annotation cp="🌃" type="tts">stjernehimmel</annotation>
+		<annotation cp="🏙">by | bygning | bylandskab</annotation>
+		<annotation cp="🏙" type="tts">bylandskab</annotation>
+		<annotation cp="🌄">bjerge | morgensol | solopgang over bjerge</annotation>
+		<annotation cp="🌄" type="tts">solopgang over bjerge</annotation>
+		<annotation cp="🌅">morgensol | solopgang</annotation>
+		<annotation cp="🌅" type="tts">solopgang</annotation>
+		<annotation cp="🌆">aften | by | by i solnedgang | højhuse | solnedgang</annotation>
+		<annotation cp="🌆" type="tts">by i solnedgang</annotation>
+		<annotation cp="🌇">skumring | solnedgang | solnedgang bag bygninger</annotation>
+		<annotation cp="🌇" type="tts">solnedgang</annotation>
+		<annotation cp="🌉">bro i mørke | bro i natten | nat</annotation>
+		<annotation cp="🌉" type="tts">bro i mørke</annotation>
+		<annotation cp="♨">damp | kilder | varm | varme kilder</annotation>
+		<annotation cp="♨" type="tts">varme kilder</annotation>
+		<annotation cp="🎠">karrusel | karruselhest | karruseltur | køre i karrusel</annotation>
+		<annotation cp="🎠" type="tts">karrusel</annotation>
+		<annotation cp="🎡">forlystelse | forlystelsespark | pariserhjul | tivoli</annotation>
+		<annotation cp="🎡" type="tts">pariserhjul</annotation>
+		<annotation cp="🎢">forlystelse | forlystelsespark | rutsjebane | tivoli</annotation>
+		<annotation cp="🎢" type="tts">rutsjebane</annotation>
+		<annotation cp="💈">barber | barbersalon</annotation>
+		<annotation cp="💈" type="tts">barber</annotation>
+		<annotation cp="🎪">cirkus | cirkustelt | telt</annotation>
+		<annotation cp="🎪" type="tts">cirkus</annotation>
+		<annotation cp="🚂">damplokomotiv | tog</annotation>
+		<annotation cp="🚂" type="tts">damplokomotiv</annotation>
+		<annotation cp="🚃">tog | togvogn</annotation>
+		<annotation cp="🚃" type="tts">togvogn</annotation>
+		<annotation cp="🚄">lyntog | tog</annotation>
+		<annotation cp="🚄" type="tts">lyntog</annotation>
+		<annotation cp="🚅">lyntog med projektilnæse | tog</annotation>
+		<annotation cp="🚅" type="tts">lyntog med projektilnæse</annotation>
+		<annotation cp="🚆">køretøj | tog</annotation>
+		<annotation cp="🚆" type="tts">tog</annotation>
+		<annotation cp="🚇">køretøj | metro</annotation>
+		<annotation cp="🚇" type="tts">metro</annotation>
+		<annotation cp="🚈">køretøj | letbane | tog</annotation>
+		<annotation cp="🚈" type="tts">letbane</annotation>
+		<annotation cp="🚉">tog | togstation</annotation>
+		<annotation cp="🚉" type="tts">togstation</annotation>
+		<annotation cp="🚊">køretøj | sporvogn | trolleybus</annotation>
+		<annotation cp="🚊" type="tts">sporvogn</annotation>
+		<annotation cp="🚝">køretøj | monorail</annotation>
+		<annotation cp="🚝" type="tts">monorail</annotation>
+		<annotation cp="🚞">bjergbane | svævebane</annotation>
+		<annotation cp="🚞" type="tts">bjergbane</annotation>
+		<annotation cp="🚋">køretøj | sporvogn | trolleybus | vogn</annotation>
+		<annotation cp="🚋" type="tts">vogn</annotation>
+		<annotation cp="🚌">bus | køretøj</annotation>
+		<annotation cp="🚌" type="tts">bus</annotation>
+		<annotation cp="🚍">bus | forfra | kørende | køretøj</annotation>
+		<annotation cp="🚍" type="tts">bus forfra</annotation>
+		<annotation cp="🚎">bus | køretøj | sporvogn | trolley | trolleybus</annotation>
+		<annotation cp="🚎" type="tts">trolleybus</annotation>
+		<annotation cp="🚐">bus | minibus</annotation>
+		<annotation cp="🚐" type="tts">minibus</annotation>
+		<annotation cp="🚑">ambulance | køretøj</annotation>
+		<annotation cp="🚑" type="tts">ambulance</annotation>
+		<annotation cp="🚒">brand | brandbil | køretøj</annotation>
+		<annotation cp="🚒" type="tts">brandbil</annotation>
+		<annotation cp="🚓">politi | politibil</annotation>
+		<annotation cp="🚓" type="tts">politibil</annotation>
+		<annotation cp="🚔">kørende politibil | politi | politibil forfra</annotation>
+		<annotation cp="🚔" type="tts">politibil forfra</annotation>
+		<annotation cp="🚕">bil | køretøj | taxa</annotation>
+		<annotation cp="🚕" type="tts">taxa</annotation>
+		<annotation cp="🚖">kørende taxa | taxa forfra</annotation>
+		<annotation cp="🚖" type="tts">taxa forfra</annotation>
+		<annotation cp="🚗">bil | køretøj</annotation>
+		<annotation cp="🚗" type="tts">bil</annotation>
+		<annotation cp="🚘">bil | bil forfra | fartøj | kørende</annotation>
+		<annotation cp="🚘" type="tts">bil forfra</annotation>
+		<annotation cp="🚙">firehjulstræk | fritid | jeep | køretøj</annotation>
+		<annotation cp="🚙" type="tts">firehjulstræk</annotation>
+		<annotation cp="🚚">køretøj | lastbil | levering | transport</annotation>
+		<annotation cp="🚚" type="tts">lastbil</annotation>
+		<annotation cp="🚛">køretøj | lastbil | lastvogn | levering | transport</annotation>
+		<annotation cp="🚛" type="tts">lastvogn</annotation>
+		<annotation cp="🚜">køretøj | traktor</annotation>
+		<annotation cp="🚜" type="tts">traktor</annotation>
+		<annotation cp="🏎">bil | racerbil | racerløb</annotation>
+		<annotation cp="🏎" type="tts">racerbil</annotation>
+		<annotation cp="🏍">motorcykel | racerløb</annotation>
+		<annotation cp="🏍" type="tts">motorcykel</annotation>
+		<annotation cp="🛵">scooter | transportmiddel</annotation>
+		<annotation cp="🛵" type="tts">scooter</annotation>
+		<annotation cp="🚲">cykel | tohjulet</annotation>
+		<annotation cp="🚲" type="tts">cykel</annotation>
+		<annotation cp="🛴">løbehjul | transportmiddel</annotation>
+		<annotation cp="🛴" type="tts">løbehjul</annotation>
+		<annotation cp="🚏">bus | busstoppested | stoppested</annotation>
+		<annotation cp="🚏" type="tts">busstoppested</annotation>
+		<annotation cp="🛣">motorvej | vej</annotation>
+		<annotation cp="🛣" type="tts">motorvej</annotation>
+		<annotation cp="🛤">spor | tog | togspor</annotation>
+		<annotation cp="🛤" type="tts">togspor</annotation>
+		<annotation cp="🛢">olie | olietønde | tønde</annotation>
+		<annotation cp="🛢" type="tts">olietønde</annotation>
+		<annotation cp="⛽">benzin | benzinpumpe | tankstation</annotation>
+		<annotation cp="⛽" type="tts">benzin</annotation>
+		<annotation cp="🚨">blinklys | politi</annotation>
+		<annotation cp="🚨" type="tts">blinklys</annotation>
+		<annotation cp="🚥">liggende trafiklys | lys | trafik</annotation>
+		<annotation cp="🚥" type="tts">liggende trafiklys</annotation>
+		<annotation cp="🚦">lys | trafik | trafiklys</annotation>
+		<annotation cp="🚦" type="tts">trafiklys</annotation>
+		<annotation cp="🛑">ottekant | ottekantet | skilt | stopskilt</annotation>
+		<annotation cp="🛑" type="tts">stopskilt</annotation>
+		<annotation cp="🚧">byggeri | spærring</annotation>
+		<annotation cp="🚧" type="tts">byggeri</annotation>
+		<annotation cp="⚓">anker | båd | skib | værktøj</annotation>
+		<annotation cp="⚓" type="tts">anker</annotation>
+		<annotation cp="⛵">båd | sejlbåd</annotation>
+		<annotation cp="⛵" type="tts">sejlbåd</annotation>
+		<annotation cp="🛶">båd | kano | transportmiddel</annotation>
+		<annotation cp="🛶" type="tts">kano</annotation>
+		<annotation cp="🚤">båd | speedbåd</annotation>
+		<annotation cp="🚤" type="tts">speedbåd</annotation>
+		<annotation cp="🛳">fartøj | passager | passagerskib | skib</annotation>
+		<annotation cp="🛳" type="tts">passagerskib</annotation>
+		<annotation cp="⛴">båd | færge</annotation>
+		<annotation cp="⛴" type="tts">færge</annotation>
+		<annotation cp="🛥">båd | fartøj | motorbåd</annotation>
+		<annotation cp="🛥" type="tts">motorbåd</annotation>
+		<annotation cp="🚢">fartøj | skib</annotation>
+		<annotation cp="🚢" type="tts">skib</annotation>
+		<annotation cp="✈">fartøj | fly</annotation>
+		<annotation cp="✈" type="tts">fly</annotation>
+		<annotation cp="🛩">fartøj | fly | lille fly</annotation>
+		<annotation cp="🛩" type="tts">lille fly</annotation>
+		<annotation cp="🛫">afgang | afrejse | fartøj | fly | indtjekning</annotation>
+		<annotation cp="🛫" type="tts">fly afgang</annotation>
+		<annotation cp="🛬">ankomme | ankomst | fartøj | fly</annotation>
+		<annotation cp="🛬" type="tts">fly ankomst</annotation>
+		<annotation cp="💺">sæde | stol</annotation>
+		<annotation cp="💺" type="tts">sæde</annotation>
+		<annotation cp="🚁">fartøj | helikopter</annotation>
+		<annotation cp="🚁" type="tts">helikopter</annotation>
+		<annotation cp="🚟">fartøj | hængende | luftbane | togbane</annotation>
+		<annotation cp="🚟" type="tts">luftbane</annotation>
+		<annotation cp="🚠">bjerg | fartøj | gondol | kabel | kabelbane</annotation>
+		<annotation cp="🚠" type="tts">kabelbane</annotation>
+		<annotation cp="🚡">fartøj | gondol | kabel | svæve | svævebane</annotation>
+		<annotation cp="🚡" type="tts">svævebane</annotation>
+		<annotation cp="🛰">fartøj | rummet | satellit</annotation>
+		<annotation cp="🛰" type="tts">satellit</annotation>
+		<annotation cp="🚀">fartøj | raket | rumfartøj | rummet | rumskib</annotation>
+		<annotation cp="🚀" type="tts">raket</annotation>
+		<annotation cp="🛎">hotel | hotelklokke | klokke</annotation>
+		<annotation cp="🛎" type="tts">hotelklokke</annotation>
+		<annotation cp="⌛">tid | timeglas</annotation>
+		<annotation cp="⌛" type="tts">timeglas</annotation>
+		<annotation cp="⏳">tid | timeglas | timeglas med løbende sand</annotation>
+		<annotation cp="⏳" type="tts">timeglas med løbende sand</annotation>
+		<annotation cp="⌚">armbåndsur | ur</annotation>
+		<annotation cp="⌚" type="tts">ur</annotation>
+		<annotation cp="⏰">ur | vækkeur</annotation>
+		<annotation cp="⏰" type="tts">vækkeur</annotation>
+		<annotation cp="⏱">stopur | ur</annotation>
+		<annotation cp="⏱" type="tts">stopur</annotation>
+		<annotation cp="⏲">æggeur | tidtager | ur</annotation>
+		<annotation cp="⏲" type="tts">æggeur</annotation>
+		<annotation cp="🕰">pynteur | ur</annotation>
+		<annotation cp="🕰" type="tts">pynteur</annotation>
+		<annotation cp="🕛">12.00 | 24.00 | kl. 24 | kl.12</annotation>
+		<annotation cp="🕛" type="tts">kl.12</annotation>
+		<annotation cp="🕐">1.00 | 13.00 | kl. 1 | kl. 13</annotation>
+		<annotation cp="🕐" type="tts">kl. 1</annotation>
+		<annotation cp="🕜">1.30 | 13.30 | halv to</annotation>
+		<annotation cp="🕜" type="tts">halv to</annotation>
+		<annotation cp="🕑">14.00 | 2.00 | kl. 2 | kl.14</annotation>
+		<annotation cp="🕑" type="tts">kl. 2</annotation>
+		<annotation cp="🕝">14.30 | 2.30 | halv tre</annotation>
+		<annotation cp="🕝" type="tts">halv tre</annotation>
+		<annotation cp="🕒">15.00 | 3.00 | kl. 3 | kl.15</annotation>
+		<annotation cp="🕒" type="tts">kl. 3</annotation>
+		<annotation cp="🕞">15.30 | 3.30 | halv fire</annotation>
+		<annotation cp="🕞" type="tts">halv fire</annotation>
+		<annotation cp="🕓">16.00 | 4.00 | kl. 16 | kl. 4</annotation>
+		<annotation cp="🕓" type="tts">kl. 4</annotation>
+		<annotation cp="🕟">16.30 | 4.30 | halv fem</annotation>
+		<annotation cp="🕟" type="tts">halv fem</annotation>
+		<annotation cp="🕔">17.00 | 5.00 | kl. 17 | kl. 5</annotation>
+		<annotation cp="🕔" type="tts">kl. 5</annotation>
+		<annotation cp="🕠">17.30 | 5.30 | halv seks</annotation>
+		<annotation cp="🕠" type="tts">halv seks</annotation>
+		<annotation cp="🕕">18.00 | 6.00 | kl. 18 | kl. 6</annotation>
+		<annotation cp="🕕" type="tts">kl. 6</annotation>
+		<annotation cp="🕡">18.30 | 6.30 | halv syv</annotation>
+		<annotation cp="🕡" type="tts">halv syv</annotation>
+		<annotation cp="🕖">19.00 | 7.00 | kl. 19 | kl. 7</annotation>
+		<annotation cp="🕖" type="tts">kl. 7</annotation>
+		<annotation cp="🕢">19.30 | 7.30 | halv otte</annotation>
+		<annotation cp="🕢" type="tts">halv otte</annotation>
+		<annotation cp="🕗">20.00 | 8.00 | kl. 20 | kl. 8</annotation>
+		<annotation cp="🕗" type="tts">kl. 8</annotation>
+		<annotation cp="🕣">20.30 | 8.30 | halv ni</annotation>
+		<annotation cp="🕣" type="tts">halv ni</annotation>
+		<annotation cp="🕘">21.00 | 9.00 | kl. 21 | kl. 9</annotation>
+		<annotation cp="🕘" type="tts">kl. 9</annotation>
+		<annotation cp="🕤">21.30 | 9.30 | halv ti</annotation>
+		<annotation cp="🕤" type="tts">halv ti</annotation>
+		<annotation cp="🕙">10.00 | 22.00 | kl. 10 | kl. 22</annotation>
+		<annotation cp="🕙" type="tts">kl. 10</annotation>
+		<annotation cp="🕥">10.30 | 22.30 | halv elleve</annotation>
+		<annotation cp="🕥" type="tts">halv elleve</annotation>
+		<annotation cp="🕚">11.00 | 23.00 | kl. 23 | kl.11</annotation>
+		<annotation cp="🕚" type="tts">kl.11</annotation>
+		<annotation cp="🕦">11.30 | 23.30 | halv tolv</annotation>
+		<annotation cp="🕦" type="tts">halv tolv</annotation>
+		<annotation cp="🌑">måne | månefase | nymåne</annotation>
+		<annotation cp="🌑" type="tts">nymåne</annotation>
+		<annotation cp="🌒">måne | månefase | tiltagende måne</annotation>
+		<annotation cp="🌒" type="tts">tiltagende måne</annotation>
+		<annotation cp="🌓">første kvarter måne | halvmåne første kvarter | måne | månefase</annotation>
+		<annotation cp="🌓" type="tts">halvmåne første kvarter</annotation>
+		<annotation cp="🌔">måne | månefase | tiltagende måne næsten fuld</annotation>
+		<annotation cp="🌔" type="tts">tiltagende måne næsten fuld</annotation>
+		<annotation cp="🌕">fuldmåne | måne | månefase</annotation>
+		<annotation cp="🌕" type="tts">fuldmåne</annotation>
+		<annotation cp="🌖">aftagende måne næsten fuld | måne | månefase</annotation>
+		<annotation cp="🌖" type="tts">aftagende måne næsten fuld</annotation>
+		<annotation cp="🌗">halvmåne sidste kvarter | måne | månefase | sidste kvarter måne</annotation>
+		<annotation cp="🌗" type="tts">halvmåne sidste kvarter</annotation>
+		<annotation cp="🌘">aftagende måne | måne | månefase</annotation>
+		<annotation cp="🌘" type="tts">aftagende måne</annotation>
+		<annotation cp="🌙">aftagende måne | halvmåne</annotation>
+		<annotation cp="🌙" type="tts">halvmåne</annotation>
+		<annotation cp="🌚">ansigt i måne | nymåne | nymåne med ansigt</annotation>
+		<annotation cp="🌚" type="tts">nymåne med ansigt</annotation>
+		<annotation cp="🌛">måne | måne med ansigt første kvarter | måneansigt</annotation>
+		<annotation cp="🌛" type="tts">måne med ansigt første kvarter</annotation>
+		<annotation cp="🌜">måne | måne med ansigt andet kvarter | måneansigt</annotation>
+		<annotation cp="🌜" type="tts">måne med ansigt andet kvarter</annotation>
+		<annotation cp="🌡">termometer | vejr</annotation>
+		<annotation cp="🌡" type="tts">termometer</annotation>
+		<annotation cp="☀">lys | rum | sol | solskin | stråler | vejr</annotation>
+		<annotation cp="☀" type="tts">sol</annotation>
+		<annotation cp="🌝">fuldmåne | fuldmåne med ansigt | fuldmåneansigt | måne med ansigt | måneansigt</annotation>
+		<annotation cp="🌝" type="tts">fuldmåneansigt</annotation>
+		<annotation cp="🌞">ansigt | sol | sol med ansigt</annotation>
+		<annotation cp="🌞" type="tts">sol med ansigt</annotation>
+		<annotation cp="⭐">hvid mellemstor stjerne | stjerne</annotation>
+		<annotation cp="⭐" type="tts">hvid mellemstor stjerne</annotation>
+		<annotation cp="🌟">blinkende stjerne | lysende stjerne | lyser | skinner | stjerneskin</annotation>
+		<annotation cp="🌟" type="tts">blinkende stjerne</annotation>
+		<annotation cp="🌠">stjerne | stjerneskud</annotation>
+		<annotation cp="🌠" type="tts">stjerneskud</annotation>
+		<annotation cp="🌌">galakse | mælkevejen</annotation>
+		<annotation cp="🌌" type="tts">mælkevejen</annotation>
+		<annotation cp="☁">sky | vejr</annotation>
+		<annotation cp="☁" type="tts">sky</annotation>
+		<annotation cp="⛅">sky | sol | sol bag sky</annotation>
+		<annotation cp="⛅" type="tts">sol bag sky</annotation>
+		<annotation cp="⛈">regn | sky | sky med lyn og regn | torden | vejr</annotation>
+		<annotation cp="⛈" type="tts">sky med lyn og regn</annotation>
+		<annotation cp="🌤">sky | sol | sol bag lille sky | vejr</annotation>
+		<annotation cp="🌤" type="tts">sol bag lille sky</annotation>
+		<annotation cp="🌥">sky | sol | sol bag stor sky | vejr</annotation>
+		<annotation cp="🌥" type="tts">sol bag stor sky</annotation>
+		<annotation cp="🌦">regn | sky | sol | sol bag sky med regn | vejr</annotation>
+		<annotation cp="🌦" type="tts">sol bag sky med regn</annotation>
+		<annotation cp="🌧">regn | sky | sky med regn | vejr</annotation>
+		<annotation cp="🌧" type="tts">sky med regn</annotation>
+		<annotation cp="🌨">kulde | sky | sky med sne | sne | vejr</annotation>
+		<annotation cp="🌨" type="tts">sky med sne</annotation>
+		<annotation cp="🌩">lyn | sky | tordensky | vejr</annotation>
+		<annotation cp="🌩" type="tts">tordensky</annotation>
+		<annotation cp="🌪">hvirvelvind | sky | skypumpe | tornado | vejr</annotation>
+		<annotation cp="🌪" type="tts">tornado</annotation>
+		<annotation cp="🌫">sky | tåge | vejr</annotation>
+		<annotation cp="🌫" type="tts">tåge</annotation>
+		<annotation cp="🌬">ansigt | blæse | sky | vejr | vind | vindansigt</annotation>
+		<annotation cp="🌬" type="tts">vindansigt</annotation>
+		<annotation cp="🌀">cyklon | svimmel | tornado | tyfon</annotation>
+		<annotation cp="🌀" type="tts">cyklon</annotation>
+		<annotation cp="🌈">regn | regnbue | vejr</annotation>
+		<annotation cp="🌈" type="tts">regnbue</annotation>
+		<annotation cp="🌂">lukket paraply | regn | regnvejr</annotation>
+		<annotation cp="🌂" type="tts">lukket paraply</annotation>
+		<annotation cp="☂">paraply | regn | tøj | vejr</annotation>
+		<annotation cp="☂" type="tts">paraply</annotation>
+		<annotation cp="☔">dråbe | paraply | paraply med regndråber | regn | tøj | vejr</annotation>
+		<annotation cp="☔" type="tts">paraply med regndråber</annotation>
+		<annotation cp="⛱">paraply | parasol | regn | sol | vejr</annotation>
+		<annotation cp="⛱" type="tts">parasol</annotation>
+		<annotation cp="⚡">advarsel | fare | højspænding</annotation>
+		<annotation cp="⚡" type="tts">højspænding</annotation>
+		<annotation cp="❄">kulde | sne | snefnug | vejr</annotation>
+		<annotation cp="❄" type="tts">snefnug</annotation>
+		<annotation cp="☃">kulde | sne | snemand | vejr</annotation>
+		<annotation cp="☃" type="tts">snemand</annotation>
+		<annotation cp="⛄">sne | snemand uden snevejr</annotation>
+		<annotation cp="⛄" type="tts">snemand uden snevejr</annotation>
+		<annotation cp="☄">komet | rummet</annotation>
+		<annotation cp="☄" type="tts">komet</annotation>
+		<annotation cp="🔥">flamme | ild</annotation>
+		<annotation cp="🔥" type="tts">ild</annotation>
+		<annotation cp="💧">dråbe | dråbe sved | følelser | koldsved</annotation>
+		<annotation cp="💧" type="tts">dråbe</annotation>
+		<annotation cp="🌊">bølge | havbølge | vandbølge</annotation>
+		<annotation cp="🌊" type="tts">bølge</annotation>
+		<annotation cp="🎃">græskar | græskarlygte</annotation>
+		<annotation cp="🎃" type="tts">græskarlygte</annotation>
+		<annotation cp="🎄">jul | juletræ | træ</annotation>
+		<annotation cp="🎄" type="tts">juletræ</annotation>
+		<annotation cp="🎆">fest | fyrværkeri | nytår</annotation>
+		<annotation cp="🎆" type="tts">fyrværkeri</annotation>
+		<annotation cp="🎇">fyrværkeri | nytår | stjernekaster</annotation>
+		<annotation cp="🎇" type="tts">stjernekaster</annotation>
+		<annotation cp="✨">skinne | stjerne | stjerner</annotation>
+		<annotation cp="✨" type="tts">stjerner</annotation>
+		<annotation cp="🎈">ballon | fest | fødselsdag</annotation>
+		<annotation cp="🎈" type="tts">ballon</annotation>
+		<annotation cp="🎉">bordbombe | fest | nytår</annotation>
+		<annotation cp="🎉" type="tts">bordbombe</annotation>
+		<annotation cp="🎊">fest | konfetti | konfettidåse | konfettiregn</annotation>
+		<annotation cp="🎊" type="tts">konfetti</annotation>
+		<annotation cp="🎋">festival | træ med papirpynt</annotation>
+		<annotation cp="🎋" type="tts">træ med papirpynt</annotation>
+		<annotation cp="🎍">fyrtræsdekoration | japansk nytår</annotation>
+		<annotation cp="🎍" type="tts">fyrtræsdekoration</annotation>
+		<annotation cp="🎎">dukker | japanske dukker</annotation>
+		<annotation cp="🎎" type="tts">dukker</annotation>
+		<annotation cp="🎏">banner | banner med fisk | banner med karper</annotation>
+		<annotation cp="🎏" type="tts">banner</annotation>
+		<annotation cp="🎐">vindpiber | vindspil</annotation>
+		<annotation cp="🎐" type="tts">vindspil</annotation>
+		<annotation cp="🎑">ceremoni | fejring | måne | måneceremoni</annotation>
+		<annotation cp="🎑" type="tts">måneceremoni</annotation>
+		<annotation cp="🎀">fejring | sløjfe</annotation>
+		<annotation cp="🎀" type="tts">sløjfe</annotation>
+		<annotation cp="🎁">fødselsdag | gave | overraskelse | pakke</annotation>
+		<annotation cp="🎁" type="tts">gave</annotation>
+		<annotation cp="🎗">bånd | fejring | minde | mindebånd</annotation>
+		<annotation cp="🎗" type="tts">mindebånd</annotation>
+		<annotation cp="🎟">adgang | adgangsbillet | billet</annotation>
+		<annotation cp="🎟" type="tts">adgangsbillet</annotation>
+		<annotation cp="🎫">billet | forlystelse | underholdning</annotation>
+		<annotation cp="🎫" type="tts">billet</annotation>
+		<annotation cp="🎖">dekoreret | fejring | medalje | militær | militærmedalje</annotation>
+		<annotation cp="🎖" type="tts">militærmedalje</annotation>
+		<annotation cp="🏆">pokal | præmie | trofæ</annotation>
+		<annotation cp="🏆" type="tts">pokal</annotation>
+		<annotation cp="🏅">medalje | sportsmedalje</annotation>
+		<annotation cp="🏅" type="tts">sportsmedalje</annotation>
+		<annotation cp="🥇">førsteplads | førstepræmie | guld | guldmedalje | medalje | vinder</annotation>
+		<annotation cp="🥇" type="tts">guldmedalje</annotation>
+		<annotation cp="🥈">andenplads | andenpræmie | medalje | sølv | sølvmedalje | vinder</annotation>
+		<annotation cp="🥈" type="tts">sølvmedalje</annotation>
+		<annotation cp="🥉">bronzemedalje | medalje | tredjeplads | tredjepræmie | vinder</annotation>
+		<annotation cp="🥉" type="tts">bronzemedalje</annotation>
+		<annotation cp="⚽">bold | fodbold</annotation>
+		<annotation cp="⚽" type="tts">fodbold</annotation>
+		<annotation cp="⚾">baseball | bold</annotation>
+		<annotation cp="⚾" type="tts">baseball</annotation>
+		<annotation cp="🏀">basketball | bold | sport</annotation>
+		<annotation cp="🏀" type="tts">basketball</annotation>
+		<annotation cp="🏐">bold | spil | volleyball</annotation>
+		<annotation cp="🏐" type="tts">volleyball</annotation>
+		<annotation cp="🏈">amerikansk fodbold | sport</annotation>
+		<annotation cp="🏈" type="tts">amerikansk fodbold</annotation>
+		<annotation cp="🏉">bold | rugbybold | sport</annotation>
+		<annotation cp="🏉" type="tts">rugbybold</annotation>
+		<annotation cp="🎾">bold | sport | tennis | tennisbold | tennisbold og ketsjer</annotation>
+		<annotation cp="🎾" type="tts">tennis</annotation>
+		<annotation cp="🎳">bowling | bowlingkugle | spille</annotation>
+		<annotation cp="🎳" type="tts">bowling</annotation>
+		<annotation cp="🏏">bat | bold | cricket | spil</annotation>
+		<annotation cp="🏏" type="tts">cricket</annotation>
+		<annotation cp="🏑">bold | hockey | spil | stav</annotation>
+		<annotation cp="🏑" type="tts">hockey</annotation>
+		<annotation cp="🏒">is | ishockeystav og puck | puck | spil | stav</annotation>
+		<annotation cp="🏒" type="tts">ishockeystav og puck</annotation>
+		<annotation cp="🏓">bat | bold | bord | bordtennis | pingpong | spil | tennis</annotation>
+		<annotation cp="🏓" type="tts">bordtennis</annotation>
+		<annotation cp="🏸">badminton | fjerbold | ketsjer | spil</annotation>
+		<annotation cp="🏸" type="tts">badminton</annotation>
+		<annotation cp="🥊">bokse | boksehandske | boksning | handske | sport</annotation>
+		<annotation cp="🥊" type="tts">boksehandske</annotation>
+		<annotation cp="🥋">kampsport | kampsportsuniform | sport | taekwondo | uniform</annotation>
+		<annotation cp="🥋" type="tts">kampsportsuniform</annotation>
+		<annotation cp="🥅">mål | målnet | net | sport</annotation>
+		<annotation cp="🥅" type="tts">målnet</annotation>
+		<annotation cp="⛳">golf flag</annotation>
+		<annotation cp="⛳" type="tts">golf flag</annotation>
+		<annotation cp="⛸">is | skøjte</annotation>
+		<annotation cp="⛸" type="tts">skøjte</annotation>
+		<annotation cp="🎣">fiske | fiskeri | fiskestang | fiskestang med fisk</annotation>
+		<annotation cp="🎣" type="tts">fiske</annotation>
+		<annotation cp="🎽">løbe | løbetrøje | løbetrøje med bånd</annotation>
+		<annotation cp="🎽" type="tts">løbetrøje</annotation>
+		<annotation cp="🎿">ski | skisport</annotation>
+		<annotation cp="🎿" type="tts">ski</annotation>
+		<annotation cp="🎯">plet | pletskud</annotation>
+		<annotation cp="🎯" type="tts">pletskud</annotation>
+		<annotation cp="🎱">billard | billardkugle</annotation>
+		<annotation cp="🎱" type="tts">billard</annotation>
+		<annotation cp="🔮">krystalkugle | spådom | spådomskunst</annotation>
+		<annotation cp="🔮" type="tts">krystalkugle</annotation>
+		<annotation cp="🎮">håndcontroller | videospil</annotation>
+		<annotation cp="🎮" type="tts">videospil</annotation>
+		<annotation cp="🕹">joystick | spil | videospil</annotation>
+		<annotation cp="🕹" type="tts">joystick</annotation>
+		<annotation cp="🎰">spil | spillemaskine</annotation>
+		<annotation cp="🎰" type="tts">spillemaskine</annotation>
+		<annotation cp="🎲">terning | terningspil</annotation>
+		<annotation cp="🎲" type="tts">terning</annotation>
+		<annotation cp="♠">kort | spar | spil</annotation>
+		<annotation cp="♠" type="tts">spar</annotation>
+		<annotation cp="♥">hjerter | kort | spil</annotation>
+		<annotation cp="♥" type="tts">hjerter</annotation>
+		<annotation cp="♦">kort | ruder | spil</annotation>
+		<annotation cp="♦" type="tts">ruder</annotation>
+		<annotation cp="♣">klør | kort | spil</annotation>
+		<annotation cp="♣" type="tts">klør</annotation>
+		<annotation cp="🃏">joker | kort | spillekort</annotation>
+		<annotation cp="🃏" type="tts">joker</annotation>
+		<annotation cp="🀄">drage | mahjong | mahjong-brik | rød drage</annotation>
+		<annotation cp="🀄" type="tts">mahjong-brik</annotation>
+		<annotation cp="🎴">spillekort | spillekort med blomster</annotation>
+		<annotation cp="🎴" type="tts">spillekort</annotation>
+		<annotation cp="🎭">masker | teater</annotation>
+		<annotation cp="🎭" type="tts">masker</annotation>
+		<annotation cp="🖼">billede | kunst | maleri | museum | ramme | ramme med billede</annotation>
+		<annotation cp="🖼" type="tts">ramme med billede</annotation>
+		<annotation cp="🎨">farver | kunstner | maler | palet</annotation>
+		<annotation cp="🎨" type="tts">palet</annotation>
+		<annotation cp="👓">beklædning | briller</annotation>
+		<annotation cp="👓" type="tts">briller</annotation>
+		<annotation cp="🕶">briller | mørk | øje | solbriller</annotation>
+		<annotation cp="🕶" type="tts">solbriller</annotation>
+		<annotation cp="👔">beklædning | slips</annotation>
+		<annotation cp="👔" type="tts">slips</annotation>
+		<annotation cp="👕">beklædning | bluse | T-shirt | trøje</annotation>
+		<annotation cp="👕" type="tts">T-shirt</annotation>
+		<annotation cp="👖">beklædning | bukser</annotation>
+		<annotation cp="👖" type="tts">bukser</annotation>
+		<annotation cp="👗">beklædning | kjole</annotation>
+		<annotation cp="👗" type="tts">kjole</annotation>
+		<annotation cp="👘">beklædning | kåbe | kimono</annotation>
+		<annotation cp="👘" type="tts">kimono</annotation>
+		<annotation cp="👙">badetøj | beklædning | bikini</annotation>
+		<annotation cp="👙" type="tts">bikini</annotation>
+		<annotation cp="👚">beklædning | bluse</annotation>
+		<annotation cp="👚" type="tts">bluse</annotation>
+		<annotation cp="👛">pengepung | pung</annotation>
+		<annotation cp="👛" type="tts">pung</annotation>
+		<annotation cp="👜">håndtaske | taske</annotation>
+		<annotation cp="👜" type="tts">håndtaske</annotation>
+		<annotation cp="👝">pung | taske</annotation>
+		<annotation cp="👝" type="tts">taske</annotation>
+		<annotation cp="🛍">hotel | indkøbsposer | pose</annotation>
+		<annotation cp="🛍" type="tts">indkøbsposer</annotation>
+		<annotation cp="🎒">rygsæk | skole | skoletaske | taske</annotation>
+		<annotation cp="🎒" type="tts">rygsæk</annotation>
+		<annotation cp="👞">herresko | sko</annotation>
+		<annotation cp="👞" type="tts">herresko</annotation>
+		<annotation cp="👟">fritidssko | gummisko | sko | tennissko</annotation>
+		<annotation cp="👟" type="tts">gummisko</annotation>
+		<annotation cp="👠">høje hæle | højhælet sko | sko</annotation>
+		<annotation cp="👠" type="tts">høje hæle</annotation>
+		<annotation cp="👡">damesandaler | sandaler</annotation>
+		<annotation cp="👡" type="tts">damesandaler</annotation>
+		<annotation cp="👢">damestøvler | støvler</annotation>
+		<annotation cp="👢" type="tts">damestøvler</annotation>
+		<annotation cp="👑">beklædning | krone</annotation>
+		<annotation cp="👑" type="tts">krone</annotation>
+		<annotation cp="👒">beklædning | hat | kvindes hat</annotation>
+		<annotation cp="👒" type="tts">hat</annotation>
+		<annotation cp="🎩">hat | høj hat | sort hat</annotation>
+		<annotation cp="🎩" type="tts">høj hat</annotation>
+		<annotation cp="🎓">eksamen | eksamenshat | hat</annotation>
+		<annotation cp="🎓" type="tts">eksamenshat</annotation>
+		<annotation cp="⛑">ansigt | hjelm | hjelm med hvidt kors | kors | nødhjælp</annotation>
+		<annotation cp="⛑" type="tts">hjelm med hvidt kors</annotation>
+		<annotation cp="📿">bedekrans | bøn | halskæde | påklædning | perler | religion</annotation>
+		<annotation cp="📿" type="tts">bedekrans</annotation>
+		<annotation cp="💄">kosmetik | læbestift</annotation>
+		<annotation cp="💄" type="tts">læbestift</annotation>
+		<annotation cp="💍">ring | romantik</annotation>
+		<annotation cp="💍" type="tts">ring</annotation>
+		<annotation cp="💎">diamant | juvel | romantik</annotation>
+		<annotation cp="💎" type="tts">diamant</annotation>
+		<annotation cp="🔇">højttaler | højttaler fra | lyd fra | lydstyrke | stille</annotation>
+		<annotation cp="🔇" type="tts">højttaler fra</annotation>
+		<annotation cp="🔈">højttaler | lydstyrke</annotation>
+		<annotation cp="🔈" type="tts">højttaler</annotation>
+		<annotation cp="🔉">højtaler med en lydbølge | højttaler til | lav volumen</annotation>
+		<annotation cp="🔉" type="tts">højttaler til</annotation>
+		<annotation cp="🔊">høj volumen | højtaler med høj volumen | højttaler høj</annotation>
+		<annotation cp="🔊" type="tts">højttaler høj</annotation>
+		<annotation cp="📢">højt | højttaler med håndtag | offentlig</annotation>
+		<annotation cp="📢" type="tts">højttaler med håndtag</annotation>
+		<annotation cp="📣">kommunikation | megafon</annotation>
+		<annotation cp="📣" type="tts">megafon</annotation>
+		<annotation cp="📯">posthorn</annotation>
+		<annotation cp="📯" type="tts">posthorn</annotation>
+		<annotation cp="🔔">klokke</annotation>
+		<annotation cp="🔔" type="tts">klokke</annotation>
+		<annotation cp="🔕">ingen klokke | ingen lyd | klokke med streg over</annotation>
+		<annotation cp="🔕" type="tts">ingen klokke</annotation>
+		<annotation cp="🎼">g-nøgle | musik | partitur</annotation>
+		<annotation cp="🎼" type="tts">partitur</annotation>
+		<annotation cp="🎵">musik | node</annotation>
+		<annotation cp="🎵" type="tts">node</annotation>
+		<annotation cp="🎶">musik | node | noder</annotation>
+		<annotation cp="🎶" type="tts">noder</annotation>
+		<annotation cp="🎙">mikrofon | musik | studie | studiemikrofon</annotation>
+		<annotation cp="🎙" type="tts">studiemikrofon</annotation>
+		<annotation cp="🎚">musik | volumenkontrol</annotation>
+		<annotation cp="🎚" type="tts">volumenkontrol</annotation>
+		<annotation cp="🎛">knapper | musik</annotation>
+		<annotation cp="🎛" type="tts">knapper</annotation>
+		<annotation cp="🎤">mikrofon | sang | synge</annotation>
+		<annotation cp="🎤" type="tts">mikrofon</annotation>
+		<annotation cp="🎧">høretelefon | hovedtelefon | lytte | musik</annotation>
+		<annotation cp="🎧" type="tts">hovedtelefon</annotation>
+		<annotation cp="📻">æteren | radio</annotation>
+		<annotation cp="📻" type="tts">radio</annotation>
+		<annotation cp="🎷">instrument | musik | musikinstrument | saxofon</annotation>
+		<annotation cp="🎷" type="tts">saxofon</annotation>
+		<annotation cp="🎸">guitar | instrument | musik | musikinstrument | strengeinstrument</annotation>
+		<annotation cp="🎸" type="tts">guitar</annotation>
+		<annotation cp="🎹">instrument | keyboard | klaver | musik | musikinstrument</annotation>
+		<annotation cp="🎹" type="tts">klaver</annotation>
+		<annotation cp="🎺">instrument | musik | musikinstrument | trompet</annotation>
+		<annotation cp="🎺" type="tts">trompet</annotation>
+		<annotation cp="🎻">instrument | musik | musikinstrument | strengeinstrument | violin</annotation>
+		<annotation cp="🎻" type="tts">violin</annotation>
+		<annotation cp="🥁">musik | rytme | tromme | trommestikker</annotation>
+		<annotation cp="🥁" type="tts">tromme</annotation>
+		<annotation cp="📱">mobil | mobiltelefon</annotation>
+		<annotation cp="📱" type="tts">mobil</annotation>
+		<annotation cp="📲">lav et opkald | mobil med pil</annotation>
+		<annotation cp="📲" type="tts">mobil med pil</annotation>
+		<annotation cp="☎">telefon</annotation>
+		<annotation cp="☎" type="tts">telefon</annotation>
+		<annotation cp="📞">kommunikation | telefonrør</annotation>
+		<annotation cp="📞" type="tts">telefonrør</annotation>
+		<annotation cp="📟">bipper | kommunikation | personsøger</annotation>
+		<annotation cp="📟" type="tts">personsøger</annotation>
+		<annotation cp="📠">fax | faxmaskine | kommunikation</annotation>
+		<annotation cp="📠" type="tts">fax</annotation>
+		<annotation cp="🔋">batteri</annotation>
+		<annotation cp="🔋" type="tts">batteri</annotation>
+		<annotation cp="🔌">elektricitet | elektrisk | stik</annotation>
+		<annotation cp="🔌" type="tts">stik</annotation>
+		<annotation cp="💻">computer</annotation>
+		<annotation cp="💻" type="tts">computer</annotation>
+		<annotation cp="🖥">computer | stationær</annotation>
+		<annotation cp="🖥" type="tts">stationær computer</annotation>
+		<annotation cp="🖨">computer | printer | stationær</annotation>
+		<annotation cp="🖨" type="tts">printer</annotation>
+		<annotation cp="⌨">computer | tastatur</annotation>
+		<annotation cp="⌨" type="tts">tastatur</annotation>
+		<annotation cp="🖱">computer | computermus | knap | mus</annotation>
+		<annotation cp="🖱" type="tts">computermus</annotation>
+		<annotation cp="🖲">computer | trackball</annotation>
+		<annotation cp="🖲" type="tts">trackball</annotation>
+		<annotation cp="💽">disk | mini disk</annotation>
+		<annotation cp="💽" type="tts">mini disk</annotation>
+		<annotation cp="💾">computer | diskette</annotation>
+		<annotation cp="💾" type="tts">diskette</annotation>
+		<annotation cp="💿">cd | dvd</annotation>
+		<annotation cp="💿" type="tts">cd</annotation>
+		<annotation cp="📀">blu-ray | cd | computer | disk | DVD | optisk</annotation>
+		<annotation cp="📀" type="tts">DVD</annotation>
+		<annotation cp="🎥">biograf | filme | filmkamera</annotation>
+		<annotation cp="🎥" type="tts">filmkamera</annotation>
+		<annotation cp="🎞">biograf | film | filmstrimmel | strimmel</annotation>
+		<annotation cp="🎞" type="tts">filmstrimmel</annotation>
+		<annotation cp="📽">biograf | filmprojektor | projektor | video</annotation>
+		<annotation cp="📽" type="tts">filmprojektor</annotation>
+		<annotation cp="🎬">filmklapper | klapper | klaptræ</annotation>
+		<annotation cp="🎬" type="tts">klaptræ</annotation>
+		<annotation cp="📺">fjernsyn | tv</annotation>
+		<annotation cp="📺" type="tts">tv</annotation>
+		<annotation cp="📷">kamera | video</annotation>
+		<annotation cp="📷" type="tts">kamera</annotation>
+		<annotation cp="📸">blitz | kamera | kamera med blitz | video</annotation>
+		<annotation cp="📸" type="tts">kamera med blitz</annotation>
+		<annotation cp="📹">kamera | video | videokamera</annotation>
+		<annotation cp="📹" type="tts">videokamera</annotation>
+		<annotation cp="📼">video | videobånd</annotation>
+		<annotation cp="📼" type="tts">videobånd</annotation>
+		<annotation cp="🔍">forstørrelse | forstørrelsesglas | forstørrelsesglas til venstre | søgning | værktøj</annotation>
+		<annotation cp="🔍" type="tts">forstørrelsesglas til venstre</annotation>
+		<annotation cp="🔎">forstørrelse | forstørrelsesglas | forstørrelsesglas til højre | søgning | værktøj</annotation>
+		<annotation cp="🔎" type="tts">forstørrelsesglas til højre</annotation>
+		<annotation cp="🕯">lys | stearinlys</annotation>
+		<annotation cp="🕯" type="tts">stearinlys</annotation>
+		<annotation cp="💡">elpære | ide | lys ide</annotation>
+		<annotation cp="💡" type="tts">elpære</annotation>
+		<annotation cp="🔦">lommelygte | lygte</annotation>
+		<annotation cp="🔦" type="tts">lommelygte</annotation>
+		<annotation cp="🏮">lanterne | lygte | rød lygte</annotation>
+		<annotation cp="🏮" type="tts">lygte</annotation>
+		<annotation cp="📔">notesbog | notesbog med udsmykning</annotation>
+		<annotation cp="📔" type="tts">notesbog med udsmykning</annotation>
+		<annotation cp="📕">bog | lukket bog</annotation>
+		<annotation cp="📕" type="tts">lukket bog</annotation>
+		<annotation cp="📖">åben bog | bog</annotation>
+		<annotation cp="📖" type="tts">åben bog</annotation>
+		<annotation cp="📗">bog | grøn bog</annotation>
+		<annotation cp="📗" type="tts">grøn bog</annotation>
+		<annotation cp="📘">blå bog | bog</annotation>
+		<annotation cp="📘" type="tts">blå bog</annotation>
+		<annotation cp="📙">bog | orange bog</annotation>
+		<annotation cp="📙" type="tts">orange bog</annotation>
+		<annotation cp="📚">bog | bøger</annotation>
+		<annotation cp="📚" type="tts">bøger</annotation>
+		<annotation cp="📓">noter | notesbog</annotation>
+		<annotation cp="📓" type="tts">notesbog</annotation>
+		<annotation cp="📒">notesbog | regnskabsbog</annotation>
+		<annotation cp="📒" type="tts">regnskabsbog</annotation>
+		<annotation cp="📃">side | side med fold</annotation>
+		<annotation cp="📃" type="tts">side med fold</annotation>
+		<annotation cp="📜">papir | skriftrulle</annotation>
+		<annotation cp="📜" type="tts">skriftrulle</annotation>
+		<annotation cp="📄">dokument | side</annotation>
+		<annotation cp="📄" type="tts">dokument</annotation>
+		<annotation cp="📰">avis | nyheder</annotation>
+		<annotation cp="📰" type="tts">avis</annotation>
+		<annotation cp="🗞">avis | nyheder | sammenrullet</annotation>
+		<annotation cp="🗞" type="tts">sammenrullet avis</annotation>
+		<annotation cp="📑">bogmærke | faner | mærke</annotation>
+		<annotation cp="📑" type="tts">faner</annotation>
+		<annotation cp="🔖">bogmærke | mærke</annotation>
+		<annotation cp="🔖" type="tts">bogmærke</annotation>
+		<annotation cp="🏷">etiket | label | mærkat | seddel</annotation>
+		<annotation cp="🏷" type="tts">label</annotation>
+		<annotation cp="💰">dollar | penge | pengepose</annotation>
+		<annotation cp="💰" type="tts">pengepose</annotation>
+		<annotation cp="💴">penge | yenseddel</annotation>
+		<annotation cp="💴" type="tts">yenseddel</annotation>
+		<annotation cp="💵">dollarseddel | penge</annotation>
+		<annotation cp="💵" type="tts">dollarseddel</annotation>
+		<annotation cp="💶">euroseddel | penge</annotation>
+		<annotation cp="💶" type="tts">euroseddel</annotation>
+		<annotation cp="💷">penge | pund | pundseddel</annotation>
+		<annotation cp="💷" type="tts">pundseddel</annotation>
+		<annotation cp="💸">flyvende penge | penge | penge med vinger</annotation>
+		<annotation cp="💸" type="tts">flyvende penge</annotation>
+		<annotation cp="💳">bank | kort | kredit | kreditkort | penge</annotation>
+		<annotation cp="💳" type="tts">kreditkort</annotation>
+		<annotation cp="💹">opadgående graf | stigende marked</annotation>
+		<annotation cp="💹" type="tts">stigende marked</annotation>
+		<annotation cp="✉">e-mail | konvolut</annotation>
+		<annotation cp="✉" type="tts">konvolut</annotation>
+		<annotation cp="📧">brev | e-mail | kommunikation</annotation>
+		<annotation cp="📧" type="tts">e-mail</annotation>
+		<annotation cp="📨">e-mail | indgående post | modtaget post</annotation>
+		<annotation cp="📨" type="tts">indgående post</annotation>
+		<annotation cp="📩">e-mail | sendt post | udgående post</annotation>
+		<annotation cp="📩" type="tts">udgående post</annotation>
+		<annotation cp="📤">kommunikation | sendt | udbakke</annotation>
+		<annotation cp="📤" type="tts">udbakke</annotation>
+		<annotation cp="📥">indbakke | kommunikation | modtaget</annotation>
+		<annotation cp="📥" type="tts">indbakke</annotation>
+		<annotation cp="📦">kasse | pakke</annotation>
+		<annotation cp="📦" type="tts">pakke</annotation>
+		<annotation cp="📫">lukket postkasse med hævet flag | post | postkasse med flag op</annotation>
+		<annotation cp="📫" type="tts">lukket postkasse med hævet flag</annotation>
+		<annotation cp="📪">lukket postkasse med sænket flag | post | postkasse med flag nede</annotation>
+		<annotation cp="📪" type="tts">lukket postkasse med sænket flag</annotation>
+		<annotation cp="📬">åben postkasse med hævet flag | post | postkasse med brev</annotation>
+		<annotation cp="📬" type="tts">åben postkasse med hævet flag</annotation>
+		<annotation cp="📭">åben postkasse | åben postkasse med sænket flag | post</annotation>
+		<annotation cp="📭" type="tts">åben postkasse med sænket flag</annotation>
+		<annotation cp="📮">postkasse</annotation>
+		<annotation cp="📮" type="tts">postkasse</annotation>
+		<annotation cp="🗳">boks | kasse | stemme | urne | valgurne med stemmeseddel</annotation>
+		<annotation cp="🗳" type="tts">valgurne med stemmeseddel</annotation>
+		<annotation cp="✏">blyant</annotation>
+		<annotation cp="✏" type="tts">blyant</annotation>
+		<annotation cp="✒">fyldepen | pen | sort fyldepen</annotation>
+		<annotation cp="✒" type="tts">sort fyldepen</annotation>
+		<annotation cp="🖋">fyldepen | pen</annotation>
+		<annotation cp="🖋" type="tts">fyldepen</annotation>
+		<annotation cp="🖊">kuglepen | pen</annotation>
+		<annotation cp="🖊" type="tts">kuglepen</annotation>
+		<annotation cp="🖌">maleri | malerpensel | maling</annotation>
+		<annotation cp="🖌" type="tts">malerpensel</annotation>
+		<annotation cp="🖍">farveblyant | farvekridt | fedtfarve</annotation>
+		<annotation cp="🖍" type="tts">farvekridt</annotation>
+		<annotation cp="📝">kommunikation | notat</annotation>
+		<annotation cp="📝" type="tts">notat</annotation>
+		<annotation cp="💼">attachémappe | mappe</annotation>
+		<annotation cp="💼" type="tts">attachémappe</annotation>
+		<annotation cp="📁">dokument | mappe</annotation>
+		<annotation cp="📁" type="tts">mappe</annotation>
+		<annotation cp="📂">åben mappe | dokument</annotation>
+		<annotation cp="📂" type="tts">åben mappe</annotation>
+		<annotation cp="🗂">kartotek | kartotekskort | kort</annotation>
+		<annotation cp="🗂" type="tts">kartotekskort</annotation>
+		<annotation cp="📅">dato | kalender</annotation>
+		<annotation cp="📅" type="tts">kalender</annotation>
+		<annotation cp="📆">afrivningskalender | kalender | kalenderblok</annotation>
+		<annotation cp="📆" type="tts">kalenderblok</annotation>
+		<annotation cp="🗒">blok | note | noter | notesblok | spiral | spiralryg</annotation>
+		<annotation cp="🗒" type="tts">notesblok</annotation>
+		<annotation cp="🗓">blok | kalender | spiral | spiralkalender</annotation>
+		<annotation cp="🗓" type="tts">spiralkalender</annotation>
+		<annotation cp="📇">indekskort | kartotek | kontakter</annotation>
+		<annotation cp="📇" type="tts">kartotek</annotation>
+		<annotation cp="📈">graf | opadgående graf | tendens</annotation>
+		<annotation cp="📈" type="tts">opadgående graf</annotation>
+		<annotation cp="📉">graf | nedadgående graf | tendens</annotation>
+		<annotation cp="📉" type="tts">nedadgående graf</annotation>
+		<annotation cp="📊">diagram | søjlediagram</annotation>
+		<annotation cp="📊" type="tts">søjlediagram</annotation>
+		<annotation cp="📋">clipboard</annotation>
+		<annotation cp="📋" type="tts">clipboard</annotation>
+		<annotation cp="📌">stift | tegnestift</annotation>
+		<annotation cp="📌" type="tts">tegnestift</annotation>
+		<annotation cp="📍">rund tegnestift | stift | tegnestift</annotation>
+		<annotation cp="📍" type="tts">rund tegnestift</annotation>
+		<annotation cp="📎">clips | papirclips</annotation>
+		<annotation cp="📎" type="tts">papirclips</annotation>
+		<annotation cp="🖇">papirclip | sammensat | sammensatte papirclips</annotation>
+		<annotation cp="🖇" type="tts">sammensatte papirclips</annotation>
+		<annotation cp="📏">lige kant | lineal</annotation>
+		<annotation cp="📏" type="tts">lineal</annotation>
+		<annotation cp="📐">trekant | vinkel | vinkelmåler</annotation>
+		<annotation cp="📐" type="tts">trekant</annotation>
+		<annotation cp="✂">saks | værktøj</annotation>
+		<annotation cp="✂" type="tts">saks</annotation>
+		<annotation cp="🗃">arkiv | arkivkasse | kasse | pap</annotation>
+		<annotation cp="🗃" type="tts">arkivkasse</annotation>
+		<annotation cp="🗄">arkiv | arkivskab | skab</annotation>
+		<annotation cp="🗄" type="tts">arkivskab</annotation>
+		<annotation cp="🗑">papirkurv | skraldespand</annotation>
+		<annotation cp="🗑" type="tts">papirkurv</annotation>
+		<annotation cp="🔒">hængelås | låst</annotation>
+		<annotation cp="🔒" type="tts">hængelås</annotation>
+		<annotation cp="🔓">åben hængelås | åben lås</annotation>
+		<annotation cp="🔓" type="tts">åben hængelås</annotation>
+		<annotation cp="🔏">fyldepen | hængelås med pen | lås med fyldepen | privat</annotation>
+		<annotation cp="🔏" type="tts">hængelås med pen</annotation>
+		<annotation cp="🔐">lås med nøgle | låst | lukket hængelås med nøgle | sikker</annotation>
+		<annotation cp="🔐" type="tts">lukket hængelås med nøgle</annotation>
+		<annotation cp="🔑">adgangskode | nøgle | password</annotation>
+		<annotation cp="🔑" type="tts">nøgle</annotation>
+		<annotation cp="🗝">gammel | lås | nøgle</annotation>
+		<annotation cp="🗝" type="tts">gammel nøgle</annotation>
+		<annotation cp="🔨">hammer | værktøj</annotation>
+		<annotation cp="🔨" type="tts">hammer</annotation>
+		<annotation cp="⛏">hakke | mine | værktøj</annotation>
+		<annotation cp="⛏" type="tts">hakke</annotation>
+		<annotation cp="⚒">hakke | hammer | hammer og hakke | værktøj</annotation>
+		<annotation cp="⚒" type="tts">hammer og hakke</annotation>
+		<annotation cp="🛠">hammer | hammer og skruenøgle | skruenøgle | svensknøgle | værktøj</annotation>
+		<annotation cp="🛠" type="tts">hammer og skruenøgle</annotation>
+		<annotation cp="🗡">daggert | kniv | våben</annotation>
+		<annotation cp="🗡" type="tts">daggert</annotation>
+		<annotation cp="⚔">korslagt | korslagte sværd | sværd | våben</annotation>
+		<annotation cp="⚔" type="tts">korslagte sværd</annotation>
+		<annotation cp="🔫">pistol | revolver | våben</annotation>
+		<annotation cp="🔫" type="tts">pistol</annotation>
+		<annotation cp="🏹">bue | bue og pil | bueskytte | pil | skytten | stjernetegn | våben | værktøj</annotation>
+		<annotation cp="🏹" type="tts">bue og pil</annotation>
+		<annotation cp="🛡">skjold | våben</annotation>
+		<annotation cp="🛡" type="tts">skjold</annotation>
+		<annotation cp="🔧">skruenøgle | værktøj</annotation>
+		<annotation cp="🔧" type="tts">skruenøgle</annotation>
+		<annotation cp="🔩">bolt | møtrik | møtrik og bolt | værktøj</annotation>
+		<annotation cp="🔩" type="tts">møtrik og bolt</annotation>
+		<annotation cp="⚙">tandhjul | værktøj</annotation>
+		<annotation cp="⚙" type="tts">tandhjul</annotation>
+		<annotation cp="🗜">skruestik | skruetvinge | værktøj</annotation>
+		<annotation cp="🗜" type="tts">skruetvinge</annotation>
+		<annotation cp="⚖">balance | jura | retfærdighed | stjernetegn | vægt | værktøj</annotation>
+		<annotation cp="⚖" type="tts">vægt</annotation>
+		<annotation cp="🔗">link | link-tegn</annotation>
+		<annotation cp="🔗" type="tts">link</annotation>
+		<annotation cp="⛓">kæde | kæder</annotation>
+		<annotation cp="⛓" type="tts">kæder</annotation>
+		<annotation cp="⚗">kemi | kolbe | værktøj</annotation>
+		<annotation cp="⚗" type="tts">kolbe</annotation>
+		<annotation cp="🔬">mikroskop | redskab | værktøj</annotation>
+		<annotation cp="🔬" type="tts">mikroskop</annotation>
+		<annotation cp="🔭">redskab | teleskop | værktøj</annotation>
+		<annotation cp="🔭" type="tts">teleskop</annotation>
+		<annotation cp="📡">kommunikation | parabolantenne</annotation>
+		<annotation cp="📡" type="tts">parabolantenne</annotation>
+		<annotation cp="💉">indsprøjtning | læge | sprøjte</annotation>
+		<annotation cp="💉" type="tts">sprøjte</annotation>
+		<annotation cp="💊">læge | medicin | pille</annotation>
+		<annotation cp="💊" type="tts">pille</annotation>
+		<annotation cp="🚪">åben dør | dør</annotation>
+		<annotation cp="🚪" type="tts">dør</annotation>
+		<annotation cp="🛏">hotel | seng | sove</annotation>
+		<annotation cp="🛏" type="tts">seng</annotation>
+		<annotation cp="🛋">hotel | lampe | sofa | sofa og lampe</annotation>
+		<annotation cp="🛋" type="tts">sofa og lampe</annotation>
+		<annotation cp="🚽">toilet | wc</annotation>
+		<annotation cp="🚽" type="tts">toilet</annotation>
+		<annotation cp="🚿">bad | brusebad</annotation>
+		<annotation cp="🚿" type="tts">brusebad</annotation>
+		<annotation cp="🛁">bad | badekar</annotation>
+		<annotation cp="🛁" type="tts">badekar</annotation>
+		<annotation cp="🛒">butik | forretning | indkøb | indkøbsvogn | køb | vogn</annotation>
+		<annotation cp="🛒" type="tts">indkøbsvogn</annotation>
+		<annotation cp="🚬">rygeskilt | rygning tilladt</annotation>
+		<annotation cp="🚬" type="tts">rygeskilt</annotation>
+		<annotation cp="⚰">død | kiste</annotation>
+		<annotation cp="⚰" type="tts">kiste</annotation>
+		<annotation cp="⚱">begravelse | død | urne</annotation>
+		<annotation cp="⚱" type="tts">urne</annotation>
+		<annotation cp="🗿">moyai-statue | statue</annotation>
+		<annotation cp="🗿" type="tts">statue</annotation>
+		<annotation cp="🏧">dankortsautomat | hæve penge | pengeautomat</annotation>
+		<annotation cp="🏧" type="tts">pengeautomat</annotation>
+		<annotation cp="🚮">skraldespand | smid i skraldespanden</annotation>
+		<annotation cp="🚮" type="tts">smid i skraldespanden</annotation>
+		<annotation cp="🚰">drik | drikkevand | vand</annotation>
+		<annotation cp="🚰" type="tts">drikkevand</annotation>
+		<annotation cp="♿">adgang | rullestol | rullestolsadgang</annotation>
+		<annotation cp="♿" type="tts">rullestolsadgang</annotation>
+		<annotation cp="🚹">mænd | wc</annotation>
+		<annotation cp="🚹" type="tts">mænd</annotation>
+		<annotation cp="🚺">kvinder | wc</annotation>
+		<annotation cp="🚺" type="tts">kvinder</annotation>
+		<annotation cp="🚻">toilet-skilt | toiletskilt</annotation>
+		<annotation cp="🚻" type="tts">toiletskilt</annotation>
+		<annotation cp="🚼">baby-skilt | babysymbol | skifte</annotation>
+		<annotation cp="🚼" type="tts">babysymbol</annotation>
+		<annotation cp="🚾">toilet | wc</annotation>
+		<annotation cp="🚾" type="tts">wc</annotation>
+		<annotation cp="🛂">pas | paskontrol</annotation>
+		<annotation cp="🛂" type="tts">paskontrol</annotation>
+		<annotation cp="🛃">told</annotation>
+		<annotation cp="🛃" type="tts">told</annotation>
+		<annotation cp="🛄">baggage | baggageudlevering</annotation>
+		<annotation cp="🛄" type="tts">baggageudlevering</annotation>
+		<annotation cp="🛅">baggage | hittegods</annotation>
+		<annotation cp="🛅" type="tts">hittegods</annotation>
+		<annotation cp="⚠">advarsel | advarselsskilt</annotation>
+		<annotation cp="⚠" type="tts">advarselsskilt</annotation>
+		<annotation cp="🚸">børn | børn krydser vej | pas på børn</annotation>
+		<annotation cp="🚸" type="tts">børn krydser vej</annotation>
+		<annotation cp="⛔">adgang | forbudt | ingen adgang | trafik</annotation>
+		<annotation cp="⛔" type="tts">adgang forbudt</annotation>
+		<annotation cp="🚫">adgang forbudt | ingen adgang</annotation>
+		<annotation cp="🚫" type="tts">ingen adgang</annotation>
+		<annotation cp="🚳">cykler forbudt | ingen cykler</annotation>
+		<annotation cp="🚳" type="tts">cykler forbudt</annotation>
+		<annotation cp="🚭">rygning forbudt | rygning ikke tilladt</annotation>
+		<annotation cp="🚭" type="tts">rygning forbudt</annotation>
+		<annotation cp="🚯">affald | forbudt | ikke tilladt | smid ikke affald</annotation>
+		<annotation cp="🚯" type="tts">smid ikke affald</annotation>
+		<annotation cp="🚱">drik | forbudt | ikke drikkevand | vand</annotation>
+		<annotation cp="🚱" type="tts">ikke drikkevand</annotation>
+		<annotation cp="🚷">fodgænger | forbudt | ingen fodgængere</annotation>
+		<annotation cp="🚷" type="tts">ingen fodgængere</annotation>
+		<annotation cp="📵">ingen mobiltelefoner | mobiltelefoner forbudt</annotation>
+		<annotation cp="📵" type="tts">mobiltelefoner forbudt</annotation>
+		<annotation cp="🔞">forbudt for under 18 | ingen under 18</annotation>
+		<annotation cp="🔞" type="tts">forbudt for under 18</annotation>
+		<annotation cp="☢">advarsel | radioaktiv | radioaktivitet | risiko | skilt</annotation>
+		<annotation cp="☢" type="tts">radioaktiv</annotation>
+		<annotation cp="☣">advarsel | biologisk | fare | risiko | skilt</annotation>
+		<annotation cp="☣" type="tts">biologisk fare</annotation>
+		<annotation cp="⬆">nord | opadvendt pil | pil | retning | verdenshjørne</annotation>
+		<annotation cp="⬆" type="tts">opadvendt pil</annotation>
+		<annotation cp="↗">nordøst | opadvendt pil mod højre | pil | retning</annotation>
+		<annotation cp="↗" type="tts">opadvendt pil mod højre</annotation>
+		<annotation cp="➡">øst | pil | pil mod højre | retning | verdenshjørne</annotation>
+		<annotation cp="➡" type="tts">pil mod højre</annotation>
+		<annotation cp="↘">nedadvendt pil mod højre | pil | retning | sydøst</annotation>
+		<annotation cp="↘" type="tts">nedadvendt pil mod højre</annotation>
+		<annotation cp="⬇">ned | nedadvendt pil | pil | retning | syd | verdenshjørne</annotation>
+		<annotation cp="⬇" type="tts">nedadvendt pil</annotation>
+		<annotation cp="↙">nedadvendt pil mod venstre | pil | retning | sydvest</annotation>
+		<annotation cp="↙" type="tts">nedadvendt pil mod venstre</annotation>
+		<annotation cp="⬅">pil | pil mod venstre | retning | verdenshjørne | vest</annotation>
+		<annotation cp="⬅" type="tts">pil mod venstre</annotation>
+		<annotation cp="↖">nordvest | opadvendt pil mod venstre | pil | retning</annotation>
+		<annotation cp="↖" type="tts">opadvendt pil mod venstre</annotation>
+		<annotation cp="↕">op- og nedadvendt pil | pil</annotation>
+		<annotation cp="↕" type="tts">op- og nedadvendt pil</annotation>
+		<annotation cp="↔">pil | pil mod venstre og højre</annotation>
+		<annotation cp="↔" type="tts">pil mod venstre og højre</annotation>
+		<annotation cp="↩">pil | pil mod højre med sving til venstre</annotation>
+		<annotation cp="↩" type="tts">pil mod højre med sving til venstre</annotation>
+		<annotation cp="↪">pil | pil mod venstre med sving til højre</annotation>
+		<annotation cp="↪" type="tts">pil mod venstre med sving til højre</annotation>
+		<annotation cp="⤴">pil | pil mod højre med sving opad</annotation>
+		<annotation cp="⤴" type="tts">pil mod højre med sving opad</annotation>
+		<annotation cp="⤵">ned | pil | pil mod højre med sving nedad</annotation>
+		<annotation cp="⤵" type="tts">pil mod højre med sving nedad</annotation>
+		<annotation cp="🔃">genindlæse | genindlæse-tegn | vertikale pile med uret</annotation>
+		<annotation cp="🔃" type="tts">genindlæse</annotation>
+		<annotation cp="🔄">mod uret | pile | pile mod uret</annotation>
+		<annotation cp="🔄" type="tts">mod uret</annotation>
+		<annotation cp="🔙">tilbage | tilbage-pil | venstrepil</annotation>
+		<annotation cp="🔙" type="tts">tilbage</annotation>
+		<annotation cp="🔚">end | end-pil | venstrepil</annotation>
+		<annotation cp="🔚" type="tts">end</annotation>
+		<annotation cp="🔛">ON med udråbstegn | ON-pil | på</annotation>
+		<annotation cp="🔛" type="tts">ON-pil</annotation>
+		<annotation cp="🔜">snart | snart med højrepil | snart-tegn</annotation>
+		<annotation cp="🔜" type="tts">snart</annotation>
+		<annotation cp="🔝">pil peger op | top | toppil</annotation>
+		<annotation cp="🔝" type="tts">top</annotation>
+		<annotation cp="🛐">bedested | bøn | religion</annotation>
+		<annotation cp="🛐" type="tts">bedested</annotation>
+		<annotation cp="⚛">ateist | atom | atomsymbol</annotation>
+		<annotation cp="⚛" type="tts">atomsymbol</annotation>
+		<annotation cp="🕉">hindu | om | religion</annotation>
+		<annotation cp="🕉" type="tts">om</annotation>
+		<annotation cp="✡">david | davidsstjerne | jøde | jødisk | religion | stjerne</annotation>
+		<annotation cp="✡" type="tts">davidsstjerne</annotation>
+		<annotation cp="☸">buddhist | dharma | dharma-hjul | hjul | religion</annotation>
+		<annotation cp="☸" type="tts">dharma-hjul</annotation>
+		<annotation cp="☯">religion | tao | taoist | yang | yin | yin og yang</annotation>
+		<annotation cp="☯" type="tts">yin og yang</annotation>
+		<annotation cp="✝">kors | kristen | latinsk kors | religion</annotation>
+		<annotation cp="✝" type="tts">latinsk kors</annotation>
+		<annotation cp="☦">kors | kristen | ortodokst kors | religion</annotation>
+		<annotation cp="☦" type="tts">ortodokst kors</annotation>
+		<annotation cp="☪">islam | muslim | religion | stjerne og halvmåne</annotation>
+		<annotation cp="☪" type="tts">stjerne og halvmåne</annotation>
+		<annotation cp="☮">fred | fredssymbol</annotation>
+		<annotation cp="☮" type="tts">fredssymbol</annotation>
+		<annotation cp="🕎">lysestage | religion | syvarmet lysestage</annotation>
+		<annotation cp="🕎" type="tts">syvarmet lysestage</annotation>
+		<annotation cp="🔯">horoskop | sekstakket stjerne med prik | stjerne</annotation>
+		<annotation cp="🔯" type="tts">sekstakket stjerne med prik</annotation>
+		<annotation cp="♈">stjernetegn | vædderen</annotation>
+		<annotation cp="♈" type="tts">vædderen</annotation>
+		<annotation cp="♉">stjernetegn | tyren</annotation>
+		<annotation cp="♉" type="tts">tyren</annotation>
+		<annotation cp="♊">stjernetegn | tvillingen</annotation>
+		<annotation cp="♊" type="tts">tvillingen</annotation>
+		<annotation cp="♋">krebsen | stjernetegn</annotation>
+		<annotation cp="♋" type="tts">krebsen</annotation>
+		<annotation cp="♌">løven | stjernetegn</annotation>
+		<annotation cp="♌" type="tts">løven</annotation>
+		<annotation cp="♍">jomfruen | stjernetegn</annotation>
+		<annotation cp="♍" type="tts">jomfruen</annotation>
+		<annotation cp="♎">stjernetegn | vægten</annotation>
+		<annotation cp="♎" type="tts">vægten</annotation>
+		<annotation cp="♏">skorpionen | stjernetegn</annotation>
+		<annotation cp="♏" type="tts">skorpionen</annotation>
+		<annotation cp="♐">skytten | stjernetegn</annotation>
+		<annotation cp="♐" type="tts">skytten</annotation>
+		<annotation cp="♑">stenbukken | stjernetegn</annotation>
+		<annotation cp="♑" type="tts">stenbukken</annotation>
+		<annotation cp="♒">stjernetegn | vandmanden</annotation>
+		<annotation cp="♒" type="tts">vandmanden</annotation>
+		<annotation cp="♓">fisken | stjernetegn</annotation>
+		<annotation cp="♓" type="tts">fisken</annotation>
+		<annotation cp="⛎">slangebæreren | stjernebillede</annotation>
+		<annotation cp="⛎" type="tts">slangebæreren</annotation>
+		<annotation cp="🔀">krydsede pile | pile | pile mod højre</annotation>
+		<annotation cp="🔀" type="tts">krydsede pile</annotation>
+		<annotation cp="🔁">gentag | gentageknap | med uret | pil</annotation>
+		<annotation cp="🔁" type="tts">gentageknap</annotation>
+		<annotation cp="🔂">én gang | knap til én gentagelse | med uret | pil</annotation>
+		<annotation cp="🔂" type="tts">knap til én gentagelse</annotation>
+		<annotation cp="▶">afspil | afspilning | afspilningsknap | højre | pil | play | trekant</annotation>
+		<annotation cp="▶" type="tts">afspilningsknap</annotation>
+		<annotation cp="⏩">dobbelt højrepil | højre | spole frem</annotation>
+		<annotation cp="⏩" type="tts">spole frem</annotation>
+		<annotation cp="⏭">knap til næste nummer | næste nummer | næste scene | pil | trekant</annotation>
+		<annotation cp="⏭" type="tts">knap til næste nummer</annotation>
+		<annotation cp="⏯">afspil | højre | knap til afspilning og pause | pause | pil | play | trekant</annotation>
+		<annotation cp="⏯" type="tts">knap til afspilning og pause</annotation>
+		<annotation cp="◀">baglæns | knap til baglæns afspilning | pil | trekant | venstre</annotation>
+		<annotation cp="◀" type="tts">knap til baglæns afspilning</annotation>
+		<annotation cp="⏪">dobbelt venstrepil | spole tilbage | venstre</annotation>
+		<annotation cp="⏪" type="tts">spole tilbage</annotation>
+		<annotation cp="⏮">forrige nummer | forrige scene | knap til forrige nummer | pil | trekant</annotation>
+		<annotation cp="⏮" type="tts">knap til forrige nummer</annotation>
+		<annotation cp="🔼">knap | op-knap | opad | pil</annotation>
+		<annotation cp="🔼" type="tts">op-knap</annotation>
+		<annotation cp="⏫">dobbeltpil op | op | pil op</annotation>
+		<annotation cp="⏫" type="tts">pil op</annotation>
+		<annotation cp="🔽">knap | ned | ned-knap | nedad | pil</annotation>
+		<annotation cp="🔽" type="tts">ned-knap</annotation>
+		<annotation cp="⏬">dobbeltpil ned | ned | pil ned</annotation>
+		<annotation cp="⏬" type="tts">pil ned</annotation>
+		<annotation cp="⏸">bjælke | dobbelt | lodret | pause | pauseknap</annotation>
+		<annotation cp="⏸" type="tts">pauseknap</annotation>
+		<annotation cp="⏹">kvadrat | stop | stopknap</annotation>
+		<annotation cp="⏹" type="tts">stopknap</annotation>
+		<annotation cp="⏺">cirkel | optage | optageknap</annotation>
+		<annotation cp="⏺" type="tts">optageknap</annotation>
+		<annotation cp="⏏">eject | skub ud | udskubningsknap</annotation>
+		<annotation cp="⏏" type="tts">udskubningsknap</annotation>
+		<annotation cp="🎦">biograf | film | filme | teater</annotation>
+		<annotation cp="🎦" type="tts">film</annotation>
+		<annotation cp="🔅">dæmpet lysstyrke | lav lysstyrke</annotation>
+		<annotation cp="🔅" type="tts">lav lysstyrke</annotation>
+		<annotation cp="🔆">høj lysstyrke | lysstyrke</annotation>
+		<annotation cp="🔆" type="tts">høj lysstyrke</annotation>
+		<annotation cp="📶">mobilsignal | signalstyrke</annotation>
+		<annotation cp="📶" type="tts">mobilsignal</annotation>
+		<annotation cp="📳">mobil | vibration</annotation>
+		<annotation cp="📳" type="tts">vibration</annotation>
+		<annotation cp="📴">mobil | mobil slået fra</annotation>
+		<annotation cp="📴" type="tts">mobil slået fra</annotation>
+		<annotation cp="✖">annuller | gange | gangetegn | multiplicer | multiplikation | stort kryds | x</annotation>
+		<annotation cp="✖" type="tts">stort kryds</annotation>
+		<annotation cp="➕">plus | plustegn</annotation>
+		<annotation cp="➕" type="tts">plus</annotation>
+		<annotation cp="➖">minus | minustegn</annotation>
+		<annotation cp="➖" type="tts">minus</annotation>
+		<annotation cp="➗">division | divisionstegn</annotation>
+		<annotation cp="➗" type="tts">division</annotation>
+		<annotation cp="‼">dobbelt udråbstegn | tegnsætning | udråbstegn</annotation>
+		<annotation cp="‼" type="tts">dobbelt udråbstegn</annotation>
+		<annotation cp="⁉">spørgsmål | tegn | tegnsætning | udråbstegn | udråbstegn og spørgsmålstegn</annotation>
+		<annotation cp="⁉" type="tts">udråbstegn og spørgsmålstegn</annotation>
+		<annotation cp="❓">spørgsmål | spørgsmålstegn | tegn | tegnsætning</annotation>
+		<annotation cp="❓" type="tts">spørgsmålstegn</annotation>
+		<annotation cp="❔">hvidt spørgsmålstegn | omrids | spørgsmål | tegn | tegnsætning</annotation>
+		<annotation cp="❔" type="tts">hvidt spørgsmålstegn</annotation>
+		<annotation cp="❕">fixed to avoid duplicate | hvidt udråbstegn</annotation>
+		<annotation cp="❕" type="tts">hvidt udråbstegn</annotation>
+		<annotation cp="❗">tegnsætning | udråbstegn</annotation>
+		<annotation cp="❗" type="tts">udråbstegn</annotation>
+		<annotation cp="〰">bølgestreg | bølget | tegn | tegnsætning</annotation>
+		<annotation cp="〰" type="tts">bølgestreg</annotation>
+		<annotation cp="💱">bank | penge | valuta | valutaveksling | veksling</annotation>
+		<annotation cp="💱" type="tts">valutaveksling</annotation>
+		<annotation cp="💲">dollartegn</annotation>
+		<annotation cp="💲" type="tts">dollartegn</annotation>
+		<annotation cp="⚕">æskulap | æskulapstav | lægekunst | lægevidenskab | medicin | medicinsymbol | slange | stav</annotation>
+		<annotation cp="⚕" type="tts">medicinsymbol</annotation>
+		<annotation cp="♻">genbrug | genbrugssymbol</annotation>
+		<annotation cp="♻" type="tts">genbrug</annotation>
+		<annotation cp="⚜">fleur-de-lis | fransk lilje | heraldik | heraldisk lilje | lilje</annotation>
+		<annotation cp="⚜" type="tts">fransk lilje</annotation>
+		<annotation cp="🔱">trefork | trefork-symbol</annotation>
+		<annotation cp="🔱" type="tts">trefork</annotation>
+		<annotation cp="📛">navn | navneskilt | skilt</annotation>
+		<annotation cp="📛" type="tts">navneskilt</annotation>
+		<annotation cp="🔰">grønt og gult | grønt og gult blad</annotation>
+		<annotation cp="🔰" type="tts">grønt og gult blad</annotation>
+		<annotation cp="⭕">cirkel | o | stor kraftig cirkel</annotation>
+		<annotation cp="⭕" type="tts">stor kraftig cirkel</annotation>
+		<annotation cp="✅">flueben | markering</annotation>
+		<annotation cp="✅" type="tts">flueben</annotation>
+		<annotation cp="☑">afkrydsning | afkrydsningsfelt med flueben | flueben | markere | stemme</annotation>
+		<annotation cp="☑" type="tts">afkrydsningsfelt med flueben</annotation>
+		<annotation cp="✔">flueben | stort flueben</annotation>
+		<annotation cp="✔" type="tts">stort flueben</annotation>
+		<annotation cp="❌">annuller | gange | kryds | mærke | multiplicer | multiplikation | x</annotation>
+		<annotation cp="❌" type="tts">kryds</annotation>
+		<annotation cp="❎">krydsknap | kvadrat | mærke | x</annotation>
+		<annotation cp="❎" type="tts">krydsknap</annotation>
+		<annotation cp="➰">krølle | løkke | loop</annotation>
+		<annotation cp="➰" type="tts">krølle</annotation>
+		<annotation cp="➿">dobbelt | krølle | løkke | loop</annotation>
+		<annotation cp="➿" type="tts">dobbelt krølle</annotation>
+		<annotation cp="〽">del | japansk | kommatering</annotation>
+		<annotation cp="〽" type="tts">japansk kommatering</annotation>
+		<annotation cp="✳">asterisk | ottetakket spids stjerne | stjerne</annotation>
+		<annotation cp="✳" type="tts">ottetakket spids stjerne</annotation>
+		<annotation cp="✴">ottetakket stjerne | stjerne</annotation>
+		<annotation cp="✴" type="tts">ottetakket stjerne</annotation>
+		<annotation cp="❇">funkle | funklen | glans | stråle</annotation>
+		<annotation cp="❇" type="tts">funkle</annotation>
+		<annotation cp="©">copyright | copyright-tegn | ophavsret</annotation>
+		<annotation cp="©" type="tts">copyright</annotation>
+		<annotation cp="®">registreret | registreret varemærke</annotation>
+		<annotation cp="®" type="tts">registreret varemærke</annotation>
+		<annotation cp="™">varemærke</annotation>
+		<annotation cp="™" type="tts">varemærke</annotation>
+		<annotation cp="🔠">store bogstaver | symbol for store bogstaver</annotation>
+		<annotation cp="🔠" type="tts">store bogstaver</annotation>
+		<annotation cp="🔡">små bogstaver | symbol for små bogstaver</annotation>
+		<annotation cp="🔡" type="tts">små bogstaver</annotation>
+		<annotation cp="🔢">symbol for tal | tal</annotation>
+		<annotation cp="🔢" type="tts">tal</annotation>
+		<annotation cp="🔣">symbol for symboler | symboler</annotation>
+		<annotation cp="🔣" type="tts">symboler</annotation>
+		<annotation cp="🔤">latinske alfabet | symbol for latinske alfabet</annotation>
+		<annotation cp="🔤" type="tts">latinske alfabet</annotation>
+		<annotation cp="🅰">A | blod | blodtype | type A</annotation>
+		<annotation cp="🅰" type="tts">blodtype A</annotation>
+		<annotation cp="🆎">AB | blod | blodtype | type AB</annotation>
+		<annotation cp="🆎" type="tts">blodtype AB</annotation>
+		<annotation cp="🅱">B | blod | blodtype | type B</annotation>
+		<annotation cp="🅱" type="tts">blodtype B</annotation>
+		<annotation cp="🆑">CL-tegn | ryd | ryd-tegn</annotation>
+		<annotation cp="🆑" type="tts">ryd</annotation>
+		<annotation cp="🆒">cool | cool-tegn</annotation>
+		<annotation cp="🆒" type="tts">cool</annotation>
+		<annotation cp="🆓">gratis | gratis-tegn</annotation>
+		<annotation cp="🆓" type="tts">gratis</annotation>
+		<annotation cp="ℹ">i | information | informationskilde | turistinformation</annotation>
+		<annotation cp="ℹ" type="tts">informationskilde</annotation>
+		<annotation cp="🆔">id | id-tegn</annotation>
+		<annotation cp="🆔" type="tts">id</annotation>
+		<annotation cp="Ⓜ">cirkel | m | m i cirkel</annotation>
+		<annotation cp="Ⓜ" type="tts">m i cirkel</annotation>
+		<annotation cp="🆕">nyhed | nyt | nyt-tegn</annotation>
+		<annotation cp="🆕" type="tts">nyt</annotation>
+		<annotation cp="🆖">ikke godt | ikke godt-tegn | NG-tegn</annotation>
+		<annotation cp="🆖" type="tts">ikke godt</annotation>
+		<annotation cp="🅾">blod | blodtype | O | type O</annotation>
+		<annotation cp="🅾" type="tts">blodtype O</annotation>
+		<annotation cp="🆗">OK | OK-tegn</annotation>
+		<annotation cp="🆗" type="tts">OK</annotation>
+		<annotation cp="🅿">parkering | parkeringsplads</annotation>
+		<annotation cp="🅿" type="tts">parkering</annotation>
+		<annotation cp="🆘">hjælp | SOS | SOS-signal | SOS-tegn</annotation>
+		<annotation cp="🆘" type="tts">SOS</annotation>
+		<annotation cp="🆙">OP! | OP!-tegn | UP!-tegn</annotation>
+		<annotation cp="🆙" type="tts">OP!</annotation>
+		<annotation cp="🆚">versus | versus-tegn | vs. | vs.-tegn</annotation>
+		<annotation cp="🆚" type="tts">versus</annotation>
+		<annotation cp="🈁">japansk | kvadratisk katakana koko</annotation>
+		<annotation cp="🈁" type="tts">kvadratisk katakana koko</annotation>
+		<annotation cp="🈂">japansk | kvadratisk katakana sa</annotation>
+		<annotation cp="🈂" type="tts">kvadratisk katakana sa</annotation>
+		<annotation cp="🈷">japansk | kvadratisk ideogram for måne</annotation>
+		<annotation cp="🈷" type="tts">kvadratisk ideogram for måne</annotation>
+		<annotation cp="🈶">japansk | kvadratisk ideogram for eksistens</annotation>
+		<annotation cp="🈶" type="tts">kvadratisk ideogram for eksistens</annotation>
+		<annotation cp="🈯">japansk | kvadratisk ideogram for finger</annotation>
+		<annotation cp="🈯" type="tts">kvadratisk ideogram for finger</annotation>
+		<annotation cp="🉐">cirkulært ideogram for fordel | japansk</annotation>
+		<annotation cp="🉐" type="tts">cirkulært ideogram for fordel</annotation>
+		<annotation cp="🈹">japansk | kvadratisk ideogram for opdeling</annotation>
+		<annotation cp="🈹" type="tts">kvadratisk ideogram for opdeling</annotation>
+		<annotation cp="🈚">japansk | kvadratisk ideogram for forhandling</annotation>
+		<annotation cp="🈚" type="tts">kvadratisk ideogram for forhandling</annotation>
+		<annotation cp="🈲">japansk | kvadratisk ideogram for forbud</annotation>
+		<annotation cp="🈲" type="tts">kvadratisk ideogram for forbud</annotation>
+		<annotation cp="🉑">cirkulært ideogram for accept | kinesisk</annotation>
+		<annotation cp="🉑" type="tts">cirkulært ideogram for accept</annotation>
+		<annotation cp="🈸">kinesisk | kvadratisk ideogram for anvendelse</annotation>
+		<annotation cp="🈸" type="tts">kvadratisk ideogram for anvendelse</annotation>
+		<annotation cp="🈴">kinesisk | kvadratisk ideogram for sammen</annotation>
+		<annotation cp="🈴" type="tts">kvadratisk ideogram for sammen</annotation>
+		<annotation cp="🈳">kinesisk | kvadratisk ideogram for tom</annotation>
+		<annotation cp="🈳" type="tts">kvadratisk ideogram for tom</annotation>
+		<annotation cp="㊗">cirkulært ideogram for lykønskning | ideogram | kinesisk | lykønskning | tillykke</annotation>
+		<annotation cp="㊗" type="tts">cirkulært ideogram for lykønskning</annotation>
+		<annotation cp="㊙">cirkulært ideogram for hemmelighed | hemmelighed | ideogram | kinesisk</annotation>
+		<annotation cp="㊙" type="tts">cirkulært ideogram for hemmelighed</annotation>
+		<annotation cp="🈺">kinesisk | kvadratisk ideogram for drift</annotation>
+		<annotation cp="🈺" type="tts">kvadratisk ideogram for drift</annotation>
+		<annotation cp="🈵">kinesisk | kvadratisk ideogram for fuld</annotation>
+		<annotation cp="🈵" type="tts">kvadratisk ideogram for fuld</annotation>
+		<annotation cp="🔴">cirkel | geometrisk | rød</annotation>
+		<annotation cp="🔴" type="tts">rød cirkel</annotation>
+		<annotation cp="🔵">blå | cirkel | geometrisk</annotation>
+		<annotation cp="🔵" type="tts">blå cirkel</annotation>
+		<annotation cp="⚫">cirkel | geometrisk | sort cirkel</annotation>
+		<annotation cp="⚫" type="tts">sort cirkel</annotation>
+		<annotation cp="⚪">cirkel | geometrisk | hvid cirkel</annotation>
+		<annotation cp="⚪" type="tts">hvid cirkel</annotation>
+		<annotation cp="⬛">geometrisk | kvadrat | stort sort kvadrat</annotation>
+		<annotation cp="⬛" type="tts">stort sort kvadrat</annotation>
+		<annotation cp="⬜">geometrisk | kvadrat | stort hvidt kvadrat</annotation>
+		<annotation cp="⬜" type="tts">stort hvidt kvadrat</annotation>
+		<annotation cp="◼">geometrisk | kvadrat | mellemstort sort kvadrat</annotation>
+		<annotation cp="◼" type="tts">mellemstort sort kvadrat</annotation>
+		<annotation cp="◻">geometrisk | kvadrat | mellemstort hvidt kvadrat</annotation>
+		<annotation cp="◻" type="tts">mellemstort hvidt kvadrat</annotation>
+		<annotation cp="◾">geometrisk | halvlille sort kvadrat | kvadrat</annotation>
+		<annotation cp="◾" type="tts">halvlille sort kvadrat</annotation>
+		<annotation cp="◽">geometrisk | halvlille hvidt kvadrat | kvadrat</annotation>
+		<annotation cp="◽" type="tts">halvlille hvidt kvadrat</annotation>
+		<annotation cp="▪">geometrisk | kvadrat | lille sort kvadrat</annotation>
+		<annotation cp="▪" type="tts">lille sort kvadrat</annotation>
+		<annotation cp="▫">geometrisk | kvadrat | lille hvidt kvadrat</annotation>
+		<annotation cp="▫" type="tts">lille hvidt kvadrat</annotation>
+		<annotation cp="🔶">diamant | geometrisk | orange | stor orange diamant</annotation>
+		<annotation cp="🔶" type="tts">stor orange diamant</annotation>
+		<annotation cp="🔷">blå | diamant | geometrisk | stor blå diamant</annotation>
+		<annotation cp="🔷" type="tts">stor blå diamant</annotation>
+		<annotation cp="🔸">diamant | geometrisk | lille orange diamant | orange</annotation>
+		<annotation cp="🔸" type="tts">lille orange diamant</annotation>
+		<annotation cp="🔹">blå | diamant | geometrisk | lille blå diamant</annotation>
+		<annotation cp="🔹" type="tts">lille blå diamant</annotation>
+		<annotation cp="🔺">op | op-trekant | rød trekant | trekant</annotation>
+		<annotation cp="🔺" type="tts">op-trekant</annotation>
+		<annotation cp="🔻">ned | ned-trekant | rød trekant | trekant</annotation>
+		<annotation cp="🔻" type="tts">ned-trekant</annotation>
+		<annotation cp="💠">diamant med prik | følelse</annotation>
+		<annotation cp="💠" type="tts">diamant med prik</annotation>
+		<annotation cp="🔘">alternativknap | knap</annotation>
+		<annotation cp="🔘" type="tts">knap</annotation>
+		<annotation cp="🔳">geometrisk | hvid kvadratisk knap | knap | kvadrat | omrids</annotation>
+		<annotation cp="🔳" type="tts">hvid kvadratisk knap</annotation>
+		<annotation cp="🔲">geometrisk | knap | kvadrat | sort kvadratisk knap</annotation>
+		<annotation cp="🔲" type="tts">sort kvadratisk knap</annotation>
+		<annotation cp="🏁">flag | motorsport | ternet flag</annotation>
+		<annotation cp="🏁" type="tts">ternet flag</annotation>
+		<annotation cp="🚩">flag | trekantet rødt flag</annotation>
+		<annotation cp="🚩" type="tts">flag</annotation>
+		<annotation cp="🎌">japanske flag | to flag</annotation>
+		<annotation cp="🎌" type="tts">to flag</annotation>
+		<annotation cp="🏴">blafrende | sort flag</annotation>
+		<annotation cp="🏴" type="tts">sort flag</annotation>
+		<annotation cp="🏳">blafrende | hvidt flag</annotation>
+		<annotation cp="🏳" type="tts">hvidt flag</annotation>
+		<annotation cp="🏳‍🌈">flag | regnbue | regnbueflag</annotation>
+		<annotation cp="🏳‍🌈" type="tts">regnbueflag</annotation>
+	</annotations>
+</ldml>

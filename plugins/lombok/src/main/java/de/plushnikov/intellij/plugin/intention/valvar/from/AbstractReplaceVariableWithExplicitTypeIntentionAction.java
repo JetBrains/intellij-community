@@ -1,9 +1,11 @@
 package de.plushnikov.intellij.plugin.intention.valvar.from;
 
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.intention.valvar.AbstractValVarIntentionAction;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import org.jetbrains.annotations.Nls;
@@ -12,30 +14,24 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractReplaceVariableWithExplicitTypeIntentionAction extends AbstractValVarIntentionAction {
 
   private final String variableClassName;
-  private final String variableClassSimpleName;
 
-  public AbstractReplaceVariableWithExplicitTypeIntentionAction(String variableClassName, String variableClassSimpleName) {
+  public AbstractReplaceVariableWithExplicitTypeIntentionAction(String variableClassName) {
     this.variableClassName = variableClassName;
-    this.variableClassSimpleName = variableClassSimpleName;
-  }
-
-  public AbstractReplaceVariableWithExplicitTypeIntentionAction(Class<?> variableClass) {
-    this(variableClass.getName(), variableClass.getSimpleName());
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace '" + variableClassSimpleName + "' with explicit type (Lombok)";
+    return "Replace '" + StringUtil.getShortName(variableClassName) + "' with explicixt type (Lombok)";
   }
 
   @Override
   public boolean isAvailableOnVariable(PsiVariable psiVariable) {
-    if (variableClassName == "lombok.val") {
+    if (LombokClassNames.VAL.equals(variableClassName)) {
       return ValProcessor.isVal(psiVariable);
     }
-    if (variableClassName == "lombok.var") {
+    if (LombokClassNames.VAR.equals(variableClassName)) {
       return ValProcessor.isVar(psiVariable);
     }
     return false;

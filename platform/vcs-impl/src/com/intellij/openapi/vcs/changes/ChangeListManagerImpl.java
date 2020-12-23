@@ -101,6 +101,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   private FileHolderComposite myComposite;
   private final ChangeListWorker myWorker;
 
+  @Nullable private Element myDisabledChangeListsState;
+
   private boolean myInitialUpdate = true;
   private VcsException myUpdateException;
   private Factory<JComponent> myAdditionalInfo;
@@ -1237,6 +1239,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
     synchronized (myDataLock) {
       ChangeListManagerSerialization.readExternal(element, myWorker);
+      myDisabledChangeListsState = ChangeListManagerSerialization.readDisabledChangeLists(element);
     }
     myConflictTracker.loadState(element);
   }
@@ -1248,11 +1251,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       return element;
     }
 
-    final ChangeListWorker worker;
     synchronized (myDataLock) {
-      worker = myWorker.copy();
+      ChangeListManagerSerialization.writeExternal(element, myWorker);
+      ChangeListManagerSerialization.writeDisabledChangeLists(element, myDisabledChangeListsState);
     }
-    ChangeListManagerSerialization.writeExternal(element, worker);
     myConflictTracker.saveState(element);
     return element;
   }
@@ -1417,11 +1419,32 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   private void updateChangeListAvailability() {
+    // Save state immediately, before LSTM trackers were replaced
+    Element currentChangeListState = !shouldEnableChangeLists() ? ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return ChangeListManagerSerialization.saveDisabledChangeLists(myWorker);
+      }
+    }) : null;
+
     myScheduler.submit(() -> {
       ReadAction.run(() -> {
         boolean enabled = shouldEnableChangeLists();
         synchronized (myDataLock) {
+          if (enabled == myWorker.areChangeListsEnabled()) return;
+
+          if (!enabled && myDisabledChangeListsState == null) {
+            myDisabledChangeListsState = currentChangeListState;
+          }
+
           myWorker.setChangeListsEnabled(enabled);
+
+          if (enabled && myDisabledChangeListsState != null) {
+            // Refresh to ensure that invokeAfterUpdate in LSTM will receive up-to-date changes
+            VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+            ChangeListManagerSerialization.loadDisabledChangeLists(myDisabledChangeListsState, myWorker);
+            ChangesViewManager.getInstance(myProject).scheduleRefresh();
+            myDisabledChangeListsState = null;
+          }
         }
       });
     });
@@ -1545,12 +1568,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     private final ArrayDeque<Future<?>> myFutures = new ArrayDeque<>();
 
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
-      ScheduledFuture<?> future = myExecutor.schedule(command, delay, unit);
+      ScheduledFuture<?> future = myExecutor.schedule(new MyLoggingRunnable(command), delay, unit);
       if (myUnitTestMode) addFuture(future);
     }
 
     public void submit(@NotNull Runnable command) {
-      Future<?> future = myExecutor.submit(command);
+      Future<?> future = myExecutor.submit(new MyLoggingRunnable(command));
       if (myUnitTestMode) addFuture(future);
     }
 
@@ -1610,6 +1633,26 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       }
 
       CompoundRuntimeException.throwIfNotEmpty(throwables);
+    }
+  }
+
+  private static class MyLoggingRunnable implements Runnable {
+    private final Runnable myDelegate;
+
+    private MyLoggingRunnable(@NotNull Runnable delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void run() {
+      try {
+        myDelegate.run();
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
   }
 }

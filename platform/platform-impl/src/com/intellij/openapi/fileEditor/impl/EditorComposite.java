@@ -66,6 +66,10 @@ public class EditorComposite implements Disposable {
    */
   private boolean myPinned;
   /**
+   * Whether the composite is opened as preview tab or not
+   */
+  private boolean myPreview;
+  /**
    * Editors which are opened in the composite
    */
   volatile FileEditor[] myEditors;
@@ -221,6 +225,14 @@ public class EditorComposite implements Disposable {
     myPinned = pinned;
     ObjectUtils.consumeIfCast(getComponent().getParent(), JComponent.class,
                               component -> component.putClientProperty(JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null));
+  }
+
+  public boolean isPreview() {
+    return myPreview;
+  }
+
+  void setPreview(final boolean preview) {
+    myPreview = preview;
   }
 
   private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){

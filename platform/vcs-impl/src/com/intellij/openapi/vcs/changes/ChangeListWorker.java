@@ -696,7 +696,7 @@ public class ChangeListWorker {
     boolean defaultChanged = setDefaultList(fallbackList.name) != null;
 
     List<LocalChangeList> removedLists = new ArrayList<>();
-    for (ListData list : myLists) {
+    for (ListData list : new ArrayList<>(myLists)) {
       if (list.isDefault) continue;
       removedLists.add(getChangeListByName(list.name));
       removeChangeList(list.name);

@@ -81,9 +81,9 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       RunConfigurationEditorFragment<Settings, JComponent> fragment =
         new RunConfigurationEditorFragment<>(executor.getId() + ".config", executor.getStartActionText(),
                                              ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
-                                             component, 0) {
+                                             component, 0, settings -> false) {
           @Override
-          public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
+          public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
             if (configEditor != null) {
               configEditor.resetFrom(s.getConfigurationSettings(runner));
             }
@@ -160,12 +160,17 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   }
 
   private void checkGotIt(SettingsEditorFragment<Settings, ?> fragment) {
-    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isInitiallyVisible(mySettings)) {
-      JComponent component = fragment.getEditorComponent();
-      new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()), fragment).
-        withHeader(ExecutionBundle.message("gotIt.popup.title")).
-        showAt(new RelativePoint(component, new Point(GotItTooltip.Companion.getARROW_SHIFT(), component.getHeight())),
-                Balloon.Position.below);
+    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag()) {
+      //noinspection unchecked
+      Settings clone = (Settings)mySettings.clone();
+      fragment.applyEditorTo(clone);
+      if (!fragment.isInitiallyVisible(clone)) {
+        JComponent component = fragment.getEditorComponent();
+        new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()),
+                         fragment).
+          withHeader(ExecutionBundle.message("gotIt.popup.title")).
+          showAt(Balloon.Position.below, new RelativePoint(component, new Point(GotItTooltip.ARROW_SHIFT, component.getHeight())));
+      }
     }
   }
 }

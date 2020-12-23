@@ -20,12 +20,12 @@ public abstract class FrameworkDetectionTestCase extends FacetTestCase {
     if (!"dynamicDetector".equals(getTestName(true))) {
       //todo we can get rid of this ugly check by converting facet tests to JUnit4 and using test rules to enable facet detection
       Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
-      "<framework.detector implementation=\"" + MockFacetDetector.class.getName() + "\"/>",
+        "<framework.detector implementation=\"" + MockFacetDetector.class.getName() + "\"/>",
         MockFacetDetector.class.getClassLoader()));
 
       Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
-      "<framework.detector implementation=\"" + MockSubFacetDetector.class.getName() + "\"/>",
-      MockSubFacetDetector.class.getClassLoader()));
+        "<framework.detector implementation=\"" + MockSubFacetDetector.class.getName() + "\"/>",
+        MockSubFacetDetector.class.getClassLoader()));
     }
     FrameworkDetectionManager.getInstance(myProject).doInitialize();
   }

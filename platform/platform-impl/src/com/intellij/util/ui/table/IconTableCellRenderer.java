@@ -20,9 +20,8 @@ public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer 
 
   public static TableCellRenderer create(@NotNull final Icon icon) {
     return new IconTableCellRenderer() {
-      @Nullable
       @Override
-      protected Icon getIcon(@NotNull Object value, JTable table, int row) {
+      protected @NotNull Icon getIcon(@NotNull Object value, JTable table, int row) {
         return icon;
       }
     };

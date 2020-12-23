@@ -158,7 +158,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       CreateFileAction.MkDirs mkDirs = WriteAction.compute(() -> new CreateFileAction.MkDirs(newName, myDirectory));
       return FileTemplateUtil.createFromTemplate(template, mkDirs.newName, properties, mkDirs.directory);
     }
-    return FileTemplateUtil.createFromTemplate(template, fileName, properties, myDirectory);
+    return FileTemplateUtil.createFromTemplate(template, null, properties, myDirectory);
   }
 
   public Properties getEnteredProperties() {

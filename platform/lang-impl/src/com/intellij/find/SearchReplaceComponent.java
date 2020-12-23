@@ -210,7 +210,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       add(leftPanel, BorderLayout.CENTER);
     }
     else {
-      mySplitter = new OnePixelSplitter(false, 0.33F);
+      mySplitter = new OnePixelSplitter(false, 0.75F);
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
       mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");

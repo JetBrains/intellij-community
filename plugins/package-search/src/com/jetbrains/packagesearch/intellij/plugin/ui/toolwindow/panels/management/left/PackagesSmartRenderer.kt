@@ -4,7 +4,6 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchPluginIcons
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderColor
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
@@ -14,6 +13,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryColorManager
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.asList
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.localizedName
+import icons.PackageSearchIcons
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -26,7 +26,7 @@ import javax.swing.ListCellRenderer
 import org.apache.commons.lang3.StringUtils
 
 private val packageIconSize by lazy { JBUI.scale(16) }
-private val packageIcon by lazy { IconUtil.toSize(PackageSearchPluginIcons.Package, packageIconSize, packageIconSize) }
+private val packageIcon by lazy { IconUtil.toSize(PackageSearchIcons.Package, packageIconSize, packageIconSize) }
 
 class PackagesSmartRenderer(private val viewModel: PackageSearchToolWindowModel) : ListCellRenderer<PackagesSmartItem> {
 

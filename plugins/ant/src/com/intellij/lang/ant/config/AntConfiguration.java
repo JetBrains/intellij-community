@@ -48,6 +48,8 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
 
   public abstract boolean isInitialized();
 
+  public abstract boolean hasBuildFiles();
+
   public abstract AntBuildFile[] getBuildFiles();
 
   public abstract List<AntBuildFileBase> getBuildFileList();

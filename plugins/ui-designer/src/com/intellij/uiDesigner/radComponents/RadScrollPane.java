@@ -45,8 +45,8 @@ public final class RadScrollPane extends RadContainer {
     super(componentClass, id, palette);
   }
 
-  @Nullable @Override
-  protected RadLayoutManager createInitialLayoutManager() {
+  @Override
+  protected @NotNull RadLayoutManager createInitialLayoutManager() {
     return new RadScrollPaneLayoutManager();
   }
 

@@ -14,6 +14,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_IN;
+
 /**
  * Precedence documentation - http://groovy-lang.org/operators.html#_operator_precedence
  */
@@ -104,7 +107,8 @@ public final class ParenthesesUtils {
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mLT, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mLE, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mEQUAL, EQUALITY_PRECEDENCE);
-    BINARY_PRECEDENCES.put(GroovyTokenTypes.kIN, RELATIONAL_PRECEDENCE);
+    BINARY_PRECEDENCES.put(KW_IN, RELATIONAL_PRECEDENCE);
+    BINARY_PRECEDENCES.put(T_NOT_IN, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mNOT_EQUAL, EQUALITY_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mCOMPARE_TO, EQUALITY_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.kAS, SAFE_CAST_PRECEDENCE);

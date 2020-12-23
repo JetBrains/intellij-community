@@ -16,6 +16,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -39,6 +40,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   protected final Object myLock = new Object();
   private final ReadWriteLock myScalableLock = new ReentrantReadWriteLock();
   private final boolean myUseScalableLock;

@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ public class LombokSettings implements PersistentStateComponent<LombokPluginStat
    * @return the unique {@link LombokSettings} instance.
    */
   public static LombokSettings getInstance() {
-    return ServiceManager.getService(LombokSettings.class);
+    return ApplicationManager.getApplication().getService(LombokSettings.class);
   }
 
   private LombokPluginState myState = new LombokPluginState();

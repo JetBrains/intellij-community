@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
-import lombok.extern.jbosslog.JBossLog;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 
 /**
  * @author Plushnikov Michail
@@ -11,6 +11,6 @@ public class JBossLogProcessor extends AbstractTopicSupportingSimpleLogProcessor
   private static final String LOGGER_INITIALIZER = "org.jboss.logging.Logger.getLogger(%s)";
 
   public JBossLogProcessor() {
-    super(JBossLog.class, LOGGER_TYPE, LOGGER_INITIALIZER, LoggerInitializerParameter.TYPE);
+    super(LombokClassNames.JBOSS_LOG, LOGGER_TYPE, LOGGER_INITIALIZER, LoggerInitializerParameter.TYPE);
   }
 }

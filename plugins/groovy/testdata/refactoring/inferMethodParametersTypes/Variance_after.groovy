@@ -1,4 +1,4 @@
-def <T, U> void foo(List<T> a, List<?> b, List<U> c, U d) {
+def <T, U> void foo(ArrayList<T> a, ArrayList<?> b, ArrayList<U> c, U d) {
   // invariant type variable
   a.add(a.get(0))
   // covariant type variable

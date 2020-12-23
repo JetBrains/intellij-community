@@ -4,7 +4,6 @@ package com.intellij.internal.statistic;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -47,10 +46,7 @@ public final class IntentionsCollector {
       }
     }
     else if (action instanceof QuickFixWrapper) {
-      LocalQuickFix fix = ((QuickFixWrapper)action).getFix();
-      if (fix != action) {
-        handler = fix;
-      }
+      handler = ((QuickFixWrapper)action).getFix();
     }
     return handler.getClass();
   }

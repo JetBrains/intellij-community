@@ -42,14 +42,7 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    checkIfAnyRepositoryIsFresh(e, myRepositories);
-  }
-
-  public static <T extends Repository> void checkIfAnyRepositoryIsFresh(@NotNull AnActionEvent e, @NotNull List<T> repositories) {
-    if (DvcsUtil.anyRepositoryIsFresh(repositories)) {
-      e.getPresentation().setEnabled(false);
-      e.getPresentation().setDescription(DvcsBundle.messagePointer("action.presentation.NewBranchAction.description"));
-    }
+    DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, myRepositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"));
   }
 
   @Override

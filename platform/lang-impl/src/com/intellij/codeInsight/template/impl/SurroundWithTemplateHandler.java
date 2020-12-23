@@ -49,7 +49,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   public static List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<Character> usedMnemonicsSet) {
     TemplateActionContext templateActionContext = TemplateActionContext.surrounding(file, editor);
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext);
-    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(templateActionContext);
+    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
     if (templates.isEmpty() && customTemplates.isEmpty()) {
       return Collections.emptyList();
     }

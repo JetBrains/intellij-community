@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -603,7 +602,7 @@ public final class IdeEventQueue extends EventQueue {
     if (manager == null) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        ourProgressManager = manager = ServiceManager.getService(ProgressManager.class);
+        ourProgressManager = manager = ApplicationManager.getApplication().getService(ProgressManager.class);
       }
     }
     return manager;

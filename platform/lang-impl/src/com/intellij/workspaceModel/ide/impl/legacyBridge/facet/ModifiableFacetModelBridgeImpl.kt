@@ -6,6 +6,7 @@ import com.intellij.facet.FacetManagerImpl
 import com.intellij.facet.ModifiableFacetModel
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
+import com.intellij.facet.impl.invalid.InvalidFacet
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.isExternalStorageEnabled
@@ -53,7 +54,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
     }
     val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
     val underlyingEntity = facet.underlyingFacet?.let { diff.facetMapping().getEntities(it).single() as FacetEntity }
-    val entity = diff.addFacetEntity(facet.name, facet.type.stringId, facetConfigurationXml, moduleEntity, underlyingEntity, source)
+    val facetTypeId = if (facet !is InvalidFacet) facet.type.stringId else facet.configuration.facetState.facetType
+    val entity = diff.addFacetEntity(facet.name, facetTypeId, facetConfigurationXml, moduleEntity, underlyingEntity, source)
     diff.mutableFacetMapping().addMapping(entity, facet)
     FacetManagerImpl.setExternalSource(facet, externalSource)
     facetsChanged()

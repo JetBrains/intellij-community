@@ -16,7 +16,6 @@ import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
-import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix.Companion.isApplicable
 import org.jdom.Element
 import javax.swing.Icon
 
@@ -24,9 +23,7 @@ class PyPipEnvSdkProvider : PySdkProvider {
   override val configureSdkProgressText: String
     get() = PyBundle.message("looking.for.pipfile")
 
-  override fun configureSdk(project: Project, module: Module, existingSdks: List<Sdk>): Sdk? {
-    return detectAndSetupPipEnv(project, module, existingSdks)
-  }
+  override fun configureSdk(project: Project, module: Module, existingSdks: List<Sdk>): Sdk? = null
 
   override fun getSdkAdditionalText(sdk: Sdk): String? = if (sdk.isPipEnv) sdk.versionString else null
 
@@ -40,11 +37,7 @@ class PyPipEnvSdkProvider : PySdkProvider {
     return if (sdk.isPipEnv) PyPipEnvPackageManagementService(project, sdk) else null
   }
 
-  override fun createMissingSdkFix(module: Module, file: PyFile): PyInterpreterInspectionQuickFixData? = when {
-    isApplicable(module) -> PyInterpreterInspectionQuickFixData(
-      UsePipEnvQuickFix(null, module), PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.project"))
-    else -> null
-  }
+  override fun createMissingSdkFix(module: Module, file: PyFile): PyInterpreterInspectionQuickFixData? = null
 
   override fun createEnvironmentAssociationFix(module: Module,
                                                sdk: Sdk,

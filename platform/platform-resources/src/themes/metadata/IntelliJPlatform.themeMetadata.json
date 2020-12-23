@@ -327,6 +327,10 @@
       "deprecated": true
     },
     {
+      "key": "GotItTooltip.borderColor",
+      "description": "GotIt tooltip border color if different from ToolTip.borderColor"
+    },
+    {
       "key": "Group.disabledSeparatorColor"
     },
     {

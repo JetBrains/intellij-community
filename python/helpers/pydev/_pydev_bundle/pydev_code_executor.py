@@ -3,6 +3,7 @@ import traceback
 
 from _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_bundle.pydev_imports import _queue
+from _pydev_imps._pydev_saved_modules import threading
 from _pydev_bundle.pydev_stdin import DebugConsoleStdIn
 from _pydevd_bundle import pydevd_vars
 
@@ -17,6 +18,9 @@ class BaseCodeExecutor(object):
         self.buffer = None
         self.mpl_modules_for_patching = {}
         self.init_mpl_modules_for_patching()
+        # `vars_lock` synchronizes commands which modify and read variables values. It's needed, because we call
+        # `getFrame()` and `add_exec()` from different threads, which can lead to incorrect variables presentation in UI
+        self.vars_lock = threading.Lock()
 
     def get_greeting_msg(self):
         return 'PyDev console: starting.\n'

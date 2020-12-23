@@ -33,6 +33,7 @@ import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.VcsExecutablePathSelector
+import com.intellij.vcs.commit.CommitWorkflowManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
@@ -42,6 +43,9 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundle.message
+import git4idea.index.canEnableStagingArea
+import git4idea.index.enableStagingArea
+import git4idea.index.isStagingAreaEnabled
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
@@ -68,6 +72,7 @@ private fun cdShowCommitAndPushDialog(project: Project)                       = 
 private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = CheckboxDescriptor(message("settings.push.dialog.for.protected.branches"), PropertyBinding({ projectSettings(project).isPreviewPushProtectedOnly }, { projectSettings(project).isPreviewPushProtectedOnly = it }), groupName = gitOptionGroupName)
 private val cdOverrideCredentialHelper                                  get() = CheckboxDescriptor(message("settings.credential.helper"), PropertyBinding({ applicationSettings.isUseCredentialHelper }, { applicationSettings.isUseCredentialHelper = it }), groupName = gitOptionGroupName)
 private fun synchronizeBranchProtectionRules(project: Project)                = CheckboxDescriptor(message("settings.synchronize.branch.protection.rules"), PropertyBinding({gitSharedSettings(project).isSynchronizeBranchProtectionRules}, { gitSharedSettings(project).isSynchronizeBranchProtectionRules = it }), groupName = gitOptionGroupName, comment = message("settings.synchronize.branch.protection.rules.description"))
+private val cdEnableStagingArea                                         get() = CheckboxDescriptor(message("settings.enable.staging.area"), PropertyBinding({ isStagingAreaEnabled() }, { enableStagingArea(it) }), groupName = gitOptionGroupName, comment = message("settings.enable.staging.area.comment"))
 // @formatter:on
 
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
@@ -275,6 +280,20 @@ internal class GitVcsPanel(private val project: Project) :
 
   override fun createPanel(): DialogPanel = panel {
     gitExecutableRow()
+    row {
+      checkBox(cdEnableStagingArea).enableIf(object : ComponentPredicate() {
+        override fun addListener(listener: (Boolean) -> Unit) {
+          val connection = project.messageBus.connect(this@GitVcsPanel.disposable!!)
+          connection.subscribe(CommitWorkflowManager.SETTINGS, object : CommitWorkflowManager.SettingsListener {
+            override fun settingsChanged() {
+              listener(invoke())
+            }
+          })
+        }
+
+        override fun invoke(): Boolean = canEnableStagingArea()
+      })
+    }
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
         checkBox(cdSyncBranches(project)).applyToComponent {

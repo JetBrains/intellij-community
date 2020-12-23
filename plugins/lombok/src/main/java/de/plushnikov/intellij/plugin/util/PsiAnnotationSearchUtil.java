@@ -33,7 +33,7 @@ public class PsiAnnotationSearchUtil {
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     if (annotationTypes.length == 1) {
-      return findAnnotation(psiModifierListOwner, annotationTypes[0]);
+      return findAnnotation(psiModifierListOwner, annotationTypes[0].getName());
     }
 
     final String[] qualifiedNames = new String[annotationTypes.length];
@@ -134,20 +134,24 @@ public class PsiAnnotationSearchUtil {
     return annotationQualifiedName;
   }
 
-  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
-    return null != findAnnotation(psiModifierListOwner, annotationType);
+  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationTypeName) {
+    return null != findAnnotation(psiModifierListOwner, annotationTypeName);
   }
 
-  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
-    return null != findAnnotation(psiModifierListOwner, annotationFQN);
+  public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, String annotationTypeName) {
+    return !isAnnotatedWith(psiModifierListOwner, annotationTypeName);
   }
 
-  public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
-    return !isAnnotatedWith(psiModifierListOwner, annotationType);
+  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final String... annotationTypes) {
+    return null != findAnnotation(psiModifierListOwner, annotationTypes);
   }
 
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     return null != findAnnotation(psiModifierListOwner, annotationTypes);
+  }
+
+  public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final String... annotationTypes) {
+    return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
   }
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {

@@ -65,7 +65,9 @@ final class ServiceViewDragHelper {
               presentation = dragBean.getContributor().getViewDescriptor(project).getPresentation();
             }
             else {
-              presentation = dragBean.getItems().get(0).getViewDescriptor().getPresentation();
+              ServiceViewItem item = dragBean.getItems().get(0);
+              presentation = item.getViewDescriptor().getPresentation();
+              dropTargetContent.setTabColor(item.getColor());
             }
             dropTargetContent.setDisplayName(getDisplayName(presentation));
             dropTargetContent.setIcon(presentation.getIcon(false));

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -12,6 +10,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -122,7 +121,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
   @NotNull
   private static VariableText computeVariablePresentationWithChanges(XValueNodeImpl value,
-                                                                     String name,
+                                                                     @NlsSafe String name,
                                                                      SimpleColoredText text,
                                                                      TextAttributes attributes,
                                                                      int lineNumber,
@@ -266,8 +265,8 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   static class VariableValue {
-   private String actual;
-   private String old;
+   private @NlsSafe String actual;
+   private @NlsSafe String old;
    private int valueNodeHashCode;
 
     VariableValue(String actual, String old, int valueNodeHashCode) {

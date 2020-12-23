@@ -206,4 +206,10 @@ abstract class ProductProperties {
    * the same sources
    */
   String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) { applicationInfo.productName.toLowerCase() }
+
+  /**
+   * Paths to externally built plugins to be included into the IDE. They will be copied into the build, as well as included into
+   * the IDE classpath when launching it to build search index, jar order, etc
+   */
+  List<String> getAdditionalPluginPaths(BuildContext context) { null }
 }

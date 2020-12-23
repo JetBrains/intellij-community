@@ -281,7 +281,7 @@ class FrameType:
     f_lasti: int
     f_lineno: int
     f_locals: Dict[str, Any]
-    f_trace: Callable[[], None]
+    f_trace: Optional[Callable[[FrameType, str, Any], Any]]
     if sys.version_info >= (3, 7):
         f_trace_lines: bool
         f_trace_opcodes: bool

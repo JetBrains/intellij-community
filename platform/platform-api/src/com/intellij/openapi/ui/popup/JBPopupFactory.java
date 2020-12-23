@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.ui.popup;
 
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
@@ -85,7 +85,7 @@ public abstract class JBPopupFactory {
    * @return the popup factory instance.
    */
   public static JBPopupFactory getInstance() {
-    return ServiceManager.getService(JBPopupFactory.class);
+    return ApplicationManager.getApplication().getService(JBPopupFactory.class);
   }
 
   @NotNull
@@ -405,7 +405,7 @@ public abstract class JBPopupFactory {
   public abstract boolean isBestPopupLocationVisible(@NotNull Editor editor);
 
   public abstract Point getCenterOf(JComponent container, JComponent content);
-  
+
   @NotNull
   public abstract List<JBPopup> getChildPopups(@NotNull Component parent);
 

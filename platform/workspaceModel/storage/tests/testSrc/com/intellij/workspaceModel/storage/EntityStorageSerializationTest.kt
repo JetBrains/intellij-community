@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNull
 import org.junit.Test
@@ -81,25 +81,26 @@ private val expectedKryoRegistration = """
   [36, kotlin.Pair]
   [37, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
   [38, com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex${'$'}VirtualFileUrlInfo]
-  [39, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}AddEntity]
-  [40, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}RemoveEntity]
-  [41, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}ReplaceEntity]
-  [42, com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl${'$'}ChangeEntry${'$'}ChangeEntitySource]
-  [43, java.util.LinkedHashSet]
-  [44, java.util.Collections${'$'}UnmodifiableCollection]
-  [45, java.util.Collections${'$'}UnmodifiableSet]
-  [46, java.util.Collections${'$'}UnmodifiableRandomAccessList]
-  [47, java.util.Collections${'$'}UnmodifiableMap]
-  [48, java.util.Collections${'$'}EmptyList]
-  [49, java.util.Collections${'$'}EmptyMap]
-  [50, java.util.Collections${'$'}EmptySet]
-  [51, java.util.Collections${'$'}SingletonList]
-  [52, java.util.Collections${'$'}SingletonMap]
-  [53, java.util.Collections${'$'}SingletonSet]
-  [54, com.intellij.util.containers.ContainerUtilRt${'$'}EmptyList]
-  [55, com.intellij.util.containers.MostlySingularMultiMap${'$'}EmptyMap]
-  [56, com.intellij.util.containers.MultiMap${'$'}EmptyMap]
-  [57, kotlin.collections.EmptyMap]
-  [58, kotlin.collections.EmptyList]
-  [59, kotlin.collections.EmptySet]
+  [39, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
+  [40, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
+  [41, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
+  [42, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
+  [43, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
+  [44, java.util.LinkedHashSet]
+  [45, java.util.Collections${'$'}UnmodifiableCollection]
+  [46, java.util.Collections${'$'}UnmodifiableSet]
+  [47, java.util.Collections${'$'}UnmodifiableRandomAccessList]
+  [48, java.util.Collections${'$'}UnmodifiableMap]
+  [49, java.util.Collections${'$'}EmptyList]
+  [50, java.util.Collections${'$'}EmptyMap]
+  [51, java.util.Collections${'$'}EmptySet]
+  [52, java.util.Collections${'$'}SingletonList]
+  [53, java.util.Collections${'$'}SingletonMap]
+  [54, java.util.Collections${'$'}SingletonSet]
+  [55, com.intellij.util.containers.ContainerUtilRt${'$'}EmptyList]
+  [56, com.intellij.util.containers.MostlySingularMultiMap${'$'}EmptyMap]
+  [57, com.intellij.util.containers.MultiMap${'$'}EmptyMap]
+  [58, kotlin.collections.EmptyMap]
+  [59, kotlin.collections.EmptyList]
+  [60, kotlin.collections.EmptySet]
 """.trimIndent()

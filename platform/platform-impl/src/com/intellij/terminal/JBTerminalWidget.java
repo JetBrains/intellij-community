@@ -68,7 +68,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
     mySettingsProvider = settingsProvider;
-    myCompositeFilterWrapper = new CompositeFilterWrapper(project, console);
+    myCompositeFilterWrapper = new CompositeFilterWrapper(project, console, this);
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
     Disposer.register(parent, this);

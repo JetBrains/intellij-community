@@ -12,13 +12,12 @@ import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.*;
 
 public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends AbstractClassProcessor {
 
   AbstractSuperBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                                                    @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+                                                    @NotNull String supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);
   }
 

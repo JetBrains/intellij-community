@@ -12,10 +12,10 @@ import javax.swing.Icon
 
 object GradleProjectModuleType : ProjectModuleType {
     override val icon: Icon?
-        get() = GradleIcons.Gradle
+        get() = GradleIcons.Gradle // TODO use KotlinIcons.MPP if it's a K/MP module
 
     override val packageIcon: Icon?
-        get() = GradleIcons.GradleFile
+        get() = GradleIcons.GradleFile // TODO use KotlinIcons.MPP if it's a K/MP module
 
     override fun terminologyFor(term: ProjectModuleTypeTerm): String =
         PackageSearchBundle.message("packagesearch.terminology.dependency.configuration")

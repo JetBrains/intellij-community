@@ -139,19 +139,16 @@ class ConstructorReferencesSearchHelper {
                                                  @NotNull PsiClass aClass, SearchScope searchScope) {
     return ReferencesSearch.search(aClass, searchScope).forEach(reference -> {
       final PsiElement element = reference.getElement();
-      if (element != null) {
-        return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PsiMethodReferenceExpression &&
-              ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
-            if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
-              if (!processor.process((PsiReference)parent)) return false;
-            }
+      return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiMethodReferenceExpression &&
+            ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
+          if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
+            if (!processor.process((PsiReference)parent)) return false;
           }
-          return true;
-        });
-      }
-      return true;
+        }
+        return true;
+      });
     });
   }
 

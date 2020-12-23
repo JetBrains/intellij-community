@@ -23,7 +23,6 @@ import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * User : ktisha
@@ -32,11 +31,9 @@ public class PyDocstringParsingContext extends ParsingContext {
   private final StatementParsing myStatementParser;
   private final ExpressionParsing myExpressionParser;
 
-  public PyDocstringParsingContext(final SyntaxTreeBuilder builder,
-                                   LanguageLevel languageLevel,
-                                   StatementParsing.FUTURE futureFlag) {
-    super(builder, languageLevel, futureFlag);
-    myStatementParser = new PyDocstringStatementParsing(this, futureFlag);
+  public PyDocstringParsingContext(final SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
+    super(builder, languageLevel);
+    myStatementParser = new PyDocstringStatementParsing(this);
     myExpressionParser = new PyDocstringExpressionParsing(this);
   }
 
@@ -63,9 +60,8 @@ public class PyDocstringParsingContext extends ParsingContext {
 
   private static class PyDocstringStatementParsing extends StatementParsing {
 
-    protected PyDocstringStatementParsing(ParsingContext context,
-                                          @Nullable FUTURE futureFlag) {
-      super(context, futureFlag);
+    protected PyDocstringStatementParsing(ParsingContext context) {
+      super(context);
     }
 
     @Override

@@ -56,8 +56,10 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
   var reuseNotModifiedTabs by property(false)
+  @get:OptionTag("OPEN_IN_PREVIEW_TAB_IF_POSSIBLE")
+  var openInPreviewTabIfPossible by property(false)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS")
-  var showToolWindowsNumbers by property(true)
+  var showToolWindowsNumbers by property(false)
 
   @get:OptionTag("HIDE_TOOL_STRIPES")
   var hideToolStripes by property(false)

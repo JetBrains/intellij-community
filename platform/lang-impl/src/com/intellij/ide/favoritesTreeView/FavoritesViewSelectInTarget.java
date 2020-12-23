@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.SelectInManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -33,12 +33,12 @@ final class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public String toString() {
-    return SelectInManager.getFavorites();
+    return IdeBundle.message("select.in.favorites");
   }
 
   @Override
   public String getToolWindowId() {
-    return SelectInManager.getFavorites();
+    return "Favorites";
   }
 
   @Override

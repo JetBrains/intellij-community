@@ -353,7 +353,6 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
         if (eventsFiltered.isEmpty()) return null;
 
         Map<String, T> removed = new HashMap<>();
-        Map<String, T> added = new HashMap<>();
         NavigableSet<VirtualFile> navSet = null;
 
         synchronized (myMappings) {
@@ -383,7 +382,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
             }
           }
         }
-        return removed.isEmpty() && added.isEmpty() ? null : new MyUndoableAction(added, removed);
+        return removed.isEmpty() ? null : new MyUndoableAction(new HashMap<>(), removed);
       }
     });
   }

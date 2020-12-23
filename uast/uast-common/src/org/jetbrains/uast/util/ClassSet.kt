@@ -10,6 +10,12 @@ interface ClassSet<out T> {
   operator fun contains(element: Class<out @UnsafeVariance T>): Boolean
 }
 
+fun <T> T?.isInstanceOf(classSet: ClassSet<T>): Boolean =
+  this?.let { classSet.contains(it.javaClass) } ?: false
+
+fun <T> ClassSet<T>.hasClassOf(instance: T?): Boolean =
+  instance?.let { contains(it.javaClass) } ?: false
+
 private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : ClassSet<T> {
 
   private val isSimple = initialClasses.size <= SIMPLE_CLASS_SET_LIMIT

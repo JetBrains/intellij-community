@@ -17,7 +17,7 @@ package org.jetbrains.java.generate.inspection;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -56,7 +56,7 @@ public final class GenerateToStringQuickFix implements LocalQuickFix {
     if (clazz == null) {
       return; // no class to fix
     }
-    GenerateToStringActionHandler handler = ServiceManager.getService(GenerateToStringActionHandler.class);
+    GenerateToStringActionHandler handler = ApplicationManager.getApplication().getService(GenerateToStringActionHandler.class);
     handler.executeActionQuickFix(project, clazz);
   }
 

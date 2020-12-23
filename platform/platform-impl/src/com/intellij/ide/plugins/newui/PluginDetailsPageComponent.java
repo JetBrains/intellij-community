@@ -98,6 +98,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private ListPluginComponent myShowComponent;
   private boolean myRequiresRestart = true;
+  private boolean myPluginIsRequired = false;
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
     myPluginModel = pluginModel;
@@ -147,11 +148,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   private JPanel createHeaderPanel() {
-    JPanel header = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(20), 0));
+    JPanel header = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(15), 0));
     header.setBorder(JBUI.Borders.emptyRight(20));
     myPanel.add(header, BorderLayout.NORTH);
 
     myIconLabel = new JLabel();
+    myIconLabel.setBorder(JBUI.Borders.emptyTop(5));
     myIconLabel.setVerticalAlignment(SwingConstants.TOP);
     myIconLabel.setOpaque(false);
     header.add(myIconLabel, BorderLayout.WEST);
@@ -160,6 +162,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       IdeBundle.message("plugin.settings.link.title"),
       createGearActions()
     );
+    myGearButton.setBorder(JBUI.Borders.emptyLeft(5));
     myGearButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     myGearButton.setOpaque(false);
     header.add(myGearButton, BorderLayout.EAST);
@@ -215,7 +218,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     Font font = editorPane.getFont();
     if (font != null) {
-      editorPane.setFont(font.deriveFont(Font.BOLD, 25));
+      editorPane.setFont(font.deriveFont(Font.BOLD, 18));
     }
 
     editorPane.setText("<html><span>Foo</span></html>");
@@ -273,12 +276,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
     centerPanel.add(panel1);
     if (myMarketplace) {
       myDownloads =
-        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, ListPluginComponent.GRAY_COLOR, false);
+        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, ListPluginComponent.GRAY_COLOR, true);
 
       myRating =
-        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, ListPluginComponent.GRAY_COLOR, false);
+        ListPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, ListPluginComponent.GRAY_COLOR, true);
     }
-    myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
+    myVendor = new LinkPanel(panel1, false, true, null, TextHorizontalLayout.FIX_LABEL);
 
     myEnabledForProject = new JLabel();
     myEnabledForProject.setHorizontalTextPosition(SwingConstants.LEFT);
@@ -309,6 +312,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     } : new TextHorizontalLayout(JBUIScale.scale(7));
 
     JPanel panel2 = new NonOpaquePanel(layout);
+    panel2.setBorder(JBUI.Borders.emptyTop(5));
     panel2.add(myTagPanel = new TagPanel(mySearchListener));
     (myMarketplace ? panel2 : panel1).add(myVersion);
     panel2.add(myEnabledForProject);
@@ -332,7 +336,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myLicensePanel.setBorder(JBUI.Borders.emptyBottom(20));
 
     if (myMarketplace) {
-      myHomePage = new LinkPanel(bottomPanel);
+      myHomePage = new LinkPanel(bottomPanel, false);
       bottomPanel.add(new JLabel());
     }
 
@@ -353,7 +357,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       bottomPanel.add(mySize = new JLabel());
     }
     else {
-      myHomePage = new LinkPanel(bottomPanel);
+      myHomePage = new LinkPanel(bottomPanel, false);
     }
   }
 
@@ -455,6 +459,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
         myPluginModel.appendOrUpdateDescriptor(descriptor);
         myRequiresRestart = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor) != null;
       }
+
+      myPluginIsRequired = myPluginModel.isRequiredPlugin(myPlugin);
     }
 
     return super.select(key, now);
@@ -511,7 +517,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersion.setText(version);
     myVersionSize.setText(version);
     myVersion
-      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersion.getPreferredSize().height));
+      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersionSize.getPreferredSize().height));
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 
@@ -709,8 +715,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     boolean errors = !myMarketplace && myPluginModel.hasErrors(myPlugin);
 
     myIconLabel.setEnabled(myMarketplace || myPluginModel.isEnabled(myPlugin));
-    myIconLabel.setIcon(myPluginModel.getIcon(myPlugin, true, false, errors, false));
-    myIconLabel.setDisabledIcon(myPluginModel.getIcon(myPlugin, true, false, errors, true));
+    myIconLabel.setIcon(myPluginModel.getIcon(myPlugin, true, errors, false));
+    myIconLabel.setDisabledIcon(myPluginModel.getIcon(myPlugin, true, errors, true));
   }
 
   private void updateErrors() {
@@ -872,7 +878,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       PluginEnabledState state = myPluginModel.getState(myPlugin);
 
       boolean invisible = myNewState == state ||
-                          myNewState.isPerProject() && (myRequiresRestart || e.getProject() == null);
+                          myNewState.isPerProject() && (myRequiresRestart || e.getProject() == null) ||
+                          !myNewState.isEnabled() && myPluginIsRequired;
       e.getPresentation().setVisible(!invisible);
     }
   }

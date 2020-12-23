@@ -115,6 +115,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myForkSocket;
   }
 
+  public boolean isReattachDebugProcess() {
+    return myConfiguration.isReattachDebugProcess();
+  }
+
+  public boolean isDebugServerProcess() {
+    return myConfiguration.isDebugServerProcess();
+  }
+
   @Nullable
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {

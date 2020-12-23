@@ -4,12 +4,12 @@ package com.intellij.codeWithMe
 import org.jetbrains.annotations.ApiStatus
 
 open class ClientIdServiceImpl : ClientIdService {
-    private val myStorage = ThreadLocal<String>()
+  private val storage = ThreadLocal<String>()
 
-    override var clientIdValue: String?
-        get() = myStorage.get()
-        set(value) = myStorage.set(value)
+  override var clientIdValue: String?
+    get() = storage.get()
+    set(value) = storage.set(value)
 
-    @ApiStatus.Internal
-    override val checkLongActivity = false
+  @ApiStatus.Internal
+  override val checkLongActivity = false
 }

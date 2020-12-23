@@ -219,6 +219,49 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     assertThat(subProjectArgsFile.readText()).describedAs("sub project task should be debugged").contains(debugString)
   }
 
+
+  @Test
+  fun `explicit tasks are debugged for a gradle subproject when called relatively`() {
+
+    createProjectSubFile("src/main/java/pack/AClass.java", jvmArgsPrinter.trimIndent())
+    createSettingsFile("include 'subproject'")
+    createProjectSubDir("subproject")
+
+    val argsFileName = "args.txt"
+
+    importProject(
+      GradleBuildScriptBuilderEx()
+        .withJavaPlugin()
+        .withMavenCentral()
+        .addPostfix("""          
+          def rootProject = project
+          
+          project("subproject") {
+            task printArgs(type: JavaExec) {
+              classpath = rootProject.sourceSets.main.runtimeClasspath
+              main = 'pack.AClass'
+              args '$argsFileName'
+            }
+          }
+        """.trimIndent())
+        .generate()
+    )
+
+    val gradleRC = createEmptyGradleRunConfiguration("myRC")
+    gradleRC.settings.apply {
+      externalProjectPath = projectPath
+      taskNames = listOf("printArgs")
+    }
+    gradleRC.isScriptDebugEnabled = false
+
+    val subProjectArgsFile = File("$projectPath/subproject", argsFileName)
+    assertThat(subProjectArgsFile).doesNotExist()
+
+    executeRunConfiguration(gradleRC)
+
+    assertThat(subProjectArgsFile.readText()).describedAs("sub project task should be debugged").contains(debugString)
+  }
+
   private fun executeRunConfiguration(gradleRC: GradleRunConfiguration) {
     val executor = DefaultDebugExecutor.getDebugExecutorInstance()
     val runner = ExternalSystemTaskDebugRunner()

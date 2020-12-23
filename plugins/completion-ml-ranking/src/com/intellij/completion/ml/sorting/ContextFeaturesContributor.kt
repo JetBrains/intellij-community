@@ -23,6 +23,7 @@ class ContextFeaturesContributor : CompletionContributor(), DumbAware {
     if (lookup != null) {
       val storage = MutableLookupStorage.get(lookup)
       if (storage != null) {
+        MutableLookupStorage.saveAsUserData(parameters, storage)
         if (CompletionMLPolicy.isReRankingDisabled(storage.language, parameters)) {
           storage.disableReRanking()
         }

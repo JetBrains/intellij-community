@@ -148,7 +148,7 @@ public final class FinishMarker {
       .map(val -> val instanceof PsiLiteralExpression ? ((PsiLiteralExpression)val).getValue() : NULL)
       .toSet();
     if (!mayNeedMarker) {
-      PsiExpression initValue = findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker);
+      PsiExpression initValue = findBestExpression(terminalReturn, nonTerminalReturns, false);
       if (initValue == null && nonTerminalReturnValues.size() == 1 && nonTerminalReturnValues.iterator().next() != NULL) {
         initValue = nonTerminalReturns.iterator().next();
       }
@@ -165,7 +165,7 @@ public final class FinishMarker {
       }
     }
     if (PsiType.INT.equals(returnType) || PsiType.LONG.equals(returnType)) {
-      return getMarkerForIntegral(nonTerminalReturns, terminalReturn, mayNeedMarker, returnType, factory);
+      return getMarkerForIntegral(nonTerminalReturns, terminalReturn, returnType, factory);
     }
     if (!(returnType instanceof PsiPrimitiveType)) {
       if (StreamEx.of(nonTerminalReturns).map(ret -> NullabilityUtil.getExpressionNullability(ret, true))
@@ -179,7 +179,7 @@ public final class FinishMarker {
         return new FinishMarker(FinishMarkerType.SEPARATE_VAR, value);
       }
     }
-    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker));
+    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, true));
   }
 
   @Nullable
@@ -208,7 +208,7 @@ public final class FinishMarker {
   @NotNull
   private static FinishMarker getMarkerForIntegral(List<PsiExpression> nonTerminalReturns,
                                                    PsiReturnStatement terminalReturn,
-                                                   boolean mayNeedMarker, PsiType returnType, PsiElementFactory factory) {
+                                                   PsiType returnType, PsiElementFactory factory) {
     boolean isLong = PsiType.LONG.equals(returnType);
     LongRangeSet fullSet = requireNonNull(LongRangeSet.fromType(returnType));
     LongRangeSet set = nonTerminalReturns.stream()
@@ -246,7 +246,7 @@ public final class FinishMarker {
         return new FinishMarker(FinishMarkerType.VALUE_NON_EQUAL, factory.createExpressionFromText(text, null));
       }
     }
-    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker));
+    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, true));
   }
 
   @Contract("null -> false")

@@ -52,13 +52,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   private byte myReferenceCount = 1;
   @Nullable SmartPointerTracker.PointerReference pointerReference;
 
-  SmartPsiElementPointerImpl(SmartPointerManagerImpl manager, 
+  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerImpl manager,
                              @NotNull E element,
                              @Nullable PsiFile containingFile,
                              boolean forInjected) {
     this(manager, element, createElementInfo(manager, element, containingFile, forInjected));
   }
-  SmartPsiElementPointerImpl(SmartPointerManagerImpl manager,
+  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerImpl manager,
                              @NotNull E element,
                              @NotNull SmartPointerElementInfo elementInfo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -69,7 +69,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof SmartPsiElementPointer && pointsToTheSameElementAs(this, (SmartPsiElementPointer)obj);
+    return obj instanceof SmartPsiElementPointer && pointsToTheSameElementAs(this, (SmartPsiElementPointer<?>)obj);
   }
 
   @Override
@@ -150,16 +150,17 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @NotNull
-  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(SmartPointerManagerImpl manager, 
+  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerImpl manager,
                                                                                   @NotNull E element,
-                                                                                  PsiFile containingFile,
+                                                                                  @Nullable PsiFile containingFile,
                                                                                   boolean forInjected) {
     SmartPointerElementInfo elementInfo = doCreateElementInfo(manager.getProject(), element, containingFile, forInjected);
     if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
       PsiElement restored = elementInfo.restoreElement(manager);
       if (!element.equals(restored)) {
         // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
-        LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo + "; restored=" + restored + " in " + element.getProject());
+        LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo +
+                  "; restored=" + restored + (restored == null ? "" : " of "+restored.getClass())+" in " + element.getProject());
       }
     }
     return elementInfo;
@@ -168,7 +169,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @NotNull
   private static <E extends PsiElement> SmartPointerElementInfo doCreateElementInfo(@NotNull Project project,
                                                                                     @NotNull E element,
-                                                                                    PsiFile containingFile, boolean forInjected) {
+                                                                                    @Nullable PsiFile containingFile,
+                                                                                    boolean forInjected) {
     if (element instanceof PsiDirectory) {
       return new DirElementInfo((PsiDirectory)element);
     }

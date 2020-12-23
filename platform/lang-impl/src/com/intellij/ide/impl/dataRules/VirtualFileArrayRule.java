@@ -50,12 +50,12 @@ public class VirtualFileArrayRule implements GetDataRule {
 
     FileSystemTree fileSystemTree = FileSystemTree.DATA_KEY.getData(dataProvider);
     if (fileSystemTree != null) {
-      result = addFiles(result, fileSystemTree.getSelectedFiles());
+      result = addFiles(null, fileSystemTree.getSelectedFiles());
     }
     else {
       Project project = PlatformDataKeys.PROJECT_CONTEXT.getData(dataProvider);
       if (project != null && !project.isDisposed()) {
-        result = addFiles(result, ProjectRootManager.getInstance(project).getContentRoots());
+        result = addFiles(null, ProjectRootManager.getInstance(project).getContentRoots());
       }
 
       Module[] selectedModules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataProvider);
@@ -92,7 +92,7 @@ public class VirtualFileArrayRule implements GetDataRule {
 
     PsiElement elem = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (elem != null) {
-      result = addFilesFromPsiElement(result, elem);
+      result = addFilesFromPsiElement(null, elem);
     }
 
     Usage[] usages = UsageView.USAGES_KEY.getData(dataProvider);

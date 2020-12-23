@@ -171,7 +171,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
       }
     }
     
-    if (startTagStartOffset < 0 || startTagEndOffset < 0) {
+    if (startTagStartOffset < 0) {
       return NOT_MATCHED_CONTEXT;
     }
     

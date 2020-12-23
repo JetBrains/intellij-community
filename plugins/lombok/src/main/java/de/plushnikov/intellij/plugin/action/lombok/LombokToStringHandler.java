@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
 import com.intellij.psi.*;
-import lombok.ToString;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 
 public class LombokToStringHandler extends BaseLombokHandler {
@@ -14,7 +14,7 @@ public class LombokToStringHandler extends BaseLombokHandler {
     if (null != toStringMethod) {
       toStringMethod.delete();
     }
-    addAnnotation(psiClass, ToString.class);
+    addAnnotation(psiClass, LombokClassNames.TO_STRING);
   }
 
 }

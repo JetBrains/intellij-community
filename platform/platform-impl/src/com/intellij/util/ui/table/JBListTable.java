@@ -458,7 +458,7 @@ public abstract class JBListTable {
         return myCellEditor;
       }
       myCellEditor = null;
-      return myCellEditor;
+      return null;
     }
 
     @Override

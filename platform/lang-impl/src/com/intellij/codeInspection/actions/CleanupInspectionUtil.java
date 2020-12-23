@@ -3,7 +3,7 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface CleanupInspectionUtil {
   static CleanupInspectionUtil getInstance() {
-    return ServiceManager.getService(CleanupInspectionUtil.class);
+    return ApplicationManager.getApplication().getService(CleanupInspectionUtil.class);
   }
 
   AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,

@@ -142,7 +142,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       final PsiElement previousComment = XmlUtil.findPreviousComment(parent);
       final String referenceName = ((XmlAttributeDecl)element).getNameElement().getText();
 
-      if (previousComment instanceof PsiComment) {
+      if (previousComment != null) {
         final PsiElement prevSibling = previousComment.getPrevSibling();
 
         if (prevSibling == null ||
@@ -323,7 +323,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
     element = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
 
-    if (element instanceof XmlTag) {
+    if (element != null) {
       XmlTag xmlTag = (XmlTag)element;
       XmlElementDescriptor elementDescriptor;
 
@@ -345,7 +345,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         String namespacePrefix = XmlUtil.findPrefixByQualifiedName(object.toString());
         String namespace = xmlTag.getNamespaceByPrefix(namespacePrefix);
 
-        if (namespace!=null && namespace.length() > 0) {
+        if (namespace.length() > 0) {
           tagText.append(" xmlns");
           if (namespacePrefix.length() > 0) tagText.append(":").append(namespacePrefix);
           tagText.append("=\"").append(namespace).append("\"");
@@ -393,7 +393,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (object instanceof String && originalElement != null) {
       PsiElement result = findDeclWithName((String)object, originalElement);
 
-      if (result == null && element instanceof XmlTag) {
+      if (result == null && element != null) {
         XmlAttribute attribute = PsiTreeUtil.getParentOfType(originalElement, XmlAttribute.class, false);
         if (attribute != null) {
           XmlAttributeDescriptor descriptor = attribute.getDescriptor();

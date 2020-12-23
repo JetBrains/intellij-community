@@ -1,7 +1,9 @@
 package de.plushnikov.intellij.plugin.provider;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
@@ -9,14 +11,16 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class LombokProcessorProvider {
+public class LombokProcessorProvider implements Disposable {
+
+  @Override
+  public void dispose() { }
 
   public static LombokProcessorProvider getInstance(@NotNull Project project) {
     final LombokProcessorProvider service = ServiceManager.getService(project, LombokProcessorProvider.class);
@@ -55,10 +59,10 @@ public class LombokProcessorProvider {
     for (Processor processor : LombokProcessorManager.getLombokProcessors()) {
       if (processor.isEnabled(myProject)) {
 
-        Class<? extends Annotation>[] annotationClasses = processor.getSupportedAnnotationClasses();
-        for (Class<? extends Annotation> annotationClass : annotationClasses) {
-          putProcessor(lombokProcessors, annotationClass.getName(), processor);
-          putProcessor(lombokProcessors, annotationClass.getSimpleName(), processor);
+        @NotNull String[] annotationClasses = processor.getSupportedAnnotationClasses();
+        for (@NotNull String annotationClass : annotationClasses) {
+          putProcessor(lombokProcessors, annotationClass, processor);
+          putProcessor(lombokProcessors, StringUtil.getShortName(annotationClass), processor);
         }
 
         putProcessor(lombokTypeProcessors, processor.getSupportedClass(), processor);

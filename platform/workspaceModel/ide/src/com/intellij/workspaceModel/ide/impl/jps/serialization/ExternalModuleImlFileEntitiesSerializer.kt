@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.impl.ModulePath
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.append
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -62,6 +65,10 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                  moduleType: String?,
                                  customImlData: ModuleCustomImlDataEntity?,
                                  writer: JpsFileContentWriter) {
+    val fileUrlString = fileUrl.url
+    if (FileUtil.extensionEquals(fileUrlString, "iml")) {
+      logger<ExternalModuleImlFileEntitiesSerializer>().error("External serializer should not write to iml files. Path:$fileUrlString")
+    }
     if (externalSystemOptions != null) {
       val componentTag = JDomSerializationUtil.createComponentElement("ExternalSystem")
 
@@ -77,12 +84,12 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
       saveOption("linkedProjectId", externalSystemOptions.linkedProjectId)
       saveOption("linkedProjectPath", externalSystemOptions.linkedProjectPath)
       saveOption("rootProjectPath", externalSystemOptions.rootProjectPath)
-      writer.saveComponent(fileUrl.url, "ExternalSystem", componentTag)
+      writer.saveComponent(fileUrlString, "ExternalSystem", componentTag)
     }
     if (moduleType != null) {
       val componentTag = JDomSerializationUtil.createComponentElement("DeprecatedModuleOptionManager")
       componentTag.addContent(Element("option").setAttribute("key", "type").setAttribute("value", moduleType))
-      writer.saveComponent(fileUrl.url, "DeprecatedModuleOptionManager", componentTag)
+      writer.saveComponent(fileUrlString, "DeprecatedModuleOptionManager", componentTag)
     }
   }
 

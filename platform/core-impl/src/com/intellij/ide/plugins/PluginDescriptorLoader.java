@@ -8,8 +8,8 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
@@ -215,8 +215,8 @@ public final class PluginDescriptorLoader {
         return o2IsVersioned ? -1 : 1;
       }
 
-      boolean o2StartsWithNeededName = StringUtil.startsWithIgnoreCase(o2Name, pluginDirName);
-      boolean o1StartsWithNeededName = StringUtil.startsWithIgnoreCase(o1Name, pluginDirName);
+      boolean o2StartsWithNeededName = StringUtilRt.startsWithIgnoreCase(o2Name, pluginDirName);
+      boolean o1StartsWithNeededName = StringUtilRt.startsWithIgnoreCase(o1Name, pluginDirName);
       if (o2StartsWithNeededName != o1StartsWithNeededName) {
         return o2StartsWithNeededName ? 1 : -1;
       }
@@ -262,18 +262,24 @@ public final class PluginDescriptorLoader {
     try {
       Path file;
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(urlToFile(resource).toString()), pathName)).getParent();
+        file = Paths.get(Strings.trimEnd(FileUtilRt.toSystemIndependentName(urlToFile(resource).toString()), pathName)).getParent();
         return loadDescriptorFromFileOrDir(file, pathName, loadingContext, Files.isDirectory(file));
       }
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
         String path = resource.getFile();
         file = urlToFile(path.substring(0, path.indexOf(URLUtil.JAR_SEPARATOR)));
-        Path pluginPath = null;
-        if (file.getParent() != null && file.getParent().endsWith("lib")) {
-          // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
-          pluginPath = file.getParent().getParent();
+        Path parentFile = file.getParent();
+        if (parentFile == null || !parentFile.endsWith("lib")) {
+          return loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, null);
         }
-        return loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, pluginPath);
+        else {
+          // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
+          IdeaPluginDescriptorImpl descriptor = loadDescriptorFromJar(file, pathName, loadingContext.pathResolver, loadingContext, file.getParent().getParent());
+          if (descriptor != null) {
+            descriptor.jarFiles = null;
+          }
+          return descriptor;
+        }
       }
       else {
         return null;
@@ -298,7 +304,7 @@ public final class PluginDescriptorLoader {
     }
     catch (URISyntaxException e) {
       if (url.indexOf(' ') > 0) {
-        return Paths.get(new URI(StringUtil.replace(url, " ", "%20")));
+        return Paths.get(new URI(url.replace(" ", "%20")));
       }
       throw e;
     }
@@ -312,7 +318,7 @@ public final class PluginDescriptorLoader {
     catch (URISyntaxException e) {
       String str = url.toString();
       if (str.indexOf(' ') > 0) {
-        return Paths.get(new URL(StringUtil.replace(str, " ", "%20")).toURI());
+        return Paths.get(new URL(str.replace(" ", "%20")).toURI());
       }
       throw e;
     }
@@ -483,7 +489,9 @@ public final class PluginDescriptorLoader {
   }
 
   public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    if (descriptor.isEnabled() && !descriptor.isExtensionsCleared()) return descriptor;
+    if (descriptor.isEnabled()) {
+      return descriptor;
+    }
 
     PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor, null);
     return PluginManager
@@ -499,7 +507,7 @@ public final class PluginDescriptorLoader {
     }
 
     if (context != null) {
-      PathBasedJdomXIncluder.PathResolver<Path> resolver = PluginManagerCore.createPluginJarsPathResolver(descriptor.getPluginPath(), context);
+      PathBasedJdomXIncluder.PathResolver<Path> resolver = createPluginJarsPathResolver(descriptor.getPluginPath(), context);
       if (resolver != null) {
         return resolver;
       }
@@ -515,5 +523,14 @@ public final class PluginDescriptorLoader {
       fullDescriptor = descriptor;
     }
     return fullDescriptor;
+  }
+
+  private static @Nullable PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir, @NotNull DescriptorLoadingContext context) {
+    List<Path> pluginJarFiles = new ArrayList<>();
+    List<Path> dirs = new ArrayList<>();
+    if (!collectPluginDirectoryContents(pluginDir, pluginJarFiles, dirs)) {
+      return null;
+    }
+    return new PluginXmlPathResolver(pluginJarFiles, context);
   }
 }

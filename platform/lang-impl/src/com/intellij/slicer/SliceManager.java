@@ -3,6 +3,7 @@ package com.intellij.slicer;
 
 import com.intellij.BundleBase;
 import com.intellij.analysis.AnalysisUIOptions;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -12,6 +13,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -52,7 +54,8 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   private ContentManager getContentManager(boolean dataFlowToThis) {
     if (dataFlowToThis) {
       if (myBackContentManager == null) {
-        ToolWindow backToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(BACK_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject);
+        ToolWindow backToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(RegisterToolWindowTask.closable(
+          BACK_TOOLWINDOW_ID, LangBundle.messagePointer("toolwindow.name.dataflow.to.here"), AllIcons.Toolwindows.ToolWindowAnalyzeDataflow, ToolWindowAnchor.BOTTOM));
         myBackContentManager = backToolWindow.getContentManager();
         ContentManagerWatcher.watchContentManager(backToolWindow, myBackContentManager);
       }
@@ -60,7 +63,8 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
     }
 
     if (myForthContentManager == null) {
-      ToolWindow forthToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(FORTH_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject);
+      ToolWindow forthToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(RegisterToolWindowTask.closable(
+        FORTH_TOOLWINDOW_ID, LangBundle.messagePointer("toolwindow.name.dataflow.from.here"), AllIcons.Toolwindows.ToolWindowAnalyzeDataflow, ToolWindowAnchor.BOTTOM));
       myForthContentManager = forthToolWindow.getContentManager();
       ContentManagerWatcher.watchContentManager(forthToolWindow, myForthContentManager);
     }

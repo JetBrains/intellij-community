@@ -37,11 +37,11 @@ import java.util.Objects;
 
 public class MoveRenameUsageInfo extends UsageInfo implements BranchableUsageInfo, Cloneable {
   private static final Logger LOG = Logger.getInstance(MoveRenameUsageInfo.class);
-  private SmartPsiElementPointer myReferencedElementPointer = null;
+  private SmartPsiElementPointer<?> myReferencedElementPointer;
   private PsiElement myReferencedElement;
 
   private PsiReference myReference;
-  private RangeMarker myReferenceRangeMarker = null;
+  private RangeMarker myReferenceRangeMarker;
 
   public MoveRenameUsageInfo(PsiReference reference, PsiElement referencedElement){
     this(reference.getElement(), reference, referencedElement);
@@ -101,7 +101,7 @@ public class MoveRenameUsageInfo extends UsageInfo implements BranchableUsageInf
   public PsiReference getReference() {
     if (myReference != null) {
       final PsiElement element = myReference.getElement();
-      if (element != null && element.isValid()) {
+      if (element.isValid()) {
         if (myReferenceRangeMarker == null) {
           return myReference;
         }

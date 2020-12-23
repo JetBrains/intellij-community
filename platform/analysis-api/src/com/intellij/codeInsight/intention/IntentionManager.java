@@ -4,7 +4,7 @@ package com.intellij.codeInsight.intention;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -37,7 +37,7 @@ public abstract class IntentionManager  {
   }
 
   public static IntentionManager getInstance() {
-    return ServiceManager.getService(IntentionManager.class);
+    return ApplicationManager.getApplication().getService(IntentionManager.class);
   }
 
   /**

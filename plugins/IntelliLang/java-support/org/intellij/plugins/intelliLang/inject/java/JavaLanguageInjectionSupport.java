@@ -418,10 +418,10 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
     }.processInjections();
   }
 
-  private static MethodParameterInjection createFrom(final Project project,
-                                                                         final BaseInjection injection,
-                                                                         final PsiMethod contextMethod,
-                                                                         final boolean includeAllPlaces) {
+  private static @NotNull MethodParameterInjection createFrom(final Project project,
+                                                              final BaseInjection injection,
+                                                              final PsiMethod contextMethod,
+                                                              final boolean includeAllPlaces) {
     final PsiClass[] classes;
     final String className;
     if (contextMethod != null) {
@@ -532,17 +532,12 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
       public void actionPerformed(@NotNull final AnActionEvent e) {
         final BaseInjection originalInjection = producer.create();
         final MethodParameterInjection injection = createFrom(project, originalInjection, null, false);
-        if (injection != null) {
-          final boolean mergeEnabled = !project.isInitialized() ||
-            JavaPsiFacade.getInstance(project).findClass(injection.getClassName(), GlobalSearchScope.allScope(project)) == null;
-          final BaseInjection newInjection = showInjectionUI(project, injection);
-          if (newInjection != null) {
-            newInjection.mergeOriginalPlacesFrom(originalInjection, mergeEnabled);
-            originalInjection.copyFrom(newInjection);
-          }
-        }
-        else {
-          perform(project, producer);
+        final boolean mergeEnabled = !project.isInitialized() ||
+          JavaPsiFacade.getInstance(project).findClass(injection.getClassName(), GlobalSearchScope.allScope(project)) == null;
+        final BaseInjection newInjection = showInjectionUI(project, injection);
+        if (newInjection != null) {
+          newInjection.mergeOriginalPlacesFrom(originalInjection, mergeEnabled);
+          originalInjection.copyFrom(newInjection);
         }
       }
     };

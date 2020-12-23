@@ -44,7 +44,7 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
     final PyFileImpl fileImpl = (PyFileImpl)file;
     myFutureFeatures = new BitSet(FUTURE_FEATURE_SET_SIZE);
     myDunderAll = fileImpl.calculateDunderAll();
-    for (FutureFeature fuf : FutureFeature.ALL) {
+    for (FutureFeature fuf : FutureFeature.values()) {
       myFutureFeatures.set(fuf.ordinal(), fileImpl.calculateImportFromFuture(fuf));
     }
     String message = fileImpl.extractDeprecationMessage();

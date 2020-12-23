@@ -114,7 +114,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     appContainer.registerComponentInstance(SchemeManagerFactory.class, new MockSchemeManagerFactory());
     MockEditorFactory editorFactory = new MockEditorFactory();
     appContainer.registerComponentInstance(EditorFactory.class, editorFactory);
-    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(editorFactory::createDocument, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
+    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY,
+                                                                                   editorFactory::createDocument));
     app.registerService(PluginUtil.class, new PluginUtilImpl());
 
     app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());

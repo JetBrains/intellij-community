@@ -14,7 +14,6 @@ import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Provides a UI to configure internal settings of the IDE.
@@ -29,11 +28,11 @@ public final class Registry  {
   public static final String REGISTRY_BUNDLE = "misc.registry";
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<>();
-  private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<>();
+  private final Map<String, RegistryValue> myValues = new ConcurrentHashMap<>();
   private final Map<String, RegistryKeyDescriptor> myContributedKeys = new HashMap<>();
 
   private static final Registry ourInstance = new Registry();
-  private volatile boolean myLoaded = false;
+  private volatile boolean myLoaded;
 
   public static @NotNull RegistryValue get(@NonNls @NotNull String key) {
     return getInstance().doGet(key);

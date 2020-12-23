@@ -1,0 +1,5 @@
+public class X {
+  @lombok.Setter
+  @lombok.Getter
+  int field;
+}

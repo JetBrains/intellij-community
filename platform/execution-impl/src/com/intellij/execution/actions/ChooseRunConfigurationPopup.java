@@ -879,9 +879,8 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return AllIcons.Nodes.Folder;
     }
 

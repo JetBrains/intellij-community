@@ -61,6 +61,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
@@ -84,17 +85,17 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @NonNls private static final String COMMENT = "comment";
 
   private enum UnusedDeclarationHint {
-    COMMENT("Commented out"),
-    DELETE("Deleted");
+    COMMENT("inspection.dead.code.commented.hint"),
+    DELETE("inspection.dead.code.deleted.hint");
 
-    private final String myDescription;
+    private final Supplier<@Nls String> myDescription;
 
-    UnusedDeclarationHint(String description) {
-      myDescription = description;
+    UnusedDeclarationHint(String descriptionKey) {
+      myDescription = AnalysisBundle.messagePointer(descriptionKey);
     }
 
-    public String getDescription() {
-      return myDescription;
+    public @Nls String getDescription() {
+      return myDescription.get();
     }
   }
 

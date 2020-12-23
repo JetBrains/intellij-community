@@ -58,7 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-@State(name = "ServiceViewManager", storages = @Storage(value = StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+@State(name = "ServiceViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
   @NonNls private static final String HELP_ID = "services.tool.window";
 
@@ -405,6 +405,16 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return result;
   }
 
+  @Override
+  public @NotNull Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    AsyncPromise<Void> result = new AsyncPromise<>();
+    myModel.getInvoker().invoke(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () ->
+      promiseFindView(contributorClass, result,
+                      serviceView -> serviceView.extract(service, contributorClass),
+                      null)));
+    return result;
+  }
+
   @NotNull
   Promise<Void> select(@NotNull VirtualFile virtualFile) {
     AsyncPromise<Void> result = new AsyncPromise<>();
@@ -460,6 +470,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   private static void extractGroup(GroupModel viewModel, Content content) {
     viewModel.addModelListener(() -> updateContentTab(viewModel.getGroup(), content));
+    updateContentTab(viewModel.getGroup(), content);
   }
 
   private void extractService(SingeServiceModel viewModel, Content content) {
@@ -487,10 +498,12 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         updateContentTab(item, content);
       }
     });
+    updateContentTab(viewModel.getService(), content);
   }
 
   private static void extractList(ServiceListModel viewModel, Content content) {
     viewModel.addModelListener(() -> updateContentTab(ContainerUtil.getOnlyItem(viewModel.getRoots()), content));
+    updateContentTab(ContainerUtil.getOnlyItem(viewModel.getRoots()), content);
   }
 
   private static ItemPresentation getContentPresentation(Project project, ServiceViewModel viewModel, ServiceViewState viewState) {
@@ -555,6 +568,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         ItemPresentation itemPresentation = viewItem.getViewDescriptor().getContentPresentation();
         content.setDisplayName(ServiceViewDragHelper.getDisplayName(itemPresentation));
         content.setIcon(itemPresentation.getIcon(false));
+        content.setTabColor(viewItem.getColor());
       });
     }
   }

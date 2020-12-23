@@ -11,9 +11,7 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.Range;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
-import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -31,6 +29,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListChange;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.ex.PartialCommitContent;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
@@ -39,12 +38,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.search.LightIndexPatternSearch;
-import com.intellij.psi.impl.search.TodoItemsCreator;
-import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -75,11 +70,19 @@ public class TodoCheckinHandlerWorker {
     myTodoFilter = todoFilter;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   public void execute() {
     for (Change change : myChanges) {
       ProgressManager.checkCanceled();
-      if (change.getAfterRevision() == null) continue;
-      FilePath afterFilePath = change.getAfterRevision().getFile();
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      ContentRevision afterRevision = change.getAfterRevision();
+
+      if (afterRevision == null) continue;
+      FilePath afterFilePath = afterRevision.getFile();
       VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
 
       EditedFileProcessorBase fileProcessor = ReadAction.compute(() -> {
@@ -93,12 +96,9 @@ public class TodoCheckinHandlerWorker {
           return null;
         }
 
-        PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
-        List<TodoItem> newTodoItems = ContainerUtil.newArrayList(searchHelper.findTodoItems(afterPsiFile));
-        applyFilterAndRemoveDuplicatesAndSort(newTodoItems, myTodoFilter);
-
-        if (change.getBeforeRevision() == null) {
+        if (beforeRevision == null) {
           // take just all todos
+          List<TodoItem> newTodoItems = collectTodoItems(afterPsiFile, false);
           myAddedOrEditedTodos.addAll(newTodoItems);
           return null;
         }
@@ -120,25 +120,32 @@ public class TodoCheckinHandlerWorker {
             return new Range(it.getVcsLine1(), it.getVcsLine2(), it.getLine1(), it.getLine2());
           });
 
-          return new PartialEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, myTodoFilter, ranges);
+          return new PartialEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, afterPsiFile, ranges);
         }
         else {
-          String rawBeforeContent = getRevisionContent(change.getBeforeRevision());
-          if (rawBeforeContent == null) {
+          String beforeContent = getRevisionContent(beforeRevision);
+          if (beforeContent == null) {
             mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
             return null;
           }
 
-          Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
-          if (afterDocument == null) {
-            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
-            return null;
+          if (afterRevision instanceof CurrentContentRevision) {
+            Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
+            if (afterDocument == null) {
+              mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
+              return null;
+            }
+            String afterContent = afterDocument.getText();
+            return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, afterPsiFile);
           }
-
-          String beforeContent = StringUtil.convertLineSeparators(rawBeforeContent);
-          String afterContent = afterDocument.getText();
-
-          return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, myTodoFilter);
+          else {
+            String afterContent = getRevisionContent(afterRevision);
+            if (afterContent == null) {
+              mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
+              return null;
+            }
+            return new NonLocalEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent);
+          }
         }
       });
 
@@ -152,8 +159,18 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private static void applyFilterAndRemoveDuplicatesAndSort(final List<TodoItem> todoItems, final TodoFilter filter) {
+  @NotNull
+  private List<TodoItem> collectTodoItems(@NotNull PsiFile psiFile, boolean isLight) {
+    PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
+    TodoItem[] todoItems = isLight ? searchHelper.findTodoItemsLight(psiFile)
+                                   : searchHelper.findTodoItems(psiFile);
+    return applyFilterAndRemoveDuplicatesAndSort(todoItems, myTodoFilter);
+  }
+
+  private static List<TodoItem> applyFilterAndRemoveDuplicatesAndSort(TodoItem @NotNull [] items, @Nullable TodoFilter filter) {
+    List<TodoItem> todoItems = ContainerUtil.newArrayList(items);
     todoItems.sort(TodoItem.BY_START_OFFSET);
+
     TodoItem previous = null;
     for (Iterator<TodoItem> iterator = todoItems.iterator(); iterator.hasNext(); ) {
       final TodoItem next = iterator.next();
@@ -167,16 +184,19 @@ public class TodoCheckinHandlerWorker {
       }
       previous = next;
     }
+    return todoItems;
   }
 
   private final class SimpleEditedFileProcessor extends EditedFileProcessorBase {
+    private final PsiFile myAfterPsiFile;
+
     private SimpleEditedFileProcessor(@NotNull Project project,
                                       @NotNull FilePath afterFilePath,
                                       @NotNull String beforeContent,
                                       @NotNull String afterContent,
-                                      @NotNull List<TodoItem> newTodoItems,
-                                      @Nullable TodoFilter todoFilter) {
-      super(project, afterFilePath, beforeContent, afterContent, newTodoItems, todoFilter);
+                                      @NotNull PsiFile afterPsiFile) {
+      super(project, afterFilePath, beforeContent, afterContent);
+      myAfterPsiFile = afterPsiFile;
     }
 
     @Override
@@ -184,29 +204,63 @@ public class TodoCheckinHandlerWorker {
       ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
       return ComparisonManager.getInstance().compareLines(myBeforeContent, myAfterContent, ComparisonPolicy.DEFAULT, indicator);
     }
+
+    @Override
+    protected @NotNull List<TodoItem> computeNewTodoItems() {
+      return collectTodoItems(myAfterPsiFile, false);
+    }
   }
 
   private class PartialEditedFileProcessor extends EditedFileProcessorBase {
+    private final PsiFile myAfterPsiFile;
     @NotNull private final List<Range> myRanges;
 
     private PartialEditedFileProcessor(@NotNull Project project,
                                        @NotNull FilePath afterFilePath,
                                        @NotNull String beforeContent,
                                        @NotNull String afterContent,
-                                       @NotNull List<TodoItem> newTodoItems,
-                                       @Nullable TodoFilter todoFilter,
+                                       @NotNull PsiFile afterPsiFile,
                                        @NotNull List<Range> ranges) {
-      super(project, afterFilePath, beforeContent, afterContent, newTodoItems, todoFilter);
+      super(project, afterFilePath, beforeContent, afterContent);
+      myAfterPsiFile = afterPsiFile;
       myRanges = ranges;
     }
 
     @Override
-    protected List<LineFragment> computeFragments() {
+    protected @NotNull List<LineFragment> computeFragments() {
       LineOffsets afterLineOffsets = LineOffsetsUtil.create(myAfterContent);
       LineOffsets beforeLineOffsets = LineOffsetsUtil.create(myBeforeContent);
 
       DiffIterable iterable = DiffIterableUtil.create(myRanges, beforeLineOffsets.getLineCount(), afterLineOffsets.getLineCount());
       return ComparisonManagerImpl.convertIntoLineFragments(beforeLineOffsets, afterLineOffsets, iterable);
+    }
+
+    @Override
+    protected @NotNull List<TodoItem> computeNewTodoItems() {
+      return collectTodoItems(myAfterPsiFile, false);
+    }
+  }
+
+  private final class NonLocalEditedFileProcessor extends EditedFileProcessorBase {
+    private NonLocalEditedFileProcessor(@NotNull Project project,
+                                        @NotNull FilePath afterFilePath,
+                                        @NotNull String beforeContent,
+                                        @NotNull String afterContent) {
+      super(project, afterFilePath, beforeContent, afterContent);
+    }
+
+    @Override
+    protected List<LineFragment> computeFragments() {
+      ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
+      return ComparisonManager.getInstance().compareLines(myBeforeContent, myAfterContent, ComparisonPolicy.DEFAULT, indicator);
+    }
+
+    @Override
+    protected @NotNull List<TodoItem> computeNewTodoItems() {
+      PsiFile afterPsiFile = ReadAction.compute(
+        () -> PsiFileFactory.getInstance(myProject).createFileFromText("new" + myAfterFile.getName(),
+                                                                       myAfterFile.getFileType(), myAfterContent));
+      return collectTodoItems(afterPsiFile, true);
     }
   }
 
@@ -214,60 +268,49 @@ public class TodoCheckinHandlerWorker {
     @NotNull protected final Project myProject;
     @NotNull protected final String myBeforeContent;
     @NotNull protected final String myAfterContent;
-    @NotNull private final FilePath myAfterFile;
-    @NotNull private final List<? extends TodoItem> myNewTodoItems;
-    @Nullable private final TodoFilter myTodoFilter;
+    @NotNull protected final FilePath myAfterFile;
 
     private EditedFileProcessorBase(@NotNull Project project,
                                     @NotNull FilePath afterFilePath,
                                     @NotNull String beforeContent,
-                                    @NotNull String afterContent,
-                                    @NotNull List<? extends TodoItem> newTodoItems,
-                                    @Nullable TodoFilter todoFilter) {
+                                    @NotNull String afterContent) {
       myProject = project;
       myAfterFile = afterFilePath;
       myBeforeContent = beforeContent;
       myAfterContent = afterContent;
-      myNewTodoItems = newTodoItems;
-      myTodoFilter = todoFilter;
     }
 
-    protected abstract List<LineFragment> computeFragments();
+    protected abstract @NotNull List<LineFragment> computeFragments();
+
+    protected abstract @NotNull List<TodoItem> computeNewTodoItems();
+
+    private @NotNull List<TodoItem> computeOldTodoItems() {
+      PsiFile beforePsiFile = ReadAction.compute(
+        () -> PsiFileFactory.getInstance(myProject).createFileFromText("old" + myAfterFile.getName(),
+                                                                       myAfterFile.getFileType(), myBeforeContent));
+      return collectTodoItems(beforePsiFile, true);
+    }
 
     public void process() throws DiffTooBigException {
+      List<TodoItem> newTodoItems = computeNewTodoItems();
       List<LineFragment> lineFragments = computeFragments();
 
       List<Pair<TodoItem, LineFragment>> changedTodoItems = new ArrayList<>();
       StepIntersection.processIntersections(
-        myNewTodoItems, lineFragments,
+        newTodoItems, lineFragments,
         TODO_ITEM_CONVERTOR, new RightLineFragmentConvertor(myAfterContent),
         (todoItem, lineFragment) -> changedTodoItems.add(Pair.create(todoItem, lineFragment)));
 
       if (changedTodoItems.isEmpty()) return;
 
-      final PsiFile beforePsiFile = ReadAction.compute(() -> PsiFileFactory.getInstance(myProject)
-                                                                           .createFileFromText("old" + myAfterFile.getName(),
-                                                                                               myAfterFile.getFileType(), myBeforeContent));
+      final List<TodoItem> oldTodoItems = computeOldTodoItems();
 
-      final IndexPatternSearch.SearchParameters searchParameters =
-        new IndexPatternSearch.SearchParameters(beforePsiFile, TodoIndexPatternProvider.getInstance(),
-                                                TodoConfiguration.getInstance().isMultiLine());
-      final Collection<IndexPatternOccurrence> patternOccurrences = LightIndexPatternSearch.SEARCH.createQuery(searchParameters).findAll();
-
-      if (patternOccurrences.isEmpty()) {
+      if (oldTodoItems.isEmpty()) {
         for (Pair<TodoItem, LineFragment> pair : changedTodoItems) {
           myAddedOrEditedTodos.add(pair.first);
         }
         return;
       }
-
-      final List<TodoItem> oldTodoItems = new ArrayList<>();
-      final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
-      for (IndexPatternOccurrence occurrence : patternOccurrences) {
-        oldTodoItems.add(todoItemsCreator.createTodo(occurrence));
-      }
-      applyFilterAndRemoveDuplicatesAndSort(oldTodoItems, myTodoFilter);
-
 
       LineFragment lastLineFragment = null;
       HashSet<String> oldTodoTexts = new HashSet<>();
@@ -323,7 +366,8 @@ public class TodoCheckinHandlerWorker {
   @Nullable
   private static String getRevisionContent(@NotNull ContentRevision revision) {
     try {
-      return revision.getContent();
+      String content = revision.getContent();
+      return content != null ? StringUtil.convertLineSeparators(content) : null;
     }
     catch (VcsException e) {
       LOG.info(e);

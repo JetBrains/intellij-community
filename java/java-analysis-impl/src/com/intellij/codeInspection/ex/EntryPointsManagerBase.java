@@ -409,12 +409,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return myAddNonJavaEntries;
   }
 
-  public void addAllPersistentEntries(EntryPointsManagerBase manager) {
+  public void addAllPersistentEntries(@NotNull EntryPointsManagerBase manager) {
     myPersistentEntryPoints.putAll(manager.myPersistentEntryPoints);
     myPatterns.addAll(manager.getPatterns());
   }
 
-  static void convert(Element element, final Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
+  static void convert(@NotNull Element element, final Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
     List<Element> content = element.getChildren();
     for (final Element entryElement : content) {
       if (ENTRY_POINT_ATTR.equals(entryElement.getName())) {
@@ -559,7 +559,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     private Pattern regexp;
     private Pattern methodRegexp;
 
-    public ClassPattern(ClassPattern classPattern) {
+    public ClassPattern(@NotNull ClassPattern classPattern) {
       hierarchically = classPattern.hierarchically;
       pattern = classPattern.pattern;
       method = classPattern.method;

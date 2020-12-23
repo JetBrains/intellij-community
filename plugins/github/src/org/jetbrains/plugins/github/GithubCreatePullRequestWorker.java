@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github;
 import com.intellij.dvcs.ui.CompareBranchesDialog;
 import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -594,7 +593,7 @@ public final class GithubCreatePullRequestWorker {
                                                      @NotNull GithubServerPath server) {
     ProgressManager progressManager = ProgressManager.getInstance();
     return progressManager.runProcessWithProgressSynchronously(() -> {
-      Git git = ServiceManager.getService(Git.class);
+      Git git = ApplicationManager.getApplication().getService(Git.class);
 
       GHRepositoryPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
       if (path == null) {

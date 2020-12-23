@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.utils.PluginInfoDetector.isPluginFromOffi
 import com.intellij.internal.statistic.utils.PluginInfoDetector.isSafeToReportFrom
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Getter
@@ -161,7 +160,7 @@ object PluginInfoDetector {
   }
 
   private fun getPluginInfoProvider(): PluginInfoProvider? {
-    return ApplicationManager.getApplication()?.let { ServiceManager.getService(PluginInfoProvider::class.java) }
+    return ApplicationManager.getApplication()?.let { ApplicationManager.getApplication().getService(PluginInfoProvider::class.java) }
   }
 
   /**

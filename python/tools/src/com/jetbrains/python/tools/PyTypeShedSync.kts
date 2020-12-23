@@ -67,13 +67,11 @@ val blacklist = sequenceOf(
   "codeop",
   "colorsys",
   "commands",
-  "contextlib",
   "cookie",
   "cookielib",
   "copy",
   "copy_reg",
   "copyreg",
-  "cprofile",
   "croniter",
   "cstringio",
   "dataclasses",
@@ -96,7 +94,6 @@ val blacklist = sequenceOf(
   "flask",
   "fnmatch",
   "formatter", // leads to broken tests but could be enabled
-  "fractions",
   "future_builtins",
   "geoip2",
   "getopt",
@@ -114,7 +111,6 @@ val blacklist = sequenceOf(
   "jinja2",
   "jwt",
   "kazoo",
-  "keyword",
   "lib2to3",
   "linecache",
   "macurl2path",
@@ -135,8 +131,6 @@ val blacklist = sequenceOf(
   "openssl",
   "optparse", // deprecated
   "pickletools",
-  "pipes",
-  "pkgutil",
   "platform", // leads to broken tests but could be enabled
   "popen2",
   "poplib",
@@ -200,7 +194,6 @@ val blacklist = sequenceOf(
   "trace",
   "traceback",
   "tty",
-  "typed_ast",
   "ujson",
   "unicodedata",
   "urllib2",
@@ -212,8 +205,7 @@ val blacklist = sequenceOf(
   "whichdb",
   "xdrlib",
   "xmlrpclib",
-  "yaml",
-  "zoneinfo"
+  "yaml"
 ).mapTo(hashSetOf()) { it.toLowerCase() }
 
 println("Cleaning")
@@ -230,14 +222,16 @@ fun sync(repo: Path, bundled: Path) {
     println("Removed: ${bundled.abs()}")
   }
 
-  val whiteList = setOf("stdlib",
+  val whiteList = setOf(".github",
+                        "scripts",
+                        "stdlib",
                         "tests",
                         "third_party",
                         ".flake8",
                         ".gitignore",
-                        ".travis.yml",
                         "CONTRIBUTING.md",
                         "LICENSE",
+                        "pre-commit",
                         "pyproject.toml",
                         "README.md",
                         "requirements-tests-py3.txt")

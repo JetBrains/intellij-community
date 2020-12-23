@@ -66,7 +66,6 @@ public final class CreateClassUtil {
       else {
         final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
         FileTemplate fileTemplate = fileTemplateManager.getJ2eeTemplate(templateName);
-        LOG.assertTrue(fileTemplate != null, templateName + " not found");
         final String text = fileTemplate.getText(attributes);
         aClass = JavaCreateFromTemplateHandler.createClassOrInterface(project, directory, text, true, fileTemplate.getExtension());
       }

@@ -137,6 +137,10 @@
     <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin"/>
     <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.java.generate.JavaUastCodeGenerationPlugin"/>
   </extensions>
+  
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="30" description="UAST usages graph building depth limit" key="uast.usage.graph.default.recursion.depth.limit"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
     <declarationSearcher language="JAVA" implementationClass="com.intellij.lang.java.source.JavaDeclarationSearcher"/>

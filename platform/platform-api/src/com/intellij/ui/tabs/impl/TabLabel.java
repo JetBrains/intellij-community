@@ -293,7 +293,7 @@ public class TabLabel extends JPanel implements Accessible {
 
   public boolean isNextToLastPinned() {
     if (!myInfo.isPinned()) {
-      @NotNull List<TabInfo> tabs = myTabs.getTabs();
+      @NotNull List<TabInfo> tabs = myTabs.getVisibleInfos();
       boolean wasPinned = false;
       for (TabInfo info : tabs) {
         if (wasPinned && info == myInfo) return true;

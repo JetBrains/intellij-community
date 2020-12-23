@@ -394,7 +394,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       removeFromUnsaved(document);
       updateModifiedProperty(file);
       if (ioException instanceof IOException) throw (IOException)ioException;
-      if (ioException instanceof RuntimeException) throw (RuntimeException)ioException;
+      if (ioException != null) throw (RuntimeException)ioException;
       return;
     }
 

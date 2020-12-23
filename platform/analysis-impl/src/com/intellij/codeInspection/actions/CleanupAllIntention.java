@@ -7,7 +7,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class CleanupAllIntention extends CleanupIntention {
 
@@ -21,9 +20,8 @@ public final class CleanupAllIntention extends CleanupIntention {
     return AnalysisBundle.message("cleanup.in.file");
   }
 
-  @Nullable
   @Override
-  protected AnalysisScope getScope(Project project, PsiFile file) {
+  protected @NotNull AnalysisScope getScope(Project project, PsiFile file) {
     return new AnalysisScope(file);
   }
 }

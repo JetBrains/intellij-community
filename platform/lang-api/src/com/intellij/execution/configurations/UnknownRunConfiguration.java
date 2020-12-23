@@ -14,6 +14,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
@@ -88,14 +89,14 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    String factoryName = getConfigurationTypeId();
+    @NlsSafe String factoryName = getConfigurationTypeId();
     // Android Studio: customise the deprecation message for Android JUnit run configurations.
     // This is to customise the message on the pop-up window when clicking run button.
     if (factoryName != null && factoryName.equals("AndroidJUnit"))
       throw new ExecutionException("Android JUnit test configurations are no longer supported. You should instead use the " +
                                    "Gradle run configuration for your unit tests. " +
                                    "<html><a href=\"http://d.android.com/r/tools/android-junit-deprecation\">Learn More.</a></html>");
-    throw new ExecutionException("Unknown run configuration type" + (StringUtil.isEmpty(factoryName) ? "" : " " + factoryName));
+    throw new ExecutionException(ExecutionBundle.message("dialog.message.unknown.run.configuration.type", factoryName, StringUtil.isEmpty(factoryName) ? 0 : 1));
   }
 
   @NotNull

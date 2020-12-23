@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Literal
 
 xs = []  # type: List
-ys = set()  # type: Set
+ys = set()  # type: Literal

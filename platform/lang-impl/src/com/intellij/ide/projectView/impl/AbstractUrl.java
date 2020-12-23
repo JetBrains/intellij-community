@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractUrl {
+  @NotNull
   protected final String url;
   protected final String moduleName;
   private final String myType;

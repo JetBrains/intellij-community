@@ -92,7 +92,11 @@ class PyTypeHintsInspection : PyInspection() {
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       super.visitPyReferenceExpression(node)
 
-      if (node.referencedName == PyNames.CANONICAL_SELF && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
+      if (!PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) {
+        return
+      }
+
+      if (node.referencedName == PyNames.CANONICAL_SELF) {
         val typeName = myTypeEvalContext.getType(node)?.name
         if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
           registerProblem(node, PyPsiBundle.message("INSP.type.hints.invalid.type.self"), ProblemHighlightType.GENERIC_ERROR, null,
@@ -100,26 +104,26 @@ class PyTypeHintsInspection : PyInspection() {
         }
       }
 
-      if ((node.parent is PyAnnotation || node.parent is PyExpressionStatement && node.parent.parent is PyTypeHintFile)) {
-        val qNames = node.multiFollowAssignmentsChain(resolveContext, this::followNotTypingOpaque)
-          .asSequence()
-          .mapNotNull { it.element }
-          .filterIsInstance<PyQualifiedNameOwner>()
-          .mapNotNull { it.qualifiedName }
-          .toList()
-        if (qNames.any { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT }) {
+
+      val isTopLevelTypeHint = node.parent is PyAnnotation ||
+                               node.parent is PyExpressionStatement && node.parent.parent is PyTypeHintFile
+      if (isTopLevelTypeHint) {
+        if (resolvesToAnyOfQualifiedNames(node, PyTypingTypeProvider.LITERAL, PyTypingTypeProvider.LITERAL_EXT)) {
           registerProblem(node, PyPsiBundle.message("INSP.type.hints.literal.must.have.at.least.one.parameter"))
         }
-        if (qNames.any { it == PyTypingTypeProvider.ANNOTATED || it == PyTypingTypeProvider.ANNOTATED_EXT }) {
+        if (resolvesToAnyOfQualifiedNames(node, PyTypingTypeProvider.ANNOTATED, PyTypingTypeProvider.ANNOTATED_EXT)) {
           registerProblem(node, PyPsiBundle.message("INSP.type.hints.annotated.must.be.called.with.at.least.two.arguments"))
         }
+      }
+      else if (resolvesToAnyOfQualifiedNames(node, PyTypingTypeProvider.TYPE_ALIAS, PyTypingTypeProvider.TYPE_ALIAS_EXT)) {
+        registerProblem(node, PyPsiBundle.message("INSP.type.hints.type.alias.must.be.used.as.standalone.type.hint"))
       }
     }
 
     override fun visitPyFile(node: PyFile) {
       super.visitPyFile(node)
 
-      if (node is PyTypeHintFile) {
+      if (node is PyTypeHintFile && PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) {
         node.children.singleOrNull().also { if (it is PyExpressionStatement) checkTupleMatching(it.expression) }
       }
     }
@@ -155,6 +159,22 @@ class PyTypeHintsInspection : PyInspection() {
       super.visitPyTargetExpression(node)
 
       checkAnnotatedNonSelfAttribute(node)
+      checkTypeAliasTarget(node)
+    }
+
+    private fun checkTypeAliasTarget(target: PyTargetExpression) {
+      val parent = target.parent
+      if (parent is PyTypeDeclarationStatement) {
+        val annotation = target.annotation?.value
+        if (annotation is PyReferenceExpression && resolvesToAnyOfQualifiedNames(annotation, PyTypingTypeProvider.TYPE_ALIAS,
+                                                                                 PyTypingTypeProvider.TYPE_ALIAS_EXT)) {
+          registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.alias.must.be.immediately.initialized"))
+        }
+      }
+      else if (parent is PyAssignmentStatement &&
+               PyTypingTypeProvider.isExplicitTypeAlias(parent, myTypeEvalContext) && !PyUtil.isTopLevel(parent)) {
+        registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.alias.must.be.top.level.declaration"))
+      }
     }
 
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
@@ -288,7 +308,9 @@ class PyTypeHintsInspection : PyInspection() {
               PyTypingTypeProvider.LITERAL,
               PyTypingTypeProvider.LITERAL_EXT,
               PyTypingTypeProvider.ANNOTATED,
-              PyTypingTypeProvider.ANNOTATED_EXT -> {
+              PyTypingTypeProvider.ANNOTATED_EXT,
+              PyTypingTypeProvider.TYPE_ALIAS,
+              PyTypingTypeProvider.TYPE_ALIAS_EXT -> {
                 val shortName = it.substringAfterLast('.')
                 registerProblem(base, PyPsiBundle.message("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
                                 ProblemHighlightType.GENERIC_ERROR)
@@ -373,7 +395,7 @@ class PyTypeHintsInspection : PyInspection() {
                           null,
                           ReplaceWithSubscriptionQuickFix())
         }
-        else if (PyTypingTypeProvider.isInAnnotationOrTypeComment(call)) {
+        else if (PyTypingTypeProvider.isInsideTypeHint(call, myTypeEvalContext)) {
           multiFollowAssignmentsChain(callee)
             .asSequence()
             .map { if (it is PyFunction) it.containingClass else it }
@@ -494,6 +516,8 @@ class PyTypeHintsInspection : PyInspection() {
       val literalExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.LITERAL_EXT)
       val annotatedQName = QualifiedName.fromDottedString(PyTypingTypeProvider.ANNOTATED)
       val annotatedExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.ANNOTATED_EXT)
+      val typeAliasQName = QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_ALIAS)
+      val typeAliasExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_ALIAS_EXT)
       val qNames = PyResolveUtil.resolveImportedElementQNameLocally(operand)
 
       var typingOnly = true
@@ -504,6 +528,7 @@ class PyTypeHintsInspection : PyInspection() {
           genericQName -> checkGenericParameters(index)
           literalQName, literalExtQName -> checkLiteralParameter(index)
           annotatedQName, annotatedExtQName -> checkAnnotatedParameter(index)
+          typeAliasQName, typeAliasExtQName -> reportParameterizedTypeAlias(index)
           callableQName -> {
             callableExists = true
             checkCallableParameters(index)
@@ -515,6 +540,13 @@ class PyTypeHintsInspection : PyInspection() {
 
       if (qNames.isNotEmpty() && typingOnly) {
         checkTypingMemberParameters(index, callableExists)
+      }
+    }
+
+    private fun reportParameterizedTypeAlias(index: PyExpression) {
+      // There is another warning in the type hint context
+      if (!PyTypingTypeProvider.isInsideTypeHint(index, myTypeEvalContext)) {
+        registerProblem(index, PyPsiBundle.message("INSP.type.hints.type.alias.cannot.be.parameterized"), ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
@@ -704,8 +736,14 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun multiFollowAssignmentsChain(referenceExpression: PyReferenceExpression,
                                             follow: (PyTargetExpression) -> Boolean = this::followNotTypingOpaque): List<PsiElement> {
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
       return referenceExpression.multiFollowAssignmentsChain(resolveContext, follow).mapNotNull { it.element }
+    }
+
+    private fun resolvesToAnyOfQualifiedNames(referenceExpr: PyReferenceExpression, vararg names: String): Boolean {
+      return multiFollowAssignmentsChain(referenceExpr)
+        .filterIsInstance<PyQualifiedNameOwner>()
+        .mapNotNull { it.qualifiedName }
+        .any { names.contains(it) }
     }
   }
 

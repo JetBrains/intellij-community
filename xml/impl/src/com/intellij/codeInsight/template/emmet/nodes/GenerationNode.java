@@ -125,9 +125,6 @@ public class GenerationNode extends UserDataHolderBase {
     myContainsSurroundedTextMarker = !(insertSurroundedText && myInsertSurroundedTextAtTheEnd);
 
     GenerationNode generationNode = this;
-    if (generationNode != this) {
-      return generationNode.generate(callback, generator, Collections.emptyList(), insertSurroundedText, segmentsLimit);
-    }
 
     boolean shouldNotReformatTemplate = false;
     boolean oneLineTemplateExpanding = false;

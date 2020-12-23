@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
+  // this logger is for low-level focus-related requests (performed by JDK and our custom low-level mechanisms)
+  public static final Logger FOCUS_REQUESTS_LOG = Logger.getInstance("Focus requests");
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
@@ -68,11 +70,11 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
-    IdeEventQueue.getInstance().addDispatcher(e -> {
+    UIUtil.addAwtListener(e -> {
       if (e instanceof FocusEvent) {
         final FocusEvent fe = (FocusEvent)e;
         final Component c = fe.getComponent();
-        if (c instanceof Window || c == null) return false;
+        if (c instanceof Window || c == null) return;
 
         Component parent = ComponentUtil.findUltimateParent(c);
         if (parent instanceof IdeFrame) {
@@ -89,9 +91,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
           }
         }
       }
-
-      return false;
-    }, this);
+    }, AWTEvent.FOCUS_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK,this);
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusedWindow", event -> {
       Object value = event.getNewValue();
@@ -123,16 +123,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @DirtyUI
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    Window window = ComponentUtil.getWindow(c);
-    if ((window == null || window.isAutoRequestFocus()) &&
-        (ApplicationManager.getApplication().isActive() || !Registry.is("suppress.focus.stealing.active.window.checks"))) {
-      logFocusRequest(c, project, false);
-      c.requestFocus();
-    }
-    else {
-      logFocusRequest(c, project, true);
-      c.requestFocusInWindow();
-    }
+    logFocusRequest(c, project, true);
+    c.requestFocusInWindow();
     return ActionCallback.DONE;
   }
 

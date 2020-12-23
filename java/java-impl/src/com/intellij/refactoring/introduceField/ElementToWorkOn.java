@@ -19,6 +19,7 @@ import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
@@ -71,7 +72,12 @@ public final class ElementToWorkOn {
     return myExpression == null;
   }
 
-  public static void processElementToWorkOn(final Editor editor, final PsiFile file, final @NlsContexts.DialogTitle String refactoringName, final String helpId, final Project project, final ElementsProcessor<? super ElementToWorkOn> processor) {
+  public static void processElementToWorkOn(final @NotNull Editor editor,
+                                            final PsiFile file,
+                                            final @NlsContexts.DialogTitle String refactoringName,
+                                            final String helpId,
+                                            final Project project,
+                                            final ElementsProcessor<? super ElementToWorkOn> processor) {
     PsiLocalVariable localVar = null;
     PsiExpression expr = null;
 
@@ -81,11 +87,12 @@ public final class ElementToWorkOn {
                                                                          .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil
                                                                          .LOOKUP_ITEM_ACCEPTED);
       if (element instanceof PsiLocalVariable) {
-        localVar = (PsiLocalVariable) element;
+        localVar = (PsiLocalVariable)element;
         PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
         if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiReferenceExpression) {
-          expr = (PsiExpression) elementAt.getParent();
-        } else {
+          expr = (PsiExpression)elementAt.getParent();
+        }
+        else {
           final PsiReference reference = TargetElementUtil.findReference(editor);
           if (reference != null) {
             final PsiElement refElement = reference.getElement();
@@ -94,21 +101,25 @@ public final class ElementToWorkOn {
             }
           }
         }
-      } else {
-        final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class);
+      }
+      else {
+        final PsiLocalVariable variable =
+          PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class);
 
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
 
         if (statementsInRange.length == 1 && IntroduceVariableBase.selectLineAtCaret(offset, statementsInRange)) {
           editor.getSelectionModel().selectLineAtCaret();
-          final ElementToWorkOn elementToWorkOn = getElementToWorkOn(editor, file, refactoringName, helpId, project, localVar, expr);
-          if (elementToWorkOn == null || elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null || !processor.accept(elementToWorkOn)) {
+          final ElementToWorkOn elementToWorkOn = getElementToWorkOn(editor, file, refactoringName, helpId, project, null, null);
+          if (elementToWorkOn == null ||
+              elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null ||
+              !processor.accept(elementToWorkOn)) {
             editor.getSelectionModel().removeSelection();
           }
         }
 
-        if (!editor.getSelectionModel().hasSelection()){
+        if (!editor.getSelectionModel().hasSelection()) {
           final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset);
           for (Iterator<PsiExpression> iterator = expressions.iterator(); iterator.hasNext(); ) {
             PsiExpression expression = iterator.next();
@@ -126,14 +137,14 @@ public final class ElementToWorkOn {
           else {
             final int selection = IntroduceVariableBase.preferredSelection(statementsInRange, expressions);
             IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
-              @Override
-              public void pass(final PsiExpression selectedValue) {
-                PsiLocalVariable var = null; //replace var if selected expression == var initializer
-                if (variable != null && variable.getInitializer() == selectedValue) {
-                  var = variable;
-                }
-                processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, var, selectedValue));
-              }
+               @Override
+               public void pass(final PsiExpression selectedValue) {
+                 PsiLocalVariable var = null; //replace var if selected expression == var initializer
+                 if (variable != null && variable.getInitializer() == selectedValue) {
+                   var = variable;
+                 }
+                 processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, var, selectedValue));
+               }
             }, new PsiExpressionTrimRenderer.RenderFunction(), RefactoringBundle.message("introduce.target.chooser.expressions.title"), selection, ScopeHighlighter.NATURAL_RANGER);
             return;
           }

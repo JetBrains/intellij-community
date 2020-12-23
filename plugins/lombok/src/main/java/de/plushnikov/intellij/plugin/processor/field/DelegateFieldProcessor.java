@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
-import lombok.Delegate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,11 +20,11 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
 
   @SuppressWarnings({"deprecation"})
   public DelegateFieldProcessor() {
-    super(PsiMethod.class, Delegate.class, lombok.experimental.Delegate.class);
+    super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);
   }
 
   private DelegateHandler getDelegateHandler() {
-    return ServiceManager.getService(DelegateHandler.class);
+    return ApplicationManager.getApplication().getService(DelegateHandler.class);
   }
 
   @Override

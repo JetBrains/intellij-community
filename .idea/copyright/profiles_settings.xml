@@ -1,12 +1,8 @@
 <component name="CopyrightManager">
-  <settings default="aosp">
-    <module2copyright>
-      <element module="bazel" copyright="bazel" />
-      <element module="firebase-code" copyright="google" />
-      <element module="aosp-code" copyright="aosp" />
-    </module2copyright>
+  <settings default="apache 2 license">
     <LanguageOptions name="__TEMPLATE__">
       <option name="addBlankAfter" value="false" />
+      <option name="block" value="false" />
     </LanguageOptions>
   </settings>
 </component>

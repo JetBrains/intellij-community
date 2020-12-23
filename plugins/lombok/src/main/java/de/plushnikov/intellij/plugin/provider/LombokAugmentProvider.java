@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.provider;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
@@ -35,7 +35,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     log.debug("LombokAugmentProvider created");
 
     modifierProcessors = LombokProcessorManager.getLombokModifierProcessors();
-    valProcessor = ServiceManager.getService(ValProcessor.class);
+    valProcessor = ApplicationManager.getApplication().getService(ValProcessor.class);
   }
 
   @NotNull
@@ -57,7 +57,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   /**
    * This method should be available in the next IntelliJ 203 Release
    */
-  //  @Override
+  @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
     if (!valProcessor.isEnabled(typeElement.getProject())) {
       return false;

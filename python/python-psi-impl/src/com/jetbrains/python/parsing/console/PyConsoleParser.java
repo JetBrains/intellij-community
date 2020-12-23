@@ -21,7 +21,6 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
-import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 
 public class PyConsoleParser extends PyParser {
@@ -48,8 +47,8 @@ public class PyConsoleParser extends PyParser {
   }
 
   @Override
-  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
     boolean iPythonStartSymbol = myPythonConsoleData.isIPythonEnabled() && startsWithIPythonSpecialSymbol(builder);
-    return new PyConsoleParsingContext(builder, languageLevel, futureFlag, myPythonConsoleData, iPythonStartSymbol);
+    return new PyConsoleParsingContext(builder, languageLevel, myPythonConsoleData, iPythonStartSymbol);
   }
 }

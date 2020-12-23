@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +16,8 @@ public abstract class SystemNotifications {
 
   public static SystemNotifications getInstance() {
     Application app = ApplicationManager.getApplication();
-    return app.isHeadlessEnvironment() || app.isUnitTestMode() ? NULL : ServiceManager.getService(SystemNotifications.class);
+    return app.isHeadlessEnvironment() || app.isUnitTestMode() ? NULL : ApplicationManager.getApplication()
+      .getService(SystemNotifications.class);
   }
 
   public abstract void notify(@NotNull String notificationName,

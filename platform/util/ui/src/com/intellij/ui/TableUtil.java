@@ -146,9 +146,7 @@ public final class TableUtil {
       }
     }
     Rectangle cellRect = table.getCellRect(selectionModel.getMinSelectionIndex(), 0, true);
-    if (cellRect != null) {
-      table.scrollRectToVisible(cellRect);
-    }
+    table.scrollRectToVisible(cellRect);
     table.repaint();
     return counter;
   }
@@ -173,9 +171,7 @@ public final class TableUtil {
       }
     }
     Rectangle cellRect = table.getCellRect(selectionModel.getMaxSelectionIndex(), 0, true);
-    if (cellRect != null) {
-      table.scrollRectToVisible(cellRect);
-    }
+    table.scrollRectToVisible(cellRect);
     table.repaint();
     return counter;
   }

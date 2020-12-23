@@ -32,24 +32,34 @@ class ConsoleHistoryCopyHandler(val originalHandler: EditorActionHandler) : Edit
     doCopyWithoutPrompt(editor as EditorEx)
   }
 
+  private fun getPromptLengthByMarker(editor: EditorEx, startOffset: Int, endOffset: Int): Int? {
+    val r = Ref.create<Int>()
+    editor.markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset) {
+      val length = it.getUserData(PROMPT_LENGTH_MARKER) ?: return@processRangeHighlightersOverlappingWith true
+      r.set(length)
+      false
+    }
+    return if (!r.isNull) {
+      r.get()
+    }
+    else {
+      null
+    }
+  }
+
   private fun doCopyWithoutPrompt(editor: EditorEx) {
     val start = editor.selectionModel.selectionStart
     val end = editor.selectionModel.selectionEnd
     val document = editor.document
     val beginLine = document.getLineNumber(start)
     val endLine = document.getLineNumber(end)
+    val lineEnd = document.getLineEndOffset(endLine)
     val sb = StringBuilder()
+    val defaultPromptLength = getPromptLengthByMarker(editor, 0, lineEnd) ?: 0
     for (i in beginLine..endLine) {
       var lineStart = document.getLineStartOffset(i)
-      val r = Ref.create<Int>()
-      editor.markupModel.processRangeHighlightersOverlappingWith(lineStart, lineStart) {
-        val length = it.getUserData(PROMPT_LENGTH_MARKER) ?: return@processRangeHighlightersOverlappingWith true
-        r.set(length)
-        false
-      }
-      if (!r.isNull) {
-        lineStart += r.get()
-      }
+      val promptLength = getPromptLengthByMarker(editor, lineStart, lineStart) ?: defaultPromptLength
+      lineStart += promptLength
       val rangeStart = max(lineStart, start)
       val rangeEnd = min(document.getLineEndOffset(i), end)
       if (rangeStart < rangeEnd) {

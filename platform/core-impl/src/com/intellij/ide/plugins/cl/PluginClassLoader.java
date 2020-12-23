@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -43,7 +42,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   private final AtomicLong backgroundTime = new AtomicLong();
 
   private final AtomicInteger loadedClassCounter = new AtomicInteger();
-  private ClassLoader myCoreLoader;
+  private final ClassLoader myCoreLoader;
 
   // to simplify analyzing of heap dump (dynamic plugin reloading)
   private final PluginId pluginId;
@@ -52,18 +51,25 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot) {
-    this(build().urls(urls).allowLock().useCache(), parents, pluginDescriptor, pluginRoot);
+    this(build().urls(urls).allowLock().useCache(), parents, pluginDescriptor, pluginRoot, null);
   }
 
   public PluginClassLoader(@NotNull Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
-                           @Nullable Path pluginRoot) {
+                           @Nullable Path pluginRoot,
+                           @Nullable ClassLoader coreLoader) {
     super(builder);
 
     myParents = parents;
     myPluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
+    myCoreLoader = coreLoader;
+    if (coreLoader != null && PluginClassLoader.class.desiredAssertionStatus()) {
+      for (ClassLoader parent : myParents) {
+        assert parent != coreLoader;
+      }
+    }
 
     myLibDirectories = new SmartList<>();
     if (pluginRoot != null) {
@@ -108,7 +114,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                    ActionWithClassloader<Result, ParameterType> actionWithClassloader,
                    ParameterType parameter) {
       Result resource = doExecute(name, classloader, parameter);
-      if (resource != null) return resource;
+      if (resource != null) {
+        return resource;
+      }
       return classloader.processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, visited, parameter, false);
     }
 
@@ -123,10 +131,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, null, parameter, true);
   }
 
-  public void setCoreLoader(ClassLoader loader) {
-    myCoreLoader = loader;
-  }
-
   private @Nullable <Result, ParameterType> Result processResourcesInParents(String name,
                                                                              ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader,
                                                                              ActionWithClassloader<Result, ParameterType> actionWithClassloader,
@@ -134,9 +138,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                                                                              ParameterType parameter,
                                                                              boolean withRoot) {
     for (ClassLoader parent : myParents) {
-      if (parent == myCoreLoader) {
-        continue;
-      }
+      assert parent != myCoreLoader;
       if (visited == null) {
         visited = new HashSet<>();
         visited.add(this);
@@ -148,7 +150,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
       if (parent instanceof PluginClassLoader) {
         Result resource = actionWithPluginClassLoader.execute(name, (PluginClassLoader)parent, visited, actionWithPluginClassLoader,
-          actionWithClassloader, parameter);
+                                                              actionWithClassloader, parameter);
         if (resource != null) {
           return resource;
         }
@@ -156,7 +158,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       }
 
       Result resource = actionWithClassloader.execute(name, parent, parameter);
-      if (resource != null) return resource;
+      if (resource != null) {
+        return resource;
+      }
     }
 
     if (withRoot && myCoreLoader != null && (visited == null || visited.add(myCoreLoader))) {
@@ -209,10 +213,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       c = processResourcesInParents(name, loadClassInPluginCL, loadClassInCl, visited, null, withRoot);
     }
 
-    if (c != null) {
-      if (resolve) {
-        resolveClass(c);
-      }
+    if (c != null && resolve) {
+      resolveClass(c);
     }
 
     if (StartUpMeasurer.measuringPluginStartupCosts) {
@@ -224,14 +226,14 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return c;
   }
 
-  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(
-    "kotlin.sequences.Sequence",
-    "kotlin.Lazy", "kotlin.Unit",
-    "kotlin.Pair", "kotlin.Triple",
-    "kotlin.jvm.internal.DefaultConstructorMarker",
-    "kotlin.jvm.internal.ClassBasedDeclarationContainer",
-    "kotlin.properties.ReadWriteProperty",
-    "kotlin.properties.ReadOnlyProperty");
+  @SuppressWarnings("SSBasedInspection")
+  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = new HashSet<>(Arrays.asList("kotlin.sequences.Sequence",
+                                                                                                          "kotlin.Lazy", "kotlin.Unit",
+                                                                                                          "kotlin.Pair", "kotlin.Triple",
+                                                                                                          "kotlin.jvm.internal.DefaultConstructorMarker",
+                                                                                                          "kotlin.jvm.internal.ClassBasedDeclarationContainer",
+                                                                                                          "kotlin.properties.ReadWriteProperty",
+                                                                                                          "kotlin.properties.ReadOnlyProperty"));
 
   private static boolean mustBeLoadedByPlatform(@NonNls String className) {
     if (className.startsWith("java.")) {
@@ -250,7 +252,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   private @Nullable Class<?> loadClassInsideSelf(@NotNull String name) {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
-      if (c != null) {
+      if (c != null && c.getClassLoader() == this) {
         return c;
       }
 
@@ -285,7 +287,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   @Override
   public URL findResource(String name) {
     URL resource = findOwnResource(name);
-    if (resource != null) return resource;
+    if (resource != null) {
+      return resource;
+    }
     return processResourcesInParents(name, findResourceInPluginCL, findResourceInCl, null);
   }
 
@@ -293,13 +297,13 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     return super.findResource(name);
   }
 
-  private static final ActionWithPluginClassLoader<InputStream, Void>
-    getResourceAsStreamInPluginCL = new ActionWithPluginClassLoader<InputStream, Void>() {
-    @Override
-    protected InputStream doExecute(String name, PluginClassLoader classloader, Void parameter) {
-      return classloader.getOwnResourceAsStream(name);
-    }
-  };
+  private static final ActionWithPluginClassLoader<InputStream, Void> getResourceAsStreamInPluginCL =
+    new ActionWithPluginClassLoader<InputStream, Void>() {
+      @Override
+      protected InputStream doExecute(String name, PluginClassLoader classloader, Void parameter) {
+        return classloader.getOwnResourceAsStream(name);
+      }
+    };
 
   private static final ActionWithClassloader<InputStream, Void> getResourceAsStreamInCl = new ActionWithClassloader<InputStream, Void>() {
     @Override

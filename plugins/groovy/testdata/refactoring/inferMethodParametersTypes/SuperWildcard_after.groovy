@@ -1,4 +1,4 @@
-Object foo(List<? super B> a) {
+Object foo(ArrayList<? super B> a) {
   C c = new C()
   a.add(c)
 }

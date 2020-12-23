@@ -15,12 +15,15 @@ import java.util.List;
 
 final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl<?>> {
   private static final Key<Integer> ORDER_BEFORE_DISPOSAL = Key.create("inlay.order.before.disposal");
+  final int myPriority;
 
   InlineInlayImpl(@NotNull EditorImpl editor,
                   int offset,
                   boolean relatesToPrecedingText,
+                  int priority,
                   @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
+    myPriority = priority;
   }
 
   @Override

@@ -1,14 +1,14 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,11 +24,11 @@ import java.util.List;
 public class GetterProcessor extends AbstractClassProcessor {
 
   public GetterProcessor() {
-    super(PsiMethod.class, Getter.class);
+    super(PsiMethod.class, LombokClassNames.GETTER);
   }
 
   private GetterFieldProcessor getGetterFieldProcessor() {
-    return ServiceManager.getService(GetterFieldProcessor.class);
+    return ApplicationManager.getApplication().getService(GetterFieldProcessor.class);
   }
 
   @Override

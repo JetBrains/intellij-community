@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.jrt;
 
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -12,6 +13,10 @@ public abstract class JrtFileSystem extends ArchiveFileSystem implements Virtual
   public static final String PROTOCOL = StandardFileSystems.JRT_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.JRT_PROTOCOL_PREFIX;
   public static final String SEPARATOR = URLUtil.JAR_SEPARATOR;
+
+  public static JrtFileSystem getInstance() {
+    return (JrtFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
+  }
 
   public static boolean isRoot(@NotNull VirtualFile file) {
     return file.getParent() == null && file.getFileSystem() instanceof JrtFileSystem;

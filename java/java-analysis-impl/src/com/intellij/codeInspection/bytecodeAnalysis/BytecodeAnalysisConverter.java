@@ -3,6 +3,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,12 +106,15 @@ public final class BytecodeAnalysisConverter {
       return qname.replace('.', '$');
     }
     if (qname.length() < packageName.length() + 1 || !qname.startsWith(packageName)) {
-      LOG.error("Invalid qname/packageName; qname = " +
-                qname +
-                "; packageName = " +
-                packageName +
-                "; getClass = " +
-                psiClass.getClass().getName() +
+      LOG.error("Invalid qname/packageName; qname = " + qname +
+                "; packageName = " + packageName +
+                "; getClass = " + psiClass.getClass().getName() +
+                "; fileName = " + psiFile.getName() +
+                "; file getClass = " + psiFile.getClass().getName() +
+                (psiClass instanceof ClsClassImpl ?
+                 "; stub getClass = " + ((ClsClassImpl)psiClass).getStub().getClass().getName() +
+                 "; stub source = " + ((ClsClassImpl)psiClass).getStub().getSourceFileName() :
+                 "") +
                 "; top-level: " + (psiClass.getContainingClass() == null));
       return null;
     }

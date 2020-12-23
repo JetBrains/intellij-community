@@ -149,8 +149,8 @@ public class Xsd2InstanceUtils {
     return Collections.emptyList();
   }
 
-  public static String processAndSaveAllSchemas(@NotNull XmlFile file, @NotNull final Map<String, String> scannedToFileName,
-                                          final @NotNull SchemaReferenceProcessor schemaReferenceProcessor) {
+  public static @NotNull String processAndSaveAllSchemas(@NotNull XmlFile file, @NotNull final Map<String, String> scannedToFileName,
+                                                         final @NotNull SchemaReferenceProcessor schemaReferenceProcessor) {
     final String fileName = file.getName();
 
     String previous = scannedToFileName.get(fileName);
@@ -194,10 +194,8 @@ public class Xsd2InstanceUtils {
 
             if (psiElement instanceof XmlFile) {
               final String s = processAndSaveAllSchemas(((XmlFile) psiElement), scannedToFileName, schemaReferenceProcessor);
-              if (s != null) {
-                result.append(xmlAttribute.getName()).append("='").append(s).append('\'');
-                replaced = true;
-              }
+              result.append(xmlAttribute.getName()).append("='").append(s).append('\'');
+              replaced = true;
             }
           }
         }

@@ -1,9 +1,10 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -14,7 +15,6 @@ import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,15 +34,15 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private static final String INCLUDE_ANNOTATION_METHOD = "name";
   private static final String INCLUDE_ANNOTATION_RANK = "rank";
   private static final String INCLUDE_ANNOTATION_SKIP_NULL = "skipNull";
-  private static final String TOSTRING_INCLUDE = ToString.Include.class.getCanonicalName();
-  private static final String TOSTRING_EXCLUDE = ToString.Exclude.class.getCanonicalName();
+  private static final String TOSTRING_INCLUDE = LombokClassNames.TO_STRING_INCLUDE;
+  private static final String TOSTRING_EXCLUDE = LombokClassNames.TO_STRING_EXCLUDE;
 
   public ToStringProcessor() {
-    super(PsiMethod.class, ToString.class);
+    super(PsiMethod.class, LombokClassNames.TO_STRING);
   }
 
   private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
-    return ServiceManager.getService(EqualsAndHashCodeToStringHandler.class);
+    return ApplicationManager.getApplication().getService(EqualsAndHashCodeToStringHandler.class);
   }
 
   @Override

@@ -3,6 +3,7 @@ package com.intellij.execution.target
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
@@ -20,7 +21,7 @@ import javax.swing.Icon
  */
 abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: String) {
 
-  abstract val displayName: String
+  abstract val displayName: String @Nls get
 
   abstract val icon: Icon
 

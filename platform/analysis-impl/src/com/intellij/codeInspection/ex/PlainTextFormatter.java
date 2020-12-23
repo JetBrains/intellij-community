@@ -152,14 +152,13 @@ public class PlainTextFormatter implements InspectionsReportConverter {
     }
     catch (IOException e) {
       throw new ConversionException("Cannot write inspection results: " + e.getMessage());
-    } finally {
-      if (w != null) {
-        try {
-          w.close();
-        }
-        catch (IOException e) {
-          warn("Cannot save inspection results: " + e.getMessage());
-        }
+    }
+    finally {
+      try {
+        w.close();
+      }
+      catch (IOException e) {
+        warn("Cannot save inspection results: " + e.getMessage());
       }
     }
   }

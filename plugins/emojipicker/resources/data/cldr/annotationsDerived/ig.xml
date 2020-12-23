@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="ig"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">Ego Amaghị</annotation>
+		<annotation cp="֏" type="tts">Ego Dram obodo Armenia</annotation>
+		<annotation cp="؋" type="tts">Ego Afghani Obodo Afghanistan</annotation>
+		<annotation cp="৳" type="tts">Ego Taka obodo Bangladesh</annotation>
+		<annotation cp="฿" type="tts">Ego Baht obodo Thai</annotation>
+		<annotation cp="៛" type="tts">Ego Riel obodo Cambodia</annotation>
+		<annotation cp="₡" type="tts">Ego Colón obodo Costa Rica</annotation>
+		<annotation cp="₦" type="tts">Naịra</annotation>
+		<annotation cp="₪" type="tts">Ego Shekel ọhụrụ obodo Israel</annotation>
+		<annotation cp="₫" type="tts">Ego Dong obodo Vietnam</annotation>
+		<annotation cp="₭" type="tts">Ego Kip Obodo Laos</annotation>
+		<annotation cp="₮" type="tts">Ego Turgik Obodo Mongolia</annotation>
+		<annotation cp="₲" type="tts">Ego Guarani obodo Paraguay</annotation>
+		<annotation cp="₴" type="tts">Ego Hryvnia obodo Ukraine</annotation>
+		<annotation cp="₵" type="tts">Ego Cedi obodo Ghana</annotation>
+		<annotation cp="₸" type="tts">Ego Tenge obodo Kazakhstani</annotation>
+		<annotation cp="₺" type="tts">Ego Lira obodo Turkey</annotation>
+		<annotation cp="₼" type="tts">Ego Manat obodo Azerbaijan</annotation>
+		<annotation cp="₾" type="tts">Ego Lari Obodo Georgia</annotation>
+	</annotations>
+</ldml>

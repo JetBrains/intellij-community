@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -36,7 +36,7 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   private ConfigurationBean myConfigurationBean;
 
   public static SvnApplicationSettings getInstance() {
-    return ServiceManager.getService(SvnApplicationSettings.class);
+    return ApplicationManager.getApplication().getService(SvnApplicationSettings.class);
   }
 
   public SvnApplicationSettings() {

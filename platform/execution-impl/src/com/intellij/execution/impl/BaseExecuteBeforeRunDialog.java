@@ -5,6 +5,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.VirtualConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -175,9 +176,11 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
     DefaultMutableTreeNode node = new DefaultMutableTreeNode(TEMPLATE_ROOT);
     root.add(node);
     for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
-      Icon icon = type.getIcon();
-      DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
-      node.add(typeNode);
+      if (!(type instanceof VirtualConfigurationType)) {
+        Icon icon = type.getIcon();
+        DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
+        node.add(typeNode);
+      }
     }
   }
 

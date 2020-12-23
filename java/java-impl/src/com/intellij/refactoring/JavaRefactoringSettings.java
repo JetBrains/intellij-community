@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -86,7 +86,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_OVERLOADS = true;
 
   public static JavaRefactoringSettings getInstance() {
-    return ServiceManager.getService(JavaRefactoringSettings.class);
+    return ApplicationManager.getApplication().getService(JavaRefactoringSettings.class);
   }
 
   public boolean isToRenameInheritors() {

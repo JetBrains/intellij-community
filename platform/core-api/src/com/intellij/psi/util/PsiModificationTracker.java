@@ -2,7 +2,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
@@ -40,7 +39,7 @@ public interface PsiModificationTracker extends ModificationTracker {
      * @return The instance of {@link PsiModificationTracker} corresponding to the given project.
      */
     public static PsiModificationTracker getInstance(Project project) {
-      return ServiceManager.getService(project, PsiModificationTracker.class);
+      return project.getService(PsiModificationTracker.class);
     }
   }
 

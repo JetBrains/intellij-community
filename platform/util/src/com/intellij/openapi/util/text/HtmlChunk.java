@@ -90,6 +90,8 @@ public abstract class HtmlChunk {
     private static final Element BODY = tag("body");
     private static final Element HTML = tag("html");
     private static final Element BR = tag("br");
+    private static final Element UL = tag("ul");
+    private static final Element LI = tag("li");
     private static final Element HR = tag("hr");
     private static final Element P = tag("p");
     private static final Element DIV = tag("div");
@@ -178,6 +180,21 @@ public abstract class HtmlChunk {
       List<HtmlChunk> newChildren = new ArrayList<>(myChildren.size() + chunks.length);
       newChildren.addAll(myChildren);
       Collections.addAll(newChildren, chunks);
+      return new Element(myTagName, myAttributes, newChildren);
+    }
+
+    /**
+     * @param chunks chunks to add to the list of children
+     * @return a new element that is like this element but has extra children
+     */
+    @Contract(pure = true)
+    public @NotNull Element children(@NotNull List<HtmlChunk> chunks) {
+      if (myChildren.isEmpty()) {
+        return new Element(myTagName, myAttributes, new ArrayList<>(chunks));
+      }
+      List<HtmlChunk> newChildren = new ArrayList<>(myChildren.size() + chunks.size());
+      newChildren.addAll(myChildren);
+      newChildren.addAll(chunks);
       return new Element(myTagName, myAttributes, newChildren);
     }
 
@@ -294,6 +311,22 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public static @NotNull Element br() {
     return Element.BR;
+  }
+
+  /**
+   * @return a &lt;li&gt; element.
+   */
+  @Contract(pure = true)
+  public static @NotNull Element li() {
+    return Element.LI;
+  }
+
+  /**
+   * @return a &lt;ul&gt; element.
+   */
+  @Contract(pure = true)
+  public static @NotNull Element ul() {
+    return Element.UL;
   }
 
   /**

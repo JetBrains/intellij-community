@@ -182,6 +182,22 @@ class ServiceTreeView extends ServiceView {
   }
 
   @Override
+  Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    AsyncPromise<Void> result = new AsyncPromise<>();
+    myTreeModel.findPath(service, contributorClass)
+      .onError(result::setError)
+      .onSuccess(path -> {
+        ServiceViewItem item = (ServiceViewItem)path.getLastPathComponent();
+        AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+          ServiceViewManagerImpl manager = (ServiceViewManagerImpl)ServiceViewManager.getInstance(getProject());
+          manager.extract(new ServiceViewDragHelper.ServiceViewDragBean(this, Collections.singletonList(item)));
+          result.setResult(null);
+        });
+      });
+    return result;
+  }
+
+  @Override
   void onViewSelected() {
     mySelected = true;
     if (myLastSelection != null) {

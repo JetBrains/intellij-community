@@ -48,10 +48,10 @@ public class ErrorLabel extends JLabel {
     boolean newUnderline = text != null;
     myForeground = color;
     if (newUnderline) {
-      updateLabelView(newUnderline, text);
+      updateLabelView(true, text);
     }
     else if (myUnderline) {
-      updateLabelView(newUnderline, myTooltip);
+      updateLabelView(false, myTooltip);
     }
   }
 

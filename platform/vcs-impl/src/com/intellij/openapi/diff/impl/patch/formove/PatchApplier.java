@@ -195,7 +195,7 @@ public final class PatchApplier {
           });
         }
         finally {
-          VcsFileListenerContextHelper.getInstance(project).clearContext();
+          trigger.cleanup();
           LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.after.patch.label.text"));
         }
       });

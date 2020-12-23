@@ -24,11 +24,6 @@ class WelcomeFrameFixture private constructor(robot: Robot,
     return this
   }
 
-  fun importProject(): WelcomeFrameFixture {
-    findActionLinkByActionId("WelcomeScreen.ImportProject").click()
-    return this
-  }
-
   fun checkoutFrom(): WelcomeFrameFixture {
     findActionLinkByActionId("Vcs.VcsClone").click()
     return this

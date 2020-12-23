@@ -117,7 +117,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
       myText = StringUtil.toLowerCase(type.getRepresentationValue()) + " " + condition.getValue();
     }
     else {
-      myText = condition.getValue().toString();
+      myText = condition.getPresentableValue();
     }
     myTextControl.setTextAlign(SwingConstants.CENTER);
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(type, false)));

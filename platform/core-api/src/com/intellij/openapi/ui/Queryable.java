@@ -31,11 +31,10 @@ public interface Queryable {
   }
 
   final class Util {
-    @Nullable
-    public static @NonNls String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
+    public static @NonNls @NotNull String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
       PrintInfo print = printInfo != null ? printInfo : new PrintInfo();
 
-      LinkedHashMap<String, String> map = new LinkedHashMap<>();
+      Map<String, String> map = new LinkedHashMap<>();
       ui.putInfo(map);
 
       if (contributor != null) {
@@ -43,14 +42,6 @@ public interface Queryable {
       }
 
       String id = null;
-
-      //String[] names = print.myIdKeys != null ? print.myIdKeys : new String[] {"name"};
-      //for (String eachKey : names) {
-      //  String eachValue = map.get(eachKey);
-      //  if (eachValue != null) {
-      //    id = eachValue;
-      //  }
-      //}
 
       if (!map.isEmpty()) {
         id = map.values().iterator().next();
@@ -72,8 +63,7 @@ public interface Queryable {
       return id + (info.length() > 0 ? " " + info : "");
     }
 
-    @Nullable
-    public static @NonNls String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo) {
+    public static @NonNls @NotNull String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo) {
       return print(ui, printInfo, null);
     }
   }

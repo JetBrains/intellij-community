@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -630,6 +630,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
     @Override
     public @NotNull ContentFactory getFactory() {
-      return ServiceManager.getService(ContentFactory.class);
+      return ApplicationManager.getApplication().getService(ContentFactory.class);
     }
   }}

@@ -32,6 +32,7 @@ class PropertyTest {
     }
   }
 
+  @Ignore("Temporally disable")
   @Test
   fun testReplaceBySource() {
     PropertyChecker.checkScenarios {

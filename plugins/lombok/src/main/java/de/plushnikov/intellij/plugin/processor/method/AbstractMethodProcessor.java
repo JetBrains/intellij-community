@@ -14,7 +14,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,13 +27,13 @@ import java.util.List;
 public abstract class AbstractMethodProcessor extends AbstractProcessor implements MethodProcessor {
 
   AbstractMethodProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                          @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+                          @NotNull String supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);
   }
 
   AbstractMethodProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                          @NotNull Class<? extends Annotation> supportedAnnotationClass,
-                          @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
+                          @NotNull String supportedAnnotationClass,
+                          @NotNull String equivalentAnnotationClass) {
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 

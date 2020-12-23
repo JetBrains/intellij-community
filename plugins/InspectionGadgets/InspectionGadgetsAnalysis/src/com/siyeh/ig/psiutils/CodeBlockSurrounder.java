@@ -249,7 +249,7 @@ public abstract class CodeBlockSurrounder {
       }
       return null;
     }
-    if (parent instanceof PsiField) {
+    if (parent instanceof PsiField && !(parent instanceof PsiEnumConstant)) {
       return new ExtractFieldInitializerSurrounder(expression, (PsiField)parent);
     }
 

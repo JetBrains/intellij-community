@@ -1,15 +1,15 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.AccessLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ import java.util.Set;
 public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
   private ConfigDiscovery getConfigDiscovery() {
-    return ServiceManager.getService(ConfigDiscovery.class);
+    return ApplicationManager.getApplication().getService(ConfigDiscovery.class);
   }
 
   @Override
@@ -53,7 +53,8 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
       return; // Should not get here, but safer to check
     }
 
-    @Nullable final PsiAnnotation fieldDefaultsAnnotation = PsiAnnotationSearchUtil.findAnnotation(searchableClass, lombok.experimental.FieldDefaults.class);
+    @Nullable final PsiAnnotation fieldDefaultsAnnotation = PsiAnnotationSearchUtil.findAnnotation(searchableClass,
+                                                                                                   LombokClassNames.FIELD_DEFAULTS);
     final boolean isConfigDefaultFinal = isConfigDefaultFinal(searchableClass);
     final boolean isConfigDefaultPrivate = isConfigDefaultPrivate(searchableClass);
 
@@ -66,26 +67,24 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
     // VISIBILITY
     if (canChangeVisibility(parentField, modifierList)) {
-      final AccessLevel defaultAccessLevel = detectDefaultAccessLevel(fieldDefaultsAnnotation, isConfigDefaultPrivate);
-      switch (defaultAccessLevel) {
-        case PRIVATE:
-          modifiers.add(PsiModifier.PRIVATE);
-          modifiers.remove(PsiModifier.PACKAGE_LOCAL);
-          break;
-        case PROTECTED:
-          modifiers.add(PsiModifier.PROTECTED);
-          modifiers.remove(PsiModifier.PACKAGE_LOCAL);
-          break;
-        case PUBLIC:
-          modifiers.add(PsiModifier.PUBLIC);
-          modifiers.remove(PsiModifier.PACKAGE_LOCAL);
-          break;
+      final String defaultAccessLevel = detectDefaultAccessLevel(fieldDefaultsAnnotation, isConfigDefaultPrivate);
+      if (PsiModifier.PRIVATE.equals(defaultAccessLevel)) {
+        modifiers.add(PsiModifier.PRIVATE);
+        modifiers.remove(PsiModifier.PACKAGE_LOCAL);
+      }
+      else if (PsiModifier.PROTECTED.equals(defaultAccessLevel)) {
+        modifiers.add(PsiModifier.PROTECTED);
+        modifiers.remove(PsiModifier.PACKAGE_LOCAL);
+      }
+      else if (PsiModifier.PUBLIC.equals(defaultAccessLevel)) {
+        modifiers.add(PsiModifier.PUBLIC);
+        modifiers.remove(PsiModifier.PACKAGE_LOCAL);
       }
     }
   }
 
   private boolean canBeAffected(PsiClass searchableClass) {
-    return PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, lombok.experimental.FieldDefaults.class)
+    return PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, LombokClassNames.FIELD_DEFAULTS)
       || isConfigDefaultFinal(searchableClass)
       || isConfigDefaultPrivate(searchableClass);
   }
@@ -100,7 +99,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
   private boolean shouldMakeFinal(@NotNull PsiField parentField, @Nullable PsiAnnotation fieldDefaultsAnnotation, boolean isConfigDefaultFinal) {
     return shouldMakeFinalByDefault(fieldDefaultsAnnotation, isConfigDefaultFinal)
-      && !PsiAnnotationSearchUtil.isAnnotatedWith(parentField, lombok.experimental.NonFinal.class);
+      && !PsiAnnotationSearchUtil.isAnnotatedWith(parentField, LombokClassNames.NON_FINAL);
   }
 
   private boolean shouldMakeFinalByDefault(@Nullable PsiAnnotation fieldDefaultsAnnotation, boolean isConfigDefaultFinal) {
@@ -117,16 +116,16 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
    */
   private boolean canChangeVisibility(@NotNull PsiField parentField, @NotNull PsiModifierList modifierList) {
     return !hasExplicitAccessModifier(modifierList)
-      && !PsiAnnotationSearchUtil.isAnnotatedWith(parentField, lombok.experimental.PackagePrivate.class);
+      && !PsiAnnotationSearchUtil.isAnnotatedWith(parentField, LombokClassNames.PACKAGE_PRIVATE);
   }
 
-  private AccessLevel detectDefaultAccessLevel(@Nullable PsiAnnotation fieldDefaultsAnnotation, boolean isConfigDefaultPrivate) {
-    final AccessLevel accessLevelFromAnnotation = fieldDefaultsAnnotation != null
+  private String detectDefaultAccessLevel(@Nullable PsiAnnotation fieldDefaultsAnnotation, boolean isConfigDefaultPrivate) {
+    final String accessLevelFromAnnotation = fieldDefaultsAnnotation != null
       ? LombokProcessorUtil.getAccessLevel(fieldDefaultsAnnotation, "level")
-      : AccessLevel.NONE;
+      : null;
 
-    if (accessLevelFromAnnotation == AccessLevel.NONE && isConfigDefaultPrivate) {
-      return AccessLevel.PRIVATE;
+    if (accessLevelFromAnnotation == null && isConfigDefaultPrivate) {
+      return PsiModifier.PRIVATE;
     }
     return accessLevelFromAnnotation;
   }

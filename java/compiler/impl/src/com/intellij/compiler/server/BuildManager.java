@@ -25,7 +25,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -390,7 +389,7 @@ public final class BuildManager implements Disposable {
   }
 
   public static BuildManager getInstance() {
-    return ServiceManager.getService(BuildManager.class);
+    return ApplicationManager.getApplication().getService(BuildManager.class);
   }
 
   public void notifyFilesChanged(final Collection<? extends File> paths) {
@@ -1136,8 +1135,8 @@ public final class BuildManager implements Disposable {
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
     }
-    cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + config.PARALLEL_COMPILATION);
-    if (config.PARALLEL_COMPILATION) {
+    cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + projectConfig.isParallelCompilationEnabled());
+    if (projectConfig.isParallelCompilationEnabled()) {
       final boolean allowParallelAutomake = Registry.is("compiler.automake.allow.parallel", true);
       if (!allowParallelAutomake) {
         cmdLine.addParameter("-D" + GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION + "=false");

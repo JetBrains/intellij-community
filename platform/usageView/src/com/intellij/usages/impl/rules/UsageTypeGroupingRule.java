@@ -90,7 +90,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
     @Override
     @NotNull
     public String getText(@Nullable UsageView view) {
-      return view == null ? myUsageType.toString() : myUsageType.toString(view.getPresentation());
+      return myUsageType.toString();
     }
 
     @Override
@@ -128,7 +128,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
 
     @Override
     public String toString() {
-      return UsageViewBundle.message("type.0", myUsageType.toString(new UsageViewPresentation()));
+      return UsageViewBundle.message("type.0", myUsageType.toString());
     }
   }
 }

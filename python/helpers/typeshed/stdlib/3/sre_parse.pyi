@@ -2,7 +2,7 @@
 
 import sys
 from sre_constants import _NamedIntConstant as _NIC, error as _Error
-from typing import Any, Dict, FrozenSet, Iterable, List, Match, Optional, Pattern as _Pattern, Tuple, Union
+from typing import Any, Dict, FrozenSet, Iterable, List, Match, Optional, Pattern as _Pattern, Tuple, Union, overload
 
 SPECIAL_CHARS: str
 REPEAT_CHARS: str
@@ -85,13 +85,20 @@ class Tokenizer:
 
 def fix_flags(src: Union[str, bytes], flags: int) -> int: ...
 
-_TemplateType = Tuple[List[Tuple[int, int]], List[str]]
+_TemplateType = Tuple[List[Tuple[int, int]], List[Optional[str]]]
+_TemplateByteType = Tuple[List[Tuple[int, int]], List[Optional[bytes]]]
 if sys.version_info >= (3, 8):
     def parse(str: str, flags: int = ..., state: Optional[State] = ...) -> SubPattern: ...
+    @overload
     def parse_template(source: str, state: _Pattern[Any]) -> _TemplateType: ...
+    @overload
+    def parse_template(source: bytes, state: _Pattern[Any]) -> _TemplateByteType: ...
 
 else:
     def parse(str: str, flags: int = ..., pattern: Optional[Pattern] = ...) -> SubPattern: ...
+    @overload
     def parse_template(source: str, pattern: _Pattern[Any]) -> _TemplateType: ...
+    @overload
+    def parse_template(source: bytes, pattern: _Pattern[Any]) -> _TemplateByteType: ...
 
 def expand_template(template: _TemplateType, match: Match[Any]) -> str: ...

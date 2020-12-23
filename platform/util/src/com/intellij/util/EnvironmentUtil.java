@@ -49,8 +49,9 @@ public final class EnvironmentUtil {
   public static final @NonNls String BASH_EXECUTABLE_NAME = "bash";
   public static final String SHELL_VARIABLE_NAME = "SHELL";
   private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
-  private static final String SHELL_LOGIN_ARGUMENT = "-l";
+  public static final String SHELL_LOGIN_ARGUMENT = "-l";
   public static final String SHELL_COMMAND_ARGUMENT = "-c";
+  public static final String SHELL_SOURCE_COMMAND = "source";
 
   /**
    * Holds the number of shell levels the current shell is running on top of.
@@ -222,20 +223,30 @@ public final class EnvironmentUtil {
       myTimeoutMillis = timeoutMillis;
     }
 
-    protected final @NotNull Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws IOException {
+    public final @NotNull Map<String, String> readShellEnv(@Nullable Path file, @Nullable Map<String, String> additionalEnvironment) throws IOException {
       Path reader = PathManager.findBinFileWithException("printenv.py");
 
       Path envFile = Files.createTempFile("intellij-shell-env.", ".tmp");
+      StringBuilder readerCmd = new StringBuilder();
+      if (file != null) {
+        if (!Files.exists(file)) {
+          throw new NoSuchFileException(file.toString());
+        }
+        readerCmd.append(SHELL_SOURCE_COMMAND).append(" \"").append(file).append("\" && ");
+      }
+
+      readerCmd.append("'").append(reader.toAbsolutePath()).append("' '").append(envFile.toAbsolutePath()).append("'");
+
       try {
         List<String> command = getShellProcessCommand();
         int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
         if (idx >= 0) {
           // if there is already a command append command to the end
-          command.set(idx + 1, command.get(idx + 1) + ";" + "'" + reader.toAbsolutePath() + "' '" + envFile.toAbsolutePath() + "'");
+          command.set(idx + 1, command.get(idx + 1) + ";" + readerCmd.toString());
         }
         else {
           command.add(SHELL_COMMAND_ARGUMENT);
-          command.add("'" + reader.toAbsolutePath() + "' '" + envFile.toAbsolutePath() + "'");
+          command.add(readerCmd.toString());
         }
 
         LOG.info("loading shell env: " + String.join(" ", command));
@@ -253,24 +264,35 @@ public final class EnvironmentUtil {
       }
     }
 
-    public @NotNull Map<String, String> readBatEnv(@NotNull Path batchFile, List<String> args) throws Exception {
+    protected final @NotNull Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws IOException {
+      return readShellEnv(null, additionalEnvironment);
+    }
+
+    public @NotNull Map<String, String> readBatEnv(@Nullable Path batchFile, List<String> args) throws IOException {
       return readBatOutputAndEnv(batchFile, args).second;
     }
 
-    protected @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull Path batchFile, List<String> args) throws Exception {
+    public @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile, List<String> args) throws IOException {
+      if (batchFile != null && !Files.exists(batchFile)) {
+        throw new NoSuchFileException(batchFile.toString());
+      }
+
       Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp");
       try {
         List<@NonNls String> cl = new ArrayList<>();
         cl.add(CommandLineUtil.getWinShellName());
         cl.add("/c");
-        cl.add("call");
-        cl.add(batchFile.toString());
-        cl.addAll(args);
-        cl.add("&&");
+        if (batchFile != null) {
+          cl.add("call");
+          cl.add(batchFile.toString());
+          if (args != null)
+            cl.addAll(args);
+          cl.add("&&");
+        }
         cl.addAll(getReadEnvCommand());
         cl.add(envFile.toString());
         cl.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
-        return runProcessAndReadOutputAndEnvs(cl, batchFile.getParent(), null, envFile);
+        return runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, null, envFile);
       }
       finally {
         try {

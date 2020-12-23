@@ -9,6 +9,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -63,6 +64,8 @@ public enum ComponentType {
           }
         }
       }
+
+      PsiNavigateUtil.navigate(cmp);
     }
   }
 

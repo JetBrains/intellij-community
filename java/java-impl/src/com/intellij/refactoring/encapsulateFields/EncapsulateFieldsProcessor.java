@@ -237,7 +237,6 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       for (final PsiReference reference : ReferencesSearch.search(fieldDescriptor.getField())) {
         final PsiElement element = reference.getElement();
-        if (element == null) continue;
 
         final EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(element.getLanguage());
         if (helper != null) {

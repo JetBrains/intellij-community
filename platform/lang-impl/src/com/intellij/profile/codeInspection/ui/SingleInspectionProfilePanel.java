@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -189,7 +188,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public static @Nls String renderSeverity(HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return LangBundle.message("single.inspection.profile.panel.no.highlighting.only.fix");
-    return severity.getDisplayLowercaseCapitalizedName();
+    return severity.getDisplayCapitalizedName();
   }
 
   private static boolean isDescriptorAccepted(Descriptor descriptor,

@@ -213,7 +213,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
   private void setInheritanceInfo(ColorAndFontDescription description) {
     Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> baseDescriptor = description.getFallbackKeyDescriptor();
-    if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
+    if (baseDescriptor != null) {
       String attrName = baseDescriptor.second.getDisplayName();
       String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR, FontUtil.rightArrow(UIUtil.getLabelFont()));
       ColorAndFontDescriptorsProvider settingsPage = baseDescriptor.first;

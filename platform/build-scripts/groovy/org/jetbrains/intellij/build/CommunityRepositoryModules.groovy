@@ -171,7 +171,6 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.common")
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
-      withModule("intellij.gradle.toolingLoaderRt")
       withProjectLibrary("Gradle")
     },
     plugin("intellij.gradle.java") {
@@ -234,6 +233,9 @@ class CommunityRepositoryModules {
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
     },
+    plugin("intellij.emojipicker") {
+      bundlingRestrictions.supportedOs = [OsFamily.LINUX]
+    },
     plugin("intellij.textmate") {
       withModule("intellij.textmate.core")
       withResource("lib/bundles", "lib/bundles")
@@ -271,7 +273,10 @@ Android Studio: exclude intellij.statsCollector */
         }
       }, "lib")
     },
-    plugin("intellij.gauge")
+    plugin("intellij.gauge"),
+    plugin("intellij.lombok") {
+      withModule("intellij.lombok.generated")
+    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {

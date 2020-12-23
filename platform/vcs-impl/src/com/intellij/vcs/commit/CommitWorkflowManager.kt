@@ -96,7 +96,7 @@ class CommitWorkflowManager(private val project: Project) {
 
   companion object {
     @JvmField
-    val SETTINGS: Topic<SettingsListener> = Topic.create("Commit Workflow Settings", SettingsListener::class.java)
+    val SETTINGS: Topic<SettingsListener> = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
 
     @JvmStatic
     fun getInstance(project: Project): CommitWorkflowManager = project.service()
@@ -111,7 +111,7 @@ class CommitWorkflowManager(private val project: Project) {
       getApplication().messageBus.syncPublisher(SETTINGS).settingsChanged()
     }
 
-    internal fun isNonModalInSettings(): Boolean = isForceNonModalCommit.asBoolean() || appSettings.COMMIT_FROM_LOCAL_CHANGES
+    fun isNonModalInSettings(): Boolean = isForceNonModalCommit.asBoolean() || appSettings.COMMIT_FROM_LOCAL_CHANGES
   }
 
   interface SettingsListener : EventListener {

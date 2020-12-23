@@ -1,11 +1,12 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -17,11 +18,11 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
 
   @SuppressWarnings({"deprecation"})
   public DelegateMethodProcessor() {
-    super(PsiMethod.class, lombok.Delegate.class, lombok.experimental.Delegate.class);
+    super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);
   }
 
   private DelegateHandler getDelegateHandler() {
-    return ServiceManager.getService(DelegateHandler.class);
+    return ApplicationManager.getApplication().getService(DelegateHandler.class);
   }
 
   @Override

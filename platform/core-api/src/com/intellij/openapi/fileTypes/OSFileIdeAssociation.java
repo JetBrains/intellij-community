@@ -6,21 +6,34 @@ package com.intellij.openapi.fileTypes;
  * with the IDE in the operating system.
  */
 public interface OSFileIdeAssociation {
-  enum Mode {
-    Unsupported,
-    ChooseExtensions,
-    AllExtensions
+  enum ExtensionMode {
+    /**
+     * Let the IDE choose if only selected or all extensions will be used to associate files with the IDE.
+     */
+    Default,
+    /**
+     * Allow a user to choose extensions of files to be opened with the IDE.
+     */
+    Selected,
+    /**
+     * Use all available extensions to associate files with the IDE.
+     */
+    All
   }
 
   /**
    * @return One of:
    * <ul>
-   *   <li>{@code Mode.Unsupported} - Don't suggest use the IDE to open files of this type.</li>
-   *   <li>{@code Mode.ChooseExtensions} - Allow a user to choose extensions of files to be opened with the IDE.</li>
-   *   <li>{@code Mode.AllExtensions} - Use all available extensions to associate files with the IDE.</li>
+   *   <li>{@link ExtensionMode#Default}</li>
+   *   <li>{@link ExtensionMode#Selected}</li>
+   *   <li>{@link ExtensionMode#All}</li>
    * </ul>
    */
-  default Mode getFileIdeAssociationMode() {
-    return Mode.AllExtensions;
+  default ExtensionMode getExtensionsMode() {
+    return ExtensionMode.All;
+  }
+
+  default boolean isFileAssociationAllowed() {
+    return true;
   }
 }

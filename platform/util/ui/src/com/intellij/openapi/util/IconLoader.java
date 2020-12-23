@@ -295,7 +295,7 @@ public final class IconLoader {
     }
     else {
       CachedImageIcon icon = iconCache.get(url);
-      return icon == null ? null : new CachedImageIcon(url, false);
+      return icon == null ? new CachedImageIcon(url, false) : icon;
     }
   }
 

@@ -4,7 +4,6 @@ package git4idea.rebase;
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Pair;
 import git4idea.commands.GitHandler;
 import git4idea.config.GitExecutable;
@@ -46,7 +45,7 @@ public class GitRebaseEditorService implements Disposable {
    */
   @NotNull
   public static GitRebaseEditorService getInstance() {
-    final GitRebaseEditorService service = ServiceManager.getService(GitRebaseEditorService.class);
+    final GitRebaseEditorService service = ApplicationManager.getApplication().getService(GitRebaseEditorService.class);
     if (service == null) {
       throw new IllegalStateException("The service " + GitRebaseEditorService.class.getName() + " cannot be located");
     }

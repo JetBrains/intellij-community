@@ -1,5 +1,6 @@
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.SelectInContext;
@@ -16,7 +17,7 @@ public class SelectInCoverageView implements  SelectInTarget {
   }
 
   public String toString() {
-    return CoverageViewManager.TOOLWINDOW_ID;
+    return CoverageBundle.message("coverage.view.title");
   }
 
   @Override

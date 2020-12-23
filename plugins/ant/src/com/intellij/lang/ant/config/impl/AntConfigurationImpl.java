@@ -260,10 +260,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 try {
                   myInitThread = Thread.currentThread();
                   // first, remove existing files
-                  Iterator<AntBuildFileBase> it = myBuildFiles.iterator();
-                  while (it.hasNext()) {
-                    AntBuildFile file = it.next();
-                    it.remove();
+                  for (AntBuildFile file : myBuildFiles) {
                     removeBuildFileImpl(file);
                   }
 
@@ -379,6 +376,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   @Override
+  public boolean hasBuildFiles() {
+    return !myBuildFiles.isEmpty() || !myBuildFilesConfiguration.isEmpty();
+  }
+
+  @Override
   public AntBuildFile[] getBuildFiles() {
     return myBuildFiles.toArray(new AntBuildFileBase[0]);
   }
@@ -449,7 +451,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private void removeBuildFiles(Collection<AntBuildFileBase> files) {
     for (AntBuildFileBase file : files) {
       incModificationCount();
-      myBuildFiles.remove(file);
       removeBuildFileImpl(file);
     }
     updateRegisteredActions();
@@ -713,6 +714,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       AntSupport.markFileAsAntFile(antFile.getOriginalFile().getVirtualFile(), antFile.getProject(), false);
     }
 
+    myBuildFiles.remove(buildFile);
     myModelToBuildFileMap.remove(buildFile);
     myEventDispatcher.getMulticaster().buildFileRemoved(buildFile);
   }

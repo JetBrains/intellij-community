@@ -39,9 +39,7 @@ public class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder>, Nan
     }
     finally {
       try {
-        if (reader != null) {
-          reader.close();
-        }
+        reader.close();
       }
       catch (IOException e) {
         // can never happen

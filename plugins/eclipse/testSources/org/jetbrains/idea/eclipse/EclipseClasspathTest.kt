@@ -186,46 +186,5 @@ class EclipseClasspathTest {
     @ClassRule
     val appRule = ApplicationRule()
 
-    @JvmStatic
-    fun setUpModule(path: String, project: Project): Module {
-      val classpathFile = File(path, EclipseXml.DOT_CLASSPATH_EXT)
-      var fileText = FileUtil.loadFile(classpathFile).replace("\\\$ROOT\\$",
-                                                              PlatformTestUtil.getOrCreateProjectBaseDir(project).path)
-      if (!SystemInfo.isWindows) {
-        fileText = fileText.replace(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL)
-      }
-      val classpathElement = JDOMUtil.load(fileText)
-      val module = WriteCommandAction.runWriteCommandAction(null, (Computable {
-        val imlPath = path + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerEx.IML_EXTENSION
-        ModuleManager.getInstance(project).newModule(imlPath, StdModuleTypes.JAVA.id)
-      } as Computable<Module>))
-      ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel? ->
-        try {
-          val classpathReader = EclipseClasspathReader(path, project, null)
-          classpathReader.init(model!!)
-          classpathReader.readClasspath(model, classpathElement)
-          EclipseClasspathStorageProvider().assertCompatible(model)
-        }
-        catch (e: Exception) {
-          throw RuntimeException(e)
-        }
-      }
-      return module
-    }
-
-    @JvmStatic
-    fun checkModule(path: String?, module: Module) {
-      val classpathFile1 = File(path, EclipseXml.DOT_CLASSPATH_EXT)
-      if (!classpathFile1.exists()) return
-      var fileText1 = FileUtil.loadFile(classpathFile1).replace("\\\$ROOT\\$",
-                                                                PlatformTestUtil.getOrCreateProjectBaseDir(module.project).path)
-      if (!SystemInfo.isWindows) {
-        fileText1 = fileText1.replace(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL)
-      }
-      val classpathElement1 = JDOMUtil.load(fileText1)
-      val model: ModuleRootModel = ModuleRootManager.getInstance(module)
-      val resultClasspathElement = EclipseClasspathWriter().writeClasspath(classpathElement1, model)
-      Assertions.assertThat(resultClasspathElement).isEqualTo(resultClasspathElement)
-    }
   }
 }

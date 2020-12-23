@@ -100,7 +100,7 @@ public final class ExecutionUtil {
 
     if (StringUtil.isEmptyOrSpaces(description)) {
       LOG.warn("Execution error without description", e);
-      description = "Unknown error";
+      description = ExecutionBundle.message("dialog.message.unknown.error");
     }
 
     String fullMessage = title + ":<br>" + description;

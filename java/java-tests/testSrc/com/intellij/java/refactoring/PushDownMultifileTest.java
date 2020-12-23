@@ -47,10 +47,8 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
     try {
       doTest(() -> {
         final PsiClass srcClass = myFixture.findClass(sourceClassName);
-        assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myFixture.findClass(targetClassName);
-        assertTrue("Target class not found", targetClass != null);
+        myFixture.findClass(targetClassName);
 
         final PsiMethod[] methods = srcClass.getMethods();
         assertTrue("No methods found", methods.length > 0);
@@ -97,10 +95,8 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
     try {
       doTest(() -> {
         final PsiClass srcClass = myFixture.findClass("a.A");
-        assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myFixture.findClass("b.B");
-        assertTrue("Target class not found", targetClass != null);
+        myFixture.findClass("b.B");
 
         final PsiField[] fields = srcClass.getFields();
         assertTrue("No methods found", fields.length > 0);

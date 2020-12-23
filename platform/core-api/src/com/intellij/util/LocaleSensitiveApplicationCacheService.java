@@ -22,17 +22,20 @@ public final class LocaleSensitiveApplicationCacheService implements Disposable 
     ClearableLazyValue.create(() -> ContainerUtil.createConcurrentWeakMap());
 
   public LocaleSensitiveApplicationCacheService() {
-    DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<DynamicBundle.LanguageBundleEP>() {
-      @Override
-      public void extensionAdded(DynamicBundle.@NotNull LanguageBundleEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        myMapProvider.drop();
-      }
+    //todo remove this check after we made languageBundle dynamic; it's added to avoid warnings
+    if (DynamicBundle.LanguageBundleEP.EP_NAME.getPoint().isDynamic()) {
+      DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<DynamicBundle.LanguageBundleEP>() {
+        @Override
+        public void extensionAdded(DynamicBundle.@NotNull LanguageBundleEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+          myMapProvider.drop();
+        }
 
-      @Override
-      public void extensionRemoved(DynamicBundle.@NotNull LanguageBundleEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        myMapProvider.drop();
-      }
-    }, this);
+        @Override
+        public void extensionRemoved(DynamicBundle.@NotNull LanguageBundleEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+          myMapProvider.drop();
+        }
+      }, this);
+    }
   }
 
   @Override

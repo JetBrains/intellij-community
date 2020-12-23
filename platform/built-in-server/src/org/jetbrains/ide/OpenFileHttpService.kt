@@ -12,7 +12,6 @@ import com.intellij.openapi.project.guessProjectForContentFile
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
@@ -216,18 +215,6 @@ private fun openRelativePath(path: String, request: OpenFileRequest): Boolean {
     if (virtualFile != null) {
       project = openedProject
       break
-    }
-  }
-
-  if (virtualFile == null) {
-    for (openedProject in projects) {
-      for (vcsRoot in ProjectLevelVcsManager.getInstance(openedProject).allVcsRoots) {
-        virtualFile = vcsRoot.path.findFileByRelativePath(path)
-        if (virtualFile != null) {
-          project = openedProject
-          break
-        }
-      }
     }
   }
 

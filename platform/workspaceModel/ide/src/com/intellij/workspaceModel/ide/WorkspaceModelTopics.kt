@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
@@ -29,7 +29,7 @@ class WorkspaceModelTopics : Disposable {
     /** Please use [subscribeImmediately] and [subscribeAfterModuleLoading] to subscribe to changes */
     private val CHANGED = Topic("Workspace Model Changed", WorkspaceModelChangeListener::class.java)
 
-    fun getInstance(project: Project): WorkspaceModelTopics = ServiceManager.getService(project, WorkspaceModelTopics::class.java)
+    fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
   private val allEvents = ContainerUtil.createConcurrentList<EventsDispatcher>()
@@ -87,9 +87,8 @@ class WorkspaceModelTopics : Disposable {
   }
 
   private class EventsDispatcher(val originalListener: WorkspaceModelChangeListener) : WorkspaceModelChangeListener {
-
-    internal val events = mutableListOf<Pair<Boolean, VersionedStorageChange>>()
-    internal var collectToQueue = true
+    val events = mutableListOf<Pair<Boolean, VersionedStorageChange>>()
+    var collectToQueue = true
 
     override fun beforeChanged(event: VersionedStorageChange) {
       if (collectToQueue) {

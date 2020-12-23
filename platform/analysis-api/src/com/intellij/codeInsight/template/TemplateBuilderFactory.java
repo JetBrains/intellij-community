@@ -2,7 +2,7 @@
 
 package com.intellij.codeInsight.template;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class TemplateBuilderFactory {
   public static TemplateBuilderFactory getInstance() {
-    return ServiceManager.getService(TemplateBuilderFactory.class);
+    return ApplicationManager.getApplication().getService(TemplateBuilderFactory.class);
   }
 
   public abstract TemplateBuilder createTemplateBuilder(@NotNull PsiElement element);

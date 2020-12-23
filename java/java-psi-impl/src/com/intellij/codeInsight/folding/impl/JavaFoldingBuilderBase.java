@@ -344,10 +344,6 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (range.equals(fileRange)) return;
 
     LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= fileRange.getEndOffset());
-    // PSI element text ranges may be invalid because of reparse exception (see, for example, IDEA-10617)
-    if (range.getStartOffset() < 0 || range.getEndOffset() > fileRange.getEndOffset()) {
-      return;
-    }
 
     if (!allowOneLiners) {
       int startLine = document.getLineNumber(range.getStartOffset());

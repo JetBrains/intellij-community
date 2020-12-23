@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.configurationStore
 
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.util.io.systemIndependentPath
@@ -17,8 +14,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Path
-import java.nio.file.Paths
 
 /**
  * This class actually doesn't depend on Java. It's located in intellij.java.tests module because if Java plugin is enabled additional elements
@@ -37,14 +32,14 @@ class SaveProjectTest {
   val projectModel = ProjectModelRule()
 
   @Test
-  fun `save single module`() = runBlocking {
+  fun `save single module`() {
     projectModel.createModule("foo")
-    saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("single-module")))
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-module")))
   }
 
   @Test
-  fun `save module with group`() = runBlocking {
+  fun `save module with group`() {
     val module = projectModel.createModule("foo")
     runWriteActionAndWait {
       val model = projectModel.moduleManager.modifiableModel
@@ -52,43 +47,37 @@ class SaveProjectTest {
       model.commit()
     }
 
-    saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("module-in-group")))
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("module-in-group")))
   }
 
   @Test
-  fun `save detached module`() = runBlocking {
+  fun `save detached module`() {
     projectModel.createModule("foo")
     val module = projectModel.createModule("bar")
-    saveProjectState()
+    projectModel.saveProjectState()
     projectModel.removeModule(module)
-    saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("detached-module")))
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("detached-module")))
   }
 
   @Test
-  fun `save single library`() = runBlocking {
+  fun `save single library`() {
     projectModel.addProjectLevelLibrary("foo") {
-      it.addRoot(VfsUtil.pathToUrl(projectModel.baseProjectDir.rootPath.resolve("lib/classes").systemIndependentPath), OrderRootType.CLASSES)
+      it.addRoot(VfsUtil.pathToUrl(projectModel.baseProjectDir.rootPath.resolve("lib/classes").systemIndependentPath),
+                 OrderRootType.CLASSES)
     }
-    saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("single-library")))
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-library")))
   }
 
   @Test
-  fun `save renamed module`() = runBlocking {
+  fun `save renamed module`() {
     val model = runReadAction { projectModel.moduleManager.modifiableModel }
     val module = projectModel.createModule("foo", model)
     model.renameModule(module, "bar")
     runWriteActionAndWait { model.commit() }
-    saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("single-module-renamed")))
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-module-renamed")))
   }
-
-  private suspend fun saveProjectState() {
-    projectModel.project.stateStore.save()
-  }
-
-  private val testDataRoot: Path
-    get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore")
 }

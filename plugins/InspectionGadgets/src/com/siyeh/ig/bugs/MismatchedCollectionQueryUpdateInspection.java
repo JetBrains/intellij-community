@@ -188,8 +188,10 @@ public class MismatchedCollectionQueryUpdateInspection
           return;
         }
         PsiElement parent = reference.getParent();
-        if (parent instanceof PsiExpressionList) {
-          PsiExpressionList args = (PsiExpressionList)parent;
+        PsiElement grandParent = parent != null ? parent.getParent() : null;
+        if (parent instanceof PsiExpressionList ||
+            (parent instanceof PsiAssignmentExpression && grandParent instanceof PsiExpressionList)) {
+          PsiExpressionList args = (PsiExpressionList)(parent instanceof PsiExpressionList ? parent : grandParent);
           PsiCallExpression surroundingCall = ObjectUtils.tryCast(args.getParent(), PsiCallExpression.class);
           if (surroundingCall != null) {
             if (surroundingCall instanceof PsiMethodCallExpression &&

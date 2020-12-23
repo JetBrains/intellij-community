@@ -7,8 +7,8 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -47,7 +47,7 @@ public final class PostfixTemplateStorage extends SimpleModificationTracker impl
 
   @NotNull
   public static PostfixTemplateStorage getInstance() {
-    return ServiceManager.getService(PostfixTemplateStorage.class);
+    return ApplicationManager.getApplication().getService(PostfixTemplateStorage.class);
   }
 
   @NotNull

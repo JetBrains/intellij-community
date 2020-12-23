@@ -274,7 +274,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
       if (next == '/' && i != 0 ||
           next == '/' && !SystemInfo.isWindows ||// additional condition for Windows UNC
-          next == '/' && SystemInfo.isWindows && slash == 2 && path.charAt(1) == ':' && OSAgnosticPathUtil.isDriveLetter(path.charAt(0)) ||// Z://foo -> Z:/foo
+          next == '/' && slash == 2 && path.charAt(1) == ':' && OSAgnosticPathUtil.isDriveLetter(path.charAt(0)) ||// Z://foo -> Z:/foo
           next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
         return cleanupTail(path, slash);
       }

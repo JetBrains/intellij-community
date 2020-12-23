@@ -454,11 +454,9 @@ public final class ReflectionUtil {
         }
       }
 
-      ExceptionUtil.rethrow(e);
+      ExceptionUtilRt.rethrowUnchecked(e);
+      throw new RuntimeException(e);
     }
-
-    // error will be thrown
-    return null;
   }
 
   @Nullable

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.ex;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
@@ -37,7 +38,7 @@ public final class DefaultColorSchemesManager {
   private volatile List<DefaultColorsScheme> mySchemes = Collections.emptyList();
 
   public static DefaultColorSchemesManager getInstance() {
-    return ServiceManager.getService(DefaultColorSchemesManager.class);
+    return ApplicationManager.getApplication().getService(DefaultColorSchemesManager.class);
   }
 
   public DefaultColorSchemesManager() {

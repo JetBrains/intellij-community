@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything
 
+import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
@@ -44,12 +45,12 @@ class RunAnythingUsageCollector {
 
 
     private fun getSafeToReportClazzName(clazz: Class<*>): String {
-      return if (getPluginInfo(clazz).isSafeToReport()) clazz.simpleName else "third.party"
+      return if (getPluginInfo(clazz).isSafeToReport()) clazz.name else "third.party"
     }
 
     private fun getSafeToReportTitle(group: RunAnythingGroup): String {
-      return if (!getPluginInfo(group.javaClass).isSafeToReport()) "third.party"
-      else return group.title
+      return if (group is RunAnythingCompletionGroup<*, *>) getSafeToReportClazzName(group.provider.javaClass)
+      else getSafeToReportClazzName(group.javaClass)
     }
   }
 }

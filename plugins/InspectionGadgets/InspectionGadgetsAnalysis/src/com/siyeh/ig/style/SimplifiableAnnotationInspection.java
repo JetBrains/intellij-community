@@ -178,7 +178,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
           registerError(arrayValue.getLastChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
         }
       }
-      else if (attributes.length > 1) {
+      else {
         for (PsiNameValuePair attribute : attributes) {
           final PsiAnnotationMemberValue value = attribute.getValue();
           if (!(value instanceof PsiArrayInitializerMemberValue)) {

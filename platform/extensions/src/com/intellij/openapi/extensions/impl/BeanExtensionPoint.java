@@ -6,14 +6,11 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.pico.DefaultPicoContainer;
-import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @ApiStatus.Internal
 public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
@@ -51,24 +48,8 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
                             @NotNull List<Element> elements,
                             @NotNull List<Runnable> priorityListenerCallbacks,
                             @NotNull List<Runnable> listenerCallbacks) {
-    Map<String, String> defaultAttributes = new HashMap<>();
-    try {
-      Object defaultInstance = componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(getClassName(), pluginDescriptor);
-      defaultAttributes.putAll(XmlExtensionAdapter.getSerializedDataMap(XmlSerializer.serialize(defaultInstance)));
-    }
-    catch (Exception e) {
-      if (!(e.getCause() instanceof ClassNotFoundException)) {
-        throw e;
-      }
-    }
-
-    unregisterExtensions((x, adapter) -> {
-      if (!(adapter instanceof XmlExtensionAdapter)) {
-        return true;
-      }
-      XmlExtensionAdapter xmlExtensionAdapter = (XmlExtensionAdapter)adapter;
-      return xmlExtensionAdapter.getPluginDescriptor() != pluginDescriptor ||
-             !xmlExtensionAdapter.isLoadedFromAnyElement(elements, defaultAttributes);
+    unregisterExtensions(adapter -> {
+      return adapter.getPluginDescriptor() != pluginDescriptor;
     }, false, priorityListenerCallbacks, listenerCallbacks);
   }
 }

@@ -24,27 +24,29 @@ import org.jetbrains.annotations.NotNull;
  * User: dcheryasov
  */
 public enum FutureFeature {
-  GENERATORS("generators", 22, 23), // historical
-  DIVISION("division", 22, 30),
-  ABSOLUTE_IMPORT("absolute_import", 25, 27),
-  WITH_STATEMENT("with_statement", 25, 26),
-  PRINT_FUNCTION("print_function", 26, 30),
-  UNICODE_LITERALS("unicode_literals", 26, 30),
-  BARRY_AS_FLUFL("barry_as_FLUFL", 31, 39), // last as of CPython 3.2
-  ANNOTATIONS("annotations", 37, 40)
+  DIVISION("division", LanguageLevel.PYTHON24, LanguageLevel.PYTHON30), // actually since 2.2
+  ABSOLUTE_IMPORT("absolute_import", LanguageLevel.PYTHON25, LanguageLevel.PYTHON30),
+  PRINT_FUNCTION("print_function", LanguageLevel.PYTHON26, LanguageLevel.PYTHON30),
+  UNICODE_LITERALS("unicode_literals", LanguageLevel.PYTHON26, LanguageLevel.PYTHON30),
+  ANNOTATIONS("annotations", LanguageLevel.PYTHON37, LanguageLevel.PYTHON310)
   // NOTE: only add new features to the end unless you want to break existing stubs that rely on ordinal
   ;
-  // TODO: link it to LanguageLevel
+
+  @NotNull
   private final String myName;
-  private final int myOptionalVersion;
-  private final int myRequiredVersion;
+
+  @NotNull
+  private final LanguageLevel myOptionalVersion;
+
+  @NotNull
+  private final LanguageLevel myRequiredVersion;
 
   /**
-   * @param name what is imported from __future__
+   * @param name     what is imported from __future__
    * @param proposed version in which the feature has become importable
    * @param included version in which the feature is included by default
    */
-  FutureFeature(final @NotNull String name, final int proposed, final int included) {
+  FutureFeature(@NotNull String name, @NotNull LanguageLevel proposed, @NotNull LanguageLevel included) {
     myName = name;
     myOptionalVersion = proposed;
     myRequiredVersion = included;
@@ -59,34 +61,18 @@ public enum FutureFeature {
   }
 
   /**
-   * @return Version since which it is possible to import the feature from __future__
-   */
-  public int getOptionalVersion() {
-    return myOptionalVersion;
-  }
-
-  /**
-   * @return Version since which the feature is built into the language (required from the language).
-   */
-  public int getRequiredVersion() {
-    return myRequiredVersion;
-  }
-
-  /**
    * @param level
    * @return true iff the feature can either be imported from __future__ at given level, or is already built-in.
    */
-  public boolean availableAt(LanguageLevel level) {
-    return level.getVersion() >= myOptionalVersion;
+  public boolean availableAt(@NotNull LanguageLevel level) {
+    return level.isAtLeast(myOptionalVersion);
   }
 
   /**
    * @param level
    * @return true iff the feature is already present (required) at given level, and there's no need to import it.
    */
-  public boolean requiredAt(LanguageLevel level) {
-    return level.getVersion() >= myRequiredVersion;
+  public boolean requiredAt(@NotNull LanguageLevel level) {
+    return level.isAtLeast(myRequiredVersion);
   }
-
-  public static final FutureFeature[] ALL = FutureFeature.values();
 }

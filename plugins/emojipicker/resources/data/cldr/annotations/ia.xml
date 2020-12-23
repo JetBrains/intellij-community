@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="ia"/>
+	</identity>
+	<annotations>
+		<annotation cp="🏻">tono de pelle | tono de pelle clar | typo 1–2</annotation>
+		<annotation cp="🏻" type="tts">tono de pelle clar</annotation>
+		<annotation cp="🏼">tono de pelle | tono de pelle medio clar | typo 3</annotation>
+		<annotation cp="🏼" type="tts">tono de pelle medio clar</annotation>
+		<annotation cp="🏽">tono de pelle | tono de pelle medie | typo 4</annotation>
+		<annotation cp="🏽" type="tts">tono de pelle medie</annotation>
+		<annotation cp="🏾">tono de pelle | tono de pelle medio obscur | tono de pelle medio-obscur | typo 5</annotation>
+		<annotation cp="🏾" type="tts">tono de pelle medio-obscur</annotation>
+		<annotation cp="🏿">tono de pelle | tono de pelle obscur | typo 6</annotation>
+		<annotation cp="🏿" type="tts">tono de pelle obscur</annotation>
+		<annotation cp="😀">facie | surridente | surriso | visage | visage con grande surriso</annotation>
+		<annotation cp="😀" type="tts">visage con grande surriso</annotation>
+		<annotation cp="😃">aperte | bucca | facie | grande surriso con grande oculos | surriso | visage</annotation>
+		<annotation cp="😃" type="tts">grande surriso con grande oculos</annotation>
+		<annotation cp="😄">aperte | facie | grande surriso con oculos surridente | oculos | surridente | visage</annotation>
+		<annotation cp="😄" type="tts">grande surriso con oculos surridente</annotation>
+		<annotation cp="😁">facie | radiante | surridente | surriso | visage | visage radiante con oculos surridente</annotation>
+		<annotation cp="😁" type="tts">visage radiante con oculos surridente</annotation>
+		<annotation cp="😆">facie | grande surriso con oculos clause | satisfacite | satisfaction | surridente | visage</annotation>
+		<annotation cp="😆" type="tts">grande surriso con oculos clause</annotation>
+		<annotation cp="😅">aperte | facie | frigide | grande surriso con gutta de sudor | sudor | visage</annotation>
+		<annotation cp="😅" type="tts">grande surriso con gutta de sudor</annotation>
+		<annotation cp="🤣">facie | ridente | riso | rolante se per terra de rider | rolar | visage</annotation>
+		<annotation cp="🤣" type="tts">rolante se per terra de rider</annotation>
+		<annotation cp="😂">facie | gaudio | joia | lacrimas | visage | visage plorante de riso</annotation>
+		<annotation cp="😂" type="tts">visage plorante de riso</annotation>
+		<annotation cp="😉">batter | facie | palpebras | visage | visage que batte le palpebras</annotation>
+		<annotation cp="😉" type="tts">visage que batte le palpebras</annotation>
+		<annotation cp="😊">facie | rubescer | rubor | surridente | surriso con oculos surridente | visage</annotation>
+		<annotation cp="😊" type="tts">surriso con oculos surridente</annotation>
+		<annotation cp="😍">corde | facie | oculo | surridente | surriso con oculos in forma de corde | visage</annotation>
+		<annotation cp="😍" type="tts">surriso con oculos in forma de corde</annotation>
+		<annotation cp="😋">alimento | deliciose | facie | mangiar | visage | visage que sapora un bon repasto</annotation>
+		<annotation cp="😋" type="tts">visage que sapora un bon repasto</annotation>
+		<annotation cp="😎">berillos | facie | sol | surriso | surriso con oculares de sol | visage</annotation>
+		<annotation cp="😎" type="tts">surriso con oculares de sol</annotation>
+		<annotation cp="💪">biceps | biceps contrahite | biceps flectite | flexion | forte | musculo</annotation>
+		<annotation cp="💪" type="tts">biceps flectite</annotation>
+		<annotation cp="🦾">accessibilitate | bracio mechanic | prothese | prothesis</annotation>
+		<annotation cp="🦾" type="tts">bracio mechanic</annotation>
+		<annotation cp="🦿">accessibilitate | gamba mechanic | prothese | prothesis</annotation>
+		<annotation cp="🦿" type="tts">gamba mechanic</annotation>
+		<annotation cp="🦵">colpo de pede | gamba | membro</annotation>
+		<annotation cp="🦵" type="tts">gamba</annotation>
+		<annotation cp="🦶">colpo de pede | pede</annotation>
+		<annotation cp="🦶" type="tts">pede</annotation>
+		<annotation cp="👂">audientia | audita | audition | aural | aure | auricular | corpore</annotation>
+		<annotation cp="👂" type="tts">aure</annotation>
+		<annotation cp="🦻">accessibilitate | aure con audiophono | debile de audito | dur de aure</annotation>
+		<annotation cp="🦻" type="tts">aure con audiophono</annotation>
+		<annotation cp="👃">corpore | naso</annotation>
+		<annotation cp="👃" type="tts">naso</annotation>
+		<annotation cp="🧠">cerebro | intelligente</annotation>
+		<annotation cp="🧠" type="tts">cerebro</annotation>
+		<annotation cp="🫀">battimento del corde | centro | corde | organo | pulsation cardiac | pulsation del corde | rhythmo cardiac | rhythmo del corde</annotation>
+		<annotation cp="🫀" type="tts">corde</annotation>
+		<annotation cp="🫁">exhalation | halito | inhalation | organo | pulmones | respiration | sufflo | suspiro</annotation>
+		<annotation cp="🫁" type="tts">pulmones</annotation>
+		<annotation cp="🦷">dental | dentari | dente | dentista | odontologia | orthodontista</annotation>
+		<annotation cp="🦷" type="tts">dente</annotation>
+		<annotation cp="🦴">osso | osteologia | skeleto</annotation>
+		<annotation cp="🦴" type="tts">osso</annotation>
+		<annotation cp="👀">facie | ocular | oculo | oculos | ophthalmologia | vision | visual</annotation>
+		<annotation cp="👀" type="tts">oculos</annotation>
+		<annotation cp="👁">corpore | ocular | oculo | ophthalmologia | vision | visual</annotation>
+		<annotation cp="👁" type="tts">oculo</annotation>
+		<annotation cp="👅">corpore | lingua | lingual</annotation>
+		<annotation cp="👅" type="tts">lingua</annotation>
+		<annotation cp="👄">bucca | labial | labios | oral | ore</annotation>
+		<annotation cp="👄" type="tts">bucca</annotation>
+		<annotation cp="🦰">capillos rosse | rossa | rossastre | rubee | rubie | rubre</annotation>
+		<annotation cp="🦰" type="tts">capillos rosse</annotation>
+		<annotation cp="🦱">afro | buclate | buclettas | capillos | crispe</annotation>
+		<annotation cp="🦱" type="tts">capillos crispe</annotation>
+		<annotation cp="🦳">blanc | capillos | gris | vetere | vetule</annotation>
+		<annotation cp="🦳" type="tts">capillos blanc</annotation>
+		<annotation cp="🦲">calve | chemotherapia | glabre | rasate | sin capillos</annotation>
+		<annotation cp="🦲" type="tts">calve</annotation>
+		<annotation cp="🏧">automatic | banca | billetes | cassa | distributor | signo de cassa automatic</annotation>
+		<annotation cp="🏧" type="tts">signo de cassa automatic</annotation>
+		<annotation cp="🚮">immunditias | jectar | receptaculo | recipiente | signo de receptaculo de immunditias</annotation>
+		<annotation cp="🚮" type="tts">signo de receptaculo de immunditias</annotation>
+		<annotation cp="🚰">aqua | biber | bibibile | potabile</annotation>
+		<annotation cp="🚰" type="tts">aqua potabile</annotation>
+		<annotation cp="♿">accesso | rolante | rotas | sede | sedia | symbolo de sedia rolante</annotation>
+		<annotation cp="♿" type="tts">symbolo de sedia rolante</annotation>
+		<annotation cp="🚹">cabinetto | homine | lavatorio | lavatorio pro homines | toilette | wc</annotation>
+		<annotation cp="🚹" type="tts">lavatorio pro homines</annotation>
+		<annotation cp="🚺">cabinetto | femina | lavatorio | lavatorio pro feminas | toilette | wc</annotation>
+		<annotation cp="🚺" type="tts">lavatorio pro feminas</annotation>
+		<annotation cp="🚻">cabinetto | lavatorio | toilette | toilettes | wc</annotation>
+		<annotation cp="🚻" type="tts">lavatorio</annotation>
+		<annotation cp="🚼">baby | bebe | cambiar | fascia | neonato | symbolo de bebe</annotation>
+		<annotation cp="🚼" type="tts">symbolo de bebe</annotation>
+		<annotation cp="🚾">aqua | cabinetto | lavatorio | toilette | water-closet | wc</annotation>
+		<annotation cp="🚾" type="tts">water-closet</annotation>
+		<annotation cp="🛂">controlo | controlo de passaportos | passaporto</annotation>
+		<annotation cp="🛂" type="tts">controlo de passaportos</annotation>
+		<annotation cp="🛃">doana</annotation>
+		<annotation cp="🛃" type="tts">doana</annotation>
+		<annotation cp="🛄">bagage | collecta | collecta de bagage | reception | retiro</annotation>
+		<annotation cp="🛄" type="tts">collecta de bagage</annotation>
+		<annotation cp="🛅">bagage | consigna | deposito | deposito de bagage</annotation>
+		<annotation cp="🛅" type="tts">deposito de bagage</annotation>
+		<annotation cp="⚠">advertimento | attention | aviso</annotation>
+		<annotation cp="⚠" type="tts">aviso</annotation>
+		<annotation cp="🚸">infante | passage | pedones | traffico | transversata | transversata de infantes</annotation>
+		<annotation cp="🚸" type="tts">transversata de infantes</annotation>
+		<annotation cp="⛔">direction unic | entrata prohibite | senso unic | traffico | unidirectional</annotation>
+		<annotation cp="⛔" type="tts">entrata prohibite</annotation>
+		<annotation cp="🚫">entrata | no | non | prohibite | sin</annotation>
+		<annotation cp="🚫" type="tts">prohibite</annotation>
+		<annotation cp="🚳">bicycletta | bicyclettas prohibite | bicyclo | no | prohibite | sin</annotation>
+		<annotation cp="🚳" type="tts">bicyclettas prohibite</annotation>
+		<annotation cp="🚭">fumar | fumo | no | non | prohibite</annotation>
+		<annotation cp="🚭" type="tts">non fumar</annotation>
+		<annotation cp="🚯">immunditias | jectar | lassar cader | non abandonar immunditias | prohibite</annotation>
+		<annotation cp="🚯" type="tts">non abandonar immunditias</annotation>
+		<annotation cp="🚱">aqua | aqua non potabile | non bibibile | non potabile</annotation>
+		<annotation cp="🚱" type="tts">aqua non potabile</annotation>
+		<annotation cp="🚷">accesso | interdicite | pedon | pedones | prohibite | prohibite al pedones</annotation>
+		<annotation cp="🚷" type="tts">prohibite al pedones</annotation>
+		<annotation cp="📵">interdicite | mobile | portabile | prohibite | telephono | telephonos mobile prohibite</annotation>
+		<annotation cp="📵" type="tts">telephonos mobile prohibite</annotation>
+		<annotation cp="🏁">bandiera | bandiera a quadros | currer | cursa | quadrettos | quadros</annotation>
+		<annotation cp="🏁" type="tts">bandiera a quadros</annotation>
+		<annotation cp="🚩">bandiera triangular | palo</annotation>
+		<annotation cp="🚩" type="tts">bandiera triangular</annotation>
+		<annotation cp="🎌">bandieras cruciate | celebration | cruce | cruciate | japonese</annotation>
+		<annotation cp="🎌" type="tts">bandieras cruciate</annotation>
+		<annotation cp="🏴">agitante | bandiera nigre | flottante | undulante</annotation>
+		<annotation cp="🏴" type="tts">bandiera nigre</annotation>
+		<annotation cp="🏳">agitante | bandiera blanc | flottante | undulante</annotation>
+		<annotation cp="🏳" type="tts">bandiera blanc</annotation>
+		<annotation cp="🏳‍🌈">arco del celo | bandiera iride | bandiera iris | iride | iris</annotation>
+		<annotation cp="🏳‍🌈" type="tts">bandiera iride</annotation>
+		<annotation cp="🏴‍☠">bandiera de pirata | cranio | ossos | piliage | pirata | tresor</annotation>
+		<annotation cp="🏴‍☠" type="tts">bandiera de pirata</annotation>
+	</annotations>
+</ldml>

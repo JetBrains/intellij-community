@@ -10,7 +10,6 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -299,7 +298,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   }
 
   public static TemplateSettings getInstance() {
-    return ServiceManager.getService(TemplateSettings.class);
+    return ApplicationManager.getApplication().getService(TemplateSettings.class);
   }
 
   boolean differsFromDefault(@NotNull TemplateImpl t) {

@@ -2,6 +2,9 @@
 package com.intellij.openapi.vfs.local
 
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.util.TimeoutUtil
 import org.junit.Assert.assertTrue
@@ -41,5 +44,14 @@ internal object FileWatcherTestUtil {
       assertTrue("operation timed out", System.currentTimeMillis() < stopAt)
       TimeoutUtil.sleep(10)
     }
+  }
+
+  internal fun refresh(file: File): VirtualFile {
+    val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file) ?: throw IllegalStateException("can't get '${file.path}' into VFS")
+    VfsUtilCore.visitChildrenRecursively(vFile, object : VirtualFileVisitor<Any>() {
+      override fun visitFile(file: VirtualFile): Boolean { file.children; return true }
+    })
+    vFile.refresh(false, true)
+    return vFile
   }
 }

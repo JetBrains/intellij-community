@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="doi"/>
+	</identity>
+	<annotations>
+		<annotation cp="‾">ओवरलाइन</annotation>
+		<annotation cp="‾" type="tts">ओवरलाइन</annotation>
+		<annotation cp="‽">इंटरोबैंग</annotation>
+		<annotation cp="‽" type="tts">इंटरोबैंग</annotation>
+		<annotation cp="‸">कैरट</annotation>
+		<annotation cp="‸" type="tts">कैरट</annotation>
+		<annotation cp="⁂">नक्षत्र</annotation>
+		<annotation cp="⁂" type="tts">नक्षत्र</annotation>
+		<annotation cp="¬">नांह्</annotation>
+		<annotation cp="¬" type="tts">नांह्</annotation>
+		<annotation cp="|">लंबूतरी काहर</annotation>
+		<annotation cp="|" type="tts">लंबूतरी काहर</annotation>
+		<annotation cp="~">टिल्ड</annotation>
+		<annotation cp="~" type="tts">टिल्ड</annotation>
+		<annotation cp="≥">थमां बड्डा जां बरोबर</annotation>
+		<annotation cp="≥" type="tts">थमां बड्डा जां बरोबर</annotation>
+	</annotations>
+</ldml>

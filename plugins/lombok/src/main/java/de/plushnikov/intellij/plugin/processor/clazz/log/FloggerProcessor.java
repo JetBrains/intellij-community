@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
 import com.intellij.psi.PsiClass;
-import lombok.extern.flogger.Flogger;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -12,7 +12,7 @@ public class FloggerProcessor extends AbstractSimpleLogProcessor {
   private static final String LOGGER_INITIALIZER = "com.google.common.flogger.FluentLogger.forEnclosingClass()";
 
   public FloggerProcessor() {
-    super(Flogger.class, LOGGER_TYPE, LOGGER_INITIALIZER);
+    super(LombokClassNames.FLOGGER, LOGGER_TYPE, LOGGER_INITIALIZER);
   }
 
   @NotNull

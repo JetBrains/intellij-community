@@ -127,7 +127,8 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         }
         else {
           // E.g. "..." item
-          final JLabel actionLabel = new JLabel(value.toString(), null, LEFT);
+          @NlsSafe String text = value.toString();
+          final JLabel actionLabel = new JLabel(text, null, LEFT);
           actionLabel.setBackground(bg);
           actionLabel.setForeground(UIUtil.getListForeground());
           actionLabel.setFont(actionLabel.getFont().deriveFont(Font.PLAIN));

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -126,6 +127,21 @@ class BuildTasksImpl extends BuildTasks {
       ideaProperties += ["idea.platform.prefix": context.productProperties.platformPrefix]
     }
 
+    def additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    additionalPluginPaths?.each { pluginPath ->
+      File libFile = new File(pluginPath, "lib")
+      libFile.list { _, name ->
+        FileUtil.extensionEquals(name, "jar")
+      }.each { jarName ->
+        File jarFile = new File(libFile, jarName)
+        if (ideClasspath.add(jarFile.absolutePath)) {
+          context.messages.debug(" $jarFile from plugin ${libFile.parentFile.name}")
+        }
+      }
+    }
+
+    disableCompatibleIgnoredPlugins(context, "${tempDir}/config")
+
     BuildUtils.runJava(
       context,
       vmOptions,
@@ -133,6 +149,17 @@ class BuildTasksImpl extends BuildTasks {
       ideClasspath,
       "com.intellij.idea.Main",
       arguments)
+  }
+
+  private static void disableCompatibleIgnoredPlugins(BuildContext context, String configDir) {
+    String text = ""
+    context.productProperties.productLayout.compatiblePluginsToIgnore.each { moduleName ->
+      def pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
+      text += JDOMUtil.load(pluginXml).getChildTextTrim("id") + "\n"
+    }
+    if (!text.isEmpty()) {
+      FileUtil.writeToFile(new File(configDir + "/disabled_plugins.txt"), text)
+    }
   }
 
   File patchIdeaPropertiesFile() {
@@ -223,6 +250,12 @@ idea.fatal.error.notification=disabled
       }
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
+
+      buildContext.productProperties.getAdditionalPluginPaths(buildContext)?.each { pluginPath ->
+        buildContext.ant.copy(todir: "$buildContext.paths.distAll/plugins/${new File(pluginPath).name}") {
+          fileset(dir: pluginPath)
+        }
+      }
     }
   }
 

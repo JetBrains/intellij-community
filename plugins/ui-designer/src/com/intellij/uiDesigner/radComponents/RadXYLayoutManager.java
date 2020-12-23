@@ -82,6 +82,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
 
   private static class MyDropLocation implements ComponentDropLocation {
     private final RadContainer myContainer;
+    @NotNull
     private final Point myLocation;
 
     MyDropLocation(final RadContainer container, @NotNull final Point location) {
@@ -96,7 +97,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
 
     @Override
     public boolean canDrop(ComponentDragObject dragObject) {
-      if (myLocation == null || dragObject.getComponentCount() != 1) {
+      if (dragObject.getComponentCount() != 1) {
         return false;
       }
       for(RadComponent component: myContainer.getComponents()) {

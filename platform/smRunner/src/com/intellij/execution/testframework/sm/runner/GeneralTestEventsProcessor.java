@@ -83,9 +83,37 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
 
   public void onSuiteTreeNodeAdded(final String testName, final String locationHint, final String metaInfo, String id, String parentNodeId) {
+      onSuiteTreeNodeAdded(false,
+                           testName,
+                           locationHint,
+                           metaInfo,
+                           id,
+                           parentNodeId);
+  }
+
+  /**
+   * Populates the test result tree by nodes in "no run" state.
+   * The node type can be suite or test. The node type, name, and location cannot be changes by
+   * followed onSuiteStarted/onTestStarted calls.
+   *
+   * @param isSuite      the node type: true for suite, false for test
+   * @param testName     the presentable test name visible to the user
+   * @param locationHint the location info that is used for navigation to the suite/test source code
+   * @param metaInfo     additional information of any type
+   * @param id           the node identifier in the test result tree
+   * @param parentNodeId the parent node identifier in the test result tree
+   */
+  public void onSuiteTreeNodeAdded(final boolean isSuite,
+                                   final String testName,
+                                   final String locationHint,
+                                   final String metaInfo,
+                                   String id,
+                                   String parentNodeId) {
     myTreeBuildBeforeStart = true;
     myBuildTreeRunnables.add(() -> {
-      final SMTestProxy testProxy = createProxy(testName, locationHint, metaInfo, id, parentNodeId);
+      final SMTestProxy testProxy = isSuite
+                                    ? createSuite(testName, locationHint, metaInfo, id, parentNodeId)
+                                    : createProxy(testName, locationHint, metaInfo, id, parentNodeId);
       testProxy.setTreeBuildBeforeStart();
       if (myLocator != null) {
         testProxy.setLocator(myLocator);

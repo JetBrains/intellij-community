@@ -2,8 +2,8 @@
 package com.intellij.dupLocator;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -25,7 +25,7 @@ public class MultilanguageDuplocatorSettings implements PersistentStateComponent
   private final Map<String, DefaultDuplocatorState> mySettingsMap = new TreeMap<>();
 
   public static MultilanguageDuplocatorSettings getInstance() {
-    return ServiceManager.getService(MultilanguageDuplocatorSettings.class);
+    return ApplicationManager.getApplication().getService(MultilanguageDuplocatorSettings.class);
   }
 
   public void registerState(@NotNull Language language, @NotNull DefaultDuplocatorState state) {

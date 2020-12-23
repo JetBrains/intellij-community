@@ -25,11 +25,11 @@ class LazyPluginLogoIcon implements PluginLogoIconProvider {
 
   @NotNull
   @Override
-  public Icon getIcon(boolean big, boolean jb, boolean error, boolean disabled) {
-    String key = String.valueOf(big) + jb + error + disabled;
+  public Icon getIcon(boolean big, boolean error, boolean disabled) {
+    String key = String.valueOf(big) + error + disabled;
     LazyIcon icon = myIcons.get(key);
     if (icon == null) {
-      myIcons.put(key, icon = new LazyIcon(new boolean[]{big, jb, error, disabled}));
+      myIcons.put(key, icon = new LazyIcon(new boolean[]{big, error, disabled}));
       icon.setIcon(myLogoIcon, false);
     }
     return icon;
@@ -72,7 +72,7 @@ class LazyPluginLogoIcon implements PluginLogoIconProvider {
     }
 
     private void setIcon(@NotNull PluginLogoIconProvider logoIcon) {
-      myIcon = logoIcon.getIcon(myState[0], myState[1], myState[2], myState[3]);
+      myIcon = logoIcon.getIcon(myState[0], myState[1], myState[2]);
     }
 
     @Override

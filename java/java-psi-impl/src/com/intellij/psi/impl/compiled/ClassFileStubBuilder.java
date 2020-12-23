@@ -27,7 +27,9 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
 
   @Override
   public @NotNull Stream<Full> getAllSubBuilders() {
-    return ClassFileDecompilers.getInstance().EP_NAME.extensions().filter(d -> d instanceof Full).map(d -> (Full) d);
+    // currently, `getExtensionList` is a more safe than `extensions` because incompatible extension is filtered out (if extension class loaded from different classloader)
+    // even more - getAllSubBuilders is called quite often, no need to use iterator here
+    return ClassFileDecompilers.getInstance().EP_NAME.getExtensionList().stream().filter(d -> d instanceof Full).map(d -> (Full)d);
   }
 
   @Override

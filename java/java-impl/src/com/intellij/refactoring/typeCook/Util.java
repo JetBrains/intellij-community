@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,7 +25,7 @@ public final class Util {
     return theType;
   }
 
-  public static PsiClassType.ClassResolveResult resolveType(PsiType type) {
+  public static @NotNull PsiClassType.ClassResolveResult resolveType(PsiType type) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass aClass = resolveResult.getElement();
     if (aClass instanceof PsiAnonymousClass) {
@@ -42,10 +43,6 @@ public final class Util {
     }
     else if (t instanceof PsiClassType) {
       PsiClassType.ClassResolveResult result = resolveType(t);
-
-      if (result == null) {
-        return null;
-      }
 
       PsiClass aclass = result.getElement();
       PsiSubstitutor subst = result.getSubstitutor();
@@ -353,10 +350,6 @@ public final class Util {
       else if (element instanceof PsiNewExpression) {
         final PsiNewExpression newx = (PsiNewExpression)element;
         final PsiClassType.ClassResolveResult result = resolveType(type);
-
-        if (result == null) {
-          return;
-        }
 
         final PsiSubstitutor subst = result.getSubstitutor();
         final PsiTypeParameter[] parms = result.getElement().getTypeParameters();

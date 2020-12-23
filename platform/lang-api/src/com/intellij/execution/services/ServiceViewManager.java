@@ -18,4 +18,7 @@ public interface ServiceViewManager {
 
   @NotNull
   Promise<Void> expand(@NotNull Object service, @NotNull Class<?> contributorClass);
+
+  @NotNull
+  Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass);
 }

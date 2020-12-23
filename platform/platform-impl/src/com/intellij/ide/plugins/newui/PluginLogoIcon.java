@@ -19,63 +19,32 @@ import java.util.Map;
 class PluginLogoIcon implements PluginLogoIconProvider {
   static final Map<Icon, Icon> disabledIcons = ContainerUtil.createWeakMap(200);
 
-  private final Icon myPluginLogo_40;
-  private final Icon myPluginLogoJB_40;
-  private final Icon myPluginLogoError_40;
-  private final Icon myPluginLogoJBError_40;
+  private final Icon myPluginLogo;
+  private final Icon myPluginLogoError;
 
-  private final Icon myPluginLogoDisabled_40;
-  private final Icon myPluginLogoDisabledJB_40;
-  private final Icon myPluginLogoDisabledError_40;
-  private final Icon myPluginLogoDisabledJBError_40;
+  private final Icon myPluginLogoDisabled;
+  private final Icon myPluginLogoDisabledError;
 
-  private final Icon myPluginLogo_80;
-  private final Icon myPluginLogoJB_80;
-  private final Icon myPluginLogoError_80;
-  private final Icon myPluginLogoJBError_80;
+  private final Icon myPluginLogoBig;
+  private final Icon myPluginLogoErrorBig;
 
-  private final Icon myPluginLogoDisabled_80;
-  private final Icon myPluginLogoDisabledJB_80;
-  private final Icon myPluginLogoDisabledError_80;
-  private final Icon myPluginLogoDisabledJBError_80;
+  private final Icon myPluginLogoDisabledBig;
+  private final Icon myPluginLogoDisabledErrorBig;
 
-  PluginLogoIcon(@NotNull Icon logo_40, @NotNull Icon logoDisabled_40, @NotNull Icon logo_80, @NotNull Icon logoDisabled_80) {
-    myPluginLogo_40 = logo_40;
-    myPluginLogoJB_40 = setSouthEast(logo_40, AllIcons.Plugins.ModifierJBLogo);
-    myPluginLogoError_40 = setSouthWest(logo_40, AllIcons.Plugins.ModifierInvalid);
-    myPluginLogoJBError_40 = setSouthEastWest(logo_40, AllIcons.Plugins.ModifierJBLogo, AllIcons.Plugins.ModifierInvalid);
+  PluginLogoIcon(@NotNull Icon logo, @NotNull Icon logoDisabled, @NotNull Icon logoBig, @NotNull Icon logoDisabledBig) {
+    myPluginLogo = logo;
+    myPluginLogoError = setSouthWest(logo, AllIcons.Plugins.ModifierInvalid);
 
-    Icon disabledJBLogo = getDisabledJBLogo();
+    myPluginLogoDisabled = logoDisabled;
+    myPluginLogoDisabledError = setSouthWest(logoDisabled, AllIcons.Plugins.ModifierInvalid);
 
-    myPluginLogoDisabled_40 = logoDisabled_40;
-    myPluginLogoDisabledJB_40 = setSouthEast(logoDisabled_40, disabledJBLogo);
-    myPluginLogoDisabledError_40 = setSouthWest(logoDisabled_40, AllIcons.Plugins.ModifierInvalid);
-    myPluginLogoDisabledJBError_40 = setSouthEastWest(logoDisabled_40, disabledJBLogo, AllIcons.Plugins.ModifierInvalid);
-
-    Icon jbLogo2x = getJBLogo2x();
     Icon errorLogo2x = getErrorLogo2x();
 
-    myPluginLogo_80 = logo_80;
-    myPluginLogoJB_80 = setSouthEast(logo_80, jbLogo2x);
-    myPluginLogoError_80 = setSouthWest(logo_80, errorLogo2x);
-    myPluginLogoJBError_80 = setSouthEastWest(logo_80, jbLogo2x, errorLogo2x);
+    myPluginLogoBig = logoBig;
+    myPluginLogoErrorBig = setSouthWest(logoBig, errorLogo2x);
 
-    Icon disabledJBLogo2x = getDisabledJBLogo2x(jbLogo2x);
-
-    myPluginLogoDisabled_80 = logoDisabled_80;
-    myPluginLogoDisabledJB_80 = setSouthEast(logoDisabled_80, disabledJBLogo2x);
-    myPluginLogoDisabledError_80 = setSouthWest(logoDisabled_80, errorLogo2x);
-    myPluginLogoDisabledJBError_80 = setSouthEastWest(logoDisabled_80, disabledJBLogo2x, errorLogo2x);
-  }
-
-  @NotNull
-  private static Icon setSouthEast(@NotNull Icon main, @NotNull Icon southEast) {
-    LayeredIcon layeredIcon = new LayeredIcon(2);
-
-    layeredIcon.setIcon(main, 0);
-    layeredIcon.setIcon(southEast, 1, SwingConstants.SOUTH_EAST);
-
-    return layeredIcon;
+    myPluginLogoDisabledBig = logoDisabledBig;
+    myPluginLogoDisabledErrorBig = setSouthWest(logoDisabledBig, errorLogo2x);
   }
 
   @NotNull
@@ -125,61 +94,22 @@ class PluginLogoIcon implements PluginLogoIconProvider {
   }
 
   @NotNull
-  private static Icon setSouthEastWest(@NotNull Icon main, @NotNull Icon southEast, @NotNull Icon southWest) {
-    LayeredIcon layeredIcon = new LayeredIcon(3);
-
-    layeredIcon.setIcon(main, 0);
-    layeredIcon.setIcon(southEast, 1, SwingConstants.SOUTH_EAST);
-    layeredIcon.setIcon(southWest, 2, SwingConstants.SOUTH_WEST);
-
-    return layeredIcon;
-  }
-
-  @NotNull
-  protected Icon getDisabledJBLogo() {
-    return getDisabledIcon(AllIcons.Plugins.ModifierJBLogo, false);
-  }
-
-  @NotNull
-  protected Icon getJBLogo2x() {
-    return getScaled2xIcon(AllIcons.Plugins.ModifierJBLogo);
-  }
-
-  @NotNull
   protected Icon getErrorLogo2x() {
-    return getScaled2xIcon(AllIcons.Plugins.ModifierInvalid);
-  }
-
-  @NotNull
-  protected Icon getDisabledJBLogo2x(@NotNull Icon jbLogo2x) {
-    return getDisabledIcon(jbLogo2x, false);
+    return PluginLogo.reloadIcon(AllIcons.Plugins.ModifierInvalid, 20, 20, PluginLogo.LOG);
   }
 
   @NotNull
   @Override
-  public Icon getIcon(boolean big, boolean jb, boolean error, boolean disabled) {
-    if (jb && !error) {
+  public Icon getIcon(boolean big, boolean error, boolean disabled) {
+    if (error) {
       if (big) {
-        return disabled ? myPluginLogoDisabledJB_80 : myPluginLogoJB_80;
+        return disabled ? myPluginLogoDisabledErrorBig : myPluginLogoErrorBig;
       }
-      return disabled ? myPluginLogoDisabledJB_40 : myPluginLogoJB_40;
+      return disabled ? myPluginLogoDisabledError : myPluginLogoError;
     }
-    if (!jb && error) {
-      if (big) {
-        return disabled ? myPluginLogoDisabledError_80 : myPluginLogoError_80;
-      }
-      return disabled ? myPluginLogoDisabledError_40 : myPluginLogoError_40;
-    }
-    if (jb/* && error*/) {
-      if (big) {
-        return disabled ? myPluginLogoDisabledJBError_80 : myPluginLogoJBError_80;
-      }
-      return disabled ? myPluginLogoDisabledJBError_40 : myPluginLogoJBError_40;
-    }
-    // !jb && !error
     if (big) {
-      return disabled ? myPluginLogoDisabled_80 : myPluginLogo_80;
+      return disabled ? myPluginLogoDisabledBig : myPluginLogoBig;
     }
-    return disabled ? myPluginLogoDisabled_40 : myPluginLogo_40;
+    return disabled ? myPluginLogoDisabled : myPluginLogo;
   }
 }

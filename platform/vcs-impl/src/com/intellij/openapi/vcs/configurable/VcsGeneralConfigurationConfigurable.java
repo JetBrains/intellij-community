@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -73,6 +74,8 @@ public class VcsGeneralConfigurationConfigurable implements SearchableConfigurab
 
   @Override
   public void disposeUIResources() {
+    if (myPanel != null) Disposer.dispose(myPanel);
+
     myPanel = null;
   }
 

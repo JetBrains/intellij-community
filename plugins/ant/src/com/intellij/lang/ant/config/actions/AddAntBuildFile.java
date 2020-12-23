@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
@@ -69,7 +70,11 @@ public class AddAntBuildFile extends AnAction {
       Messages.showWarningDialog(project, errors.toString(), AntBundle.message("cannot.add.build.file.dialog.title"));
     }
     if (filesAdded > 0) {
-      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD).activate(null);
+      ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD);
+      if (window == null) {
+        window = ActivateAntToolWindowAction.createToolWindow(project);
+      }
+      window.activate(null);
     }
   }
 

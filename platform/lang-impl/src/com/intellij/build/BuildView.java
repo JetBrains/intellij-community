@@ -12,12 +12,10 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +39,7 @@ import java.util.function.Supplier;
  * @author Vladislav.Soroka
  */
 public class BuildView extends CompositeView<ExecutionConsole>
-  implements BuildProgressListener, ConsoleView, DataProvider, Filterable<ExecutionNode>, OccurenceNavigator {
+  implements BuildProgressListener, ConsoleView, DataProvider, Filterable<ExecutionNode>, OccurenceNavigator, ObservableConsoleView {
   public static final String CONSOLE_VIEW_NAME = "consoleView";
   @ApiStatus.Experimental
   public static final DataKey<List<AnAction>> RESTART_ACTIONS = DataKey.create("restart actions");
@@ -185,6 +183,14 @@ public class BuildView extends CompositeView<ExecutionConsole>
   @ApiStatus.Internal
   BuildTreeConsoleView getEventView() {
     return getView(BuildTreeConsoleView.class.getName(), BuildTreeConsoleView.class);
+  }
+
+  @Override
+  public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
+    ExecutionConsole console = getConsoleView();
+    if (console instanceof ObservableConsoleView) {
+      ((ObservableConsoleView) console).addChangeListener(listener, parent);
+    }
   }
 
   @Override

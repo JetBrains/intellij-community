@@ -67,7 +67,7 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
           projectsPanel.setBorder(JBUI.Borders.emptyTop(10));
 
           JPanel northPanel =
-            JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(JBColor.border(), JBUI.insetsBottom(1)) {
+            JBUI.Panels.simplePanel().andTransparent().withBorder(new CustomLineBorder(WelcomeScreenUIManager.getSeparatorColor(), JBUI.insetsBottom(1)) {
               @Override
               public Insets getBorderInsets(Component c) {
                 return JBUI.insetsBottom(12);
@@ -143,11 +143,11 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
       @NotNull
       private ActionToolbar createActionsToolbar() {
         Couple<DefaultActionGroup> mainAndMore =
-          splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
+          splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE),
                               action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
                               PRIMARY_BUTTONS_NUM);
         DefaultActionGroup toolbarActionGroup = new DefaultActionGroup(
-          ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), ToolbarTextButtonWrapper::wrapAsTextButton));
+          ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), action -> createButtonWrapper(action)));
         ActionGroup moreActionGroup = mainAndMore.getSecond();
 
         Presentation moreActionPresentation = moreActionGroup.getTemplatePresentation();
@@ -170,6 +170,16 @@ public final class ProjectsTabFactory implements WelcomeTabFactory {
         toolbar.setOpaque(false);
         toolbar.setReservePlaceAutoPopupIcon(false);
         return toolbar;
+      }
+
+      @NotNull
+      private ToolbarTextButtonWrapper createButtonWrapper(@NotNull AnAction action) {
+        if (action instanceof ActionGroup) {
+          List<AnAction> actions =
+            ContainerUtil.map(((ActionGroup)action).getChildren(null), a -> ActionGroupPanelWrapper.wrapGroups(a, parentDisposable));
+          return ToolbarTextButtonWrapper.wrapAsOptionButton(actions);
+        }
+        return ToolbarTextButtonWrapper.wrapAsTextButton(action);
       }
 
       private JPanel createNotificationsPanel(@NotNull Disposable parentDisposable) {

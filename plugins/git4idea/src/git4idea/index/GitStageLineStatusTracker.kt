@@ -89,8 +89,8 @@ class GitStageLineStatusTracker(
     unstagedTracker = DocumentTracker(stagedDocument, document, LOCK)
     Disposer.register(disposable, unstagedTracker)
 
-    stagedTracker.addHandler(MyDocumentTrackerHandler(true))
-    unstagedTracker.addHandler(MyDocumentTrackerHandler(false))
+    stagedTracker.addHandler(MyDocumentTrackerHandler(false))
+    unstagedTracker.addHandler(MyDocumentTrackerHandler(true))
   }
 
 

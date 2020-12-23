@@ -120,7 +120,7 @@ public class XmlMover extends LineMover {
       if (targetParent != null) {
         if (movedParent instanceof XmlTagChild && targetParent instanceof XmlTag) {
           if (targetParent == movedParent) return false;
-          if (movedParent instanceof XmlTag && moveTags(info, (XmlTag)movedParent, (XmlTag)targetParent, down)) return true;
+          if (movedParent instanceof XmlTag && moveTags(info, (XmlTag)movedParent, (XmlTag)targetParent, true)) return true;
 
           final XmlTag tag = (XmlTag)targetParent;
           final int offset = tag.isEmpty() ? tag.getTextRange().getStartOffset() : getTagContentRange(tag).getStartOffset();
@@ -151,7 +151,7 @@ public class XmlMover extends LineMover {
             info.toMove2 = new LineRange(Math.min(line, toMove2.startLine), toMove2.endLine);
           }
           if (targetParent == movedParent) return false;
-          if (movedParent instanceof XmlTag && moveTags(info, (XmlTag)movedParent, (XmlTag)targetParent, down)) return true;
+          if (movedParent instanceof XmlTag && moveTags(info, (XmlTag)movedParent, (XmlTag)targetParent, false)) return true;
 
         } else if ((movedParent instanceof XmlTagChild && targetParent instanceof XmlTagChild) || targetParent instanceof XmlAttribute) {
           final int line = document.getLineNumber(targetParent.getTextRange().getStartOffset());

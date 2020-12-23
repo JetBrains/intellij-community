@@ -362,17 +362,15 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return list.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @NotNull RefactoringEventData getBeforeData() {
     final RefactoringEventData beforeData = new RefactoringEventData();
     beforeData.addElements(myElements);
     return beforeData;
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @NotNull String getRefactoringId() {
     return "refactoring.safeDelete";
   }
 

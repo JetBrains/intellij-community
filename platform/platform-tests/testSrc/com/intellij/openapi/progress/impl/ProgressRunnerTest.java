@@ -314,7 +314,6 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
       .modal()
       .sync()
       .submitAndGet();
-    if (result == null) return;
     assertFalse(result.isCanceled());
     Throwable throwable = result.getThrowable();
 

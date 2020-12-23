@@ -337,14 +337,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
         enableNonSuspendingRequest(requestManager.createThreadStartRequest(),
                                    event -> {
                                      ThreadReference thread = ((ThreadStartEvent)event).thread();
-                                     getVirtualMachineProxy().threadStarted(thread);
+                                     machineProxy.threadStarted(thread);
                                      myDebugProcessDispatcher.getMulticaster().threadStarted(this, thread);
                                    });
 
         enableNonSuspendingRequest(requestManager.createThreadDeathRequest(),
                                    event -> {
                                      ThreadReference thread = ((ThreadDeathEvent)event).thread();
-                                     getVirtualMachineProxy().threadStopped(thread);
+                                     machineProxy.threadStopped(thread);
                                      myDebugProcessDispatcher.getMulticaster().threadStopped(this, thread);
                                    });
       }

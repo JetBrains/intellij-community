@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+
+Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file.
+-->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="sw"/>
+		<territory type="KE"/>
+	</identity>
+	<annotations>
+		<annotation cp="👊🏻">konde | kunja ngumi | mkono | mwili | ngozi nyeupe | ngumi | ngumi iliyonyooshewa</annotation>
+		<annotation cp="👊🏻" type="tts">ngumi iliyonyooshewa: ngozi nyeupe</annotation>
+		<annotation cp="👊🏼">konde | kunja ngumi | mkono | mwili | ngozi nyeupe kiasi | ngumi | ngumi iliyonyooshewa</annotation>
+		<annotation cp="👊🏼" type="tts">ngumi iliyonyooshewa: ngozi nyeupe kiasi</annotation>
+		<annotation cp="👊🏽">konde | kunja ngumi | mkono | mwili | ngozi ya kahawia | ngumi | ngumi iliyonyooshewa</annotation>
+		<annotation cp="👊🏽" type="tts">ngumi iliyonyooshewa: ngozi ya kahawia</annotation>
+		<annotation cp="👊🏾">konde | kunja ngumi | mkono | mwili | ngozi nyeusi kiasi | ngumi | ngumi iliyonyooshewa</annotation>
+		<annotation cp="👊🏾" type="tts">ngumi iliyonyooshewa: ngozi nyeusi kiasi</annotation>
+		<annotation cp="👊🏿">konde | kunja ngumi | mkono | mwili | ngozi nyeusi | ngumi | ngumi iliyonyooshewa</annotation>
+		<annotation cp="👊🏿" type="tts">ngumi iliyonyooshewa: ngozi nyeusi</annotation>
+		<annotation cp="🤦🏻‍♀">ishara | kutoamini | mwanamke anayeashiria kutoamini | mwanamke anayueashiria kutoamini | ngozi nyeupe</annotation>
+		<annotation cp="🤦🏻‍♀" type="tts">mwanamke anayeashiria kutoamini: ngozi nyeupe</annotation>
+		<annotation cp="🤦🏼‍♀">ishara | kutoamini | mwanamke anayeashiria kutoamini | mwanamke anayueashiria kutoamini | ngozi nyeupe kiasi</annotation>
+		<annotation cp="🤦🏼‍♀" type="tts">mwanamke anayeashiria kutoamini: ngozi nyeupe kiasi</annotation>
+		<annotation cp="🤦🏽‍♀">ishara | kutoamini | mwanamke anayeashiria kutoamini | mwanamke anayueashiria kutoamini | ngozi ya kahawia</annotation>
+		<annotation cp="🤦🏽‍♀" type="tts">mwanamke anayeashiria kutoamini: ngozi ya kahawia</annotation>
+		<annotation cp="🤦🏾‍♀">ishara | kutoamini | mwanamke anayeashiria kutoamini | mwanamke anayueashiria kutoamini | ngozi nyeusi kiasi</annotation>
+		<annotation cp="🤦🏾‍♀" type="tts">mwanamke anayeashiria kutoamini: ngozi nyeusi kiasi</annotation>
+		<annotation cp="🤦🏿‍♀">ishara | kutoamini | mwanamke anayeashiria kutoamini | mwanamke anayueashiria kutoamini | ngozi nyeusi</annotation>
+		<annotation cp="🤦🏿‍♀" type="tts">mwanamke anayeashiria kutoamini: ngozi nyeusi</annotation>
+		<annotation cp="👨🏻‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi na kofia ya kufuzu | ngozi nyeupe</annotation>
+		<annotation cp="👨🏼‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi na kofia ya kufuzu | ngozi nyeupe kiasi</annotation>
+		<annotation cp="👨🏽‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi na kofia ya kufuzu | ngozi ya kahawia</annotation>
+		<annotation cp="👨🏾‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi na kofia ya kufuzu | ngozi nyeusi kiasi</annotation>
+		<annotation cp="👨🏿‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi na kofia ya kufuzu | ngozi nyeusi</annotation>
+		<annotation cp="👩🏻‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi wa kike na kofia ya kufuzu | ngozi nyeupe</annotation>
+		<annotation cp="👩🏼‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi wa kike na kofia ya kufuzu | ngozi nyeupe kiasi</annotation>
+		<annotation cp="👩🏽‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi wa kike na kofia ya kufuzu | ngozi ya kahawia</annotation>
+		<annotation cp="👩🏾‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi wa kike na kofia ya kufuzu | ngozi nyeusi kiasi</annotation>
+		<annotation cp="👩🏿‍🎓">fuzu | hitimu | kofia | mahafali | mwanafunzi wa kike na kofia ya kufuzu | ngozi nyeusi</annotation>
+		<annotation cp="👮🏻">afisa | afisa wa polisi | ngozi nyeupe | polisi</annotation>
+		<annotation cp="👮🏻" type="tts">afisa wa polisi: ngozi nyeupe</annotation>
+		<annotation cp="👮🏼">afisa | afisa wa polisi | ngozi nyeupe kiasi | polisi</annotation>
+		<annotation cp="👮🏼" type="tts">afisa wa polisi: ngozi nyeupe kiasi</annotation>
+		<annotation cp="👮🏽">afisa | afisa wa polisi | ngozi ya kahawia | polisi</annotation>
+		<annotation cp="👮🏽" type="tts">afisa wa polisi: ngozi ya kahawia</annotation>
+		<annotation cp="👮🏾">afisa | afisa wa polisi | ngozi nyeusi kiasi | polisi</annotation>
+		<annotation cp="👮🏾" type="tts">afisa wa polisi: ngozi nyeusi kiasi</annotation>
+		<annotation cp="👮🏿">afisa | afisa wa polisi | ngozi nyeusi | polisi</annotation>
+		<annotation cp="👮🏿" type="tts">afisa wa polisi: ngozi nyeusi</annotation>
+		<annotation cp="🤰🏻">mjamzito | mwanamke | ngozi nyeupe</annotation>
+		<annotation cp="🤰🏼">mjamzito | mwanamke | ngozi nyeupe kiasi</annotation>
+		<annotation cp="🤰🏽">mjamzito | mwanamke | ngozi ya kahawia</annotation>
+		<annotation cp="🤰🏾">mjamzito | mwanamke | ngozi nyeusi kiasi</annotation>
+		<annotation cp="🤰🏿">mjamzito | mwanamke | ngozi nyeusi</annotation>
+		<annotation cp="🏋🏻‍♂">mbeba vyuma | mwanamume anayebeba vyuma vizito | ngozi nyeupe | uzani | uzito</annotation>
+		<annotation cp="🏋🏼‍♂">mbeba vyuma | mwanamume anayebeba vyuma vizito | ngozi nyeupe kiasi | uzani | uzito</annotation>
+		<annotation cp="🏋🏽‍♂">mbeba vyuma | mwanamume anayebeba vyuma vizito | ngozi ya kahawia | uzani | uzito</annotation>
+		<annotation cp="🏋🏾‍♂">mbeba vyuma | mwanamume anayebeba vyuma vizito | ngozi nyeusi kiasi | uzani | uzito</annotation>
+		<annotation cp="🏋🏿‍♂">mbeba vyuma | mwanamume anayebeba vyuma vizito | ngozi nyeusi | uzani | uzito</annotation>
+		<annotation cp="🏋🏻‍♀">mbeba vyuma | mwanamke anayebeba vyuma vizito | ngozi nyeupe | uzani | uzito</annotation>
+		<annotation cp="🏋🏼‍♀">mbeba vyuma | mwanamke anayebeba vyuma vizito | ngozi nyeupe kiasi | uzani | uzito</annotation>
+		<annotation cp="🏋🏽‍♀">mbeba vyuma | mwanamke anayebeba vyuma vizito | ngozi ya kahawia | uzani | uzito</annotation>
+		<annotation cp="🏋🏾‍♀">mbeba vyuma | mwanamke anayebeba vyuma vizito | ngozi nyeusi kiasi | uzani | uzito</annotation>
+		<annotation cp="🏋🏿‍♀">mbeba vyuma | mwanamke anayebeba vyuma vizito | ngozi nyeusi | uzani | uzito</annotation>
+		<annotation cp="🤹🏻">mtu anayecheza mipira mingi | ngozi nyeupe | shughuli nyingi</annotation>
+		<annotation cp="🤹🏻" type="tts">mtu anayecheza mipira mingi: ngozi nyeupe</annotation>
+		<annotation cp="🤹🏼">mtu anayecheza mipira mingi | ngozi nyeupe kiasi | shughuli nyingi</annotation>
+		<annotation cp="🤹🏼" type="tts">mtu anayecheza mipira mingi: ngozi nyeupe kiasi</annotation>
+		<annotation cp="🤹🏽">mtu anayecheza mipira mingi | ngozi ya kahawia | shughuli nyingi</annotation>
+		<annotation cp="🤹🏽" type="tts">mtu anayecheza mipira mingi: ngozi ya kahawia</annotation>
+		<annotation cp="🤹🏾">mtu anayecheza mipira mingi | ngozi nyeusi kiasi | shughuli nyingi</annotation>
+		<annotation cp="🤹🏾" type="tts">mtu anayecheza mipira mingi: ngozi nyeusi kiasi</annotation>
+		<annotation cp="🤹🏿">mtu anayecheza mipira mingi | ngozi nyeusi | shughuli nyingi</annotation>
+		<annotation cp="🤹🏿" type="tts">mtu anayecheza mipira mingi: ngozi nyeusi</annotation>
+		<annotation cp="🇦🇫" type="tts">bendera: Afghanistani</annotation>
+		<annotation cp="🇦🇮" type="tts">bendera: Anguila</annotation>
+		<annotation cp="🇦🇶" type="tts">bendera: Antaktika</annotation>
+		<annotation cp="🇦🇿" type="tts">bendera: Azabajani</annotation>
+		<annotation cp="🇧🇯" type="tts">bendera: Benini</annotation>
+		<annotation cp="🇧🇹" type="tts">bendera: Bhutani</annotation>
+		<annotation cp="🇧🇾" type="tts">bendera: Belarusi</annotation>
+		<annotation cp="🇨🇨" type="tts">bendera: Visiwa vya Kokos (Keeling)</annotation>
+		<annotation cp="🇨🇩" type="tts">bendera: Kongo - Kinshasa</annotation>
+		<annotation cp="🇨🇻" type="tts">bendera: Kepuvede</annotation>
+		<annotation cp="🇪🇦" type="tts">bendera: Keuta na Melilla</annotation>
+		<annotation cp="🇪🇨" type="tts">bendera: Ekwado</annotation>
+		<annotation cp="🇬🇦" type="tts">bendera: Gaboni</annotation>
+		<annotation cp="🇬🇱" type="tts">bendera: Grinilandi</annotation>
+		<annotation cp="🇬🇵" type="tts">bendera: Gwadelupe</annotation>
+		<annotation cp="🇬🇸" type="tts">bendera: Visiwa vya Jojia ya Kusini na Sandwich ya Kusini</annotation>
+		<annotation cp="🇬🇺" type="tts">bendera: Guami</annotation>
+		<annotation cp="🇭🇷" type="tts">bendera: Kroashia</annotation>
+		<annotation cp="🇮🇴" type="tts">bendera: Himaya ya Uingereza katika Bahari Hindi</annotation>
+		<annotation cp="🇯🇴" type="tts">bendera: Yordani</annotation>
+		<annotation cp="🇰🇾" type="tts">bendera: Visiwa vya Kaimani</annotation>
+		<annotation cp="🇱🇦" type="tts">bendera: Laosi</annotation>
+		<annotation cp="🇱🇧" type="tts">bendera: Lebanoni</annotation>
+		<annotation cp="🇱🇮" type="tts">bendera: Lishenteni</annotation>
+		<annotation cp="🇱🇸" type="tts">bendera: Lesotho</annotation>
+		<annotation cp="🇱🇺" type="tts">bendera: Lasembagi</annotation>
+		<annotation cp="🇱🇻" type="tts">bendera: Lativia</annotation>
+		<annotation cp="🇲🇦" type="tts">bendera: Moroko</annotation>
+		<annotation cp="🇲🇨" type="tts">bendera: Monako</annotation>
+		<annotation cp="🇲🇰" type="tts">bendera: Masedonia</annotation>
+		<annotation cp="🇲🇲" type="tts">bendera: Myama (Burma)</annotation>
+		<annotation cp="🇲🇶" type="tts">bendera: Martiniki</annotation>
+		<annotation cp="🇲🇸" type="tts">bendera: Montserati</annotation>
+		<annotation cp="🇳🇨" type="tts">bendera: Nyukaledonia</annotation>
+		<annotation cp="🇳🇪" type="tts">bendera: Nijeri</annotation>
+		<annotation cp="🇳🇴" type="tts">bendera: Norwe</annotation>
+		<annotation cp="🇳🇵" type="tts">bendera: Nepali</annotation>
+		<annotation cp="🇴🇲" type="tts">bendera: Omani</annotation>
+		<annotation cp="🇵🇫" type="tts">bendera: Polinesia ya Ufaransa</annotation>
+		<annotation cp="🇵🇬" type="tts">bendera: Papua Guinea Mpya</annotation>
+		<annotation cp="🇵🇱" type="tts">bendera: Polandi</annotation>
+		<annotation cp="🇵🇷" type="tts">bendera: Puetoriko</annotation>
+		<annotation cp="🇵🇸" type="tts">bendera: Himaya za Palestina</annotation>
+		<annotation cp="🇵🇾" type="tts">bendera: Paragwai</annotation>
+		<annotation cp="🇶🇦" type="tts">bendera: Katari</annotation>
+		<annotation cp="🇸🇬" type="tts">bendera: Singapuri</annotation>
+		<annotation cp="🇸🇷" type="tts">bendera: Surinamu</annotation>
+		<annotation cp="🇸🇹" type="tts">bendera: Sao Tome na Prinsipe</annotation>
+		<annotation cp="🇸🇾" type="tts">bendera: Shamu</annotation>
+		<annotation cp="🇹🇩" type="tts">bendera: Chadi</annotation>
+		<annotation cp="🇹🇭" type="tts">bendera: Thailandi</annotation>
+		<annotation cp="🇹🇲" type="tts">bendera: Turukimenstani</annotation>
+		<annotation cp="🇹🇼" type="tts">bendera: Taiwani</annotation>
+		<annotation cp="🇺🇦" type="tts">bendera: Ukreni</annotation>
+		<annotation cp="🇺🇾" type="tts">bendera: Urugwai</annotation>
+		<annotation cp="🇻🇦" type="tts">bendera: Mji wa Vatikani</annotation>
+		<annotation cp="🇻🇬" type="tts">bendera: Visiwa vya Virgin vya Uingereza</annotation>
+		<annotation cp="🇻🇮" type="tts">bendera: Visiwa vya Virgin vya Marekani</annotation>
+		<annotation cp="🇾🇹" type="tts">bendera: Mayote</annotation>
+		<annotation cp="🏴󠁧󠁢󠁷󠁬󠁳󠁿" type="tts">bendera: Wales</annotation>
+		<annotation cp="¤" type="tts">Sarafu Isiyojulikana</annotation>
+		<annotation cp="؋" type="tts">Afghani ya Afghanistani</annotation>
+		<annotation cp="৳" type="tts">Taka ya Bangladeshi</annotation>
+		<annotation cp="฿" type="tts">Bahti ya Tailandi</annotation>
+		<annotation cp="៛" type="tts">Rieli ya Kambodia</annotation>
+		<annotation cp="₦" type="tts">Naira ya Naijeria</annotation>
+		<annotation cp="₫" type="tts">Dong ya Vietnamu</annotation>
+		<annotation cp="₴" type="tts">Hryvnia ya Ukraini</annotation>
+		<annotation cp="₵" type="tts">Sidi ya Ghana</annotation>
+		<annotation cp="₸" type="tts">Tenge ya Kazakistani</annotation>
+		<annotation cp="₼" type="tts">Manati ya Azabajani</annotation>
+		<annotation cp="₾" type="tts">Lari ya Jiojia</annotation>
+	</annotations>
+</ldml>

@@ -1,8 +1,9 @@
 import sys
 import threading
+from abc import abstractmethod
 from logging import Logger
 from types import TracebackType
-from typing import Any, Callable, Generic, Iterable, Iterator, List, Optional, Set, Tuple, TypeVar
+from typing import Any, Callable, Container, Generic, Iterable, Iterator, List, Optional, Protocol, Set, Tuple, TypeVar
 
 FIRST_COMPLETED: str
 FIRST_EXCEPTION: str
@@ -25,6 +26,15 @@ if sys.version_info >= (3, 7):
     class BrokenExecutor(RuntimeError): ...
 
 _T = TypeVar("_T")
+
+_T_co = TypeVar("_T_co", covariant=True)
+
+# Copied over Collection implementation as it does not exist in Python 2 and <3.6.
+# Also to solve pytype issues with _Collection.
+class _Collection(Iterable[_T_co], Container[_T_co], Protocol[_T_co]):
+    # Implement Sized (but don't have it as a base class).
+    @abstractmethod
+    def __len__(self) -> int: ...
 
 class Future(Generic[_T]):
     def __init__(self) -> None: ...
@@ -65,7 +75,7 @@ class Executor:
 
 def as_completed(fs: Iterable[Future[_T]], timeout: Optional[float] = ...) -> Iterator[Future[_T]]: ...
 def wait(
-    fs: Iterable[Future[_T]], timeout: Optional[float] = ..., return_when: str = ...
+    fs: _Collection[Future[_T]], timeout: Optional[float] = ..., return_when: str = ...
 ) -> Tuple[Set[Future[_T]], Set[Future[_T]]]: ...
 
 class _Waiter:

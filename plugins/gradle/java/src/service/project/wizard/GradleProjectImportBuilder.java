@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.project.wizard;
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -159,7 +158,8 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
           }
         };
 
-        Runnable importTask = () -> ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
+        Runnable importTask =
+          () -> ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, false);
 
         boolean showSelectiveImportDialog = GradleSettings.getInstance(project).showSelectiveImportDialogOnInitialImport();
         if (showSelectiveImportDialog && !ApplicationManager.getApplication().isHeadlessEnvironment()) {

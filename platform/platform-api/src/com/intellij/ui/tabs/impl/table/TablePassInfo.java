@@ -11,20 +11,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TablePassInfo extends LayoutPassInfo {
+class TablePassInfo extends LayoutPassInfo {
   final List<TableRow> table = new ArrayList<>();
-  public Rectangle toFitRec;
+  public final Rectangle toFitRec;
   final Map<TabInfo, TableRow> myInfo2Row = new HashMap<>();
-
-  int requiredWidth;
-  int requiredRows;
-  int rowToFitMaxX;
-
   final JBTabsImpl myTabs;
 
   TablePassInfo(final JBTabsImpl tabs, List<TabInfo> visibleInfos) {
     super(visibleInfos);
     myTabs = tabs;
+    final Insets insets = myTabs.getLayoutInsets();
+    toFitRec =
+      new Rectangle(insets.left, insets.top, myTabs.getWidth() - insets.left - insets.right, myTabs.getHeight() - insets.top - insets.bottom);
   }
 
   public boolean isInSelectionRow(final TabInfo tabInfo) {

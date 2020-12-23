@@ -25,11 +25,6 @@ import javax.swing.*;
 import java.util.List;
 
 public interface FileSystemTree extends Disposable {
-  /**
-   * If you return a {@link FileSystemTree} instance for this key from a {@link com.intellij.openapi.actionSystem.DataContext}
-   * you <strong>must</strong> also return {@link #getSelectedFiles()} for {@link com.intellij.openapi.actionSystem.CommonDataKeys#VIRTUAL_FILE_ARRAY} key.
-   * Otherwise 'Delete' action on your component may delete the whole project.
-   */
   DataKey<FileSystemTree> DATA_KEY = DataKey.create("FileSystemTree");
 
   JTree getTree();

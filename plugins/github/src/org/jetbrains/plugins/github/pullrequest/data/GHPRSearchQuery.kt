@@ -83,6 +83,9 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
     author("author") {
       override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
     },
+    label("label") {
+      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
+    },
     after("created") {
       override fun createTerm(value: String) = Term.Qualifier.Date.After.from(this, value)
     },

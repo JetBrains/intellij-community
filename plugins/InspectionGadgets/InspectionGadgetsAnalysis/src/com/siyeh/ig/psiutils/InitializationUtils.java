@@ -240,7 +240,7 @@ public final class InitializationUtils {
         initializedInTryAndCatch &= ExceptionUtils.blockThrowsException(catchBlock);
       }
       else {
-        initializedInTryAndCatch &= blockAssignsVariableOrFails(catchBlock, variable, checkedMethods, strict);
+        initializedInTryAndCatch &= blockAssignsVariableOrFails(catchBlock, variable, checkedMethods, false);
       }
     }
     return initializedInTryAndCatch || blockAssignsVariableOrFails(tryStatement.getFinallyBlock(), variable, checkedMethods, strict);

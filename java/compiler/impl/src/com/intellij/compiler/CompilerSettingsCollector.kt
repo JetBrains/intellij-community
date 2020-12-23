@@ -12,15 +12,16 @@ class CompilerSettingsCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val usages = mutableSetOf<MetricEvent>()
 
-    val config = CompilerWorkspaceConfiguration.getInstance(project)
+    val workspaceConfig = CompilerWorkspaceConfiguration.getInstance(project)
+    val config = CompilerConfiguration.getInstance(project)
 
-    usages.add(newBooleanMetric("AUTO_SHOW_ERRORS_IN_EDITOR", config.AUTO_SHOW_ERRORS_IN_EDITOR))
-    usages.add(newBooleanMetric("DISPLAY_NOTIFICATION_POPUP", config.DISPLAY_NOTIFICATION_POPUP))
-    usages.add(newBooleanMetric("CLEAR_OUTPUT_DIRECTORY", config.CLEAR_OUTPUT_DIRECTORY))
-    usages.add(newBooleanMetric("MAKE_PROJECT_ON_SAVE", config.MAKE_PROJECT_ON_SAVE))
-    usages.add(newBooleanMetric("PARALLEL_COMPILATION", config.PARALLEL_COMPILATION))
-    usages.add(newBooleanMetric("REBUILD_ON_DEPENDENCY_CHANGE", config.REBUILD_ON_DEPENDENCY_CHANGE))
-    usages.add(newBooleanMetric("COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT", config.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT))
+    usages.add(newBooleanMetric("AUTO_SHOW_ERRORS_IN_EDITOR", workspaceConfig.AUTO_SHOW_ERRORS_IN_EDITOR))
+    usages.add(newBooleanMetric("DISPLAY_NOTIFICATION_POPUP", workspaceConfig.DISPLAY_NOTIFICATION_POPUP))
+    usages.add(newBooleanMetric("CLEAR_OUTPUT_DIRECTORY", workspaceConfig.CLEAR_OUTPUT_DIRECTORY))
+    usages.add(newBooleanMetric("MAKE_PROJECT_ON_SAVE", workspaceConfig.MAKE_PROJECT_ON_SAVE))
+    usages.add(newBooleanMetric("PARALLEL_COMPILATION", config.isParallelCompilationEnabled))
+    usages.add(newBooleanMetric("REBUILD_ON_DEPENDENCY_CHANGE", workspaceConfig.REBUILD_ON_DEPENDENCY_CHANGE))
+    usages.add(newBooleanMetric("COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT", workspaceConfig.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT))
 
     return usages
   }

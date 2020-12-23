@@ -6,10 +6,13 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.util.PropertiesComponent
 import com.jetbrains.builtInHelp.settings.SettingsPage
+import org.jetbrains.annotations.NonNls
 
 class Utils {
   companion object {
+    @NonNls
     private const val EMPTY_STRING = ""
+    @NonNls
     const val BASE_HELP_URL = "https://www.jetbrains.com/"
 
     private val secureKey = CredentialAttributes("Web Help Bundle")

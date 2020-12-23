@@ -193,7 +193,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
           if (obj == null) continue;
 
           String s1 = obj.toString();
-          if (s1 != null && (s1.startsWith(s) || s1.equals(s))) {
+          if (s1 != null && s1.startsWith(s)) {
             popup.getList().setSelectedIndex(j);
             return;
           }

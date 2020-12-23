@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.CodeStyleBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -63,7 +64,7 @@ public class StdArrangementRuleAliasToken extends StdArrangementSettingsToken im
   }
 
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 

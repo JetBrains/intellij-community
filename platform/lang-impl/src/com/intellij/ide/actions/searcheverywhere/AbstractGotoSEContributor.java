@@ -220,7 +220,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         }
       });
     }
-    result.add(new SearchEverywhereUIBase.FiltersAction(filter, onChanged));
+    result.add(new SearchEverywhereUI.FiltersAction(filter, onChanged));
     return result;
   }
 
@@ -338,8 +338,12 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   @Override
   public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
-    SearchEverywhereCommandInfo command = getFilterCommand();
-    return command == null ? Collections.emptyList() : Collections.singletonList(command);
+    if (Registry.is("search.everywhere.group.contributors.by.type")) {
+      SearchEverywhereCommandInfo command = getFilterCommand();
+      return command == null ? Collections.emptyList() : Collections.singletonList(command);
+    }
+
+    return Collections.emptyList();
   }
 
   @NotNull

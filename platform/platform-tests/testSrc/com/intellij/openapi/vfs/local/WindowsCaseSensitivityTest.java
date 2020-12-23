@@ -1,18 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.SuperUserStatus;
-import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,7 +38,7 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     assertNotNull(vDir);
     assertFalse(vDir.isCaseSensitive());
-    makeCaseSensitive(dir, true);
+    IoTestUtil.setCaseSensitivity(dir, true);
     VirtualFile readme = createChildData(vDir, "readme.txt");
     assertTrue(readme.isCaseSensitive());
   }
@@ -52,7 +49,7 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     assertNotNull(vDir);
     assertFalse(vDir.isCaseSensitive());
-    makeCaseSensitive(dir, true);
+    IoTestUtil.setCaseSensitivity(dir, true);
     VirtualFile readme = createChildData(vDir, "readme.txt");
     VirtualFile README = createChildData(vDir, "README.TXT");
     assertNotEquals(((VirtualFileSystemEntry)readme).getId(), ((VirtualFileSystemEntry)README).getId());
@@ -60,23 +57,7 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     assertTrue(README.isCaseSensitive());
   }
 
-  static void makeCaseSensitive(@NotNull File dir, boolean caseSensitive) throws Exception {
-    exec("fsutil.exe", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
-  }
-
-  @NotNull
-  private static VirtualFile createChildData(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
+  private static VirtualFile createChildData(VirtualFile dir, String name) throws IOException {
     return WriteAction.computeAndWait(() -> dir.createChildData(null, name));
-  }
-
-  private static void exec(String @NotNull ... command) throws Exception {
-    GeneralCommandLine cmd = new GeneralCommandLine(command).withRedirectErrorStream(true);
-    ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 60_000);
-    String stderr = output.getStderr();
-    if (output.getExitCode() != 0 || output.isTimeout() || !stderr.isEmpty()) {
-      fail("failed: " + cmd + '\n' +
-           "exit code: " + output.getExitCode() + " timeout: " + output.isTimeout()
-           + "; output:\n" + output.getStdout().trim() + "\nstderr:\n"+stderr);
-    }
   }
 }

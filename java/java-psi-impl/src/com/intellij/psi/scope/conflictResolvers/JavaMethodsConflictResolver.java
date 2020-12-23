@@ -532,7 +532,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
       if (applicable12 || applicable21) {
         if (applicable12 && !applicable21) return Specifics.SECOND;
-        if (applicable21 && !applicable12) return Specifics.FIRST;
+        if (!applicable12) return Specifics.FIRST;
 
         //from 15.12.2.5 Choosing the Most Specific Method: concrete = nonabstract or default
         final boolean abstract1 = method1.hasModifierProperty(PsiModifier.ABSTRACT) || method1.hasModifierProperty(PsiModifier.DEFAULT);

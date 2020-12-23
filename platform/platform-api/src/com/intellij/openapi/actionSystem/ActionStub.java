@@ -9,6 +9,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -27,7 +29,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final String myId;
   private final PluginDescriptor myPlugin;
   private final String myIconPath;
-  private final SmartList<Supplier<String>> mySynonyms = new SmartList<>();
+  private List<Supplier<String>> mySynonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
@@ -46,7 +48,12 @@ public final class ActionStub extends AnAction implements ActionStubBase {
 
   @Override
   public void addSynonym(@NotNull Supplier<String> text) {
-    mySynonyms.add(text);
+    if (mySynonyms == Collections.<Supplier<String>>emptyList()) {
+      mySynonyms = new SmartList<>(text);
+    }
+    else {
+      mySynonyms.add(text);
+    }
   }
 
   @NotNull

@@ -91,7 +91,7 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
     return SystemProperties.getBooleanProperty(PROP_KEY, false);
   }
 
-  synchronized CompilerRef.JavaCompilerClassRef asClassUsage(JavacRef aClass) throws IOException {
+  synchronized @NotNull CompilerRef.JavaCompilerClassRef asClassUsage(JavacRef aClass) throws IOException {
     return new CompilerRef.JavaCompilerClassRef(id(aClass, myIndex.getByteSeqEum()));
   }
 

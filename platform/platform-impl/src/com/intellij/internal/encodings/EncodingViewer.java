@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -59,9 +60,9 @@ public class EncodingViewer extends DialogWrapper {
   }
 
   private void refreshText() {
-    String selectedCharset = getSelectedCharset();
-    if (myBytes == null || selectedCharset == null) return;
+    if (myBytes == null) return;
     try {
+      String selectedCharset = getSelectedCharset();
       myText.setText(new String(myBytes, selectedCharset));
     }
     catch (UnsupportedEncodingException e) {
@@ -69,7 +70,7 @@ public class EncodingViewer extends DialogWrapper {
     }
   }
 
-  private String getSelectedCharset() {
+  private @NotNull String getSelectedCharset() {
     return ((Charset) myEncoding.getSelectedItem()).name();
   }
 

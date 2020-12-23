@@ -66,6 +66,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
   static final boolean DISABLE_FORK_DEBUGGER = Boolean.getBoolean("external.system.disable.fork.debugger");
 
+  public static final String DEBUG_SERVER_PROCESS_NAME = "ExternalSystemDebugServerProcess";
+  private static final String REATTACH_DEBUG_PROCESS_NAME = "ExternalSystemReattachDebugProcess";
+  private boolean isDebugServerProcess = true;
+  private boolean isReattachDebugProcess = false;
+
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
                                         Project project,
                                         ConfigurationFactory factory,
@@ -77,6 +82,22 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @Override
   public String suggestedName() {
     return AbstractExternalSystemTaskConfigurationType.generateName(getProject(), mySettings);
+  }
+
+  public boolean isReattachDebugProcess() {
+    return isReattachDebugProcess;
+  }
+
+  public void setReattachDebugProcess(boolean reattachDebugProcess) {
+    isReattachDebugProcess = reattachDebugProcess;
+  }
+
+  public boolean isDebugServerProcess() {
+    return isDebugServerProcess;
+  }
+
+  public void setDebugServerProcess(boolean debugServerProcess) {
+    isDebugServerProcess = debugServerProcess;
   }
 
   @Override
@@ -101,6 +122,15 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     Element e = element.getChild(ExternalSystemTaskExecutionSettings.TAG_NAME);
     if (e != null) {
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
+
+      final Element debugServerProcess = element.getChild(DEBUG_SERVER_PROCESS_NAME);
+      if (debugServerProcess != null) {
+        isDebugServerProcess = Boolean.valueOf(debugServerProcess.getText());
+      }
+      final Element reattachProcess = element.getChild(REATTACH_DEBUG_PROCESS_NAME);
+      if (reattachProcess != null) {
+        isReattachDebugProcess = Boolean.valueOf(reattachProcess.getText());
+      }
     }
     EP_NAME.forEachExtensionSafe(extension -> extension.readExternal(this, element));
   }
@@ -122,6 +152,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         }
       }
     }));
+
+    final Element debugServerProcess = new Element(DEBUG_SERVER_PROCESS_NAME);
+    debugServerProcess.setText(String.valueOf(isDebugServerProcess));
+    element.addContent(debugServerProcess);
+    final Element reattachProcess = new Element(REATTACH_DEBUG_PROCESS_NAME);
+    reattachProcess.setText(String.valueOf(isReattachDebugProcess));
+    element.addContent(reattachProcess);
+
     EP_NAME.forEachExtensionSafe(extension -> extension.writeExternal(this, element));
   }
 

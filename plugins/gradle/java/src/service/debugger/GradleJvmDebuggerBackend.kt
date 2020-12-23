@@ -35,18 +35,26 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     gradle.taskGraph.whenReady { taskGraph ->
       def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
       def taskPathsList = []
+      logger.debug("idea.gradle.debug.all is ${'$'}{debugAllIsEnabled}")
       if (!debugAllIsEnabled) {
         def currentPath = gradle.getStartParameter().getCurrentDir().path
         def currentProject = rootProject.allprojects.find { it.projectDir.path == currentPath }
         if (currentProject == null) {
           currentProject = project
         }
+        logger.debug("Current project [${'$'}{currentProject}]")
         
         def startTaskNames = gradle.getStartParameter().getTaskNames()
         if (startTaskNames.isEmpty()) {
           startTaskNames = currentProject.getDefaultTasks() 
         } 
-        taskPathsList = startTaskNames.collect { currentProject.tasks.findByPath(it)?.path }.findAll { it != null }
+        logger.debug("Start Tasks Names: ${'$'}{startTaskNames}")
+        List<TaskContainer> allTaskContainers = currentProject.getAllprojects().collect { it.tasks }
+        taskPathsList = startTaskNames.collect { taskName -> 
+            def foundContainer = allTaskContainers.find { it.findByPath(taskName) != null }
+            foundContainer?.findByPath(taskName)?.path
+          }.findAll { it != null }
+        logger.debug("Task paths: ${'$'}{taskPathsList}")
       }
       
       taskGraph.allTasks.each { Task task ->

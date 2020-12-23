@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions
 
-import com.intellij.codeInsight.actions.ReaderModeFileEditorListener.Companion.applyReaderMode
+import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.applyReaderMode
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager

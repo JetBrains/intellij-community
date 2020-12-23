@@ -424,9 +424,8 @@ public class HtmlParsing {
   protected static PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText != null) {
       xmlText.done(XmlElementType.XML_TEXT);
-      xmlText = null;
     }
-    return xmlText;
+    return null;
   }
 
   protected void parseCData() {

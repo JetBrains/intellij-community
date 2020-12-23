@@ -97,16 +97,13 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
     return getBundleText("");
   }
 
-  public @Nls @NotNull String getDisplayLowercaseName() {
-    return getBundleText(".lowercase");
+  public @Nls @NotNull String getDisplayCapitalizedName() {
+    return getBundleText(".capitalized");
   }
 
-  public @Nls @NotNull String getDisplayLowercaseCapitalizedName() {
-    return getBundleText(".lowercase.capitalized");
-  }
-
-  public @Nls @NotNull String getDisplayLowercasePluralName() {
-    return getBundleText(".lowercase.plural");
+  public @Nls @NotNull String getCountMessage(int count) {
+    if (myBundleKey != null) return InspectionsBundle.message(myBundleKey + ".count.message", count);
+    return InspectionsBundle.message("custom.severity.count.message", count, myName);
   }
 
   private @NotNull @Nls String getBundleText(@NotNull String suffix) {

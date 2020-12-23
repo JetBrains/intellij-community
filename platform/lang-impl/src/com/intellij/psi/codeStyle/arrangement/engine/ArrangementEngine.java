@@ -7,7 +7,6 @@ import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -51,7 +50,7 @@ public final class ArrangementEngine {
   private boolean myCodeChanged;
 
   public static ArrangementEngine getInstance() {
-    return ServiceManager.getService(ArrangementEngine.class);
+    return ApplicationManager.getApplication().getService(ArrangementEngine.class);
   }
 
   @Nullable

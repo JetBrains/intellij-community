@@ -227,7 +227,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, this, true);
     myToolWindow.setIcon(MavenIcons.ToolWindowMaven);
-    final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
+    final ContentFactory contentFactory = ApplicationManager.getApplication().getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);
     ContentManager contentManager = myToolWindow.getContentManager();
     contentManager.addContent(content);

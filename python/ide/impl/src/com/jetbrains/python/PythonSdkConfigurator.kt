@@ -124,6 +124,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (indicator.isCanceled) return
 
     if (extension != null) {
+      indicator.text = ""
       setSdkUsingExtension(module, extension) { extension.createAndAddSdkForConfigurator(module) }
       return
     }

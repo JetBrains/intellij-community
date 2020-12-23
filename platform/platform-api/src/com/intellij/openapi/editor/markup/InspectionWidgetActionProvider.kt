@@ -15,6 +15,8 @@ interface InspectionWidgetActionProvider {
    * Creates action for the given editor.
    * User may return ActionGroup containing several actions and separators if needed.
    * All groups will be flattened upon adding to the inspection widget toolbar.
+   *
+   * May return null if no action should be created for the given editor.
    */
-  fun createAction(editor: Editor): AnAction
+  fun createAction(editor: Editor): AnAction?
 }

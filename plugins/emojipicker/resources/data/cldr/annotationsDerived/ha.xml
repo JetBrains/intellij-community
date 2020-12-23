@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="ha"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">Kudin da ba a sani ba</annotation>
+		<annotation cp="֏" type="tts">Kuɗin Armenia</annotation>
+		<annotation cp="؋" type="tts">Afghani na ƙasar Afghanistan</annotation>
+		<annotation cp="৳" type="tts">Taka na ƙasar Bangladesh</annotation>
+		<annotation cp="฿" type="tts">Baht na ƙasar Thailand</annotation>
+		<annotation cp="៛" type="tts">Riel na ƙasar Cambodia</annotation>
+		<annotation cp="₡" type="tts">Colón na ƙasar Costa Rica</annotation>
+		<annotation cp="₦" type="tts">Nairar Najeriya</annotation>
+		<annotation cp="₪" type="tts">Sabbin Kuɗin Israʼila</annotation>
+		<annotation cp="₫" type="tts">Kuɗin Vietnam</annotation>
+		<annotation cp="₭" type="tts">Kuɗin Laos</annotation>
+		<annotation cp="₮" type="tts">Tugrik na Mongolia</annotation>
+		<annotation cp="₲" type="tts">Guarani na ƙasar Paraguay</annotation>
+		<annotation cp="₴" type="tts">Kudin Ukrainian</annotation>
+		<annotation cp="₵" type="tts">Sidi na Ghana</annotation>
+		<annotation cp="₸" type="tts">Tenge na ƙasar Kazkhstan</annotation>
+		<annotation cp="₺" type="tts">Kuɗin Turkiyya</annotation>
+		<annotation cp="₼" type="tts">Kuɗin Azerbaijani</annotation>
+		<annotation cp="₾" type="tts">Kuɗin Georgia</annotation>
+	</annotations>
+</ldml>

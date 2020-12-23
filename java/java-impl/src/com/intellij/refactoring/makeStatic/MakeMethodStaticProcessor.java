@@ -193,7 +193,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
       }
       addParameterAfter = paramList.addAfter(parameter, null);
-      anchor = javaDocHelper.addParameterAfter(classParameterName, anchor);
+      anchor = javaDocHelper.addParameterAfter(classParameterName, null);
     }
 
     if (mySettings.isMakeFieldParameters()) {

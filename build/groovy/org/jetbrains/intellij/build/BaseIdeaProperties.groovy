@@ -29,6 +29,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.properties",
     "intellij.properties.resource.bundle.editor",
     "intellij.terminal",
+    "intellij.emojipicker",
     "intellij.textmate",
     "intellij.editorconfig",
     "intellij.settingsRepository",

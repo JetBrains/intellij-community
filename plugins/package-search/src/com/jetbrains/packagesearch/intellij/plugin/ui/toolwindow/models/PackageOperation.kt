@@ -1,17 +1,16 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchPluginIcons
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstallationInformation.Companion.DEFAULT_SCOPE
+import icons.PackageSearchIcons
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.Icon
@@ -80,22 +79,22 @@ class PackageOperation(
     companion object {
 
         fun install(identifier: String, version: String) =
-            PackageOperation(
-                PackageSearchBundle.message("packagesearch.packageoperation.install.title"),
-                PackageSearchBundle.message("packagesearch.packageoperation.install.description", identifier, version),
-                PackageSearchBundle.message("packagesearch.packageoperation.install.htmlDescription", identifier, version),
-                PackageSearchPluginIcons.Operations.Install,
-                PackageOperationType.INSTALL
-            )
+          PackageOperation(
+            PackageSearchBundle.message("packagesearch.packageoperation.install.title"),
+            PackageSearchBundle.message("packagesearch.packageoperation.install.description", identifier, version),
+            PackageSearchBundle.message("packagesearch.packageoperation.install.htmlDescription", identifier, version),
+            PackageSearchIcons.Operations.Install,
+            PackageOperationType.INSTALL
+          )
 
         fun remove(identifier: String, version: String) =
-            PackageOperation(
-                PackageSearchBundle.message("packagesearch.packageoperation.remove.title"),
-                PackageSearchBundle.message("packagesearch.packageoperation.remove.description", identifier, version),
-                PackageSearchBundle.message("packagesearch.packageoperation.remove.htmlDescription", identifier, version),
-                PackageSearchPluginIcons.Operations.Remove,
-                PackageOperationType.REMOVE
-            )
+          PackageOperation(
+            PackageSearchBundle.message("packagesearch.packageoperation.remove.title"),
+            PackageSearchBundle.message("packagesearch.packageoperation.remove.description", identifier, version),
+            PackageSearchBundle.message("packagesearch.packageoperation.remove.htmlDescription", identifier, version),
+            PackageSearchIcons.Operations.Remove,
+            PackageOperationType.REMOVE
+          )
 
         fun resolve(identifier: String, oldVersion: String, newVersion: String) = when {
             looksLikeGradleVariable(oldVersion) || looksLikeGradleVariable(newVersion) -> null
@@ -116,19 +115,19 @@ class PackageOperation(
             )
 
             VersionComparatorUtil.compare(oldVersion, newVersion) < 0 -> PackageOperation(
-                PackageSearchBundle.message("packagesearch.packageoperation.upgrade.title"),
-                PackageSearchBundle.message("packagesearch.packageoperation.upgrade.description", identifier, newVersion),
-                PackageSearchBundle.message("packagesearch.packageoperation.upgrade.htmlDescription", identifier, newVersion),
-                PackageSearchPluginIcons.Operations.Upgrade,
-                PackageOperationType.UPGRADE
+              PackageSearchBundle.message("packagesearch.packageoperation.upgrade.title"),
+              PackageSearchBundle.message("packagesearch.packageoperation.upgrade.description", identifier, newVersion),
+              PackageSearchBundle.message("packagesearch.packageoperation.upgrade.htmlDescription", identifier, newVersion),
+              PackageSearchIcons.Operations.Upgrade,
+              PackageOperationType.UPGRADE
             )
 
             VersionComparatorUtil.compare(oldVersion, newVersion) > 0 -> PackageOperation(
-                PackageSearchBundle.message("packagesearch.packageoperation.downgrade.title"),
-                PackageSearchBundle.message("packagesearch.packageoperation.downgrade.description", identifier, newVersion),
-                PackageSearchBundle.message("packagesearch.packageoperation.downgrade.htmlDescription", identifier, newVersion),
-                PackageSearchPluginIcons.Operations.Downgrade,
-                PackageOperationType.DOWNGRADE
+              PackageSearchBundle.message("packagesearch.packageoperation.downgrade.title"),
+              PackageSearchBundle.message("packagesearch.packageoperation.downgrade.description", identifier, newVersion),
+              PackageSearchBundle.message("packagesearch.packageoperation.downgrade.htmlDescription", identifier, newVersion),
+              PackageSearchIcons.Operations.Downgrade,
+              PackageOperationType.DOWNGRADE
             )
 
             VersionComparatorUtil.compare(oldVersion, newVersion) == 0 -> null

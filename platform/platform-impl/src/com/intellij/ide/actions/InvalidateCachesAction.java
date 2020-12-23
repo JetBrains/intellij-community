@@ -33,15 +33,13 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
-    final boolean mac = Messages.canShowMacSheetPanel();
     boolean canRestart = app.isRestartCapable();
 
-    String[] options = new String[canRestart ? 4 : 3];
+    String[] options = new String[canRestart ? 3 : 2];
     options[0] = canRestart ? IdeBundle.message("button.invalidate.and.restart") : IdeBundle.message("button.invalidate.and.exit");
-    options[1] = mac ? IdeBundle.message("button.cancel.without.mnemonic") : IdeBundle.message("button.invalidate");
-    options[2] = mac ? IdeBundle.message("button.invalidate") : IdeBundle.message("button.cancel.without.mnemonic");
+    options[1] = IdeBundle.message("button.cancel.without.mnemonic");
     if (canRestart) {
-      options[3] = IdeBundle.message("button.just.restart");
+      options[2] = IdeBundle.message("button.just.restart");
     }
 
     List<String> descriptions = new SmartList<>();
@@ -63,18 +61,18 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
                   + "\n"+StringUtil.join(descriptions, s -> "  " + s, "\n");
     }
 
-    String message = IdeBundle.message("dialog.message.caches.will.be.invalidated", descriptions.isEmpty() ? "" : warnings + "\n\n");
+    String message = IdeBundle.message("dialog.message.caches.will.be.invalidated", descriptions.isEmpty() ? "" : "\n\n" + warnings);
     int result = Messages.showDialog(e.getData(CommonDataKeys.PROJECT),
                                      message,
                                      IdeBundle.message("dialog.title.invalidate.caches"),
                                      options, 0,
                                      Messages.getWarningIcon());
 
-    if (result == -1 || result == (mac ? 1 : 2)) {
+    if (result == -1 || result == 1) {
       return;
     }
 
-    if (result == 3) {
+    if (result == 2) {
       app.restart(true);
       return;
     }

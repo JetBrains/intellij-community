@@ -3,7 +3,6 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfo;
@@ -85,7 +84,7 @@ public class NationalKeyboardSupport implements PersistentStateComponent<Nationa
       return new NationalKeyboardSupport();
     }
     else {
-      return ServiceManager.getService(NationalKeyboardSupport.class);
+      return ApplicationManager.getApplication().getService(NationalKeyboardSupport.class);
     }
   }
 

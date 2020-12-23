@@ -45,7 +45,10 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
       .map(ex -> ex.createFileIndexingStatusProcessor(project))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
-    myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
+
+    myShouldProcessUpToDateFiles = true;
+    // TODO: this optimization is incorrect and may lead to red code after IDE upgrade (see IDEA-252846).
+    //myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
   }
 
   @Override
@@ -54,6 +57,9 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
       if (myProject.isDisposed() || !file.isValid() || !(file instanceof VirtualFileWithId)) {
         return false;
       }
+
+      AtomicBoolean shouldIndexFile = new AtomicBoolean(false);
+
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, myProject);
       if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
         if (myRunExtensionsForFilesMarkedAsIndexed && myShouldProcessUpToDateFiles) {
@@ -62,15 +68,18 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
           for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
             for (ID<?, ?> id : ids) {
               if (myFileBasedIndex.needsFileContentLoading(id)) {
-                processor.processUpToDateFile(indexedFile, inputId, id);
+                if (!processor.processUpToDateFile(indexedFile, inputId, id)) {
+                  shouldIndexFile.set(true);
+                }
               }
             }
           }
         }
-        return false;
+        if (!shouldIndexFile.get()) {
+          return false;
+        }
       }
 
-      AtomicBoolean shouldIndexFile = new AtomicBoolean(false);
       FileBasedIndexImpl.getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
         boolean isDirectory = file.isDirectory();
         int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
@@ -107,7 +116,9 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
                     }
                     if (!tryIndexWithoutContentViaInfrastructureExtension(indexedFile, inputId, indexId)) {
                       shouldIndexFile.set(true);
-                      break;
+                      // NOTE! Do not break the loop here. We must process ALL IDs and pass them to the FileIndexingStatusProcessor
+                      // so that it can invalidate all "indexing states" (by means of clearing IndexingStamp)
+                      // for all indexes that became invalid. See IDEA-252846 for more details.
                     }
                   }
                 }

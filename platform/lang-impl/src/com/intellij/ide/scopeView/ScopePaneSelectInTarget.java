@@ -2,8 +2,8 @@
 
 package com.intellij.ide.scopeView;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
@@ -25,7 +25,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public String toString() {
-    return SelectInManager.getScope();
+    return IdeBundle.message("select.in.scope");
   }
 
   @Override

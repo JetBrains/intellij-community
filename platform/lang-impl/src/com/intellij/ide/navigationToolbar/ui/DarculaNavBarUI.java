@@ -14,6 +14,6 @@ final class DarculaNavBarUI extends CommonNavBarUI {
   @Override
   public Color getForeground(boolean selected, boolean focused, boolean inactive) {
     if (inactive) return Gray._140;
-    return super.getForeground(selected, focused, inactive);
+    return super.getForeground(selected, focused, false);
   }
 }

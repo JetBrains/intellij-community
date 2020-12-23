@@ -32,6 +32,7 @@ public final class SmartHashSet<T> extends THashSet<T> {
     super(collection.size() == 1 ? Collections.emptyList() : collection);
     if (collection.size() == 1) {
       T element = collection.iterator().next();
+      //noinspection ConstantConditions
       if (element == null) {
         throw new IllegalArgumentException("Null elements are not permitted but got: "+collection);
       }

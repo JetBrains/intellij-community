@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
@@ -51,22 +50,25 @@ public class WSLDistribution {
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
   @NotNull private final WslDistributionDescriptor myDescriptor;
-  @NotNull private final Path myExecutablePath;
+  @Nullable private final Path myExecutablePath;
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
   }
 
-  WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @NotNull Path executablePath) {
+  WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @Nullable Path executablePath) {
     myDescriptor = descriptor;
     myExecutablePath = executablePath;
   }
 
+  public WSLDistribution(@NotNull String msId) {
+    this(new WslDistributionDescriptor(msId, msId, null, msId), null);
+  }
+
   /**
-   * @return executable file
+   * @return executable file, null for WSL distributions parsed from `wsl.exe --list` output
    */
-  @NotNull
-  public Path getExecutablePath() {
+  public @Nullable Path getExecutablePath() {
     return myExecutablePath;
   }
 
@@ -234,14 +236,19 @@ public class WSLDistribution {
     if (executeCommandInShell && StringUtil.isNotEmpty(options.getRemoteWorkingDirectory())) {
       prependCommand(linuxCommand, "cd", CommandLineUtil.posixQuote(options.getRemoteWorkingDirectory()), "&&");
     }
-    if (executeCommandInShell) {
+    if (executeCommandInShell && !options.isPassEnvVarsUsingInterop()) {
       commandLine.getEnvironment().forEach((key, val) -> {
         prependCommand(linuxCommand, "export", CommandLineUtil.posixQuote(key) + "=" + CommandLineUtil.posixQuote(val), "&&");
       });
       commandLine.getEnvironment().clear();
     }
     else {
-      setWSLENV(commandLine);
+      passEnvironmentUsingInterop(commandLine);
+    }
+    if (executeCommandInShell) {
+      for (String command : options.getInitShellCommands()) {
+        prependCommand(linuxCommand, command, "&&");
+      }
     }
 
     commandLine.getParametersList().clearAll();
@@ -250,13 +257,7 @@ public class WSLDistribution {
       commandLine.setExePath(wslExe.toString());
       commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
-        String scriptLinuxPath = createScriptAndGetLinuxPath(linuxCommandStr);
-        if (scriptLinuxPath != null) {
-          commandLine.addParameters("$SHELL", "-c", scriptLinuxPath);
-        }
-        else {
-          commandLine.addParameters("--exec", "/bin/bash", "-c", linuxCommandStr);
-        }
+        commandLine.addParameters("--exec", "/bin/sh", "-c", linuxCommandStr);
       }
       else {
         commandLine.addParameter("--exec");
@@ -264,7 +265,7 @@ public class WSLDistribution {
       }
     }
     else {
-      commandLine.setExePath(getExecutablePath().toString());
+      commandLine.setExePath(Objects.requireNonNull(getExecutablePath()).toString());
       commandLine.addParameter(getRunCommandLineParameter());
       commandLine.addParameter(linuxCommandStr);
     }
@@ -301,21 +302,8 @@ public class WSLDistribution {
     return new ArrayList<>(ContainerUtil.map(command, executeCommandInShell ? CommandLineUtil::posixQuote : Functions.identity()));
   }
 
-  private @Nullable String createScriptAndGetLinuxPath(@NotNull String scriptContent) {
-    File file;
-    try {
-      file = FileUtil.createTempFile("intellij-wsl-", ".sh", true);
-      FileUtil.writeToFile(file, scriptContent);
-    }
-    catch (IOException e) {
-      LOG.info("Cannot create script for WSL command", e);
-      return null;
-    }
-    return Objects.requireNonNull(getWslPath(file.getAbsolutePath()));
-  }
-
   // https://blogs.msdn.microsoft.com/commandline/2017/12/22/share-environment-vars-between-wsl-and-windows/
-  private static void setWSLENV(@NotNull GeneralCommandLine commandLine) {
+  private static void passEnvironmentUsingInterop(@NotNull GeneralCommandLine commandLine) {
     StringBuilder builder = new StringBuilder();
     for (String envName : commandLine.getEnvironment().keySet()) {
       if (StringUtil.isNotEmpty(envName)) {

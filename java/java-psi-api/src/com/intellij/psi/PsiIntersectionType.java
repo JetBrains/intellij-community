@@ -50,9 +50,6 @@ public final class PsiIntersectionType extends PsiType.Stub {
   private static PsiType @NotNull [] flattenAndRemoveDuplicates(PsiType @NotNull [] conjuncts) {
     try {
       final Set<PsiType> flattenConjuncts = flatten(conjuncts, new LinkedHashSet<>());
-      if (flattenConjuncts == null) {
-        return conjuncts;
-      }
       return flattenConjuncts.toArray(createArray(flattenConjuncts.size()));
     }
     catch (NoSuchElementException e) {
@@ -60,7 +57,7 @@ public final class PsiIntersectionType extends PsiType.Stub {
     }
   }
 
-  public static Set<PsiType> flatten(PsiType[] conjuncts, Set<PsiType> types) {
+  public static @NotNull Set<PsiType> flatten(PsiType @NotNull [] conjuncts, Set<PsiType> types) {
     for (PsiType conjunct : conjuncts) {
       if (conjunct instanceof PsiIntersectionType) {
         PsiIntersectionType type = (PsiIntersectionType)conjunct;

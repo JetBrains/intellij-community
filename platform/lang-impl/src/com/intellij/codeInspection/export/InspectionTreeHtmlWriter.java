@@ -130,7 +130,7 @@ public final class InspectionTreeHtmlWriter {
         else if (HighlightDisplayLevel.WARNING.equals(level)) {
           color = WARNING_COLOR;
         }
-        warningLevelName = level.getSeverity().getDisplayName();
+        warningLevelName = StringUtil.toUpperCase(level.getSeverity().getDisplayName());
       }
 
       final StringBuilder sb = new StringBuilder();

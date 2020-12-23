@@ -103,8 +103,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
       try {
         type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText((String)aValue, myTypeContext);
       }
-      catch (IncorrectOperationException e) {
-        type = null;
+      catch (IncorrectOperationException ignored) {
       }
     }
 
@@ -152,7 +151,6 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     private static void completeVariable(EditorTextField editorTextField, PsiType type) {
       Editor editor = editorTextField.getEditor();
       String prefix = editorTextField.getText();
-      if (prefix == null) prefix = "";
       Set<LookupElement> set = new LinkedHashSet<>();
       JavaCompletionUtil.completeVariableNameForRefactoring(editorTextField.getProject(), set, prefix, type, VariableKind.PARAMETER);
 

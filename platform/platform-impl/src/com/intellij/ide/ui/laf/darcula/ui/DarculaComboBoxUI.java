@@ -299,10 +299,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Object value = comboBox.getSelectedItem();
     Component c = renderer.getListCellRendererComponent(listBox, value, -1, false, false);
 
-    // Android Studio: added by Change I5ccb797d / commit 7458675
-    if (c == null) {
-      return;
-    }
     c.setFont(comboBox.getFont());
     c.setBackground(getBackgroundColor());
 

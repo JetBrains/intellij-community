@@ -55,7 +55,7 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
       return JavaBundle.message("jrt.node.short");
     }
     else if (object instanceof PsiLambdaExpression) {
-      return "Lambda";
+      return JavaBundle.message("lambda.tree.node.presentation");
     }
     return null;
   }

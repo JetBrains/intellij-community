@@ -145,9 +145,6 @@ public final class ScopeEditorPanel {
 
     initTree(myPackageTree);
     new UiNotifyConnector(myPanel, new Activatable() {
-      @Override
-      public void showNotify() {
-      }
 
       @Override
       public void hideNotify() {

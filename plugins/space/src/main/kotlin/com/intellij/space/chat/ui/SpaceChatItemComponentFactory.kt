@@ -3,6 +3,7 @@ package com.intellij.space.chat.ui
 
 import circlet.client.api.M2TextItemContent
 import circlet.client.api.Navigator
+import circlet.client.api.mc.MCMessage
 import circlet.code.api.*
 import circlet.completion.mentions.MentionConverter
 import circlet.m2.channel.M2ChannelVm
@@ -16,6 +17,8 @@ import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.message.MessageTitleComponent
@@ -25,7 +28,6 @@ import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
@@ -40,10 +42,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
-import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
+import com.intellij.util.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
@@ -103,6 +105,25 @@ internal class SpaceChatItemComponentFactory(
           }
           EventMessagePanel(createSimpleMessagePanel(text))
         }
+        is MergeRequestMergedEvent -> EventMessagePanel(
+          createSimpleMessagePanel(
+            HtmlChunk.raw(
+              SpaceBundle.message(
+                "chat.review.merged",
+                HtmlChunk.text(details.sourceBranch).bold(), // NON-NLS
+                HtmlChunk.text(details.targetBranch).bold() // NON-NLS
+              )
+            ).wrapWith(html()).toString()
+          )
+        )
+        is MergeRequestBranchDeletedEvent -> EventMessagePanel(
+          createSimpleMessagePanel(
+            HtmlChunk.raw(
+              SpaceBundle.message("chat.review.deleted.branch", HtmlChunk.text(details.branch).bold()) // NON-NLS
+            ).wrapWith(html()).toString()
+          )
+        )
+        is MCMessage -> EventMessagePanel(createSimpleMessagePanel(item.text))
         else -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
@@ -204,8 +225,22 @@ internal class SpaceChatItemComponentFactory(
       val avatarProvider = SpaceAvatarProvider(lifetime, panel, threadAvatarSize)
 
       val itemsListModel = SpaceChatItemListModel()
+
+      // TODO: don't subscribe on thread changes in factory
+      thread.mvms.forEach(lifetime) { messageList ->
+        itemsListModel.messageListUpdated(
+          messageList.messages
+            .drop(if (withFirst) 0 else 1)
+            .map { it.convertToChatItem(it.getLink(server)) }
+        )
+      }
+
       val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
-      val threadTimeline = TimelineComponent(itemsListModel, itemComponentFactory, offset = 0).apply {
+      val threadTimeline = TimelineThreadCommentsPanel(
+        itemsListModel,
+        commentComponentFactory = itemComponentFactory::createComponent,
+        offset = 0
+      ).apply {
         border = JBUI.Borders.empty(10, 0)
       }
 
@@ -213,16 +248,6 @@ internal class SpaceChatItemComponentFactory(
         border = JBUI.Borders.empty()
       }
 
-      // TODO: don't subscribe on thread changes in factory
-      thread.mvms.forEach(lifetime) { messageList ->
-        launch(lifetime, Ui) {
-          itemsListModel.messageListUpdated(
-            messageList.messages
-              .drop(if (withFirst) 0 else 1)
-              .map { it.convertToChatItem(it.getLink(server)) }
-          )
-        }
-      }
       panel.add(this, VerticalLayout.FILL_HORIZONTAL)
       panel.add(threadTimeline, VerticalLayout.FILL_HORIZONTAL)
       panel.add(replyComponent, VerticalLayout.FILL_HORIZONTAL)
@@ -273,7 +298,7 @@ internal class SpaceChatItemComponentFactory(
   private fun createFileNameComponent(filePath: String): JComponent {
     val name = PathUtil.getFileName(filePath)
     val parentPath = PathUtil.getParentPath(filePath)
-    val nameLabel = JLabel(name, null, SwingConstants.LEFT)
+    val nameLabel = JBLabel(name, null, SwingConstants.LEFT).setCopyable(true)
 
     return NonOpaquePanel(HorizontalLayout(JBUI.scale(5))).apply {
       add(nameLabel)
@@ -281,6 +306,7 @@ internal class SpaceChatItemComponentFactory(
       if (parentPath.isNotBlank()) {
         add(JBLabel(parentPath).apply {
           foreground = UIUtil.getContextHelpForeground()
+          setCopyable(true)
         })
       }
     }
@@ -341,7 +367,6 @@ internal class SpaceChatItemComponentFactory(
         add(title, VerticalLayout.FILL_HORIZONTAL)
         add(content, VerticalLayout.FILL_HORIZONTAL)
       }
-      background = JBColor.namedColor("Space.Chat.Message.hoverBackground", 0xF5F5F5, 0x343739)
       isOpaque = false
       border = JBUI.Borders.empty(10)
       add(avatarPanel, BorderLayout.WEST)
@@ -351,10 +376,9 @@ internal class SpaceChatItemComponentFactory(
     private fun userAvatar(avatar: Icon) = LinkLabel<Any>("", avatar)
 
     override fun hoverStateChanged(isHovered: Boolean) {
-      isOpaque = isHovered
       title.actionsPanel.isVisible = isHovered
       title.revalidate()
-      repaint()
+      title.repaint()
     }
   }
 }

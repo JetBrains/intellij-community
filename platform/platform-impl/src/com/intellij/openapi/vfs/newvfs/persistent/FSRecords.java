@@ -154,7 +154,7 @@ public final class FSRecords {
   public static String diagnosticsForAlreadyCreatedFile(int id, int nameId, @NotNull Object existingData) {
     invalidateCaches();
     int parentId = getParent(id);
-    String msg = "File already created: id="+id + "; nameId="+nameId  + "; parentId=" + parentId+ "; existingData=" + existingData;
+    String msg = "File already created: id="+id + "; nameId="+nameId + "("+getNameByNameId(nameId)+"); parentId=" + parentId+ "; existingData=" + existingData;
     if (parentId > 0) {
       msg += "; parent.name=" + getName(parentId);
       msg += "; parent.children=" + list(parentId);
@@ -683,7 +683,7 @@ public final class FSRecords {
       if (ourStoreRootsSeparately) {
         IntList result = new IntArrayList();
 
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
+        try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while ((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -734,7 +734,7 @@ public final class FSRecords {
   static int findRootRecord(@NotNull String rootUrl) {
     return writeAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
+        try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -747,7 +747,7 @@ public final class FSRecords {
         catch (FileNotFoundException ignored) {}
 
         DbConnection.markDirty();
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream = Files.newBufferedWriter(DbConnection.myRootsFile, StandardOpenOption.APPEND)) {
+        try (Writer stream = Files.newBufferedWriter(DbConnection.myRootsFile, StandardOpenOption.APPEND)) {
           int id = createRecord();
           stream.write(id + " " + rootUrl + "\n");
           return id;
@@ -802,7 +802,7 @@ public final class FSRecords {
       DbConnection.markDirty();
       if (ourStoreRootsSeparately) {
         List<String> rootsThatLeft = new ArrayList<>();
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
+        try (LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -814,7 +814,7 @@ public final class FSRecords {
         }
         catch (FileNotFoundException ignored) {}
 
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream = Files.newBufferedWriter(DbConnection.myRootsFile)) {
+        try (Writer stream = Files.newBufferedWriter(DbConnection.myRootsFile)) {
           for (String line : rootsThatLeft) {
             stream.write(line);
             stream.write("\n");

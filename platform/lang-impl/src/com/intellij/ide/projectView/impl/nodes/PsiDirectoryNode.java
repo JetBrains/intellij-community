@@ -163,9 +163,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
     if (PlatformUtils.isAppCode()) {
       final Icon icon = IconUtil.getIcon(virtualFile, 0, myProject);
-      if (icon != null) {
-        data.setIcon(icon);
-      }
+      data.setIcon(icon);
     }
     else {
       Icon icon = CompoundIconProvider.findIcon(psiDirectory, 0);

@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.facet.FacetFromExternalSourcesStorage
 import com.intellij.facet.FacetManager
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
@@ -45,7 +46,8 @@ internal class ModuleBridgeImpl(
               val currentStore = entityStorage.current
               val storage = if (currentStore is WorkspaceEntityStorageBuilder) currentStore.toStorage() else currentStore
               entityStorage = VersionedEntityStorageOnStorage(storage)
-              assert(entityStorage.current.resolve(moduleEntityId) != null) { "Cannot resolve module $moduleEntityId. Current store: $currentStore" }
+              assert(entityStorage.current.resolve(
+                moduleEntityId) != null) { "Cannot resolve module $moduleEntityId. Current store: $currentStore" }
             }
           }
         }
@@ -62,11 +64,10 @@ internal class ModuleBridgeImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: MutableList<in Runnable>?) {
+  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, listenerCallbacks: MutableList<Runnable>?) {
     super.registerComponents(plugins, null)
 
-    val corePlugin = plugins.asSequence().map { it.descriptor }.find { it.pluginId == PluginManagerCore.CORE_ID }
-
+    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
     if (corePlugin != null) {
       registerComponent(ModuleRootManager::class.java, ModuleRootComponentBridge::class.java, corePlugin, true)
       registerComponent(FacetManager::class.java, FacetManagerBridge::class.java, corePlugin, true)

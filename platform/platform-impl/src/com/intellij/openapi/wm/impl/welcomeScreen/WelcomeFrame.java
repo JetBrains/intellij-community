@@ -3,13 +3,17 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.SplashManager;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -34,8 +38,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+
+import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
 
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
@@ -158,6 +166,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     ApplicationManager.getApplication().executeOnPooledThread(() -> ActionManager.getInstance());
 
     IdeFrame frame = createWelcomeFrame();
+    registerKeyboardShortcuts(frame);
     return () -> {
       if (ourInstance != null) {
         return;
@@ -171,6 +180,26 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
         ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
       }
     };
+  }
+
+  private static void registerKeyboardShortcuts(IdeFrame frame) {
+    JRootPane rootPane = frame.getComponent().getRootPane();
+
+    ActionListener helpAction = e -> doHelpAction();
+    ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp());
+    rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), WHEN_IN_FOCUSED_WINDOW);
+  }
+
+  private static void doHelpAction() {
+    String helpId = getHelpId();
+    if (helpId != null) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(WelcomeFrame.class.getName(), WelcomeFrame.class);
+      HelpManager.getInstance().invokeHelp(helpId);
+    }
+  }
+
+  protected static String getHelpId() {
+    return "welcome";
   }
 
   @NotNull

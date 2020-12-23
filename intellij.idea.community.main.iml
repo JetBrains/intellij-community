@@ -5,7 +5,6 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/android/android-uitests" />
       <excludeFolder url="file://$MODULE_DIR$/config" />
-      <excludeFolder url="file://$MODULE_DIR$/onestudio" />
       <excludeFolder url="file://$MODULE_DIR$/system" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -149,6 +148,9 @@
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.packageSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.packageSearch.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.kotlin.idea" />
     <orderEntry type="module" module-name="intellij.android.kotlin.extensions" />
     <orderEntry type="module" module-name="intellij.android.kotlin.output.parser" />

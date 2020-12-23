@@ -3,7 +3,7 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.Contract;
@@ -23,7 +23,7 @@ public interface InspectionProfileManager {
   }
 
   static @NotNull InspectionProfileManager getInstance() {
-    return ServiceManager.getService(InspectionProfileManager.class);
+    return ApplicationManager.getApplication().getService(InspectionProfileManager.class);
   }
 
   static @NotNull InspectionProfileManager getInstance(@NotNull Project project) {

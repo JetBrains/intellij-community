@@ -8,7 +8,6 @@ import com.intellij.psi.PsiField;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -18,7 +17,7 @@ import java.util.List;
  */
 public interface Processor {
   @NotNull
-  Class<? extends Annotation>[] getSupportedAnnotationClasses();
+  String[] getSupportedAnnotationClasses();
 
   @NotNull
   Class<? extends PsiElement> getSupportedClass();

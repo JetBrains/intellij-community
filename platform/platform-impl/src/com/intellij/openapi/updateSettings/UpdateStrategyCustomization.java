@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.updateSettings.impl.ChannelStatus;
 import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UpdateStrategyCustomization {
   public static UpdateStrategyCustomization getInstance() {
-    return ServiceManager.getService(UpdateStrategyCustomization.class);
+    return ApplicationManager.getApplication().getService(UpdateStrategyCustomization.class);
   }
 
   public boolean forceEapUpdateChannelForEapBuilds() {

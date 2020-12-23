@@ -9,12 +9,12 @@ import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
 
-class SelectableInlayButton(
+open class SelectableInlayButton(
   private val editor: EditorEx,
   private val default: InlayPresentation,
   private val active: InlayPresentation,
   private val hovered: InlayPresentation
-  ): DynamicDelegatePresentation(default), SelectableInlayPresentation {
+): DynamicDelegatePresentation(default), SelectableInlayPresentation {
 
   private val selectionListeners: MutableList<SelectionListener> = mutableListOf()
 
@@ -57,7 +57,7 @@ class SelectableInlayButton(
   
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     super<DynamicDelegatePresentation>.mouseMoved(event, translated)
-    val defaultCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
+    val defaultCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     editor.setCustomCursor(this, defaultCursor)
     isHovered = true
   }

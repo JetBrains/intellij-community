@@ -2,5 +2,5 @@
 public class Test permits abc {
 }
 
-public class abc {
+public class <caret>abc extends Test {
 }

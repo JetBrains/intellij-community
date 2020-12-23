@@ -49,10 +49,8 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
             }
           };
     myDocument = editorTextField.getDocument();
-    if (myDocument != null) {
-      for (DocumentListener listener : myListeners) {
-        editorTextField.addDocumentListener(listener);
-      }
+    for (DocumentListener listener : myListeners) {
+      editorTextField.addDocumentListener(listener);
     }
     return editorTextField;
   }

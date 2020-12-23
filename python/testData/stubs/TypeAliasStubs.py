@@ -2,12 +2,17 @@ __author__ = 'Mikhail.Golubev'
 __all__ = ['S1', 'S2']
 __version__ = '0.1'
 
+from typing_extensions import TypeAlias
+
 S1_ok = "foo"
 S2_ok = "foo.bar"
 S3_ok = "foo.bar[baz]"
 too_long_string = "foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo"
 natural_text = "Foo is baz."
 glued_string = 'foo' '.bar'
+
+explicit_alias1_ok: TypeAlias = 'Foo is bar.'
+explicit_alias2_ok = 'Foo is bar.'  # type: TypeAlias
 
 # Such expressions are kept as qualified expressions in PyTargetExpressionStub 
 # with initializer type of ReferenceExpression instead of custom stubs for

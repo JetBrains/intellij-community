@@ -4,7 +4,7 @@ package com.intellij.ide.ui
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
@@ -32,7 +32,7 @@ import kotlin.math.roundToInt
 private val LOG = logger<UISettings>()
 
 @State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], useLoadedStateAsExisting = false)
-class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
+class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponentWithModificationTracker<UISettingsState> {
   constructor() : this(ApplicationManager.getApplication().getService(NotRoamableUiSettings::class.java))
 
   private var state = UISettingsState()
@@ -89,6 +89,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.reuseNotModifiedTabs
     set(value) {
       state.reuseNotModifiedTabs = value
+    }
+
+  var openInPreviewTabIfPossible: Boolean
+    get() = state.openInPreviewTabIfPossible
+    set(value) {
+      state.openInPreviewTabIfPossible = value
     }
 
   var disableMnemonics: Boolean
@@ -657,6 +663,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
     fireUISettingsChanged()
+  }
+
+  override fun getStateModificationCount(): Long {
+    return state.modificationCount
   }
 
   @Suppress("DEPRECATION")

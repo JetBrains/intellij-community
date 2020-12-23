@@ -2,6 +2,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
@@ -174,7 +175,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @param module the module for which the path is requested.
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
-  public abstract String @Nullable [] getModuleGroupPath(@NotNull Module module);
+  public abstract @NlsSafe String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
   public abstract boolean hasModuleGroups();
 

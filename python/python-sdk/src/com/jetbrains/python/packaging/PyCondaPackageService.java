@@ -6,6 +6,7 @@ import com.google.common.collect.Multimaps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -48,7 +49,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   public static PyCondaPackageService getInstance() {
-    return ServiceManager.getService(PyCondaPackageService.class);
+    return ApplicationManager.getApplication().getService(PyCondaPackageService.class);
   }
 
   @Nullable

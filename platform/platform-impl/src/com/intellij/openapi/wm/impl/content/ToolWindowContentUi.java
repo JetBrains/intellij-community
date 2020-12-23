@@ -32,6 +32,7 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -232,7 +233,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     tabsLayout.dropCaches();
   }
 
-  private void rebuild() {
+  @ApiStatus.Internal
+  public void rebuild() {
     getCurrentLayout().rebuild();
     getCurrentLayout().update();
 
@@ -240,7 +242,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     tabComponent.repaint();
   }
 
-  private void update() {
+  public void update() {
     getCurrentLayout().update();
     getCurrentLayout().layout();
 
@@ -659,8 +661,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       size.width = TabContentLayout.TAB_LAYOUT_START + getInsets().left + getInsets().right;
       for (int i = 0; i < getComponentCount(); i++) {
         final Component each = getComponent(i);
-        size.height = Math.max(each.getPreferredSize().height, size.height);
-        size.width += each.getPreferredSize().width;
+        if (each.isVisible()) {
+          size.height = Math.max(each.getPreferredSize().height, size.height);
+          size.width += each.getPreferredSize().width;
+        }
       }
 
       size.width = Math.max(size.width, getMinimumSize().width);

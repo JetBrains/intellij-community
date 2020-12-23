@@ -142,7 +142,8 @@ public class JarsBuilder {
                                                   jar.getPresentableDestination(), Attributes.Name.MANIFEST_VERSION);
       myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.WARNING, messageText));
     }
-    final JarOutputStream jarOutputStream = createJarOutputStream(jarFile, manifest);
+    BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(jarFile));
+    JarOutputStream jarOutputStream = manifest != null ? new JarOutputStream(outputStream, manifest) : new JarOutputStream(outputStream);
 
     final THashSet<String> writtenPaths = new THashSet<>();
     try {
@@ -197,6 +198,11 @@ public class JarsBuilder {
           jarOutputStream.close();
         }
         catch (IOException ignored) {
+          try {
+            outputStream.close();
+          }
+          catch (IOException ignored1) {
+          }
         }
         FileUtil.delete(jarFile);
         myBuiltJars.remove(jar);
@@ -206,20 +212,18 @@ public class JarsBuilder {
           jarOutputStream.close();
         }
         catch (IOException e) {
+          try {
+            outputStream.close();
+          }
+          catch (IOException ignored) {
+          }
+          FileUtil.delete(jarFile);
           String messageText = JpsBuildBundle.message("build.message.cannot.create.0.1", jar.getPresentableDestination(), e.getMessage());
           myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.ERROR, messageText));
           LOG.debug(e);
         }
       }
     }
-  }
-
-  private static JarOutputStream createJarOutputStream(File jarFile, @Nullable Manifest manifest) throws IOException {
-    final BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(jarFile));
-    if (manifest != null) {
-      return new JarOutputStream(outputStream, manifest);
-    }
-    return new JarOutputStream(outputStream);
   }
 
   @Nullable

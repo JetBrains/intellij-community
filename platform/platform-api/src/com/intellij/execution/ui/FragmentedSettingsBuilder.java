@@ -176,8 +176,9 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     DefaultActionGroup group = buildGroup(lastSelected);
     Runnable callback = () -> {
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (!lastSelected.isNull()) {
-          IdeFocusManager.getGlobalInstance().requestFocus(lastSelected.get(), false);
+        JComponent component = lastSelected.get();
+        if (component != null && !(component instanceof JPanel) && !(component instanceof JLabel)) {
+          IdeFocusManager.getGlobalInstance().requestFocus(component, false);
         }
       });
     };

@@ -95,7 +95,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
         NavigationUtil.activateFileWithPsiElement(value, true);
       }
       else if (value instanceof NavigationItem) {
-        ((NavigationItem)value).navigate(requestFocus);
+        ((NavigationItem)value).navigate(false);
       }
     }
   }

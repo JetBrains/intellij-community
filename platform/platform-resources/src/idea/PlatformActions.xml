@@ -568,16 +568,15 @@
           <group id="UIToggleActions">
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
-            <group id="ViewToolbarActionsGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarActionsGroup"/>
+            <group id="ViewToolbarActionsGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarActionsGroup">
+              <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
+            </group>
             <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
             <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
             <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
         </group>
-        <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction">
-          <add-to-group group-id="ViewToolbarActionsGroup"/>
-        </action>
 
         <group id="ViewToolbarNewGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarNewActionGroup" popup="true">
           <add-to-group group-id="UIToggleActions" relative-to-action="ViewToolButtons" anchor="before"/>
@@ -718,7 +717,7 @@
             <action id="CloseContent" class="com.intellij.ide.actions.CloseAction"/>
             <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
             <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
-            <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
+            <!--<action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>-->
             <action id="CloseAllToTheLeft" class="com.intellij.ide.actions.CloseAllEditorsToTheLeftAction"/>
             <action id="CloseAllToTheRight" class="com.intellij.ide.actions.CloseAllEditorsToTheRightAction"/>
             <action id="CloseAllReadonly" class="com.intellij.ide.actions.CloseAllReadonlyEditorsAction"/>
@@ -887,7 +886,15 @@
       <reference ref="UnsplitAll"/>
     </group>
 
+    <group id="WelcomeScreen.QuickStart.EmptyState">
+    </group>
+
+    <group id="WelcomeScreen.QuickStart.ProjectsState">
+    </group>
+
     <group id="WelcomeScreen.QuickStart">
+      <add-to-group group-id="WelcomeScreen.QuickStart.EmptyState"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart.ProjectsState"/>
     </group>
 
     <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"/>

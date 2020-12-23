@@ -16,10 +16,10 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
@@ -92,7 +92,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ResizeToolWindowRight",
     "ResizeToolWindowUp",
     "ResizeToolWindowDown",
-    "MaximizeToolWindow"
+    "MaximizeToolWindow",
+    
+    "MaintenanceAction"
   };
   private static final int MIN_FONT_SIZE = 8;
 
@@ -114,6 +116,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     mySettingsProvider.addListener(this);
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    if (isMinimumSizeSet()) {
+      return super.getMinimumSize();
+    }
+    return JBUI.emptySize();
   }
 
   private boolean skipKeyEvent(@NotNull KeyEvent e) {
@@ -312,12 +322,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
         IdeEventQueue.getInstance().flushDelayedKeyEvents();
-        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830, revert once it's fixed.
-        if (SystemInfo.isJavaVersionAtLeast(8, 0, 212)) {
-          // JBTerminalPanel is focused, because TerminalEventDispatcher added in focusGained and removed in focusLost
-          processKeyEvent(e);
-        }
-        dispatchEvent(e);
+        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830
+        // Once it's fixed, replace "processKeyEvent(e)" with "dispatchEvent(e)".
+        JBTerminalPanel.this.processKeyEvent(e);
         return true;
       }
       return false;

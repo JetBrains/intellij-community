@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.jetbrains.python.PyDisposable;
+import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -39,14 +39,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     myFlavor = flavor;
-    myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(PyDisposable.getInstance());
-    myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(PyDisposable.getInstance());
+    myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
+    myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
   }
 
   protected PythonSdkAdditionalData(@NotNull PythonSdkAdditionalData from) {
     myFlavor = from.getFlavor();
-    myAddedPaths = from.myAddedPaths.clone(PyDisposable.getInstance());
-    myExcludedPaths = from.myExcludedPaths.clone(PyDisposable.getInstance());
+    myAddedPaths = from.myAddedPaths.clone(PythonPluginDisposable.getInstance());
+    myExcludedPaths = from.myExcludedPaths.clone(PythonPluginDisposable.getInstance());
     myAssociatedModulePath = from.myAssociatedModulePath;
   }
 

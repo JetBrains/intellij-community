@@ -56,7 +56,7 @@ public class ListPluginComponent extends JPanel {
   public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
-  private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo_40);
+  private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
   protected JButton myRestartButton;
   protected InstallButton myInstallButton;
@@ -488,7 +488,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, false, errors, disabled));
+    myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, errors, disabled));
   }
 
   public void showProgress() {

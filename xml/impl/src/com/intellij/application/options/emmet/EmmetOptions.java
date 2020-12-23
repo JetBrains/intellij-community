@@ -3,8 +3,8 @@ package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
@@ -124,6 +124,6 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   }
 
   public static EmmetOptions getInstance() {
-    return ServiceManager.getService(EmmetOptions.class);
+    return ApplicationManager.getApplication().getService(EmmetOptions.class);
   }
 }

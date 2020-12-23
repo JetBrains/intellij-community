@@ -47,6 +47,8 @@
     T_LAND = '&&'
     T_LOR = '||'
     T_NOT = '!'
+    T_NOT_IN = '!in'
+    T_NOT_INSTANCEOF = '!instanceof'
     T_BNOT = '~'
     T_COMPARE = '<=>'
     T_REGEX_FIND = '=~'
@@ -1101,9 +1103,9 @@ range_expression ::= expression mb_nl ('..' | '..<') mb_nl <<disableNlBeforeClos
 private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
 relational_expression ::= expression mb_nl relational_operator mb_nl <<disableNlBeforeClosure>> expression
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
-in_expression ::= expression mb_nl mb_not ('in') mb_nl <<disableNlBeforeClosure>> expression
+in_expression ::= expression mb_nl ('in' | '!in') mb_nl <<disableNlBeforeClosure>> expression
 instanceof_expression ::= expression mb_nl instanceof_expression_tail
-private instanceof_expression_tail ::= mb_not ('instanceof') mb_nl (type_element | expect_type) { pin = 2 }
+private instanceof_expression_tail ::= ('instanceof' | '!instanceof') mb_nl (type_element | expect_type) { pin = 1 }
 as_expression ::= expression mb_nl ('as') mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
@@ -1313,7 +1315,6 @@ private empty ::= ()
 private empty_parens ::= '('(')') { consumeTokenMethod = 'consumeTokenFast' }
 
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
-private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
 
 private not_colon ::= !fast_colon
 

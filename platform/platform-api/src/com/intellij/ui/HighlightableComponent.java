@@ -99,7 +99,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
         }
 
         // must be before and overlap
-        if (startOffset < hRegion.startOffset && endOffset > hRegion.startOffset){
+        if (startOffset < hRegion.startOffset) {
 
           if (endOffset < hRegion.endOffset){
             myHighlightedRegions.add(i, new HighlightedRegion(startOffset, hRegion.startOffset, attributes));
@@ -158,21 +158,19 @@ public class HighlightableComponent extends JComponent implements Accessible {
             break;
           }
 
-          if (endOffset > oldEndOffset){
-            myHighlightedRegions.add(i + 1, new HighlightedRegion(startOffset, oldEndOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
-            if (i < myHighlightedRegions.size() - 1){
-              addHighlighter(i + 1, oldEndOffset, endOffset, attributes);
-            }
-            else{
-              myHighlightedRegions.add(i + 2, new HighlightedRegion(hRegion.endOffset, endOffset, attributes));
-            }
-
-            if (startOffset == hRegion.startOffset){
-              myHighlightedRegions.remove(hRegion);
-            }
-
-            break;
+          myHighlightedRegions.add(i + 1, new HighlightedRegion(startOffset, oldEndOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
+          if (i < myHighlightedRegions.size() - 1){
+            addHighlighter(i + 1, oldEndOffset, endOffset, attributes);
           }
+          else{
+            myHighlightedRegions.add(i + 2, new HighlightedRegion(hRegion.endOffset, endOffset, attributes));
+          }
+
+          if (startOffset == hRegion.startOffset){
+            myHighlightedRegions.remove(hRegion);
+          }
+
+          break;
         }
       }
     }

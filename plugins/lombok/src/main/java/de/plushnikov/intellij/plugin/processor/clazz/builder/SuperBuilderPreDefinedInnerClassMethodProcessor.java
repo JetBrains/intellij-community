@@ -1,12 +1,12 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
-import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -19,11 +19,11 @@ import java.util.Collection;
 public class SuperBuilderPreDefinedInnerClassMethodProcessor extends AbstractSuperBuilderPreDefinedInnerClassProcessor {
 
   public SuperBuilderPreDefinedInnerClassMethodProcessor() {
-    super(PsiMethod.class, SuperBuilder.class);
+    super(PsiMethod.class, LombokClassNames.SUPER_BUILDER);
   }
 
   protected SuperBuilderHandler getBuilderHandler() {
-    return ServiceManager.getService(SuperBuilderHandler.class);
+    return ApplicationManager.getApplication().getService(SuperBuilderHandler.class);
   }
 
   @Override

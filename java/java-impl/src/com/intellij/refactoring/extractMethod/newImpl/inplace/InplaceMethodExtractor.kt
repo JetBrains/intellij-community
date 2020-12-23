@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
@@ -11,9 +10,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -23,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.changesHandler.range
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.*
@@ -30,7 +28,6 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.util.PsiNavigateUtil
-import com.intellij.util.SmartList
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
   : InplaceRefactoring(editor, null, extractOptions.project) {
@@ -45,6 +42,10 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     private fun setActiveExtractor(editor: Editor, extractor: InplaceMethodExtractor) {
       TemplateManagerImpl.getTemplateState(editor)?.properties?.put(INPLACE_METHOD_EXTRACTOR, extractor)
     }
+  }
+
+  init {
+    setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text"))
   }
 
   private val fragmentsToRevert = mutableListOf<FragmentState>()
@@ -85,7 +86,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     setElementToRename(method)
 
-    preview = EditorCodePreview(editor)
+    preview = EditorCodePreview.create(editor)
 
     val callLines = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
     val callNavigatableRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
@@ -93,19 +94,11 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     Disposer.register(preview, Disposable { callNavigatableRange.dispose() })
     preview.addPreview(callLines) { navigate(project, file, callNavigatableRange.endOffset)}
 
-    val methodLines = findLines(document, method.textRange).trimTail(4)
+    val methodLines = findLines(document, method.textRange).trimToLength(4)
     val methodNavigatableRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
     Disposer.register(preview, Disposable { methodNavigatableRange.dispose() })
     preview.addPreview(methodLines) { navigate(project, file, methodNavigatableRange.endOffset) }
   }
-
-  private fun navigate(project: Project, file: VirtualFile, offset: Int) {
-    val descriptor = OpenFileDescriptor(project, file, offset)
-    descriptor.navigate(true)
-    descriptor.dispose()
-  }
-
-  private fun IntRange.trimTail(maxLength: Int) = first until first + minOf(maxLength, length)
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
     ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
@@ -124,12 +117,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
         editor.selectionModel.setSelection(selectionToRevert.startOffset, selectionToRevert.endOffset)
       }
     }
-  }
-
-  private fun HighlightManager.addHighlight(editor: Editor, range: TextRange, attributes: TextAttributesKey): RangeHighlighter {
-    val out = SmartList<RangeHighlighter>()
-    this.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, attributes, 0, out)
-    return out.first()
   }
 
   override fun afterTemplateStart() {
@@ -153,10 +140,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     setActiveExtractor(editor, this)
 
     Disposer.register(templateState, preview)
-  }
-
-  private fun findLines(document: Document, range: TextRange): IntRange {
-    return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 
   fun restartInDialog() {
@@ -215,4 +198,16 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   private fun enclosingTextRangeOf(start: PsiElement, end: PsiElement): TextRange = start.textRange.union(end.textRange)
+
+  private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
+
+  private fun navigate(project: Project, file: VirtualFile, offset: Int) {
+    val descriptor = OpenFileDescriptor(project, file, offset)
+    descriptor.navigate(true)
+    descriptor.dispose()
+  }
+
+  private fun findLines(document: Document, range: TextRange): IntRange {
+    return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
+  }
 }

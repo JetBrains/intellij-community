@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.openapi.util.registry.Registry
@@ -52,7 +52,7 @@ foo(null as List<Number>)
 
   fun testTypeParameters() {
     val text = """
-def<# [< T >] #> foo(<# [[List < T >]  ] #>a, <# [[List < [? [ extends  T]] >]  ] #>b) {
+def<# [< T >] #> foo(<# [[ArrayList < T >]  ] #>a, <# [[ArrayList < [? [ extends  T]] >]  ] #>b) {
   a.add(b[0])
 }
 

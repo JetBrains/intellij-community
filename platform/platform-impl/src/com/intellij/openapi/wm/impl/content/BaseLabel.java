@@ -27,6 +27,7 @@ public class BaseLabel extends JLabel {
 
   private Color myActiveFg;
   private Color myPassiveFg;
+  private Color myTabColor;
   private boolean myBold;
 
   public BaseLabel(@NotNull ToolWindowContentUi ui, boolean bold) {
@@ -113,11 +114,13 @@ public class BaseLabel extends JLabel {
     if (content == null) {
       setText(null);
       setIcon(null);
+      myTabColor = null;
     }
     else {
       setText(content.getDisplayName());
       setActiveFg(getActiveFg(isSelected));
       setPassiveFg(getPassiveFg(isSelected));
+      myTabColor = content.getTabColor();
 
       setToolTipText(content.getDescription());
 
@@ -141,6 +144,10 @@ public class BaseLabel extends JLabel {
 
       myBold = false; //isSelected;
     }
+  }
+
+  public @Nullable Color getTabColor() {
+    return myTabColor;
   }
 
   @Nullable

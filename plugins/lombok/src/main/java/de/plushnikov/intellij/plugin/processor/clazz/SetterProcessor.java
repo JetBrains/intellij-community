@@ -1,7 +1,8 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
@@ -10,7 +11,6 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,11 +26,11 @@ import java.util.List;
 public class SetterProcessor extends AbstractClassProcessor {
 
   public SetterProcessor() {
-    super(PsiMethod.class, Setter.class);
+    super(PsiMethod.class, LombokClassNames.SETTER);
   }
 
   private SetterFieldProcessor getSetterFieldProcessor() {
-    return ServiceManager.getService(SetterFieldProcessor.class);
+    return ApplicationManager.getApplication().getService(SetterFieldProcessor.class);
   }
 
   @Override

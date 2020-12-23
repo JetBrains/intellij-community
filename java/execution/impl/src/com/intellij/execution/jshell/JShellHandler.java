@@ -141,10 +141,10 @@ public final class JShellHandler {
     return contentFile != null? contentFile.getUserData(MARKER_KEY) : null;
   }
 
-  public static JShellHandler create(@NotNull final Project project,
-                                     @NotNull final VirtualFile contentFile,
-                                     @Nullable Module module,
-                                     @Nullable Sdk alternateSdk) throws Exception{
+  public static @NotNull JShellHandler create(@NotNull final Project project,
+                                              @NotNull final VirtualFile contentFile,
+                                              @Nullable Module module,
+                                              @Nullable Sdk alternateSdk) throws Exception{
     final OSProcessHandler processHandler = launchProcess(project, module, alternateSdk);
 
     final String title = JShellDiagnostic.TITLE + " " + contentFile.getNameWithoutExtension();
@@ -344,7 +344,7 @@ public final class JShellHandler {
     finally {
       renderResponse(request, response, stdOut.toString());
     }
-    return response;
+    return null;
   }
 
   private void renderResponse(Request request, @Nullable Response response, String stdOut) {

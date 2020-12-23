@@ -35,7 +35,7 @@ public final class PlainTextFileType extends LanguageFileType implements PlainTe
   }
 
   @Override
-  public Mode getFileIdeAssociationMode() {
-    return Mode.ChooseExtensions;
+  public ExtensionMode getExtensionsMode() {
+    return ExtensionMode.Selected;
   }
 }

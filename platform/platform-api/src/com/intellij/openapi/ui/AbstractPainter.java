@@ -61,9 +61,11 @@ public abstract class AbstractPainter implements Painter {
     if (!myNeedsRepaint) {
       if (oldValue != null) {
         setNeedsRepaint(!oldValue.equals(newValue));
-      } else if (newValue != null) {
-        setNeedsRepaint(!newValue.equals(oldValue));
-      } else {
+      }
+      else if (newValue != null) {
+        setNeedsRepaint(true);
+      }
+      else {
         setNeedsRepaint(false);
       }
     }
@@ -76,9 +78,11 @@ public abstract class AbstractPainter implements Painter {
     if (!myNeedsRepaint) {
       if (oldValue != null) {
         setNeedsRepaint(!oldValue.equals(newValue));
-      } else if (newValue != null) {
-        setNeedsRepaint(!newValue.equals(oldValue));
-      } else {
+      }
+      else if (newValue != null) {
+        setNeedsRepaint(true);
+      }
+      else {
         setNeedsRepaint(false);
       }
     }

@@ -112,8 +112,14 @@ open class VirtualFileIndex internal constructor(
 
     private fun removeByPropertyFromIndexes(id: EntityId, propertyName: String) {
       val vfuInfos = entityId2VirtualFileUrlInfo[id] ?: return
-      val filteredVfuInfos = vfuInfos.filter { it.propertyName == propertyName }
-      vfuInfos.removeAll(filteredVfuInfos)
+      val filteredVfuInfos = HashSet<VirtualFileUrlInfo>()
+      vfuInfos.removeIf {
+        if (it.propertyName == propertyName) {
+          filteredVfuInfos.add(it)
+          return@removeIf true
+        }
+        return@removeIf false
+      }
       if (vfuInfos.isEmpty()) entityId2VirtualFileUrlInfo.remove(id)
 
       filteredVfuInfos.forEach { vfuInfo ->

@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin;
 
 import com.intellij.AbstractBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -24,7 +25,7 @@ public class LombokBundle {
   private LombokBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {
+  public static @Nls String message(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {
     return AbstractBundle.message(BUNDLE, key, params);
   }
 }

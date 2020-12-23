@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
-/**
- * @author max
- */
 public interface BinaryFileStubBuilder {
   boolean acceptsFile(@NotNull VirtualFile file);
 

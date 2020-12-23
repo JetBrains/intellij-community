@@ -234,6 +234,7 @@ public final class PathsVerifier {
       addPatch(myPatch, beforeFile);
       FilePath filePath = VcsUtil.getFilePath(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory());
       if (myPatch.isDeletedFile() || myPatch.getAfterName() == null) {
+        // See VcsFileListenerContextHelper javadoc
         myDeletedPaths.add(filePath);
       }
       myBeforePaths.add(filePath);
@@ -286,6 +287,7 @@ public final class PathsVerifier {
         setErrorMessage(fileNotFoundMessage(myAfterName));
         return false;
       }
+      // See VcsFileListenerContextHelper javadoc
       myAddedPaths.add(VcsUtil.getFilePath(file));
       if (!checkExistsAndValid(file, myAfterName)) {
         return false;

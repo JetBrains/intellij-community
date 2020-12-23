@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.xml.langInjection" />
     <orderEntry type="module" module-name="intellij.textmate" />
     <orderEntry type="module" module-name="intellij.completionMlRankingModels" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
   </component>
 </module>

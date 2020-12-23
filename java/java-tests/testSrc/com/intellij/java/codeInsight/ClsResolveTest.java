@@ -84,7 +84,6 @@ public class ClsResolveTest {
   public void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
-    JarFileSystemImpl.cleanupForNextTest();
   }
 
   @Test

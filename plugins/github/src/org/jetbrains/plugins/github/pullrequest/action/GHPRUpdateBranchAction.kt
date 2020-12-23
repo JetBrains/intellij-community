@@ -44,13 +44,6 @@ class GHPRUpdateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val prRemote = GithubGitHelper.getInstance().findRemote(repository, httpUrl, sshUrl) ?: return
     val localBranch = GithubGitHelper.getInstance().findLocalBranch(repository, prRemote, isFork, headRefName) ?: return
 
-    if (repository.currentBranchName == localBranch) {
-      val updateProjectAction = ActionManager.getInstance().getAction("Vcs.UpdateProject")
-      ActionUtil.invokeAction(updateProjectAction, e.dataContext, GHPRDirectionPanel.BranchActionsToolbar.BRANCH_ACTIONS_TOOLBAR,
-                              e.inputEvent, null)
-    }
-    else {
-      GitBranchUtil.updateBranches(project, listOf(repository), listOf(localBranch))
-    }
+    GitBranchUtil.updateBranches(project, listOf(repository), listOf(localBranch))
   }
 }

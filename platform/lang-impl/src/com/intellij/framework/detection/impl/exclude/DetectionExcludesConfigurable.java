@@ -128,7 +128,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       @NotNull
       @Override
       public String getTextFor(FrameworkType value) {
-        return value != null ? value.getPresentableName() : "All Frameworks...";
+        return value != null ? value.getPresentableName() : ProjectBundle.message("list.item.all.frameworks");
       }
 
       @Override
@@ -229,8 +229,7 @@ public class DetectionExcludesConfigurable implements Configurable {
     myConfiguration.loadState(computeState());
   }
 
-  @Nullable
-  private ExcludesConfigurationState computeState() {
+  private @NotNull ExcludesConfigurationState computeState() {
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     state.setDetectionEnabled(myEnabledDetectionCheckBox.isSelected());
     for (ExcludeListItem item : myModel.getItems()) {

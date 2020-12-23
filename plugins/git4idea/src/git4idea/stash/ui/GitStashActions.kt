@@ -44,3 +44,14 @@ class GitApplyStashAction : GitSingleStashAction() {
     return GitStashOperations.unstash(project, stashInfo, null, false, false)
   }
 }
+
+class GitUnstashAsAction: GitSingleStashAction() {
+  override fun perform(project: Project, stashInfo: StashInfo): Boolean {
+    val dialog = GitUnstashAsDialog(project, stashInfo)
+    if (dialog.showAndGet()) {
+      return GitStashOperations.unstash(project, stashInfo, dialog.branch, dialog.popStash, dialog.keepIndex)
+    }
+    return false
+  }
+
+}

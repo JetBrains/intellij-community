@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +12,7 @@ public abstract class LocalHistory {
   public static final Object VFS_EVENT_REQUESTOR = new Object();
 
   private static final class LocalHistoryHolder {
-    static final LocalHistory ourInstance = ServiceManager.getService(LocalHistory.class);
+    static final LocalHistory ourInstance = ApplicationManager.getApplication().getService(LocalHistory.class);
   }
 
   @NotNull

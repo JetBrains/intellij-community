@@ -7,13 +7,17 @@ import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+
+
+private val pluginIdCounter = AtomicInteger()
 
 class PluginBuilder {
   private data class ExtensionBlock(val ns: String, val text: String)
   private data class DependsTag(val pluginId: String, val configFile: String?)
 
-  var id: String = UUID.randomUUID().toString()
+  // counter is used to reduce plugin id length
+  var id: String = "p_${pluginIdCounter.incrementAndGet()}"
 
   private var implementationDetail = false
   private var name: String? = null
@@ -36,7 +40,7 @@ class PluginBuilder {
   }
 
   fun randomId(idPrefix: String): PluginBuilder {
-    this.id = "$idPrefix${UUID.randomUUID()}"
+    this.id = "${idPrefix}_${pluginIdCounter.incrementAndGet()}"
     return this
   }
 

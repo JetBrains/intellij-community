@@ -149,6 +149,9 @@
       <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}" />
     </annotation>
   </item>
+  <item name='java.awt.FlowLayout java.lang.String toString()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.awt.FlowLayout void setAlignment(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}" />

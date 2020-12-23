@@ -62,9 +62,6 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   private static String getText(final String templateName, @Nullable Project project) throws IOException {
     final FileTemplateManager templateManager = project == null ? FileTemplateManager.getDefaultInstance() : FileTemplateManager.getInstance(project);
     final FileTemplate template = templateManager.getJ2eeTemplate(templateName);
-    if (template == null) {
-      return "";
-    }
     return template.getText(templateManager.getDefaultProperties());
   }
 

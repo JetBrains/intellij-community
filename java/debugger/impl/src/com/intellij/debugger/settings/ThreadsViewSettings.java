@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -20,8 +20,8 @@ public final class ThreadsViewSettings implements PersistentStateComponent<Threa
   public boolean SHOW_ARGUMENTS_TYPES = false;
 
   public static ThreadsViewSettings getInstance() {
-    return ServiceManager.getService(ThreadsViewSettings.class);
- }
+    return ApplicationManager.getApplication().getService(ThreadsViewSettings.class);
+  }
 
   @Override
   public ThreadsViewSettings getState() {

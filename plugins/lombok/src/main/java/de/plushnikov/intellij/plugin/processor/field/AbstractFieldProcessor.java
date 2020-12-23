@@ -12,7 +12,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,13 +26,13 @@ import java.util.regex.Pattern;
 public abstract class AbstractFieldProcessor extends AbstractProcessor implements FieldProcessor {
 
   AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                         @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+                         @NotNull String supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);
   }
 
   AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                         @NotNull Class<? extends Annotation> supportedAnnotationClass,
-                         @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
+                         @NotNull String supportedAnnotationClass,
+                         @NotNull String equivalentAnnotationClass) {
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 

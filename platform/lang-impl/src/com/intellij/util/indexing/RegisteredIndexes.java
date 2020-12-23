@@ -136,7 +136,7 @@ final class RegisteredIndexes {
   }
 
   boolean areIndexesReady() {
-    return myStateFuture.isDone() && myAllIndicesInitializedFuture.isDone();
+    return myStateFuture.isDone() && myAllIndicesInitializedFuture != null && myAllIndicesInitializedFuture.isDone();
   }
 
   boolean isExtensionsDataLoaded() {

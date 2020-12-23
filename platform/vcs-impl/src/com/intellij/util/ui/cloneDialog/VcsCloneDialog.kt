@@ -67,6 +67,7 @@ class VcsCloneDialog private constructor(private val project: Project,
       })
       preferredSize = JBDimension(200, 0) // width fixed by design
     }
+    extensionList.accessibleContext.accessibleName = VcsBundle.message("get.from.vcs.extension.list.accessible.name")
     val scrollableList = ScrollPaneFactory.createScrollPane(extensionList, true).apply {
 
       border = IdeBorderFactory.createBorder(SideBorder.RIGHT)

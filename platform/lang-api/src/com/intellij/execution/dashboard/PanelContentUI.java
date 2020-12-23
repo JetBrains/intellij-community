@@ -61,7 +61,7 @@ final class PanelContentUI implements ContentUI {
         return JBIterable.of(myContentManager.getContents())
           .map(content -> {
             JComponent component = content.getComponent();
-            return component != null && myPanel != component.getParent() ? component : null;
+            return myPanel != component.getParent() ? component : null;
           })
           .filter(Conditions.notNull())
           .iterator();

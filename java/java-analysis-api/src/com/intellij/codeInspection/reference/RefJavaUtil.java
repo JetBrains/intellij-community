@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ public abstract class RefJavaUtil {
   }
 
   public static RefJavaUtil getInstance() {
-    return ServiceManager.getService(RefJavaUtil.class);
+    return ApplicationManager.getApplication().getService(RefJavaUtil.class);
   }
 
   public boolean isCallToSuperMethod(UExpression expression, UMethod method) {

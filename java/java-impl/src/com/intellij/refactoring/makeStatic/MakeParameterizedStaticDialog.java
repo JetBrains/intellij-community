@@ -239,7 +239,6 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     PsiMethod[] methods = myMember instanceof PsiMethod ? new PsiMethod[]{(PsiMethod)myMember} : ((PsiClass)myMember).getConstructors();
     for (PsiMethod method : methods) {
       PsiParameterList parameterList = method.getParameterList();
-      if(parameterList == null) continue;
       PsiParameter[] parameters = parameterList.getParameters();
       for (PsiParameter parameter : parameters) {
         if (parameterName.equals(parameter.getName())) return method;

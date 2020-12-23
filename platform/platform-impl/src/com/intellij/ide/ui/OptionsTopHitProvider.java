@@ -9,9 +9,11 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -200,7 +202,15 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
           if (indicator != null) {
             indicator.checkCanceled();
           }
-          getCachedOptions(provider, project, pluginDescriptor);
+          try {
+            getCachedOptions(provider, project, pluginDescriptor);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            Logger.getInstance(OptionsTopHitProvider.class).error(e);
+          }
         });
       }
       activity.end();

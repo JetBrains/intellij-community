@@ -109,8 +109,7 @@ public final class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockW
       children = new ArrayList<>(subWrappers);
     }
     else if (subWrappers.size() == 0) {
-      //noinspection unchecked
-      children = (List<Block>)(subWrappers.size() > 0 ? myTlBlocks : BlockUtil.splitBlockIntoFragments(myOriginal, myTlBlocks));
+      children = BlockUtil.splitBlockIntoFragments(myOriginal, myTlBlocks);
     }
     else {
       children = BlockUtil.mergeBlocks(myTlBlocks, subWrappers);

@@ -264,15 +264,20 @@ public class WelcomeScreenComponentFactory {
   }
 
   public static JComponent wrapActionLink(@NotNull ActionLink link) {
+    JPanel panel = (JPanel)wrapActionLinkWithoutArrow(link);
+    if (!StringUtil.isEmptyOrSpaces(link.getText())) {
+      panel.add(createArrow(link), BorderLayout.EAST);
+    }
+    return panel;
+  }
+
+  public static JComponent wrapActionLinkWithoutArrow(@NotNull ActionLink link) {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);
     link.setNormalColor(getLinkNormalColor());
     JActionLinkPanel panel = new JActionLinkPanel(link);
     panel.setBorder(JBUI.Borders.empty(4, 6));
-    if (!StringUtil.isEmptyOrSpaces(link.getText())) {
-      panel.add(createArrow(link), BorderLayout.EAST);
-    }
     return panel;
   }
 

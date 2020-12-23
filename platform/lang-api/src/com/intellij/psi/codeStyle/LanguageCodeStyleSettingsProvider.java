@@ -120,7 +120,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   /**
-   * @deprecated use PredefinedCodeStyle extension point instead
+   * @deprecated use {@link PredefinedCodeStyle} extension point instead
    */
   @Deprecated
   public PredefinedCodeStyle @NotNull [] getPredefinedCodeStyles() {

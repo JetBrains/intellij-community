@@ -14,13 +14,16 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import org.jetbrains.annotations.NonNls
 
 
 class HelpComplete {
 
   companion object {
     val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
+    @NonNls
     val PREFIX = "/search/"
+    @NonNls
     val NOT_FOUND = "[]"
 
     private val analyzer: StandardAnalyzer = StandardAnalyzer()

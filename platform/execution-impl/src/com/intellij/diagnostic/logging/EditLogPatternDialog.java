@@ -41,7 +41,7 @@ public class EditLogPatternDialog extends DialogWrapper {
     myFilePattern.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        setOKActionEnabled(myFilePattern.getText() != null && myFilePattern.getText().length() > 0);
+        setOKActionEnabled(myFilePattern.getText().length() > 0);
       }
     });
     return myWholePanel;

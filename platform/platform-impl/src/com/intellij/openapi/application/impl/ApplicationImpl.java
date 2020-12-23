@@ -332,9 +332,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public final void load() {
-    @SuppressWarnings("unchecked")
-    List<IdeaPluginDescriptorImpl> plugins = (List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins();
-    registerComponents(plugins);
+    List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getLoadedPlugins(null);
+    registerComponents(plugins, null);
     ApplicationLoader.initConfigurationStore(this);
     Executor executor = ApplicationLoader.createExecutorToPreloadServices();
     preloadServices(plugins, executor, false).getSyncPreloadedServices().join();
@@ -986,7 +985,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       throw (RuntimeException)result.getThrowable();
     }
 
-    return !(result.getThrowable() instanceof ProcessCanceledException);
+    return true;
   }
 
   private <T,E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {

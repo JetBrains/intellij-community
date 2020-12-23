@@ -312,14 +312,6 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     }
   }
 
-  // The current dispatching of incoming build events is done based on event parent ids.
-  // It forces to put event ids into the myBuildsMap.
-  // In order to reduce memory footprint of the map we will assume that OutputBuildEvents and MessageEvents will never have children.
-  // TODO[Vlad] change event routing logic to avoid such excessive usage of event ids
-  private static boolean mayHaveChildren(BuildEvent event) {
-    return !(event instanceof OutputBuildEvent) && !(event instanceof MessageEvent);
-  }
-
   private void clearOldBuilds(List<Runnable> runOnEdt, StartBuildEvent startBuildEvent) {
     long currentTime = System.currentTimeMillis();
     DefaultListModel<AbstractViewManager.BuildInfo> listModel = (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();

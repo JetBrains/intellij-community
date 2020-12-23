@@ -7,12 +7,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -602,7 +602,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public @NotNull ContentFactory getFactory() {
-    return ServiceManager.getService(ContentFactory.class);
+    return ApplicationManager.getApplication().getService(ContentFactory.class);
   }
 
   @Override
@@ -634,5 +634,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   public boolean isSingleSelection() {
     return myUI.isSingleSelection();
+  }
+
+  public void rebuildContentUi() {
+    if (myUI instanceof ToolWindowContentUi) {
+      ToolWindowContentUi contentUi = (ToolWindowContentUi)myUI;
+      contentUi.rebuild();
+    }
   }
 }

@@ -363,9 +363,14 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
     boolean versionAndPathsUpdated = updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, sdkModificator, project);
     if (!versionAndPathsUpdated) {
-      Messages.showErrorDialog(project,
-                               PyBundle.message("python.sdk.cannot.setup.sdk", getSdkPresentableName(sdk)),
-                               PyBundle.message("python.sdk.invalid.python.sdk"));
+      ApplicationManager.getApplication().invokeLater(
+        () ->
+          Messages.showErrorDialog(
+            project,
+            PyBundle.message("python.sdk.cannot.setup.sdk", getSdkPresentableName(sdk)),
+            PyBundle.message("python.sdk.invalid.python.sdk")
+          )
+      );
     }
   }
 
@@ -676,4 +681,5 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       }
       return null;
     }
-  }}
+  }
+}

@@ -15,11 +15,11 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 
 public abstract class XsltConfig {
   public static XsltConfig getInstance() {
-    return ServiceManager.getService(XsltConfig.class);
+    return ApplicationManager.getApplication().getService(XsltConfig.class);
   }
 
   public abstract boolean isShowLinkedFiles();

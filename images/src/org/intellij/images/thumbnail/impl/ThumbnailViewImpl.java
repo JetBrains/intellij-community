@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import icons.ImagesIcons;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.search.TagFilter;
@@ -43,6 +44,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
     myThumbnailViewUI = new ThumbnailViewUI(this);
     Disposer.register(this, myThumbnailViewUI);
     toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, myThumbnailViewUI, ToolWindowAnchor.BOTTOM);
+    toolWindow.setStripeTitle(ImagesBundle.message("thumbnails.toolwindow.name"));
     toolWindow.setIcon(ImagesIcons.ThumbnailToolWindow);
     setVisible(false);
   }

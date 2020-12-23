@@ -8,8 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter
-import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -19,7 +17,6 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.Consumer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
@@ -29,28 +26,27 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   private val sdkNameCallbackExecuted = AtomicBoolean(false)
   private val sdkCallbackExecuted = AtomicBoolean(false)
 
-  val sdkName= params.sdkName
+  val sdkName = params.sdkName
   val sdkType = params.sdkType
   val testSdkSequence = params.testSdkSequence
   val project = params.project
   val progressMessageTitle = params.progressMessageTitle
 
-  val sdkHomeFilter= params.sdkHomeFilter
-  val versionFilter= params.versionFilter
+  val sdkHomeFilter = params.sdkHomeFilter
+  val versionFilter = params.versionFilter
+  val onDownloadingSdkDetected = params.onDownloadingSdkDetected
   val onBeforeSdkSuggestionStarted = params.onBeforeSdkSuggestionStarted
   val onLocalSdkSuggested = params.onLocalSdkSuggested
   val onDownloadableSdkSuggested = params.onDownloadableSdkSuggested
+  val onSdkFixResolved = params.onSdkFixResolved
 
   val onSdkNameResolvedConsumer = Consumer<Sdk?> { onSdkNameResolved(it) }
   val onSdkResolvedConsumer = Consumer<Sdk?> { onSdkResolved(it) }
 
-  fun attachIndicatorIfNeeded(rootProgressIndicator: ProgressIndicatorBase) {
-    val indicator = params.progressIndicator ?: return
-    if (indicator is ProgressIndicatorEx) {
-      rootProgressIndicator.addStateDelegate(indicator)
-    } else {
-      rootProgressIndicator.addStateDelegate(RelayUiToDelegateIndicator(indicator))
-    }
+  fun resolveProgressIndicator() : ProgressIndicator {
+    val indicator = params.progressIndicator
+    if (indicator != null) return indicator
+    return ProgressIndicatorBase()
   }
 
   fun onSdkNameResolved(sdk: Sdk?) {
@@ -120,29 +116,33 @@ internal class SdkLookupImpl : SdkLookup {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     object : SdkLookupContextEx(lookup) {
-      override fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicator): Boolean {
-        ApplicationManager.getApplication().assertIsNonDispatchThread()
+      override fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator): () -> Boolean {
+        LOG.warn("It is not possible to wait for SDK download to complete in blocking execution mode. " +
+                  "Use another " + SdkLookupDownloadDecision::class.simpleName)
 
-        onSdkNameResolved(sdk)
+        return {
+          ApplicationManager.getApplication().assertIsNonDispatchThread()
+          onSdkNameResolved(sdk)
 
-        ///we do not has a better API on SdkDownloadTracker to wait for a download
-        ///smarter than with a busy waiting. Need to re-implement the SdkDownloadTracker
-        ///in a way to avoid heavy dependency on EDT (and modality state)
-        try {
-          while (true) {
+          ///we do not has a better API on SdkDownloadTracker to wait for a download
+          ///smarter than with a busy waiting. Need to re-implement the SdkDownloadTracker
+          ///in a way to avoid heavy dependency on EDT (and modality state)
+          try {
+            while (true) {
+              rootProgressIndicator.checkCanceled()
+              if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) break
+              Thread.sleep(300)
+            }
+          } catch (e: InterruptedException) {
             rootProgressIndicator.checkCanceled()
-            if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) break
-            Thread.sleep(300)
+            throw ProcessCanceledException()
           }
-        } catch (e: InterruptedException) {
-          rootProgressIndicator.checkCanceled()
-          throw ProcessCanceledException()
-        }
 
-        return false
+          false
+        }
       }
 
-      override fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase, action: (ProgressIndicator) -> Unit) {
+      override fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicator, action: (ProgressIndicator) -> Unit) {
         //it is already running under progress, no need to open yet another one
         action.invoke(rootProgressIndicator)
       }
@@ -156,8 +156,7 @@ internal class SdkLookupImpl : SdkLookup {
 
 private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext(lookup) {
   fun lookup() {
-    val rootProgressIndicator = ProgressIndicatorBase()
-    attachIndicatorIfNeeded(rootProgressIndicator)
+    val rootProgressIndicator = resolveProgressIndicator()
 
     run {
       val namedSdk = sdkName?.let {
@@ -198,7 +197,28 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     return false
   }
 
-  open fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicator) : Boolean {
+  fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicator) : Boolean {
+    if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return false
+
+    //  we need to make sure there is no race conditions,
+    // the SdkDownloadTracker has to use WriteAction to apply changes
+    val action: () -> Boolean = invokeAndWaitIfNeeded {
+      //double checked to avoid
+      if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return@invokeAndWaitIfNeeded { false }
+
+      onSdkNameResolved(sdk)
+
+      when (onDownloadingSdkDetected(sdk)) {
+        SdkLookupDownloadDecision.WAIT -> doWaitSdkDownloadToComplete(sdk, rootProgressIndicator)
+        SdkLookupDownloadDecision.SKIP -> {{ false }}
+        SdkLookupDownloadDecision.STOP -> {{ onSdkResolved(null); true }}
+      }
+    }
+
+    return action()
+  }
+
+  open fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator) : () -> Boolean {
     val disposable = Disposer.newDisposable()
     val onDownloadCompleted = Consumer<Boolean> { onSucceeded ->
       Disposer.dispose(disposable)
@@ -216,7 +236,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
       onSdkResolved(finalSdk)
     }
 
-    val isDownloading = invokeAndWaitIfNeeded {
+    val isDownloading =
       SdkDownloadTracker
         .getInstance()
         .tryRegisterDownloadingListener(
@@ -224,19 +244,17 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
           disposable,
           rootProgressIndicator,
           onDownloadCompleted)
-    }
 
     if (!isDownloading) {
       Disposer.dispose(disposable)
-      return false
+      return { false }
     }
 
     //it will be notified later when the download is completed
-    onSdkNameResolved(sdk)
-    return true
+    return { true }
   }
 
-  private fun testExistingSdk(sdk: Sdk): Boolean {
+  fun testExistingSdk(sdk: Sdk): Boolean {
     //it could be the case with an ordinary SDK, it may not pass the test below
     if (!checkSdkHomeAndVersion(sdk)) return false
 
@@ -244,7 +262,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     return true
   }
 
-  private fun continueSdkLookupWithSuggestions(rootProgressIndicator: ProgressIndicatorBase) {
+  private fun continueSdkLookupWithSuggestions(rootProgressIndicator: ProgressIndicator) {
     if (sdkType == null) {
       //it is not possible to suggest everything, if [sdkType] is not specified
       onSdkResolved(null)
@@ -295,6 +313,10 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
           }
         }
 
+        if (onSdkFixResolved(possibleFix) != SdkLookupDecision.CONTINUE) {
+          return@runSdkResolutionUnderProgress onSdkResolved(null)
+        }
+
         possibleFix.addSuggestionListener(getFixListener(possibleFix))
         executeFix(indicator, possibleFix)
       } catch (e: ProcessCanceledException) {
@@ -341,35 +363,15 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
                         .firstOrNull()
   }
 
-  open fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicatorBase,
+  open fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicator,
                                          action: (ProgressIndicator) -> Unit) {
     val sdkTypeName = sdkType?.presentableName ?: ProjectBundle.message("sdk")
     val title = progressMessageTitle ?: ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdkTypeName)
 
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND){
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND) {
       override fun run(indicator: ProgressIndicator) {
-        runWithBoundProgress(rootProgressIndicator, indicator, action)
+        runUnderNestedProgressAndRelayMessages(rootProgressIndicator, indicator, action = action)
       }
     })
-  }
-
-  fun runWithBoundProgress(rootProgressIndicator: ProgressIndicatorBase,
-                           indicator: ProgressIndicator,
-                           action: (ProgressIndicatorBase) -> Unit) {
-    object : ProgressIndicatorListenerAdapter() {
-      override fun cancelled() {
-        rootProgressIndicator.cancel()
-      }
-    }.installToProgressIfPossible(indicator)
-
-    val relayToVisibleIndicator: ProgressIndicatorEx = RelayUiToDelegateIndicator(indicator)
-    rootProgressIndicator.addStateDelegate(relayToVisibleIndicator)
-
-    try {
-      action(rootProgressIndicator)
-    }
-    finally {
-      rootProgressIndicator.removeStateDelegate(relayToVisibleIndicator)
-    }
   }
 }

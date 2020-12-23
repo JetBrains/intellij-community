@@ -157,7 +157,7 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
       return new EditorSettingsExternalizable(new OsSpecificState());
     }
     else {
-      return ServiceManager.getService(EditorSettingsExternalizable.class);
+      return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
     }
   }
 

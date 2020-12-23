@@ -493,10 +493,6 @@ public class PyQuickFixTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doInspectionTest(PySetFunctionToLiteralInspection.class, PyPsiBundle.message("QFIX.replace.function.set.with.literal"), true, true));
   }
 
-  public void testDictComprehensionToCall() {
-    doInspectionTest(PyCompatibilityInspection.class, PyPsiBundle.message("INTN.convert.dict.comp.to"), true, true);
-  }
-
   // PY-3394
   public void testDocstringParams() {
     getIndentOptions().INDENT_SIZE = 2;

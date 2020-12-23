@@ -11,28 +11,35 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class LightEditGotoOpenedFileAction extends FileChooserAction implements LightEditCompatible {
 
   @Override
   protected void actionPerformed(@NotNull FileSystemTree fileSystemTree, @NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project != null) {
-      VirtualFile file = ArrayUtil.getFirstElement(FileEditorManager.getInstance(project).getSelectedFiles());
-      if (file != null) {
-        fileSystemTree.select(file, () -> fileSystemTree.expand(file, null));
-      }
+    VirtualFile file = getSelectedFile(fileSystemTree, project);
+    if (project != null && file != null) {
+      fileSystemTree.select(file, () -> fileSystemTree.expand(file, null));
     }
   }
 
   @Override
-  protected void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
+  protected void update(@NotNull FileSystemTree fileSystemTree, @NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (LightEdit.owns(project)) {
-      e.getPresentation().setEnabled(FileEditorManager.getInstance(project).hasOpenFiles());
+      e.getPresentation().setEnabled(getSelectedFile(fileSystemTree, project) != null);
     }
     else {
       e.getPresentation().setEnabledAndVisible(false);
     }
+  }
+
+  private static @Nullable VirtualFile getSelectedFile(@NotNull FileSystemTree fileSystemTree, @Nullable Project project) {
+    if (LightEdit.owns(project)) {
+      VirtualFile file = ArrayUtil.getFirstElement(FileEditorManager.getInstance(project).getSelectedFiles());
+      return file != null && file.getParent() != null && fileSystemTree.isUnderRoots(file) ? file : null;
+    }
+    return null;
   }
 }

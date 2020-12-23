@@ -14,7 +14,6 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,7 +47,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     }
   }
 
-  AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
+  AbstractLogProcessor(@NotNull String supportedAnnotationClass) {
     super(PsiField.class, supportedAnnotationClass);
   }
 
@@ -88,7 +87,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isInterface() || psiClass.isAnnotationType()) {
-      builder.addError("@%s is legal only on classes and enums", getSupportedAnnotationClasses()[0].getSimpleName());
+      builder.addError("@%s is legal only on classes and enums", getSupportedAnnotationClasses()[0]);
       result = false;
     }
     if (result) {

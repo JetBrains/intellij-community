@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
@@ -25,7 +26,7 @@ import kotlin.collections.LinkedHashMap
 
 data class SettingsAndEffectiveTarget(val configuration: RunConfiguration, val target: ExecutionTarget)
 
-class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
+class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? = null,
                                                          project: Project,
                                                          factory: ConfigurationFactory = runConfigurationType<CompoundRunConfigurationType>()) :
   RunConfigurationMinimalBase<CompoundRunConfigurationOptions>(name, factory, project), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {

@@ -2,7 +2,7 @@
 package com.intellij.model.psi;
 
 import com.intellij.model.Symbol;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -14,7 +14,7 @@ public interface PsiSymbolService {
 
   @NotNull
   static PsiSymbolService getInstance() {
-    return ServiceManager.getService(PsiSymbolService.class);
+    return ApplicationManager.getApplication().getService(PsiSymbolService.class);
   }
 
   /**

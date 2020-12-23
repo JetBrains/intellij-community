@@ -37,14 +37,24 @@ class CloseTab(c: JComponent,
       e.presentation.setText("")
     }
     else {
-      e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+      if (pinned) {
+        e.presentation.setText(IdeBundle.message("action.unpin.tab.tooltip"))
+      }
+      else {
+        e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+      }
     }
   }
 
   private fun isPinned() = editorWindow.isFilePinned(file)
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (isPinned() && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) return
+    if (isPinned() && e.place == ActionPlaces.EDITOR_TAB) {
+      if (Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
+        editorWindow.setFilePinned(file, false)
+      }
+      return
+    }
     val mgr = FileEditorManagerEx.getInstanceEx(project)
     val window: EditorWindow?
     if (ActionPlaces.EDITOR_TAB == e.place) {

@@ -88,7 +88,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     }
   })
 
-  private fun eraseClassType(type: PsiClassType): PsiClassType {
+  override fun eraseClassType(type: PsiClassType): PsiClassType {
     val factory = JavaPsiFacade.getElementFactory(project)
 
     val clazz: PsiClass? = type.resolve()
@@ -294,6 +294,6 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     )
 
   private fun enumMethods() : List<PsiMethod> {
-    return if (myCodeClass is GrEnumTypeDefinitionImpl) myCodeClass.defEnumMethods else emptyList()
+    return if (myCodeClass is GrEnumTypeDefinitionImpl) myCodeClass.getDefEnumMethods(this) else emptyList()
   }
 }

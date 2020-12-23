@@ -258,6 +258,7 @@
       <add-to-group group-id="CopyGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
     </action>
 
+    <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction" use-shortcut-of="CheckinProject"/>
     <action id="Git.Stage.Refresh" class="git4idea.index.actions.GitRefreshStageAction" icon="AllIcons.Actions.Refresh"
             use-shortcut-of="Refresh"/>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
@@ -296,7 +297,9 @@
 
     <action id="Git.Stash.Pop" class="git4idea.stash.ui.GitPopStashAction"/>
     <action id="Git.Stash.Apply" class="git4idea.stash.ui.GitApplyStashAction"/>
+    <action id="Git.Stash.UnstashAs" class="git4idea.stash.ui.GitUnstashAsAction"/>
     <action id="Git.Stash.Drop" class="git4idea.stash.ui.GitDropStashAction"/>
+    <action id="Git.Show.Stash" class="git4idea.stash.ui.GitShowStashToolWindowTabAction"/>
 
     <group id="Git.Stash.Toolbar">
       <reference id="Diff.ShowDiff"/>
@@ -304,6 +307,7 @@
     <group id="Git.Stash.ContextMenu">
       <reference id="Git.Stash.Pop"/>
       <reference id="Git.Stash.Apply"/>
+      <reference id="Git.Stash.UnstashAs"/>
       <reference id="Git.Stash.Drop"/>
       <separator/>
       <reference id="Diff.ShowDiff"/>
@@ -392,7 +396,7 @@
     <registryKey key="git.update.project.info.as.log" defaultValue="true"
                  description="If enabled, Update Project for Git is followed by the list of commits, instead of the list of updated files."/>
     <registryKey key="git.enable.stage" defaultValue="false"
-                 description="Show tool window with staging area."/>
+                 description="Obsolete property, replaced by Settings | Version Control | Git | Enable staging area"/>
     <registryKey key="git.enable.stage.line.status.tracker" defaultValue="true"
                  description="Show staged and unstaged changes in gutter markers."/>
     <registryKey key="git.enable.stage.disable.local.changes" defaultValue="true"
@@ -545,7 +549,7 @@
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
     <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
 
-    <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
+    <vcsStartupActivity implementation="git4idea.index.GitStageManager$GitStageStartupActivity"/>
 
     <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>
@@ -596,6 +600,10 @@
               activeInHeadlessMode="false"/>
     <listener class="git4idea.ui.branch.GitBranchWidget$Listener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="git4idea.index.GitStageManager$StagingSettingsListener" topic="git4idea.index.GitStagingAreaSettingsListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="git4idea.index.GitStageManager$CommitSettingsListener" topic="com.intellij.vcs.commit.CommitWorkflowManager$SettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>
 </idea-plugin>

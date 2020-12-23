@@ -23,12 +23,12 @@ public class BuilderSimpleWithSetterPrefix {
     BuilderSimpleWithSetterPrefixBuilder() {
     }
 
-    public BuilderSimpleWithSetterPrefixBuilder setMyInt(int myInt) {
+    public BuilderSimpleWithSetterPrefix.BuilderSimpleWithSetterPrefixBuilder setMyInt(int myInt) {
       this.myInt = myInt;
       return this;
     }
 
-    public BuilderSimpleWithSetterPrefixBuilder setMyString(String myString) {
+    public BuilderSimpleWithSetterPrefix.BuilderSimpleWithSetterPrefixBuilder setMyString(String myString) {
       this.myString = myString;
       return this;
     }

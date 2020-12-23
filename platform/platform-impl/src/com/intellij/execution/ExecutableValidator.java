@@ -236,7 +236,7 @@ public abstract class ExecutableValidator {
       this(myNotificationErrorDescription);
     }
 
-    public ExecutableNotValidNotification(@NotNull String description) {
+    public ExecutableNotValidNotification(@NotNull @Nls String description) {
       this(prepareDescription(description, true), NotificationType.ERROR);
     }
 

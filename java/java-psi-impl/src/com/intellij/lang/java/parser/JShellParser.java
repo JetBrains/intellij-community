@@ -46,7 +46,7 @@ public class JShellParser extends JavaParser {
                                                                                          !JavaElementType.EXPRESSION_STATEMENT.equals(tokenType);
   private static final Predicate<IElementType> DECLARATION_PARSED_CONDITION = tokenType -> TOP_LEVEL_DECLARATIONS.contains(tokenType);
 
-  private final FileParser myJShellFileParser = new FileParser(JShellParser.this) {
+  private final FileParser myJShellFileParser = new FileParser(this) {
     private final TokenSet IMPORT_PARSING_STOP_LIST = TokenSet.orSet(
       IMPORT_LIST_STOPPER_SET,
       TokenSet.orSet(
@@ -103,9 +103,7 @@ public class JShellParser extends JavaParser {
           }
 
           if (marker == null) {
-            if (wrapper != null) {
-              wrapper.drop();
-            }
+            wrapper.drop();
             break;
           }
 

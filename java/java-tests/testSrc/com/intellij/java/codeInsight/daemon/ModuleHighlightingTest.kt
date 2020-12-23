@@ -224,7 +224,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("module M { exports <caret>pkg.missing; }", arrayOf("CreateClassInPackageInModuleFix"))
     fixes("module M { exports <caret>pkg.m3; }", arrayOf())
     fixes("module M { uses pkg.m3.<caret>C3; }", arrayOf("AddModuleDependencyFix"))
-    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix", "PackageSearchQuickFix"))
 
     addFile("module-info.java", "module M { requires M6; }")
     addFile("pkg/main/Util.java", "package pkg.main;\nclass Util {\n static <T> void sink(T t) { }\n}")
@@ -233,7 +233,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     addFile("module-info.java", "module M2 { }", M2)
     fixes("module M { requires M2; uses <caret>pkg.m2.C2; }", arrayOf("AddExportsDirectiveFix"))
-    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddExportsDirectiveFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddExportsDirectiveFix", "PackageSearchQuickFix"))
 
     addFile("pkg/main/S.java", "package pkg.main;\npublic class S { }")
     fixes("module M { provides pkg.main.<caret>S with pkg.main.S; }", arrayOf("AddExportsDirectiveFix", "AddUsesDirectiveFix"))

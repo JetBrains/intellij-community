@@ -28,11 +28,11 @@ public final class JavaStylePropertiesUtil {
   public static void fixJavaStyleProperty(GrMethodCall call) {
     GrExpression invoked = call.getInvokedExpression();
     String accessorName = ((GrReferenceExpression)invoked).getReferenceName();
-    if (isGetterInvocation(call) && invoked instanceof GrReferenceExpression) {
+    if (isGetterInvocation(call)) {
       final GrExpression newCall = genRefForGetter(call, accessorName);
       call.replaceWithExpression(newCall, true);
     }
-    else if (isSetterInvocation(call) && invoked instanceof GrReferenceExpression) {
+    else if (isSetterInvocation(call)) {
       final GrStatement newCall = genRefForSetter(call, accessorName);
       if(newCall != null) {
         call.replaceWithStatement(newCall);
@@ -92,7 +92,6 @@ public final class JavaStylePropertiesUtil {
     else {
       method = call.resolveMethod();
       if (!GroovyPropertyUtils.isSimplePropertySetter(method)) return false;
-      LOG.assertTrue(method != null);
     }
 
     if (!GroovyNamesUtil.isValidReference(GroovyPropertyUtils.getPropertyNameBySetterName(method.getName()),
@@ -124,7 +123,6 @@ public final class JavaStylePropertiesUtil {
 
     PsiMethod method = call.resolveMethod();
     if (!GroovyPropertyUtils.isSimplePropertyGetter(method)) return false;
-    LOG.assertTrue(method != null);
     if (!GroovyNamesUtil.isValidReference(GroovyPropertyUtils.getPropertyNameByGetterName(method.getName(), true),
                                           ((GrReferenceExpression)expr).getQualifier() != null,
                                           call.getProject())) {

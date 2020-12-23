@@ -9,6 +9,7 @@ import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.GridBagLayout
+import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -73,5 +74,9 @@ open class VcsCloneDialogExtensionListItem : JPanel(GridBagLayout()) {
 
   fun setTitleForeground(foreground: Color) {
     titleLabel.foreground = foreground
+  }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    return titleLabel.accessibleContext
   }
 }

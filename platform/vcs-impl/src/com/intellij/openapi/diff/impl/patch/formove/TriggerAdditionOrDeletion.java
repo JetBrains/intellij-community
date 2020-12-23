@@ -48,6 +48,16 @@ public class TriggerAdditionOrDeletion {
     return myAffected;
   }
 
+  /**
+   * Prepare files to be added|deleted in VCS
+   * <p/>
+   * For VCS with async file listeners (see {@link AbstractVcs#fileListenerIsSynchronous}),<br/>
+   * should be always called inside {@link com.intellij.openapi.command.CommandProcessor#executeCommand}<br/>
+   * This will ensure that added files will be correctly filtered in {@link VcsVFSListener.MyCommandAdapter#commandFinished}<br/>
+   * and {@link VcsVFSListener.MyAsyncVfsListener#prepareChange} for deleted files<br/>
+   *
+   * @see VcsFileListenerContextHelper
+   */
   public void prepare() {
     if (!myExisting.isEmpty()) {
       processAddition();
@@ -55,6 +65,10 @@ public class TriggerAdditionOrDeletion {
     if (!myDeleted.isEmpty()) {
       processDeletion();
     }
+  }
+
+  public void cleanup() {
+    myVcsFileListenerContextHelper.clearContext();
   }
 
   public void processIt() {

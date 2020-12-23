@@ -371,7 +371,6 @@ public class CommanderPanel extends JPanel {
     }
     else {
       final Color color = UIUtil.getPanelBackground();
-      LOG.assertTrue(color != null);
       myTitlePanel.setBackground(color);
       myTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, color.brighter(), color.darker()));
       myParentTitle.setForeground(JBColor.foreground());

@@ -14,8 +14,16 @@ fun validateName(repositories: Collection<GitRepository>, inputString: String): 
   checkRefName(inputString) ?: checkBranchConflict(repositories, inputString)
 
 fun checkRefName(inputString: String?): ValidationInfo? =
-  if (!GitRefNameValidator.getInstance().checkInput(inputString) || StringUtil.equalsIgnoreCase(inputString, HEAD))
+  checkRefNameEmptyOrHead(inputString) ?:
+  if (!GitRefNameValidator.getInstance().checkInput(inputString))
     ValidationInfo(GitBundle.message("new.branch.dialog.error.branch.name.invalid", inputString))
+  else null
+
+fun checkRefNameEmptyOrHead(inputString: String?): ValidationInfo? =
+  if (StringUtil.isEmptyOrSpaces(inputString))
+    ValidationInfo(GitBundle.message("new.branch.dialog.error.branch.name.empty"))
+  else if (StringUtil.equalsIgnoreCase(inputString, HEAD))
+    ValidationInfo(GitBundle.message("new.branch.dialog.error.branch.name.head"))
   else null
 
 private fun checkBranchConflict(repositories: Collection<GitRepository>, inputString: String) =

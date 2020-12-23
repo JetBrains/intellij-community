@@ -407,9 +407,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
       if (lastPathComponent == null) return null;
       String text = lastPathComponent.getDelegate().getText();
-      if (text != null) {
-        text = convertElementText(text);
-      }
+      text = convertElementText(text);
       return text;
     });
     treeSpeedSearch.setComparator(getSpeedSearchComparator());

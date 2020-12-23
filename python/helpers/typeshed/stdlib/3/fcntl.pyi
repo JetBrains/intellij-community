@@ -1,3 +1,4 @@
+import sys
 from _typeshed import FileDescriptorLike
 from array import array
 from typing import Any, Union, overload
@@ -33,6 +34,10 @@ F_SETLK: int
 F_SETLK64: int
 F_SETLKW: int
 F_SETLKW64: int
+if sys.version_info >= (3, 9) and sys.platform == "linux":
+    F_OFD_GETLK: int
+    F_OFD_SETLK: int
+    F_OFD_SETLKW: int
 F_SETOWN: int
 F_SETSIG: int
 F_SHLCK: int

@@ -15,8 +15,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 
-import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
-
+import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE 
 /**
  * @author peter
  */
@@ -612,6 +611,19 @@ class X {
   }
 }
 """)
+  }
+
+  void "test at equals token"() {
+    myFixture.configureByText "a.java", """
+class X {
+  void test() {
+    int i <selection>=</selection> 5;
+  }
+}
+"""
+    TemplateActionContext templateActionContext = TemplateActionContext.surrounding(file, editor);
+    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
+    assert templates == []
   }
 
 }

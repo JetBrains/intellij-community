@@ -9,7 +9,6 @@ import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.Nullable;
 
 public class PyConsoleParsingContext extends ParsingContext {
   private final StatementParsing stmtParser;
@@ -17,11 +16,10 @@ public class PyConsoleParsingContext extends ParsingContext {
 
   public PyConsoleParsingContext(final SyntaxTreeBuilder builder,
                                  LanguageLevel languageLevel,
-                                 StatementParsing.FUTURE futureFlag,
                                  PythonConsoleData pythonConsoleData,
                                  boolean startsWithIPythonSymbol) {
-    super(builder, languageLevel, futureFlag);
-    stmtParser = new ConsoleStatementParsing(this, futureFlag, startsWithIPythonSymbol, pythonConsoleData);
+    super(builder, languageLevel);
+    stmtParser = new ConsoleStatementParsing(this, startsWithIPythonSymbol, pythonConsoleData);
     if (pythonConsoleData.isIPythonEnabled()) {
       expressionParser = new ConsoleExpressionParsing(this);
     }
@@ -46,10 +44,9 @@ public class PyConsoleParsingContext extends ParsingContext {
     private final PythonConsoleData myPythonConsoleData;
 
     protected ConsoleStatementParsing(ParsingContext context,
-                                      @Nullable FUTURE futureFlag,
                                       boolean startsWithIPythonSymbol,
                                       PythonConsoleData pythonConsoleData) {
-      super(context, futureFlag);
+      super(context);
       myStartsWithIPythonSymbol = startsWithIPythonSymbol;
       myPythonConsoleData = pythonConsoleData;
     }

@@ -90,7 +90,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField,
                                                           ExecutionBundle.message("run.configuration.working.directory.label"));
 
-    myEnvVariablesComponent = new EnvironmentVariablesComponent();
+    myEnvVariablesComponent = createEnvironmentVariablesComponent();
 
     myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
     myProgramParametersComponent.setLabelLocation(BorderLayout.WEST);
@@ -104,6 +104,11 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     setPreferredSize(new Dimension(10, 10));
 
     copyDialogCaption(myProgramParametersComponent);
+  }
+
+  @NotNull
+  protected EnvironmentVariablesComponent createEnvironmentVariablesComponent() {
+    return new EnvironmentVariablesComponent();
   }
 
   /**
@@ -237,8 +242,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     configuration.setProgramParameters(fromTextField(myProgramParametersComponent.getComponent(), configuration));
     configuration.setWorkingDirectory(fromTextField(myWorkingDirectoryField, configuration));
 
-    configuration.setEnvs(myEnvVariablesComponent.getEnvs());
-    configuration.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());
+    myEnvVariablesComponent.apply(configuration);
   }
 
   @Nullable
@@ -250,7 +254,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     setProgramParameters(configuration.getProgramParameters());
     setWorkingDirectory(PathUtil.toSystemDependentName(configuration.getWorkingDirectory()));
 
-    myEnvVariablesComponent.setEnvs(configuration.getEnvs());
-    myEnvVariablesComponent.setPassParentEnvs(configuration.isPassParentEnvs());
+    myEnvVariablesComponent.reset(configuration);
   }
 }

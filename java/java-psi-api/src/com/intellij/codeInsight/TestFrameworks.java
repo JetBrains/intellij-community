@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.CachedValueProvider;
@@ -19,7 +19,7 @@ import java.util.Set;
  */
 public abstract class TestFrameworks {
   public static TestFrameworks getInstance() {
-    return ServiceManager.getService(TestFrameworks.class);
+    return ApplicationManager.getApplication().getService(TestFrameworks.class);
   }
 
   public abstract boolean isTestClass(PsiClass psiClass);

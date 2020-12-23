@@ -4,6 +4,7 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 
@@ -17,8 +18,8 @@ public interface BackendCompiler {
   @NotNull
   String getId(); // used for externalization
 
-  @NotNull
-  String getPresentableName();
+  @NlsContexts.ListItem
+  @NotNull String getPresentableName();
 
   @NotNull
   Configurable createConfigurable();

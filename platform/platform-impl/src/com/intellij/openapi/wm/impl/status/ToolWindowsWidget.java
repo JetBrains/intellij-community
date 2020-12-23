@@ -4,13 +4,17 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -22,8 +26,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.BaseButtonBehavior;
@@ -139,20 +144,21 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         toolWindows.sort((o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));
 
         JBList<ToolWindow> list = new JBList<>(toolWindows);
-        list.setCellRenderer(new ListCellRenderer<ToolWindow>() {
-          final JBLabel label = new JBLabel();
-
+        list.setCellRenderer(new ColoredListCellRenderer<ToolWindow>() {
           @Override
-          public Component getListCellRendererComponent(JList<? extends ToolWindow> list, ToolWindow toolWindow, int index, boolean isSelected, boolean cellHasFocus) {
-            label.setText(toolWindow.getStripeTitle());
-            label.setIcon(toolWindow.getIcon());
-            label.setBorder(JBUI.Borders.empty(4, 10));
-            label.setForeground(UIUtil.getListForeground(isSelected));
-            label.setBackground(UIUtil.getListBackground(isSelected));
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.add(label, BorderLayout.CENTER);
-            panel.setBackground(UIUtil.getListBackground(isSelected));
-            return panel;
+          protected void customizeCellRenderer(@NotNull JList<? extends ToolWindow> list,
+                                               ToolWindow value,
+                                               int index,
+                                               boolean selected,
+                                               boolean hasFocus) {
+            append(value.getStripeTitle());
+            String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
+            KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
+            if (shortcut != null) {
+              append(" " + KeymapUtil.getShortcutText(shortcut), SimpleTextAttributes.GRAY_ATTRIBUTES);
+            }
+            setIcon(value.getIcon());
+            setBorder(JBUI.Borders.empty(2, 10));
           }
         });
 

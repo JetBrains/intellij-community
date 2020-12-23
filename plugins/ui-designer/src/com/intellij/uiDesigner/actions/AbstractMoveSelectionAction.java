@@ -109,7 +109,6 @@ abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware
       return;
     }
 
-    LOG.assertTrue(nextSelectedIndex != -1);
     final RadComponent component = components.get(nextSelectedIndex);
     selectOrExtend(component);
   }

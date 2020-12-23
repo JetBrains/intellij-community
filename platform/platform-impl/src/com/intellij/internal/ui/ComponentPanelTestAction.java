@@ -110,7 +110,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private static final String GOT_IT_HEADER = "IDE features trainer";
     private static final String GOT_IT_TEXT = "Learn the most useful shortcuts and essential IDE features interactively";
-    //private static final String GOT_IT_TEXT = "Press Tab to show options";
+    private static final String GOT_IT_TEXT2 = "Some textfield that actually means nothing";
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -127,9 +127,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       setTitle("Component Panel Test Action");
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @NotNull JComponent createCenterPanel() {
       pane = new JBTabbedPane(SwingConstants.TOP);
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());
@@ -267,18 +266,20 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       new HelpTooltip().setDescription(LONG_TEXT2).installOn(button);
       topPanel.add(UI.PanelFactory.panel(button).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
-      //try {
-        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).andShowCloseShortcut();
+      try {
+        GotItTooltip gotItTooltip = new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
+          andShowCloseShortcut().
+          withShowCount(3).
+          withHeader(GOT_IT_HEADER).
+          withIcon(AllIcons.General.BalloonInformation).
+          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/"));
+        gotItTooltip.showDynamic(Balloon.Position.below, () -> new RelativePoint(button, new Point(button.getWidth() / 2, button.getHeight())));
 
-          //withTimeout();
-          //withIcon(AllIcons.General.BalloonInformation).
-          //withHeader(GOT_IT_HEADER).
-          //withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
-          //withShortcut("Ctrl+Alt+D");
+        new GotItTooltip("textfield", GOT_IT_TEXT2, project).
+          withShowCount(5).showAfter(gotItTooltip, Balloon.Position.below,
+                                     () -> new RelativePoint(text1, new Point(text1.getWidth()/2, text1.getHeight())));
 
-        gotItTooltip.showFor(button, c -> new PointPosition(new RelativePoint(c, new Point(c.getWidth() / 2, c.getHeight())),
-                                                            Balloon.Position.below));
-      //} catch (MalformedURLException ex) {}
+      } catch (MalformedURLException ex) {}
 
       // Combobox with comment
       gc.gridy++;

@@ -353,7 +353,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   public String getDisplayName() {
     return fileType instanceof LanguageFileType
            ? ((LanguageFileType)fileType).getLanguage().getDisplayName()
-           : fileType.getName();
+           : fileType.getDisplayName();
   }
 
   @Override

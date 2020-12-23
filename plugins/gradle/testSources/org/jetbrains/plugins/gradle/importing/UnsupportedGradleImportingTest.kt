@@ -14,18 +14,10 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     importProject("")
     val expectedExecutionTree: String
     when {
-      currentGradleVersion < GradleVersion.version("1.0") -> expectedExecutionTree =
+      currentGradleVersion < GradleVersion.version("3.0") -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
-        "  Support for builds using Gradle versions older than 2.6 was removed"
-      currentGradleVersion < GradleVersion.version("2.6") -> expectedExecutionTree =
-        "-\n" +
-        " -failed\n" +
-        "  Support for builds using Gradle versions older than 2.6 was removed in tooling API version 5.0"
-      JavaVersion.current().feature > 8 && currentGradleVersion < GradleVersion.version("3.0") -> expectedExecutionTree =
-        "-\n" +
-        " -failed\n" +
-        "  Cannot determine classpath for resource 'java/sql/SQLException.class' from location 'jrt:/java.sql/java/sql/SQLException.class'"
+        "  Unsupported Gradle"
       else -> expectedExecutionTree = "-\n" +
                                       " finished"
     }

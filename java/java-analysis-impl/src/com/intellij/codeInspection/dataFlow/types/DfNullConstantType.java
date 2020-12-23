@@ -7,7 +7,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
+import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
@@ -53,7 +53,7 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
     if (other.isSuperType(this)) return other;
     if (!(other instanceof DfReferenceType)) return TOP;
     DfReferenceType type = (DfReferenceType)other;
-    return new DfGenericObjectType(Collections.emptySet(), type.getConstraint(), DfaNullability.NULL.unite(type.getNullability()),
+    return new DfGenericObjectType(Set.of(), type.getConstraint(), DfaNullability.NULL.unite(type.getNullability()),
                                    type.getMutability(), null, BOTTOM, false);
   }
 }

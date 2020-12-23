@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.externalDependencies.DependencyOnPlugin;
+import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
@@ -65,6 +67,15 @@ public class InstalledPluginsTableModel {
     return myDependentToRequiredListMap.get(pluginId);
   }
 
+  public boolean isRequiredPlugin(@NotNull IdeaPluginDescriptor descriptor) {
+    return myProject != null &&
+           ExternalDependenciesManager.getInstance(myProject)
+             .getDependencies(DependencyOnPlugin.class)
+             .stream()
+             .map(DependencyOnPlugin::getPluginId)
+             .anyMatch(descriptor.getPluginId().getIdString()::equals);
+  }
+
   public final boolean isLoaded(@NotNull PluginId pluginId) {
     return isLoaded(pluginId, getEnabledMap());
   }
@@ -76,9 +87,9 @@ public class InstalledPluginsTableModel {
     PluginEnabledState enabled;
     if (descriptorEnabled || PluginManagerCore.isDisabled(pluginId)) {
       ProjectPluginTracker pluginTracker = getPluginTracker();
-      enabled = (pluginTracker != null && pluginTracker.isEnabled(ideaPluginDescriptor)) ?
+      enabled = (pluginTracker != null && pluginTracker.isEnabled(pluginId)) ?
                 PluginEnabledState.ENABLED_FOR_PROJECT :
-                (pluginTracker != null && pluginTracker.isDisabled(ideaPluginDescriptor)) ?
+                (pluginTracker != null && pluginTracker.isDisabled(pluginId)) ?
                 PluginEnabledState.DISABLED_FOR_PROJECT :
                 descriptorEnabled ?
                 PluginEnabledState.ENABLED :

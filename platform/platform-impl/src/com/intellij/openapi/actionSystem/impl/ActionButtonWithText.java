@@ -72,7 +72,7 @@ public class ActionButtonWithText extends ActionButton {
     }
     else {
       AnAction action = getAction();
-      setFont(action != null && action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
+      setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
     }
   }
 

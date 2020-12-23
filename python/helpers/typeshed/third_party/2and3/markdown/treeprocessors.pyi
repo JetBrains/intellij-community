@@ -1,0 +1,23 @@
+from typing import Any, Optional
+
+from . import util
+
+def build_treeprocessors(md, **kwargs): ...
+def isString(s): ...
+
+class Treeprocessor(util.Processor):
+    def run(self, root) -> None: ...
+
+class InlineProcessor(Treeprocessor):
+    md: Any
+    inlinePatterns: Any
+    ancestors: Any
+    def __init__(self, md) -> None: ...
+    @property
+    def markdown(self): ...
+    stashed_nodes: Any
+    parent_map: Any
+    def run(self, tree, ancestors: Optional[Any] = ...): ...
+
+class PrettifyTreeprocessor(Treeprocessor):
+    def run(self, root) -> None: ...

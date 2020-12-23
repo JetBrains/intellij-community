@@ -19,8 +19,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyDisposable
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.psi.PyFile
@@ -65,7 +65,7 @@ object PyProjectSdkConfiguration {
     val project = module.project
 
     val lifetime = Disposer.newDisposable(
-      PyDisposable.getInstance(project),
+      PythonPluginDisposable.getInstance(project),
       "Configuring sdk using ${extension.javaClass.name} extension"
     )
 

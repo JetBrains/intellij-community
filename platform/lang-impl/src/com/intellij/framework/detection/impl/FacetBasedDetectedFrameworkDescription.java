@@ -21,6 +21,7 @@ import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +61,7 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
   @NotNull
   @Override
   public String getSetupText() {
-    return "'" + myFacetType.getPresentableName() + "' facet will be added to '" + getModuleName() + "' module";
+    return ProjectBundle.message("label.facet.will.be.added.to.module", myFacetType.getPresentableName(), getModuleName());
   }
 
   @NotNull

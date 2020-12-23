@@ -217,8 +217,11 @@ public class AllIcons {
   }
 
   public static final class CodeWithMe {
-    /** 16x16 */ public static final @NotNull Icon CwmAccessOff = load("/codeWithMe/cwmAccessOff.svg", 3186571184996513339L, 2);
-    /** 16x16 */ public static final @NotNull Icon CwmAccessOn = load("/codeWithMe/cwmAccessOn.svg", -3876505334373507565L, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmAccess = load("/codeWithMe/cwmAccess.svg", -8506332554421268584L, 2);
+    /** 12x16 */ public static final @NotNull Icon CwmAccessDotOff = load("/codeWithMe/cwmAccessDotOff.svg", -8812063715608207365L, 2);
+    /** 12x16 */ public static final @NotNull Icon CwmAccessDotOn = load("/codeWithMe/cwmAccessDotOn.svg", -2516495234422554919L, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmAccessOff = load("/codeWithMe/cwmAccessOff.svg", -3285420431309666253L, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmAccessOn = load("/codeWithMe/cwmAccessOn.svg", 4803550132182083872L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmFollow = load("/codeWithMe/cwmFollow.svg", 421350531028907789L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmFollowMe = load("/codeWithMe/cwmFollowMe.svg", -270893421881497261L, 2);
     /** 16x16 */ public static final @NotNull Icon CwmForceFollowMe = load("/codeWithMe/cwmForceFollowMe.svg", 4620331311933886528L, 2);
@@ -858,12 +861,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Disabled = load("/plugins/disabled.svg", 1549974329331083409L, 0);
     /** 12x12 */ public static final @NotNull Icon Downloads = load("/plugins/downloads.svg", -5558854271072714700L, 2);
     /** 15x15 */ public static final @NotNull Icon ModifierInvalid = load("/plugins/modifierInvalid.svg", -890103319846480834L, 2);
-    /** 14x14 */ public static final @NotNull Icon ModifierJBLogo = load("/plugins/modifierJBLogo.svg", 2890608732317108833L, 2);
-    /** 40x40 */ public static final @NotNull Icon PluginLogo = load("/plugins/pluginLogo.svg", 5988091152524049042L, 0);
-    /** 40x40 */ public static final @NotNull Icon PluginLogo_40 = load("/plugins/pluginLogo_40.png", 0L, 1);
-    /** 80x80 */ public static final @NotNull Icon PluginLogo_80 = load("/plugins/pluginLogo_80.png", 0L, 1);
-    /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled_40 = load("/plugins/pluginLogoDisabled_40.png", 0L, 1);
-    /** 80x80 */ public static final @NotNull Icon PluginLogoDisabled_80 = load("/plugins/pluginLogoDisabled_80.png", 0L, 1);
+    /** 40x40 */ public static final @NotNull Icon PluginLogo = load("/plugins/pluginLogo.svg", 7832027511472709011L, 0);
+    /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled = load("/plugins/pluginLogoDisabled.svg", -3041544482900141067L, 0);
     /** 12x12 */ public static final @NotNull Icon Rating = load("/plugins/rating.svg", -9106209893098497806L, 2);
     /** 12x12 */ public static final @NotNull Icon Updated = load("/plugins/updated.svg", -5532394946450969676L, 2);
   }
@@ -1050,6 +1049,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon NoEvents = load("/toolwindows/noEvents.svg", -5504420985643137627L, 2);
     /** 13x13 */ public static final @NotNull Icon Problems = load("/toolwindows/problems.svg", -226223461307188800L, 2);
     /** 13x13 */ public static final @NotNull Icon ProblemsEmpty = load("/toolwindows/problemsEmpty.svg", 8743835617958897286L, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("/toolwindows/toolWindowAnalyzeDataflow.svg", -4551741696608876948L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("/toolwindows/toolWindowAnt.svg", -1371233028234801963L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBuild = load("/toolwindows/toolWindowBuild.svg", 3713223205308650376L, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowChanges = load("/toolwindows/toolWindowChanges.svg", -499947355073527402L, 2);

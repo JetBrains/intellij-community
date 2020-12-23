@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
@@ -23,7 +24,8 @@ public class YamlJsonSchemaGotoDeclarationHandler implements GotoDeclarationHand
     final IElementType elementType = PsiUtilCore.getElementType(sourceElement);
     if (elementType != YAMLTokenTypes.SCALAR_KEY) return null;
     final YAMLKeyValue literal = PsiTreeUtil.getParentOfType(sourceElement, YAMLKeyValue.class);
-    if (literal == null || literal.getKey() != sourceElement) return null;
+    // do not override injected references
+    if (literal == null || literal.getKey() != sourceElement|| !ArrayUtil.isEmpty(literal.getReferences())) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
     final PsiFile containingFile = literal.getContainingFile();
     final VirtualFile file = containingFile.getVirtualFile();

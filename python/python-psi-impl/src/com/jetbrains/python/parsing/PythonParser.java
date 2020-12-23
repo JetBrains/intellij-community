@@ -8,7 +8,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PythonParser {
   protected static final Logger LOGGER = Logger.getInstance(PyParser.class.getName());
   protected LanguageLevel myLanguageLevel;
-  private StatementParsing.FUTURE myFutureFlag;
 
   public PythonParser() {myLanguageLevel = LanguageLevel.getDefault();}
 
@@ -18,7 +17,7 @@ public class PythonParser {
 
   public void parseRoot(IElementType root, SyntaxTreeBuilder builder) {
     final SyntaxTreeBuilder.Marker rootMarker = builder.mark();
-    ParsingContext context = createParsingContext(builder, myLanguageLevel, myFutureFlag);
+    ParsingContext context = createParsingContext(builder, myLanguageLevel);
     StatementParsing statementParser = context.getStatementParser();
     builder.setTokenTypeRemapper(statementParser); // must be done before touching the caching lexer with eof() call.
     boolean lastAfterSemicolon = false;
@@ -36,11 +35,7 @@ public class PythonParser {
     rootMarker.done(root);
   }
 
-  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
-    return new ParsingContext(builder, languageLevel, futureFlag);
-  }
-
-  public void setFutureFlag(StatementParsing.FUTURE future) {
-    myFutureFlag = future;
+  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
+    return new ParsingContext(builder, languageLevel);
   }
 }

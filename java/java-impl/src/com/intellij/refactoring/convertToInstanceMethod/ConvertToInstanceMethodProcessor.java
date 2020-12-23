@@ -147,23 +147,20 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @NotNull String getRefactoringId() {
     return "refactoring.makeInstance";
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @NotNull RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElements(new PsiElement[]{myMethod, myTargetClass});
     return data;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @NotNull RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myTargetClass);
     return data;

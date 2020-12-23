@@ -6,10 +6,10 @@ import com.intellij.execution.RunManager;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +88,7 @@ public abstract class ConfigurationFactory {
    * The name of the run configuration variant created by this factory.
    */
   @NotNull
-  public String getName() {
+  public @Nls String getName() {
     // null only if SimpleConfigurationType (but method overriden)
     //noinspection ConstantConditions
     return myType.getDisplayName();

@@ -6,7 +6,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -21,16 +20,18 @@ import java.util.regex.Pattern;
 public class PsiAnnotationUtil {
 
   @NotNull
-  public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull Class<? extends Annotation> annotationClass) {
-    return createPsiAnnotation(psiModifierListOwner, annotationClass, "");
+  public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String annotationClassName) {
+    return createPsiAnnotation(psiModifierListOwner, "", annotationClassName);
   }
 
   @NotNull
-  public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull Class<? extends Annotation> annotationClass, @Nullable String value) {
+  public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner,
+                                                  @Nullable String value,
+                                                  String annotationClassName) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiModifierListOwner.getProject());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiModifierListOwner, PsiClass.class);
     final String valueString = StringUtil.isNotEmpty(value) ? "(" + value + ")" : "";
-    return elementFactory.createAnnotationFromText("@" + annotationClass.getName() + valueString, psiClass);
+    return elementFactory.createAnnotationFromText("@" + annotationClassName + valueString, psiClass);
   }
 
   @NotNull

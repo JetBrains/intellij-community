@@ -84,14 +84,6 @@ public class PyIntentionTest extends PyTestCase {
     assertSdkRootsNotParsed(file);
   }
 
-  public void testConvertDictComp() {
-    doTest(PyPsiBundle.message("INTN.convert.dict.comp.to"), LanguageLevel.PYTHON26);
-  }
-
-  public void testConvertSetLiteral() {
-    doTest(PyPsiBundle.message("INTN.convert.set.literal.to"), LanguageLevel.PYTHON26);
-  }
-
   public void testReplaceExceptPart() {
     doTest(PyPsiBundle.message("INTN.convert.except.to"), LanguageLevel.PYTHON34);
   }

@@ -3,13 +3,14 @@ package com.intellij.ide.actions.toolbar.experimental;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 
-public class ViewToolbarActionsGroup extends DefaultActionGroup {
+public class ViewToolbarActionsGroup extends DefaultActionGroup implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);

@@ -2014,6 +2014,7 @@ public class StringUtil extends StringUtilRt {
     return removeHtmlTags(htmlString, false);
   }
 
+  @Contract(pure = true)
   public static @NotNull String removeHtmlTags(@NotNull String htmlString, boolean isRemoveStyleTag) {
     if (isEmpty(htmlString)) {
       return "";

@@ -97,8 +97,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
       @Override
       @NotNull
       protected UIController createUIController() {
-        boolean mergeEditor = editor.getUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG) == Boolean.TRUE;
-        return editor.getEditorKind() == EditorKind.DIFF && !mergeEditor ? new SimplifiedUIController() : new DefaultUIController();
+        return super.createUIController(editor);
       }
     };
   }

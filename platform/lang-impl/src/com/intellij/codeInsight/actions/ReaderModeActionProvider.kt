@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions
 
+import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.matchMode
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.lang.LangBundle
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
@@ -27,29 +29,28 @@ import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
 class ReaderModeActionProvider : InspectionWidgetActionProvider {
-  override fun createAction(editor: Editor): AnAction {
-    val action = ReaderModeAction(editor)
-
-     return object : DefaultActionGroup(action, Separator.create()) {
-      override fun update(e: AnActionEvent) {
-        if (!Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
-          e.presentation.isEnabledAndVisible = false
-        }
-        else {
-          val project = editor.project
-          if (project != null) {
-            val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
-            e.presentation.isEnabledAndVisible = ReaderModeFileEditorListener.matchMode(project, file)
+  override fun createAction(editor: Editor): AnAction? {
+    val project: Project? = editor.project
+    return if (project == null || project.isDefault) null
+      else object : DefaultActionGroup(ReaderModeAction(editor), Separator.create()) {
+        override fun update(e: AnActionEvent) {
+          if (!Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
+            e.presentation.isEnabledAndVisible = false
           }
           else {
-            e.presentation.isEnabledAndVisible = false
+            if (project.isInitialized) {
+              val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
+              e.presentation.isEnabledAndVisible = matchMode(project, file)
+            }
+            else {
+              e.presentation.isEnabledAndVisible = false
+            }
           }
         }
       }
-    }
   }
 
-  class ReaderModeAction(private val editor: Editor) : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
+  private class ReaderModeAction(private val editor: Editor) : DumbAwareAction(LangBundle.messagePointer("action.ReaderModeProvider.text"),
                                                                        LangBundle.messagePointer("action.ReaderModeProvider.description"),
                                                                        null), CustomComponentAction {
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent =

@@ -107,7 +107,7 @@ public class FlowDropLocation implements ComponentDropLocation {
       }
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
-    else if (myInsertIndex == myContainer.getComponentCount() && isRightAlign()) {
+    else if (myInsertIndex == myContainer.getComponentCount()) {
       Rectangle bounds = myContainer.getComponent(myInsertIndex-1).getBounds();
       Rectangle rc = new Rectangle(bounds.x+bounds.width, bounds.y, 8, bounds.height);
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE, myContainer.getDisplayName());

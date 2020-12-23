@@ -113,15 +113,9 @@ public abstract class CodeStyleDeriveProcessor {
       values = cvalues;
     }
 
-    if (indentOptions != null) {
-      List<Value> valuesOrder = readAll("indentOptions", indentOptions);
-      valuesOrder.addAll(values);
-      return valuesOrder;
-    }
-    else {
-      Utils.logError("Indent options were not detected.");
-      return values;
-    }
+    List<Value> valuesOrder = readAll("indentOptions", indentOptions);
+    valuesOrder.addAll(values);
+    return valuesOrder;
   }
 
   @NotNull

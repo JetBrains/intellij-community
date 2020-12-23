@@ -85,9 +85,9 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     return null;
   }
 
-  private static List<ParameterInfoControllerBase> getAllControllers(@NotNull Editor editor) {
+  static List<ParameterInfoControllerBase> getAllControllers(@NotNull Editor editor) {
     List<ParameterInfoControllerBase> array = editor.getUserData(ALL_CONTROLLERS_KEY);
-    if (array == null){
+    if (array == null) {
       array = new ArrayList<>();
       editor.putUserData(ALL_CONTROLLERS_KEY, array);
     }

@@ -72,10 +72,8 @@ public class PythonHighlightingLexer extends PythonLexer {
     if (tokenType == PyTokenTypes.IDENTIFIER) {
       final String tokenText = getTokenText();
 
-      if (myLanguageLevel.hasWithStatement()) {
-        if (tokenText.equals(PyNames.WITH)) return PyTokenTypes.WITH_KEYWORD;
-        if (tokenText.equals(PyNames.AS)) return PyTokenTypes.AS_KEYWORD;
-      }
+      if (tokenText.equals(PyNames.WITH)) return PyTokenTypes.WITH_KEYWORD;
+      if (tokenText.equals(PyNames.AS)) return PyTokenTypes.AS_KEYWORD;
 
       if (myLanguageLevel.hasPrintStatement() && !hasPrintFunctionImport) {
         if (tokenText.equals(PyNames.PRINT)) return PyTokenTypes.PRINT_KEYWORD;

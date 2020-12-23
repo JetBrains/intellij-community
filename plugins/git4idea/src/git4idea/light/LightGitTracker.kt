@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.light
 
 import com.intellij.ide.FrameStateListener
@@ -7,7 +7,6 @@ import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
@@ -255,7 +254,7 @@ class LightGitTracker : Disposable {
 
   companion object {
     fun getInstance(): LightGitTracker {
-      return ServiceManager.getService(LightGitTracker::class.java)
+      return ApplicationManager.getApplication().getService(LightGitTracker::class.java)
     }
   }
 }

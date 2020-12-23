@@ -1,10 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -16,9 +17,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-import lombok.experimental.NonFinal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -39,15 +37,15 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
 
   private static final String INCLUDE_ANNOTATION_METHOD = "replaces";
-  private static final String EQUALSANDHASHCODE_INCLUDE = EqualsAndHashCode.Include.class.getCanonicalName();
-  private static final String EQUALSANDHASHCODE_EXCLUDE = EqualsAndHashCode.Exclude.class.getCanonicalName();
+  private static final String EQUALSANDHASHCODE_INCLUDE = LombokClassNames.EQUALS_AND_HASHCODE_INCLUDE;
+  private static final String EQUALSANDHASHCODE_EXCLUDE = LombokClassNames.EQUALS_AND_HASHCODE_EXCLUDE;
 
   public EqualsAndHashCodeProcessor() {
-    super(PsiMethod.class, EqualsAndHashCode.class);
+    super(PsiMethod.class, LombokClassNames.EQUALS_AND_HASHCODE);
   }
 
   private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
-    return ServiceManager.getService(EqualsAndHashCodeToStringHandler.class);
+    return ApplicationManager.getApplication().getService(EqualsAndHashCodeToStringHandler.class);
   }
 
   @Override
@@ -159,7 +157,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
 
     final boolean isFinal = psiClass.hasModifierProperty(PsiModifier.FINAL) ||
-      (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Value.class) && PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NonFinal.class));
+      (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE) && PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.NON_FINAL));
     return !isFinal;
   }
 

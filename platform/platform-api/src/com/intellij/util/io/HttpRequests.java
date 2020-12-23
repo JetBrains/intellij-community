@@ -387,12 +387,29 @@ public final class HttpRequests {
     @Override
     public InputStream getInputStream() throws IOException {
       if (myInputStream == null) {
-        myInputStream = getConnection().getInputStream();
-        if (myBuilder.myGzip && "gzip".equalsIgnoreCase(getConnection().getContentEncoding())) {
-          myInputStream = CountingGZIPInputStream.create(myInputStream);
-        }
+        URLConnection connection = getConnection();
+        myInputStream = unzipStreamIfNeeded(connection, connection.getInputStream());
       }
       return myInputStream;
+    }
+
+    @Nullable
+    InputStream getErrorStream() throws IOException {
+      URLConnection connection = getConnection();
+      if (!(connection instanceof HttpURLConnection)) return null;
+
+      InputStream errorStream = ((HttpURLConnection)connection).getErrorStream();
+      if (errorStream == null) return null;
+
+      return unzipStreamIfNeeded(connection, errorStream);
+    }
+
+    @NotNull
+    private InputStream unzipStreamIfNeeded(@NotNull URLConnection connection, @NotNull InputStream stream) throws IOException {
+      if (myBuilder.myGzip && "gzip".equalsIgnoreCase(connection.getContentEncoding())) {
+        return CountingGZIPInputStream.create(stream);
+      }
+      return stream;
     }
 
     @NotNull
@@ -642,7 +659,10 @@ public final class HttpRequests {
   private static void throwHttpStatusError(HttpURLConnection connection, RequestImpl request, RequestBuilderImpl builder, int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
-      message = HttpUrlConnectionUtil.readString(connection.getErrorStream(), connection);
+      InputStream errorStream = request.getErrorStream();
+      if (errorStream != null) {
+        message = HttpUrlConnectionUtil.readString(errorStream, connection);
+      }
     }
     if (StringUtil.isEmpty(message)) {
       message = "Request failed with status code " + responseCode;

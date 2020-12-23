@@ -59,7 +59,7 @@ public final class EventLog {
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>");
-  @NonNls private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
+  @NonNls private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>", "<li>");
   private static final String DEFAULT_CATEGORY = "";
 
   private final LogModel myModel = new LogModel(null);
@@ -337,7 +337,7 @@ public final class EventLog {
       "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td",
       "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"};
 
-  @NonNls private static final String[] SKIP_TAGS = {"html", "body", "b", "i", "font"};
+  @NonNls private static final String[] SKIP_TAGS = {"html", "body", "b", "i", "font", "ul"};
 
   private static boolean isTag(String @NotNull [] tags, @NotNull String tag) {
     tag = tag.substring(1, tag.length() - 1); // skip <>

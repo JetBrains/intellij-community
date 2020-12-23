@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
+<!-- Copyright © 1991-2020 Unicode, Inc.
+For terms of use, see http://www.unicode.org/copyright.html
+Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
+-->
+<!-- Derived short names and annotations, using GenerateDerivedAnnotations.java. See warnings in /annotations/ file. -->
+<ldml>
+	<identity>
+		<version number="$Revision$"/>
+		<language type="lb"/>
+	</identity>
+	<annotations>
+		<annotation cp="¤" type="tts">Onbekannt Währung</annotation>
+		<annotation cp="֏" type="tts">Armeneschen Dram</annotation>
+		<annotation cp="؋" type="tts">Afghanesch Afghani</annotation>
+		<annotation cp="৳" type="tts">Bangladesch-Taka</annotation>
+		<annotation cp="฿" type="tts">Thailännesche Baht</annotation>
+		<annotation cp="៛" type="tts">Kambodschanesche Riel</annotation>
+		<annotation cp="₡" type="tts">Costa-Rica-Colón</annotation>
+		<annotation cp="₦" type="tts">Nigerianeschen Naira</annotation>
+		<annotation cp="₧" type="tts">Spuenesch Peseta</annotation>
+		<annotation cp="₪" type="tts">Israeleschen Neie Schekel</annotation>
+		<annotation cp="₫" type="tts">Vietnameseschen Dong</annotation>
+		<annotation cp="₭" type="tts">Laoteschen Kip</annotation>
+		<annotation cp="₮" type="tts">Mongoleschen Tögrög</annotation>
+		<annotation cp="₲" type="tts">Paraguayeschen Guaraní</annotation>
+		<annotation cp="₴" type="tts">Ukraineschen Hrywnja</annotation>
+		<annotation cp="₵" type="tts">Ghanaeschen Cedi</annotation>
+		<annotation cp="₸" type="tts">Kasacheschen Tenge</annotation>
+		<annotation cp="₺" type="tts">Tierkesch Lira</annotation>
+		<annotation cp="₼" type="tts">Aserbaidschan-Manat</annotation>
+		<annotation cp="₾" type="tts">Georgesche Lari</annotation>
+	</annotations>
+</ldml>

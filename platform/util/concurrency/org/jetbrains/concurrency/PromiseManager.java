@@ -66,7 +66,9 @@ public abstract class PromiseManager<HOST, VALUE> {
   private Promise<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
     Promise<VALUE> promise = fieldUpdater.get(host);
     if (promise == null) {
-      if (!fieldUpdater.compareAndSet(host, null, promise = new AsyncPromise<>())) {
+      promise = new AsyncPromise<>();
+      promise.onError((ignored) -> {});
+      if (!fieldUpdater.compareAndSet(host, null, promise)) {
         return fieldUpdater.get(host);
       }
     }

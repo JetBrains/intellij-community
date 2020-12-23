@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,7 +44,8 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         }
       }
       else {
-        final String text = tooltipObject.toString();
+        //noinspection HardCodedStringLiteral
+        @NlsContexts.Tooltip String text = tooltipObject.toString();
         if (tooltips.add(text)) {
           if (bigRenderer == null) {
             bigRenderer = new DaemonTooltipRenderer(text, new Object[]{highlighters});
@@ -99,6 +101,6 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       return new DaemonTooltipWithActionRenderer(text, action, width, action == null ? new Object[]{text} : new Object[]{text, action});
     }
 
-    return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, action, width);
+    return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, null, width);
   }
 }
