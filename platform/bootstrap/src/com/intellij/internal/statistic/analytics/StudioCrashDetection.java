@@ -17,7 +17,8 @@ package com.intellij.internal.statistic.analytics;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -71,7 +72,7 @@ public class StudioCrashDetection {
 
           String buildVersion = "<unknown>";
           if (buildInfo.exists()) {
-            List<String> lines = FileUtil.loadLines(buildInfo);
+            List<String> lines = Files.readAllLines(buildInfo.toPath());
             if (!lines.isEmpty()) {
               buildVersion = lines.get(0);
             }
@@ -114,7 +115,7 @@ public class StudioCrashDetection {
     if (recordFileName != null) {
       File recordFile = new File(recordFileName);
       try {
-        List<String> lines = FileUtil.loadLines(recordFile);
+        List<String> lines = Files.readAllLines(recordFile.toPath());
         lines.set(0, version);
 
         try (FileWriter fw = new FileWriter(recordFile)) {
@@ -136,7 +137,11 @@ public class StudioCrashDetection {
   public static void stop() {
     String recordFileName = System.getProperty(RECORD_FILE_KEY);
     if (recordFileName != null) {
-      FileUtil.delete(new File(recordFileName));
+      try {
+        Files.deleteIfExists(Paths.get(recordFileName));
+      } catch (IOException ignored) {
+        // Ignore.
+      }
       System.clearProperty(RECORD_FILE_KEY);
     }
   }
@@ -167,8 +172,12 @@ public class StudioCrashDetection {
         catch (IOException ignored) {
           crash = StudioCrashDetails.UNKNOWN;
         }
-        if (FileUtil.delete(record)) {
-          ourCrashes.add(crash);
+        try {
+          if (Files.deleteIfExists(record.toPath())) {
+            ourCrashes.add(crash);
+          }
+        } catch (IOException ignored) {
+          // Ignore
         }
       }
     }

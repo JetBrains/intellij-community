@@ -15,7 +15,6 @@
  */
 package com.intellij.internal.statistic.analytics;
 
-import com.intellij.openapi.util.io.FileUtil;
 import java.util.Scanner;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +63,7 @@ public class StudioCrashDetails {
 
   @NotNull
   public static StudioCrashDetails loadFromRecordFile(File record) throws IOException {
-    final List<String> lines = FileUtil.loadLines(record);
+    final List<String> lines = Files.readAllLines(record.toPath());
     String buildNumber = !lines.isEmpty() ? lines.get(0) : "";
     String runtimeVersion = lines.size() > 1 ? lines.get(1) : "";
     long startupDateInMs = -1;
