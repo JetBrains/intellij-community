@@ -26,8 +26,9 @@ public final class SystemInfoRt {
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 
   private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
-  public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
-  public static final boolean is64Bit = !is32Bit;
+  /** @deprecated inexact, please use {@code com.intellij.util.system.CpuArch} instead */
+  @Deprecated
+  public static final boolean is64Bit = !(ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32"));
 
   @ReviseWhenPortedToJDK("9")
   public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();

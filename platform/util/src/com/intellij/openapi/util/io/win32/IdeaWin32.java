@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.loader.NativeLibraryLoader;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public final class IdeaWin32 {
   }
 
   private static boolean loadBundledLibrary() throws IOException {
-    String name = SystemInfoRt.is64Bit ? "IdeaWin64" : "IdeaWin32";
+    String name = CpuArch.CURRENT == CpuArch.X86_64 ? "IdeaWin64" : "IdeaWin32";
     URL bundled = IdeaWin32.class.getResource(name + ".dll");
     if (bundled == null) {
       return false;

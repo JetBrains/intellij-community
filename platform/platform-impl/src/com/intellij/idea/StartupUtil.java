@@ -40,6 +40,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
@@ -436,7 +437,7 @@ public final class StartupUtil {
       }
     }
 
-    if ("true".equals(System.getProperty("idea.64bit.check")) && !SystemInfoRt.is64Bit && PlatformUtils.isCidr()) {
+    if ("true".equals(System.getProperty("idea.64bit.check")) && CpuArch.CURRENT != CpuArch.X86_64 && PlatformUtils.isCidr()) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.jvm"),
                        BootstrapBundle.message("bootstrap.error.message.use.64.jvm.instead.of.32"), true);
       return false;
