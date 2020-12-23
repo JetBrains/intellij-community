@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -17,7 +16,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -39,7 +38,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.list.LeftRightRenderer;
 import com.intellij.usages.UsageView;
@@ -47,6 +49,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +117,7 @@ public class ImplementationViewComponent extends JPanel {
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
     myEditor = (EditorEx)factory.createEditor(doc, project);
-    tuneEditor(null);
+    tuneEditor();
 
     myBinarySwitch = new CardLayout();
     myViewingPanel = new JPanel(myBinarySwitch);
@@ -125,7 +128,7 @@ public class ImplementationViewComponent extends JPanel {
 
     add(myViewingPanel, BorderLayout.CENTER);
 
-    myToolbar = createToolbar();
+    myToolbar = createToolbar(openUsageView);
 
     setPreferredSize(JBUI.size(600, 400));
 
@@ -136,10 +139,7 @@ public class ImplementationViewComponent extends JPanel {
       myIndex = index < myElements.length ? index : 0;
       VirtualFile virtualFile = myElements[myIndex].getContainingFile();
 
-      if (virtualFile != null) {
-        EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
-        myEditor.setHighlighter(highlighter);
-      }
+      tuneEditor(virtualFile);
 
       final JPanel toolbarPanel = new JPanel(new GridBagLayout());
       final GridBagConstraints gc =
@@ -150,6 +150,7 @@ public class ImplementationViewComponent extends JPanel {
       toolbarPanel.add(mySingleEntryPanel, gc);
 
       myFileChooser = new ComboBox<>(fileDescriptors.toArray(new FileDescriptor[0]), 250);
+      myFileChooser.setOpaque(false);
       myFileChooser.addActionListener(e -> {
         int index1 = myFileChooser.getSelectedIndex();
         if (myIndex != index1) {
@@ -179,20 +180,25 @@ public class ImplementationViewComponent extends JPanel {
       component.setBorder(null);
       toolbarPanel.add(component, gc);
 
-      final JPanel header = new JPanel(new BorderLayout());
-      header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.empty(3)));
-      header.add(toolbarPanel, BorderLayout.CENTER);
-      header.add(createGearActionButton(openUsageView), BorderLayout.EAST);
-
-      add(header, BorderLayout.NORTH);
+      toolbarPanel.setBackground(UIUtil.getToolTipActionBackground());
+      toolbarPanel.setBorder(JBUI.Borders.empty(3));
+      toolbarPanel.setOpaque(false);
+      add(toolbarPanel, BorderLayout.NORTH);
 
       updateControls();
       return true;
     });
   }
 
-  private ActionButton createGearActionButton(Consumer<ImplementationViewComponent> openUsageView) {
-    DefaultActionGroup gearActions = new DefaultActionGroup();
+  private DefaultActionGroup createGearActionButton(Consumer<ImplementationViewComponent> openUsageView) {
+    DefaultActionGroup gearActions = new DefaultActionGroup() {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setIcon(AllIcons.Actions.More);
+        e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      }
+    };
     gearActions.setPopup(true);
     EditSourceActionBase edit = new EditSourceAction();
     edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getEditSource(), CommonShortcuts.ENTER), this);
@@ -209,15 +215,7 @@ public class ImplementationViewComponent extends JPanel {
         }
       });
     }
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-    return new ActionButton(gearActions, presentation, IMPLEMENTATION_VIEW_PLACE, new Dimension(20, 20)) {
-      @Override
-      protected DataContext getDataContext() {
-        return DataManager.getInstance().getDataContext(ImplementationViewComponent.this);
-      }
-    };
+    return gearActions;
   }
 
   private  void updateSingleEntryLabel(VirtualFile virtualFile) {
@@ -229,12 +227,20 @@ public class ImplementationViewComponent extends JPanel {
     mySingleEntryPanel.add(new JLabel(myElements[myIndex].getLocationText(), myElements[myIndex].getLocationIcon(), SwingConstants.LEFT), BorderLayout.EAST);
     mySingleEntryPanel.setOpaque(false);
     mySingleEntryPanel.setVisible(true);
-    mySingleEntryPanel.setBorder(JBUI.Borders.empty(5));
+    mySingleEntryPanel.setBorder(JBUI.Borders.empty(4, 3));
   }
 
   private void tuneEditor(VirtualFile virtualFile) {
-    myEditor.setBackgroundColor(EditorColorsUtil.getGlobalOrDefaultColor(EditorColors.DOCUMENTATION_COLOR));
+    if (virtualFile != null) {
+      myEditor.setHighlighter(HighlighterFactory.createHighlighter(project, virtualFile));
+    }
+  }
 
+  private void tuneEditor() {
+    Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.DOCUMENTATION_COLOR);
+    if (color != null) {
+      myEditor.setBackgroundColor(color);
+    }
     final EditorSettings settings = myEditor.getSettings();
     settings.setAdditionalLinesCount(1);
     settings.setAdditionalColumnsCount(1);
@@ -246,11 +252,6 @@ public class ImplementationViewComponent extends JPanel {
 
     myEditor.setBorder(JBUI.Borders.empty(12, 6));
     myEditor.getScrollPane().setViewportBorder(JBScrollPane.createIndentBorder());
-
-    if (virtualFile != null) {
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
-      myEditor.setHighlighter(highlighter);
-    }
   }
 
   private void updateRenderer(final Project project) {
@@ -515,7 +516,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private ActionToolbar createToolbar() {
+  private ActionToolbar createToolbar(Consumer<ImplementationViewComponent> openUsageView) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     BackAction back = new BackAction();
@@ -523,6 +524,14 @@ public class ImplementationViewComponent extends JPanel {
     group.add(back);
 
     group.add(new ToolbarLabelAction() {
+      @Override
+      public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation,
+                                                       @NotNull String place) {
+        JComponent component = super.createCustomComponent(presentation, place);
+        component.setBorder(JBUI.Borders.empty(0, 2));
+        return component;
+      }
+
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
@@ -540,6 +549,8 @@ public class ImplementationViewComponent extends JPanel {
     ForwardAction forward = new ForwardAction();
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
     group.add(forward);
+    
+    group.add(createGearActionButton(openUsageView));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
