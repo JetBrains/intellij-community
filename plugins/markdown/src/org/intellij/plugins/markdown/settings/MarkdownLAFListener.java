@@ -35,7 +35,8 @@ class MarkdownLAFListener implements LafManagerListener {
       stylesheetUri,
       currentCssSettings.isTextEnabled(),
       currentCssSettings.getCustomStylesheetText(),
-      currentCssSettings.getFontSize());
+      currentCssSettings.getFontSize(),
+      currentCssSettings.getFontFamily());
 
     MarkdownApplicationSettings.getInstance().setMarkdownCssSettings(newSettings);
 

@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.FontInfo
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
@@ -22,19 +24,27 @@ class MarkdownFontSettingsAction : ComboBoxAction() {
   private val applicationSettings get() = MarkdownApplicationSettings.getInstance()
   private val markdownCssSettings get() = MarkdownApplicationSettings.getInstance().markdownCssSettings
   private val fontSizeProperty = PropertyGraph().graphProperty { markdownCssSettings.fontSize }
+  private val fontFamilyProperty = PropertyGraph().graphProperty { markdownCssSettings.fontFamily }
 
   override fun createPopupActionGroup(button: JComponent?) = DefaultActionGroup()
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    fontSizeProperty.afterChange(
-      { newFontSize ->
-        applicationSettings.markdownCssSettings = createMarkdownCssSettingsWithFont(newFontSize)
-        ApplicationManager.getApplication().messageBus.syncPublisher(MarkdownApplicationSettings.FontChangedListener.TOPIC).fontChanged()
-      },
-      Disposer.newDisposable()
-    )
+    fontSizeProperty.afterChange({ newFontSize -> updateFontSettings(newFontSize, markdownCssSettings.fontFamily) },
+                                 Disposer.newDisposable())
+
+    fontFamilyProperty.afterChange({ newFontFamily -> updateFontSettings(markdownCssSettings.fontSize, newFontFamily) },
+                                   Disposer.newDisposable())
 
     return panel(LCFlags.noGrid) {
+      row(MarkdownBundle.message("markdown.preview.settings.font.family"), true) {
+        cell {
+          val fontNames = FontInfo.getAll(false).map { it.toString() }.toSortedSet().toTypedArray()
+          val model = DefaultComboBoxModel(fontNames)
+          ComboboxSpeedSearch(
+            comboBox(model, fontFamilyProperty).component
+          )
+        }
+      }
       row(MarkdownBundle.message("markdown.preview.settings.font.size"), true) {
         cell {
           val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet().toTypedArray()
@@ -45,12 +55,19 @@ class MarkdownFontSettingsAction : ComboBoxAction() {
     }
   }
 
-  private fun createMarkdownCssSettingsWithFont(newFontSize: @NotNull Int) = MarkdownCssSettings(
+  private fun updateFontSettings(currentFontSize: @NotNull Int,
+                                 newFontFamily: @NotNull String) {
+    applicationSettings.markdownCssSettings = createMarkdownCssSettingsWithFont(currentFontSize, newFontFamily)
+    ApplicationManager.getApplication().messageBus.syncPublisher(MarkdownApplicationSettings.FontChangedListener.TOPIC).fontChanged()
+  }
+
+  private fun createMarkdownCssSettingsWithFont(newFontSize: @NotNull Int, newFontFamily: @NotNull String) = MarkdownCssSettings(
     markdownCssSettings.isCustomStylesheetEnabled,
     markdownCssSettings.customStylesheetPath,
     markdownCssSettings.isTextEnabled,
     markdownCssSettings.customStylesheetText,
-    newFontSize)
+    newFontSize,
+    newFontFamily)
 
   override fun update(e: AnActionEvent) {
     val isCustomCssEnabled = markdownCssSettings.isTextEnabled && markdownCssSettings.customStylesheetText.isNotEmpty()

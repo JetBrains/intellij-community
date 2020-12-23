@@ -12,10 +12,10 @@ internal class FontStylesExtension : MarkdownJCEFPreviewExtension, ResourceProvi
 
   override val priority: MarkdownBrowserPreviewExtension.Priority
     get() = MarkdownBrowserPreviewExtension.Priority.AFTER_ALL
-  override val styles: List<String> = listOf("font/font-size.css")
+  override val styles: List<String> = listOf("font/font-settings.css")
   override val resourceProvider: ResourceProvider = this
   override fun canProvide(resourceName: String): Boolean = resourceName in styles
   override fun loadResource(resourceName: String): ResourceProvider.Resource {
-    return ResourceProvider.Resource(MarkdownFontUtil.getFontSizeCss(cssSettings.fontSize).toByteArray())
+    return ResourceProvider.Resource(MarkdownFontUtil.getFontSizeCss(cssSettings.fontSize, cssSettings.fontFamily).toByteArray())
   }
 }

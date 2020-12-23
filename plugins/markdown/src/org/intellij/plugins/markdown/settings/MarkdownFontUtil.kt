@@ -2,10 +2,11 @@
 package org.intellij.plugins.markdown.settings
 
 object MarkdownFontUtil {
-  fun getFontSizeCss(fontSize: Int) =
+  fun getFontSizeCss(fontSize: Int, fontFamily: String) =
     """
       div { 
         font-size: ${fontSize}px !important; 
+        font-family: ${fontFamily} !important; 
       }
     """.trimIndent()
 }

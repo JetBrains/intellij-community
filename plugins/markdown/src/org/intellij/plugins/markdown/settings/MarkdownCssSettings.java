@@ -31,23 +31,29 @@ public final class MarkdownCssSettings {
   @NotNull
   private Integer myFontSize;
 
+  @NotNull
+  private String myFontFamily;
+
   private MarkdownCssSettings() {
     this(false,
          "",
          false, "",
-         Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_SIZE); //FIXME: may be get from default.css
+         Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_SIZE, //note: may be get from default.css
+         Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_FAMILY); //note: may be get from default.css
   }
 
   public MarkdownCssSettings(boolean customStylesheetEnabled,
                              @NotNull String customStylesheetPath,
                              boolean textEnabled,
                              @NotNull String stylesheetText,
-                             @NotNull Integer fontSize) {
+                             @NotNull Integer fontSize,
+                             @NotNull String fontFamily) {
     myCustomStylesheetEnabled = customStylesheetEnabled;
     myCustomStylesheetPath = customStylesheetPath;
     myTextEnabled = textEnabled;
     myStylesheetText = stylesheetText;
     myFontSize = fontSize;
+    myFontFamily = fontFamily;
   }
 
   public boolean isCustomStylesheetEnabled() {
@@ -77,6 +83,15 @@ public final class MarkdownCssSettings {
     myFontSize = fontSize;
   }
 
+  @NotNull
+  public String getFontFamily() {
+    return myFontFamily;
+  }
+
+  public void setFontFamily(@NotNull String fontFamily) {
+    myFontFamily = fontFamily;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -89,13 +104,14 @@ public final class MarkdownCssSettings {
     if (!myCustomStylesheetPath.equals(settings.myCustomStylesheetPath)) return false;
     if (!myStylesheetText.equals(settings.myStylesheetText)) return false;
     if (!myFontSize.equals(settings.myFontSize)) return false;
+    if (!myFontFamily.equals(settings.myFontFamily)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myCustomStylesheetEnabled, myCustomStylesheetPath, myTextEnabled, myStylesheetText, myFontSize);
+    return Objects.hash(myCustomStylesheetEnabled, myCustomStylesheetPath, myTextEnabled, myStylesheetText, myFontSize, myFontFamily);
   }
 
   public interface Holder {
