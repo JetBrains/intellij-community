@@ -36,16 +36,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
-
-  }
-
-  @Override
-  public void removeIndexableSet(@NotNull IndexableFileSet set) {
-
-  }
-
-  @Override
   public VirtualFile findFileById(Project project, int id) {
     return null;
   }

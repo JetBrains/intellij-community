@@ -1775,7 +1775,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return false;
   }
 
-  @Override
   public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
     myIndexableSets.add(set);
     myIndexableSetToProjectMap.put(set, project);
@@ -1786,7 +1785,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return acceptsInput(filter, indexedFile);
   }
 
-  @Override
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
     if (!myIndexableSetToProjectMap.containsKey(set)) return;
     myIndexableSets.remove(set);

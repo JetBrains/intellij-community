@@ -60,22 +60,6 @@ public abstract class FileBasedIndex {
     return processor;
   }
 
-  /**
-   * @deprecated please use {@link IndexableSetContributor} or
-   * {@link com.intellij.util.indexing.roots.IndexableFilesContributor}
-   * which will be managed registered/unregistered automatically.
-   */
-  @Deprecated
-  public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project);
-
-  /**
-   * @deprecated please use {@link IndexableSetContributor} or
-   * {@link com.intellij.util.indexing.roots.IndexableFilesContributor}
-   * which will be managed registered/unregistered automatically.
-   */
-  @Deprecated
-  public abstract void removeIndexableSet(@NotNull IndexableFileSet set);
-
   public static FileBasedIndex getInstance() {
     return ApplicationManager.getApplication().getService(FileBasedIndex.class);
   }
