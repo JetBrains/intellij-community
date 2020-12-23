@@ -984,6 +984,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void setActions(Wrapper placeHolder, String place, DefaultActionGroup group) {
     String adjustedPlace = place == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : place;
     ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, group, true);
+    tb.setTargetComponent(myComponent);
     tb.getComponent().setBorder(null);
 
     placeHolder.setContent(tb.getComponent());
