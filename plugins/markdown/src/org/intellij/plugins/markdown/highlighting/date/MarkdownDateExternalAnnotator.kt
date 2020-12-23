@@ -44,7 +44,12 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
       visitor.visitElement(element)
     }
 
-    return MyAnnotationResult(document, visitor.dateRanges, resetCache = listenedChanges == null)
+    val dateRanges = findDates(visitor.texts.map(TextWithOffset::first))
+      .flatMapIndexed { i: Int, ranges: Collection<TextRange> ->
+        ranges.map { it.shiftRight(visitor.texts[i].second) }
+      }.toSet()
+
+    return MyAnnotationResult(document, dateRanges, resetCache = listenedChanges == null)
   }
 
   override fun apply(file: PsiFile, annotationResult: MyAnnotationResult?, holder: AnnotationHolder) {
