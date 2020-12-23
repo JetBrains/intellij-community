@@ -190,15 +190,10 @@ public final class GradleProjectResolverUtil {
     String gradlePath = projectIdentifier.getProjectPath();
     String compositePrefix = "";
     boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
-    if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
-      if (!isRootPath && build != resolverCtx.getModels().getMainBuild()) {
-        compositePrefix = build.getName();
-      } else {
-        compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
-      }
-    }
-    else if (!isRootPath && build != resolverCtx.getModels().getMainBuild()) {
+    if (!isRootPath && build != resolverCtx.getModels().getMainBuild()) {
       compositePrefix = build.getName();
+    } else if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
+      compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
     }
     return compositePrefix + getModuleId(gradlePath, project.getName());
   }
