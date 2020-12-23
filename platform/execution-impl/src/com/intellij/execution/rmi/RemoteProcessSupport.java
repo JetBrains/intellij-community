@@ -529,12 +529,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
-  private class Heartbeat {
+  private static class Heartbeat {
     private final Registry myRegistry;
     private boolean live = true;
     private ScheduledFuture<?> myFuture = null;
 
-    public Heartbeat(String host, int port) throws RemoteException {
+    Heartbeat(String host, int port) throws RemoteException {
       myRegistry = LocateRegistry.getRegistry(host, port);
     }
 
