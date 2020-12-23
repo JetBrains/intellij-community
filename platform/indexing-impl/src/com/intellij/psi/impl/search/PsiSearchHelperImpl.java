@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final ExtensionPointName<ScopeOptimizer> USE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.useScopeOptimizer");
 
-  private static final Logger LOG = Logger.getInstance(PsiSearchHelperImpl.class);
+  public static final Logger LOG = Logger.getInstance(PsiSearchHelperImpl.class);
   private final PsiManagerEx myManager;
   private final DumbService myDumbService;
 
@@ -1172,6 +1172,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        TextIndexQuery @NotNull ... textIndexQueries) {
     if (ContainerUtil.find(textIndexQueries, query -> !query.isEmpty()) == null) return true;
 
+    if (LOG.isTraceEnabled()) {
+      List<String> words = ContainerUtil.map(textIndexQueries, q -> StringUtil.join(q.getInitialWords(), " "));
+      LOG.trace("searching for words " + words + " in " + scope);
+    }
+
     Computable<Boolean> query =
       () -> {
         Collection<FileBasedIndex.AllKeysQuery<?, ?>> queries = ContainerUtil.flatMap(Arrays.asList(textIndexQueries), q -> q.toFileBasedIndexQueries());
@@ -1201,15 +1206,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     @Nullable
     private final Short myContext;
     private final boolean myUseOnlyWeakHashToSearch;
+    private final @NotNull Collection<String> myInitialWords;
 
     private TextIndexQuery(@NotNull Set<IdIndexEntry> idIndexEntries,
                            @NotNull Set<Integer> trigrams,
                            @Nullable Short context,
-                           boolean useOnlyWeakHashToSearch) {
+                           boolean useOnlyWeakHashToSearch,
+                           Collection<String> initialWords) {
       myIdIndexEntries = idIndexEntries;
       myTrigrams = trigrams;
       myContext = context;
       myUseOnlyWeakHashToSearch = useOnlyWeakHashToSearch;
+      myInitialWords = initialWords;
+    }
+
+    @NotNull Collection<String> getInitialWords() {
+      return myInitialWords;
     }
 
     public boolean isEmpty() {
@@ -1280,7 +1292,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       }
 
-      return new TextIndexQuery(keys, trigrams, context, useOnlyWeakHashToSearch);
+      return new TextIndexQuery(keys, trigrams, context, useOnlyWeakHashToSearch, words);
     }
 
     @NotNull

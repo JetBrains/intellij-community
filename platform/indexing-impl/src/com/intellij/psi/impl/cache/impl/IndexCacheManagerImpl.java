@@ -75,6 +75,10 @@ public class IndexCacheManagerImpl implements CacheManager {
     }
     PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWords(words, caseSensitively, false, occurenceMask);
 
+    if (PsiSearchHelperImpl.LOG.isTraceEnabled()) {
+      PsiSearchHelperImpl.LOG.trace("searching for words " + words + " in " + scope);
+    }
+
     try {
       return FileBasedIndex.getInstance().processFilesContainingAllKeys(query.toFileBasedIndexQueries(), scope, processor);
     }
