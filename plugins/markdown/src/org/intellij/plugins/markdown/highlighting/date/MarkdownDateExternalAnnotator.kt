@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -56,9 +57,9 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
         markupModel.removeAllHighlighters()
       }
       for (range in ranges) {
-        val highlighter = markupModel.addRangeHighlighter(MarkdownHighlighterColors.BOLD_ATTR_KEY,
+        val highlighter = markupModel.addRangeHighlighter(MarkdownHighlighterColors.DATE,
                                                           range.startOffset, range.endOffset,
-                                                          0,
+                                                          HighlighterLayer.ADDITIONAL_SYNTAX,
                                                           HighlighterTargetArea.EXACT_RANGE)
         highlighter.putUserData(IS_DATE_HIGHLIGHTER, true)
       }
