@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NonNls;
@@ -45,15 +46,15 @@ public interface IndexableFilesIterator {
   /**
    * Iterates through all files and directories corresponding to this iterator.
    * <br />
-   * The {@code indexableFilesDeduplicateFilter} is used to not visit files twice
-   * when several {@code IndexableFilesIterator}-s would iterate the same roots (probably in different threads).
+   * The {@code fileFilter} is used to not process some files.
    * <br />
-   * The {@code fileIterator} should be invoked on every new file (with respect to {@code indexableFilesDeduplicateFilter}).
-   * If the {@code fileIterator} returns false, the iteration should be stopped and this method should return {@code false}.
+   * It is common to pass {@link IndexableFilesDeduplicateFilter} as the {@code fileFilter}
+   * to avoid processing the same files twice. Several {@code IndexableFilesIterator}-s
+   * may iterate the same roots (probably in different threads).
    *
    * @return {@code false} if the {@code fileIterator} has stopped the iteration by returning {@code false}, {@code true} otherwise.
    */
   boolean iterateFiles(@NotNull Project project,
                        @NotNull ContentIterator fileIterator,
-                       @NotNull IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter);
+                       @NotNull VirtualFileFilter fileFilter);
 }

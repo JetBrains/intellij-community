@@ -20,14 +20,14 @@ object IndexableFilesIterationMethods {
     project: Project,
     roots: Iterable<VirtualFile>,
     contentIterator: ContentIterator,
-    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
+    fileFilter: VirtualFileFilter
   ): Boolean {
     val projectFileIndex = ProjectFileIndex.getInstance(project)
     val filters = IndexableFilesFilter.EP_NAME.extensionList
     val rootsSet = roots.toSet()
-    val fileFilter = indexableFilesDeduplicateFilter.and { shouldIndexFile(it, projectFileIndex, filters, rootsSet) }
+    val finalFileFilter = fileFilter.and { shouldIndexFile(it, projectFileIndex, filters, rootsSet) }
     return roots.all { root ->
-      VfsUtilCore.iterateChildrenRecursively(root, fileFilter, contentIterator)
+      VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
 
@@ -35,13 +36,13 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
-    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
+    fileFilter: VirtualFileFilter
   ): Boolean {
     val allRoots = runReadAction {
       if (projectAware) indexableSetContributor.getAdditionalProjectRootsToIndex(project)
       else indexableSetContributor.additionalRootsToIndex
     }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, allRoots, fileIterator, indexableFilesDeduplicateFilter)
+    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, allRoots, fileIterator, fileFilter)
   }
 
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.ModuleFileIndexImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
@@ -39,8 +40,8 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
-    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
-  ): Boolean = ModuleRootManager.getInstance(module).fileIndex.iterateContentUnderDirectory(root, fileIterator, indexableFilesDeduplicateFilter)
+    fileFilter: VirtualFileFilter
+  ): Boolean = ModuleRootManager.getInstance(module).fileIndex.iterateContentUnderDirectory(root, fileIterator, fileFilter)
 
   override fun getModule(): Module = module
 

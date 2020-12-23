@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 
 class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : ProjectIndexableFilesIterator {
@@ -21,8 +22,8 @@ class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : Pr
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
-    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
-  ): Boolean = ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, fileIterator, indexableFilesDeduplicateFilter)
+    fileFilter: VirtualFileFilter
+  ): Boolean = ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, fileIterator, fileFilter)
 
   override fun getFileOrDir(): VirtualFile {
     return fileOrDir

@@ -24,12 +24,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ApiStatus.Experimental
 public final class IndexableFilesDeduplicateFilter implements VirtualFileFilter {
 
-  private final @Nullable IndexableFilesDeduplicateFilter delegate;
-  private final ConcurrentBitSet visitedFileSet = ConcurrentBitSet.create();
-  private final AtomicInteger numberOfSkippedFiles = new AtomicInteger();
+  private final @Nullable IndexableFilesDeduplicateFilter myDelegate;
+  private final ConcurrentBitSet myVisitedFileSet = ConcurrentBitSet.create();
+  private final AtomicInteger myNumberOfSkippedFiles = new AtomicInteger();
 
   private IndexableFilesDeduplicateFilter(@Nullable IndexableFilesDeduplicateFilter delegate) {
-    this.delegate = delegate;
+    this.myDelegate = delegate;
   }
 
   /**
@@ -46,36 +46,36 @@ public final class IndexableFilesDeduplicateFilter implements VirtualFileFilter 
    * then this method allows to create a delegating filter that counts only files that have been skipped for a specific {@link IndexableFilesIterator}
    */
   public static @NotNull IndexableFilesDeduplicateFilter createDelegatingTo(@NotNull IndexableFilesDeduplicateFilter delegate) {
-    if (delegate.delegate != null) {
+    if (delegate.myDelegate != null) {
       throw new IllegalStateException("Only one-level delegation is supported now");
     }
     return new IndexableFilesDeduplicateFilter(delegate);
   }
 
   public int getNumberOfSkippedFiles() {
-    return numberOfSkippedFiles.get();
+    return myNumberOfSkippedFiles.get();
   }
 
   @Override
   public boolean accept(@NotNull VirtualFile file) {
-    if (delegate != null) {
-      boolean shouldVisit = delegate.accept(file);
+    if (myDelegate != null) {
+      boolean shouldVisit = myDelegate.accept(file);
       if (!shouldVisit) {
-        numberOfSkippedFiles.incrementAndGet();
+        myNumberOfSkippedFiles.incrementAndGet();
       }
       return shouldVisit;
     }
     if (file instanceof VirtualFileWithId) {
       int fileId = ((VirtualFileWithId)file).getId();
       if (fileId > 0) {
-        boolean wasVisited = visitedFileSet.set(fileId);
+        boolean wasVisited = myVisitedFileSet.set(fileId);
         if (wasVisited) {
-          numberOfSkippedFiles.incrementAndGet();
+          myNumberOfSkippedFiles.incrementAndGet();
         }
         return !wasVisited;
       }
     }
-    numberOfSkippedFiles.incrementAndGet();
+    myNumberOfSkippedFiles.incrementAndGet();
     return false;
   }
 }

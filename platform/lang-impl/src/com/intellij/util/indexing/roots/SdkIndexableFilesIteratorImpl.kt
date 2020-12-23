@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import org.jetbrains.annotations.ApiStatus
 
@@ -26,12 +27,12 @@ class SdkIndexableFilesIteratorImpl(val sdk: Sdk) : IndexableFilesIterator {
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
-    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
+    fileFilter: VirtualFileFilter
   ): Boolean {
     val roots = runReadAction {
       val rootProvider = sdk.rootProvider
       rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
     }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, indexableFilesDeduplicateFilter)
+    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, fileFilter)
   }
 }

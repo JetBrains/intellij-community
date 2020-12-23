@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 
 class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryIndexableFilesIterator {
@@ -26,7 +27,7 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
-    indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter
+    fileFilter: VirtualFileFilter
   ): Boolean {
     @Suppress("DuplicatedCode")
     val roots = runReadAction {
@@ -38,7 +39,7 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
         rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
       }
     }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, indexableFilesDeduplicateFilter)
+    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, fileFilter)
   }
 
   override fun getLibrary(): Library {
