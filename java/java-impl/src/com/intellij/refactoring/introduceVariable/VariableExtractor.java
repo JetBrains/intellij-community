@@ -249,24 +249,13 @@ final class VariableExtractor {
    * @param anchor anchor to insert the declaration before
    */
   private static void tryFixSurroundContext(@NotNull PsiElement anchor) {
-    PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor);
-    if (prev instanceof PsiStatement) {
-      PsiErrorElement last = ObjectUtils.tryCast(PsiTreeUtil.getDeepestLast(prev), PsiErrorElement.class);
-      if (last != null && last.getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) {
-        try {
-          prev.replace(JavaPsiFacade.getElementFactory(prev.getProject()).createStatementFromText(prev.getText() + ";", anchor));
-        }
-        catch (IncorrectOperationException ignored) {
-        }
-      }
-    }
-    else if (anchor.getParent() instanceof PsiCodeBlock && anchor.getParent().getParent() instanceof PsiClassInitializer) {
+    if (anchor.getParent() instanceof PsiCodeBlock && anchor.getParent().getParent() instanceof PsiClassInitializer) {
       PsiElement element = anchor.getParent().getParent();
       while (element != null) {
         element = element.getPrevSibling();
         if (element instanceof PsiErrorElement &&
             ((PsiErrorElement)element).getErrorDescription().equals(JavaPsiBundle.message("expected.class.or.interface"))) {
-          prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
+          PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
           if (PsiUtil.isJavaToken(prev, JavaTokenType.RBRACE)) {
             prev.delete();
           }
@@ -316,8 +305,13 @@ final class VariableExtractor {
     if (anchor instanceof PsiStatement) {
       while (true) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor);
-        if (!(prevSibling instanceof PsiErrorElement)) break;
-        PsiElement prevStatement = PsiTreeUtil.getPrevSiblingOfType(prevSibling, PsiStatement.class);
+        PsiElement prevStatement = null;
+        if (prevSibling instanceof PsiErrorElement) {
+          prevStatement = PsiTreeUtil.getPrevSiblingOfType(prevSibling, PsiStatement.class);
+        }
+        else if (prevSibling instanceof PsiStatement && prevSibling.getLastChild() instanceof PsiErrorElement) {
+          prevStatement = prevSibling;
+        }
         if (prevStatement == null) break;
         // Let's try to find more valid context to be able to reparse
         anchor = prevStatement;
