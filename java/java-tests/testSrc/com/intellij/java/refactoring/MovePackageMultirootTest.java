@@ -17,7 +17,9 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
@@ -112,6 +114,7 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
   }
 
   private void doMovementTest(@NotNull Set<String> sourceClassNames, @NotNull String targetPackageName) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> {
       doTest((rootDir, rootAfter) -> {
         JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
@@ -128,6 +131,7 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
   private void doMovementTestWithConflicts(@NotNull Set<String> sourceClassNames,
                                            @NotNull String targetPackageName,
                                            @NotNull String message) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
     doTest((rootDir, rootAfter) -> {
       JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
       PsiClass[] sourceClasses = sourceClassNames.stream().map(name -> facade.findClass(name)).toArray(PsiClass[]::new);

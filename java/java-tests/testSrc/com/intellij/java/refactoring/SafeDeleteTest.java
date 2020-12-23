@@ -436,6 +436,16 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testLastClassInPackage() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    doTest("pack1.First");
+  }
+
+  public void testNotLastClassInPackage() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    doTest("pack1.First");
+  }
+
   private void doTest(@NonNls final String qClassName) {
     doTest((rootDir, rootAfter) -> this.performAction(qClassName));
   }

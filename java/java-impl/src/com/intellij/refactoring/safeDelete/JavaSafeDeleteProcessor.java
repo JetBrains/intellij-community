@@ -34,6 +34,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ContractConverter;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.inCallers.AbstractJavaMemberCallerChooser;
+import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoUsageDetector;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -68,6 +69,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       if (element instanceof PsiTypeParameter) {
         findTypeParameterExternalUsages((PsiTypeParameter)element, usages);
       }
+      ModuleInfoUsageDetector.createSafeDeleteUsageInstance(element.getProject(), allElementsToDelete)
+        .detectModuleStatementsUsed(usages, MultiMap.create());
     }
     else if (element instanceof PsiMethod) {
       insideDeletedCondition = findMethodUsages((PsiMethod) element, allElementsToDelete, usages);

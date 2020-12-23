@@ -35,7 +35,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
-import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoUsageDetector.ModifyModuleStatementUsageInfo;
+import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoModifyUsageDetector.ModifyModuleStatementUsageInfo;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
@@ -117,7 +117,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       return 0;
     });
     myMoveDestination = moveDestination;
-    myModuleInfoUsageDetector = new ModuleInfoUsageDetector(myProject, myElementsToMove, myMoveDestination);
+    myModuleInfoUsageDetector = ModuleInfoUsageDetector.createModifyUsageInstance(myProject, myElementsToMove, myMoveDestination);
     myTargetPackage = myMoveDestination.getTargetPackage();
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
@@ -643,8 +643,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> allUsages = new SmartList<>(usages);
     allUsages.addAll(myModuleInfoUsageDetector.createUsageInfosForNewlyCreatedDirs());
     Map<PsiJavaModule, List<ModifyModuleStatementUsageInfo>> moduleStatementsByDescriptor = StreamEx.of(allUsages)
-      .select(ModifyModuleStatementUsageInfo.class).groupingBy(usage -> branch == null ? usage.getModuleDescriptor() :
-                                                                        branch.obtainPsiCopy(usage.getModuleDescriptor()));
+      .select(ModuleInfoModifyUsageDetector.ModifyModuleStatementUsageInfo.class).groupingBy(usage -> branch == null ? usage.getModuleDescriptor() :
+                                                                                                      branch.obtainPsiCopy(usage.getModuleDescriptor()));
     for (var entry : moduleStatementsByDescriptor.entrySet()) {
       PsiJavaModule moduleDescriptor = entry.getKey();
       for (ModifyModuleStatementUsageInfo modifyStatementInfo : entry.getValue()) {
