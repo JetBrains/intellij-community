@@ -6,6 +6,7 @@ import com.intellij.util.ui.RegionPainter
 import java.awt.Graphics2D
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.RegionPaintIcon
@@ -26,7 +27,8 @@ internal class MnemonicPainter(ch: Char) : RegionPainter<Component?> {
     val background = EditorColorsUtil.getColor(c, BACKGROUND)
     val borderColor = EditorColorsUtil.getColor(c, BORDER_COLOR)
     val thickness = if (borderColor == null || borderColor == background) 0 else 1
-    val round = width / 3
+    val divisor = Registry.intValue("ide.mnemonic.icon.round", 0)
+    val round = if (divisor > 0) width.coerceAtLeast(height) / divisor else null
     if (background != null) {
       g.paint = background
       RectanglePainter.FILL.paint(g, x, y, width, height, round)
@@ -55,7 +57,7 @@ internal class MnemonicPainter(ch: Char) : RegionPainter<Component?> {
     }
   }
 
-  override fun toString() = string
+  override fun toString() = "MnemonicIcon:$string"
 
   override fun hashCode() = string.hashCode()
 

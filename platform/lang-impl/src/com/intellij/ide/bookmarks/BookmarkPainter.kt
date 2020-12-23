@@ -42,9 +42,9 @@ internal class BookmarkPainter : RegionPainter<Component?> {
     }
   }
 
-  override fun toString() = ""
+  override fun toString() = "BookmarkIcon"
 
-  override fun hashCode() = "".hashCode()
+  override fun hashCode() = toString().hashCode()
 
   override fun equals(other: Any?) = other === this || other is BookmarkPainter
 }
