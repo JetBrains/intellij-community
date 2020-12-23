@@ -109,19 +109,13 @@ public class RemoteServer {
       registry.bind(name, stub);
 
       IdeaWatchdog watchdog = new IdeaWatchdogImpl();
-      if (!localHostOnly) {
-        Remote watchdogStub = UnicastRemoteObject.exportObject(watchdog, 0);
-        registry.bind(IdeaWatchdog.BINDING_NAME, watchdogStub);
-      }
+      Remote watchdogStub = UnicastRemoteObject.exportObject(watchdog, 0);
+      registry.bind(IdeaWatchdog.BINDING_NAME, watchdogStub);
       String id = port + "/" + name + portSuffix;
       System.out.println("Port/ID: " + id);
       System.out.println();
 
-      if (localHostOnly) {
-        waitForRemoteHand(registry, id);
-      } else {
-        spinUntilWatchdogAlive(watchdog);
-      }
+      spinUntilWatchdogAlive(watchdog);
     }
     catch (Throwable e) {
       e.printStackTrace(System.err);
@@ -140,20 +134,6 @@ public class RemoteServer {
       if (!watchdog.isAlive()) {
         System.exit(1);
       }
-    }
-  }
-
-  private static void waitForRemoteHand(Registry registry, String id) throws InterruptedException, RemoteException, NotBoundException {
-    long waitTime = RemoteDeadHand.PING_TIMEOUT;
-    Object lock = new Object();
-    //noinspection InfiniteLoopStatement
-    while (true) {
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (lock) {
-        lock.wait(waitTime);
-      }
-      RemoteDeadHand deadHand = (RemoteDeadHand)registry.lookup(RemoteDeadHand.BINDING_NAME);
-      waitTime = deadHand.ping(id);
     }
   }
 

@@ -35,6 +35,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Gregory.Shrago
@@ -43,6 +44,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   public static final Logger LOG = Logger.getInstance(RemoteProcessSupport.class);
 
   private final Class<EntryPoint> myValueClass;
+  private final AtomicReference<Heartbeat> myHeartbeatRef = new AtomicReference<>();
   private final Map<Pair<Target, Parameters>, Info> myProcMap = new HashMap<>();
   private final Map<Pair<Target, Parameters>, InProcessInfo<EntryPoint>> myInProcMap = new HashMap<>();
 
@@ -334,6 +336,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         if (dropProcessInfo(key, null, event.getProcessHandler())) {
           fireModificationCountChanged();
         }
+        Heartbeat heartbeat = myHeartbeatRef.get();
+        if (heartbeat != null) {
+          heartbeat.stopBeat();
+        }
       }
 
       @Override
@@ -381,12 +387,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           }
           fireModificationCountChanged();
           try {
-            if ("127.0.0.1".equals(result.host)) {
-              RemoteDeadHand.TwoMinutesTurkish.startCooking(result.host, result.port);
-            }
-            else {
-              new Heartbeat(result.host, result.port).startBeat();
-            }
+            Heartbeat heartbeat = new Heartbeat(result.host, result.port);
+            heartbeat.startBeat();
+            myHeartbeatRef.set(heartbeat);
           }
           catch (Throwable e) {
             LOG.warn("The cook failed to start due to " + ExceptionUtil.getRootCause(e));
@@ -538,23 +541,26 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       myRegistry = LocateRegistry.getRegistry(host, port);
     }
 
-    void startBeat() {
+    void stopBeat() {
+      if (myFuture != null) {
+        myFuture.cancel(false);
+      }
+    }
 
+    void startBeat() {
       myFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
         try {
-          if (!live) {
-            if (myFuture != null) {
-              myFuture.cancel(false);
-            }
-            return;
+          if (live) {
+            IdeaWatchdog watchdog = getWatchdog();
+            watchdog.ping();
           }
-          IdeaWatchdog watchdog = getWatchdog();
-          watchdog.ping();
         }
         catch (Exception ignore) {
           live = false;
+          myFuture.cancel(false);
         }
       }, IdeaWatchdog.PULSE_TIMEOUT, IdeaWatchdog.PULSE_TIMEOUT, TimeUnit.MILLISECONDS);
+      Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
     }
 
     private IdeaWatchdog getWatchdog() throws RemoteException, NotBoundException {
