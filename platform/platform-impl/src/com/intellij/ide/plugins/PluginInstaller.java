@@ -107,7 +107,8 @@ public final class PluginInstaller {
   }
 
   private static void uninstallAfterRestart(IdeaPluginDescriptor pluginDescriptor) throws IOException {
-    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath()));
+    StartupActionScriptManager
+      .addActionCommands(Collections.singletonList(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath())));
   }
 
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,

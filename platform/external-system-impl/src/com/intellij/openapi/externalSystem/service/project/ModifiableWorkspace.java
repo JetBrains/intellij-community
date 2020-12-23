@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate;
@@ -7,8 +7,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,11 +19,14 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public class ModifiableWorkspace {
-
-  private final Map<ProjectCoordinate, String> myModuleMappingById = new THashMap<>(new TObjectHashingStrategy<ProjectCoordinate>() {
+public final class ModifiableWorkspace {
+  private final Map<ProjectCoordinate, String> myModuleMappingById = new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<>() {
     @Override
-    public int computeHashCode(ProjectCoordinate object) {
+    public int hashCode(ProjectCoordinate object) {
+      if (object == null) {
+        return 0;
+      }
+
       String groupId = object.getGroupId();
       String artifactId = object.getArtifactId();
       String version = object.getVersion();
@@ -35,12 +38,20 @@ public class ModifiableWorkspace {
 
     @Override
     public boolean equals(ProjectCoordinate o1, ProjectCoordinate o2) {
+      if (o1 == o2) {
+        return true;
+      }
+      if (o1 == null || o2 == null) {
+        return false;
+      }
+
       if (o1.getGroupId() != null ? !o1.getGroupId().equals(o2.getGroupId()) : o2.getGroupId() != null) return false;
       if (o1.getArtifactId() != null ? !o1.getArtifactId().equals(o2.getArtifactId()) : o2.getArtifactId() != null) return false;
       if (o1.getVersion() != null ? !o1.getVersion().equals(o2.getVersion()) : o2.getVersion() != null) return false;
       return true;
     }
   });
+
   private final AbstractIdeModifiableModelsProvider myModelsProvider;
   private final ExternalProjectsWorkspaceImpl.State myState;
   private final MultiMap<String/* module owner */, String /* substitution modules */> mySubstitutions = MultiMap.createSet();
@@ -107,7 +118,7 @@ public class ModifiableWorkspace {
                                  String libraryName,
                                  DependencyScope scope) {
     mySubstitutions.remove(ownerModuleName, moduleName + '_' + scope.getDisplayName());
-    Collection<? extends String> substitutions = mySubstitutions.values();
+    Collection<String> substitutions = mySubstitutions.values();
     for (DependencyScope dependencyScope : DependencyScope.values()) {
       if (substitutions.contains(moduleName + '_' + dependencyScope.getDisplayName())) {
         return;

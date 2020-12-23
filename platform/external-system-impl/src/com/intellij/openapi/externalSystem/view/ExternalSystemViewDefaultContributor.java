@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.icons.AllIcons;
@@ -25,9 +25,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TLongObjectHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +37,10 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
-
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalSystemViewDefaultContributor extends ExternalSystemViewContributor {
-
+final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContributor {
   private static final Key<?>[] KEYS = new Key[]{
     ProjectKeys.MODULE,
     ProjectKeys.DEPENDENCIES_GRAPH,
@@ -80,7 +76,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         result.add(tasksNode);
       }
       else {
-        ContainerUtil.addAll(result, tasksNode.getChildren());
+        Collections.addAll(result, tasksNode.getChildren());
       }
     }
 
@@ -89,9 +85,8 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     return result;
   }
 
-  @Nullable
   @Override
-  public String getDisplayName(@NotNull DataNode node) {
+  public @NotNull String getDisplayName(@NotNull DataNode node) {
     return getNodeDisplayName(node);
   }
 
@@ -182,7 +177,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         final ModuleData data = (ModuleData)dataNode.getData();
 
         final ExternalProjectSettings projectSettings = systemSettings.getLinkedProjectSettings(data.getLinkedExternalProjectPath());
-        DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(dataNode, PROJECT);
+        DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(dataNode, ProjectKeys.PROJECT);
         final boolean isRoot =
           projectSettings != null && data.getLinkedExternalProjectPath().equals(projectSettings.getExternalProjectPath()) &&
           projectDataNode != null && projectDataNode.getData().getInternalName().equals(data.getInternalName());
@@ -228,9 +223,9 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     }
   }
 
-  private static class DependencyScopeExternalSystemNode extends ExternalSystemNode<Object> {
+  private static final class DependencyScopeExternalSystemNode extends ExternalSystemNode<Object> {
     private final DependencyScopeNode myDependenciesGraph;
-    private final TLongObjectHashMap<DependencyNode> myDependencyNodeMap = new TLongObjectHashMap<>();
+    private final Long2ObjectOpenHashMap<DependencyNode> myDependencyNodeMap = new Long2ObjectOpenHashMap<>();
 
     DependencyScopeExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
                                       @NotNull DependencyScopeNode dependenciesGraph) {
@@ -283,7 +278,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       return result;
     }
 
-    private static void buildNodesMap(@NotNull TLongObjectHashMap<DependencyNode> dependencyNodeMap, @NotNull DependencyNode node) {
+    private static void buildNodesMap(@NotNull Long2ObjectOpenHashMap<DependencyNode> dependencyNodeMap, @NotNull DependencyNode node) {
       for (DependencyNode child : node.getDependencies()) {
         if (child instanceof ReferenceNode) continue;
         dependencyNodeMap.put(child.getId(), child);
@@ -292,18 +287,18 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     }
   }
 
-  private static class DependencyExternalSystemNode extends ExternalSystemNode<Object> {
+  private static final class DependencyExternalSystemNode extends ExternalSystemNode<Object> {
     @NotNull
     private final DependencyNode myDependencyNode;
     @NotNull
-    private final TLongObjectHashMap<DependencyNode> myDependencyNodeMap;
+    private final Long2ObjectOpenHashMap<DependencyNode> myDependencyNodeMap;
     @Nullable
     private DependencyNode myReferencedNode;
     private final String myName;
 
     DependencyExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
                                  @NotNull DependencyNode dependencyNode,
-                                 @NotNull TLongObjectHashMap<DependencyNode> dependencyNodeMap) {
+                                 @NotNull Long2ObjectOpenHashMap<DependencyNode> dependencyNodeMap) {
       super(externalProjectsView, null);
       myDependencyNode = dependencyNode;
       myDependencyNodeMap = dependencyNodeMap;
@@ -544,7 +539,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         if (paths.size() == 1) {
           String relativePathToRoot = null;
           String path = ExternalSystemApiUtil.toCanonicalPath(paths.iterator().next());
-          DataNode<ProjectData> projectDataDataNode = ExternalSystemApiUtil.findParent(node, PROJECT);
+          DataNode<ProjectData> projectDataDataNode = ExternalSystemApiUtil.findParent(node, ProjectKeys.PROJECT);
           if (projectDataDataNode != null) {
             relativePathToRoot = FileUtil.getRelativePath(projectDataDataNode.getData().getLinkedExternalProjectPath(), path, '/');
             relativePathToRoot = relativePathToRoot != null && StringUtil.startsWith(relativePathToRoot, "../../")

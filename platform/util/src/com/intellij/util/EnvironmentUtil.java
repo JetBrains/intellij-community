@@ -14,8 +14,6 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseOutputReader;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -143,7 +141,7 @@ public final class EnvironmentUtil {
 
   private static @NotNull Map<String, String> getSystemEnv() {
     if (SystemInfoRt.isWindows) {
-      return Collections.unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
+      return Collections.unmodifiableMap(CollectionFactory.createCaseInsensitiveStringMap(System.getenv()));
     }
     else if (SystemInfoRt.isXWindow) {
       // DESKTOP_STARTUP_ID variable can be set by an application launcher in X Window environment.

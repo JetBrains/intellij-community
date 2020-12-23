@@ -11,20 +11,15 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemNode.BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER)
-public class RunConfigurationsNode extends ExternalSystemNode<Void> {
-
+public final class RunConfigurationsNode extends ExternalSystemNode<Void> {
   private final ModuleData myModuleData;
 
   public RunConfigurationsNode(@NotNull ExternalProjectsView externalProjectsView, ModuleNode parent) {
@@ -55,9 +50,8 @@ public class RunConfigurationsNode extends ExternalSystemNode<Void> {
     final AbstractExternalSystemTaskConfigurationType configurationType = ExternalSystemUtil.findConfigurationType(myModuleData.getOwner());
     if (configurationType == null) return Collections.emptyList();
 
-    Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
+    Set<RunnerAndConfigurationSettings> settings = new HashSet<>(
       RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType));
-
 
     String directory = FileUtil.toCanonicalPath(myModuleData.getLinkedExternalProjectPath());
 

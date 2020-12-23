@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import icons.ExternalSystemIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +48,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalSystemKeymapExtension implements KeymapExtension {
-
+public final class ExternalSystemKeymapExtension implements KeymapExtension {
   @FunctionalInterface
   public interface ActionsProvider {
     ExtensionPointName<ActionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemKeymapProvider");
@@ -244,7 +242,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
     }
 
-    Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
+    Set<RunnerAndConfigurationSettings> settings = new HashSet<>(
       RunManager.getInstance(project).getConfigurationSettingsList(configurationType));
 
     final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();

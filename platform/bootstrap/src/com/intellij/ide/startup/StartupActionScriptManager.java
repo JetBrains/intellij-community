@@ -64,26 +64,27 @@ public final class StartupActionScriptManager {
       for (ActionCommand command : commands) {
         command.execute();
       }
+      return;
     }
-    else {
-      List<ActionCommand> script;
-      try {
-        List<ActionCommand> savedScript = loadActionScript(getActionScriptFile());
-        script = new ArrayList<>(savedScript.size() + commands.size());
-        script.addAll(savedScript);
-        script.addAll(commands);
-      }
-      catch (ObjectStreamException e) {
-        Logger.getInstance(StartupActionScriptManager.class).warn(e);
-        script = new ArrayList<>(commands);
-      }
 
-      saveActionScript(script);
+    List<ActionCommand> script;
+    Path actionScriptFile = getActionScriptFile();
+    try {
+      List<ActionCommand> savedScript = loadActionScript(actionScriptFile);
+      script = new ArrayList<>(savedScript.size() + commands.size());
+      script.addAll(savedScript);
+      script.addAll(commands);
     }
+    catch (ObjectStreamException e) {
+      Logger.getInstance(StartupActionScriptManager.class).warn(e);
+      script = new ArrayList<>(commands);
+    }
+
+    saveActionScript(script, actionScriptFile);
   }
 
   private static @NotNull Path getActionScriptFile() {
-    return Paths.get(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
+    return Path.of(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
   public static @NotNull List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
@@ -105,10 +106,6 @@ public final class StartupActionScriptManager {
     catch (ReflectiveOperationException e) {
       throw (StreamCorruptedException)new StreamCorruptedException("Stream error: " + scriptFile).initCause(e);
     }
-  }
-
-  private static void saveActionScript(@Nullable List<ActionCommand> commands) throws IOException {
-    saveActionScript(commands, getActionScriptFile());
   }
 
   public static void saveActionScript(@Nullable List<ActionCommand> commands, @NotNull Path scriptFile)
