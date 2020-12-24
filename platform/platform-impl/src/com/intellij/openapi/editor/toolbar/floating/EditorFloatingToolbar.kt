@@ -22,17 +22,23 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     val container = editor.scrollPane
     val parentDisposable = editor.disposable
     val toolbarComponents = ArrayList<FloatingToolbarComponentImpl>()
-    EP_NAME.forEachExtensionSafe { provider ->
-      toolbarComponents.add(FloatingToolbarComponentImpl(provider, this, targetComponent, parentDisposable))
+    forEachProvider { provider ->
+      val actionGroup = provider.actionGroup
+      val autoHideable = provider.autoHideable
+      val providerId = provider.id
+      val component = FloatingToolbarComponentImpl(providerId, this, targetComponent, actionGroup, autoHideable, parentDisposable)
+      if (provider is EditorFloatingToolbarProvider) {
+        provider.register(component, parentDisposable)
+      }
+      toolbarComponents.add(component)
+      add(component)
     }
-    toolbarComponents.sortBy { it.provider.priority }
-    toolbarComponents.forEach { add(it) }
 
     editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
       override fun mouseMoved(e: EditorMouseEvent) {
         if (isInsideActivationArea(container, e.mouseEvent.point)) {
           for (component in toolbarComponents) {
-            if (component.provider.autoHideable) {
+            if (component.autoHideable) {
               component.scheduleShow()
             }
           }
@@ -42,10 +48,17 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
   }
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<FloatingToolbarProvider>("com.intellij.editorFloatingToolbarProvider")
+    private val EP_NAME = ExtensionPointName.create<FloatingToolbarProvider>("com.intellij.floatingToolbarProvider")
+    private val DEPRECATED_EP_NAME = ExtensionPointName.create<EditorFloatingToolbarProvider>("com.intellij.editorFloatingToolbarProvider")
+
+    private fun forEachProvider(action: (FloatingToolbarProvider) -> Unit) {
+      EP_NAME.forEachExtensionSafe(action)
+      DEPRECATED_EP_NAME.forEachExtensionSafe(action)
+    }
 
     fun getProvider(id: String): FloatingToolbarProvider {
-      return EP_NAME.findFirstSafe { it.id == id }!!
+      return EP_NAME.findFirstSafe { it.id == id }
+             ?: DEPRECATED_EP_NAME.findFirstSafe { it.id == id }!!
     }
 
     private fun isInsideActivationArea(container: JScrollPane, p: Point): Boolean {

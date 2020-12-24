@@ -611,7 +611,7 @@
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
                          id="delete.in.column.mode"/>
 
-    <editorFloatingToolbarProvider id="DefaultFloatingToolbarProvider" group="EditorContextBarMenu"/>
+    <floatingToolbarProvider id="DefaultFloatingToolbarProvider" group="EditorContextBarMenu"/>
 
     <bundledKeymap file="$default.xml"/>
     <bundledKeymap file="Mac OS X 10.5+.xml"/>

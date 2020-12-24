@@ -16,9 +16,11 @@ import javax.swing.JPanel
 
 @ApiStatus.Internal
 class FloatingToolbarComponentImpl(
-  override val provider: FloatingToolbarProvider,
+  override val providerId: String,
   parentComponent: JComponent,
   contextComponent: JComponent,
+  actionGroup: ActionGroup,
+  val autoHideable: Boolean,
   parentDisposable: Disposable
 ) : JPanel(), FloatingToolbarComponent {
 
@@ -31,14 +33,11 @@ class FloatingToolbarComponentImpl(
     autoHideable: Boolean,
     parentDisposable: Disposable
   ) : this(
-    object : FloatingToolbarProvider {
-      override val id = "Deprecated"
-      override val priority = 0
-      override val autoHideable = autoHideable
-      override val actionGroup = actionGroup
-    },
+    "",
     parentComponent,
     contextComponent,
+    actionGroup,
+    autoHideable,
     parentDisposable
   )
 
@@ -96,7 +95,7 @@ class FloatingToolbarComponentImpl(
     isOpaque = false
     isVisible = false
 
-    actionToolbar = ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, provider.actionGroup, true)
+    actionToolbar = ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true)
     actionToolbar.setTargetComponent(contextComponent)
     actionToolbar.setMinimumButtonSize(Dimension(22, 22))
     actionToolbar.setSkipWindowAdjustments(true)
@@ -104,7 +103,7 @@ class FloatingToolbarComponentImpl(
     actionToolbar.isOpaque = false
     add(actionToolbar, BorderLayout.CENTER)
 
-    visibilityController = ToolbarVisibilityController(provider.autoHideable, parentComponent, actionToolbar, this)
+    visibilityController = ToolbarVisibilityController(autoHideable, parentComponent, actionToolbar, this)
     visibilityController.scheduleHide()
 
     Disposer.register(parentDisposable, visibilityController)

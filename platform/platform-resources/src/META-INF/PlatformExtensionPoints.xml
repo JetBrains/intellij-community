@@ -144,6 +144,9 @@
     </extensionPoint>
 
     <extensionPoint name="editorFloatingToolbarProvider"
+                    interface="com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbarProvider"
+                    dynamic="true"/>
+    <extensionPoint name="floatingToolbarProvider"
                     beanClass="com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProviderBean"
                     dynamic="true"/>
 

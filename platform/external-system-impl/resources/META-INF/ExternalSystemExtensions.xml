@@ -34,10 +34,10 @@
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings"
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware"/>
-    <editorFloatingToolbarProvider
+    <floatingToolbarProvider
       id="ExternalSystem.ProjectRefreshFloatingProvider"
+      order="after DefaultFloatingToolbarProvider"
       group="ExternalSystem.ProjectRefreshActionGroup"
-      priority="100"
       autoHideable="false"
     />
 

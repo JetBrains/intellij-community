@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FloatingToolbarProviderBean : FloatingToolbarProvider {
 
   @Attribute("id")
@@ -19,9 +20,6 @@ class FloatingToolbarProviderBean : FloatingToolbarProvider {
   @RequiredElement
   lateinit var group: String
 
-  @Attribute("priority")
-  override var priority: Int = 0
-
   @Attribute("autoHideable")
   override var autoHideable: Boolean = true
 
@@ -30,7 +28,6 @@ class FloatingToolbarProviderBean : FloatingToolbarProvider {
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.editor.toolbar.floating")
 
-    @ApiStatus.Internal
     fun resolveActionGroup(actionGroupId: String): ActionGroup {
       val actionManager = ActionManager.getInstance()
       val action = actionManager.getAction(actionGroupId)

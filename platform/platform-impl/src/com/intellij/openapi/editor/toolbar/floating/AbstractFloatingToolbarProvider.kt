@@ -10,7 +10,7 @@ import kotlin.reflect.jvm.jvmName
 
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated("Use FloatingToolbarProviderBean instead")
-abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : FloatingToolbarProvider {
+abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : EditorFloatingToolbarProvider {
 
   override val id by lazy { this::class.jvmName }
 
