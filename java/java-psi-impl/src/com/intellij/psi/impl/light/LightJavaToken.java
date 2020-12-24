@@ -15,18 +15,38 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lexer.Lexer;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class LightKeyword extends LightJavaToken implements PsiKeyword {
-  public LightKeyword(PsiManager manager, String text) {
-    super(manager, text);
+public class LightJavaToken extends LightElement implements PsiJavaToken {
+  private final String myText;
+
+  public LightJavaToken(PsiManager manager, String text) {
+    super(manager, JavaLanguage.INSTANCE);
+    myText = text;
+  }
+
+  @Override
+  public String getText(){
+    return myText;
+  }
+
+  @Override
+  public IElementType getTokenType(){
+    Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
+    lexer.start(myText);
+    return lexer.getTokenType();
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitKeyword(this);
+      ((JavaElementVisitor)visitor).visitJavaToken(this);
     }
     else {
       visitor.visitElement(this);
@@ -35,11 +55,11 @@ public class LightKeyword extends LightJavaToken implements PsiKeyword {
 
   @Override
   public PsiElement copy(){
-    return new LightKeyword(getManager(), getText());
+    return new LightJavaToken(getManager(), myText);
   }
 
   @Override
   public String toString(){
-    return "PsiKeyword:" + getText();
+    return "PsiJavaToken:" + getText();
   }
 }

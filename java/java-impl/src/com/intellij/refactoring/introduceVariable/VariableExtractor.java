@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.light.LightJavaToken;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -258,6 +259,10 @@ final class VariableExtractor {
           PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
           if (PsiUtil.isJavaToken(prev, JavaTokenType.RBRACE)) {
             prev.delete();
+          }
+          if (prev instanceof PsiErrorElement &&
+              ((PsiErrorElement)prev).getErrorDescription().equals(JavaPsiBundle.message("expected.lbrace"))) {
+            prev.replace(new LightJavaToken(anchor.getManager(), "{"));
           }
         }
       }
