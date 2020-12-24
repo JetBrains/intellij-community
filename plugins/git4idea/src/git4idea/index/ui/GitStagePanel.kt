@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.ChangesViewCommitPanelSplitter
 import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -120,9 +119,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
     treePanelWithToolbar.add(progressStripe, BorderLayout.CENTER)
 
-    treeMessageSplitter = ChangesViewCommitPanelSplitter(project).also {
-      Disposer.register(this, it)
-    }
+    treeMessageSplitter = OnePixelSplitter(!isHorizontalLayout, "git.stage.tree.message.splitter", 0.7f)
     treeMessageSplitter.orientation = !(isHorizontalLayout && isEditorDiffPreview)
     treeMessageSplitter.firstComponent = treePanelWithToolbar
     treeMessageSplitter.secondComponent = commitPanel
