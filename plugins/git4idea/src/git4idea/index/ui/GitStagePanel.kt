@@ -59,7 +59,7 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
-                             isHorizontal: Boolean,
+                             isVertical: Boolean,
                              isEditorDiffPreview: Boolean,
                              disposableParent: Disposable,
                              private val activate: () -> Unit) :
@@ -131,7 +131,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     add(commitDiffSplitter, BorderLayout.CENTER)
     add(changesStatusPanel, BorderLayout.SOUTH)
 
-    setDiffPreviewInEditor(isEditorDiffPreview, force = true)
+    updateLayout(isVertical, isEditorDiffPreview, forceDiffPreview = true)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     val busConnection = project.messageBus.connect(this)
@@ -143,7 +143,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       progressStripe.startLoadingImmediately()
     }
     updateChangesStatusPanel()
-    updateLayout(isHorizontal, isEditorDiffPreview)
 
     Disposer.register(disposableParent, this)
 
@@ -173,14 +172,15 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     return null
   }
 
-  fun updateLayout(isHorizontal: Boolean, isEditorDiffPreview: Boolean) {
-    val newOrientation = !(isHorizontal && isEditorDiffPreview)
-    if (treeMessageSplitter.orientation != newOrientation) {
-      treeMessageSplitter.orientation = newOrientation
+  fun updateLayout(isVertical: Boolean, isEditorDiffPreview: Boolean, forceDiffPreview: Boolean = false) {
+    val isMessageSplitterVertical = isVertical || !isEditorDiffPreview
+    if (treeMessageSplitter.orientation != isMessageSplitterVertical) {
+      treeMessageSplitter.orientation = isMessageSplitterVertical
     }
+    setDiffPreviewInEditor(isEditorDiffPreview, forceDiffPreview)
   }
 
-  fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
+  private fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
     if (Disposer.isDisposed(this)) return
     if (!force && (isInEditor == (editorTabPreview != null))) return
 

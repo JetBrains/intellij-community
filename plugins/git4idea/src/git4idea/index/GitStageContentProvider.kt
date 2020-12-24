@@ -29,30 +29,25 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   override fun initContent(): JComponent {
     val tracker = GitStageTracker.getInstance(project)
     disposable = Disposer.newDisposable("Git Stage Content Provider")
-    val gitStagePanel = GitStagePanel(tracker, isHorizontalLayout(), ChangesViewContentManager.isCommitToolWindowShown(project),
-                                      disposable!!) {
+    val gitStagePanel = GitStagePanel(tracker, isVertical(), isDiffPreviewInEditor(), disposable!!) {
       ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
     }
     setupTabTitleUpdater(tracker, gitStagePanel)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
-      override fun toolWindowMappingChanged() {
-        gitStagePanel.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindowShown(project))
-      }
+      override fun toolWindowMappingChanged() = gitStagePanel.updatePanelLayout()
     })
-
     project.messageBus.connect(disposable!!).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager) {
-        gitStagePanel.updateLayout(isHorizontalLayout(), ChangesViewContentManager.isCommitToolWindowShown(project))
-      }
+      override fun stateChanged(toolWindowManager: ToolWindowManager) = gitStagePanel.updatePanelLayout()
     })
 
     return gitStagePanel
   }
 
-  private fun isHorizontalLayout(): Boolean {
-    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return false
-    return toolWindow.anchor.isHorizontal
-  }
+  private fun GitStagePanel.updatePanelLayout() = updateLayout(isVertical(), isDiffPreviewInEditor())
+
+  private fun isDiffPreviewInEditor() = ChangesViewContentManager.isCommitToolWindowShown(project)
+
+  private fun isVertical() = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.anchor?.isHorizontal == false
 
   private fun setupTabTitleUpdater(tracker: GitStageTracker, panel: GitStagePanel) {
     val updater = CommitTabTitleUpdater(panel.tree, STAGING_AREA_TAB_NAME) { VcsBundle.message("tab.title.commit") }
