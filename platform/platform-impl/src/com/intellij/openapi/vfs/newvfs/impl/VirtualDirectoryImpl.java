@@ -666,15 +666,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  @ApiStatus.Internal
   // check if all these names are not existing, remove invalid events from the list
-  public void validateChildrenToCreate(@NotNull List<VFileCreateEvent> childrenToCreate) {
+  public void validateChildrenToCreate(@NotNull Collection<VFileCreateEvent> childrenToCreate) {
     if (childrenToCreate.size() <= 1) {
-      for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
-        VFileCreateEvent event = childrenToCreate.get(i);
-        if (!event.isValid()) {
-          childrenToCreate.remove(i);
-        }
-      }
+      childrenToCreate.removeIf(event -> !event.isValid());
       return;
     }
     boolean caseSensitive = isCaseSensitive();
@@ -702,16 +698,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private void validateAgainst(@NotNull List<VFileCreateEvent> childrenToCreate, @NotNull Set<? extends CharSequence> existingNames) {
-    for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
-      VFileCreateEvent event = childrenToCreate.get(i);
+  private void validateAgainst(@NotNull Collection<VFileCreateEvent> childrenToCreate, @NotNull Set<? extends CharSequence> existingNames) {
+    childrenToCreate.removeIf(event -> {
       String childName = event.getChildName();
       // assume there is no need to canonicalize names in VFileCreateEvent
-      boolean childExists = !myData.isAdoptedName(childName) && existingNames.contains(childName);
-      if (childExists) {
-        childrenToCreate.remove(i);
-      }
-    }
+      return !myData.isAdoptedName(childName) && existingNames.contains(childName);
+    });
   }
 
   public boolean allChildrenLoaded() {
