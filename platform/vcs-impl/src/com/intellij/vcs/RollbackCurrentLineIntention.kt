@@ -3,17 +3,20 @@ package com.intellij.vcs
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.icons.AllIcons.Actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.RollbackLineStatusAction
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.psi.PsiFile
 import java.util.*
+import javax.swing.Icon
 
-class RollbackCurrentLineIntention : IntentionAction, LowPriorityAction, DumbAware {
+class RollbackCurrentLineIntention : IntentionAction, LowPriorityAction, DumbAware, Iconable {
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
     if (editor == null) return false
     val tracker = getValidTrackerOrNull(project, editor)
@@ -52,4 +55,8 @@ class RollbackCurrentLineIntention : IntentionAction, LowPriorityAction, DumbAwa
   override fun getFamilyName(): String = text
 
   override fun startInWriteAction(): Boolean = true
+
+  override fun getIcon(flags: Int): Icon {
+    return Rollback
+  }
 }
