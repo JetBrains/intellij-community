@@ -833,7 +833,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (anchorStatement == null) {
       PsiField field = PsiTreeUtil.getParentOfType(place, PsiField.class, true, PsiStatement.class);
       if (field != null && !(field instanceof PsiEnumConstant)) {
-        anchorStatement = field.getInitializer();
+        PsiExpression initializer = field.getInitializer();
+        // Could be also an annotation argument
+        if (PsiTreeUtil.isAncestor(initializer, place, false)) {
+          anchorStatement = initializer;
+        }
       }
     }
     return anchorStatement;

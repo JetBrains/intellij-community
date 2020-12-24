@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -230,6 +231,11 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   
   public void testHeavilyBrokenFile6() {
     doTest(null);
+  }
+
+  public void testAnnotationArgument() {
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class, 
+                 "Introduce Variable refactoring is not supported in the current context", () -> doTest(null));
   }
 
   public void testNullTypeAddCast() {
