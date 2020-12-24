@@ -26,11 +26,7 @@ internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBrid
   }
 
   internal fun libraryEntities(): Sequence<LibraryEntity> {
-    val moduleLibraryTableId = LibraryTableId.ModuleLibraryTableId(moduleBridge.moduleEntityId)
-
-    return moduleBridge.entityStorage.current
-      .entities(LibraryEntity::class.java)
-      .filter { it.tableId == moduleLibraryTableId }
+    return moduleBridge.entityStorage.current.referrers(moduleBridge.moduleEntityId, LibraryEntity::class.java)
   }
 
   override fun getLibraryIterator(): Iterator<Library> {
