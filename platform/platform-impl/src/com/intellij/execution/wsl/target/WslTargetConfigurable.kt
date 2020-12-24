@@ -3,8 +3,10 @@ package com.intellij.execution.wsl.target
 
 import com.intellij.execution.target.getTargetType
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WSLUtil
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -12,7 +14,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.layout.*
-import java.util.ArrayList
 import javax.swing.JList
 
 class WslTargetConfigurable(val config: WslTargetEnvironmentConfiguration) :
@@ -35,12 +36,29 @@ class WslTargetConfigurable(val config: WslTargetEnvironmentConfiguration) :
   }
 
   private fun createComboBox(): ComboBox<Ref<WSLDistribution?>> {
-    val model = CollectionComboBoxModel(ArrayList(WSLUtil.getAvailableDistributions().map { Ref.create(it) }))
+    val selectedDistribution = config.distribution
+    val selectedItem = Ref.create(selectedDistribution)
+    val model = CollectionComboBoxModel(mutableListOf(selectedItem))
     val comboBox: ComboBox<Ref<WSLDistribution?>> = ComboBox()
     comboBox.model = model
     comboBox.renderer = WslDistributionRenderer()
-    comboBox.selectedItem = Ref.create(config.distribution)
+    comboBox.selectedItem = selectedItem
     comboBox.prototypeDisplayValue = Ref.create()
+
+    WslDistributionManager.getInstance().installedDistributionsFuture.thenAccept { distributions ->
+      var result = distributions
+      if (selectedDistribution != null && distributions.find { it.msId.equals(selectedDistribution.msId, ignoreCase = true) } == null) {
+        result = distributions + selectedDistribution
+      }
+      ApplicationManager.getApplication().invokeLater(Runnable {
+        model.removeAll()
+        val data = result.map { Ref.create(it) }
+        model.addAll(0, data)
+        if (selectedDistribution != null) {
+          comboBox.selectedItem = data.find { it.get().msId.equals(selectedDistribution.msId, ignoreCase = true) }
+        }
+      }, ModalityState.any())
+    }
     return comboBox
   }
 
