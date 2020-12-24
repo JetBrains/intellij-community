@@ -213,4 +213,29 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testSubprocessIsolated() {
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_isolated.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_python_subprocess_another_helper.py"), 2);
+        setWaitForTermination(false);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("42");
+        resume();
+        waitForOutput("Module returned code 0");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("python3");
+      }
+    });
+  }
 }
