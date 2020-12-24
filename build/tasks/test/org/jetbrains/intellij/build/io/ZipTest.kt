@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.zip.ImmutableZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -23,13 +24,13 @@ class ZipTest {
     Files.createDirectories(dir)
     val fileDescriptors = listOf(Entry("lib.jar", true), Entry("lib.zip", true), Entry("image.png", true), Entry("scalable-image.svg", true), Entry("readme.txt", true))
     for (entry in fileDescriptors) {
-      Files.write(dir.resolve(entry.path), random.nextBytes(42))
+      Files.write(dir.resolve(entry.path), random.nextBytes(1024))
     }
 
     val archiveFile = fsRule.fs.getPath("/archive.zip")
     zip(archiveFile, mapOf(dir to ""))
 
-    val zipFile = com.intellij.util.zip.ImmutableZipFile.load(archiveFile)
+    val zipFile = ImmutableZipFile.load(archiveFile)
     for (entry in fileDescriptors) {
       assertThat(zipFile.getEntry(entry.path).method)
         .describedAs(entry.path)
@@ -53,7 +54,7 @@ class ZipTest {
     val archiveFile = fsRule.fs.getPath("/archive.zip")
     zip(archiveFile, mapOf(dir to ""))
 
-    val zipFile = com.intellij.util.zip.ImmutableZipFile.load(archiveFile)
+    val zipFile = ImmutableZipFile.load(archiveFile)
     for (name in list) {
       assertThat(zipFile.getEntry(name)).isNotNull()
     }
@@ -75,9 +76,27 @@ class ZipTest {
     val archiveFile = fsRule.fs.getPath("/archive.zip")
     zip(archiveFile, mapOf(dir to "test"))
 
-    val zipFile = com.intellij.util.zip.ImmutableZipFile.load(archiveFile)
+    val zipFile = ImmutableZipFile.load(archiveFile)
     for (name in list) {
       assertThat(zipFile.getEntry("test/$name")).isNotNull()
+    }
+  }
+
+  @Test
+  fun `small file`() {
+    val dir = fsRule.fs.getPath("/dir")
+    val file = dir.resolve("samples/nested_dir/__init__.py")
+    Files.createDirectories(file.parent)
+    Files.writeString(file, "\n")
+
+    val archiveFile = fsRule.fs.getPath("/archive.zip")
+    zip(archiveFile, mapOf(dir to ""))
+
+    val zipFile = ImmutableZipFile.load(archiveFile)
+    for (name in zipFile.entries) {
+      val entry = zipFile.getEntry("samples/nested_dir/__init__.py")
+      assertThat(entry).isNotNull()
+      assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
     }
   }
 }
