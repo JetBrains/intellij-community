@@ -9,6 +9,7 @@ import training.learn.LessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.parseLessonSample
 
 class MultipleSelectionHtmlLesson(module: Module)
@@ -41,19 +42,30 @@ class MultipleSelectionHtmlLesson(module: Module)
       prepareSample(sample)
 
       actionTask("SelectNextOccurrence") {
+        restoreIfModifiedOrMoved()
         LessonsBundle.message("multiple.selections.select.symbol", action(it))
       }
       actionTask("SelectNextOccurrence") {
+        restoreState {
+          sample.text != editor.document.text || editor.selectionModel.selectedText != "th"
+        }
         LessonsBundle.message("multiple.selections.select.next.symbol", action(it))
       }
       actionTask("UnselectPreviousOccurrence") {
+        restoreState {
+          sample.text != editor.document.text || editor.caretModel.caretCount < 2
+        }
         LessonsBundle.message("multiple.selections.deselect.symbol", action(it))
       }
       actionTask("SelectAllOccurrences") {
+        restoreIfModifiedOrMoved()
         LessonsBundle.message("multiple.selections.select.all", action(it))
       }
       task {
         text(LessonsBundle.message("multiple.selections.replace", code("td"), code("th")))
+        restoreState {
+          editor.caretModel.caretCount != 6
+        }
         stateCheck { checkMultiChange() }
         test { type("td") }
       }

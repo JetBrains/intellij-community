@@ -49,6 +49,7 @@ open class TaskRuntimeContext(private val lessonExecutor: LessonExecutor,
   fun setSample(sample: LessonSample) {
     invokeLater(ModalityState.NON_MODAL) {
       (editor as? EditorEx)?.isViewer = false
+      editor.caretModel.removeSecondaryCarets()
       setDocumentCode(sample.text)
       setCaret(sample.getPosition(0))
     }
