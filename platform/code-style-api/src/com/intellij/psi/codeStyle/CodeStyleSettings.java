@@ -108,10 +108,18 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
     if (loadExtensions) {
       for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
-        addCustomSettings(factory.createCustomSettings(this));
+        if (!factory.getClass().getSimpleName().startsWith("AndroidStudio")) { // Android Studio: b/175998141
+          addCustomSettings(factory.createCustomSettings(this));
+        }
       }
       for (CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getSettingsPagesProviders()) {
         addCustomSettings(factory.createCustomSettings(this));
+      }
+      // Android Studio: also apply our predefined Android code styles (b/175998141).
+      for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
+        if (factory.getClass().getSimpleName().startsWith("AndroidStudio")) {
+          addCustomSettings(factory.createCustomSettings(this));
+        }
       }
     }
 
