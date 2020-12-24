@@ -35,8 +35,9 @@ internal class MnemonicPainter(ch: Char) : RegionPainter<Component?> {
     }
     if (foreground != null) {
       g.paint = foreground
-      val font = EditorFontType.PLAIN.globalFont
+      UISettings.setupAntialiasing(g)
       val frc = g.fontRenderContext
+      val font = EditorFontType.PLAIN.globalFont
 
       val size1 = height - 2f * thickness
       val vector1 = font.deriveFont(size1).createGlyphVector(frc, string)
@@ -48,7 +49,6 @@ internal class MnemonicPainter(ch: Char) : RegionPainter<Component?> {
 
       val dx = x - bounds2.x + .5 * (width - bounds2.width)
       val dy = y - bounds2.y + .5 * (height - bounds2.height)
-      UISettings.setupAntialiasing(g)
       g.drawGlyphVector(vector2, dx.toFloat(), dy.toFloat())
     }
     if (thickness > 0) {
