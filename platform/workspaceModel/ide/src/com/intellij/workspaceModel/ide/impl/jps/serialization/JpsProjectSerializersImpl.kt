@@ -117,8 +117,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val addedFileUrls = change.addedFileUrls.flatMap {
       val file = JpsPathUtil.urlToFile(it)
       if (file.isDirectory) {
-        val baseUrl = JpsPathUtil.pathToUrl(file.path)
-        file.list()?.map { fileName -> "$baseUrl/$fileName" } ?: emptyList()
+        file.list()?.map { fileName -> "$it/$fileName" } ?: emptyList()
       } else listOf(it)
     }.toSet()
 
