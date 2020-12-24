@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Container for the information necessary to execute or update an {@link AnAction}.
@@ -29,7 +27,6 @@ public class AnActionEvent implements PlaceProvider {
   @JdkConstants.InputEventMask private final int myModifiers;
   private boolean myWorksInInjected;
   @NonNls private static final String ourInjectedPrefix = "$injected$.";
-  private static final Map<String, String> ourInjectedIds = new HashMap<>();
   private final boolean myIsContextMenuAction;
   private final boolean myIsActionToolbar;
 
@@ -144,9 +141,7 @@ public class AnActionEvent implements PlaceProvider {
   @NonNls
   @NotNull
   public static String injectedId(@NotNull String dataId) {
-    synchronized(ourInjectedIds) {
-      return ourInjectedIds.computeIfAbsent(dataId, i -> ourInjectedPrefix + i);
-    }
+    return ourInjectedPrefix + dataId;
   }
 
   @NonNls
