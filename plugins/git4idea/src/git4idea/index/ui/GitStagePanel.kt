@@ -59,7 +59,7 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
-                             isHorizontalLayout: Boolean,
+                             isHorizontal: Boolean,
                              isEditorDiffPreview: Boolean,
                              disposableParent: Disposable,
                              private val activate: () -> Unit) :
@@ -119,8 +119,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
     treePanelWithToolbar.add(progressStripe, BorderLayout.CENTER)
 
-    treeMessageSplitter = OnePixelSplitter(!isHorizontalLayout, "git.stage.tree.message.splitter", 0.7f)
-    treeMessageSplitter.orientation = !(isHorizontalLayout && isEditorDiffPreview)
+    treeMessageSplitter = OnePixelSplitter(true, "git.stage.tree.message.splitter", 0.7f)
     treeMessageSplitter.firstComponent = treePanelWithToolbar
     treeMessageSplitter.secondComponent = commitPanel
 
@@ -144,6 +143,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       progressStripe.startLoadingImmediately()
     }
     updateChangesStatusPanel()
+    updateLayout(isHorizontal, isEditorDiffPreview)
 
     Disposer.register(disposableParent, this)
 
@@ -173,8 +173,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     return null
   }
 
-  fun setOrientation(isHorizontalLayout: Boolean) {
-    treeMessageSplitter.orientation = !(isHorizontalLayout && editorTabPreview != null)
+  fun updateLayout(isHorizontal: Boolean, isEditorDiffPreview: Boolean) {
+    val newOrientation = !(isHorizontal && isEditorDiffPreview)
+    if (treeMessageSplitter.orientation != newOrientation) {
+      treeMessageSplitter.orientation = newOrientation
+    }
   }
 
   fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {

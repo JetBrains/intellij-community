@@ -42,7 +42,7 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
 
     project.messageBus.connect(disposable!!).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun stateChanged(toolWindowManager: ToolWindowManager) {
-        gitStagePanel.setOrientation(isHorizontalLayout())
+        gitStagePanel.updateLayout(isHorizontalLayout(), ChangesViewContentManager.isCommitToolWindowShown(project))
       }
     })
 
