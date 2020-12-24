@@ -307,8 +307,16 @@ public class DfaExpressionFactory {
     if (member instanceof PsiMember && qualifier != null) {
       PsiClass fieldClass = ((PsiMember)member).getContainingClass();
       PsiClassType classType = ObjectUtils.tryCast(qualifier.getType(), PsiClassType.class);
-      if (classType != null && InheritanceUtil.isInheritorOrSelf(classType.resolve(), fieldClass, true)) {
-        return TypeConversionUtil.getSuperClassSubstitutor(fieldClass, classType);
+      if (classType != null && fieldClass != null && (fieldClass.hasTypeParameters() || fieldClass.getContainingClass() != null)) {
+        PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+        PsiClass derivedClass = classResolveResult.getElement();
+        if (derivedClass != null) {
+          PsiSubstitutor substitutor = TypeConversionUtil
+            .getMaybeSuperClassSubstitutor(fieldClass, derivedClass, classResolveResult.getSubstitutor());
+          if (substitutor != null) {
+            return substitutor;
+          }
+        }
       }
     }
     return PsiSubstitutor.EMPTY;
