@@ -3,13 +3,16 @@ package com.jetbrains.python.run
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.EnvReader
 import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
-internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
+internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : EnvReader() {
   companion object {
     private val LOG = Logger.getInstance(PyVirtualEnvReader::class.java)
 
@@ -31,8 +34,8 @@ internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : Envir
 
   override fun getShell(): String? {
     return when {
-      File("/bin/bash").exists() -> "/bin/bash"
-      File("/bin/sh").exists() -> "/bin/sh"
+      Files.exists(Path.of("/bin/bash")) -> "/bin/bash"
+      Files.exists(Path.of("/bin/sh")) -> "/bin/sh"
       else -> super.getShell()
     }
   }
@@ -41,7 +44,7 @@ internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : Envir
     try {
       if (SystemInfo.isUnix) {
         // pass shell environment for correct virtualenv environment setup (virtualenv expects to be executed from the terminal)
-        return super.readShellEnv(EnvironmentUtil.getEnvironmentMap())
+        return super.readShellEnv(null, EnvironmentUtil.getEnvironmentMap())
       }
       else {
         if (activate != null) {

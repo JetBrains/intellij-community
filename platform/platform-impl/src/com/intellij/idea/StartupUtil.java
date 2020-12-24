@@ -230,7 +230,13 @@ public final class StartupUtil {
     });
 
     Activity subActivity = StartUpMeasurer.startActivity("environment loading");
-    EnvironmentUtil.loadEnvironment(subActivity::end);
+    Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
+    if (envReaderFile == null) {
+      subActivity.end();
+    }
+    else {
+      EnvironmentUtil.loadEnvironment(envReaderFile, subActivity::end);
+    }
 
     if (!configImportNeeded) {
       runPreAppClass(log);
