@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +79,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
       result
         .add(describeDecorators(function, Function.identity(), TO_ONE_LINE_AND_ESCAPE, ", ", "\n"))
-        .add(describeFunction(function, originalElement, context, true));
+        .add(describeFunction(function, context, true));
 
       final String docStringSummary = getDocStringSummary(function);
       if (docStringSummary != null) {
@@ -128,38 +127,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
   @NotNull
   static ChainIterable<String> describeFunction(@NotNull PyFunction function,
-                                                @Nullable PsiElement original,
                                                 @NotNull TypeEvalContext context,
                                                 boolean forTooltip) {
-
-    final ChainIterable<String> result = new ChainIterable<>(describeFunctionWithTypes(function, context, forTooltip));
-
-    if (showOverloads(function, original, context)) {
-      final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
-      if (!overloads.isEmpty()) {
-        result.addItem("\nPossible types:\n");
-        boolean first = true;
-        for (PyFunction overload : overloads) {
-          if (!first) {
-            result.addItem("\n");
-          }
-          result.addItem(BULLET_POINT).addItem(" ");
-          describeTypeWithLinks(context.getType(overload), overload, context, function, result);
-          first = false;
-        }
-      }
-    }
-
-    return result;
-  }
-
-  private static boolean showOverloads(@NotNull PyFunction definition, @Nullable PsiElement original, @NotNull TypeEvalContext context) {
-    if (!PyiUtil.isOverload(definition, context)) {
-      return true;
-    }
-    final PyFunction containing = PsiTreeUtil.getParentOfType(original, PyFunction.class, false,
-                                                              PyStatementList.class, PyParameterList.class);
-    return containing == null || !(containing == original || containing.getNameIdentifier() == original);
+    return new ChainIterable<>(describeFunctionWithTypes(function, context, forTooltip));
   }
 
   @NotNull
