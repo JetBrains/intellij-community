@@ -255,8 +255,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   @VisibleForTesting
   public static void indentBlock(Project project, Editor editor, final int startOffset, final int endOffset, int originalCaretCol) {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.commitAllDocuments();
     final Document document = editor.getDocument();
+    documentManager.commitDocument(document);
     PsiFile file = documentManager.getPsiFile(document);
     if (file == null) {
       return;
@@ -271,11 +271,12 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   private static void indentEachLine(Project project, Editor editor, int startOffset, int endOffset) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return;
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    final CharSequence text = editor.getDocument().getCharsSequence();
+    final CharSequence text = document.getCharsSequence();
     if (startOffset > 0 && endOffset > startOffset + 1 && text.charAt(endOffset - 1) == '\n' && text.charAt(startOffset - 1) == '\n') {
       // There is a possible situation that pasted text ends by a line feed. We don't want to proceed it when a text is
       // pasted at the first line column.
@@ -309,8 +310,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   private static void reformatBlock(final Project project, final Editor editor, final int startOffset, final int endOffset) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return;
     try {
       CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
     }
@@ -431,7 +434,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     // Sync document and PSI for correct formatting processing.
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     if (file == null) {
       return;
     }
