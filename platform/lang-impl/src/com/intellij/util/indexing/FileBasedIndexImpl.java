@@ -5,6 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import com.intellij.AppTopics;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -187,8 +188,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ID.unloadId(extension.getName());
       }
     }, null);
-
-    initComponent();
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -347,7 +346,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void initComponent() {
+  void loadIndexes() {
     LOG.assertTrue(myRegisteredIndexes == null);
     myStorageBufferingHandler.resetState();
     myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);

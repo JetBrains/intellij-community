@@ -84,7 +84,7 @@ public final class FileBasedIndexSwitcher {
     myNestedLevelCount--;
     if (myNestedLevelCount == 0) {
       RebuildStatus.reset();
-      myFileBasedIndex.initComponent();
+      myFileBasedIndex.loadIndexes();
       boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
       if (unitTestMode) {
