@@ -38,7 +38,7 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
   public void performCommand(@NotNull ImperativeCommand.Environment env) {
     Project project = getProject();
     PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
-    int offset = env.generateValue(Generator.integers(0, getDocument().getTextLength()).noShrink(), "Offset");
+    int offset = env.generateValue(Generator.integers(0, getDocument().getTextLength()).noShrink(), null);
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
     assert editor != null;
     PsiElement element = getFile().findElementAt(offset);
