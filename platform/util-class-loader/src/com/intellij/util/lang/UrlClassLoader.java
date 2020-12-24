@@ -90,17 +90,21 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(createDefaultBuilderForJdk(parent), null, isParallelCapable);
 
+    registerInClassLoaderValueMap(parent, this);
+  }
+
+  protected static void registerInClassLoaderValueMap(@NotNull ClassLoader parent, @NotNull ClassLoader classLoader) {
     // without this ToolProvider.getSystemJavaCompiler() does not work in jdk 9+
     try {
       Field f = ClassLoader.class.getDeclaredField("classLoaderValueMap");
       f.setAccessible(true);
-      f.set(this, f.get(parent));
+      f.set(classLoader, f.get(parent));
     }
     catch (Exception ignored) {
     }
   }
 
-  private static @NotNull UrlClassLoader.Builder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
+  protected static @NotNull UrlClassLoader.Builder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
     Builder configuration = new Builder();
 
     if (parent instanceof URLClassLoader) {

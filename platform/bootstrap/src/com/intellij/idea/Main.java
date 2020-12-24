@@ -8,7 +8,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.lang.PathClassLoader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -136,15 +136,17 @@ public final class Main {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
+    startupTimings.put("plugin updates install", System.nanoTime());
     // this check must be performed before system directories are locked
-    String configPath = PathManager.getConfigPath();
-    boolean configImportNeeded = !isHeadless() && !Files.exists(Paths.get(configPath));
-    if (!configImportNeeded) {
-      installPluginUpdates();
+    if (!isCommandLine || Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
+      boolean configImportNeeded = !isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()));
+      if (!configImportNeeded) {
+        installPluginUpdates();
+      }
     }
 
     startupTimings.put("classloader init", System.nanoTime());
-    UrlClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
+    PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
     startupTimings.put("MainRunner search", System.nanoTime());
@@ -161,10 +163,6 @@ public final class Main {
 
   @SuppressWarnings("HardCodedStringLiteral")
   private static void installPluginUpdates() {
-    if (isCommandLine() && !Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
-      return;
-    }
-
     try {
       StartupActionScriptManager.executeActionScript();
     }

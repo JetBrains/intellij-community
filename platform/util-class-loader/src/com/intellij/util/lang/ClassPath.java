@@ -2,6 +2,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class ClassPath {
   static final String CLASS_EXTENSION = ".class";
 
@@ -154,6 +156,18 @@ public final class ClassPath {
   private synchronized void addFiles(List<Path> files) {
     for (int i = files.size() - 1; i >= 0; i--) {
       this.files.add(files.get(i));
+    }
+    allUrlsWereProcessed = false;
+  }
+
+  // think twice before use
+  public synchronized void appendFiles(@NotNull List<Path> newList) {
+    Set<Path> existing = new HashSet<>(files);
+    for (int i = newList.size() - 1; i >= 0; i--) {
+      Path file = newList.get(i);
+      if (!existing.contains(file)) {
+        files.add(file);
+      }
     }
     allUrlsWereProcessed = false;
   }

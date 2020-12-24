@@ -71,7 +71,7 @@ private fun start() {
   @Suppress("SpellCheckingInspection")
   LOG.info("Custom plugins: ${getAdditionalModules()?.joinToString() ?: "not set (use VM property `additional.modules` to specify additional module ids)"}")
   @Suppress("SpellCheckingInspection")
-  LOG.info("Run IDE with VM property -Didea.use.dev.build.server=true to use it")
+  LOG.info("Run IDE on module intellij.platform.bootstrap with VM properties -Didea.use.dev.build.server=true -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
   httpServer.start()
 
   val doneSignal = CountDownLatch(1)

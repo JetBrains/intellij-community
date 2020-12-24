@@ -15,6 +15,7 @@ public final class PathClassLoader extends UrlClassLoader {
     Boolean.getBoolean("idea.use.lock.free.zip.impl") ? file -> new ZipResourceFile(file) : null;
 
   private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+  private static final ClassLoader appClassLoader = PathClassLoader.class.getClassLoader();
 
   private final BytecodeTransformer transformer;
 
@@ -32,6 +33,31 @@ public final class PathClassLoader extends UrlClassLoader {
     super(builder, isParallelCapable);
 
     this.transformer = transformer;
+  }
+
+  // for java.system.class.loader
+  @ApiStatus.Internal
+  public PathClassLoader(@NotNull ClassLoader parent) {
+    super(createDefaultBuilderForJdk(parent), null, isParallelCapable);
+
+    transformer = null;
+    registerInClassLoaderValueMap(parent, this);
+
+    // who knows
+    assert appClassLoader != this;
+  }
+
+  @Override
+  protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
+    if (name.startsWith("com.intellij.util.lang.")) {
+      return appClassLoader.loadClass(name);
+    }
+
+    Class<?> clazz = classPath.findClass(name);
+    if (clazz == null) {
+      throw new ClassNotFoundException(name);
+    }
+    return clazz;
   }
 
   @Override

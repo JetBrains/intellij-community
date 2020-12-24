@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -37,19 +36,28 @@ public final class BootstrapClassLoaderUtil {
     return Logger.getInstance(BootstrapClassLoaderUtil.class);
   }
 
-  public static @NotNull UrlClassLoader initClassLoader() throws IOException {
-    Collection<Path> classpath = new LinkedHashSet<>();
-    Path distDir = Paths.get(PathManager.getHomePath());
+  public static @NotNull PathClassLoader initClassLoader() throws IOException {
+    Path distDir = Path.of(PathManager.getHomePath());
     if (Boolean.getBoolean("idea.use.dev.build.server")) {
-      loadClassPathFromDevBuildServer(classpath);
+      ClassLoader classLoader = BootstrapClassLoaderUtil.class.getClassLoader();
+      if (!(classLoader instanceof PathClassLoader)) {
+        //noinspection SpellCheckingInspection,UseOfSystemOutOrSystemErr
+        System.err.println("Please run with VM option -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
+        System.exit(1);
+      }
+
+      List<Path> paths = loadClassPathFromDevBuildServer(distDir);
+      PathClassLoader result = (PathClassLoader)classLoader;
+      result.getClassPath().appendFiles(paths);
+      return result;
     }
-    else {
-      parseClassPathString(System.getProperty("java.class.path"), classpath);
-      addIdeaLibraries(distDir, classpath);
-    }
+
+    Collection<Path> classpath = new LinkedHashSet<>();
+    parseClassPathString(System.getProperty("java.class.path"), classpath);
+    addIdeaLibraries(distDir, classpath);
     parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
 
-    Path pluginDir = Paths.get(PathManager.getPluginsPath());
+    Path pluginDir = Path.of(PathManager.getPluginsPath());
     Path marketPlaceBootDir = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot");
     Path mpBoot = marketPlaceBootDir.resolve("marketplace-bootstrap.jar");
     boolean installMarketplace = shouldInstallMarketplace(distDir, mpBoot);
@@ -89,7 +97,7 @@ public final class BootstrapClassLoaderUtil {
     return new PathClassLoader(builder);
   }
 
-  private static void loadClassPathFromDevBuildServer(@NotNull Collection<Path> classpath) throws IOException {
+  private static List<Path> loadClassPathFromDevBuildServer(@NotNull Path distDir) throws IOException {
     String platformPrefix = System.getProperty("idea.platform.prefix", "idea");
     URL serverUrl = new URL("http://127.0.0.1:20854/build?platformPrefix=" + platformPrefix);
     //noinspection UseOfSystemOutOrSystemErr
@@ -111,17 +119,17 @@ public final class BootstrapClassLoaderUtil {
       throw new RuntimeException("Dev Build server not able to handle build request, see server's log for details");
     }
 
-    Path excludedModuleListPath = Paths.get(PathManager.getHomePath(), "out/dev-run", platformPrefix, "libClassPath.txt");
+    List<Path> result = new ArrayList<>();
+    FileSystem fs = FileSystems.getDefault();
+    Path excludedModuleListPath = distDir.resolve("out/dev-run/" + platformPrefix + "/libClassPath.txt");
     try (Stream<String> lineStream = Files.lines(excludedModuleListPath)) {
       lineStream.forEach(s -> {
         if (!s.isEmpty()) {
-          classpath.add(Paths.get(s));
+          result.add(fs.getPath(s));
         }
       });
     }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    return result;
   }
 
   private static boolean shouldInstallMarketplace(@NotNull Path homePath, @NotNull Path mpBoot) {
