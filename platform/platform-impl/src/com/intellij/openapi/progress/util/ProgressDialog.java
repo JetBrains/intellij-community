@@ -243,11 +243,14 @@ final class ProgressDialog implements Disposable {
   }
 
   void show() {
-    if (myWasShown) return;
+    if (myWasShown) {
+      return;
+    }
     myWasShown = true;
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    if (myParentWindow == null) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || myParentWindow == null) {
+      return;
+    }
     if (myPopup != null) {
       myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
     }
@@ -279,7 +282,7 @@ final class ProgressDialog implements Disposable {
     return myProgressWindow instanceof PotemkinProgress;
   }
 
-  private class MyDialogWrapper extends DialogWrapper {
+  private final class MyDialogWrapper extends DialogWrapper {
     private final boolean myIsCancellable;
 
     MyDialogWrapper(Project project, final boolean cancellable) {

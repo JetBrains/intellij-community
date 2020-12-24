@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.pycharm
 
 import com.intellij.openapi.util.io.FileUtil
-import groovy.io.FileType
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.ApplicationInfoProperties
@@ -11,11 +10,12 @@ import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.JetBrainsProductProperties
 
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-
-import static org.jetbrains.intellij.build.pycharm.PyCharmBuildOptions.GENERATE_INDICES_AND_STUBS_STEP
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 
 @CompileStatic
 abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
@@ -51,7 +51,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     }
 
     // Don't generate indices and stubs when building pycharm only from sources
-    context.executeStep("Generate indices and stubs", GENERATE_INDICES_AND_STUBS_STEP) {
+    context.executeStep("Generate indices and stubs", PyCharmBuildOptions.GENERATE_INDICES_AND_STUBS_STEP) {
       Path indicesFolder = PyCharmBuildOptions.getFolderForIndicesAndStubs(context)
       if (!Files.exists(indicesFolder)) {
         Files.createDirectories(indicesFolder)
@@ -70,7 +70,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
 
   @Override
   String getEnvironmentVariableBaseName(ApplicationInfoProperties applicationInfo) {
-    "PYCHARM"
+    return "PYCHARM"
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -87,11 +87,24 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
       }
     }
 
-    tempFolder.eachFileRecurse(FileType.FILES) {
-      if (it.fileName.toString().endsWith(".zip")) {
-        context.ant.unzip(src: it.toString(), dest: "${destination.toString()}/${it.fileName}")
+    unzipAllZips(tempFolder, destination, context)
+  }
+
+  private static Path unzipAllZips(Path tempFolder, Path destination, BuildContext buildContext) {
+    Files.walkFileTree(tempFolder, new SimpleFileVisitor<Path>() {
+      @Override
+      FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (file.fileName.toString().endsWith(".zip")) {
+          doUnzip(buildContext, file, destination)
+        }
+        return FileVisitResult.CONTINUE
       }
-    }
+    })
+  }
+
+  @CompileStatic(TypeCheckingMode.SKIP)
+  private static void doUnzip(BuildContext context, Path file, Path destination) {
+    context.ant.unzip(src: file.toString(), dest: "${destination.toString()}/${file.fileName}")
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -203,7 +216,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
       generateIndices(context, folderWithUnzipContent, temporaryIndexFolder)
     }
 
-    folderWithUnzipContent.deleteDir()
+    FileUtil.delete(folderWithUnzipContent)
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)

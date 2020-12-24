@@ -16,7 +16,7 @@ import java.util.Map;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class StatusBarProgress extends ProgressIndicatorBase {
+public final class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
   private final Map<StatusBar, Pair<@StatusBarText String, @StatusBarText String>> myStatusBar2SavedText = new HashMap<>();
   private boolean myScheduledStatusBarTextSave;

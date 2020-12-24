@@ -16,8 +16,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.io.getParentPath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtilRt
 import com.intellij.util.io.copy
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
@@ -27,7 +27,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 
@@ -175,7 +174,7 @@ fun getPaths(input: InputStream): Set<String> {
       var path = entry.name.trimEnd('/')
       result.add(path)
       while (true) {
-        path = getParentPath(path) ?: break
+        path = PathUtilRt.getParentPath(path).takeIf { it.isNotEmpty() } ?: break
         result.add(path)
       }
     }

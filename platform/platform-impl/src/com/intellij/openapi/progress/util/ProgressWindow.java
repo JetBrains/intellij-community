@@ -390,7 +390,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return getTitle() + " " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
   }
 
-  private class MyDelegate extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
+  private final class MyDelegate extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
     private long myLastUpdatedButtonTimestamp;
     @Override
     public void cancel() {

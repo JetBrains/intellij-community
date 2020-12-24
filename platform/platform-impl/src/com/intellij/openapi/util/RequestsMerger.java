@@ -21,7 +21,7 @@ import java.util.Map;
  * - if request had been submitted while refresh action was in progress, new refresh action is initiated right after first refresh action finishes
  */
 @SomeQueue
-public class RequestsMerger {
+public final class RequestsMerger {
   private static final Logger LOG = Logger.getInstance(RequestsMerger.class);
 
   private final Object myLock = new Object();

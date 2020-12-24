@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @SomeQueue
-public class ZipperUpdater {
+public final class ZipperUpdater {
   private final Alarm myAlarm;
   private boolean myRaised;
   private final Object myLock = new Object();
