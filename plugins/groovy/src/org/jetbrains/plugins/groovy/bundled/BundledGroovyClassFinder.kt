@@ -16,15 +16,4 @@ class BundledGroovyClassFinder(project: Project) : NonClasspathClassFinder(proje
     val root = bundledGroovyJarRoot ?: return emptyList()
     return listOf(root)
   }
-
-  override fun getSubPackages(psiPackage: PsiPackage, scope: GlobalSearchScope): Array<PsiPackage> {
-    val pkgName = psiPackage.qualifiedName
-    val names = getCache(scope).getSubpackageNames(pkgName, scope)
-    if (names.isEmpty()) return PsiPackage.EMPTY_ARRAY
-    val packages = names.map { name ->
-      val subPackageFqn = getQualifiedName(pkgName, name)
-      PsiPackageImpl(psiManager, subPackageFqn)
-    }
-    return if (packages.isEmpty()) PsiPackage.EMPTY_ARRAY else packages.toTypedArray()
-  }
 }
