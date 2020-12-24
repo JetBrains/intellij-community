@@ -8,6 +8,8 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.kind.IndexableSetContributorOriginImpl
 
 internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor,
                                                     private val projectAware: Boolean) : IndexableFilesIterator {
@@ -30,6 +32,8 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
     }
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
   }
+
+  override fun getOrigin(): IndexableSetOrigin = IndexableSetContributorOriginImpl(indexableSetContributor)
 
   private fun getName() = (indexableSetContributor as? ItemPresentation)?.presentableText
 

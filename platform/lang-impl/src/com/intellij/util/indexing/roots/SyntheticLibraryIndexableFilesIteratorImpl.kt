@@ -8,6 +8,8 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
+import com.intellij.util.indexing.roots.kind.SyntheticLibraryOriginImpl
 
 internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticLibrary: SyntheticLibrary) : SyntheticLibraryIndexableFilesIterator {
 
@@ -32,6 +34,8 @@ internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticL
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
   }
 
+  override fun getOrigin(): SyntheticLibraryOrigin = SyntheticLibraryOriginImpl(syntheticLibrary)
+
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
@@ -40,6 +44,4 @@ internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticL
     val roots = runReadAction { syntheticLibrary.allRoots }
     return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, fileFilter)
   }
-
-  override fun getSyntheticLibrary(): SyntheticLibrary = syntheticLibrary
 }

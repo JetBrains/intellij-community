@@ -10,6 +10,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
+import com.intellij.util.indexing.roots.kind.LibraryOriginImpl
 
 class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryIndexableFilesIterator {
   override fun getDebugName() = "Library ${library.presentableName}"
@@ -22,6 +24,10 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
       return IndexingBundle.message("indexable.files.provider.scanning.library.name", libraryName)
     }
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
+  }
+
+  override fun getOrigin(): LibraryOrigin {
+    return LibraryOriginImpl(library)
   }
 
   override fun iterateFiles(
@@ -40,9 +46,5 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
       }
     }
     return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, fileFilter)
-  }
-
-  override fun getLibrary(): Library {
-    return library
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
@@ -42,6 +43,12 @@ public interface IndexableFilesIterator {
    */
   @NlsContexts.ProgressText
   String getRootsScanningProgressText();
+
+  /**
+   * Represents origins (module, library, etc) of indexable file iterator.
+   */
+  @NotNull
+  IndexableSetOrigin getOrigin();
 
   /**
    * Iterates through all files and directories corresponding to this iterator.

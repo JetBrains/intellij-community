@@ -6,9 +6,8 @@ import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.ModuleIndexableFilesIterator
-import com.intellij.util.indexing.roots.ProjectIndexableFilesIterator
+import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
+import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
 
 /**
  * This class doesn't push any file properties, it is used for scanning the project for `*.run.xml` files - files with run configurations.
@@ -32,7 +31,7 @@ class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
   override fun startSession(project: Project): IndexableFileScanner.ScanSession {
     val runManagerImpl = RunManagerImpl.getInstanceImpl(project)
     return IndexableFileScanner.ScanSession {
-      if (it is ModuleIndexableFilesIterator || it is ProjectIndexableFilesIterator)
+      if (it is ModuleRootOrigin || it is ProjectFileOrDirOrigin)
         IndexableFileScanner.IndexableFileVisitor { fileOrDir ->
           if (isFileWithRunConfigs(fileOrDir)) {
             runManagerImpl.updateRunConfigsFromArbitraryFiles(emptyList(), listOf(fileOrDir.path))

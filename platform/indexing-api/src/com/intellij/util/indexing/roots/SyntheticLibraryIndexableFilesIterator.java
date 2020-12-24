@@ -2,11 +2,12 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.roots.SyntheticLibrary;
+import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
 public interface SyntheticLibraryIndexableFilesIterator extends IndexableFilesIterator {
-  @NotNull
-  SyntheticLibrary getSyntheticLibrary();
+  @Override
+  @NotNull SyntheticLibraryOrigin getOrigin();
 }

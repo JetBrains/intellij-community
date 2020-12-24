@@ -9,10 +9,12 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.kind.SdkOriginImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SdkIndexableFilesIteratorImpl(val sdk: Sdk) : IndexableFilesIterator {
+class SdkIndexableFilesIteratorImpl(private val sdk: Sdk) : IndexableFilesIterator {
   override fun getDebugName() = "$sdkPresentableName ${sdk.name}"
 
   private val sdkPresentableName: String
@@ -23,6 +25,8 @@ class SdkIndexableFilesIteratorImpl(val sdk: Sdk) : IndexableFilesIterator {
 
   override fun getRootsScanningProgressText() = IndexingBundle.message("indexable.files.provider.scanning.sdk", sdkPresentableName,
                                                                        sdk.name)
+
+  override fun getOrigin(): IndexableSetOrigin = SdkOriginImpl(sdk)
 
   override fun iterateFiles(
     project: Project,

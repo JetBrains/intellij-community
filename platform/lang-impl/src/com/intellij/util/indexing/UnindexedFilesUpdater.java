@@ -305,7 +305,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
       providerToFiles.put(provider, files);
       List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors =
-        ContainerUtil.mapNotNull(sessions, s -> s.createVisitor(provider));
+        ContainerUtil.mapNotNull(sessions, s -> s.createVisitor(provider.getOrigin()));
 
       IndexableFilesDeduplicateFilter thisProviderDeduplicateFilter =
         IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter);

@@ -4,7 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +37,13 @@ public interface IndexableFileScanner {
      * <br/>
      * One can use {@code fileSet} to determine scanned file origins: module, library, sdk, etc. {@see IndexableFilesIterator} for details.
      *
-     * @param fileSet the file set being scanned
+     * @param indexableSetOrigin the file set being scanned
      *
      * @return a visitor is being used for {@code fileSet} scanning or
      * {@code null} if the indexable file set should not be processed by a {@link IndexableFileScanner}.
      */
     @Nullable
-    IndexableFileVisitor createVisitor(@NotNull IndexableFilesIterator fileSet);
+    IndexableFileVisitor createVisitor(@NotNull IndexableSetOrigin indexableSetOrigin);
   }
 
   /**

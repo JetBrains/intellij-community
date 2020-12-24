@@ -10,6 +10,8 @@ import com.intellij.openapi.roots.impl.ModuleFileIndexImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
+import com.intellij.util.indexing.roots.kind.ModuleRootOriginImpl
 
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
                                                 private val root: VirtualFile) : ModuleIndexableFilesIterator {
@@ -37,13 +39,11 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
     return IndexingBundle.message("indexable.files.provider.scanning.module.name", module.name)
   }
 
+  override fun getOrigin(): ModuleRootOrigin = ModuleRootOriginImpl(module, root)
+
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean = ModuleRootManager.getInstance(module).fileIndex.iterateContentUnderDirectory(root, fileIterator, fileFilter)
-
-  override fun getModule(): Module = module
-
-  override fun getRoot(): VirtualFile = root
 }

@@ -192,7 +192,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
                                  @NotNull List<IndexableFileScanner> scanners,
                                  @NotNull IndexableFilesIterator indexableFilesIterator) {
     List<IndexableFileScanner.IndexableFileVisitor> sessions =
-      ContainerUtil.mapNotNull(scanners, visitor -> visitor.startSession(myProject).createVisitor(indexableFilesIterator));
+      ContainerUtil.mapNotNull(scanners, visitor -> visitor.startSession(myProject).createVisitor(indexableFilesIterator.getOrigin()));
     indexableFilesIterator.iterateFiles(myProject, fileOrDir -> {
       applyPushersToFile(fileOrDir, pushers, null);
       applyScannersToFile(fileOrDir, sessions);
@@ -287,7 +287,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     scanProject(myProject, moduleFileSet -> {
       final Object[] moduleValues = new Object[pushers.size()];
       for (int i = 0; i < moduleValues.length; i++) {
-        moduleValues[i] = pushers.get(i).getImmediateValue(moduleFileSet.getModule());
+        moduleValues[i] = pushers.get(i).getImmediateValue(moduleFileSet.getOrigin().getModule());
       }
       return fileOrDir -> {
         applyPushersToFile(fileOrDir, pushers, moduleValues);
