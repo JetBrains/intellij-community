@@ -5,6 +5,9 @@
 
         <completion.contributor language="XML" implementationClass="ru.adelf.idea.dotenv.php.PhpunitEnvCompletionContributor"/>
         <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.php.PhpunitEnvCompletionContributor"/>
+
+        <!--suppress PluginXmlValidity -->
+        <fileTypeOverrider implementation="ru.adelf.idea.dotenv.php.PhpFileTypeOverrider"/>
     </extensions>
 
     <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
