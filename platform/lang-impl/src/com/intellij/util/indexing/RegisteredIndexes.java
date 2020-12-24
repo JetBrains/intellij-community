@@ -48,9 +48,9 @@ final class RegisteredIndexes {
                     @NotNull FileBasedIndexImpl fileBasedIndex) {
     myFileDocumentManager = fileDocumentManager;
     myFileBasedIndex = fileBasedIndex;
-    myStateFuture = IndexInfrastructure.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
+    myStateFuture = IndexDataInitializer.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
 
-    if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
+    if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         waitUntilIndicesAreInitialized();
       });
@@ -102,7 +102,7 @@ final class RegisteredIndexes {
   }
 
   void ensureLoadedIndexesUpToDate() {
-    myAllIndicesInitializedFuture = IndexInfrastructure.submitGenesisTask(() -> {
+    myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(() -> {
       if (!myShutdownPerformed.get()) {
         myFileBasedIndex.getChangedFilesCollector().ensureUpToDateAsync();
       }

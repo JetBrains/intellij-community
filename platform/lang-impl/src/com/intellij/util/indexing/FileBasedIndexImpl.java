@@ -1080,7 +1080,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final @NotNull Throwable throwable) {
     if (!myRegisteredIndexes.isExtensionsDataLoaded()) {
-      IndexInfrastructure.submitGenesisTask(() -> {
+      IndexDataInitializer.submitGenesisTask(() -> {
         waitUntilIndicesAreInitialized(); // should be always true here since the genesis pool is sequential
         doRequestRebuild(indexId, throwable);
         return null;

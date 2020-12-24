@@ -514,9 +514,9 @@ public final class StubIndexImpl extends StubIndexEx {
     // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
     FileBasedIndex.getInstance();
     myStateFuture = new CompletableFuture<>();
-    Future<AsyncState> future = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
+    Future<AsyncState> future = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
 
-    if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
+    if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
       try {
         future.get();
       }
@@ -666,37 +666,9 @@ public final class StubIndexImpl extends StubIndexEx {
     }
   }
 
-  private final class StubIndexInitialization extends IndexInfrastructure.DataInitialization<AsyncState> {
+  private final class StubIndexInitialization extends IndexDataInitializer<AsyncState> {
     private final AsyncState state = new AsyncState();
     private final IndexVersionRegistrationSink indicesRegistrationSink = new IndexVersionRegistrationSink();
-
-    @Override
-    protected void prepare() {
-      Iterator<StubIndexExtension<?, ?>> extensionsIterator;
-      if (IndexInfrastructure.hasIndices()) {
-        extensionsIterator = StubIndexExtension.EP_NAME.getIterable().iterator();
-      }
-      else {
-        extensionsIterator = Collections.emptyIterator();
-      }
-
-      boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
-      while (extensionsIterator.hasNext()) {
-        StubIndexExtension<?, ?> extension = extensionsIterator.next();
-        if (extension == null) {
-          break;
-        }
-        // initialize stub index keys
-        extension.getKey();
-
-        addNestedInitializationTask(() -> registerIndexer(extension, forceClean, state, indicesRegistrationSink));
-      }
-    }
-
-    @Override
-    protected void onThrowable(@NotNull Throwable t) {
-      LOG.error(t);
-    }
 
     @Override
     protected AsyncState finish() {
@@ -712,6 +684,32 @@ public final class StubIndexImpl extends StubIndexEx {
       myInitialized = true;
       myStateFuture.complete(state);
       return state;
+    }
+
+    @NotNull
+    @Override
+    protected Collection<ThrowableRunnable<?>> prepareTasks() {
+      Iterator<StubIndexExtension<?, ?>> extensionsIterator;
+      if (IndexInfrastructure.hasIndices()) {
+        extensionsIterator = StubIndexExtension.EP_NAME.getIterable().iterator();
+      }
+      else {
+        extensionsIterator = Collections.emptyIterator();
+      }
+
+      boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
+      List<ThrowableRunnable<?>> tasks = new ArrayList<>();
+      while (extensionsIterator.hasNext()) {
+        StubIndexExtension<?, ?> extension = extensionsIterator.next();
+        if (extension == null) {
+          break;
+        }
+        // initialize stub index keys
+        extension.getKey();
+
+        tasks.add(() -> registerIndexer(extension, forceClean, state, indicesRegistrationSink));
+      }
+      return tasks;
     }
   }
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import java.util.*;
 
 import static com.intellij.serviceContainer.ComponentManagerImplKt.handleComponentError;
 
-class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitialization<IndexConfiguration> {
+class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfiguration> {
   private static final NotificationGroup NOTIFICATIONS = NotificationGroup.balloonGroup("Indexing", PluginManagerCore.CORE_ID);
   private static final Logger LOG = Logger.getInstance(FileBasedIndexDataInitialization.class);
 
@@ -44,12 +45,14 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
     myRegisteredIndexes = registeredIndexes;
   }
 
-  private void initAssociatedDataForExtensions() {
+  @NotNull
+  private Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
     Iterator<FileBasedIndexExtension<?, ?>> extensions =
       IndexInfrastructure.hasIndices() ?
       ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator() :
       Collections.emptyIterator();
+    List<ThrowableRunnable<?>> tasks = new ArrayList<>();
 
     // todo: init contentless indices first ?
     while (extensions.hasNext()) {
@@ -60,7 +63,7 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
 
       myRegisteredIndexes.registerIndexExtension(extension);
 
-      addNestedInitializationTask(() -> {
+      tasks.add(() -> {
         try {
           FileBasedIndexImpl.registerIndexer(extension, state, registrationResultSink);
         }
@@ -75,10 +78,13 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
 
     myRegisteredIndexes.extensionsDataWasLoaded();
     activity.end();
+
+    return tasks;
   }
 
+  @NotNull
   @Override
-  protected void prepare() {
+  protected Collection<ThrowableRunnable<?>> prepareTasks() {
     // PersistentFS lifecycle should contain FileBasedIndex lifecycle, so,
     // 1) we call for it's instance before index creation to make sure it's initialized
     // 2) we dispose FileBasedIndex before PersistentFS disposing
@@ -89,7 +95,7 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
     Disposer.register(fs, disposable);
     myFileBasedIndex.setUpShutDownTask();
 
-    initAssociatedDataForExtensions();
+    Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions();
 
     PersistentIndicesConfiguration.loadConfiguration();
 
@@ -103,11 +109,8 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
     if (currentVersionCorrupted) {
       CorruptionMarker.dropIndexes();
     }
-  }
 
-  @Override
-  protected void onThrowable(@NotNull Throwable t) {
-    FileBasedIndexImpl.LOG.error(t);
+    return tasks;
   }
 
   @Override
