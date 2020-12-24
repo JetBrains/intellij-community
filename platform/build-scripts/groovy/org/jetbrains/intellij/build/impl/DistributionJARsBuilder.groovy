@@ -1233,6 +1233,13 @@ class DistributionJARsBuilder {
               "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"", //we leave element unclosed to allow other attributes
               !toPublish ? "" :
               "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\" $eapAttribute ")
+
+      //hack for publishing: we plugin is compatible only with WebStorm
+      if (toPublish && text.contains("code=\"PDB\"") &&
+          buildContext.getApplicationInfo().productName == "WebStorm") {
+        text = text.replace("Database Tools and SQL", "Database Tools and SQL for WebStorm")
+        text = text.replace("IntelliJ-based IDEs", "WebStorm")
+      }
       buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parentFile.parentFile.name} <product-descriptor/>")
     }
 
