@@ -4,26 +4,25 @@ package git4idea.index.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.asJBIterable
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.GitStageDataKeys
 import java.util.function.Supplier
 import javax.swing.Icon
-import kotlin.streams.toList
 
 abstract class GitFileStatusNodeAction(text: Supplier<String>, description: Supplier<String>, icon: Icon? = null)
   : DumbAwareAction(text, description, icon) {
 
   override fun update(e: AnActionEvent) {
-    val statusInfoStream = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM)
-    e.presentation.isEnabledAndVisible = e.project != null && statusInfoStream != null &&
-                                         statusInfoStream.anyMatch(this::matches)
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+    e.presentation.isEnabledAndVisible = e.project != null && nodes.filter(this::matches).isNotEmpty
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM).filter(this::matches).toList()
+    val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
 
-    perform(project, nodes)
+    perform(project, nodes.filter(this::matches).toList())
   }
 
   abstract fun matches(statusNode: GitFileStatusNode): Boolean

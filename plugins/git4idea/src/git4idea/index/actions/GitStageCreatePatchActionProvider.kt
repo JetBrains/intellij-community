@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.util.containers.addIfNotNull
+import com.intellij.util.containers.asJBIterable
 import git4idea.index.ContentVersion
 import git4idea.index.createChange
 import git4idea.index.ui.GitStageDataKeys
 import git4idea.index.ui.NodeKind
-import kotlin.streams.toList
 
 open class GitStageCreatePatchActionProvider private constructor(private val silentClipboard: Boolean) : AnActionExtensionProvider {
   class Dialog : GitStageCreatePatchActionProvider(false)
@@ -19,17 +19,18 @@ open class GitStageCreatePatchActionProvider private constructor(private val sil
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
     e.presentation.isEnabled = e.project != null &&
-                               e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM)?.anyMatch {
+                               nodes.filter {
                                  it.kind == NodeKind.STAGED ||
                                  it.kind == NodeKind.UNSTAGED
-                               } ?: false
+                               }.isNotEmpty
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM).toList()
+    val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
 
     val stagedNodesMap = nodes.filter { it.kind == NodeKind.STAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
     val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }

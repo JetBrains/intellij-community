@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.util.containers.isEmpty
+import com.intellij.util.containers.asJBIterable
 import git4idea.index.createThreeSidesDiffRequestProducer
 import git4idea.index.createTwoSidesDiffRequestProducer
 import git4idea.index.ui.GitStageDataKeys
@@ -17,8 +17,9 @@ class GitStageDiffAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
     e.presentation.isEnabled = e.project != null &&
-                               e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM)?.anyMatch { it.kind != NodeKind.IGNORED  } == true
+                               nodes.filter { it.kind != NodeKind.IGNORED  }.isNotEmpty
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 
@@ -31,9 +32,10 @@ class GitStageDiffAction : AnActionExtensionProvider {
 
 class GitStageThreeSideDiffAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
     e.presentation.isEnabled = e.project != null &&
                                e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null &&
-                               e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM)?.anyMatch { it.kind != NodeKind.IGNORED  } == true
+                               nodes.filter { it.kind != NodeKind.IGNORED  }.isNotEmpty
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 

@@ -4,6 +4,7 @@ package git4idea.index.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.asJBIterable
 import git4idea.conflicts.GitMergeHandler
 import git4idea.conflicts.acceptConflictSide
 import git4idea.conflicts.getConflictOperationLock
@@ -13,7 +14,6 @@ import git4idea.index.ui.*
 import git4idea.repo.GitConflict
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
-import kotlin.streams.asSequence
 
 class GitAcceptTheirsAction : GitAcceptConflictSideAction(true)
 class GitAcceptYoursAction : GitAcceptConflictSideAction(false)
@@ -23,17 +23,14 @@ abstract class GitConflictAction(text: Supplier<@Nls String>) :
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val statusInfoStream = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM)
-    if (project == null || statusInfoStream == null || !statusInfoStream.anyMatch(this::matches)) {
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+    if (project == null || nodes.filter(this::matches).isEmpty) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
     e.presentation.isVisible = true
-    e.presentation.isEnabled = isEnabled(project,
-                                         e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM).asSequence().mapNotNull {
-                                           it.createConflict()
-                                         })
+    e.presentation.isEnabled = isEnabled(project, nodes.filterMap(GitFileStatusNode::createConflict).asSequence() as Sequence<GitConflict>)
   }
 
   override fun matches(statusNode: GitFileStatusNode): Boolean = statusNode.kind == NodeKind.CONFLICTED

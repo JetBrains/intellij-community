@@ -2,12 +2,10 @@
 package git4idea.index.ui
 
 import com.intellij.openapi.actionSystem.DataKey
-import git4idea.index.GitStageTracker
-import java.util.stream.Stream
 
 object GitStageDataKeys {
   @JvmField
-  val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
+  val GIT_FILE_STATUS_NODES = DataKey.create<Iterable<GitFileStatusNode>>("GitFileStatusNodesStream")
   @JvmField
   val GIT_STAGE_TREE = DataKey.create<GitStageTree>("GitStageTree")
   @JvmField
