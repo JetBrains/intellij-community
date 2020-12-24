@@ -58,4 +58,9 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
     public void testEnvExportKeys() {
         assertIndexContains(DotEnvKeyValuesIndex.KEY, "EXPORTED");
     }
+
+    public void testSingleQuotes() {
+        assertContainsKeyAndValue("SINGLE_QUOTE", "1");
+        assertContainsKeyAndValue("SINGLE_QUOTE_WITH_COMMENT", "123#comment");
+    }
 }

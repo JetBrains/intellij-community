@@ -2,6 +2,7 @@ package ru.adelf.idea.dotenv;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 
@@ -12,7 +13,7 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     private final Collection<KeyValuePsiElement> collectedItems = new HashSet<>();
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
         if(element instanceof DotEnvProperty) {
             this.visitProperty((DotEnvProperty) element);
         }
@@ -22,8 +23,8 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
 
     private void visitProperty(DotEnvProperty property) {
         collectedItems.add(new KeyValuePsiElement(
-                property.getKey().getText(),
-                property.getValue() != null ? property.getValue().getText() : "",
+                property.getKeyText(),
+                property.getValueText(),
                 property));
     }
 

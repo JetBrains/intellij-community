@@ -13,7 +13,12 @@ public class DotEnvPsiUtil {
     public static String getValueText(DotEnvProperty element) {
         ASTNode valueNode = element.getNode().findChildByType(DotEnvTypes.VALUE);
         if (valueNode != null) {
-            return valueNode.getText();
+            ASTNode valueCharsNode = valueNode.findChildByType(DotEnvTypes.VALUE_CHARS);
+            if (valueCharsNode != null) {
+                return valueCharsNode.getText();
+            } else {
+                return "";
+            }
         } else {
             return "";
         }
