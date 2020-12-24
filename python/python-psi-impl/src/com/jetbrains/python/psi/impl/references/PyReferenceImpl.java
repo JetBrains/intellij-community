@@ -249,6 +249,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             return StreamEx
               .of(resolvedElements)
               .nonNull()
+              .filter(element -> PyUtil.inSameFile(element, realContext))
               .filter(element -> PyiUtil.isOverload(element, typeEvalContext))
               .map(element -> new RatedResolveResult(getRate(element, typeEvalContext), element))
               .prepend(latestDefs)
