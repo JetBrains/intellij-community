@@ -57,7 +57,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.avatars.CachingGHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.*
 import java.awt.FlowLayout
@@ -73,8 +72,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager,
   private val accountInformationProvider: GithubAccountInformationProvider,
-  private val avatarLoader: CachingGHUserAvatarLoader,
-  private val imageResizer: GithubImageResizer
+  private val avatarLoader: CachingGHUserAvatarLoader
 ) : VcsCloneDialogExtensionComponent(),
     AccountRemovedListener,
     AccountTokenChangedListener {
@@ -261,14 +259,12 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
       override fun run(indicator: ProgressIndicator) {
         user = accountInformationProvider.getInformation(executor, indicator, account)
-        iconProvider = CachingGHAvatarIconsProvider
-          .Factory(avatarLoader, imageResizer, executor)
-          .create(avatarSizeUiInt, accountsPanel)
+        iconProvider = GHAvatarIconsProvider(avatarLoader, executor)
       }
 
       override fun onSuccess() {
         userDetailsByAccount[account] = user
-        val avatar = iconProvider.getIcon(user.avatarUrl)
+        val avatar = iconProvider.getIcon(user.avatarUrl, avatarSizeUiInt.get())
         avatarsByAccount[account] = avatar
         accountComponents[account]?.icon = resizeIcon(avatar, VcsCloneDialogUiSpec.Components.avatarSize)
         refillRepositories()

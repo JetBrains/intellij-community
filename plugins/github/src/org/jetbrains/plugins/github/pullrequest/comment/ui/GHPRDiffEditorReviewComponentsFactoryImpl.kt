@@ -12,25 +12,21 @@ import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewCom
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconProviderFactory
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.successOnEdt
 import javax.swing.JComponent
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
-                     private val avatarIconsProviderFactory: GHAvatarIconProviderFactory,
+                     private val avatarIconsProvider: GHAvatarIconsProvider,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
-    wrapComponentUsingRoundedPanel { wrapper ->
-      val avatarIconsProvider = avatarIconsProviderFactory.create(GHUIUtil.avatarSize, wrapper)
-      GHPRReviewThreadComponent.create(thread, reviewDataProvider, avatarIconsProvider, currentUser).apply {
-        border = JBUI.Borders.empty(8, 8)
-      }
-    }
+    GHPRReviewThreadComponent.create(thread, reviewDataProvider, avatarIconsProvider, currentUser).apply {
+      border = JBUI.Borders.empty(8, 8)
+    }.let(::wrapComponentUsingRoundedPanel)
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHSubmittableTextFieldModel {
@@ -98,13 +94,10 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
     textFieldModel: GHSubmittableTextFieldModel,
     @NlsActions.ActionText actionName: String,
     hideCallback: () -> Unit
-  ): JComponent = wrapComponentUsingRoundedPanel { wrapper ->
-    val avatarIconsProvider = avatarIconsProviderFactory.create(GHUIUtil.avatarSize, wrapper)
-
+  ): JComponent =
     GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser, actionName) {
       hideCallback()
     }.apply {
       border = JBUI.Borders.empty(8)
-    }
-  }
+    }.let(::wrapComponentUsingRoundedPanel)
 }

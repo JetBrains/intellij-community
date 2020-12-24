@@ -19,7 +19,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDirectionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconProviderFactory
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -27,9 +27,9 @@ internal object GHPRDetailsComponent {
 
   fun create(detailsModel: GHPRDetailsModel,
              branchesModel: GHPRBranchesModel,
-             avatarIconsProviderFactory: GHAvatarIconProviderFactory): JComponent {
+             avatarIconsProvider: GHAvatarIconsProvider): JComponent {
 
-    val metaPanel = createPanel(detailsModel, branchesModel, avatarIconsProviderFactory).apply {
+    val metaPanel = createPanel(detailsModel, branchesModel, avatarIconsProvider).apply {
       border = JBUI.Borders.empty(8)
     }
 
@@ -50,12 +50,12 @@ internal object GHPRDetailsComponent {
 
   private fun createPanel(detailsModel: GHPRDetailsModel,
                           branchesModel: GHPRBranchesModel,
-                          avatarIconsProviderFactory: GHAvatarIconProviderFactory): JComponent {
+                          avatarIconsProvider: GHAvatarIconsProvider): JComponent {
     val panel = JPanel(VerticalLayout(UI.scale(8))).apply {
       isOpaque = false
     }
     val directionPanel = GHPRDirectionPanel()
-    val metadataPanel = GHPRMetadataPanelFactory(detailsModel, avatarIconsProviderFactory).create()
+    val metadataPanel = GHPRMetadataPanelFactory(detailsModel, avatarIconsProvider).create()
     val timelineLink = LinkLabel<Any>(GithubBundle.message("pull.request.view.conversations.action"), null) { label, _ ->
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@LinkLabel
       ActionUtil.invokeAction(action, label, ActionPlaces.UNKNOWN, null, null)

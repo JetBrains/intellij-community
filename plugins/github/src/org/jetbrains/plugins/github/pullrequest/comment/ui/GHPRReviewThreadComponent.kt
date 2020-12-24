@@ -231,7 +231,7 @@ object GHPRReviewThreadComponent {
     return JPanel().apply {
       isOpaque = false
       layout = MigLayout(LC().insets("0"))
-      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + GHUIUtil.avatarSize.get()}"))
+      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + UI.scale(GHUIUtil.AVATAR_SIZE)}"))
     }
   }
 

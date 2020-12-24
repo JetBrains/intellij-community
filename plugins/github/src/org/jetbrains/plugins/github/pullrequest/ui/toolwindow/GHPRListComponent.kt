@@ -29,7 +29,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.BoundedRangeModelThresholdListener
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
@@ -95,8 +94,7 @@ internal object GHPRListComponent {
       ActionManager.getInstance().getAction("Github.PullRequest.Show")
     }
 
-    val avatarIconsProvider = dataContext.avatarIconsProviderFactory.create(GHUIUtil.avatarSize, list)
-    val renderer = GHPRListCellRenderer(avatarIconsProvider, openButtonViewModel)
+    val renderer = GHPRListCellRenderer(dataContext.avatarIconsProvider, openButtonViewModel)
     list.cellRenderer = renderer
     UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 

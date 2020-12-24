@@ -12,9 +12,8 @@ import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-fun wrapComponentUsingRoundedPanel(componentFactory: (wrapper: JComponent) -> JComponent): JComponent {
+fun wrapComponentUsingRoundedPanel(component: JComponent): JComponent {
   val wrapper = RoundedPanel(BorderLayout())
-  val component = componentFactory(wrapper)
   wrapper.add(component)
   component.addComponentListener(object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) =
@@ -22,8 +21,6 @@ fun wrapComponentUsingRoundedPanel(componentFactory: (wrapper: JComponent) -> JC
   })
   return wrapper
 }
-
-fun wrapComponentUsingRoundedPanel(component: JComponent): JComponent = wrapComponentUsingRoundedPanel { component }
 
 private class RoundedPanel(layout: LayoutManager?) : JPanel(layout) {
   private var borderLineColor: Color? = null

@@ -47,7 +47,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 
 object GHUIUtil {
-  val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
+  const val AVATAR_SIZE = 20
 
   fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
     if (isDraft) GithubIcons.PullRequestDraft
@@ -131,7 +131,7 @@ object GHUIUtil {
   }
 
   fun <T> showChooserPopup(@NlsContexts.PopupTitle popupTitle: String, parentComponent: JComponent,
-                           cellRendererFactory: (JList<SelectableWrapper<T>>) -> SelectionListCellRenderer<T>,
+                           cellRenderer: SelectionListCellRenderer<T>,
                            currentList: List<T>,
                            availableListFuture: CompletableFuture<List<T>>)
     : CompletableFuture<CollectionDelta<T>> {
@@ -142,11 +142,10 @@ object GHUIUtil {
       isFocusable = false
       selectionMode = ListSelectionModel.SINGLE_SELECTION
     }
-    val listCellRenderer = cellRendererFactory(list)
-    list.cellRenderer = listCellRenderer
+    list.cellRenderer = cellRenderer
 
     val speedSearch = SpeedSearch()
-    val filteringListModel = NameFilteringListModel<SelectableWrapper<T>>(listModel, { listCellRenderer.getText(it.value) },
+    val filteringListModel = NameFilteringListModel<SelectableWrapper<T>>(listModel, { cellRenderer.getText(it.value) },
                                                                           speedSearch::shouldBeShowing, { speedSearch.filter ?: "" })
     list.model = filteringListModel
 
@@ -221,7 +220,7 @@ object GHUIUtil {
             .thenApplyAsync { available ->
               available.map { SelectableWrapper(it, originalSelection.contains(it)) }
                 .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.selected }
-                              .thenComparing({ listCellRenderer.getText(it.value) }) { a, b -> StringUtil.compare(a, b, true) })
+                              .thenComparing({ cellRenderer.getText(it.value) }) { a, b -> StringUtil.compare(a, b, true) })
             }.successOnEdt {
               listModel.replaceAll(it)
 

@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconProviderFactory
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.LabeledListPanelHandle
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.CollectionDelta
@@ -23,10 +23,9 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
-                               private val avatarIconsProviderFactory: GHAvatarIconProviderFactory) {
+                               private val avatarIconsProvider: GHAvatarIconsProvider) {
 
   private val panel = JPanel(null)
-  private val avatarIconsProvider = avatarIconsProviderFactory.create(GHUIUtil.avatarSize, panel)
 
   fun create(): JComponent {
     val reviewersHandle = ReviewersListPanelHandle()
@@ -57,10 +56,9 @@ class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>>? {
       return GHUIUtil
-        .showChooserPopup(GithubBundle.message("pull.request.reviewers"), parentComponent, { list ->
-          val avatarIconsProvider = avatarIconsProviderFactory.create(GHUIUtil.avatarSize, list)
-          GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider)
-        }, model.reviewers, model.loadPotentialReviewers())
+        .showChooserPopup(GithubBundle.message("pull.request.reviewers"), parentComponent,
+                          GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
+                          model.reviewers, model.loadPotentialReviewers())
     }
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
@@ -78,10 +76,9 @@ class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>>? = GHUIUtil
-      .showChooserPopup(GithubBundle.message("pull.request.assignees"), parentComponent, { list ->
-        val avatarIconsProvider = avatarIconsProviderFactory.create(GHUIUtil.avatarSize, list)
-        GHUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
-      }, model.assignees, model.loadPotentialAssignees())
+      .showChooserPopup(GithubBundle.message("pull.request.assignees"), parentComponent,
+                        GHUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider),
+                        model.assignees, model.loadPotentialAssignees())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
       model.adjustAssignees(indicator, delta)
@@ -104,7 +101,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>>? =
       GHUIUtil.showChooserPopup(GithubBundle.message("pull.request.labels"), parentComponent,
-                                { GHUIUtil.SelectionListCellRenderer.Labels() },
+                                GHUIUtil.SelectionListCellRenderer.Labels(),
                                 model.labels, model.loadAssignableLabels())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =

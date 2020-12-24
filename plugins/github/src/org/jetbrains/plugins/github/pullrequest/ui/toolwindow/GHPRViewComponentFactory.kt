@@ -69,7 +69,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
 
   private val diffHelper = GHPRChangesDiffHelperImpl(project, dataProvider,
-                                                     dataContext.avatarIconsProviderFactory,
+                                                     dataContext.avatarIconsProvider,
                                                      dataContext.securityService.currentUser)
 
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
@@ -246,7 +246,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                 dataProvider.detailsData,
                                                 dataContext.gitRemoteCoordinates.repository,
                                                 disposable)
-      GHPRDetailsComponent.create(detailsModel, branchesModel, dataContext.avatarIconsProviderFactory)
+      GHPRDetailsComponent.create(detailsModel, branchesModel, dataContext.avatarIconsProvider)
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }

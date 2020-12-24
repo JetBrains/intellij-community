@@ -90,7 +90,7 @@ object GHPRReviewCommentComponent {
     }
   }
 
-  private fun getMaxWidth() = GHUIUtil.getPRTimelineWidth() - GHUIUtil.avatarSize.get() + AllIcons.Actions.Close.iconWidth
+  private fun getMaxWidth() = GHUIUtil.getPRTimelineWidth() - UI.scale(GHUIUtil.AVATAR_SIZE) + AllIcons.Actions.Close.iconWidth
 
   private class Controller(private val model: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
 import com.intellij.util.ui.update.UiNotifyConnector
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -102,15 +103,13 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   fun create(): JComponent {
     val mainPanel = Wrapper()
 
-    val avatarIconsProvider = editor.avatarIconsProviderFactory.create(GHUIUtil.avatarSize, mainPanel)
-
     val header = GHPRTitleComponent.create(detailsModel, editor.detailsData)
 
     val timeline = GHPRTimelineComponent(detailsModel,
                                          timelineModel,
                                          createItemComponentFactory(project, editor.detailsData, editor.commentsData, editor.reviewData,
                                                                     reviewThreadsModelsProvider,
-                                                                    avatarIconsProvider, editor.securityService.currentUser)).apply {
+                                                                    editor.avatarIconsProvider, editor.securityService.currentUser)).apply {
       border = JBUI.Borders.empty(16, 0)
     }
     val errorPanel = GHHtmlErrorPanel.create(errorModel)
@@ -139,14 +138,14 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       add(header, CC().growX().maxWidth("$maxWidth"))
       add(timeline, CC().growX().minWidth(""))
 
-      val fullTimelineWidth = GHUIUtil.avatarSize.get() + maxWidth
+      val fullTimelineWidth = UI.scale(GHUIUtil.AVATAR_SIZE) + maxWidth
 
       add(errorPanel, CC().hideMode(2).width("$fullTimelineWidth"))
       add(loadingIcon, CC().hideMode(2).width("$fullTimelineWidth"))
 
       if (editor.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
         val commentField = createCommentField(editor.commentsData,
-                                              avatarIconsProvider,
+                                              editor.avatarIconsProvider,
                                               editor.securityService.currentUser)
         add(commentField, CC().growX().pushX().maxWidth("$fullTimelineWidth"))
       }

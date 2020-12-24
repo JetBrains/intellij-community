@@ -475,22 +475,11 @@ public class IconUtil {
   @Deprecated
   @NotNull
   public static Icon scale(@NotNull final Icon source, double _scale) {
-    final double scale = MathUtil.clamp(_scale, .1, 32);
+    final double scale = clampScale(_scale);
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D)g.create();
-        try {
-          g2d.translate(x, y);
-          AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
-          transform.preConcatenate(g2d.getTransform());
-          g2d.setTransform(transform);
-          g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-          source.paintIcon(c, g2d, 0, 0);
-        }
-        finally {
-          g2d.dispose();
-        }
+        paintScaled(c, g, x, y, scale, source);
       }
 
       @Override
@@ -501,6 +490,47 @@ public class IconUtil {
       @Override
       public int getIconHeight() {
         return (int)(source.getIconHeight() * scale);
+      }
+    };
+  }
+
+  private static double clampScale(double _scale) {
+    return MathUtil.clamp(_scale, .1, 32);
+  }
+
+  private static void paintScaled(@NotNull Component c, @NotNull Graphics g, int x, int y, double scale, @NotNull Icon source) {
+    Graphics2D g2d = (Graphics2D)g.create();
+    try {
+      g2d.translate(x, y);
+      AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
+      transform.preConcatenate(g2d.getTransform());
+      g2d.setTransform(transform);
+      g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+      source.paintIcon(c, g2d, 0, 0);
+    }
+    finally {
+      g2d.dispose();
+    }
+  }
+
+
+  public static @NotNull Icon resizeSquared(@NotNull Icon source, int size) {
+    JBValue sizeValue = JBUI.uiIntValue("ResizedIcon", size);
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        double scale = clampScale((double)sizeValue.get() / (double)source.getIconWidth());
+        paintScaled(c, g, x, y, scale, source);
+      }
+
+      @Override
+      public int getIconWidth() {
+        return sizeValue.get();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return sizeValue.get();
       }
     };
   }

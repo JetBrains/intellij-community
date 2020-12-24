@@ -16,7 +16,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefault
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanel
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
-import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSettings
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -28,7 +27,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     return panel {
       row {
         val accountsPanel = GHAccountsPanel(project, GithubApiRequestExecutor.Factory.getInstance(),
-                                            CachingGHUserAvatarLoader.getInstance(), GithubImageResizer.getInstance()).apply {
+                                            CachingGHUserAvatarLoader.getInstance()).apply {
           Disposer.register(disposable!!, this)
         }
         component(accountsPanel)
