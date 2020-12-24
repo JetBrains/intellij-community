@@ -13,18 +13,12 @@ import java.util.concurrent.TimeUnit
 
 
 internal interface HandshakeReader : Closeable {
-  fun <R> read(doRead: (InputStream) -> R): R
-  override fun close()
-}
-
-internal abstract class AbstractHandshakeStreamReader : HandshakeReader {
-  abstract val inputStream: InputStream
-  override fun <R> read(doRead: (InputStream) -> R): R = inputStream.let(doRead)
+  val inputStream: InputStream
   override fun close() = inputStream.close()
 }
 
 
-internal class HandshakeSocketReader(port: Int = 0) : AbstractHandshakeStreamReader() {
+internal class HandshakeSocketReader(port: Int = 0) : HandshakeReader {
   private val cleanup = MultiCloseable()
 
   private val serverSocket = ServerSocket(port).also(cleanup::registerCloseable)
@@ -36,9 +30,9 @@ internal class HandshakeSocketReader(port: Int = 0) : AbstractHandshakeStreamRea
   override fun close() = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.
 }
 
-internal class HandshakeStreamReader(override val inputStream: InputStream) : AbstractHandshakeStreamReader()
+internal class HandshakeStreamReader(override val inputStream: InputStream) : HandshakeReader
 
-internal abstract class HandshakeFileReader(val path: Path) : AbstractHandshakeStreamReader()
+internal abstract class HandshakeFileReader(val path: Path) : HandshakeReader
 
 @Suppress("SpellCheckingInspection")
 internal class HandshakeUnixFifoReader(path: Path) : HandshakeFileReader(path) {

@@ -69,7 +69,7 @@ private abstract class AbstractHandshakeTransport(private val launchOptions: Dae
   abstract fun getHandshakeOption(): DaemonLaunchOptions.HandshakeOption
 
   override fun readHandshake(): Handshake? {
-    return handshakeReader.read(Handshake::parseDelimitedFrom)
+    return Handshake.parseDelimitedFrom(handshakeReader.inputStream)
   }
 
   override fun close() = handshakeReader.close()
