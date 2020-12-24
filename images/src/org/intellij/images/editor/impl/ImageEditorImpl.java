@@ -47,15 +47,25 @@ public final class ImageEditorImpl implements ImageEditor {
     this(project, file, false);
   }
 
+  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file, boolean isEmbedded) {
+    this(project, file, isEmbedded, true);
+  }
+
     /**
      * @param isEmbedded if it's true the toolbar and the image info are disabled and an image is left-side aligned
      */
-  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file, boolean isEmbedded) {
+  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file, boolean isEmbedded, boolean registerAsParentOfUI) {
     this.project = project;
     this.file = file;
 
     editorUI = new ImageEditorUI(this, isEmbedded);
-    Disposer.register(this, editorUI);
+
+    if (registerAsParentOfUI) {
+      Disposer.register(this, editorUI);
+    }
+    else {
+      Disposer.register(editorUI, this);
+    }
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
@@ -165,6 +175,7 @@ public final class ImageEditorImpl implements ImageEditor {
 
   @Override
   public void dispose() {
+    System.out.println("dispose image " + this);
     disposed = true;
   }
 
