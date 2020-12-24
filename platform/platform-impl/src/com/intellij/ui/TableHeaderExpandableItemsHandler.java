@@ -28,7 +28,7 @@ public class TableHeaderExpandableItemsHandler extends AbstractExpandableItemsHa
     Component comp = renderer.getTableCellRendererComponent(myComponent.getTable(),
                                                             column.getHeaderValue(),
                                                             false, hasFocus,
-                                                            -1, column.getModelIndex());
+                                                            -1, myComponent.getTable().convertColumnIndexToView(column.getModelIndex()));
     AppUIUtil.targetToDevice(comp, myComponent);
 
     int viewIndex = myComponent.getTable().convertColumnIndexToView(column.getModelIndex());
