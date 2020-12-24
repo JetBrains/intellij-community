@@ -59,6 +59,7 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
+                             isHorizontalLayout: Boolean,
                              isEditorDiffPreview: Boolean,
                              disposableParent: Disposable,
                              private val activate: () -> Unit) :
@@ -66,6 +67,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   private val project = tracker.project
 
   val tree: GitStageTree
+  private val treeMessageSplitter: OnePixelSplitter
   private val commitPanel: GitStageCommitPanel
   private val commitWorkflowHandler: GitStageCommitWorkflowHandler
   private val progressStripe: ProgressStripe
@@ -113,19 +115,19 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
     val treePanel = simplePanel(createScrollPane(tree, SideBorder.TOP)).addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
-    val treeMessageSplitter = OnePixelSplitter(true, "git.stage.tree.message.splitter", 0.7f)
-    treeMessageSplitter.firstComponent = progressStripe
-    treeMessageSplitter.secondComponent = commitPanel
+    val treePanelWithToolbar = JPanel(BorderLayout())
+    treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
+    treePanelWithToolbar.add(progressStripe, BorderLayout.CENTER)
 
-    val leftPanel = JPanel(BorderLayout())
-    leftPanel.add(toolbar.component, BorderLayout.NORTH)
-    leftPanel.add(treeMessageSplitter, BorderLayout.CENTER)
+    treeMessageSplitter = OnePixelSplitter(!isHorizontalLayout, "git.stage.tree.message.splitter", 0.7f)
+    treeMessageSplitter.firstComponent = treePanelWithToolbar
+    treeMessageSplitter.secondComponent = commitPanel
 
     changesStatusPanel = Wrapper()
     changesStatusPanel.minimumSize = JBUI.emptySize()
 
     commitDiffSplitter = OnePixelSplitter("git.stage.commit.diff.splitter", 0.5f)
-    commitDiffSplitter.firstComponent = leftPanel
+    commitDiffSplitter.firstComponent = treeMessageSplitter
     add(commitDiffSplitter, BorderLayout.CENTER)
     add(changesStatusPanel, BorderLayout.SOUTH)
 
@@ -168,6 +170,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   override fun getData(dataId: String): Any? {
     if (QuickActionProvider.KEY.`is`(dataId)) return toolbar
     return null
+  }
+
+  fun setOrientation(isHorizontalLayout: Boolean) {
+    treeMessageSplitter.orientation = !isHorizontalLayout
   }
 
   fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {

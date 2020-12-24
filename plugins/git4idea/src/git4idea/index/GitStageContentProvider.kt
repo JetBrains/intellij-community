@@ -9,6 +9,8 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -27,7 +29,8 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   override fun initContent(): JComponent {
     val tracker = GitStageTracker.getInstance(project)
     disposable = Disposer.newDisposable("Git Stage Content Provider")
-    val gitStagePanel = GitStagePanel(tracker, ChangesViewContentManager.isCommitToolWindowShown(project), disposable!!) {
+    val gitStagePanel = GitStagePanel(tracker, isHorizontalLayout(), ChangesViewContentManager.isCommitToolWindowShown(project),
+                                      disposable!!) {
       ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
     }
     setupTabTitleUpdater(tracker, gitStagePanel)
@@ -36,7 +39,19 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
         gitStagePanel.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindowShown(project))
       }
     })
+
+    project.messageBus.connect(disposable!!).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager) {
+        gitStagePanel.setOrientation(isHorizontalLayout())
+      }
+    })
+
     return gitStagePanel
+  }
+
+  private fun isHorizontalLayout(): Boolean {
+    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return false
+    return toolWindow.anchor.isHorizontal
   }
 
   private fun setupTabTitleUpdater(tracker: GitStageTracker, panel: GitStagePanel) {
