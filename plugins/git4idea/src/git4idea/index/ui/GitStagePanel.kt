@@ -123,7 +123,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     treeMessageSplitter = ChangesViewCommitPanelSplitter(project).also {
       Disposer.register(this, it)
     }
-    treeMessageSplitter.orientation = !isHorizontalLayout
+    treeMessageSplitter.orientation = !(isHorizontalLayout && isEditorDiffPreview)
     treeMessageSplitter.firstComponent = treePanelWithToolbar
     treeMessageSplitter.secondComponent = commitPanel
 
@@ -177,7 +177,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   }
 
   fun setOrientation(isHorizontalLayout: Boolean) {
-    treeMessageSplitter.orientation = !isHorizontalLayout
+    treeMessageSplitter.orientation = !(isHorizontalLayout && editorTabPreview != null)
   }
 
   fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
