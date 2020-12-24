@@ -2,6 +2,8 @@
 package com.intellij.ide;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -202,6 +204,11 @@ public class HelpTooltip {
    */
   public HelpTooltip setShortcut(@Nullable @NlsSafe String shortcut) {
     this.shortcut = shortcut;
+    return this;
+  }
+
+  public HelpTooltip setShortcut(@Nullable Shortcut shortcut) {
+    this.shortcut = shortcut == null ? null : KeymapUtil.getShortcutText(shortcut);
     return this;
   }
 

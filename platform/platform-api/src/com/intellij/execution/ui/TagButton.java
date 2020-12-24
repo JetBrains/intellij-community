@@ -2,9 +2,11 @@
 package com.intellij.execution.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts;
@@ -42,9 +44,11 @@ public class TagButton extends JBLayeredPane implements Disposable {
       }
     });
     add(myButton, JLayeredPane.DEFAULT_LAYER);
-    myCloseButton = new InplaceButton(new IconButton(OptionsBundle.message("tag.button.tooltip"), AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey),
+    myCloseButton = new InplaceButton(new IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey),
                                       a -> remove(action, null));
     myCloseButton.setOpaque(false);
+    new HelpTooltip().setTitle(OptionsBundle.message("tag.button.tooltip")).
+      setShortcut(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), null)).installOn(myCloseButton);
     add(myCloseButton, JLayeredPane.POPUP_LAYER);
 
     layoutButtons();
