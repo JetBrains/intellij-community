@@ -1,8 +1,7 @@
 package ru.adelf.idea.dotenv.php;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.php.lang.psi.elements.FunctionReference;
-import com.jetbrains.php.lang.psi.elements.ParameterList;
+import com.jetbrains.php.lang.psi.elements.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -11,14 +10,29 @@ class PhpPsiHelper {
 
     public static final List<String> FUNCTIONS = Arrays.asList("getenv", "env");
 
+    public static final List<String> ARRAY_NAMES = Arrays.asList("_ENV", "_SERVER");
+
     /**
-     * Checks that this element is first parameter of needed functions, like env('element')
+     * Checks that this element environment string
      *
-     * @param psiElement Checking psi element
-     * @return true if it's needed parameter in needed function
+     * @param literal Checking psi element
      */
-    static boolean isEnvFunctionParameter(PsiElement psiElement) {
-        return isFunctionParameter(psiElement, 0, FUNCTIONS);
+    static boolean isEnvStringLiteral(StringLiteralExpression literal) {
+        PsiElement parent = literal.getParent();
+
+        if (parent instanceof ParameterList) {
+            return isFunctionParameter(literal, 0, FUNCTIONS);
+        }
+
+        if (parent instanceof ArrayIndex) {
+            PsiElement arrayAccess = parent.getParent();
+
+            if (arrayAccess instanceof ArrayAccessExpression) {
+                return isEnvArrayCall((ArrayAccessExpression) arrayAccess);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -27,12 +41,25 @@ class PhpPsiHelper {
      * @return true if condition filled
      */
     static boolean isEnvFunction(FunctionReference functionReference) {
-
         String name = functionReference.getName();
 
         return (name != null && FUNCTIONS.contains(name));
     }
 
+    /**
+     * Checks whether this array access is environment call
+     * @param arrayAccess Checking array
+     * @return true if condition filled
+     */
+    static boolean isEnvArrayCall(ArrayAccessExpression arrayAccess) {
+        PhpPsiElement variable = arrayAccess.getValue();
+
+        if (!(variable instanceof Variable)) return false;
+
+        return (variable.getName() != null && ARRAY_NAMES.contains(variable.getName()));
+    }
+
+    @SuppressWarnings("SameParameterValue")
     private static boolean isFunctionParameter(PsiElement psiElement, int parameterIndex, List<String> functions) {
         PsiElement variableContext = psiElement.getContext();
         if(!(variableContext instanceof ParameterList)) {

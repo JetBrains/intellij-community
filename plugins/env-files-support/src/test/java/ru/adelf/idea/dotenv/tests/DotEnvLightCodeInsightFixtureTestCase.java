@@ -10,10 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -22,6 +19,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatformTestCase {
 
     protected String basePath = "src/test/java/ru/adelf/idea/dotenv/tests/";
+
+    protected void assertCompletion(String... shouldContain) {
+        myFixture.completeBasic();
+
+        List<String> strings = myFixture.getLookupElementStrings();
+
+        if (strings == null) {
+            fail("Null completion");
+            return;
+        }
+
+        assertContainsElements(strings, shouldContain);
+    }
 
     protected void assertIndexContains(@NotNull ID<String, ?> id, @NotNull String... keys) {
         assertIndex(id, false, keys);

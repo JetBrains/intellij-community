@@ -1,6 +1,9 @@
 package ru.adelf.idea.dotenv.php;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +18,7 @@ import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
 public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
     public PhpEnvCompletionContributor() {
-        extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
+        extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(StringLiteralExpression.class), new CompletionProvider<CompletionParameters>() {
             @Override
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
@@ -54,7 +57,7 @@ public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider imple
             return null;
         }
 
-        if(!PhpPsiHelper.isEnvFunctionParameter(parent)) {
+        if(!PhpPsiHelper.isEnvStringLiteral((StringLiteralExpression) parent)) {
             return null;
         }
 

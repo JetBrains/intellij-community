@@ -8,6 +8,6 @@ public class PhpUsagesTest extends BaseUsagesTest {
     }
 
     public void testUsages() {
-        assertUsagesContains("PHP_TEST", "PHP_TEST2");
+        assertUsagesContains("PHP_TEST", "PHP_TEST2", "PHP_TEST3", "PHP_TEST4");
     }
 }
