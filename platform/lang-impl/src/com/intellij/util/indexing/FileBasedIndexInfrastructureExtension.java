@@ -87,10 +87,10 @@ public interface FileBasedIndexInfrastructureExtension {
   InitializationResult initialize();
 
   /**
-   * Executed when IntelliJ is requested to clear indexes. Each extension should clear its caches.
+   * Executed when IntelliJ is requested to clear indexes. Each extension should reset its caches.
    * For example, it may happen on index invalidation.
    */
-  void clearPersistentData();
+  void resetPersistentState();
 
   /**
    * Executed when IntelliJ is shutting down it's indexes (IDE shutdown or plugin load/unload). It is the best time

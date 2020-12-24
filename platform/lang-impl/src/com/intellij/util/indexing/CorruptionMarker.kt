@@ -38,6 +38,6 @@ internal object CorruptionMarker {
     ID.reinitializeDiskStorage()
     PersistentIndicesConfiguration.saveConfiguration()
     FileUtil.delete(corruptionMarker)
-    FileBasedIndexInfrastructureExtension.EP_NAME.extensions.forEach { it.clearPersistentData() }
+    FileBasedIndexInfrastructureExtension.EP_NAME.extensions.forEach { it.resetPersistentState() }
   }
 }
