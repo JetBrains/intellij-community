@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 
+import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 
 public class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer, VcsLogCellRenderer {
@@ -59,7 +60,8 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
 
     myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
               VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
-    myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground());
+    myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected,
+                                                                              row == getHoveredRow(table)).getBackground());
     setForeground(UIUtil.getTableForeground(false, hasFocus));
 
     if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {
