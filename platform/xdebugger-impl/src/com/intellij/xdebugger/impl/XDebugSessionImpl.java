@@ -495,8 +495,10 @@ public final class XDebugSessionImpl implements XDebugSession {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (areBreakpointsMuted() == muted) return;
     mySessionData.setBreakpointsMuted(muted);
-    processAllBreakpoints(!muted, muted);
-    myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
+    if (!myBreakpointsDisabled) {
+      processAllBreakpoints(!muted, muted);
+      myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
+    }
   }
 
   @Override
@@ -505,7 +507,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     if (ignoreBreakpoints) {
-      disableBreakpoints();
+      setBreakpointsDisabledTemporarily(true);
     }
     myDebugProcess.startStepOver(doResume());
   }
@@ -549,7 +551,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     if (ignoreBreakpoints) {
-      disableBreakpoints();
+      setBreakpointsDisabledTemporarily(true);
     }
     myDebugProcess.runToPosition(position, doResume());
   }
@@ -563,14 +565,20 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void processAllBreakpoints(final boolean register, final boolean temporary) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       processBreakpoints(handler, register, temporary);
     }
   }
 
-  private void disableBreakpoints() {
-    myBreakpointsDisabled = true;
-    ReadAction.run(() -> processAllBreakpoints(false, true));
+  private void setBreakpointsDisabledTemporarily(boolean disabled) {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (myBreakpointsDisabled == disabled) return;
+      myBreakpointsDisabled = disabled;
+      if (!areBreakpointsMuted()) {
+        processAllBreakpoints(!disabled, disabled);
+      }
+    });
   }
 
   @Override
@@ -838,7 +846,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void positionReachedInternal(@NotNull final XSuspendContext suspendContext, boolean attract) {
-    enableBreakpoints();
+    setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
     myCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
@@ -898,13 +906,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public void sessionResumed() {
     doResume();
-  }
-
-  private void enableBreakpoints() {
-    if (myBreakpointsDisabled) {
-      myBreakpointsDisabled = false;
-      ReadAction.run(() -> processAllBreakpoints(true, false));
-    }
   }
 
   @Override
