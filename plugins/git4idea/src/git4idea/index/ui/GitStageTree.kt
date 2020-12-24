@@ -152,7 +152,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     return when {
       GitStageDataKeys.GIT_STAGE_TREE.`is`(dataId) -> this
       GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
-      GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
+      GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) ->
+        VcsTreeModelData.selected(this).userObjectsStream(GitFileStatusNode::class.java)
       VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
       VcsDataKeys.VIRTUAL_FILES.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
