@@ -518,10 +518,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
               mySplitter.getSecondComponent() != null &&
               Registry.is("ide.find.expand.search.field.on.typing", true)) {
             Dimension preferredSize = getPreferredSize();
+            Dimension minimumSize = getMinimumSize();
             int spaceForLeftPanel =
               mySplitter.getWidth() - mySplitter.getSecondComponent().getPreferredSize().width - mySplitter.getDividerWidth();
             int allSearchTextAreaIcons = JBUI.scale(180);
             int w = spaceForLeftPanel - allSearchTextAreaIcons;
+            w = Math.max(w, minimumSize.width);
             return new Dimension(Math.min(Math.max(defaultSize.width, preferredSize.width), w), defaultSize.height);
           }
           return defaultSize;
@@ -529,6 +531,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       };
       ((JBTextArea)innerTextComponent).setRows(isMultiline() ? 2 : 1);
       ((JBTextArea)innerTextComponent).setColumns(12);
+      innerTextComponent.setMinimumSize(new Dimension(150, 0));
       outerComponent = new SearchTextArea(((JBTextArea)innerTextComponent), search);
       if (search) {
         myExtraSearchButtons.clear();
