@@ -1566,6 +1566,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @Override
   public KeyboardShortcut getKeyboardShortcut(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) return null;
     final ShortcutSet shortcutSet = action.getShortcutSet();
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
     for (final Shortcut shortcut : shortcuts) {
