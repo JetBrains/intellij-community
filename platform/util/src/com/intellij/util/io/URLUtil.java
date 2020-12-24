@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.UrlUtilRt;
@@ -19,6 +22,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class URLUtil {
+  private static final String PROTOCOL_DELIMITER = ":";
+
   public static final String SCHEME_SEPARATOR = "://";
   public static final String FILE_PROTOCOL = "file";
   public static final String HTTP_PROTOCOL = "http";
@@ -309,5 +314,43 @@ public final class URLUtil {
 
   public static @Nullable URL internProtocol(@NotNull URL url) {
     return UrlUtilRt.internProtocol(url);
+  }
+
+  public static @NotNull String convertFromUrl(@NotNull URL url) throws IOException {
+    String protocol = url.getProtocol();
+    String path = url.getPath();
+    if (protocol.equals(JAR_PROTOCOL)) {
+      if (StringUtil.startsWithConcatenation(path, FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
+        URL subURL = new URL(path);
+        path = subURL.getPath();
+      }
+      else {
+        throw new IOException(url.toExternalForm());
+      }
+    }
+    if (SystemInfoRt.isWindows) {
+      while (!path.isEmpty() && path.charAt(0) == '/') {
+        path = path.substring(1);
+      }
+    }
+
+    path = unescapePercentSequences(path);
+    return protocol + "://" + path;
+  }
+
+  public static @NotNull @NlsSafe String urlToPath(@Nullable String url) {
+    return url == null ? "" : extractPath(url);
+  }
+
+  /**
+   * Extracts path from the given URL. Path is a substring from "://" till the end of URL. If there is no "://" URL
+   * itself is returned.
+   *
+   * @param url the URL
+   * @return path
+   */
+  public static @NotNull String extractPath(@NotNull String url) {
+    int index = url.indexOf(SCHEME_SEPARATOR);
+    return index >= 0 ? url.substring(index + SCHEME_SEPARATOR.length()) : url;
   }
 }

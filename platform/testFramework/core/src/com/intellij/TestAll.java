@@ -5,15 +5,14 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
-import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,18 @@ import static com.intellij.TestCaseLoader.*;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class TestAll implements Test {
   static {
-    Logger.setFactory(TestLoggerFactory.class);
+    String testLoggerFactoryClass = "com.intellij.testFramework.TestLoggerFactory";
+    Class<? extends Logger.Factory> testLoggerFactory = null;
+    try {
+      //noinspection unchecked
+      testLoggerFactory = (Class<? extends Logger.Factory>)Class.forName(testLoggerFactoryClass);
+    }
+    catch (ClassNotFoundException e) {
+      System.out.println(testLoggerFactoryClass + " is not found in classpath");
+    }
+    if (testLoggerFactory != null) {
+      Logger.setFactory(testLoggerFactory);
+    }
   }
 
   private static final String MAX_FAILURE_TEST_COUNT_FLAG = "idea.max.failure.test.count";
@@ -155,7 +165,14 @@ public class TestAll implements Test {
   }
 
   private static List<Path> getClassRoots(URL[] urls) {
-    List<Path> classLoaderRoots = ContainerUtil.map(urls, url -> Paths.get(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url))));
+    List<Path> classLoaderRoots = ContainerUtil.map(urls, url -> {
+      try {
+        return Paths.get(URLUtil.urlToPath(URLUtil.convertFromUrl(url)));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
     System.out.println("Collecting tests from " + classLoaderRoots);
     return classLoaderRoots;
   }
