@@ -57,6 +57,8 @@ public class MacWinTabsHandler {
     myFrame = frame;
 
     if (JdkEx.setTabbingMode(frame, () -> updateTabBars(null))) {
+      Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
+
       Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
         @Override
         public void dispose() {
