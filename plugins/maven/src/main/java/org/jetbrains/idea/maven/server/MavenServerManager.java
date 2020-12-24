@@ -114,17 +114,18 @@ public final class MavenServerManager implements Disposable {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
     Sdk jdk = getJdk(project, settings);
 
+    MavenServerConnector connector = null;
     synchronized (myMultimoduleDirToConnectorMap) {
-      MavenServerConnector connector = myMultimoduleDirToConnectorMap.get(multimoduleDirectory);
-      if (connector == null) {
-        return registerNewConnectorOrFindCompatible(project, jdk, multimoduleDirectory);
-      }
-      if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
-        connector.shutdown(false);
-        return registerNewConnectorOrFindCompatible(project, jdk, multimoduleDirectory);
-      }
-      return connector;
+      connector = myMultimoduleDirToConnectorMap.get(multimoduleDirectory);
     }
+    if (connector == null) {
+      return registerNewConnectorOrFindCompatible(project, jdk, multimoduleDirectory);
+    }
+    if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
+      connector.shutdown(false);
+      return registerNewConnectorOrFindCompatible(project, jdk, multimoduleDirectory);
+    }
+    return connector;
   }
 
   private static @NotNull String getMultimoduleDirectory(@NotNull Project project, @NotNull String directory) {
@@ -159,9 +160,9 @@ public final class MavenServerManager implements Disposable {
 
     if (existing != null) {
       MavenLog.LOG.info("Using existing connector for " + project + " in " + multimoduleDirectory);
+      registerDisposable(project, existing);
+      existing.connect(project);
       synchronized (myMultimoduleDirToConnectorMap) {
-        registerDisposable(project, existing);
-        existing.connect(project);
         myMultimoduleDirToConnectorMap.put(multimoduleDirectory, existing);
       }
       return existing;
@@ -173,9 +174,9 @@ public final class MavenServerManager implements Disposable {
     MavenServerConnector connector = new MavenServerConnector(this, jdk, vmOptions, debugPort, distribution);
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector);
-      registerDisposable(project, connector);
-      connector.connect(project);
     }
+    registerDisposable(project, connector);
+    connector.connect(project);
 
     return connector;
   }
@@ -532,12 +533,13 @@ public final class MavenServerManager implements Disposable {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
-        synchronized (myMultimoduleDirToConnectorMap){
-          MavenServerConnector connector = myMultimoduleDirToConnectorMap.values().stream().findFirst().orElse(null);
-          if(connector!=null){
-            connector.connect(project);
-            return connector.createIndexer();
-          }
+        MavenServerConnector connector = null;
+        synchronized (myMultimoduleDirToConnectorMap) {
+          connector = myMultimoduleDirToConnectorMap.values().stream().findFirst().orElse(null);
+        }
+        if(connector!=null){
+          connector.connect(project);
+          return connector.createIndexer();
         }
         return MavenServerManager.this.getConnector(project,
                                                     ObjectUtils.chooseNotNull(project.getBasePath(),

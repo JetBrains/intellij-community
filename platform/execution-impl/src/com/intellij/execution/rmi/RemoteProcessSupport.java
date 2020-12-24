@@ -16,6 +16,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -136,7 +137,16 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return configurations;
   }
 
+  /**
+   @deprecated
+    * use acquire(Target, Parameters, ProgressIndicator)
+   */
+  @Deprecated
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
+    return acquire(target, configuration, null);
+  }
+
+  public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator) throws Exception {
     ApplicationManagerEx.getApplicationEx().assertTimeConsuming();
 
     EntryPoint inProcess = acquireInProcess(target, configuration);
@@ -152,12 +162,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           synchronized (ref) {
             while (ref.isNull()) {
               ref.wait(1000);
-              ProgressManager.checkCanceled();
+              checkIndicator(indicator);
             }
           }
         }
         catch (InterruptedException e) {
-          ProgressManager.checkCanceled();
+          checkIndicator(indicator);
         }
       }
     }
@@ -175,6 +185,15 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       publishPort(info.servicePort);
     }
     return acquire(info);
+  }
+
+  private static void checkIndicator(@Nullable ProgressIndicator indicator) {
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
+    else {
+      ProgressManager.checkCanceled();
+    }
   }
 
   protected void publishPort(int port) throws ExecutionException {

@@ -16,6 +16,9 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
@@ -28,29 +31,36 @@ public class MavenServerManagerTest extends MavenTestCase {
     //make sure all components are initialized to prevent deadlocks
     MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      Future result = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    Future result = ApplicationManager.getApplication().runWriteAction(
+      (ThrowableComputable<Future, Exception>)() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MavenServerManager.getInstance().shutdown(true);
-        try {
-          MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
+        MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
+      }));
 
+
+    long start = System.currentTimeMillis();
+    long end = TimeUnit.SECONDS.toMillis(10) + start;
+    boolean ok = false;
+    while (System.currentTimeMillis() < end) {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      });
       try {
-        result.get(10, TimeUnit.SECONDS);
+        result.get(0, TimeUnit.MILLISECONDS);
+        ok = true;
+        break;
       }
       catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         throw new RuntimeException(e);
       }
-      catch (TimeoutException e) {
-        printThreadDump();
-        throw new RuntimeException(e);
+      catch (TimeoutException ignore) {
       }
-      result.cancel(true);
-    });
+    }
+    if (!ok) {
+      printThreadDump();
+      fail();
+    }
+    result.cancel(true);
   }
   public void testConnectorRestartAfterVMChanged() {
     MavenWorkspaceSettingsComponent settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject);
