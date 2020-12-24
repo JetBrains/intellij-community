@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -146,7 +147,8 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
   @Nullable
   private JRootPane considerShowingDialog(long now) {
-    if (now - myLastUiUpdate > myDelayInMillis && myApp.isActive()) {
+    if (now - myLastUiUpdate > myDelayInMillis && myApp.isActive() &&
+        myApp.getServiceIfCreated(DialogWrapperPeerFactory.class) != null) {
       getDialog().myRepaintRunnable.run();
       showDialog();
       return getDialog().getPanel().getRootPane();
