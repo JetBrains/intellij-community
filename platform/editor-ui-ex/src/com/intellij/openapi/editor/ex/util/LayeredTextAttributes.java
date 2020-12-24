@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class LayeredTextAttributes extends TextAttributes {
-  public static LayeredTextAttributes create(EditorColorsScheme scheme, TextAttributesKey @NotNull [] keys) {
+public final class LayeredTextAttributes extends TextAttributes {
+  public static @NotNull LayeredTextAttributes create(@NotNull EditorColorsScheme scheme, TextAttributesKey @NotNull [] keys) {
     TextAttributes result = new TextAttributes();
 
     for (TextAttributesKey key : keys) {
@@ -29,7 +29,7 @@ public class LayeredTextAttributes extends TextAttributes {
 
   private final TextAttributesKey[] myKeys;
 
-  private LayeredTextAttributes(TextAttributesKey @NotNull [] keys, TextAttributes attributes) {
+  private LayeredTextAttributes(TextAttributesKey @NotNull [] keys, @NotNull TextAttributes attributes) {
     super(attributes.getForegroundColor(),
           attributes.getBackgroundColor(),
           attributes.getEffectColor(),
@@ -38,7 +38,7 @@ public class LayeredTextAttributes extends TextAttributes {
     myKeys = keys;
   }
 
-  public TextAttributesKey[] getKeys() {
+  public TextAttributesKey @NotNull [] getKeys() {
     return myKeys;
   }
 }

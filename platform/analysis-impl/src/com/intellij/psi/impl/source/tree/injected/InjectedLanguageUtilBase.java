@@ -77,8 +77,7 @@ public class InjectedLanguageUtilBase {
                      @NotNull ProperTextRange rangeInsideInjectionHost,
                      int shredIndex,
                      @NotNull TextAttributes attributes,
-                     TextAttributesKey @NotNull [] textAttributesKeys
-    ) {
+                     TextAttributesKey @NotNull [] textAttributesKeys) {
       this.type = type;
       this.rangeInsideInjectionHost = rangeInsideInjectionHost;
       this.shredIndex = shredIndex;
