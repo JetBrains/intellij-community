@@ -12693,6 +12693,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/simplifyNestedEachInScope/also5.kt");
         }
 
+        @TestMetadata("alsoFunctionReference.kt")
+        public void testAlsoFunctionReference() throws Exception {
+            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/alsoFunctionReference.kt");
+        }
+
         @TestMetadata("alsoLabel.kt")
         public void testAlsoLabel() throws Exception {
             runTest("testData/inspectionsLocal/simplifyNestedEachInScope/alsoLabel.kt");
@@ -12721,6 +12726,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("apply3.kt")
         public void testApply3() throws Exception {
             runTest("testData/inspectionsLocal/simplifyNestedEachInScope/apply3.kt");
+        }
+
+        @TestMetadata("applyFunctionReference.kt")
+        public void testApplyFunctionReference() throws Exception {
+            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyFunctionReference.kt");
+        }
+
+        @TestMetadata("applyFunctionReferenceWithParentheses.kt")
+        public void testApplyFunctionReferenceWithParentheses() throws Exception {
+            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyFunctionReferenceWithParentheses.kt");
         }
 
         @TestMetadata("applyLabel.kt")

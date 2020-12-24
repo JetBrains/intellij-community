@@ -228,10 +228,16 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
             }
             val factory = KtPsiFactory(project)
             val innerBlock = eachCall.valueArguments.singleOrNull() ?: return
-            if (label?.labelQualifier == null && eachCall.calleeExpression?.text == "forEach")
+            if (label?.labelQualifier == null && eachCall.calleeExpression?.text == "forEach") {
                 innerBlock.accept(ReplaceLabelVisitor(factory))
-            outerBlock.replace(innerBlock)
-            descriptor.psiElement.replace(factory.createExpression("onEach"))
+            }
+            val innerBlockExpression = innerBlock.getArgumentExpression()
+            if (innerBlockExpression != null && KtPsiUtil.deparenthesize(innerBlockExpression) is KtCallableReferenceExpression) {
+                callExpression.replace(factory.createExpressionByPattern("onEach($0)", innerBlockExpression))
+            } else {
+                outerBlock.replace(innerBlock)
+                descriptor.psiElement.replace(factory.createExpression("onEach"))
+            }
         }
     }
 }
