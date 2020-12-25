@@ -28,11 +28,12 @@ class ProjectPluginTracker(
 
       internal fun register(id: PluginId, enable: Boolean) {
         val idString = id.idString
+
         val setToRemoveFrom = if (enable) disabledPlugins else enabledPlugins
-        if (!setToRemoveFrom.remove(idString)) {
-          val setToAddTo = if (enable) enabledPlugins else disabledPlugins
-          setToAddTo.add(idString)
-        }
+        setToRemoveFrom.remove(idString)
+
+        val setToAddTo = if (enable) enabledPlugins else disabledPlugins
+        setToAddTo.add(idString)
       }
 
       internal fun unregister(id: PluginId) {
