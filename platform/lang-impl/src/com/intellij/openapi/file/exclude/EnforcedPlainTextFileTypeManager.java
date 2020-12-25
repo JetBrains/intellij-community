@@ -69,11 +69,11 @@ public final class EnforcedPlainTextFileTypeManager {
     return false;
   }
 
-  public static boolean isApplicableFor(@Nullable VirtualFile file) {
+  public static boolean isApplicableFor(@Nullable VirtualFile file, boolean isToOriginal) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
     if (ScratchUtil.isScratch(file)) return false;
     FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
-    return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
+    return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && (originalType != StdFileTypes.JAVA || isToOriginal);
   }
 
   public void markAsPlainText(@NotNull Project project, VirtualFile @NotNull ... files) {

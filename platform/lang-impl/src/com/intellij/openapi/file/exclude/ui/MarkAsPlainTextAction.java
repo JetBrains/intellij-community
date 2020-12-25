@@ -25,7 +25,7 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-              .filter(file -> isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
+              .filter(file -> isApplicableFor(file, false) && !typeManager.isMarkedAsPlainText(file));
     typeManager.markAsPlainText(project, VfsUtilCore.toVirtualFileArray(selectedFiles.toList()));
   }
 
@@ -34,7 +34,7 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-        .filter(file -> isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
+        .filter(file -> isApplicableFor(file, false) && !typeManager.isMarkedAsPlainText(file));
     boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
     e.getPresentation().setEnabledAndVisible(enabled);
     e.getPresentation().setIcon(EnforcedPlainTextFileType.INSTANCE.getIcon());
