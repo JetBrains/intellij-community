@@ -356,7 +356,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public void waitUntilIndicesAreInitialized() {
     if (myRegisteredIndexes == null) {
       // interrupt all calculation while plugin reload
-      throw new ProcessCanceledException();
+      throw new ServiceNotReadyException();
     }
     myRegisteredIndexes.waitUntilIndicesAreInitialized();
   }
