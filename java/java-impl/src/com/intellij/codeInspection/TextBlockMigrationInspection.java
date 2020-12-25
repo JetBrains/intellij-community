@@ -73,7 +73,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
                                  new ReplaceWithTextBlockFix());
           return;
         }
-        if (hasEscapedQuotes) {
+        if (isOnTheFly && hasEscapedQuotes) {
           holder.registerProblem(expression,
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
@@ -95,7 +95,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
                                  new ReplaceWithTextBlockFix());
           return;
         }
-        if (getQuoteIndex(text) != -1) {
+        if (isOnTheFly && getQuoteIndex(text) != -1) {
           holder.registerProblem(expression, 
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
