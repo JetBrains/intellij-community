@@ -51,8 +51,8 @@ private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-open class ProcessMediatorDaemonLauncher {
-  fun launchDaemon(): ProcessMediatorDaemon {
+abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
+  fun launchDaemon(): R {
     return GlobalScope.async(Dispatchers.IO) {
       createHandshakeTransport().use { handshakeTransport ->
         ensureActive()
@@ -65,7 +65,7 @@ open class ProcessMediatorDaemonLauncher {
             val finishedAsync = launcherOutput.onFinished().asDeferred()
 
             val handshake = try {
-              select<Handshake?> {
+              select<H?> {
                 handshakeAsync.onAwait { it }
                 finishedAsync.onAwait { handshakeFailed(this@processHandler, launcherOutput) }
               }
@@ -88,18 +88,16 @@ open class ProcessMediatorDaemonLauncher {
     }.awaitWithCheckCanceled()
   }
 
-  private fun handshakeSucceeded(handshake: Handshake,
-                                 transport: HandshakeTransport,
-                                 processHandler: BaseOSProcessHandler): ProcessMediatorDaemonImpl {
-    val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
-                              // Use the launcher process handle instead unless it's a short-living trampoline.
-                              // In particular, this happens on Windows, where we can't access a process owned by another user.
-                              ?: processHandler.process.toHandle().takeUnless { transport.getDaemonLaunchOptions().trampoline }
+  protected abstract fun createHandshakeTransport(): T
+  protected abstract fun createProcessHandler(transport: T): BaseOSProcessHandler
 
-    return ProcessMediatorDaemonImpl(daemonProcessHandle,
-                                     handshake.port,
-                                     DaemonClientCredentials(handshake.token))
-  }
+  protected abstract fun handshakeSucceeded(handshake: H,
+                                            transport: T,
+                                            processHandler: BaseOSProcessHandler): R
+
+  protected abstract fun handshakeFailed(processHandler: BaseOSProcessHandler,
+                                         output: ProcessOutput,
+                                         reason: @NlsContexts.DialogMessage String?): Nothing
 
   private fun handshakeFailed(processHandler: BaseOSProcessHandler,
                               output: ProcessOutput,
@@ -122,38 +120,10 @@ open class ProcessMediatorDaemonLauncher {
     handshakeFailed(processHandler, output, reason)
   }
 
-  protected open fun handshakeFailed(processHandler: BaseOSProcessHandler,
-                                     output: ProcessOutput,
-                                     reason: @NlsContexts.DialogMessage String?): Nothing {
-    val message = ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
-    throw ExecutionException(message)
-  }
-
-  protected open fun createHandshakeTransport(): HandshakeTransport {
-    return HandshakeTransport.createProcessStdoutTransport(createBaseLaunchOptions())
-  }
-
-  protected open fun createBaseLaunchOptions(): DaemonLaunchOptions {
-    return DaemonLaunchOptions(leaderPid = ProcessHandle.current().pid().takeIf { SystemInfo.isUnix })
-  }
-
-  protected fun createCommandLine(transport: HandshakeTransport): GeneralCommandLine {
-    val daemonLaunchOptions = transport.getDaemonLaunchOptions()
-    return createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
-                                   ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
-      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
-      .withParameters(daemonLaunchOptions.asCmdlineArgs())
-  }
-
-  protected open fun createProcessHandler(transport: HandshakeTransport): BaseOSProcessHandler {
-    val commandLine = createCommandLine(transport)
-    return createProcessHandler(transport, commandLine)
-  }
-
-  protected fun createProcessHandler(transport: HandshakeTransport,
-                                     commandLine: GeneralCommandLine): OSProcessHandler.Silent {
+  protected fun createProcessHandler(transport: T,
+                                     commandLine: GeneralCommandLine): OSProcessHandler {
     val processHandler =
-      if (transport !is ProcessStdoutHandshakeTransport) {
+      if (transport !is ProcessStdoutHandshakeTransport<*>) {
         OSProcessHandler.Silent(commandLine)
       }
       else {
@@ -172,8 +142,52 @@ open class ProcessMediatorDaemonLauncher {
 }
 
 
+open class ProcessMediatorDaemonLauncher : ProcessHandshakeLauncher<Handshake, DaemonHandshakeTransport, ProcessMediatorDaemon>() {
+  override fun handshakeSucceeded(handshake: Handshake,
+                                  transport: DaemonHandshakeTransport,
+                                  processHandler: BaseOSProcessHandler): ProcessMediatorDaemon {
+    val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
+                              // Use the launcher process handle instead unless it's a short-living trampoline.
+                              // In particular, this happens on Windows, where we can't access a process owned by another user.
+                              ?: processHandler.process.toHandle().takeUnless { transport.getDaemonLaunchOptions().trampoline }
+
+    return ProcessMediatorDaemonImpl(daemonProcessHandle,
+                                     handshake.port,
+                                     DaemonClientCredentials(handshake.token))
+  }
+
+  override fun handshakeFailed(processHandler: BaseOSProcessHandler,
+                               output: ProcessOutput,
+                               reason: @NlsContexts.DialogMessage String?): Nothing {
+    val message = ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
+    throw ExecutionException(message)
+  }
+
+  override fun createHandshakeTransport(): DaemonHandshakeTransport {
+    return DaemonHandshakeTransport.createProcessStdoutTransport(createBaseLaunchOptions())
+  }
+
+  protected open fun createBaseLaunchOptions(): DaemonLaunchOptions {
+    return DaemonLaunchOptions(leaderPid = ProcessHandle.current().pid().takeIf { SystemInfo.isUnix })
+  }
+
+  protected fun createCommandLine(transport: DaemonHandshakeTransport): GeneralCommandLine {
+    val daemonLaunchOptions = transport.getDaemonLaunchOptions()
+    return createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
+                                   ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
+      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+      .withParameters(daemonLaunchOptions.asCmdlineArgs())
+  }
+
+  override fun createProcessHandler(transport: DaemonHandshakeTransport): BaseOSProcessHandler {
+    val commandLine = createCommandLine(transport)
+    return createProcessHandler(transport, commandLine)
+  }
+}
+
+
 class ElevationDaemonLauncher : ProcessMediatorDaemonLauncher() {
-  override fun createHandshakeTransport(): HandshakeTransport {
+  override fun createHandshakeTransport(): DaemonHandshakeTransport {
     // Unix sudo may take different forms, and not all of them are reliable in terms of process lifecycle management,
     // input/output redirection, and so on. To overcome the limitations we use an RSA-secured channel for initial communication
     // instead of process stdio, and launch it in a trampoline mode. In this mode the sudo'ed process forks the real daemon process,
@@ -192,15 +206,15 @@ class ElevationDaemonLauncher : ProcessMediatorDaemonLauncher() {
     }
   }
 
-  private fun openUnixHandshakeTransport(): HandshakeTransport {
+  private fun openUnixHandshakeTransport(): DaemonHandshakeTransport {
     val launchOptions = createBaseLaunchOptions()
     return try {
-      HandshakeTransport.createUnixFifoTransport(launchOptions, path = FileUtil.generateRandomTemporaryPath().toPath())
+      DaemonHandshakeTransport.createUnixFifoTransport(launchOptions, path = FileUtil.generateRandomTemporaryPath().toPath())
     }
     catch (e0: IOException) {
       ElevationLogger.LOG.warn("Unable to create file-based handshake channel; falling back to socket streams", e0)
       try {
-        HandshakeTransport.createSocketTransport(launchOptions)
+        DaemonHandshakeTransport.createSocketTransport(launchOptions)
       }
       catch (e1: IOException) {
         e1.addSuppressed(e0)
@@ -219,7 +233,7 @@ class ElevationDaemonLauncher : ProcessMediatorDaemonLauncher() {
     }
   }
 
-  override fun createProcessHandler(transport: HandshakeTransport): BaseOSProcessHandler {
+  override fun createProcessHandler(transport: DaemonHandshakeTransport): BaseOSProcessHandler {
     val commandLine = createCommandLine(transport)
     val sudoCommandLine = ExecUtil.sudoCommand(commandLine,
                                                ElevationBundle.message("dialog.title.sudo.prompt.product.elevation.daemon",

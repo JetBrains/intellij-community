@@ -11,36 +11,47 @@ import java.nio.file.Path
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 
-interface HandshakeTransport : Closeable {
-  fun getDaemonLaunchOptions(): DaemonLaunchOptions
-
+interface HandshakeTransport<H> : Closeable {
   /**
-   * Blocks until the greeting message from the daemon process. Returns null if the stream has reached EOF prematurely.
+   * Blocks until the greeting message from the daemon process.
+   * Returns null if the stream has reached EOF prematurely.
    */
   @Throws(IOException::class)
-  fun readHandshake(): Handshake?
+  fun readHandshake(): H?
+}
+
+interface ProcessStdoutHandshakeTransport<H> : HandshakeTransport<H> {
+  fun initStream(inputStream: InputStream)
+}
+
+
+interface DaemonHandshakeTransport : HandshakeTransport<Handshake> {
+  fun getDaemonLaunchOptions(): DaemonLaunchOptions
+
+  @Throws(IOException::class)
+  override fun readHandshake(): Handshake?
 
   override fun close()
 
   companion object
 }
 
-interface ProcessStdoutHandshakeTransport : HandshakeTransport {
-  fun initStream(inputStream: InputStream)
+interface ProcessStdoutDaemonHandshakeTransport : DaemonHandshakeTransport, ProcessStdoutHandshakeTransport<Handshake> {
+  override fun initStream(inputStream: InputStream)
 }
 
-fun HandshakeTransport.Companion.createProcessStdoutTransport(launchOptions: DaemonLaunchOptions): ProcessStdoutHandshakeTransport =
+fun DaemonHandshakeTransport.Companion.createProcessStdoutTransport(launchOptions: DaemonLaunchOptions): ProcessStdoutDaemonHandshakeTransport =
   StdoutTransport(launchOptions)
 
-fun HandshakeTransport.Companion.createUnixFifoTransport(launchOptions: DaemonLaunchOptions, path: Path): HandshakeTransport =
+fun DaemonHandshakeTransport.Companion.createUnixFifoTransport(launchOptions: DaemonLaunchOptions, path: Path): DaemonHandshakeTransport =
   UnixFifoTransport(launchOptions, path)
 
-fun HandshakeTransport.Companion.createSocketTransport(launchOptions: DaemonLaunchOptions, port: Int = 0): HandshakeTransport =
+fun DaemonHandshakeTransport.Companion.createSocketTransport(launchOptions: DaemonLaunchOptions, port: Int = 0): DaemonHandshakeTransport =
   SocketTransport(launchOptions, port)
 
-fun HandshakeTransport.encrypted(): HandshakeTransport = EncryptedHandshakeTransport(this)
+fun DaemonHandshakeTransport.encrypted(): DaemonHandshakeTransport = EncryptedHandshakeTransport(this)
 
-private class EncryptedHandshakeTransport(private val delegate: HandshakeTransport) : HandshakeTransport by delegate {
+private class EncryptedHandshakeTransport(private val delegate: DaemonHandshakeTransport) : DaemonHandshakeTransport by delegate {
   private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply {
     initialize(1024)
   }.genKeyPair()
@@ -62,7 +73,7 @@ private class EncryptedHandshakeTransport(private val delegate: HandshakeTranspo
 }
 
 
-private abstract class AbstractHandshakeTransport(private val launchOptions: DaemonLaunchOptions) : HandshakeTransport {
+private abstract class AbstractHandshakeTransport(private val launchOptions: DaemonLaunchOptions) : DaemonHandshakeTransport {
   protected abstract val handshakeReader: HandshakeReader
 
   override fun getDaemonLaunchOptions() = launchOptions.copy(handshakeOption = getHandshakeOption())
@@ -84,7 +95,7 @@ private class SocketTransport(
 }
 
 private class StdoutTransport(launchOptions: DaemonLaunchOptions) : AbstractHandshakeTransport(launchOptions),
-                                                                    ProcessStdoutHandshakeTransport {
+                                                                    ProcessStdoutDaemonHandshakeTransport {
   override lateinit var handshakeReader: HandshakeStreamReader
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Stdout
 
