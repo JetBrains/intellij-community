@@ -6,7 +6,6 @@ package com.intellij.execution.process.mediator
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
 import com.intellij.execution.process.elevation.ElevationBundle
-import com.intellij.execution.process.elevation.ElevationLogger
 import com.intellij.execution.process.mediator.handshake.HandshakeTransport
 import com.intellij.execution.process.mediator.handshake.ProcessStdoutHandshakeTransport
 import com.intellij.ide.IdeBundle
@@ -27,6 +26,8 @@ import java.io.Reader
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
+
+private val LOG = logger<ProcessHandshakeLauncher<*, *, *>>()
 
 abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
   fun launchDaemon(): R {
@@ -118,20 +119,16 @@ abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
       addProcessListener(LoggingProcessListener)
     }
   }
-
-  companion object {
-    private val LOG = logger<ProcessHandshakeLauncher<*, *, *>>()
-  }
 }
 
 private object LoggingProcessListener : ProcessAdapter() {
   override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-    ElevationLogger.LOG.info("Daemon/launcher [$outputType]: ${event.text.removeSuffix("\n")}")
+    LOG.info("Process [$outputType]: ${event.text.removeSuffix("\n")}")
   }
 
   override fun processTerminated(event: ProcessEvent) {
     val exitCodeString = ProcessTerminatedListener.stringifyExitCode(event.exitCode)
-    ElevationLogger.LOG.info("Daemon/launcher process terminated with exit code ${exitCodeString}")
+    LOG.info("Process terminated with exit code ${exitCodeString}")
   }
 }
 
