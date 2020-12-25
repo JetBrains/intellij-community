@@ -56,6 +56,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @ApiStatus.Internal
   public abstract ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project);
 
+  @NotNull
   @ApiStatus.Internal
   public abstract <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId);
 
@@ -121,10 +122,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     try {
       waitUntilIndicesAreInitialized();
-      final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
-      if (index == null) {
-        return true;
-      }
+      UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
@@ -211,8 +209,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return index.getModificationStamp();
   }
 
-
-
   @Nullable
   private <K, V, R> R processExceptions(@NotNull final ID<K, V> indexId,
                                         @Nullable final VirtualFile restrictToFile,
@@ -220,11 +216,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                         @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent>, ? extends R, ? extends StorageException> computable) {
     try {
       waitUntilIndicesAreInitialized();
-      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-      if (index == null) {
-        return null;
-      }
-      final Project project = filter.getProject();
+      UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+      Project project = filter.getProject();
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       if (!ensureUpToDate(indexId, project, filter, restrictToFile)) {
         return null;

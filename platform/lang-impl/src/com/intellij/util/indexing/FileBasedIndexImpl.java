@@ -1127,9 +1127,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     LOG.error("Unexpected async indices initialization problem");
   }
 
+  @NotNull
   @Override
   public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
-    return getState().getIndex(indexId);
+    UpdatableIndex<K, V, FileContent> index = getState().getIndex(indexId);
+    if (index == null) {
+      throw new IllegalStateException("Index is not created for `" + indexId.getName() + "`");
+    }
+    return index;
   }
 
   private InputFilter getInputFilter(@NotNull ID<?, ?> indexId) {
@@ -1421,8 +1426,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     myLocalModCount.incrementAndGet();
 
-    final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-    assert index != null;
+    UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
 
     if (currentFC instanceof FileContentImpl && FileBasedIndex.ourSnapshotMappingsEnabled) {
       // Optimization: initialize indexed file hash eagerly. The hash is calculated by raw content bytes.
@@ -1574,9 +1578,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   public void dropNontrivialIndexedStates(int inputId, ID<?, ?> indexId) {
     UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-    if (index == null) {
-      LOG.error("can't find registered index '" + indexId.getName() + "'");
-    }
     index.invalidateIndexedStateForFile(inputId);
   }
 

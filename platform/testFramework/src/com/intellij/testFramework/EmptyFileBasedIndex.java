@@ -167,6 +167,7 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
     return true;
   }
 
+  @NotNull
   @Override
   public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
     return EmptyIndex.getInstance();
