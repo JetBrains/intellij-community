@@ -114,7 +114,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
 
   public void closeAndDispose(@NotNull LightEditServiceImpl lightEditServiceImpl) {
     IdeFrameImpl frame = requireNotNullFrame();
-    FrameInfo frameInfo = ProjectFrameBounds.getInstance(myProject).getActualFrameInfoInDeviceSpace$intellij_platform_ide_impl(
+    FrameInfo frameInfo = ProjectFrameBounds.getInstance(myProject).getActualFrameInfoInDeviceSpace(
       this, frame, (WindowManagerImpl)WindowManager.getInstance()
     );
     lightEditServiceImpl.setFrameInfo(frameInfo);

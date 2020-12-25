@@ -21,7 +21,7 @@ internal class ProjectFrameBounds {
   internal val frameInfoHelper = FrameInfoHelper()
   private var pendingBounds: Rectangle? = null
 
-  internal fun getActualFrameInfoInDeviceSpace(frameHelper: ProjectFrameHelper, frame: JFrame, windowManager: WindowManagerImpl): FrameInfo {
+  fun getActualFrameInfoInDeviceSpace(frameHelper: ProjectFrameHelper, frame: JFrame, windowManager: WindowManagerImpl): FrameInfo {
     return frameInfoHelper.updateAndGetInfo(frameHelper, frame, pendingBounds, windowManager)
   }
 
