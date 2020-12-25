@@ -32,10 +32,11 @@ public interface IndexableFileScanner {
   interface ScanSession {
     /**
      * Called on a background thread (possibly different from {@link IndexableFileScanner#startSession(Project)}) when
-     * visiting the given {@code fileSet}. Different file sets can be visited on different threads during the same scan session.
-     * Please note it can be called not under read action, thus {@code fileSet} might be invalid or the project might be already disposed.
+     * visiting the given files from the given {@code indexableSetOrigin}.
+     * Different origin file sets can be visited on different threads during the same scan session.
+     * Please note it can be called not under read action, thus {@code indexableSetOrigin} might be invalid or the project might be already disposed.
      * <br/>
-     * One can use {@code fileSet} to determine scanned file origins: module, library, sdk, etc. {@see IndexableFilesIterator} for details.
+     * One can use {@code indexableSetOrigin} to determine scanned file set source: module, library, sdk, etc. {@see IndexableFilesIterator} for details.
      *
      * @param indexableSetOrigin the file set being scanned
      *
