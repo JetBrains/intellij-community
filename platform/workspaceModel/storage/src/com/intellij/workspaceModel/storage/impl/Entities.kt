@@ -208,7 +208,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
       .all { it.get(this) == it.get(other) }
   }
 
-  fun equalsIgnoringEntitySource(other: Any?): Boolean {
+  open fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
