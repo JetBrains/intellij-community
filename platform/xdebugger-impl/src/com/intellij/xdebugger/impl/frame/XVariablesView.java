@@ -31,18 +31,27 @@ import javax.swing.*;
 import java.util.*;
 
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  protected JPanel myComponent;
+  protected BorderLayoutPanel myComponent;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
     myComponent = new BorderLayoutPanel();
-    myComponent.add(super.getPanel());
+    JComponent panel = super.getPanel();
+    JComponent top = createTopPanel();
+    if (top != null) {
+      panel = new BorderLayoutPanel().addToTop(top).addToCenter(panel);
+    }
+    myComponent.add(panel);
     DataManager.registerDataProvider(myComponent, this);
   }
 
   @Override
   public JPanel getPanel() {
     return myComponent;
+  }
+
+  JComponent createTopPanel() {
+    return null;
   }
 
   @Override

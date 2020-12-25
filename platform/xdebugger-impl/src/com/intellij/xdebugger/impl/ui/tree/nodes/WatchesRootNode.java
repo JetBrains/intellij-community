@@ -6,8 +6,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -102,6 +104,27 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
 
   public void computeWatches() {
     myChildren.forEach(WatchNodeImpl::computePresentationIfNeeded);
+  }
+
+  public void addResultNode(@Nullable XStackFrame stackFrame, @NotNull XExpression expression) {
+    class ResultNode extends WatchNodeImpl {
+      ResultNode(@NotNull XDebuggerTree tree,
+                 @NotNull WatchesRootNode parent,
+                 @NotNull XExpression expression,
+                 @Nullable XStackFrame stackFrame) {
+        super(tree, parent, expression, stackFrame, "result");
+      }
+    }
+    WatchNodeImpl message = new ResultNode(myTree, this, expression, stackFrame);
+    if (ContainerUtil.getFirstItem(myChildren) instanceof ResultNode) {
+      myChildren.set(0, message);
+      message.fireNodeStructureChanged();
+    }
+    else {
+      myChildren.add(0, message);
+      fireNodeInserted(0);
+    }
+    TreeUtil.selectNode(myTree, message);
   }
 
   public void addWatchExpression(@Nullable XStackFrame stackFrame,

@@ -38,10 +38,7 @@ import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
-import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.XDebugSessionData;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
@@ -55,10 +52,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -127,6 +121,28 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
     installEditListeners();
+  }
+
+  @Override
+  JComponent createTopPanel() {
+    if (Registry.is("debugger.new.tool.window.layout")) {
+      XDebuggerTree tree = getTree();
+      XDebuggerExpressionComboBox comboBox =
+        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true);
+      final JComponent editorComponent = comboBox.getEditorComponent();
+      editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
+      editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          comboBox.saveTextInHistory();
+          XDebugSession session = getSession(getTree());
+          myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, comboBox.getExpression());
+        }
+      });
+      return comboBox.getComponent();
+    }
+    return null;
   }
 
   private void installEditListeners() {
