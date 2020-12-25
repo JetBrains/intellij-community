@@ -26,6 +26,7 @@ import training.learn.lesson.general.*
 import training.learn.lesson.general.assistance.CodeFormatLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson
 import training.learn.lesson.general.assistance.QuickPopupsLesson
+import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractMethodCocktailSortLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
 import training.learn.lesson.kimpl.LessonUtil
@@ -111,6 +112,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
         PythonFileStructureLesson(it),
         PythonRecentFilesLesson(it),
         PythonSearchEverywhereLesson(it),
+        FindInFilesLesson(it, lang, "src/warehouse/find_in_files_sample.py")
       )
     },
     LearningModule(name = LessonsBundle.message("run.debug.module.name"),
