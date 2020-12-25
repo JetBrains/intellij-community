@@ -21,7 +21,7 @@ import com.sun.jdi.Type
 
 class GetterDescriptor(
     private val parentObject: ObjectReference,
-    private val getter: Method,
+    val getter: Method,
     project: Project
 ) : ValueDescriptorImpl(project), DescriptorWithParentObject {
     companion object {
@@ -45,6 +45,8 @@ class GetterDescriptor(
         // For properties starting with 'is' leave the name unmodified
         return this
     }
+
+    override fun getType(): Type = getter.returnType()
 
     override fun getObject() = parentObject
 

@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.ClassNotPreparedException
+import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -42,15 +43,12 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
     ): SourcePosition? {
         if (context.frameProxy == null) return null
 
-        if (descriptor is FieldDescriptor) {
-            return computeSourcePosition(descriptor, project, context, nearest)
+        return when(descriptor) {
+            is FieldDescriptor -> computeSourcePosition(descriptor, project, context, nearest)
+            is GetterDescriptor -> computeSourcePosition(descriptor, project, context, nearest)
+            is LocalVariableDescriptor -> computeSourcePosition(descriptor, project, context, nearest)
+            else -> null
         }
-
-        if (descriptor is LocalVariableDescriptor) {
-            return computeSourcePosition(descriptor, project, context, nearest)
-        }
-
-        return null
     }
 
     private fun computeSourcePosition(
@@ -82,6 +80,22 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         return null
     }
 
+    private fun computeSourcePositionForDeclaration(
+        name: String,
+        declaringType: ReferenceType,
+        project: Project,
+        context: DebuggerContextImpl,
+        nearest: Boolean
+    ): SourcePosition? {
+        val myClass = findClassByType(project, declaringType, context)?.navigationElement as? KtClassOrObject ?: return null
+        val declaration = myClass.declarations.firstOrNull { name == it.name } ?: return null
+
+        if (nearest) {
+            return DebuggerContextUtil.findNearest(context, declaration, myClass.containingFile)
+        }
+        return SourcePosition.createFromOffset(declaration.containingFile, declaration.textOffset)
+    }
+
     private fun computeSourcePosition(
         descriptor: FieldDescriptor,
         project: Project,
@@ -97,15 +111,25 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
             return null
         }
 
-        val type = descriptor.field.declaringType()
-        val myClass = findClassByType(project, type, context)?.navigationElement as? KtClassOrObject ?: return null
+        return computeSourcePositionForDeclaration(fieldName, descriptor.field.declaringType(), project, context, nearest)
+    }
 
-        val field = myClass.declarations.firstOrNull { fieldName == it.name } ?: return null
+    private fun computeSourcePosition(
+        descriptor: GetterDescriptor,
+        project: Project,
+        context: DebuggerContextImpl,
+        nearest: Boolean
+    ): SourcePosition?  {
+        val name = descriptor.name
+        val type = descriptor.getter.declaringType()
+        computeSourcePositionForDeclaration(name, type, project, context, nearest)?.let { return it }
 
-        if (nearest) {
-            return DebuggerContextUtil.findNearest(context, field, myClass.containingFile)
+        val interfaces = (type as? ClassType)?.interfaces() ?: return null
+        for (i in interfaces) {
+            computeSourcePositionForDeclaration(name, i, project, context, nearest)?.let { return it }
         }
-        return SourcePosition.createFromOffset(field.containingFile, field.textOffset)
+
+        return null
     }
 
     private fun findClassByType(project: Project, type: ReferenceType, context: DebuggerContextImpl): PsiElement? {
