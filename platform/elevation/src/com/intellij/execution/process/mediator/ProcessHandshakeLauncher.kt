@@ -1,0 +1,158 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
+package com.intellij.execution.process.mediator
+
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.*
+import com.intellij.execution.process.elevation.ElevationBundle
+import com.intellij.execution.process.elevation.ElevationLogger
+import com.intellij.execution.process.mediator.handshake.HandshakeTransport
+import com.intellij.execution.process.mediator.handshake.ProcessStdoutHandshakeTransport
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.io.BaseInputStreamReader
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.selects.select
+import java.io.IOException
+import java.io.InputStream
+import java.io.Reader
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
+
+
+abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
+  fun launchDaemon(): R {
+    return GlobalScope.async(Dispatchers.IO) {
+      createHandshakeTransport().use { transport ->
+        ensureActive()
+
+        createProcessHandler(transport)
+          .withOutputCaptured(SynchronizedProcessOutput()) processHandler@{ launcherOutput ->
+            startNotify()
+
+            val handshakeAsync = async(Dispatchers.IO) { transport.readHandshake() }
+            val finishedAsync = launcherOutput.onFinished().asDeferred()
+
+            val handshake = try {
+              select<H?> {
+                handshakeAsync.onAwait { it }
+                finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
+              }
+              // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
+              ?: select<Nothing> {
+                finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
+                onTimeout(1000) {
+                  launcherOutput.setTimeout()
+                  handshakeFailed(transport, this@processHandler, launcherOutput)
+                }
+              }
+            }
+            catch (e: IOException) {
+              handshakeFailed(transport, this, launcherOutput, e)
+            }
+
+            handshakeSucceeded(handshake, transport, this)
+          }
+      }
+    }.awaitWithCheckCanceled()
+  }
+
+  protected abstract fun createHandshakeTransport(): T
+  protected abstract fun createProcessHandler(transport: T): BaseOSProcessHandler
+
+  protected abstract fun handshakeSucceeded(handshake: H,
+                                            transport: T,
+                                            processHandler: BaseOSProcessHandler): R
+
+  protected abstract fun handshakeFailed(transport: T,
+                                         processHandler: BaseOSProcessHandler,
+                                         output: ProcessOutput,
+                                         reason: @NlsContexts.DialogMessage String?): Nothing
+
+  private fun handshakeFailed(transport: T,
+                              processHandler: BaseOSProcessHandler,
+                              output: ProcessOutput,
+                              exception: IOException? = null): Nothing = synchronized(output) {
+    val errorExitCodeString =
+      if (output.isExitCodeSet && output.exitCode != 0) ProcessTerminatedListener.stringifyExitCode(output.exitCode)
+      else null
+
+    LOG.warn("Reading handshake failed", exception)
+    if (errorExitCodeString != null) {
+      LOG.warn("Process finished with exit code $errorExitCodeString")
+    }
+    LOG.warn("Process stderr:\n${output.stderr}")
+
+    val reason = when {
+      errorExitCodeString != null -> IdeBundle.message("finished.with.exit.code.text.message", errorExitCodeString)
+      exception == null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.eof")
+      else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.ioe")
+    }
+    handshakeFailed(transport, processHandler, output, reason)
+  }
+
+  protected fun createProcessHandler(transport: T,
+                                     commandLine: GeneralCommandLine): OSProcessHandler {
+    val processHandler =
+      if (transport !is ProcessStdoutHandshakeTransport<*>) {
+        OSProcessHandler.Silent(commandLine)
+      }
+      else {
+        object : OSProcessHandler.Silent(commandLine) {
+          override fun createProcessOutReader(): Reader {
+            return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
+          }
+        }.also {
+          transport.initStream(it.process.inputStream)
+        }
+      }
+    return processHandler.apply {
+      addProcessListener(LoggingProcessListener)
+    }
+  }
+
+  companion object {
+    private val LOG = logger<ProcessHandshakeLauncher<*, *, *>>()
+  }
+}
+
+private object LoggingProcessListener : ProcessAdapter() {
+  override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+    ElevationLogger.LOG.info("Daemon/launcher [$outputType]: ${event.text.removeSuffix("\n")}")
+  }
+
+  override fun processTerminated(event: ProcessEvent) {
+    val exitCodeString = ProcessTerminatedListener.stringifyExitCode(event.exitCode)
+    ElevationLogger.LOG.info("Daemon/launcher process terminated with exit code ${exitCodeString}")
+  }
+}
+
+private fun <R> Deferred<R>.awaitWithCheckCanceled(): R = asCompletableFuture().awaitWithCheckCanceled()
+private fun <R> CompletableFuture<R>.awaitWithCheckCanceled(): R {
+  try {
+    if (ApplicationManager.getApplication() == null) return join()
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(this)
+  }
+  catch (e: Throwable) {
+    throw ExceptionUtil.findCause(e, ExecutionException::class.java)?.cause ?: e
+  }
+}
+
+private inline fun <P : ProcessHandler, T : ProcessOutput, R> P.withOutputCaptured(output: T, block: P.(T) -> R): R {
+  val capturingProcessListener = CapturingProcessAdapter(output)
+  addProcessListener(capturingProcessListener)
+  return try {
+    block(output)
+  }
+  finally {
+    removeProcessListener(capturingProcessListener)
+  }
+}
