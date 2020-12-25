@@ -204,6 +204,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public <K, V> long getIndexModificationStamp(@NotNull ID<K, V> indexId, @NotNull Project project) {
+    waitUntilIndicesAreInitialized();
     UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
     ensureUpToDate(indexId, project, GlobalSearchScope.allScope(project));
     return index.getModificationStamp();
