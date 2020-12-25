@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
@@ -67,7 +68,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   private val project = tracker.project
 
   val tree: GitStageTree
-  private val treeMessageSplitter: OnePixelSplitter
+  private val treeMessageSplitter: Splitter
   private val commitPanel: GitStageCommitPanel
   private val commitWorkflowHandler: GitStageCommitWorkflowHandler
   private val progressStripe: ProgressStripe
@@ -119,7 +120,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
     treePanelWithToolbar.add(progressStripe, BorderLayout.CENTER)
 
-    treeMessageSplitter = OnePixelSplitter(true, "git.stage.tree.message.splitter", 0.7f)
+    treeMessageSplitter = TwoKeySplitter(true, ProportionKey("git.stage.tree.message.splitter", 0.7f,
+                                                             "git.stage.tree.message.splitter.horizontal", 0.5f))
     treeMessageSplitter.firstComponent = treePanelWithToolbar
     treeMessageSplitter.secondComponent = commitPanel
 
