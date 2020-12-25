@@ -42,11 +42,9 @@
     <keyboard-shortcut first-keystroke="meta shift S"/>
   </action>
   <action id="EditorSelectWord"/>
-  <action id="Close">
-    <keyboard-shortcut first-keystroke="meta F4"/>
-  </action>
   <action id="CloseContent"/>
   <action id="CloseEditor">
+    <keyboard-shortcut first-keystroke="meta F4"/>
     <keyboard-shortcut first-keystroke="meta W"/>
   </action>
   <action id="CloseAllEditors">
@@ -327,7 +325,6 @@
     <keyboard-shortcut first-keystroke="control G" second-keystroke="control U"/>
   </action>
   <action id="Move"/>
-  <action id="CopyFile"/>
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="F6"/>
   </action>
