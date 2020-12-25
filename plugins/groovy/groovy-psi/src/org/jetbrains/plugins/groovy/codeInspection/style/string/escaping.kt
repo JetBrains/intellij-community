@@ -15,7 +15,9 @@ private val QUOTE_TO_KIND: Map<String, InspectionStringQuotationKind> = listOf(
 
 
 /**
- * @return Best quotation kind (the one that minimizes escaping) for the text and amount of characters that will be unescaped
+ * @return Best quotation kind (the one that minimizes escaping) for the text
+ * and amount of characters that will be unescaped in comparison with current literal text.
+ * Returns null if there is no better quotation.
  */
 internal fun findBestQuotationForEscaping(literalText: String,
                                           fallbackKindForEscapedStrings: InspectionStringQuotationKind,
@@ -48,18 +50,40 @@ internal fun findBestQuotationForEscaping(literalText: String,
 
 
 private fun countScores(text: String): Map<InspectionStringQuotationKind, Int> {
-  val doubleQuotes = text.count { it == '"' }
-  val singleQuotes = text.count { it == '\'' }
-  val dollars = text.count { it == '$' }
-  val windows = text.windowed(3)
-  val tripleQuotes = windows.count { it == GrStringUtil.TRIPLE_QUOTES }
-  val tripleDoubleQuotes = windows.count { it == GrStringUtil.TRIPLE_DOUBLE_QUOTES }
-  val slashes = text.count { it == '/' }
-  val reversedSlashes = text.count { it == '\\' }
+  var doubleQuotes = 0
+  var singleQuotes = 0
+  var dollars = 0
+  var doubleQuoteSequence = 0
+  var tripleQuotes = 0
+  var tripleDoubleQuotes = 0
+  var singleQuoteSequence = 0
+  var slashes = 0
+  var reversedSlashes = 0
+  for (c in text) {
+    if (c == '"') {
+      doubleQuotes += 1
+      doubleQuoteSequence += 1
+    } else {
+      tripleDoubleQuotes += doubleQuoteSequence / 3
+      doubleQuoteSequence = 0
+    }
+    if (c == '\'') {
+      singleQuotes += 1
+      singleQuoteSequence += 1
+    } else {
+      tripleQuotes += singleQuoteSequence / 3
+      singleQuoteSequence = 0
+    }
+    when (c) {
+      '$' -> dollars += 1
+      '/' -> slashes += 1
+      '\\' -> reversedSlashes += 1
+    }
+  }
   return mapOf(DOUBLE_QUOTED to doubleQuotes + reversedSlashes + dollars,
                SINGLE_QUOTED to singleQuotes + reversedSlashes,
-               TRIPLE_QUOTED to tripleQuotes,
-               TRIPLE_DOUBLE_QUOTED to tripleDoubleQuotes + dollars,
+               TRIPLE_QUOTED to tripleQuotes * 3 + reversedSlashes,
+               TRIPLE_DOUBLE_QUOTED to tripleDoubleQuotes * 3 + reversedSlashes + dollars,
                DOLLAR_SLASHY_QUOTED to dollars,
                SLASHY to slashes)
 }
