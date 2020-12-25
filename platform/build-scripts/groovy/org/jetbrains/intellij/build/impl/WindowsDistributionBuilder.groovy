@@ -298,9 +298,10 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       Path productJsonDir = Paths.get(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix")
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
 
+      String zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath, productJsonDir] + jreDirectoryPaths
-      BuildHelper.zip(buildContext, targetFile, dirs)
-      ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), "")
+      BuildHelper.zip(buildContext, targetFile, dirs, zipPrefix)
+      ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), zipPrefix)
       buildContext.notifyArtifactWasBuilt(targetFile)
       return targetFile
     }

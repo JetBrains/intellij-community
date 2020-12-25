@@ -90,10 +90,10 @@ final class BuildHelper {
     Files.move(source, target)
   }
 
-  static void zip(@NotNull BuildContext buildContext, @NotNull Path targetFile, List<Path> dirs) {
+  static void zip(@NotNull BuildContext buildContext, @NotNull Path targetFile, List<Path> dirs, @Nullable String prefix) {
     Map<Path, String> map = new LinkedHashMap<>(dirs.size())
     for (Path dir : dirs) {
-      map.put(dir, "")
+      map.put(dir, prefix ?: "")
     }
     // invoke cannot be called reflectively (as Groovy does)
     getInstance(buildContext).zipHandle.invokeWithArguments(targetFile, map, true, false, buildContext.messages)
