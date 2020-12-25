@@ -15,14 +15,12 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ListenerUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -148,7 +146,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, myEvaluateComboBox.getExpression());
         }
       });
-      return myEvaluateComboBox.getComponent();
+      JComponent component = myEvaluateComboBox.getComponent();
+      //component.setBackground(tree.getBackground());
+      component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+      return component;
     }
     return null;
   }
