@@ -9,6 +9,7 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.cfg.WhenChecker
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
@@ -53,9 +55,10 @@ class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLoc
                     val prev = referenceExpression.previousStatement() ?: return true
                     if (prev.isUnitLiteral) return true
                     if (prev is KtDeclaration && isDynamicCall(parent)) return false
-                    val prevType = prev.analyze(BodyResolveMode.PARTIAL).getType(prev)
+                    val context = prev.analyze(BodyResolveMode.PARTIAL)
+                    val prevType = context.getType(prev)
                     if (prevType != null) {
-                        return prevType.isUnit()
+                        return prevType.isUnit() && prev.canBeUsedAsValue(context)
                     }
 
                     if (prev !is KtDeclaration) return false
@@ -94,6 +97,19 @@ private fun KtFunctionLiteral.findLambdaReturnType(): KotlinType? {
     val valueArgument = getStrictParentOfType<KtValueArgument>() ?: return null
     val mapping = resolvedCall.getArgumentMapping(valueArgument) as? ArgumentMatch ?: return null
     return mapping.valueParameter.returnType?.arguments?.lastOrNull()?.type
+}
+
+private fun KtExpression.canBeUsedAsValue(context: BindingContext): Boolean {
+    return when (this) {
+        is KtIfExpression -> {
+            val elseExpression = `else`
+            if (elseExpression is KtIfExpression) elseExpression.canBeUsedAsValue(context) else elseExpression != null
+        }
+        is KtWhenExpression ->
+            entries.lastOrNull()?.elseKeyword != null || WhenChecker.getMissingCases(this, context).isEmpty()
+        else ->
+            true
+    }
 }
 
 private class RemoveRedundantUnitFix : LocalQuickFix {

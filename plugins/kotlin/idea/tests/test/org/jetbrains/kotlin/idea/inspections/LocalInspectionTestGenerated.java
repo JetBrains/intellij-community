@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8630,6 +8630,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantUnitExpression/atLastAfterFunInWhen.kt");
         }
 
+        @TestMetadata("atLastAfterIfStatement.kt")
+        public void testAtLastAfterIfStatement() throws Exception {
+            runTest("testData/inspectionsLocal/redundantUnitExpression/atLastAfterIfStatement.kt");
+        }
+
         @TestMetadata("atLastAfterIntFunctionCall.kt")
         public void testAtLastAfterIntFunctionCall() throws Exception {
             runTest("testData/inspectionsLocal/redundantUnitExpression/atLastAfterIntFunctionCall.kt");
@@ -8648,6 +8653,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("atLastAfterVal.kt")
         public void testAtLastAfterVal() throws Exception {
             runTest("testData/inspectionsLocal/redundantUnitExpression/atLastAfterVal.kt");
+        }
+
+        @TestMetadata("atLastAfterWhenStatement.kt")
+        public void testAtLastAfterWhenStatement() throws Exception {
+            runTest("testData/inspectionsLocal/redundantUnitExpression/atLastAfterWhenStatement.kt");
         }
 
         @TestMetadata("dynamic.kt")
