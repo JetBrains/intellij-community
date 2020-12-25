@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.OccurenceNavigator;
@@ -63,20 +63,18 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     return XDebuggerBundle.message("action.previous.frame.text");
   }
 
+  private static final OccurenceInfo EMPTY_OCCURENCE = OccurenceInfo.position(-1, -1);
+
   @Override
   public OccurenceInfo goNextOccurence() {
     setSelectedIndex(getSelectedIndex() + 1);
-    return createInfo();
+    return EMPTY_OCCURENCE;
   }
 
   @Override
   public OccurenceInfo goPreviousOccurence() {
     setSelectedIndex(getSelectedIndex() - 1);
-    return createInfo();
-  }
-
-  private OccurenceInfo createInfo() {
-    return OccurenceInfo.position(getSelectedIndex(), getElementCount());
+    return EMPTY_OCCURENCE;
   }
 
   @Override
