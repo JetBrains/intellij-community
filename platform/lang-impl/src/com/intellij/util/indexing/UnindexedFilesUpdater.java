@@ -33,6 +33,7 @@ import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl;
+import com.intellij.util.indexing.roots.kind.SdkOrigin;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -266,11 +267,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     List<IndexableFilesIterator> orderedProviders = new ArrayList<>();
     originalOrderedProviders.stream()
-      .filter(p -> !(p instanceof SdkIndexableFilesIteratorImpl))
+      .filter(p -> !(p.getOrigin() instanceof SdkOrigin))
       .collect(Collectors.toCollection(() -> orderedProviders));
 
     originalOrderedProviders.stream()
-      .filter(p -> p instanceof SdkIndexableFilesIteratorImpl)
+      .filter(p -> p.getOrigin() instanceof SdkOrigin)
       .collect(Collectors.toCollection(() -> orderedProviders));
 
     return orderedProviders;
