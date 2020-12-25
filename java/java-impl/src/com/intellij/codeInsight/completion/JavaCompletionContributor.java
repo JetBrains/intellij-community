@@ -8,6 +8,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
@@ -197,6 +198,13 @@ public class JavaCompletionContributor extends CompletionContributor implements 
         filter = applyScopeFilter(filter, position);
       }
       return filter;
+    }
+
+    if (position.getParent() instanceof PsiReferenceExpression) {
+      PsiClass enumClass = GenericsHighlightUtil.getEnumClassForExpressionInInitializer((PsiReferenceExpression)position.getParent());
+      if (enumClass != null) {
+        return new EnumStaticFieldsFilter(enumClass);
+      }
     }
 
     return TrueFilter.INSTANCE;
@@ -1182,6 +1190,22 @@ public class JavaCompletionContributor extends CompletionContributor implements 
       }
 
       return false;
+    }
+
+    @Override
+    public boolean isClassAcceptable(Class hintClass) {
+      return true;
+    }
+  }
+
+  private static class EnumStaticFieldsFilter implements ElementFilter {
+    private final PsiClass myEnumClass;
+
+    public EnumStaticFieldsFilter(PsiClass enumClass) {myEnumClass = enumClass;}
+
+    @Override
+    public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+      return !(element instanceof PsiField) || !GenericsHighlightUtil.isRestrictedStaticEnumField((PsiField)element, myEnumClass);
     }
 
     @Override

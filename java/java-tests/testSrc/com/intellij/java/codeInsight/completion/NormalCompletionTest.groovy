@@ -2288,6 +2288,22 @@ class Abc {
                           "class X { Charset test() {return StandardCharsets.UTF_8;}}")
   }
 
+  @NeedsIndex.ForStandardLibrary
+  void "test static fields in enum initializer"() {
+    myFixture.configureByText("a.java", "enum MyEnum {\n" +
+                                        "    A, B, C, D, E, F;\n" +
+                                        "    static int myEnumField;\n" +
+                                        "    static int myEnumField2;\n" +
+                                        "    static final int myEnumField3 = 10;\n" +
+                                        "    static final String myEnumField4 = \"\";\n" +
+                                        "    {\n" +
+                                        "        System.out.println(myE<caret>);\n" +
+                                        "    }\n" +
+                                        "}");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["myEnumField3", "myEnumField4"]
+  }
+
   void "test qualified outer class name"() {
     myFixture.configureByText("a.java", "class A {\n" +
                                         "    private static final long sss = 0L;\n" +

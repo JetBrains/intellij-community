@@ -812,36 +812,54 @@ public final class GenericsHighlightUtil {
 
   //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.9.2
   static HighlightInfo checkAccessStaticFieldFromEnumConstructor(@NotNull PsiReferenceExpression expr, @NotNull JavaResolveResult result) {
-    final PsiElement resolved = result.getElement();
+    PsiField field = ObjectUtils.tryCast(result.getElement(), PsiField.class);
+    if (field == null) return null;
 
-    if (!(resolved instanceof PsiField)) return null;
-    if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
+    PsiClass enumClass = getEnumClassForExpressionInInitializer(expr);
+    if (enumClass == null || !isRestrictedStaticEnumField(field, enumClass)) return null;
+
+    String description = JavaErrorBundle.message(
+      "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
+      HighlightMessageUtil.getSymbolName(field, result.getSubstitutor())
+    );
+
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description).create();
+  }
+
+  /**
+   * @param field field to check
+   * @param enumClass an enum class returned from {@link #getEnumClassForExpressionInInitializer(PsiExpression)}
+   * @return true if given field cannot be referenced in constructors or instance initializers of given enum class.
+   */
+  public static boolean isRestrictedStaticEnumField(@NotNull PsiField field, @NotNull PsiClass enumClass) {
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (field.getContainingClass() != enumClass) return false;
+
+    if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_6)) {
+      final PsiType type = field.getType();
+      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == enumClass) return false;
+    }
+
+    return !PsiUtil.isCompileTimeConstant(field);
+  }
+
+  /**
+   * @param expr expression to analyze
+   * @return a enum class, whose non-constant static fields cannot be used at given place, 
+   * null if there's no such restriction 
+   */
+  public static @Nullable PsiClass getEnumClassForExpressionInInitializer(@NotNull PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) return null;
     final PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
     if (constructorOrInitializer == null) return null;
     if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
-    final PsiClass aClass = constructorOrInitializer instanceof PsiEnumConstantInitializer ?
-                            (PsiClass)constructorOrInitializer : constructorOrInitializer.getContainingClass();
-    if (aClass == null || !(aClass.isEnum() || aClass instanceof PsiEnumConstantInitializer)) return null;
-    final PsiField field = (PsiField)resolved;
-    if (aClass instanceof PsiEnumConstantInitializer) {
-      if (field.getContainingClass() != aClass.getSuperClass()) return null;
-    } else if (field.getContainingClass() != aClass) return null;
-
-
-    if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_6)) {
-      final PsiType type = field.getType();
-      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) return null;
+    PsiClass enumClass = constructorOrInitializer instanceof PsiEnumConstantInitializer ?
+                      (PsiClass)constructorOrInitializer : constructorOrInitializer.getContainingClass();
+    if (enumClass instanceof PsiEnumConstantInitializer) {
+      enumClass = enumClass.getSuperClass();
     }
-
-    if (PsiUtil.isCompileTimeConstant(field)) return null;
-
-    String description = JavaErrorBundle.message(
-      "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
-      HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor())
-    );
-
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description).create();
+    if (enumClass == null || !enumClass.isEnum()) return null;
+    return enumClass;
   }
 
   static HighlightInfo checkEnumInstantiation(@NotNull PsiElement expression, @Nullable PsiClass aClass) {
