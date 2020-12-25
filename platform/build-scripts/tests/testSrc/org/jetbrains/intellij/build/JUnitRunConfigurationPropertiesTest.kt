@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build
 import com.intellij.util.io.URLUtil
 import junit.framework.AssertionFailedError
 import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
-import org.jetbrains.intellij.build.TestingOptions
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
