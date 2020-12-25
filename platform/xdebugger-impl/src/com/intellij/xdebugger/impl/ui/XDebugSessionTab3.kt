@@ -11,6 +11,8 @@ import com.intellij.ide.actions.TabListAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.PersistentThreeComponentSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
@@ -392,5 +394,13 @@ class XDebugSessionTab3(
         else -> false;
       }
     }
+  }
+}
+
+internal class MorePopupGroup : DefaultActionGroup(), DumbAware {
+  init {
+    isPopup = true
+    templatePresentation.icon = AllIcons.Actions.More
+    templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }
 }
