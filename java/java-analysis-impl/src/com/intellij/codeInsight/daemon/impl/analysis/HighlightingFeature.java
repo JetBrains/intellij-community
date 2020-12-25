@@ -82,7 +82,8 @@ public enum HighlightingFeature {
     LanguageLevel getStandardLevel() {
       return LanguageLevel.JDK_16;
     }
-  };
+  },
+  INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
 

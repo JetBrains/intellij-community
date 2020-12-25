@@ -99,10 +99,10 @@ public class UnnecessaryParenthesesInspection
     }
 
     class ParenthesesAroundLambda {
-      <error descr="Inner classes cannot have static declarations">interface I</error> {
+      <error descr="Static declarations in inner classes are not supported at language level '15'">interface I</error> {
         void foo(int x, int y);
       }
-      <error descr="Inner classes cannot have static declarations">interface J</error> {
+      <error descr="Static declarations in inner classes are not supported at language level '15'">interface J</error> {
         void foo(int x);
       }
 
