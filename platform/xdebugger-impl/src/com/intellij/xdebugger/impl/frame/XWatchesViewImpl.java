@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -128,7 +129,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
       XDebuggerExpressionComboBox comboBox =
-        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true);
+        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
+          @Override
+          protected void prepareEditor(EditorEx editor) {
+            super.prepareEditor(editor);
+            ((EditorEx)editor).setPlaceholder(XDebuggerBundle.message("debugger.evaluate.expression.or.add.a.watch.hint"));
+          }
+        };
       final JComponent editorComponent = comboBox.getEditorComponent();
       editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
         .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");

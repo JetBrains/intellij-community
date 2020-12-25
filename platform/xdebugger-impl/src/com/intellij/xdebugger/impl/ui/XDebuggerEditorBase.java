@@ -390,7 +390,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     });
   }
 
-  protected void prepareEditor(Editor editor) {
+  protected void prepareEditor(EditorEx editor) {
   }
 
   protected final void setExpandable(Editor editor) {
