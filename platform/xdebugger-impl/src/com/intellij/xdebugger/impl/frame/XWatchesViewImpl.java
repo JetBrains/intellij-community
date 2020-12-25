@@ -61,6 +61,7 @@ import java.util.List;
 
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
   protected WatchesRootNode myRootNode;
+  private XDebuggerExpressionComboBox myEvaluateComboBox;
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private final boolean myWatchesInVariables;
@@ -128,28 +129,36 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   JComponent createTopPanel() {
     if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
-      XDebuggerExpressionComboBox comboBox =
+      myEvaluateComboBox =
         new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
           @Override
           protected void prepareEditor(EditorEx editor) {
             super.prepareEditor(editor);
-            ((EditorEx)editor).setPlaceholder(XDebuggerBundle.message("debugger.evaluate.expression.or.add.a.watch.hint"));
+            editor.setPlaceholder(XDebuggerBundle.message("debugger.evaluate.expression.or.add.a.watch.hint"));
           }
         };
-      final JComponent editorComponent = comboBox.getEditorComponent();
+      final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();
       editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
         .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
       editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          comboBox.saveTextInHistory();
+          myEvaluateComboBox.saveTextInHistory();
           XDebugSession session = getSession(getTree());
-          myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, comboBox.getExpression());
+          myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, myEvaluateComboBox.getExpression());
         }
       });
-      return comboBox.getComponent();
+      return myEvaluateComboBox.getComponent();
     }
     return null;
+  }
+
+  @Override
+  protected void buildTreeAndRestoreState(@NotNull XStackFrame stackFrame) {
+    super.buildTreeAndRestoreState(stackFrame);
+    if (myEvaluateComboBox != null) {
+      myEvaluateComboBox.setSourcePosition(stackFrame.getSourcePosition());
+    }
   }
 
   private void installEditListeners() {
