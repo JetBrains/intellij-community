@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,7 @@ import static com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES;
 import static javax.swing.text.html.HTML.Tag.*;
 
+@ApiStatus.Experimental
 public class HtmlToSimpleColoredComponentConverter {
 
   private static final Logger LOG = Logger.getInstance(HtmlToSimpleColoredComponentConverter.class);
