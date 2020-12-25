@@ -11,7 +11,7 @@ import javax.swing.*;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenRunnerParametersSettingEditor extends SettingsEditor<MavenRunConfiguration> {
+public class MavenRunnerParametersSettingEditor extends SettingsEditor<MavenRunConfiguration> implements MavenSettingsObservable {
 
   private final MavenRunnerParametersPanel myPanel;
 
@@ -40,5 +40,11 @@ public class MavenRunnerParametersSettingEditor extends SettingsEditor<MavenRunC
   @Override
   protected void disposeEditor() {
     myPanel.disposeUIResources();
+  }
+
+  @Override
+  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
+    getComponent(); // make sure controls are initialized
+    myPanel.registerSettingsWatcher(watcher);
   }
 }
