@@ -25,7 +25,9 @@ class RollbackCurrentLineIntention : IntentionAction, LowPriorityAction, DumbAwa
     val caret = editor.caretModel.currentCaret
     val lines = BitSet()
     if (caret.hasSelection()) {
-      lines.set(caret.selectionStart, caret.selectionEnd)
+      val startLine = editor.document.getLineNumber(caret.selectionStart)
+      val endLine = editor.document.getLineNumber(caret.selectionEnd)
+      lines.set(startLine, endLine)
     }
     else {
       val currentLine = editor.document.getLineNumber(caret.offset)
