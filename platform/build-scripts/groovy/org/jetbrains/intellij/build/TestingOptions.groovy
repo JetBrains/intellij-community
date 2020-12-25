@@ -26,13 +26,6 @@ class TestingOptions {
   String testConfigurations = System.getProperty("intellij.build.test.configurations")
 
   /**
-   * Semicolon-separated names of JUnit run configurations each optionally joined with test bootstrap suite name via colon.
-   * If this option is specified {@link #testGroups}, {@link #testPatterns} and {@link #mainModule} will be ignored.
-   * Can be specified together with {@link #testConfigurations}, all run configurations will be executed.
-   */
-  String testConfigurationsWithBootstrapSuites = System.getProperty("intellij.build.test.configurations.with.bootstrap.suites")
-
-  /**
    * Specifies components from which product will be used to run tests, by default IDEA Ultimate will be used.
    */
   String platformPrefix = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
