@@ -2117,7 +2117,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() {
-    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyIncorrectlyRecursiveAnnotator(), () -> {
+    //System.out.println("i = " + i);
+    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyIncorrectlyRecursiveAnnotator()}, () -> {
       @Language("JAVA")
       String text1 = "class X {\n" +
                      "  int foo(Object param) {\n" +
@@ -2144,12 +2145,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                                      MyRecordingAnnotator @NotNull [] annotators,
                                      @NotNull Runnable runnable) {
     useAnnotatorsIn(Collections.singletonMap(language, annotators), runnable);
-  }
-
-  public static void useAnnotatorsIn(@NotNull com.intellij.lang.Language language,
-                                     @NotNull MyRecordingAnnotator annotator,
-                                     @NotNull Runnable runnable) {
-    useAnnotatorsIn(Collections.singletonMap(language, new MyRecordingAnnotator[]{annotator}), runnable);
   }
 
   public static void useAnnotatorsIn(@NotNull Map<com.intellij.lang.Language, MyRecordingAnnotator @NotNull []> annotatorsByLanguage,
@@ -2536,7 +2531,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testAddAnnotationViaBuilderEntailsCreatingCorrespondingRangeHighlighterImmediately() {
     if (!ensureEnoughParallelism()) return;
-    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyNewBuilderAnnotator(), this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyNewBuilderAnnotator()},
+                    this::checkSwearingAnnotationIsVisibleImmediately);
   }
 
   private static final AtomicBoolean annotated = new AtomicBoolean();
@@ -2625,39 +2621,38 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
   public void testTypingMustRescheduleDaemonBackByReparseDelayMillis() {
     EmptyAnnotator emptyAnnotator = new EmptyAnnotator();
-    executeWithReparseDelay(2000, () ->
-      useAnnotatorsIn(JavaLanguage.INSTANCE, emptyAnnotator, () -> {
-        @Language("JAVA")
-        String text = "class X {\n}";
-        configureByText(JavaFileType.INSTANCE, text);
-        ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-        assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
-        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
-        doHighlighting();
-        MyRecordingAnnotator.clearAll();
-        type(" import java.lang.*;\n");
-        long start = System.currentTimeMillis();
-        for (int i=0; i<10; i++) {
-          type(" ");
-          TimeoutUtil.sleep(100);
-          UIUtil.dispatchAllInvocationEvents();
-        }
-        long typing = System.currentTimeMillis();
-        while (!emptyAnnotator.didIDoIt()) {
-          UIUtil.dispatchAllInvocationEvents();
-        }
-        long end = System.currentTimeMillis();
+    executeWithReparseDelay(2000, () -> useAnnotatorsIn(JavaLanguage.INSTANCE, new MyRecordingAnnotator[]{emptyAnnotator}, () -> {
+            @Language("JAVA")
+            String text = "class X {\n}";
+            configureByText(JavaFileType.INSTANCE, text);
+            ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+            assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+            CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
+            doHighlighting();
+            MyRecordingAnnotator.clearAll();
+            type(" import java.lang.*;\n");
+            long start = System.currentTimeMillis();
+            for (int i=0; i<10; i++) {
+              type(" ");
+              TimeoutUtil.sleep(100);
+              UIUtil.dispatchAllInvocationEvents();
+            }
+            long typing = System.currentTimeMillis();
+            while (!emptyAnnotator.didIDoIt()) {
+              UIUtil.dispatchAllInvocationEvents();
+            }
+            long end = System.currentTimeMillis();
 
-        long typingElapsed = typing - start;
-        long highlightElapsed = end - typing;
-        assertTrue("; typed in " + typingElapsed + "ms; highlighted in " + highlightElapsed + "ms",
-                   typingElapsed > 1000 && highlightElapsed >= 2000);
-      })
+            long typingElapsed = typing - start;
+            long highlightElapsed = end - typing;
+            assertTrue("; typed in " + typingElapsed + "ms; highlighted in " + highlightElapsed + "ms",
+                       typingElapsed > 1000 && highlightElapsed >= 2000);
+          })
     );
   }
 
   public void testDaemonDoesReportTheFirstProducedAnnotation() {
-    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyInfoAnnotator(), () -> checkFirstAnnotation());
+    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyInfoAnnotator()}, () -> checkFirstAnnotation());
   }
 
   private void checkFirstAnnotation() {
