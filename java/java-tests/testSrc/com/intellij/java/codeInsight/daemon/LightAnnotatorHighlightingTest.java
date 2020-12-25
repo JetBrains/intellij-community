@@ -457,4 +457,52 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators()
     );
   }
+
+  public void testAnnotatorTryingToSubmitWarningToTheSameElementErrorWasHighlightedAlreadyMustNotSucceed() {
+    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MyWarningAnnotator()}, () -> {
+      configureFromFileText("My.java", "class My {}");
+      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
+      List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+      HighlightInfo info = assertOneElement(infos);
+      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
+    });
+  }
+  
+  public void testAnnotatorTryingToSubmitInformationToTheSameElementErrorWasHighlightedAlreadyMustNotSucceed() {
+    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MyInfoAnnotator()}, () -> {
+      configureFromFileText("My.java", "class My {}");
+      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
+      List<HighlightInfo> infos = doHighlighting(HighlightSeverity.INFORMATION);
+      HighlightInfo info = assertOneElement(infos);
+      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
+    });
+  }
+
+  public static class MyErrorAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      if (psiElement instanceof PsiClass) {
+        holder.newAnnotation(HighlightSeverity.ERROR, "error").range(((PsiClass)psiElement).getNameIdentifier()).create();
+        iDidIt();
+      }
+    }
+  }
+  public static class MyWarningAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      if (psiElement instanceof PsiClass) {
+        holder.newAnnotation(HighlightSeverity.WARNING, "warn").range(((PsiClass)psiElement).getNameIdentifier()).create();
+        iDidIt();
+      }
+    }
+  }
+  public static class MyInfoAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      if (psiElement instanceof PsiClass) {
+        holder.newAnnotation(HighlightSeverity.INFORMATION, "info").range(((PsiClass)psiElement).getNameIdentifier()).create();
+        iDidIt();
+      }
+    }
+  }
 }
