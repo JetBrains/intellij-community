@@ -2,11 +2,19 @@
 package com.intellij.execution.stateExecutionWidget
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.Nls
 
 
 interface StateWidgetProcess {
   companion object {
+    private const val runDebugKey = "ide.new.navbar"
+
+    @JvmStatic
+    fun isAvailable(): Boolean {
+      return Registry.get(runDebugKey).asBoolean()
+    }
+
     const val ACTION_PREFIX = "StateWidgetProcess_"
     val EP_NAME: ExtensionPointName<StateWidgetProcess> = ExtensionPointName("com.intellij.stateWidgetProcess")
 
@@ -23,4 +31,6 @@ interface StateWidgetProcess {
   val actionId: String
 
   val showInBar: Boolean
+
+  fun rerunAvailable(): Boolean = false
 }

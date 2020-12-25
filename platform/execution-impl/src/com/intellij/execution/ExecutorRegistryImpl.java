@@ -112,26 +112,27 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         .add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
     }
 
-    List<StateWidgetProcess> processes = StateWidgetProcess.getProcesses();
-    processes.stream().filter(it -> it.getExecutorId().equals(executor.getId()) && it.getShowInBar()).forEach(it -> {
+    if(StateWidgetProcess.isAvailable()) {
+      List<StateWidgetProcess> processes = StateWidgetProcess.getProcesses();
+      processes.stream().filter(it -> it.getExecutorId().equals(executor.getId()) && it.getShowInBar()).forEach(it -> {
+        if (executor instanceof ExecutorGroup) {
+          ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
+          ActionGroup wrappedAction = new SplitButtonAction(new StateWidgetGroup(executorGroup, ExecutorAction::new, it));
+          Presentation presentation = wrappedAction.getTemplatePresentation();
+          presentation.setIcon(executor.getIcon());
+          presentation.setText(it.getName());
+          presentation.setDescription(executor.getDescription());
 
-      if (executor instanceof ExecutorGroup) {
-        ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
-        ActionGroup wrappedAction = new SplitButtonAction(new StateWidgetGroup(executorGroup, ExecutorAction::new, it));
-        Presentation presentation = wrappedAction.getTemplatePresentation();
-        presentation.setIcon(executor.getIcon());
-        presentation.setText(it.getName());
-        presentation.setDescription(executor.getDescription());
-
-        registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
-                              myRunDebugIdToAction);
-      }
-      else {
-        ExecutorAction wrappedAction = new StateWidget(executor, it);
-        registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
-                              myRunDebugIdToAction);
-      }
-    });
+          registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
+                                myRunDebugIdToAction);
+        }
+        else {
+          ExecutorAction wrappedAction = new StateWidget(executor, it);
+          registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
+                                myRunDebugIdToAction);
+        }
+      });
+    }
 
     myContextActionIdSet.add(executor.getContextActionId());
   }
@@ -265,6 +266,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (StateWidgetManager.getInstance(project).getExecutionsCount() == 0) {
           e.getPresentation().setEnabledAndVisible(true);
           super.update(e);
+          e.getPresentation().setEnabledAndVisible(e.getPresentation().isEnabled() && e.getPresentation().isVisible());
           e.getPresentation().setText(myExecutor.getActionName());
           return;
         }

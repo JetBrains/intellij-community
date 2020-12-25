@@ -11,4 +11,5 @@ class StateWidgetRunProcess : StateWidgetProcess {
   override val name: String = ExecutionBundle.message("state.widget.run")
   override val actionId: String = generateActionID(executorId)
   override val showInBar: Boolean = true
+  override fun rerunAvailable(): Boolean = true
 }

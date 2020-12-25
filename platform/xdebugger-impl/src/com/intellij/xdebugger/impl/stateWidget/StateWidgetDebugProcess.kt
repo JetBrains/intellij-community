@@ -13,4 +13,5 @@ class StateWidgetDebugProcess : StateWidgetProcess {
   override val actionId: String = generateActionID(executorId)
 
   override val showInBar: Boolean = true
+  override fun rerunAvailable(): Boolean = true
 }
