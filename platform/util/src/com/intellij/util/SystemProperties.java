@@ -1,14 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Utility wrappers for accessing system properties.
  *
- * @see SystemInfo
+ * @see com.intellij.openapi.util.SystemInfo
  */
 public final class SystemProperties {
   private SystemProperties() { }
@@ -23,27 +21,6 @@ public final class SystemProperties {
 
   public static String getLineSeparator() {
     return System.lineSeparator();
-  }
-
-  /** @deprecated use {@link SystemInfo#OS_NAME} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static String getOsName() {
-    return SystemInfo.OS_NAME;
-  }
-
-  /** @deprecated use {@link SystemInfo#JAVA_VERSION} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static String getJavaVersion() {
-    return SystemInfo.JAVA_VERSION;
-  }
-
-  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static String getJavaVmVendor() {
-    return SystemInfo.JAVA_VENDOR;
   }
 
   public static String getJavaHome() {
