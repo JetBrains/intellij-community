@@ -6,6 +6,8 @@ import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 
+import java.nio.file.Path
+
 abstract class DelegatingCompilationContext implements CompilationContext {
   private final CompilationContext delegate
 
@@ -86,5 +88,10 @@ abstract class DelegatingCompilationContext implements CompilationContext {
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     delegate.notifyArtifactBuilt(artifactPath)
+  }
+
+  @Override
+  void notifyArtifactWasBuilt(Path artifactPath) {
+    delegate.notifyArtifactWasBuilt(artifactPath)
   }
 }
