@@ -172,7 +172,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     return null
   }
 
-  fun updateLayout(isVertical: Boolean, isEditorDiffPreview: Boolean, forceDiffPreview: Boolean = false) {
+  fun updateLayout(isVertical: Boolean, canUseEditorDiffPreview: Boolean, forceDiffPreview: Boolean = false) {
+    val isEditorDiffPreview = canUseEditorDiffPreview || isVertical
     val isMessageSplitterVertical = isVertical || !isEditorDiffPreview
     if (treeMessageSplitter.orientation != isMessageSplitterVertical) {
       treeMessageSplitter.orientation = isMessageSplitterVertical
