@@ -362,7 +362,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   static <K, V> void registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension, @NotNull IndexConfiguration state,
-                                     @NotNull IndexVersionRegistrationSink registrationStatusSink) throws IOException {
+                                     @NotNull IndexVersionRegistrationSink registrationStatusSink) throws Exception {
     ID<K, V> name = extension.getName();
     int version = getIndexExtensionVersion(extension);
 
@@ -399,7 +399,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                               int version,
                                               @NotNull IndexConfiguration state,
                                               @NotNull IndexVersionRegistrationSink registrationStatusSink)
-    throws IOException {
+    throws Exception {
     final ID<K, V> name = extension.getName();
 
     final InputFilter inputFilter = extension.getInputFilter();
@@ -419,7 +419,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       contentHashesEnumeratorOk = SnapshotHashEnumeratorService.getInstance().initialize();
     }
 
-    for (int attempt = 0; attempt < 2; attempt++) {
+    int attemptCount = 2;
+    for (int attempt = 0; attempt < attemptCount; attempt++) {
       try {
         VfsAwareIndexStorageLayout<K, V> layout = VfsAwareIndexStorageLayout.getLayout(extension, contentHashesEnumeratorOk);
         UpdatableIndex<K, V, FileContent> index = createIndex(extension, layout);
@@ -439,15 +440,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         break;
       }
       catch (Exception e) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
+        registrationStatusSink.setIndexVersionDiff(name, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
+        IndexVersion.rewriteVersion(name, version);
+
+        boolean lastAttempt = attempt == attemptCount - 1;
+        if (lastAttempt) {
+          throw e;
+        }
+        else if (ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error(e);
         }
         else {
           LOG.warn(e);
         }
-
-        registrationStatusSink.setIndexVersionDiff(name, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
-        IndexVersion.rewriteVersion(name, version);
       }
     }
   }
