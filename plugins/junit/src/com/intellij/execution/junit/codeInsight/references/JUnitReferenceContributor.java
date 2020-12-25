@@ -92,9 +92,9 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
         if (element instanceof UAnnotation) {
           return (UAnnotation)element;
         }
-        if (element.getUastParent() != null) {
-          element = element.getUastParent();
-        } else return null;
+        UElement parent = element.getUastParent();
+        if (parent == null) return null;
+        element = parent;
       }
       return null;
     }
