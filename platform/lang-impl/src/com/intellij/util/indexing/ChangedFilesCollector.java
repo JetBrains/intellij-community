@@ -98,8 +98,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (!(file instanceof DeletedVirtualFileStub)) {
       IndexableFileSet setForFile = myManager.getIndexableSetForFile(file);
       if (setForFile == null) {
-        if (ApplicationManager.getApplication().isInternal()) {
-          LOG.warn("index will not be updated for file = " + file + ", id = " + FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+        if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.error("index will not be updated for file = " + file + ", id = " + FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
         }
         return;
       }
