@@ -17,6 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -44,19 +45,10 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitReferenceElement(
     PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
-    final PsiElement resolvedElement = reference.resolve();
-    if (!(resolvedElement instanceof PsiClass)) {
-      return;
+    final PsiClass aClass = ObjectUtils.tryCast(reference.resolve(), PsiClass.class);
+    if (aClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getScope() instanceof PsiClass) {
+      m_referencesStaticallyAccessible = false;
     }
-    final PsiClass aClass = (PsiClass)resolvedElement;
-    final PsiElement scope = aClass.getScope();
-    if (!(scope instanceof PsiClass)) {
-      return;
-    }
-    if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-      return;
-    }
-    m_referencesStaticallyAccessible = false;
   }
 
   @Override
@@ -64,26 +56,18 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
     @NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     final PsiElement qualifier = expression.getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof PsiThisExpression) &&
-        !(qualifier instanceof PsiSuperExpression)) {
-      return;
-    }
-    final PsiElement element = expression.resolve();
-    if (element instanceof PsiMember) {
-      final PsiMember member = (PsiMember)element;
-      if (isMemberStaticallyAccessible(member)) {
+    if (qualifier == null || qualifier instanceof PsiQualifiedExpression) {
+      final PsiElement element = expression.resolve();
+      if (element instanceof PsiMember && isMemberStaticallyAccessible((PsiMember)element) ||
+          element != null && !(element instanceof PsiMember)) {
         return;
       }
+      m_referencesStaticallyAccessible = false;
     }
-    else if (element != null) {
-      return;
-    }
-    m_referencesStaticallyAccessible = false;
   }
 
   @Override
-  public void visitThisExpression(
-    @NotNull PsiThisExpression expression) {
+  public void visitThisExpression(@NotNull PsiThisExpression expression) {
     super.visitThisExpression(expression);
     m_referencesStaticallyAccessible = false;
   }
@@ -97,7 +81,6 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     final PsiClass referenceContainingClass = m_method.getContainingClass();
     final PsiClass containingClass = member.getContainingClass();
-    return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass,
-                                              containingClass, true);
+    return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass, containingClass, true);
   }
 }
