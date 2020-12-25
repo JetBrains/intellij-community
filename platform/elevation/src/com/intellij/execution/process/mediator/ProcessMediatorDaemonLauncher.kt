@@ -17,6 +17,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Key
@@ -108,11 +109,11 @@ abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
       if (output.isExitCodeSet && output.exitCode != 0) ProcessTerminatedListener.stringifyExitCode(output.exitCode)
       else null
 
-    ElevationLogger.LOG.warn("Reading handshake failed", exception)
+    LOG.warn("Reading handshake failed", exception)
     if (errorExitCodeString != null) {
-      ElevationLogger.LOG.warn("Daemon process finished with exit code $errorExitCodeString")
+      LOG.warn("Process finished with exit code $errorExitCodeString")
     }
-    ElevationLogger.LOG.warn("Daemon process stderr:\n${output.stderr}")
+    LOG.warn("Process stderr:\n${output.stderr}")
 
     val reason = when {
       errorExitCodeString != null -> IdeBundle.message("finished.with.exit.code.text.message", errorExitCodeString)
@@ -140,6 +141,10 @@ abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
     return processHandler.apply {
       addProcessListener(LoggingProcessListener)
     }
+  }
+
+  companion object {
+    private val LOG = logger<ProcessHandshakeLauncher<*, *, *>>()
   }
 }
 
