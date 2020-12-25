@@ -61,7 +61,7 @@ class KotlinOptionsModelTest : GradleFileModelTestCase() {
     val android = gradleBuildModel.android()
     val kotlinOptions = android.kotlinOptions()
     assertMissingProperty(kotlinOptions.jvmTarget())
-    assertThrows<IllegalArgumentException>(IllegalArgumentException::class.java) {
+    assertThrows(IllegalArgumentException::class.java) {
       kotlinOptions.jvmTarget().setLanguageLevel(LanguageLevel.JDK_1_7)
     }
   }

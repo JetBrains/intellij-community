@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public class AstLoadingFilterTest extends BasePlatformTestCase {
@@ -36,35 +35,16 @@ public class AstLoadingFilterTest extends BasePlatformTestCase {
     );
   }
 
-  private static final class AstLoadingExceptionCase extends AbstractExceptionCase<AstLoadingException> {
-
-    private final Runnable myRunnable;
-
-    private AstLoadingExceptionCase(Runnable runnable) {
-      myRunnable = runnable;
-    }
-
-    @Override
-    public Class<AstLoadingException> getExpectedExceptionClass() {
-      return AstLoadingException.class;
-    }
-
-    @Override
-    public void tryClosure() throws AssertionError {
-      myRunnable.run();
-    }
-  }
-
   public void testDisallowedLoading() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
 
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
-    assertException(new AstLoadingExceptionCase(
+    assertThrows(AstLoadingException.class,
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> file.getNode()
       )
-    ));
+    );
   }
 
   public void testForceAllowLoading() throws AstLoadingException {
@@ -73,21 +53,21 @@ public class AstLoadingFilterTest extends BasePlatformTestCase {
     assertFalse(file.isContentsLoaded());
     PsiFileImpl anotherFile = addAnotherFile();
     assertFalse(anotherFile.isContentsLoaded());
-    assertNoException(new AstLoadingExceptionCase(
+    assertNoException(AstLoadingException.class,
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> AstLoadingFilter.forceAllowTreeLoading(
           file,                                                                 // allow for file
           (ThrowableComputable<?, RuntimeException>)() -> file.getNode()        // access its node -> no exception
         )
       )
-    ));
-    assertException(new AstLoadingExceptionCase(
+    );
+    assertThrows(AstLoadingException.class,
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> AstLoadingFilter.forceAllowTreeLoading(
           file,                                                                 // allow for file
           (ThrowableComputable<?, RuntimeException>)() -> anotherFile.getNode() // access another file node -> exception
         )
       )
-    ));
+    );
   }
 }

@@ -26,7 +26,7 @@ class FileContentImplTest : HeavyPlatformTestCase() {
     val bytes = byteArrayOf(3, 5, 7, 11)
     val content = createFileContent(bytes, binary = true)
     assertArrayEquals(bytes, content.content)
-    assertThrows(UnsupportedOperationException::class.java, ThrowableRunnable { content.contentAsText })
+    assertThrows(UnsupportedOperationException::class.java, { content.contentAsText })
   }
 
   fun `test conversion of line separators for text file`() {

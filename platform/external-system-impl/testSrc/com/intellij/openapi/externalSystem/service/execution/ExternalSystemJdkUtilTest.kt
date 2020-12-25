@@ -66,7 +66,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
     val javaHomeEnv = EnvironmentUtil.getValue("JAVA_HOME")?.let { FileUtil.toSystemIndependentName(it) }
     if (javaHomeEnv.isNullOrBlank()) {
-      assertThrows<UndefinedJavaHomeException>(UndefinedJavaHomeException::class.java) { getJdk(project, USE_JAVA_HOME) }
+      assertThrows(UndefinedJavaHomeException::class.java) { getJdk(project, USE_JAVA_HOME) }
     }
     else {
       assertThat(getJdk(project, USE_JAVA_HOME)?.homePath)
@@ -92,14 +92,14 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
     val javaHomeEnv = EnvironmentUtil.getValue("JAVA_HOME")?.let { FileUtil.toSystemIndependentName(it) }
     if (javaHomeEnv.isNullOrBlank()) {
-      assertThrows<UndefinedJavaHomeException>(UndefinedJavaHomeException::class.java) { resolveJdkName(null, USE_JAVA_HOME) }
+      assertThrows(UndefinedJavaHomeException::class.java) { resolveJdkName(null, USE_JAVA_HOME) }
     }
     else {
       assertThat(resolveJdkName(null, USE_JAVA_HOME)?.homePath)
         .isEqualTo(javaHomeEnv)
     }
 
-    assertThrows<ProjectJdkNotFoundException>(ProjectJdkNotFoundException::class.java) {
+    assertThrows(ProjectJdkNotFoundException::class.java) {
       resolveJdkName(null, USE_PROJECT_JDK)
     }
     val sdk: Sdk = mock(Sdk::class.java)

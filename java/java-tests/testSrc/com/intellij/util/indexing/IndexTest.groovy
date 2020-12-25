@@ -69,7 +69,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
 import com.intellij.util.indexing.impl.IndexDebugProperties
@@ -839,13 +838,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     GlobalSearchScope allScope = new EverythingGlobalScope()
     // create file to be indexed
     final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile()
-    assertNoException(new IllegalArgumentExceptionCase() {
+    assertNoException(IllegalArgumentException.class, new ThrowableRunnable<Throwable>() {
       @Override
-      void tryClosure() throws IllegalArgumentException {
+      void run() throws Throwable {
         //force to index new file with null project scope
-        FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, null, allScope)
+        FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, getProject(), allScope)
       }
     })
+    assertNotNull(testFile)
   }
 
   class RecordingVfsListener extends IndexedFilesListener {

@@ -16,7 +16,6 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.testFramework.exceptionCases.ThrowableErrorCase;
 
 /**
  * @author Roman Chernyatchik
@@ -75,12 +74,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
 
     enableDebugMode();
 
-    assertException(new ThrowableErrorCase() {
-      @Override
-      public void tryClosure() {
-        myTestSuiteStack.popSuite("some suite");
-      }
-    });
+    assertThrows(Throwable.class, () -> myTestSuiteStack.popSuite("some suite"));
   }
 
   public void testPopEmptySuite_NormalMode() {
@@ -101,12 +95,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     assertEquals(4, myTestSuiteStack.getStackSize());
     assertEquals("3", myTestSuiteStack.getCurrentSuite().getName());
 
-    assertException(new ThrowableErrorCase() {
-      @Override
-      public void tryClosure() {
-        myTestSuiteStack.popSuite(suiteName);
-      }
-    });
+    assertThrows(Throwable.class, () -> myTestSuiteStack.popSuite(suiteName));
     assertEquals(4, myTestSuiteStack.getStackSize());
   }
 

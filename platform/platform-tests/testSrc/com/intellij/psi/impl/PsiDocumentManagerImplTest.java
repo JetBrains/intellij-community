@@ -43,7 +43,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
@@ -434,42 +433,12 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   public void testLargeFileException() {
     VirtualFile vFile = getTempDir().createVirtualFile("a.txt", getTooLargeContent());
-    assertException(new FileTooBigExceptionCase() {
-      @Override
-      public void tryClosure() throws Throwable {
-        vFile.getOutputStream(this);
-      }
-    });
-    assertException(new FileTooBigExceptionCase() {
-      @Override
-      public void tryClosure() throws Throwable {
-        vFile.setBinaryContent(new byte[]{});
-      }
-    });
-    assertException(new FileTooBigExceptionCase() {
-      @Override
-      public void tryClosure() throws Throwable {
-        vFile.setBinaryContent(ArrayUtilRt.EMPTY_BYTE_ARRAY, 1, 2);
-      }
-    });
-    assertException(new FileTooBigExceptionCase() {
-      @Override
-      public void tryClosure() throws Throwable {
-        vFile.setBinaryContent(ArrayUtilRt.EMPTY_BYTE_ARRAY, 1, 2, this);
-      }
-    });
-    assertException(new FileTooBigExceptionCase() {
-      @Override
-      public void tryClosure() throws Throwable {
-        vFile.contentsToByteArray();
-      }
-    });
-    assertException(new FileTooBigExceptionCase() {
-      @Override
-      public void tryClosure() throws Throwable {
-        vFile.contentsToByteArray(false);
-      }
-    });
+    assertThrows(FileTooBigException.class, () -> vFile.getOutputStream(this));
+    assertThrows(FileTooBigException.class, () -> vFile.setBinaryContent(new byte[]{}));
+    assertThrows(FileTooBigException.class, () -> vFile.setBinaryContent(ArrayUtilRt.EMPTY_BYTE_ARRAY, 1, 2));
+    assertThrows(FileTooBigException.class, () -> vFile.setBinaryContent(ArrayUtilRt.EMPTY_BYTE_ARRAY, 1, 2, this));
+    assertThrows(FileTooBigException.class, () -> vFile.contentsToByteArray());
+    assertThrows(FileTooBigException.class, () -> vFile.contentsToByteArray(false));
   }
 
   private void assertNoFileDocumentMapping(VirtualFile vFile, PsiFile psiFile, Document document) {
@@ -797,13 +766,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   @NotNull
   private static String getTooLargeContent() {
     return StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);
-  }
-
-  private abstract static class FileTooBigExceptionCase extends AbstractExceptionCase {
-    @Override
-    public Class getExpectedExceptionClass() {
-      return FileTooBigException.class;
-    }
   }
 
   public void testDefaultProjectDocumentsAreAutoCommitted() {

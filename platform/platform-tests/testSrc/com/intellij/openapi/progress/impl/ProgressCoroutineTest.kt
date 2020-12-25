@@ -8,12 +8,11 @@ import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import com.intellij.openapi.progress.ProcessCanceledException as PCE
 
 class ProgressCoroutineTest : LightPlatformTestCase() {
 
   private inline fun <reified T : Throwable> assertThrows(noinline action: () -> Unit) {
-    assertThrows<T>(T::class.java, action)
+    assertThrows(T::class.java, action)
   }
 
   private fun backgroundActivity(indicator: ProgressIndicator, action: () -> Unit): Future<*> {
@@ -26,7 +25,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     val lock = Semaphore(1)
     val indicator = EmptyProgressIndicator()
     val future = backgroundActivity(indicator) {  // some blocking code under indicator
-      assertThrows<PCE> {
+      assertThrows(ProcessCanceledException::class.java) {
         runSuspendingAction {                     // want to switch to coroutine world from under the blocking code
           ensureActive()
           lock.up()
@@ -66,7 +65,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
       val deferred: Deferred<Unit> = async(Dispatchers.Default) {
         runUnderIndicator {
           lock.up()
-          throw PCE()
+          throw ProcessCanceledException()
         }
       }
       lock.waitFor()
@@ -74,7 +73,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         deferred.await()
         fail("PCE expected")
       }
-      catch (e: PCE) {
+      catch (e: ProcessCanceledException) {
       }
     }
   }
