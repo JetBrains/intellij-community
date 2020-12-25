@@ -54,35 +54,35 @@ private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
   fun launchDaemon(): R {
     return GlobalScope.async(Dispatchers.IO) {
-      createHandshakeTransport().use { handshakeTransport ->
+      createHandshakeTransport().use { transport ->
         ensureActive()
 
-        createProcessHandler(handshakeTransport)
+        createProcessHandler(transport)
           .withOutputCaptured(SynchronizedProcessOutput()) processHandler@{ launcherOutput ->
             startNotify()
 
-            val handshakeAsync = async(Dispatchers.IO) { handshakeTransport.readHandshake() }
+            val handshakeAsync = async(Dispatchers.IO) { transport.readHandshake() }
             val finishedAsync = launcherOutput.onFinished().asDeferred()
 
             val handshake = try {
               select<H?> {
                 handshakeAsync.onAwait { it }
-                finishedAsync.onAwait { handshakeFailed(this@processHandler, launcherOutput) }
+                finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
               }
               // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
               ?: select<Nothing> {
-                finishedAsync.onAwait { handshakeFailed(this@processHandler, launcherOutput) }
+                finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
                 onTimeout(1000) {
                   launcherOutput.setTimeout()
-                  handshakeFailed(this@processHandler, launcherOutput)
+                  handshakeFailed(transport, this@processHandler, launcherOutput)
                 }
               }
             }
             catch (e: IOException) {
-              handshakeFailed(this, launcherOutput, e)
+              handshakeFailed(transport, this, launcherOutput, e)
             }
 
-            handshakeSucceeded(handshake, handshakeTransport, this)
+            handshakeSucceeded(handshake, transport, this)
           }
       }
     }.awaitWithCheckCanceled()
@@ -95,11 +95,13 @@ abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
                                             transport: T,
                                             processHandler: BaseOSProcessHandler): R
 
-  protected abstract fun handshakeFailed(processHandler: BaseOSProcessHandler,
+  protected abstract fun handshakeFailed(transport: T,
+                                         processHandler: BaseOSProcessHandler,
                                          output: ProcessOutput,
                                          reason: @NlsContexts.DialogMessage String?): Nothing
 
-  private fun handshakeFailed(processHandler: BaseOSProcessHandler,
+  private fun handshakeFailed(transport: T,
+                              processHandler: BaseOSProcessHandler,
                               output: ProcessOutput,
                               exception: IOException? = null): Nothing = synchronized(output) {
     val errorExitCodeString =
@@ -117,7 +119,7 @@ abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
       exception == null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.eof")
       else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.ioe")
     }
-    handshakeFailed(processHandler, output, reason)
+    handshakeFailed(transport, processHandler, output, reason)
   }
 
   protected fun createProcessHandler(transport: T,
@@ -156,7 +158,8 @@ open class ProcessMediatorDaemonLauncher : ProcessHandshakeLauncher<Handshake, D
                                      DaemonClientCredentials(handshake.token))
   }
 
-  override fun handshakeFailed(processHandler: BaseOSProcessHandler,
+  override fun handshakeFailed(transport: DaemonHandshakeTransport,
+                               processHandler: BaseOSProcessHandler,
                                output: ProcessOutput,
                                reason: @NlsContexts.DialogMessage String?): Nothing {
     val message = ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
@@ -245,7 +248,8 @@ class ElevationDaemonLauncher : ProcessMediatorDaemonLauncher() {
     }
   }
 
-  override fun handshakeFailed(processHandler: BaseOSProcessHandler,
+  override fun handshakeFailed(transport: DaemonHandshakeTransport,
+                               processHandler: BaseOSProcessHandler,
                                output: ProcessOutput,
                                reason: @NlsContexts.DialogMessage String?): Nothing {
     val sudoPath: Path? = processHandler.getUserData(SUDO_PATH_KEY)
