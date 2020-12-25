@@ -28,7 +28,7 @@ internal class LookupActionsListener private constructor(): AnActionListener {
   private val up by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP) }
   private val backspace by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
 
-  var listener: CompletionPopupListener = CompletionPopupListener.Adapter()
+  var listener: CompletionPopupListener = CompletionPopupListener.DISABLED
 
   override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
     LOG.runAndLogException {

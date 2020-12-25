@@ -35,11 +35,13 @@ class CompletionLoggerInitializer : LookupTracker() {
   private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
   override fun lookupClosed() {
-    actionListener.listener = CompletionPopupListener.Adapter()
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    actionListener.listener = CompletionPopupListener.DISABLED
   }
 
   override fun lookupCreated(lookup: LookupImpl,
                              storage: MutableLookupStorage) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)
@@ -51,7 +53,7 @@ class CompletionLoggerInitializer : LookupTracker() {
       storage.markLoggingEnabled()
     }
     else {
-      actionListener.listener = CompletionPopupListener.Adapter()
+      actionListener.listener = CompletionPopupListener.DISABLED
     }
   }
 
