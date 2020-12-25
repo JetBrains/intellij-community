@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 final class DirectByteBufferBackedInputStream extends InputStream implements InputStreamEx {
   private ByteBuffer buffer;
@@ -52,7 +51,7 @@ final class DirectByteBufferBackedInputStream extends InputStream implements Inp
   }
 
   @Override
-  public byte[] readAllBytes() {
+  public byte @NotNull [] readAllBytes() {
     byte[] result = new byte[buffer.remaining()];
     buffer.get(result);
     return result;
@@ -75,10 +74,5 @@ final class DirectByteBufferBackedInputStream extends InputStream implements Inp
 
     this.buffer = null;
     DirectByteBufferPool.DEFAULT_POOL.release(buffer);
-  }
-
-  @Override
-  public @NotNull String readString() {
-    return new String(readAllBytes(), StandardCharsets.UTF_8);
   }
 }

@@ -137,7 +137,7 @@ public final class ResourceUtil {
   public static @NotNull String loadText(@NotNull InputStream in) throws IOException {
     try {
       if (in instanceof InputStreamEx) {
-        return ((InputStreamEx)in).readString();
+        return new String(((InputStreamEx)in).readAllBytes(), StandardCharsets.UTF_8);
       }
       else {
         BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
