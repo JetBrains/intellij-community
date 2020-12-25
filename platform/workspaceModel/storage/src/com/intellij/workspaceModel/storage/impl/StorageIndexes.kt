@@ -239,11 +239,11 @@ internal class MutableStorageIndexes(
       val externalMapping = externalMappings[id]
       if (externalMapping == null) {
         val newMapping = MutableExternalEntityMappingImpl<Any>()
-        newMapping.index[newId] = data
+        newMapping.add(newId, data)
         externalMappings[id] = newMapping
       } else {
         externalMapping as MutableExternalEntityMappingImpl<Any>
-        externalMapping.index[newId] = data
+        externalMapping.add(newId, data)
       }
     }
   }

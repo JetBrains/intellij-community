@@ -56,7 +56,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
   }
 
-  private fun add(id: EntityId, data: T) {
+  internal fun add(id: EntityId, data: T) {
     startWrite()
     index[id] = data
     indexLog.add(IndexLogRecord.Add(id, data))
@@ -139,13 +139,10 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   companion object {
-    fun from(other: MutableExternalEntityMappingImpl<*>): MutableExternalEntityMappingImpl<*> =
-      MutableExternalEntityMappingImpl(other.index, other.indexLog, true)
-
     fun fromMap(other: Map<String, ExternalEntityMappingImpl<*>>): MutableMap<String, MutableExternalEntityMappingImpl<*>> {
       val result = mutableMapOf<String, MutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
-        result[identifier] = MutableExternalEntityMappingImpl(index.index, mutableListOf(), true)
+        result[identifier] = MutableExternalEntityMappingImpl(index.index.copy(), mutableListOf(), false)
       }
       return result
     }
