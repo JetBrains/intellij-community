@@ -16,7 +16,7 @@ internal class LookupActionsListener private constructor(): AnActionListener {
     private val instance = LookupActionsListener()
 
     fun getInstance(): LookupActionsListener {
-      if (!subscribed && CompletionLoggerInitializer.shouldInitialize()) {
+      if (!subscribed) {
         ApplicationManager.getApplication().messageBus.connect().subscribe(AnActionListener.TOPIC, instance)
         subscribed = true
       }

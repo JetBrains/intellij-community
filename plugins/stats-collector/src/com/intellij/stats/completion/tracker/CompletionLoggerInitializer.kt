@@ -16,7 +16,7 @@ import kotlin.random.Random
 
 class CompletionLoggerInitializer : LookupTracker() {
   companion object {
-    fun shouldInitialize(): Boolean =
+    private fun shouldInitialize(): Boolean =
       (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()) || ApplicationManager.getApplication().isUnitTestMode
 
     private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
