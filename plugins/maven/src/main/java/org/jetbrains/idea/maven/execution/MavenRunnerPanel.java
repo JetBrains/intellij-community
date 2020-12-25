@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class MavenRunnerPanel {
+public class MavenRunnerPanel implements MavenSettingsObservable {
   protected final Project myProject;
   private final boolean myRunConfigurationMode;
 
@@ -234,5 +234,17 @@ public class MavenRunnerPanel {
     } else {
       myJdkLabel.setLabelFor(myJdkCombo);
     }
+  }
+
+  @Override
+  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
+    watcher.registerComponent("maven.runner.delegateToMaven", myDelegateToMavenCheckbox);
+    watcher.registerComponent("maven.runner.runInBackground", myRunInBackgroundCheckbox);
+    watcher.registerComponent("maven.runner.vmParameters", myVMParametersEditor);
+    watcher.registerComponent("maven.runner.envVariables", myEnvVariablesComponent);
+    watcher.registerComponent("maven.runner.jdk", myJdkCombo);
+    watcher.registerComponent("maven.runner.targetJdk", myTargetJdkCombo);
+    watcher.registerComponent("maven.runner.skipTests", mySkipTestsCheckBox);
+    watcher.registerComponent("maven.runner.properties", myPropertiesPanel);
   }
 }

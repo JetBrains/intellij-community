@@ -12,12 +12,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
+import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
+import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 import java.util.Arrays;
 
-public class MavenGeneralPanel implements PanelWithAnchor {
+public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservable {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox outputLevelCombo;
@@ -123,5 +125,20 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   @ApiStatus.Internal
   public void applyTargetEnvironmentConfiguration(@NotNull Project project, @Nullable String targetName) {
     mavenPathsForm.apply(project, targetName);
+  }
+
+  @Override
+  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
+    watcher.registerComponent("maven.general.workOffline", checkboxWorkOffline);
+    mavenPathsForm.registerSettingsWatcher(watcher);
+    watcher.registerComponent("maven.general.produceExceptionErrorMessages", checkboxProduceExceptionErrorMessages);
+    watcher.registerComponent("maven.general.usePluginRegistry", checkboxUsePluginRegistry);
+    watcher.registerComponent("maven.general.recursive", checkboxRecursive);
+    watcher.registerComponent("maven.general.alwaysUpdateSnapshots", alwaysUpdateSnapshotsCheckBox);
+    watcher.registerComponent("maven.general.threadsEditor", threadsEditor);
+    watcher.registerComponent("maven.general.outputLevel", outputLevelCombo);
+    watcher.registerComponent("maven.general.checksumPolicy", checksumPolicyCombo);
+    watcher.registerComponent("maven.general.failPolicy", failPolicyCombo);
+    watcher.registerComponent("maven.general.showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
   }
 }
