@@ -74,44 +74,44 @@ private class EncryptedHandshakeTransport(private val delegate: DaemonHandshakeT
 
 
 private abstract class AbstractHandshakeTransport(private val launchOptions: DaemonLaunchOptions) : DaemonHandshakeTransport {
-  protected abstract val handshakeReader: HandshakeReader
+  protected abstract val inputHandle: InputHandle
 
   override fun getDaemonLaunchOptions() = launchOptions.copy(handshakeOption = getHandshakeOption())
   abstract fun getHandshakeOption(): DaemonLaunchOptions.HandshakeOption
 
   override fun readHandshake(): Handshake? {
-    return Handshake.parseDelimitedFrom(handshakeReader.inputStream)
+    return Handshake.parseDelimitedFrom(inputHandle.inputStream)
   }
 
-  override fun close() = handshakeReader.close()
+  override fun close() = inputHandle.close()
 }
 
 private class SocketTransport(
   launchOptions: DaemonLaunchOptions,
   port: Int = 0
 ) : AbstractHandshakeTransport(launchOptions) {
-  override val handshakeReader = HandshakeSocketReader(port)
-  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Port(handshakeReader.localPort)
+  override val inputHandle = SocketInputHandle(port)
+  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Port(inputHandle.localPort)
 }
 
 private class StdoutTransport(launchOptions: DaemonLaunchOptions) : AbstractHandshakeTransport(launchOptions),
                                                                     ProcessStdoutDaemonHandshakeTransport {
-  override lateinit var handshakeReader: HandshakeStreamReader
+  override lateinit var inputHandle: StreamInputHandle
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Stdout
 
   override fun initStream(inputStream: InputStream) {
-    handshakeReader = HandshakeStreamReader(inputStream)
+    inputHandle = StreamInputHandle(inputStream)
   }
 }
 
 private open class FileTransport(
   launchOptions: DaemonLaunchOptions,
-  override val handshakeReader: HandshakeFileReader
+  override val inputHandle: FileInputHandle
 ) : AbstractHandshakeTransport(launchOptions) {
-  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.File(handshakeReader.path.toAbsolutePath())
+  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.File(inputHandle.path.toAbsolutePath())
 }
 
 private class UnixFifoTransport(
   launchOptions: DaemonLaunchOptions,
   path: Path
-) : FileTransport(launchOptions, HandshakeUnixFifoReader(path))
+) : FileTransport(launchOptions, UnixFifoInputHandle(path))

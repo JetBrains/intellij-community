@@ -12,13 +12,17 @@ import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 
 
-internal interface HandshakeReader : Closeable {
+/**
+ * An input stream which may have other resources associated that need to be closed / cleaned up when closing the stream.
+ * For example, a temporary file may need to be deleted as soon as we are done reading from its input stream.
+ */
+internal interface InputHandle : Closeable {
   val inputStream: InputStream
   override fun close() = inputStream.close()
 }
 
 
-internal class HandshakeSocketReader(port: Int = 0) : HandshakeReader {
+internal class SocketInputHandle(port: Int = 0) : InputHandle {
   val localPort: Int get() = serverSocket.localPort
 
   private val cleanup = MultiCloseable()
@@ -28,12 +32,12 @@ internal class HandshakeSocketReader(port: Int = 0) : HandshakeReader {
   override fun close() = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.
 }
 
-internal class HandshakeStreamReader(override val inputStream: InputStream) : HandshakeReader
+internal class StreamInputHandle(override val inputStream: InputStream) : InputHandle
 
-internal abstract class HandshakeFileReader(val path: Path) : HandshakeReader
+internal abstract class FileInputHandle(val path: Path) : InputHandle
 
 @Suppress("SpellCheckingInspection")
-internal class HandshakeUnixFifoReader(path: Path) : HandshakeFileReader(path) {
+internal class UnixFifoInputHandle(path: Path) : FileInputHandle(path) {
   private val cleanup = MultiCloseable().apply {
     registerCloseable { super.close() }
   }
