@@ -17,6 +17,7 @@ class BasicKotlinReferenceTransferableData(
     val sourceTextOffset: Int,
     val sourceText: String,
     val textRanges: List<TextRange>,
+    val references: List<KotlinReferenceData>?,
     val locationFqName: String?
 ) : TextBlockTransferableData, Cloneable, Serializable {
     override fun getFlavor() = dataFlavor
@@ -25,10 +26,18 @@ class BasicKotlinReferenceTransferableData(
     override fun getOffsets(offsets: IntArray?, index: Int) = index
     override fun setOffsets(offsets: IntArray?, index: Int) = index
 
+    public override fun clone(): BasicKotlinReferenceTransferableData {
+        try {
+            return super.clone() as BasicKotlinReferenceTransferableData
+        } catch (e: CloneNotSupportedException) {
+            throw RuntimeException()
+        }
+    }
+
     companion object {
         val dataFlavor: DataFlavor? by lazy {
             try {
-                val dataClass = KotlinReferenceData::class.java
+                val dataClass = BasicKotlinReferenceTransferableData::class.java
                 DataFlavor(
                     DataFlavor.javaJVMLocalObjectMimeType + ";class=" + dataClass.name,
                     "BasicKotlinReferenceTransferableData",
@@ -39,14 +48,6 @@ class BasicKotlinReferenceTransferableData(
             } catch (e: IllegalArgumentException) {
                 null
             }
-        }
-    }
-
-    public override fun clone(): BasicKotlinReferenceTransferableData {
-        try {
-            return super.clone() as BasicKotlinReferenceTransferableData
-        } catch (e: CloneNotSupportedException) {
-            throw RuntimeException()
         }
     }
 
