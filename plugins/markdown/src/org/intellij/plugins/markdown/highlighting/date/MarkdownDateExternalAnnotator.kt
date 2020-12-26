@@ -49,18 +49,15 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
         ranges.map { it.shiftRight(visitor.texts[i].second) }
       }.toSet()
 
-    return MyAnnotationResult(document, dateRanges, resetCache = listenedChanges == null)
+    return MyAnnotationResult(document, dateRanges)
   }
 
   override fun apply(file: PsiFile, annotationResult: MyAnnotationResult?, holder: AnnotationHolder) {
-    val (document, ranges, resetCache) = annotationResult ?: return
+    val (document, ranges) = annotationResult ?: return
 
     val markupModel = DocumentMarkupModel.forDocument(document, file.project, true)
 
     ApplicationManager.getApplication().invokeLater {
-      if (resetCache) {
-        markupModel.removeAllHighlighters()
-      }
       for (range in ranges) {
         val highlighter = markupModel.addRangeHighlighter(MarkdownHighlighterColors.DATE,
                                                           range.startOffset, range.endOffset,
@@ -82,7 +79,7 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
 }
 
 data class MyDocumentInfo(val document: Document, val file: PsiFile)
-data class MyAnnotationResult(val document: Document, val ranges: Set<TextRange>, val resetCache: Boolean)
+data class MyAnnotationResult(val document: Document, val ranges: Set<TextRange>)
 
 val IS_DATE_HIGHLIGHTER = Key.create<Boolean>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_IS_DATE_HIGHLIGHTER")
 private val HAS_DOCUMENT_LISTENER = Key.create<AtomicBoolean>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_HAS_DOCUMENT_LISTENER")
