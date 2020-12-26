@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.SmartList
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
+import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightDatesAction
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnotationResult>() {
@@ -58,12 +59,19 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
     val markupModel = DocumentMarkupModel.forDocument(document, file.project, true)
 
     ApplicationManager.getApplication().invokeLater {
-      for (range in ranges) {
-        val highlighter = markupModel.addRangeHighlighter(MarkdownHighlighterColors.DATE,
-                                                          range.startOffset, range.endOffset,
-                                                          HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                          HighlighterTargetArea.EXACT_RANGE)
-        highlighter.putUserData(IS_DATE_HIGHLIGHTER, true)
+      if (HighlightDatesAction.isHighlightingEnabled) {
+        for (range in ranges) {
+          val highlighter = markupModel.addRangeHighlighter(MarkdownHighlighterColors.DATE,
+                                                            range.startOffset, range.endOffset,
+                                                            HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                            HighlighterTargetArea.EXACT_RANGE)
+          highlighter.putUserData(IS_DATE_HIGHLIGHTER, true)
+        }
+      }
+      else {
+        markupModel.allHighlighters
+          .filter { it.getUserData(IS_DATE_HIGHLIGHTER) == true }
+          .forEach(markupModel::removeHighlighter)
       }
     }
   }
