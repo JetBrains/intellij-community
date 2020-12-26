@@ -24,4 +24,7 @@ internal fun findEntities(textsWithOffsets: Collection<TextWithOffset>): Entitie
 class Entities(private val labelToRangesMap: Map<String, Set<TextRange>>) {
   val dates: Set<TextRange>
     get() = labelToRangesMap["date"] ?: emptySet()
+
+  val money: Set<TextRange>
+    get() = labelToRangesMap["money"] ?: emptySet()
 }

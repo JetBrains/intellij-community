@@ -56,4 +56,5 @@ public final class MarkdownHighlighterColors {
 
   public static final TextAttributesKey NUMBER = createTextAttributesKey("MARKDOWN_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
   public static final TextAttributesKey DATE = createTextAttributesKey("MARKDOWN_DATE", STRING);
+  public static final TextAttributesKey MONEY = createTextAttributesKey("MARKDOWN_MONEY", METADATA);
 }

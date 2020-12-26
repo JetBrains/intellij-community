@@ -211,6 +211,9 @@ Includes the following features:</p>
         <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightDatesAction"
                 id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightDatesAction">
         </action>
+        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightMoneyAction"
+                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightMoneyAction">
+        </action>
       </group>
     </group>
 

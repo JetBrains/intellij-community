@@ -152,6 +152,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.inline_html", MarkdownHighlighterColors.INLINE_HTML_ATTR_KEY);
       put("markdown.editor.colors.number", MarkdownHighlighterColors.NUMBER);
       put("markdown.editor.colors.date", MarkdownHighlighterColors.DATE);
+      put("markdown.editor.colors.money", MarkdownHighlighterColors.MONEY);
     }
 
     public AttributesDescriptor @NotNull [] get() {
