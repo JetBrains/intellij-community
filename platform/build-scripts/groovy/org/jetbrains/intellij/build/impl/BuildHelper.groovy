@@ -14,6 +14,7 @@ import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 @CompileStatic
 final class BuildHelper {
@@ -82,7 +83,12 @@ final class BuildHelper {
 
   static void copyFileToDir(Path file, Path targetDir) {
     Files.createDirectories(targetDir)
-    Files.copy(file, targetDir.resolve(file.fileName))
+    Files.copy(file, targetDir.resolve(file.fileName), StandardCopyOption.COPY_ATTRIBUTES)
+  }
+
+  static void copyFile(Path file, Path target) {
+    Files.createDirectories(target.parent)
+    Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
   }
 
   static void moveFile(Path source, Path target) {

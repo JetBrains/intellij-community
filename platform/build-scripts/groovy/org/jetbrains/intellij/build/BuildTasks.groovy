@@ -21,7 +21,11 @@ abstract class BuildTasks {
   /**
    * Builds archive containing production source roots of the project modules
    */
-  abstract void zipSourcesOfModules(Collection<String> modules, String targetFilePath)
+  abstract void zipSourcesOfModules(Collection<String> modules, Path targetFile)
+
+  void zipSourcesOfModules(Collection<String> modules, String targetFilePath) {
+    zipSourcesOfModules(modules, Path.of(targetFilePath))
+  }
 
   /**
    * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR

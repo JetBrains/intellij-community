@@ -14,6 +14,9 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
 
+import java.nio.file.Files
+import java.nio.file.Path
+
 @CompileStatic
 final class LibraryLicensesListGenerator {
   private final BuildMessages messages
@@ -82,9 +85,8 @@ final class LibraryLicensesListGenerator {
     return name
   }
 
-  void generateHtml(String filePath) {
+  void generateHtml(Path file) {
     messages.debug("Used libraries:")
-    List<String> lines = []
 
     String line = '''
   <tr valign="top">
@@ -97,11 +99,12 @@ final class LibraryLicensesListGenerator {
     </td>
   </tr>
       '''.trim()
-    def engine = new SimpleTemplateEngine()
+    SimpleTemplateEngine engine = new SimpleTemplateEngine()
 
-    licensesInModules.entrySet().each {
-      LibraryLicense lib = it.key
-      String moduleName = it.value
+    List<String> lines = new ArrayList<>()
+    for (entry in licensesInModules.entrySet()) {
+      LibraryLicense lib = entry.key
+      String moduleName = entry.value
 
       String libKey = (lib.presentableName + "_" + lib.version ?: "").replace(" ", "_")
       // id here is needed because of a bug IDEA-188262
@@ -112,15 +115,12 @@ final class LibraryLicensesListGenerator {
                        "<span class=\"licence\">$lib.license</span>"
 
       messages.debug(" $lib.presentableName (in module $moduleName)")
-      lines << engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).toString()
+      lines.add(engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).toString())
     }
 
     lines.sort(true, String.CASE_INSENSITIVE_ORDER)
-    File file = new File(filePath)
-    file.parentFile.mkdirs()
-    FileWriter out = new FileWriter(file)
-    try {
-      out.println('''
+    StringBuilder out = new StringBuilder()
+    out.append('''
 <style>
   table {
     width: 560px;
@@ -162,19 +162,18 @@ final class LibraryLicensesListGenerator {
   }
 </style>
 '''.trim())
-      out.println("<table>")
-      out.println("<tr><th class=\"firstColumn\">Software</th><th class=\"secondColumn\">License</th></tr>")
-      lines.each {
-        out.println(it)
-      }
-      out.println("</table>")
+    out.append("\n<table>")
+    out.append("\n<tr><th class=\"firstColumn\">Software</th><th class=\"secondColumn\">License</th></tr>")
+    for (it in lines) {
+      out.append('\n')
+      out.append(it)
     }
-    finally {
-      out.close()
-    }
+    out.append("\n</table>")
+    Files.createDirectories(file.getParent())
+    Files.writeString(file, out)
   }
 
-  void generateJson(String filePath) {
+  void generateJson(Path file) {
     List<LibraryLicenseData> entries = []
 
     licensesInModules.keySet().sort( {it.presentableName} ).each {
@@ -189,9 +188,8 @@ final class LibraryLicensesListGenerator {
       )
     }
 
-    File file = new File(filePath)
-    file.parentFile.mkdirs()
-    file.withWriter {
+    Files.createDirectories(file.getParent())
+    Files.newBufferedWriter(file).withCloseable {
       new GsonBuilder().setPrettyPrinting().create().toJson(entries, it)
     }
   }

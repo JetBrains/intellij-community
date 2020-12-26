@@ -15,12 +15,15 @@ import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -70,22 +73,22 @@ final class BuildTasksImpl extends BuildTasks {
 
   @Override
   @CompileStatic(TypeCheckingMode.SKIP)
-  void zipSourcesOfModules(Collection<String> modules, String targetFilePath) {
+  void zipSourcesOfModules(Collection<String> modules, Path targetFile) {
     buildContext.executeStep("Build sources of modules archive", BuildOptions.SOURCES_ARCHIVE_STEP) {
-      buildContext.messages.progress("Building archive of ${modules.size()} modules to $targetFilePath")
-      buildContext.ant.mkdir(dir: new File(targetFilePath).getParent())
-      buildContext.ant.delete(file: targetFilePath)
-      buildContext.ant.zip(destfile: targetFilePath) {
-        modules.each {
-          JpsModule module = buildContext.findModule(it)
+      buildContext.messages.progress("Building archive of ${modules.size()} modules to $targetFile")
+      Files.createDirectories(targetFile.parent)
+      Files.deleteIfExists(targetFile)
+      buildContext.ant.zip(destfile: targetFile) {
+        for (String moduleName in modules) {
+          JpsModule module = buildContext.findModule(moduleName)
           if (module == null) {
-            buildContext.messages.error("Cannot build sources archive: '$it' module doesn't exist")
+            buildContext.messages.error("Cannot build sources archive: '$moduleName' module doesn't exist")
           }
-          module.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
-            buildContext.ant.
-              zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
+          for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
+            buildContext.ant.zipfileset(dir: root.file.absolutePath,
+                                        prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
           }
-          module.getSourceRoots(JavaResourceRootType.RESOURCE).each { root ->
+          for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
             buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false) {
               exclude(name: "**/*.png")
             }
@@ -93,7 +96,7 @@ final class BuildTasksImpl extends BuildTasks {
         }
       }
 
-      buildContext.notifyArtifactBuilt(targetFilePath)
+      buildContext.notifyArtifactBuilt(targetFile)
     }
   }
 
@@ -851,13 +854,14 @@ idea.fatal.error.notification=disabled
   @CompileStatic(TypeCheckingMode.SKIP)
   void buildFullUpdaterJar() {
     String updaterModule = "intellij.platform.updater"
-    def libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule)).productionOnly().runtimeOnly().libraries.collectMany {
-      it.getFiles(JpsOrderRootType.COMPILED)
-    }
+    List<File> libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule))
+      .productionOnly()
+      .runtimeOnly()
+      .libraries.collectMany {it.getFiles(JpsOrderRootType.COMPILED)}
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
       jar("updater-full.jar") {
         module(updaterModule)
-        libraryFiles.each { file ->
+        for (file in libraryFiles) {
           ant.zipfileset(src: file.absolutePath)
         }
       }
@@ -867,8 +871,8 @@ idea.fatal.error.notification=disabled
   @Override
   void runTestBuild() {
     checkProductProperties()
-    def patchedApplicationInfo = patchApplicationInfo()
-    def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    Path patchedApplicationInfo = patchApplicationInfo()
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     distributionJARsBuilder.buildJARs()
     distributionJARsBuilder.buildInternalUtilities()
     if (buildContext.productProperties.scrambleMainJar) {
@@ -925,17 +929,14 @@ idea.fatal.error.notification=disabled
         }
       }
       else {
-        buildContext.ant.exec(executable: '/bin/sh', failOnError: true) {
-          arg(value: '-c')
-          arg(value: "mv \"$jbrTargetDir\"/* \"$targetDirectory\"")
-        }
+        BuildHelper.runProcess(buildContext, List.of("/bin/sh", "-c", "mv \"" + jbrTargetDir + "\"/* \"" + targetDirectory + '"'), null)
       }
 
-      def executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
+      List<String> executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       buildContext.ant.chmod(perm: "755") {
         fileset(dir: targetDirectory.toString()) {
-          executableFilesPatterns.each {
-            include(name: it)
+          for (String pattern in executableFilesPatterns) {
+            include(name: pattern)
           }
         }
       }

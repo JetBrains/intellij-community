@@ -1,22 +1,27 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+import org.jetbrains.jps.model.library.JpsLibrary
 
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  */
-class CommunityStandaloneJpsBuilder {
+@CompileStatic
+final class CommunityStandaloneJpsBuilder {
   private final BuildContext buildContext
 
   CommunityStandaloneJpsBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   void processJpsLayout(String targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
                         boolean copyFiles, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
-    def context = buildContext
+    BuildContext context = buildContext
     new LayoutBuilder(buildContext, false).process(targetDir, projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
         jar("util.jar") {
@@ -74,15 +79,15 @@ class CommunityStandaloneJpsBuilder {
         jar("devkit-jps.jar") { module("intellij.devkit.jps") }
         jar("java-langInjection-jps.jar") { module("intellij.java.langInjection.jps") }
 
-        [
+        for (String name in List.of(
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
           "jetbrains-annotations-java5", "qdox-java-parser", "gson", "jps-javac-extension", "fastutil-min"
-        ].each {
-          projectLibrary(it)
+        )) {
+          projectLibrary(name)
         }
-        context.findRequiredModule("intellij.java.aetherDependencyResolver").libraryCollection.libraries.each {
-          jpsLibrary(it)
+        for (JpsLibrary library in context.findRequiredModule("intellij.java.aetherDependencyResolver").libraryCollection.libraries) {
+          jpsLibrary(library)
         }
 
         jar("ant-jps.jar") { module("intellij.ant.jps") }
@@ -98,6 +103,6 @@ class CommunityStandaloneJpsBuilder {
   }
 
   static String getZipName(String buildNumber) {
-    "standalone-jps-${buildNumber}.zip"
+    return "standalone-jps-${buildNumber}.zip"
   }
 }

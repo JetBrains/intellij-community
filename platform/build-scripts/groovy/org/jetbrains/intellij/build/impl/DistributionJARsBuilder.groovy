@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
+import java.util.function.Supplier
 import java.util.regex.Matcher
 import java.util.stream.Collectors
 import java.util.stream.Stream
@@ -61,7 +62,7 @@ final class DistributionJARsBuilder {
   private static final String PLUGINS_DIRECTORY = "plugins"
 
   private final BuildContext buildContext
-  private final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
+  final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
   final PlatformLayout platform
   private final Path patchedApplicationInfo
   private final LinkedHashSet<PluginLayout> pluginsToPublish
@@ -412,20 +413,22 @@ final class DistributionJARsBuilder {
     return platformModules + pluginsToPublish.collectMany(new LinkedHashSet()) { it.moduleJars.values() }
   }
 
-  void buildAdditionalArtifacts() {
-    def productProperties = buildContext.productProperties
+  static void buildAdditionalArtifacts(BuildContext buildContext, ProjectStructureMapping projectStructureMapping) {
+    ProductProperties productProperties = buildContext.productProperties
 
-    if (productProperties.generateLibrariesLicensesTable && !buildContext.options.buildStepsToSkip.
-      contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
+    if (productProperties.generateLibrariesLicensesTable &&
+        !buildContext.options.buildStepsToSkip.contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      FileUtil.copy(new File(getThirdPartyLibrariesHtmlFilePath(buildContext)), new File(buildContext.paths.artifacts, "$artifactNamePrefix-third-party-libraries.html"))
-      FileUtil.copy(new File(getThirdPartyLibrariesJsonFilePath(buildContext)), new File(buildContext.paths.artifacts, "$artifactNamePrefix-third-party-libraries.json"))
+      Path artifactDir = Path.of(buildContext.paths.artifacts)
+      Files.createDirectories(artifactDir)
+      Files.copy(getThirdPartyLibrariesHtmlFilePath(buildContext), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
+      Files.copy(getThirdPartyLibrariesJsonFilePath(buildContext), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
     }
 
-    buildInternalUtilities()
+    buildInternalUtilities(buildContext)
 
     if (productProperties.buildSourcesArchive) {
-      def archiveName = "${productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
+      String archiveName = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + "-sources.zip"
       BuildTasks.create(buildContext).zipSourcesOfModules(projectStructureMapping.includedModules, "$buildContext.paths.artifacts/$archiveName")
     }
   }
@@ -442,9 +445,9 @@ final class DistributionJARsBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  void buildInternalUtilities() {
+  static void buildInternalUtilities(BuildContext buildContext) {
     if (buildContext.productProperties.scrambleMainJar) {
-      createLayoutBuilder().layout("$buildContext.paths.buildOutputRoot/internal") {
+      new LayoutBuilder(buildContext, COMPRESS_JARS).layout("$buildContext.paths.buildOutputRoot/internal") {
         jar("internalUtilities.jar") {
           module("intellij.tools.internalUtilities")
         }
@@ -465,12 +468,12 @@ final class DistributionJARsBuilder {
     }
   }
 
-  private static String getThirdPartyLibrariesHtmlFilePath(@NotNull BuildContext buildContext) {
-    return "$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH"
+  private static Path getThirdPartyLibrariesHtmlFilePath(@NotNull BuildContext buildContext) {
+    return buildContext.paths.distAllDir.resolve(THIRD_PARTY_LIBRARIES_FILE_PATH)
   }
 
-  private static String getThirdPartyLibrariesJsonFilePath(@NotNull BuildContext buildContext) {
-    return "$buildContext.paths.temp/third-party-libraries.json"
+  private static Path getThirdPartyLibrariesJsonFilePath(@NotNull BuildContext buildContext) {
+    return buildContext.paths.tempDir.resolve("third-party-libraries.json")
   }
 
   static Map<String, String> getPluginModulesToJar(@NotNull BuildContext buildContext) {
@@ -653,7 +656,7 @@ final class DistributionJARsBuilder {
 
       PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext, pluginVersion)
       if (helpPlugin != null) {
-        PluginRepositorySpec spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, autoUploadingDir.toString(), layoutBuilder)
+        PluginRepositorySpec spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, autoUploadingDir, layoutBuilder)
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
           pluginsToIncludeInCustomRepository.add(spec)
         }
@@ -671,8 +674,8 @@ final class DistributionJARsBuilder {
    * to provide downloading plugins via incremental downloading algorithm Blockmap.
    */
   private void buildNonBundledPluginsBlockMaps(){
-    def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
-    def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
+    String pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
+    String nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
     Path path = Paths.get(nonBundledPluginsArtifacts)
     if (!Files.exists(path)) {
       return
@@ -682,47 +685,48 @@ final class DistributionJARsBuilder {
       .filter({ it -> it.toString().endsWith(".zip") && Files.isRegularFile(it) })
       .forEach { Path file ->
         Path blockMapFile = file.parent.resolve("${file.fileName}.blockmap.zip")
-        Path hashFile = file.parent.resolve("${file.fileName}.hash.json")
-        String blockMapJson = "blockmap.json"
         String algorithm = "SHA-256"
+        byte[] bytes
         new BufferedInputStream(Files.newInputStream(file)).withCloseable { input ->
-          BlockMap blockMap = new BlockMap(input, algorithm)
-          new BufferedOutputStream(Files.newOutputStream(blockMapFile)).withCloseable { output ->
-            writeBlockMapToZip(output, JsonOutput.toJson(blockMap).bytes, blockMapJson)
+          bytes = JsonOutput.toJson(new BlockMap(input, algorithm)).bytes
+        }
+
+        new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(blockMapFile))).withCloseable { stream ->
+          try {
+            //noinspection SpellCheckingInspection
+            ZipEntry entry = new ZipEntry("blockmap.json")
+            stream.putNextEntry(entry)
+            stream.write(bytes)
+            stream.closeEntry()
+          }
+          finally {
+            stream.close()
           }
         }
+
+        Path hashFile = file.parent.resolve("${file.fileName}.hash.json")
         new BufferedInputStream(Files.newInputStream(file)).withCloseable { input ->
           Files.writeString(hashFile, JsonOutput.toJson(new FileHash(input, algorithm)))
         }
       }
   }
 
-  private static void writeBlockMapToZip(OutputStream output, byte[] bytes, String blockMapJson){
-    new BufferedOutputStream(output).withStream {bufferedOutput ->
-      new ZipOutputStream(bufferedOutput).withStream { zipOutputStream ->
-        def entry = new ZipEntry(blockMapJson)
-        zipOutputStream.putNextEntry(entry)
-        zipOutputStream.write(bytes)
-        zipOutputStream.closeEntry()
-      }
-    }
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private PluginRepositorySpec buildHelpPlugin(PluginLayout helpPlugin, Path pluginsToPublishDir, String targetDir, LayoutBuilder layoutBuilder) {
+  private PluginRepositorySpec buildHelpPlugin(PluginLayout helpPlugin, Path pluginsToPublishDir, Path targetDir, LayoutBuilder layoutBuilder) {
     String directory = getActualPluginDirectoryName(helpPlugin, buildContext)
-    String destFile = "${targetDir}/${directory}.zip"
+    Path destFile = targetDir.resolve(directory + ".zip")
     Path patchedPluginXmlDir = buildContext.paths.tempDir.resolve("patched-plugin-xml/$helpPlugin.mainModule")
     layoutBuilder.patchModuleOutput(helpPlugin.mainModule, patchedPluginXmlDir.toString())
-    buildContext.messages.block("Building $directory plugin") {
-      buildPlugins(layoutBuilder, List.of(helpPlugin), pluginsToPublishDir, null)
-      buildContext.ant.zip(destfile: destFile) {
-        zipfileset(dir: pluginsToPublishDir.resolve(directory).toString(), prefix: directory)
+    buildContext.messages.block("Building $directory plugin", new Supplier<Object>() {
+      @Override
+      Object get() {
+        buildPlugins(layoutBuilder, List.of(helpPlugin), pluginsToPublishDir, null)
+        BuildHelper.zip(buildContext, destFile, List.of(pluginsToPublishDir.resolve(directory)), directory)
+        return null
       }
-    }
+    })
     buildContext.notifyArtifactBuilt(destFile)
     Path pluginXmlPath = patchedPluginXmlDir.resolve("META-INF/plugin.xml")
-    return new PluginRepositorySpec(pluginZip: destFile, pluginXml: pluginXmlPath.toString())
+    return new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXmlPath.toString())
   }
 
   /**
@@ -749,7 +753,7 @@ final class DistributionJARsBuilder {
                             ProjectStructureMapping parentMapping) {
     addSearchableOptions(layoutBuilder)
     List<Pair<PluginLayout, Path>> pluginsToScramble = new ArrayList<>()
-    for (plugin in pluginsToInclude) {
+    for (PluginLayout plugin in pluginsToInclude) {
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
         checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes)
@@ -767,19 +771,21 @@ final class DistributionJARsBuilder {
       Path targetDir = targetDirectory.resolve(getActualPluginDirectoryName(plugin, buildContext))
       processPluginLayout(plugin, layoutBuilder, targetDir, generatedResources, parentMapping, true)
       if (!plugin.pathsToScramble.isEmpty()) {
-        pluginsToScramble.add(Pair.create(plugin, targetDir))
+        pluginsToScramble.add(new Pair<>(plugin, targetDir))
       }
     }
 
-    if (buildContext.proprietaryBuildTools.scrambleTool != null) {
-      pluginsToScramble.each { pluginPair -> buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, pluginPair.first, pluginPair.second) }
+    if (buildContext.proprietaryBuildTools.scrambleTool == null) {
+      for (Pair<PluginLayout, Path> pluginPair in pluginsToScramble) {
+        buildContext.messages.warning("Scrambling plugin $pluginPair.first.directoryName skipped: " +
+                                      "'scrambleTool' isn't defined, but plugin defines paths to be scrambled")
+      }
     }
     else {
-      pluginsToScramble.each { pluginPair ->
-        buildContext.messages.warning("Scrambling plugin $pluginPair.first.directoryName skipped: 'scrambleTool' isn't defined, but plugin defines paths to be scrambled")
+      for (Pair<PluginLayout, Path> pluginPair in pluginsToScramble) {
+        buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, pluginPair.first, pluginPair.second)
       }
     }
-
   }
 
   private void patchPluginXml(LayoutBuilder layoutBuilder, PluginLayout plugin) {
@@ -972,20 +978,18 @@ final class DistributionJARsBuilder {
           }
         }
 
-        if (!outputResourceJars.empty) {
-          outputResourceJars.keySet().forEach { resourceJarName ->
-            jar(resourceJarName, true) {
-              outputResourceJars.get(resourceJarName).each { moduleName ->
-                modulePatches([moduleName]) {
-                  ant.patternset(refid: resourcesIncluded)
+        for (String resourceJarName : outputResourceJars.keySet()) {
+          jar(resourceJarName, true) {
+            for (String moduleName in outputResourceJars.get(resourceJarName)) {
+              modulePatches(List.of(moduleName)) {
+                ant.patternset(refid: resourcesIncluded)
+              }
+              module(moduleName) {
+                for (String moduleExclude in layout.moduleExcludes.get(moduleName)) {
+                  //noinspection GrUnresolvedAccess
+                  ant.exclude(name: "$moduleExclude/**")
                 }
-                module(moduleName) {
-                  layout.moduleExcludes.get(moduleName).each {
-                    //noinspection GrUnresolvedAccess
-                    ant.exclude(name: "$it/**")
-                  }
-                  ant.patternset(refid: resourcesIncluded)
-                }
+                ant.patternset(refid: resourcesIncluded)
               }
             }
           }

@@ -208,10 +208,10 @@ final class LayoutBuilder {
      */
     @CompileStatic(TypeCheckingMode.SKIP)
     void modulePatches(Collection<String> moduleNames, Closure body = {}) {
-      moduleNames.each { String moduleName ->
-        moduleOutputPatches.get(moduleName).each {
-          ant.fileset(dir: it, body)
-          context.messages.debug(" include $it with pathces for module '$moduleName'")
+      for (String moduleName in moduleNames) {
+        for (String moduleOutputPatch in moduleOutputPatches.get(moduleName)) {
+          ant.fileset(dir: moduleOutputPatch, body)
+          context.messages.debug(" include $moduleOutputPatch with pathces for module '$moduleName'")
         }
       }
     }

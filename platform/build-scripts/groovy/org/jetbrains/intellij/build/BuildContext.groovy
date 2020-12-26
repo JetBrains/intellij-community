@@ -64,6 +64,8 @@ abstract class BuildContext implements CompilationContext {
 
   abstract void notifyArtifactBuilt(String artifactPath)
 
+  abstract void notifyArtifactBuilt(Path artifactPath)
+
   abstract JpsModule findApplicationInfoModule()
 
   abstract @Nullable Path findFileInModuleSources(String moduleName, String relativePath)

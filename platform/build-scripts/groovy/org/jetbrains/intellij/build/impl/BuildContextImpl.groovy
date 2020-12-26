@@ -199,6 +199,11 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  void notifyArtifactBuilt(Path artifactPath) {
+    compilationContext.notifyArtifactWasBuilt(artifactPath)
+  }
+
+  @Override
   void notifyArtifactWasBuilt(Path artifactPath) {
     compilationContext.notifyArtifactWasBuilt(artifactPath)
   }
