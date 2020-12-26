@@ -33,7 +33,7 @@ internal object MarkdownDateDocumentListener : DocumentListener {
 
     for (highlighter in markupModel.allHighlighters) {
       val highlightedRange = highlighter.range ?: continue
-      if (changedRange.intersects(highlightedRange) && highlighter.getUserData(IS_DATE_HIGHLIGHTER) == true) {
+      if (changedRange.intersects(highlightedRange) && highlighter.getUserData(ENTITY_TYPE) != null) {
         markupModel.removeHighlighter(highlighter)
       }
     }
