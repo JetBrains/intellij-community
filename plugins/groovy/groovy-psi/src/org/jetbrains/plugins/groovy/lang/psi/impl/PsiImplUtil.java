@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
@@ -346,7 +347,7 @@ public final class PsiImplUtil {
 
   public static boolean isMainMethod(GrMethod method) {
     if (!method.getName().equals(MAIN_METHOD)) return false;
-    else if (!method.hasModifierProperty(PsiModifier.STATIC))return false;
+    else if (!GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.STATIC)) return false;
 
     final GrParameter[] parameters = method.getParameters();
 
