@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.ui.actions.styling.HighlightNumbersAction
+import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction
 
 class MarkdownNumberHighlightingAnnotator : Annotator {
 

@@ -205,8 +205,8 @@ Includes the following features:</p>
              class="com.intellij.openapi.actionSystem.DefaultActionGroup"
              popup="true"
              icon="AllIcons.Actions.Edit">
-        <action class="org.intellij.plugins.markdown.ui.actions.styling.HighlightNumbersAction"
-                id="org.intellij.plugins.markdown.ui.actions.styling.HighlightNumbersAction">
+        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction"
+                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction">
         </action>
       </group>
     </group>
