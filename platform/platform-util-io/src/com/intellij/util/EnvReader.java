@@ -54,7 +54,6 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
       }
 
       callArgs.add((System.getProperty("java.home") + "/bin/java").replace('/', File.separatorChar));
-      callArgs.add((System.getProperty("java.home") + "/bin/java").replace('/', File.separatorChar));
       callArgs.add("-cp");
       callArgs.add(PathManager.getJarPathForClass(ReadEnv.class));
       callArgs.add(ReadEnv.class.getCanonicalName());
