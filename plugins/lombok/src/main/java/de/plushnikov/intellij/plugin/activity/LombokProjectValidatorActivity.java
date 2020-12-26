@@ -94,7 +94,8 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
       .getCachedValue(project, () -> {
         Boolean isVersionLessThan;
         try {
-          isVersionLessThan = ReadAction.nonBlocking(() -> isVersionLessThan1_18_16_Internal(project)).executeSynchronously();
+          isVersionLessThan = ReadAction.nonBlocking(
+            () -> isVersionLessThanInternal(project, Version.LAST_LOMBOK_VERSION_WITH_JPS_FIX)).executeSynchronously();
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -107,14 +108,15 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
       });
   }
 
-  private static boolean isVersionLessThan1_18_16_Internal(@NotNull Project project) {
+  private static boolean isVersionLessThanInternal(@NotNull Project project, @NotNull String version) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("lombok.experimental");
     if (aPackage != null) {
       PsiDirectory[] directories = aPackage.getDirectories();
       if (directories.length > 0) {
-        List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(directories[0].getVirtualFile());
+        List<OrderEntry> entries =
+          ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(directories[0].getVirtualFile());
         if (!entries.isEmpty()) {
-          return Version.isLessThan(entries.get(0), "1.18.16");
+          return Version.isLessThan(entries.get(0), version);
         }
       }
     }

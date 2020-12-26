@@ -15,6 +15,8 @@ public interface Version {
    */
   @NonNls String LAST_LOMBOK_VERSION = "1.18.16";
 
+  @NonNls String LAST_LOMBOK_VERSION_WITH_JPS_FIX = "1.18.16";
+
   static boolean isLessThan(@Nullable OrderEntry orderEntry, @NotNull String version) {
     String lombokVersion = parseLombokVersion(orderEntry);
     return lombokVersion != null && compareVersionString(lombokVersion, version) < 0;
