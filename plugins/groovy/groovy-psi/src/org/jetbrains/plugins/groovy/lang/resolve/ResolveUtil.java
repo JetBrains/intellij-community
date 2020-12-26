@@ -13,6 +13,7 @@ import com.intellij.psi.scope.ElementClassHint.DeclarationKind;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialSta
 public final class ResolveUtil {
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
   public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
+  @NlsSafe private static final String FIELD = "Field";
 
   private ResolveUtil() {
   }
@@ -723,8 +725,18 @@ public final class ResolveUtil {
     return parent instanceof GrVariableDeclaration && isScriptFieldDeclaration(((GrVariableDeclaration)parent));
   }
 
+  public static boolean hasFieldKeyword(@NotNull PsiFile psiFile) {
+    return CachedValuesManager.getCachedValue(psiFile, () -> {
+      boolean hasFieldKeyword = PsiSearchHelper.getInstance(psiFile.getProject()).hasIdentifierInFile(psiFile, FIELD);
+      return new CachedValueProvider.Result<>(hasFieldKeyword, psiFile);
+    });
+  }
+
   public static boolean isScriptFieldDeclaration(@NotNull GrVariableDeclaration declaration) {
     PsiFile containingFile = declaration.getContainingFile();
+    if (!hasFieldKeyword(containingFile)) {
+      return false;
+    }
     if (!(containingFile instanceof GroovyFile) || !((GroovyFile)containingFile).isScript()) return false;
 
     GrMember member = PsiTreeUtil.getParentOfType(declaration, GrTypeDefinition.class, GrMethod.class);
