@@ -62,7 +62,7 @@ Includes the following features:</p>
 
     <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownHighlightingAnnotator"/>
     <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownNumberHighlightingAnnotator"/>
-    <externalAnnotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.date.MarkdownDateExternalAnnotator"/>
+    <externalAnnotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.ner.MarkdownNamedEntitiesExternalAnnotator"/>
 
     <multiHostInjector implementation="org.intellij.plugins.markdown.injection.CodeFenceInjector"/>
 

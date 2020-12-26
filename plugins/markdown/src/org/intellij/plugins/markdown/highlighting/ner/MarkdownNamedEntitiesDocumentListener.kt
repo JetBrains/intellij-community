@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.highlighting.date
+package org.intellij.plugins.markdown.highlighting.ner
 
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -12,7 +12,7 @@ import com.intellij.refactoring.suggested.newRange
 import com.intellij.refactoring.suggested.oldRange
 import com.intellij.refactoring.suggested.range
 
-internal object MarkdownDateDocumentListener : DocumentListener {
+internal object MarkdownNamedEntitiesDocumentListener : DocumentListener {
   val CHANGED_RANGES = Key.create<Set<TextRange>>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_CHANGED_RANGES")
 
   override fun beforeDocumentChange(event: DocumentEvent) {

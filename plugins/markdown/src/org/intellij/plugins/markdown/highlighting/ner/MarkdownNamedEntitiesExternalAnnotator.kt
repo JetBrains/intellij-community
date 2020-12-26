@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.highlighting.date
+package org.intellij.plugins.markdown.highlighting.ner
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
@@ -16,7 +16,7 @@ import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.SmartList
 import java.util.concurrent.atomic.AtomicBoolean
 
-class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnotationResult>() {
+class MarkdownNamedEntitiesExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnotationResult>() {
 
   override fun collectInformation(file: PsiFile): MyDocumentInfo? {
     val document = PsiDocumentManager.getInstance(file.project)
@@ -29,8 +29,8 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
 
     tryRegisterDocumentListener(document)
 
-    val listenedChanges = document.getUserData(MarkdownDateDocumentListener.CHANGED_RANGES)
-    document.putUserData(MarkdownDateDocumentListener.CHANGED_RANGES, null)
+    val listenedChanges = document.getUserData(MarkdownNamedEntitiesDocumentListener.CHANGED_RANGES)
+    document.putUserData(MarkdownNamedEntitiesDocumentListener.CHANGED_RANGES, null)
 
     val elementsToVisit = listenedChanges?.flatMap {
       file.findElementsIntersectingRange(it)
@@ -59,7 +59,7 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
 
     val hasDocumentListener = dataHolder.putUserDataIfAbsent(HAS_DOCUMENT_LISTENER, AtomicBoolean(false))
     if (hasDocumentListener.compareAndSet(false, true)) {
-      document.addDocumentListener(MarkdownDateDocumentListener)
+      document.addDocumentListener(MarkdownNamedEntitiesDocumentListener)
     }
   }
 }
