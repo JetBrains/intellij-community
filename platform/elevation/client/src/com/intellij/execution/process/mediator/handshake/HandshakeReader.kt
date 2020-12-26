@@ -19,12 +19,10 @@ internal interface HandshakeReader : Closeable {
 
 
 internal class HandshakeSocketReader(port: Int = 0) : HandshakeReader {
+  val localPort: Int get() = serverSocket.localPort
+
   private val cleanup = MultiCloseable()
-
   private val serverSocket = ServerSocket(port).also(cleanup::registerCloseable)
-
-  @Suppress("EXPERIMENTAL_API_USAGE")
-  val port = serverSocket.localPort.toUShort()
 
   override val inputStream: InputStream by lazy { serverSocket.accept().getInputStream().also(cleanup::registerCloseable) }
   override fun close() = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.

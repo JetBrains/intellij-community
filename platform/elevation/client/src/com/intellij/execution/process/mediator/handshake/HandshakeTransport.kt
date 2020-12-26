@@ -91,7 +91,7 @@ private class SocketTransport(
   port: Int = 0
 ) : AbstractHandshakeTransport(launchOptions) {
   override val handshakeReader = HandshakeSocketReader(port)
-  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Port(handshakeReader.port)
+  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Port(handshakeReader.localPort)
 }
 
 private class StdoutTransport(launchOptions: DaemonLaunchOptions) : AbstractHandshakeTransport(launchOptions),
@@ -115,4 +115,3 @@ private class UnixFifoTransport(
   launchOptions: DaemonLaunchOptions,
   path: Path
 ) : FileTransport(launchOptions, HandshakeUnixFifoReader(path))
-

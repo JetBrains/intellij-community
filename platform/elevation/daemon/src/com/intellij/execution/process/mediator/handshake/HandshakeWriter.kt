@@ -1,6 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package com.intellij.execution.process.mediator.handshake
 
 import java.io.Closeable
@@ -23,8 +21,8 @@ internal open class HandshakeStreamWriter(private val outputStream: OutputStream
 
 internal class HandshakeFileWriter(path: Path) : HandshakeStreamWriter(Files.newOutputStream(path, StandardOpenOption.WRITE))
 
-internal class HandshakeSocketWriter(port: UShort) : HandshakeStreamWriter(createSocket(port).getOutputStream()) {
+internal class HandshakeSocketWriter(port: Int) : HandshakeStreamWriter(createSocket(port).getOutputStream()) {
   companion object {
-    private fun createSocket(port: UShort) = Socket(InetAddress.getLoopbackAddress(), port.toInt())
+    private fun createSocket(port: Int) = Socket(InetAddress.getLoopbackAddress(), port)
   }
 }
