@@ -301,8 +301,6 @@ final class DistributionJARsBuilder {
       }
     }
 
-    reorderJars(buildContext)
-
     buildNonBundledPlugins(!isUpdateFromSources)
     if (!isUpdateFromSources) {
       buildNonBundledPluginsBlockMaps()

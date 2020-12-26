@@ -402,7 +402,9 @@ idea.fatal.error.notification=disabled
     buildContext.messages.block("Build platform and plugin JARs") {
       if (buildContext.shouldBuildDistributions()) {
         distributionJARsBuilder.buildJARs()
-        distributionJARsBuilder.buildAdditionalArtifacts()
+        DistributionJARsBuilder.buildAdditionalArtifacts(buildContext, distributionJARsBuilder.projectStructureMapping)
+        scramble(buildContext)
+        DistributionJARsBuilder.reorderJars(buildContext)
       }
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
@@ -413,9 +415,6 @@ idea.fatal.error.notification=disabled
     }
 
     if (buildContext.shouldBuildDistributions()) {
-      if (buildContext.productProperties.scrambleMainJar) {
-        scramble()
-      }
       setupJBre()
       layoutShared()
 
@@ -581,12 +580,16 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void scramble() {
-    if (buildContext.proprietaryBuildTools.scrambleTool != null) {
-      buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
+  private void scramble(BuildContext buildContext) {
+    if (!buildContext.productProperties.scrambleMainJar) {
+      return
+    }
+
+    if (buildContext.proprietaryBuildTools.scrambleTool == null) {
+      buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
     }
     else {
-      buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
+      buildContext.proprietaryBuildTools.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
     }
     buildContext.ant.zip(destfile: "$buildContext.paths.artifacts/internalUtilities.zip") {
       fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
@@ -874,10 +877,9 @@ idea.fatal.error.notification=disabled
     Path patchedApplicationInfo = patchApplicationInfo()
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     distributionJARsBuilder.buildJARs()
-    distributionJARsBuilder.buildInternalUtilities()
-    if (buildContext.productProperties.scrambleMainJar) {
-      scramble()
-    }
+    DistributionJARsBuilder.buildInternalUtilities(buildContext)
+    scramble(buildContext)
+    DistributionJARsBuilder.reorderJars(buildContext)
     layoutShared()
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
@@ -901,6 +903,7 @@ idea.fatal.error.notification=disabled
     setupBundledMaven()
     Path patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo).buildJARs(true)
+    DistributionJARsBuilder.reorderJars(buildContext)
     if (includeBinAndRuntime) {
       JvmArchitecture arch = SystemInfo.isArm64 ? JvmArchitecture.aarch64 : SystemInfo.is64Bit ? JvmArchitecture.x64 : JvmArchitecture.x32
       setupJBre(arch.name())
