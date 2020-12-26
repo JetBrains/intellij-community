@@ -4,11 +4,11 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,7 +50,7 @@ public final class SuspendManagerUtil {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return suspendManager.getEventContexts().stream()
       .filter(suspendContext -> suspendContext.suspends(thread))
-      .collect(Collectors.toCollection(SmartHashSet::new));
+      .collect(Collectors.toCollection(HashSet::new));
   }
 
   @Nullable

@@ -12,12 +12,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.SmartHashSet;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public final class DebuggerTreeNodeExpression {
@@ -99,7 +99,7 @@ public final class DebuggerTreeNodeExpression {
       ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
       Set<String> imports = expression.getUserData(ADDITIONAL_IMPORTS_KEY);
       if (imports == null) {
-        imports = new SmartHashSet<>();
+        imports = new HashSet<>();
       }
       imports.add(typeName);
       parenthExpression.putUserData(ADDITIONAL_IMPORTS_KEY, imports);

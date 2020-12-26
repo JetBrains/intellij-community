@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import gnu.trove.THashMap
-import gnu.trove.THashSet
 import org.jdom.Element
 import java.util.function.Consumer
 import java.util.function.Function
@@ -15,7 +13,7 @@ internal class UnknownElementWriter internal constructor(private val unknownElem
   }
 
   fun <T> write(outElement: Element, items: Collection<T>, itemToTagName: Function<T, String>, writer: Consumer<T>) {
-    val knownNameToWriter = THashMap<String, T>(items.size)
+    val knownNameToWriter = HashMap<String, T>(items.size)
     for (item in items) {
       knownNameToWriter.put(itemToTagName.apply(item), item)
     }
@@ -47,7 +45,7 @@ internal class UnknownElementWriter internal constructor(private val unknownElem
 }
 
 internal class UnknownElementCollector {
-  private val knownTagNames = THashSet<String>()
+  private val knownTagNames = HashSet<String>()
 
   fun addKnownName(name: String) {
     knownTagNames.add(name)
@@ -59,7 +57,7 @@ internal class UnknownElementCollector {
     for (child in iterator) {
       if (child.name != "option" && !knownTagNames.contains(child.name)) {
         if (unknownElements == null) {
-          unknownElements = THashMap()
+          unknownElements = HashMap()
         }
         unknownElements.put(child.name, child)
         iterator.remove()

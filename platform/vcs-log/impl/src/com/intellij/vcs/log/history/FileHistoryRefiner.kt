@@ -10,8 +10,6 @@ import com.intellij.vcs.log.graph.utils.Dfs
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import gnu.trove.THashSet
-import java.util.*
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
                                   permanentGraphInfo: PermanentGraphInfo<Int>,
@@ -25,7 +23,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<Map<Int, MaybeDeletedFilePath>, Set<Int>> {
     walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, startPath)
 
-    val excluded = THashSet<Int>()
+    val excluded = HashSet<Int>()
     for ((commit, path) in pathsForCommits) {
       if (!historyData.affects(commit, path, true)) {
         excluded.add(commit)
@@ -44,10 +42,12 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
    * Then goes to the other down-siblings.
    */
   private fun walk(graph: LiteLinearGraph, startNode: Int, startPath: MaybeDeletedFilePath) {
-    if (startNode < 0 || startNode >= graph.nodesCount()) return
+    if (startNode < 0 || startNode >= graph.nodesCount()) {
+      return
+    }
 
     val visited = BitSetFlags(graph.nodesCount(), false)
-    val stack = Stack<Pair<Int, MaybeDeletedFilePath>>(Pair(startNode, startPath))
+    val stack = Stack(Pair(startNode, startPath))
 
     outer@ while (!stack.empty()) {
       val (currentNode, currentPath) = stack.peek()

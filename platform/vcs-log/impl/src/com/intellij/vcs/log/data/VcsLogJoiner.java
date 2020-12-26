@@ -4,13 +4,10 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
  * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
@@ -18,8 +15,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
  * @author Stanislav Erokhin
  * @author Kirill Likhodedov
  */
-public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
-
+public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
   @NonNls public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**
@@ -63,7 +59,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
                                                                      @NotNull Collection<? extends CommitId> previousRefs,
                                                                      @NotNull List<? extends Commit> firstBlock,
                                                                      @NotNull Collection<? extends CommitId> newRefs) {
-    Set<CommitId> allUnresolvedLinkedHashes = new THashSet<>(newRefs);
+    Set<CommitId> allUnresolvedLinkedHashes = new HashSet<>(newRefs);
     allUnresolvedLinkedHashes.removeAll(previousRefs);
     // at this moment allUnresolvedLinkedHashes contains only NEW refs
     for (Commit commit : firstBlock) {
@@ -115,9 +111,9 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
                                                                      @NotNull Collection<? extends CommitId> previousRefs,
                                                                      @NotNull List<? extends Commit> firstBlock,
                                                                      @NotNull Collection<? extends CommitId> newRefs) {
-    Set<CommitId> startRedCommits = new THashSet<>(previousRefs);
+    Set<CommitId> startRedCommits = new HashSet<>(previousRefs);
     startRedCommits.removeAll(newRefs);
-    Set<CommitId> startGreenNodes = new THashSet<>(newRefs);
+    Set<CommitId> startGreenNodes = new HashSet<>(newRefs);
     for (Commit commit : firstBlock) {
       startGreenNodes.add(commit.getId());
       startGreenNodes.addAll(commit.getParents());
@@ -131,7 +127,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
   private static final class RedGreenSorter<CommitId, Commit extends GraphCommit<CommitId>> {
     private final Set<? super CommitId> currentRed;
     private final Set<? super CommitId> currentGreen;
-    private final Set<CommitId> allRedCommit = new THashSet<>();
+    private final Set<CommitId> allRedCommit = new HashSet<>();
 
     private final List<? extends Commit> savedLog;
 
@@ -191,7 +187,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private void insertAllUseStack() {
       while (!newCommitsMap.isEmpty()) {
-        visitCommit(Objects.requireNonNull(getFirstItem(newCommitsMap.values())));
+        visitCommit(Objects.requireNonNull(ContainerUtil.getFirstItem(newCommitsMap.values())));
         while (!commitsStack.isEmpty()) {
           Commit currentCommit = commitsStack.peek();
           boolean allParentsWereAdded = true;
@@ -209,7 +205,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
           }
 
           int insertIndex;
-          Set<CommitId> parents = new THashSet<>(currentCommit.getParents());
+          Set<CommitId> parents = new HashSet<>(currentCommit.getParents());
           for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
             Commit someCommit = list.get(insertIndex);
             if (parents.contains(someCommit.getId())) {

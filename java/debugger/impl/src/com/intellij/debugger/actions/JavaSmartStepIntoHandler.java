@@ -33,7 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -455,7 +455,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   private static void visitLinesInstructions(Location location, boolean full, Set<Integer> lines, MethodInsnVisitor visitor) {
-    TObjectIntHashMap<String> myCounter = new TObjectIntHashMap<>();
+    Object2IntOpenHashMap<String> myCounter = new Object2IntOpenHashMap<>();
 
     MethodBytecodeUtil.visit(location.method(), full ? Long.MAX_VALUE : location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
       boolean myLineMatch = false;
@@ -481,8 +481,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         if (myLineMatch) {
           String key = owner + "." + name + desc;
-          int currentCount = myCounter.get(key);
-          myCounter.put(key, currentCount + 1);
+          int currentCount = myCounter.addTo(key, 1);
           if (name.startsWith("access$")) { // bridge method
             ReferenceType cls =
               ContainerUtil.getFirstItem(location.virtualMachine().classesByName(Type.getObjectType(owner).getClassName()));

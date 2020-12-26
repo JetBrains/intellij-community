@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -202,7 +202,7 @@ final class CommonCodeStyleSettingsManager {
         return;
       }
 
-      final Map<String, Language> idToLang = new THashMap<>();
+      final Map<String, Language> idToLang = new HashMap<>();
       for (Language language : myCommonSettingsMap.keySet()) {
         idToLang.put(language.getID(), language);
       }
