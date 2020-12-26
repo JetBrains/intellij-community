@@ -22,7 +22,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   }
 
   override fun getVersion(): Int {
-    return 5
+    return 6
   }
 
   override fun getMetrics(): Set<MetricEvent> {
