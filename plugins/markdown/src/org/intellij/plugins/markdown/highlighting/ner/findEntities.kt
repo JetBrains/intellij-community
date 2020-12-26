@@ -31,6 +31,9 @@ class Entities(private val labelToRangesMap: Map<String, Set<TextRange>>) {
   val numbers: Set<TextRange>
     get() = labelToRangesMap["cardinal"] ?: emptySet()
 
+  val persons: Set<TextRange>
+    get() = labelToRangesMap["person"] ?: emptySet()
+
   val organizations: Set<TextRange>
     get() = labelToRangesMap["org"] ?: emptySet()
 }

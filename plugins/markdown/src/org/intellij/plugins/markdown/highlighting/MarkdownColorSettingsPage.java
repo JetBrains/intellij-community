@@ -153,6 +153,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.number", MarkdownHighlighterColors.NUMBER);
       put("markdown.editor.colors.date", MarkdownHighlighterColors.DATE);
       put("markdown.editor.colors.money", MarkdownHighlighterColors.MONEY);
+      put("markdown.editor.colors.person", MarkdownHighlighterColors.PERSON);
       put("markdown.editor.colors.organization", MarkdownHighlighterColors.ORGANIZATION);
     }
 
