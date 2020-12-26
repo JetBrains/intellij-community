@@ -14,13 +14,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity;
+import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.stream.Stream;
 
 public abstract class AbstractDelombokAction extends AnAction {
   private DelombokHandler myHandler;
@@ -116,7 +115,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     final DataContext dataContext = event.getDataContext();
 
     final Project project = event.getProject();
-    if (project == null || !LombokProjectValidatorActivity.hasLombokLibrary(project)) {
+    if (project == null || !LombokLibraryUtil.hasLombokLibrary(project)) {
       presentation.setEnabled(false);
       return;
     }

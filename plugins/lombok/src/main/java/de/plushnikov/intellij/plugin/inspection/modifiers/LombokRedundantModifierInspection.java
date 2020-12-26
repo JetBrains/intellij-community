@@ -1,18 +1,18 @@
 package de.plushnikov.intellij.plugin.inspection.modifiers;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import de.plushnikov.intellij.plugin.inspection.LombokJavaInspectionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Optional;
 
-public abstract class LombokRedundantModifierInspection extends AbstractBaseJavaLocalInspectionTool {
+public abstract class LombokRedundantModifierInspection extends LombokJavaInspectionBase {
 
   private final String supportedAnnotation;
   private final RedundantModifiersInfo[] redundantModifiersInfo;
@@ -24,12 +24,11 @@ public abstract class LombokRedundantModifierInspection extends AbstractBaseJava
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  protected PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new LombokRedundantModifiersVisitor(holder);
   }
 
   private class LombokRedundantModifiersVisitor extends JavaElementVisitor {
-
     private final ProblemsHolder holder;
 
     LombokRedundantModifiersVisitor(ProblemsHolder holder) {

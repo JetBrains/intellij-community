@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.activity;
 
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +25,7 @@ import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
     ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) return null;
 
-      final boolean hasLombokLibrary = hasLombokLibrary(project);
+      final boolean hasLombokLibrary = LombokLibraryUtil.hasLombokLibrary(project);
 
       // If dependency is present and out of date notification setting is enabled (defaults to disabled)
       if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
@@ -79,14 +79,6 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
   @NotNull
   private static NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup(Version.PLUGIN_NAME);
-  }
-
-  public static boolean hasLombokLibrary(Project project) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("lombok.experimental");
-      return new CachedValueProvider.Result<>(aPackage, ProjectRootManager.getInstance(project));
-    }) != null;
   }
 
   public static boolean isVersionLessThan1_18_16(Project project) {

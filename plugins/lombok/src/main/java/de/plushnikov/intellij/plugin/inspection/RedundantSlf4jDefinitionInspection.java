@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
@@ -11,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
 
 import static java.lang.String.format;
 
-public class RedundantSlf4jDefinitionInspection extends AbstractBaseJavaLocalInspectionTool {
+public class RedundantSlf4jDefinitionInspection extends LombokJavaInspectionBase {
 
   private static final String LOGGER_SLF4J_FQCN = Slf4jProcessor.LOGGER_TYPE;
   private static final String LOGGER_INITIALIZATION = "LoggerFactory.getLogger(%s.class)";
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  protected PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new LombokDefinitionVisitor(holder);
   }
 
@@ -26,7 +25,7 @@ public class RedundantSlf4jDefinitionInspection extends AbstractBaseJavaLocalIns
 
     private final ProblemsHolder holder;
 
-    public LombokDefinitionVisitor(ProblemsHolder holder) {
+    LombokDefinitionVisitor(ProblemsHolder holder) {
       this.holder = holder;
     }
 
