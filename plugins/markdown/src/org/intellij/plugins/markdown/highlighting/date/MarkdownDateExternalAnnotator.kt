@@ -63,7 +63,7 @@ class MarkdownDateExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnota
         for (range in ranges) {
           val highlighter = markupModel.addRangeHighlighter(MarkdownHighlighterColors.DATE,
                                                             range.startOffset, range.endOffset,
-                                                            HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                            HighlighterLayer.ADDITIONAL_SYNTAX + 1, // overwrite numbers highlighting
                                                             HighlighterTargetArea.EXACT_RANGE)
           highlighter.putUserData(IS_DATE_HIGHLIGHTER, true)
         }
