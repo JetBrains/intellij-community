@@ -99,7 +99,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       IndexableFileSet setForFile = myManager.getIndexableSetForFile(file);
       if (setForFile == null) {
         if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.error("index will not be updated for file = " + file + ", id = " + FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+          LOG.debug("index will not be updated for file = " + file + ", id = " + FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
         }
         return;
       }
