@@ -5,6 +5,6 @@ import junit.framework.Test;
 
 public class AllTests {
   public static Test suite() throws Throwable {
-    return new com.intellij.TestAll("");
+    return new TestAll("");
   }
 }
