@@ -101,17 +101,6 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     Disposer.dispose(myEditPanel);
   }
 
-  public @NotNull IdeFrameImpl requireNotNullFrame() {
-    IdeFrameImpl frame = getFrame();
-    if (frame != null) {
-      return frame;
-    }
-    if (Disposer.isDisposed(this)) {
-      throw new AssertionError(LightEditFrameWrapper.class.getSimpleName() + " is already disposed");
-    }
-    throw new AssertionError("Frame is null, but " + LightEditFrameWrapper.class.getSimpleName() + " is not disposed yet");
-  }
-
   public void closeAndDispose(@NotNull LightEditServiceImpl lightEditServiceImpl) {
     IdeFrameImpl frame = requireNotNullFrame();
     FrameInfo frameInfo = ProjectFrameBounds.getInstance(myProject).getActualFrameInfoInDeviceSpace(

@@ -421,7 +421,29 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   public @Nullable IdeFrameImpl getFrame() {
+    IdeFrameImpl frame = this.frame;
+    if (frame == null) {
+      if (Disposer.isDisposed(this)) {
+        LOG.error(getClass().getSimpleName() + " is already disposed");
+      }
+      else {
+        LOG.error("Frame is null, but " + getClass().getSimpleName() + " is not disposed yet");
+      }
+    }
     return frame;
+  }
+
+  public @NotNull IdeFrameImpl requireNotNullFrame() {
+    IdeFrameImpl frame = this.frame;
+    if (frame != null) {
+      return frame;
+    }
+    if (Disposer.isDisposed(this)) {
+      throw new AssertionError(getClass().getSimpleName() + " is already disposed");
+    }
+    else {
+      throw new AssertionError("Frame is null, but " + getClass().getSimpleName() + " is not disposed yet");
+    }
   }
 
   @ApiStatus.Internal
