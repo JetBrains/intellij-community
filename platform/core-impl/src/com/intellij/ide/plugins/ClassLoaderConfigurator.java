@@ -263,7 +263,8 @@ final class ClassLoaderConfigurator {
                                                                     @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
                                                                     @NotNull ClassLoader coreLoader,
                                                                     @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
-    if (descriptor.id.getIdString().equals("com.intellij.properties")) {
+    String idString = descriptor.id.getIdString();
+    if (idString.equals("com.intellij.properties")) {
       // todo ability to customize (cannot move due to backward compatibility)
       return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
                                    descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory) {
@@ -274,8 +275,18 @@ final class ClassLoaderConfigurator {
         }
       };
     }
-    else if (descriptor.id.getIdString().equals("com.intellij.kubernetes") &&
-             descriptor.descriptorPath == null &&
+    else if (descriptor.descriptorPath == null && idString.equals("com.intellij.diagram")) {
+      // multiple packages - intellij.diagram and intellij.diagram.impl modules
+      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
+                                   descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory) {
+        @Override
+        protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+          return super.isDefinitelyAlienClass(name, packagePrefix) &&
+                 !name.startsWith("com.intellij.diagram.");
+        }
+      };
+    }
+    else if (descriptor.descriptorPath == null && idString.equals("com.intellij.kubernetes") &&
              descriptor.dependenciesDescriptor != null /* old plugin version */) {
       // kubernetes uses project libraries - not yet clear how to deal with that, that's why here we don't use default implementation
       return new FilteringPluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor,
