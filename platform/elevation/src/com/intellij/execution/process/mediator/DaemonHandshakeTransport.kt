@@ -1,11 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.BaseOSProcessHandler
+import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.handshake.*
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.rsaDecrypt
+import com.intellij.util.io.BaseInputStreamReader
 import java.io.InputStream
+import java.io.Reader
 import java.nio.file.Path
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -17,9 +22,7 @@ interface DaemonHandshakeTransport : HandshakeTransport<Handshake> {
   companion object
 }
 
-interface ProcessStdoutDaemonHandshakeTransport : DaemonHandshakeTransport, ProcessStdoutHandshakeTransport<Handshake>
-
-fun DaemonHandshakeTransport.Companion.createProcessStdoutTransport(launchOptions: DaemonLaunchOptions): ProcessStdoutDaemonHandshakeTransport =
+fun DaemonHandshakeTransport.Companion.createProcessStdoutTransport(launchOptions: DaemonLaunchOptions): DaemonHandshakeTransport =
   StdoutTransport(launchOptions)
 
 fun DaemonHandshakeTransport.Companion.createUnixFifoTransport(launchOptions: DaemonLaunchOptions, path: Path): DaemonHandshakeTransport =
@@ -74,12 +77,18 @@ private class SocketTransport(
 }
 
 private class StdoutTransport(launchOptions: DaemonLaunchOptions) : AbstractHandshakeTransport(launchOptions),
-                                                                    ProcessStdoutDaemonHandshakeTransport {
+                                                                    DaemonHandshakeTransport {
   override lateinit var inputHandle: StreamInputHandle
   override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.Stdout
 
-  override fun initStream(inputStream: InputStream) {
-    inputHandle = StreamInputHandle(inputStream)
+  override fun createProcessHandler(commandLine: GeneralCommandLine): BaseOSProcessHandler {
+    return object : OSProcessHandler.Silent(commandLine) {
+      override fun createProcessOutReader(): Reader {
+        return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
+      }
+    }.also {
+      inputHandle = StreamInputHandle(it.process.inputStream)
+    }
   }
 }
 

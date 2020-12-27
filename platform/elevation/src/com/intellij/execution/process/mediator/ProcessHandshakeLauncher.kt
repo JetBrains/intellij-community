@@ -13,14 +13,11 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.io.BaseInputStreamReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.selects.select
 import java.io.IOException
-import java.io.InputStream
-import java.io.Reader
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
@@ -99,21 +96,8 @@ abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
   }
 
   protected fun createProcessHandler(transport: T,
-                                     commandLine: GeneralCommandLine): OSProcessHandler {
-    val processHandler =
-      if (transport !is ProcessStdoutHandshakeTransport<*>) {
-        OSProcessHandler.Silent(commandLine)
-      }
-      else {
-        object : OSProcessHandler.Silent(commandLine) {
-          override fun createProcessOutReader(): Reader {
-            return BaseInputStreamReader(InputStream.nullInputStream())  // don't let the process handler touch the stdout stream
-          }
-        }.also {
-          transport.initStream(it.process.inputStream)
-        }
-      }
-    return processHandler.apply {
+                                     commandLine: GeneralCommandLine): BaseOSProcessHandler {
+    return transport.createProcessHandler(commandLine).apply {
       addProcessListener(LoggingProcessListener)
     }
   }
