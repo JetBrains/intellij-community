@@ -27,4 +27,7 @@ class Entities(private val labelToRangesMap: Map<String, Set<TextRange>>) {
 
   val money: Set<TextRange>
     get() = labelToRangesMap["money"] ?: emptySet()
+
+  val numbers: Set<TextRange>
+    get() = labelToRangesMap["cardinal"] ?: emptySet()
 }

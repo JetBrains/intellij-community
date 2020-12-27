@@ -52,6 +52,7 @@ class MarkdownNamedEntitiesExternalAnnotator : ExternalAnnotator<MyDocumentInfo,
     ApplicationManager.getApplication().invokeLater {
       HighlightedEntityType.Date.applyHighlightingTo(entities.dates, markupModel)
       HighlightedEntityType.Money.applyHighlightingTo(entities.money, markupModel)
+      HighlightedEntityType.Number.applyHighlightingTo(entities.numbers, markupModel)
     }
   }
 
