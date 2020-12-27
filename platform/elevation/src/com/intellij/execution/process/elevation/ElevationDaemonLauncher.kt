@@ -85,7 +85,7 @@ class ElevationDaemonLauncher : ProcessMediatorDaemonLauncher() {
   override fun handshakeFailed(transport: DaemonHandshakeTransport,
                                processHandler: BaseOSProcessHandler,
                                output: ProcessOutput,
-                               reason: @NlsContexts.DialogMessage String?): Nothing {
+                               reason: @NlsContexts.DialogMessage String): Nothing {
     val sudoPath: Path? = processHandler.getUserData(SUDO_PATH_KEY)
 
     if (SystemInfo.isMac) {

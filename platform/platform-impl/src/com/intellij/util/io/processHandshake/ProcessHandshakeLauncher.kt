@@ -3,6 +3,7 @@
 
 package com.intellij.util.io.processHandshake
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
 import com.intellij.ide.IdeBundle
@@ -20,7 +21,6 @@ import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.selects.select
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutionException
 
 
 private val LOG = logger<ProcessHandshakeLauncher<*, *, *>>()
@@ -78,10 +78,12 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
                                             transport: T,
                                             processHandler: BaseOSProcessHandler): R
 
-  protected abstract fun handshakeFailed(transport: T,
-                                         processHandler: BaseOSProcessHandler,
-                                         output: ProcessOutput,
-                                         reason: @NlsContexts.DialogMessage String?): Nothing
+  protected open fun handshakeFailed(transport: T,
+                                     processHandler: BaseOSProcessHandler,
+                                     output: ProcessOutput,
+                                     reason: @NlsContexts.DialogMessage String): Nothing {
+    throw ExecutionException(reason)
+  }
 
   private fun handshakeFailed(transport: T,
                               processHandler: BaseOSProcessHandler,
@@ -131,7 +133,7 @@ private fun <R> CompletableFuture<R>.awaitWithCheckCanceled(): R {
     return ProgressIndicatorUtils.awaitWithCheckCanceled(this)
   }
   catch (e: Throwable) {
-    throw ExceptionUtil.findCause(e, ExecutionException::class.java)?.cause ?: e
+    throw ExceptionUtil.findCause(e, java.util.concurrent.ExecutionException::class.java)?.cause ?: e
   }
 }
 

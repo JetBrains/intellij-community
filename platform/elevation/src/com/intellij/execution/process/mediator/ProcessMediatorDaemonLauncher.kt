@@ -1,18 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseOSProcessHandler
-import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.process.elevation.ElevationBundle
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
@@ -35,14 +31,6 @@ open class ProcessMediatorDaemonLauncher : ProcessHandshakeLauncher<Handshake, D
     return ProcessMediatorDaemonImpl(daemonProcessHandle,
                                      handshake.port,
                                      DaemonClientCredentials(handshake.token))
-  }
-
-  override fun handshakeFailed(transport: DaemonHandshakeTransport,
-                               processHandler: BaseOSProcessHandler,
-                               output: ProcessOutput,
-                               reason: @NlsContexts.DialogMessage String?): Nothing {
-    val message = ElevationBundle.message("dialog.message.failed.to.launch.daemon", reason)
-    throw ExecutionException(message)
   }
 
   override fun createHandshakeTransport(): DaemonHandshakeTransport {
