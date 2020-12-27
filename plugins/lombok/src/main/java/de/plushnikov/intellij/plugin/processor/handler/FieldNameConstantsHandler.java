@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
@@ -16,6 +17,7 @@ import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -24,8 +26,8 @@ import java.util.stream.Collectors;
 public final class FieldNameConstantsHandler {
 
   public static String getTypeName(@NotNull PsiClass containingClass, @NotNull PsiAnnotation fieldNameConstants) {
-    String typeName = PsiAnnotationUtil.getStringAnnotationValue(fieldNameConstants, "innerTypeName");
-    if (typeName == null || typeName.equals("")) {
+    String typeName = PsiAnnotationUtil.getStringAnnotationValue(fieldNameConstants, "innerTypeName", "");
+    if (StringUtil.isEmptyOrSpaces(typeName)) {
       final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
       typeName = configDiscovery.getStringLombokConfigProperty(ConfigKey.FIELD_NAME_CONSTANTS_TYPENAME, containingClass);
     }
@@ -68,41 +70,42 @@ public final class FieldNameConstantsHandler {
   @NotNull
   private static LombokLightClassBuilder createEnum(@NotNull String name, @NotNull PsiClass containingClass, @NotNull String accessLevel, @NotNull PsiElement navigationElement) {
     final String innerClassQualifiedName = containingClass.getQualifiedName() + "." + name;
-    final LombokLightClassBuilder classBuilder = new LombokLightClassBuilder(containingClass, name, innerClassQualifiedName);
-    classBuilder.withContainingClass(containingClass)
+    final LombokLightClassBuilder lazyClassBuilder = new LombokLightClassBuilder(containingClass, name, innerClassQualifiedName);
+    lazyClassBuilder.withContainingClass(containingClass)
       .withNavigationElement(navigationElement)
       .withEnum(true)
       .withModifier(accessLevel)
       .withImplicitModifier(PsiModifier.STATIC)
       .withImplicitModifier(PsiModifier.FINAL);
 
-    //add enum methods like here:  ClassInnerStuffCache.calcMethods
-    final PsiManager psiManager = containingClass.getManager();
-    final PsiClassType enumClassType = PsiClassUtil.getTypeWithGenerics(classBuilder);
+    lazyClassBuilder.withMethodSupplier(()-> {
+      //add enum methods like here:  ClassInnerStuffCache.calcMethods
+      final PsiManager psiManager = containingClass.getManager();
+      final PsiClassType enumClassType = PsiClassUtil.getTypeWithGenerics(lazyClassBuilder);
 //    "public static " + myClass.getName() + "[] values() { }"
-    final LombokLightMethodBuilder valuesEnumMethod = new LombokLightMethodBuilder(psiManager, "values")
-      .withModifier(PsiModifier.PUBLIC)
-      .withModifier(PsiModifier.STATIC)
-      .withContainingClass(containingClass)
-      .withNavigationElement(navigationElement)
-      .withMethodReturnType(new PsiArrayType(enumClassType));
-    valuesEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valuesEnumMethod));
+      final LombokLightMethodBuilder valuesEnumMethod = new LombokLightMethodBuilder(psiManager, "values")
+        .withModifier(PsiModifier.PUBLIC)
+        .withModifier(PsiModifier.STATIC)
+        .withContainingClass(containingClass)
+        .withNavigationElement(navigationElement)
+        .withMethodReturnType(new PsiArrayType(enumClassType));
+      valuesEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valuesEnumMethod));
 
-    //     "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }"
-    final LombokLightMethodBuilder valueOfEnumMethod = new LombokLightMethodBuilder(psiManager, "valueOf")
-      .withModifier(PsiModifier.PUBLIC)
-      .withModifier(PsiModifier.STATIC)
-      .withContainingClass(containingClass)
-      .withNavigationElement(navigationElement)
-      .withParameter("name", PsiType.getJavaLangString(psiManager, containingClass.getResolveScope()))
-      .withException(PsiType.getTypeByName("java.lang.IllegalArgumentException", containingClass.getProject(), containingClass.getResolveScope()))
-      .withMethodReturnType(enumClassType);
-    valueOfEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valueOfEnumMethod));
+      //     "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }"
+      final LombokLightMethodBuilder valueOfEnumMethod = new LombokLightMethodBuilder(psiManager, "valueOf")
+        .withModifier(PsiModifier.PUBLIC)
+        .withModifier(PsiModifier.STATIC)
+        .withContainingClass(containingClass)
+        .withNavigationElement(navigationElement)
+        .withParameter("name", PsiType.getJavaLangString(psiManager, containingClass.getResolveScope()))
+        .withException(PsiType.getTypeByName("java.lang.IllegalArgumentException", containingClass.getProject(), containingClass.getResolveScope()))
+        .withMethodReturnType(enumClassType);
+      valueOfEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valueOfEnumMethod));
 
-    classBuilder.addMethod(valuesEnumMethod);
-    classBuilder.addMethod(valueOfEnumMethod);
+      return Arrays.asList(valuesEnumMethod, valueOfEnumMethod);
+    });
 
-    return classBuilder;
+    return lazyClassBuilder;
   }
 
   private static PsiField createEnumConstant(@NotNull PsiField field, boolean makeUppercased, @NotNull PsiClass containingClass, PsiClassType classType) {
@@ -122,13 +125,13 @@ public final class FieldNameConstantsHandler {
   @NotNull
   private static LombokLightClassBuilder createInnerClass(@NotNull String name, @NotNull PsiClass containingClass, @NotNull String accessLevel, @NotNull PsiElement navigationElement) {
     final String innerClassQualifiedName = containingClass.getQualifiedName() + "." + name;
-    final LombokLightClassBuilder classBuilder = new LombokLightClassBuilder(containingClass, name, innerClassQualifiedName);
-    classBuilder.withContainingClass(containingClass)
+    final LombokLightClassBuilder lazyClassBuilder = new LombokLightClassBuilder(containingClass, name, innerClassQualifiedName);
+    lazyClassBuilder.withContainingClass(containingClass)
       .withNavigationElement(navigationElement)
       .withModifier(accessLevel)
       .withModifier(PsiModifier.STATIC)
       .withModifier(PsiModifier.FINAL);
-    return classBuilder;
+    return lazyClassBuilder;
   }
 
   @NotNull

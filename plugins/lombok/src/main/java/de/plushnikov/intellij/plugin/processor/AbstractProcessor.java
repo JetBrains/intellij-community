@@ -33,7 +33,8 @@ public abstract class AbstractProcessor implements Processor {
 
   /**
    * Constructor for all Lombok-Processors
-   *  @param supportedClass           kind of output elements this processor supports
+   *
+   * @param supportedClass             kind of output elements this processor supports
    * @param supportedAnnotationClasses annotations this processor supports
    */
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
@@ -66,7 +67,7 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   protected boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
-                                                          @NotNull String annotationParameter, @NotNull ConfigKey configKey) {
+                                                   @NotNull String annotationParameter, @NotNull ConfigKey configKey) {
     final boolean result;
     final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, annotationParameter);
     if (null == declaredAnnotationValue) {

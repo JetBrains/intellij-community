@@ -11,6 +11,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,12 +39,14 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = new ArrayList<>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
       if (null != psiAnnotation) {
-        if (validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
+        if (possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation, psiField)
+          && validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
+
           generatePsiElements(psiField, psiAnnotation, result);
         }
       }
@@ -51,8 +54,17 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
-  @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
+    if (null == nameHint) {
+      return true;
+    }
+
+    return true;
+  }
+
   @NotNull
+  @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {

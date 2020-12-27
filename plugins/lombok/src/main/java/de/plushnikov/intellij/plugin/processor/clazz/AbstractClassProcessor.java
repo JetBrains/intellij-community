@@ -44,21 +44,31 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = Collections.emptyList();
-
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
-    if (null != psiAnnotation) {
-      if (supportAnnotationVariant(psiAnnotation) && validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
-        result = new ArrayList<>();
-        generatePsiElements(psiClass, psiAnnotation, result);
-      }
+    if (null != psiAnnotation
+      && supportAnnotationVariant(psiAnnotation)
+      && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
+      && validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())
+    ) {
+      result = new ArrayList<>();
+      generatePsiElements(psiClass, psiAnnotation, result);
     }
     return result;
   }
 
-  @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    if (null == nameHint) {
+      return true;
+    }
+
+    return true;
+  }
+
   @NotNull
+  @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     Collection<PsiAnnotation> result = new ArrayList<>();
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
@@ -164,7 +174,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
     if (result) {
       result = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
-                                                          LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR);
+        LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR);
     }
     return result;
   }

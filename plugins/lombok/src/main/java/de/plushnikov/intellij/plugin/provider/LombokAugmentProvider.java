@@ -2,14 +2,10 @@ package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -71,7 +67,16 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   @NotNull
   @Override
-  public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull final Class<Psi> type) {
+  public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                        @NotNull final Class<Psi> type) {
+    return getAugments(element, type, null);
+  }
+
+  @NotNull
+  @Override
+  public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                        @NotNull final Class<Psi> type,
+                                                        @Nullable String nameHint) {
     final List<Psi> emptyResult = Collections.emptyList();
     if ((type != PsiClass.class && type != PsiField.class && type != PsiMethod.class) || !(element instanceof PsiExtensibleClass)) {
       return emptyResult;
@@ -87,76 +92,26 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return emptyResult;
     }
 
-    final List<Psi> cachedValue;
-    if (type == PsiField.class) {
-      cachedValue = CachedValuesManager.getCachedValue(element, new FieldLombokCachedValueProvider<>(type, psiClass));
-    } else if (type == PsiMethod.class) {
-      cachedValue = CachedValuesManager.getCachedValue(element, new MethodLombokCachedValueProvider<>(type, psiClass));
-    } else {
-      cachedValue = CachedValuesManager.getCachedValue(element, new ClassLombokCachedValueProvider<>(type, psiClass));
-    }
-    return null != cachedValue ? cachedValue : emptyResult;
-  }
+    // All invoker of AugmentProvider already make caching
+    // and we want to try to skip recursive calls completely
 
-  private static class FieldLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {
-    private static final RecursionGuard<PsiClass> ourGuard = RecursionManager.createGuard("lombok.augment.field");
-
-    FieldLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
-      super(type, psiClass, ourGuard);
-    }
-  }
-
-  private static class MethodLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {
-    private static final RecursionGuard<PsiClass> ourGuard = RecursionManager.createGuard("lombok.augment.method");
-
-    MethodLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
-      super(type, psiClass, ourGuard);
-    }
-  }
-
-  private static class ClassLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {
-    private static final RecursionGuard<PsiClass> ourGuard = RecursionManager.createGuard("lombok.augment.class");
-
-    ClassLombokCachedValueProvider(Class<Psi> type, PsiClass psiClass) {
-      super(type, psiClass, ourGuard);
-    }
-  }
-
-  private abstract static class LombokCachedValueProvider<Psi extends PsiElement> implements CachedValueProvider<List<Psi>> {
-    private final Class<Psi> type;
-    private final PsiClass psiClass;
-    private final RecursionGuard<PsiClass> recursionGuard;
-
-    LombokCachedValueProvider(Class<Psi> type, PsiClass psiClass, RecursionGuard<PsiClass> recursionGuard) {
-      this.type = type;
-      this.psiClass = psiClass;
-      this.recursionGuard = recursionGuard;
-    }
-
-    @Nullable
-    @Override
-    public Result<List<Psi>> compute() {
-//      return computeIntern();
-      return recursionGuard.doPreventingRecursion(psiClass, true, this::computeIntern);
-    }
-
-    private Result<List<Psi>> computeIntern() {
-//      final String message = String.format("Process call for type: %s class: %s", type.getSimpleName(), psiClass.getQualifiedName());
+///      final String message = String.format("Process call for type: %s class: %s", type.getSimpleName(), psiClass.getQualifiedName());
 //      log.info(">>>" + message);
-      final List<Psi> result = getPsis(psiClass, type);
+    final List<Psi> result = getPsis(psiClass, type, nameHint);
 //      log.info("<<<" + message);
-      return Result.create(result, psiClass);
-    }
+    return result;
   }
 
   @NotNull
-  private static <Psi extends PsiElement> List<Psi> getPsis(PsiClass psiClass, Class<Psi> type) {
+  private static <Psi extends PsiElement> List<Psi> getPsis(PsiClass psiClass, Class<Psi> type, String nameHint) {
     final List<Psi> result = new ArrayList<>();
     final Collection<Processor> lombokProcessors = LombokProcessorProvider.getInstance(psiClass.getProject()).getLombokProcessors(type);
     for (Processor processor : lombokProcessors) {
-      final List<? super PsiElement> generatedElements = processor.process(psiClass);
-      for (Object psiElement : generatedElements) {
-        result.add((Psi) psiElement);
+      if (processor.notNameHintIsEqualToSupportedAnnotation(nameHint)) {
+        final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);
+        for (Object psiElement : generatedElements) {
+          result.add((Psi) psiElement);
+        }
       }
     }
     return result;

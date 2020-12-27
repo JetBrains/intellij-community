@@ -144,8 +144,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
       paramString.append("super=\" + super.toString() + \", ");
     }
 
+    final EqualsAndHashCodeToStringHandler handler = getEqualsAndHashCodeToStringHandler();
     for (MemberInfo memberInfo : memberInfos) {
-
       if (includeFieldNames) {
         paramString.append(memberInfo.getName()).append('=');
       }
@@ -161,7 +161,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
         }
       }
 
-      final String memberAccessor = getEqualsAndHashCodeToStringHandler().getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
+      final String memberAccessor = handler.getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
       paramString.append("this.").append(memberAccessor);
 
       if (classFieldType instanceof PsiArrayType) {

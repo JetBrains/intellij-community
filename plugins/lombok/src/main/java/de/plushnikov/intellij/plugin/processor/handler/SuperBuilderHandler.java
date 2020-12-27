@@ -205,17 +205,24 @@ public class SuperBuilderHandler extends BuilderHandler {
       }
     }
 
-    final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
-    initBuilderInfosBuilderClassType(builderInfos, bType);
+    baseClassBuilder.withFieldSupplier(() -> {
+      final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
+      initBuilderInfosBuilderClassType(builderInfos, bType);
 
-    // create builder Fields
-    builderInfos.stream()
-      .map(BuilderInfo::renderBuilderFields)
-      .forEach(baseClassBuilder::withFields);
+      // create builder Fields
+      return builderInfos.stream()
+        .map(BuilderInfo::renderBuilderFields)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    });
 
-    // create all methods
-    baseClassBuilder.withMethods(
-      addAllMethodsForBaseBuilderClass(psiClass, psiAnnotation, baseClassBuilder, builderInfos, bType, cType));
+    baseClassBuilder.withMethodSupplier(() -> {
+      final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
+      initBuilderInfosBuilderClassType(builderInfos, bType);
+
+      // create all methods
+      return addAllMethodsForBaseBuilderClass(psiClass, psiAnnotation, baseClassBuilder, builderInfos, bType, cType);
+    });
 
     return baseClassBuilder;
   }
@@ -369,7 +376,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       PsiClassUtil.getTypeWithGenerics(psiClass), PsiClassUtil.getTypeWithGenerics(implClassBuilder));
     implClassBuilder.withExtends(extendsType);
 
-    implClassBuilder.withMethods(createAllMethodsOfImplBuilder(psiClass, psiAnnotation, implClassBuilder));
+    implClassBuilder.withMethodSupplier(() -> createAllMethodsOfImplBuilder(psiClass, psiAnnotation, implClassBuilder));
 
     return implClassBuilder;
   }

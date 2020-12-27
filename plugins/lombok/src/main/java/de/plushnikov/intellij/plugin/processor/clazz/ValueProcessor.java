@@ -82,7 +82,7 @@ public class ValueProcessor extends AbstractClassProcessor {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 
-      final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
+      final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
       final Collection<PsiField> requiredFields = getAllArgsConstructorProcessor().getAllFields(psiClass);
 
       if (getAllArgsConstructorProcessor().validateIsConstructorNotDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {

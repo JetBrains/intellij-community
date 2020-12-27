@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -9,13 +8,14 @@ import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Inspect and validate @Builder lombok annotation on a class.
@@ -39,6 +39,23 @@ public class BuilderProcessor extends AbstractClassProcessor {
 
   private AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
+  }
+
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    if (null == nameHint) {
+      return true;
+    }
+
+    boolean possibleMatchFound = Objects.equals(nameHint, psiClass.getName());
+    if (!possibleMatchFound) {
+      possibleMatchFound = Objects.equals(nameHint, BuilderHandler.TO_BUILDER_METHOD_NAME);
+      if (!possibleMatchFound) {
+        final String builderMethodName = getBuilderHandler().getBuilderMethodName(psiAnnotation);
+        possibleMatchFound = Objects.equals(nameHint, builderMethodName);
+      }
+    }
+    return possibleMatchFound;
   }
 
   @NotNull

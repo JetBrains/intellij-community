@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -13,17 +14,17 @@ import java.util.Collection;
 public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
     return isImplicitWrite(element) || isImplicitRead(element);
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     return checkUsage(element, LombokPsiElementUsage.READ);
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     return checkUsage(element, LombokPsiElementUsage.WRITE);
   }
 

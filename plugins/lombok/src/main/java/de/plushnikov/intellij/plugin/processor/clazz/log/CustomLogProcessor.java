@@ -72,7 +72,7 @@ public class CustomLogProcessor extends AbstractLogProcessor {
       builder.addError(LombokBundle.message("inspection.message.custom.log.not.configured.correctly"));
       return false;
     }
-    final String topic = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "topic");
+    final String topic = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "topic", "");
     final boolean topicPresent = !StringUtil.isEmptyOrSpaces(topic);
     if (topicPresent) {
       if (!declaration.hasWithTopic()) {

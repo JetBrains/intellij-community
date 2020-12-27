@@ -19,9 +19,7 @@ public final class ReflectionUtil {
           break;
         }
       }
-    } catch (IllegalArgumentException x) {
-      LOG.error(x);
-    } catch (IllegalAccessException x) {
+    } catch (IllegalArgumentException | IllegalAccessException x) {
       LOG.error(x);
     }
   }
