@@ -6,6 +6,7 @@ import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
 import java.net.ServerSocket
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -80,7 +81,8 @@ class UnixFifoInputHandle(path: Path) : FileInputHandle(path) {
           throw IOException("mkfifo timed out ($MKFIFO_PROCESS_TIMEOUT_MS ms)")
         }
         if (process.exitValue() != 0) {
-          throw IOException("mkfifo failed with exit code ${process.exitValue()}: ${String(process.errorStream.readAllBytes())}")
+          val stderr = String(process.errorStream.readAllBytes(), StandardCharsets.UTF_8)
+          throw IOException("mkfifo failed with exit code ${process.exitValue()}: $stderr")
         }
       }
       catch (e: Throwable) {
