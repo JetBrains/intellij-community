@@ -38,38 +38,35 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
     }
   }
 
-  suspend fun launch(): R {
-    return coroutineScope {
-      createHandshakeTransport().use { transport ->
-        ensureActive()
+  suspend fun launch(): R = coroutineScope {
+    createHandshakeTransport().use { transport ->
+      ensureActive()
 
-        createProcessHandler(transport)
-          .withOutputCaptured(SynchronizedProcessOutput()) processHandler@{ launcherOutput ->
-            startNotify()
+      createProcessHandler(transport).withOutputCaptured(SynchronizedProcessOutput()) processHandler@{ launcherOutput ->
+        startNotify()
 
-            val handshakeAsync = async(Dispatchers.IO) { transport.readHandshake() }
-            val finishedAsync = launcherOutput.onFinished().asDeferred()
+        val handshakeAsync = async(Dispatchers.IO) { transport.readHandshake() }
+        val finishedAsync = launcherOutput.onFinished().asDeferred()
 
-            val handshake = try {
-              select<H?> {
-                handshakeAsync.onAwait { it }
-                finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
-              }
-              // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
-              ?: select<Nothing> {
-                finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
-                onTimeout(1000) {
-                  launcherOutput.setTimeout()
-                  handshakeFailed(transport, this@processHandler, launcherOutput)
-                }
-              }
-            }
-            catch (e: IOException) {
-              handshakeFailed(transport, this, launcherOutput, e)
-            }
-
-            handshakeSucceeded(handshake, transport, this)
+        val handshake = try {
+          select<H?> {
+            handshakeAsync.onAwait { it }
+            finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
           }
+          // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
+          ?: select<Nothing> {
+            finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
+            onTimeout(1000) {
+              launcherOutput.setTimeout()
+              handshakeFailed(transport, this@processHandler, launcherOutput)
+            }
+          }
+        }
+        catch (e: IOException) {
+          handshakeFailed(transport, this, launcherOutput, e)
+        }
+
+        handshakeSucceeded(handshake, transport, this)
       }
     }
   }
