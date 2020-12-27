@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.process.mediator
+package com.intellij.execution.process.mediator.client
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.KillableColoredProcessHandler
-import com.intellij.execution.process.mediator.client.MediatedProcess
 import com.intellij.util.io.BaseOutputReader
 
 class MediatedProcessHandler(
