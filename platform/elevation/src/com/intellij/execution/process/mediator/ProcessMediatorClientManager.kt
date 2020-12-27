@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator
 
-import com.intellij.execution.process.elevation.ElevationLogger
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
@@ -46,7 +45,7 @@ class ProcessMediatorClientManager(private val launchDaemon: () -> ProcessMediat
           client.adjustQuotaBlocking(quotaOptions)
         }
         catch (e: Exception) {
-          ElevationLogger.LOG.warn("Unable to adjust quota for client $client")
+          ProcessMediatorLogger.LOG.warn("Unable to adjust quota for client $client")
         }
       }
       getActiveClientOrNull()?.adjustQuotaBlocking(quotaOptions)
