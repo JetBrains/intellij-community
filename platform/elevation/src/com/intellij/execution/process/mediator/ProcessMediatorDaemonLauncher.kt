@@ -24,19 +24,11 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.orNull
 import com.intellij.util.io.processHandshake.ProcessHandshakeLauncher
 import com.sun.jna.platform.unix.LibC
-import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
-import io.grpc.stub.MetadataUtils
 import java.io.File
 import java.io.IOException
-import java.net.InetAddress
 import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
-
-private typealias Port = Int
-
-private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 
 
 open class ProcessMediatorDaemonLauncher : ProcessHandshakeLauncher<Handshake, DaemonHandshakeTransport, ProcessMediatorDaemon>() {
@@ -166,26 +158,6 @@ class ElevationDaemonLauncher : ProcessMediatorDaemonLauncher() {
 
   companion object {
     private val SUDO_PATH_KEY: Key<Path> = Key.create("SUDO_PATH_KEY")
-  }
-}
-
-
-private class ProcessMediatorDaemonImpl(private val processHandle: ProcessHandle?,
-                                        private val port: Port,
-                                        private val credentials: DaemonClientCredentials) : ProcessMediatorDaemon {
-
-  override fun createChannel(): ManagedChannel {
-    return ManagedChannelBuilder.forAddress(LOOPBACK_IP, port).usePlaintext()
-      .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
-      .build().also { channel ->
-        processHandle?.onExit()?.whenComplete { _, _ -> channel.shutdown() }
-      }
-  }
-
-  override fun stop() = Unit
-
-  override fun blockUntilShutdown() {
-    processHandle?.onExit()?.get()
   }
 }
 
