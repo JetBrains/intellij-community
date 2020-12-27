@@ -214,6 +214,9 @@ Includes the following features:</p>
         <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightMoneyAction"
                 id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightMoneyAction">
         </action>
+        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightOrganizationsAction"
+                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightOrganizationsAction">
+        </action>
       </group>
     </group>
 

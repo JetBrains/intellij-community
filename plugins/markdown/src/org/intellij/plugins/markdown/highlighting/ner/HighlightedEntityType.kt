@@ -11,6 +11,7 @@ import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightDatesAction
 import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightMoneyAction
 import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction
+import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightOrganizationsAction
 
 internal enum class HighlightedEntityType(private val highlightingKey: TextAttributesKey, private val priority: Int) {
   Date(MarkdownHighlighterColors.DATE, 1) {
@@ -26,6 +27,11 @@ internal enum class HighlightedEntityType(private val highlightingKey: TextAttri
   Number(MarkdownHighlighterColors.NUMBER, 0) {
     override val isEnabled: Boolean
       get() = HighlightNumbersAction.isHighlightingEnabled
+  },
+
+  Organization(MarkdownHighlighterColors.ORGANIZATION, 1) {
+    override val isEnabled: Boolean
+      get() = HighlightOrganizationsAction.isHighlightingEnabled
   };
 
   abstract val isEnabled: Boolean
