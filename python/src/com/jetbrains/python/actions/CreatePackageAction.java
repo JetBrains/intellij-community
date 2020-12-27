@@ -167,10 +167,15 @@ public final class CreatePackageAction extends DumbAwareAction {
 
 
   public static void createInitPyInHierarchy(@NotNull PsiDirectory created, @NotNull PsiDirectory ancestor) {
+    if (created.equals(ancestor)) {
+      createInitPy(created);
+      return;
+    }
     do {
       createInitPy(created);
       created = created.getParent();
-    } while(created != null && !created.equals(ancestor));
+    }
+    while (created != null && !created.equals(ancestor));
   }
 
   private static void createInitPy(@NotNull PsiDirectory directory) {
