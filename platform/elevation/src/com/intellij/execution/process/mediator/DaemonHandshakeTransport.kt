@@ -92,14 +92,10 @@ private class StdoutTransport(launchOptions: DaemonLaunchOptions) : AbstractHand
   }
 }
 
-private open class FileTransport(
-  launchOptions: DaemonLaunchOptions,
-  override val inputHandle: FileInputHandle
-) : AbstractHandshakeTransport(launchOptions) {
-  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.File(inputHandle.path.toAbsolutePath())
-}
-
 private class UnixFifoTransport(
   launchOptions: DaemonLaunchOptions,
-  path: Path
-) : FileTransport(launchOptions, UnixFifoInputHandle(path))
+  path: Path,
+) : AbstractHandshakeTransport(launchOptions) {
+  override val inputHandle = UnixFifoInputHandle(path)
+  override fun getHandshakeOption() = DaemonLaunchOptions.HandshakeOption.File(inputHandle.path.toAbsolutePath())
+}
