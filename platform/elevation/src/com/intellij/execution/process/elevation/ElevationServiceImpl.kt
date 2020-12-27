@@ -5,7 +5,6 @@ import com.intellij.application.subscribe
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ElevationService
-import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.MediatedProcessHandler
 import com.intellij.execution.process.mediator.ProcessMediatorConnectionManager
@@ -48,10 +47,8 @@ class ElevationServiceImpl : ElevationService, Disposable {
       throw ProcessCanceledException()
     }
     return tryRelaunchingDaemonUntilHaveQuotaPermit { client ->
-      object : MediatedProcess(client, processBuilder), SelfKiller {
-        init {
-          ElevationLogger.LOG.info("Created process PID ${pid()}")
-        }
+      MediatedProcess(client, processBuilder).apply {
+        ElevationLogger.LOG.info("Created process PID ${pid()}")
       }
     }
   }

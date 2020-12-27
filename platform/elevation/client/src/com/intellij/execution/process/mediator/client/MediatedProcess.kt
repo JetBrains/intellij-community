@@ -2,6 +2,7 @@
 package com.intellij.execution.process.mediator.client
 
 import com.google.protobuf.ByteString
+import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.execution.process.mediator.util.ChannelInputStream
 import com.intellij.execution.process.mediator.util.ChannelOutputStream
@@ -20,7 +21,7 @@ private val CLEANER = Cleaner.create()
 open class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
                                                pipeStdin: Boolean,
                                                pipeStdout: Boolean,
-                                               pipeStderr: Boolean) : Process(), CoroutineScope by handle {
+                                               pipeStderr: Boolean) : Process(), SelfKiller, CoroutineScope by handle {
   init {
     @Suppress("LeakingThis")
     CLEANER.register(this, handle::releaseAsync)
