@@ -8,7 +8,7 @@ import com.intellij.execution.process.ElevationService
 import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.MediatedProcessHandler
-import com.intellij.execution.process.mediator.ProcessMediatorClientManager
+import com.intellij.execution.process.mediator.ProcessMediatorConnectionManager
 import com.intellij.execution.process.mediator.client.MediatedProcess
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
@@ -22,8 +22,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 class ElevationServiceImpl : ElevationService, Disposable {
   private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-  private val clientManager = ProcessMediatorClientManager(ElevationDaemonLauncher()::launchDaemon,
-                                                           ::createProcessMediatorClient).apply {
+  private val connectionManager = ProcessMediatorConnectionManager(ElevationDaemonLauncher()::launchDaemon,
+                                                                   ::createProcessMediatorClient).apply {
     ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
       override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {
         adjustQuota(newValue)
@@ -59,14 +59,14 @@ class ElevationServiceImpl : ElevationService, Disposable {
   private fun <R> tryRelaunchingDaemonUntilHaveQuotaPermit(block: (ProcessMediatorClient) -> R): R {
     val maxAttempts = MAX_RELAUNCHING_DAEMON_UNTIL_HAVE_QUOTA_PERMIT_ATTEMPTS
     for (attempt in 1..maxAttempts) {
-      val client = clientManager.launchDaemonAndConnectClientIfNeeded()
+      val client = connectionManager.launchDaemonAndConnectClientIfNeeded()
       try {
         return block(client)
       }
       catch (e: QuotaExceededException) {
         if (attempt > 1) ElevationLogger.LOG.warn("Repeated quota exceeded error after $attempt attempts; " +
                                                   "quota options: ${ElevationSettings.getInstance().quotaOptions}", e)
-        clientManager.parkClient(client)
+        connectionManager.parkClient(client)
       }
     }
     throw ExecutionException(ElevationBundle.message("dialog.message.unable.to.configure.elevation.daemon.after.attempts",

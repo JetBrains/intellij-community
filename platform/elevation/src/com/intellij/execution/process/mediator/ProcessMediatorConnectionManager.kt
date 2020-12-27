@@ -15,8 +15,8 @@ import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
 
-class ProcessMediatorClientManager(private val launchDaemon: () -> ProcessMediatorDaemon,
-                                   private val createClient: (ManagedChannel) -> ProcessMediatorClient) : Disposable {
+class ProcessMediatorConnectionManager(private val launchDaemon: () -> ProcessMediatorDaemon,
+                                       private val createClient: (ManagedChannel) -> ProcessMediatorClient) : Disposable {
   private var isDisposed = false  // synchronized on this
   private val parkedClients = mutableListOf<ProcessMediatorClient>()  // synchronized on this
 
