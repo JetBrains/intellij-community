@@ -5,10 +5,10 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
-import com.intellij.execution.process.mediator.handshake.*
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.rsaDecrypt
-import com.intellij.util.io.BaseInputStreamReader
+import com.intellij.util.io.*
+import com.intellij.util.io.processHandshake.ProcessHandshakeTransport
 import java.io.InputStream
 import java.io.Reader
 import java.nio.file.Path
@@ -16,7 +16,7 @@ import java.security.KeyPair
 import java.security.KeyPairGenerator
 
 
-interface DaemonHandshakeTransport : HandshakeTransport<Handshake> {
+interface DaemonHandshakeTransport : ProcessHandshakeTransport<Handshake> {
   fun getDaemonLaunchOptions(): DaemonLaunchOptions
 
   companion object

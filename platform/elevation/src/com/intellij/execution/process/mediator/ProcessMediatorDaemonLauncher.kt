@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.orNull
+import com.intellij.util.io.processHandshake.ProcessHandshakeLauncher
 import com.sun.jna.platform.unix.LibC
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder

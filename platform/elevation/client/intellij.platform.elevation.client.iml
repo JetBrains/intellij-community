@@ -19,7 +19,7 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.elevation.daemon" />
     <orderEntry type="module" module-name="intellij.platform.elevation.common" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
   </component>

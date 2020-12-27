@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 
-package com.intellij.execution.process.mediator
+package com.intellij.util.io.processHandshake
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
-import com.intellij.execution.process.elevation.ElevationBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -24,7 +23,7 @@ import java.util.concurrent.ExecutionException
 
 private val LOG = logger<ProcessHandshakeLauncher<*, *, *>>()
 
-abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
+abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> {
   fun launchDaemon(): R {
     return GlobalScope.async(Dispatchers.IO) {
       createHandshakeTransport().use { transport ->
@@ -89,8 +88,8 @@ abstract class ProcessHandshakeLauncher<H, T : HandshakeTransport<H>, R> {
 
     val reason = when {
       errorExitCodeString != null -> IdeBundle.message("finished.with.exit.code.text.message", errorExitCodeString)
-      exception == null -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.eof")
-      else -> ElevationBundle.message("dialog.message.failed.to.launch.daemon.handshake.ioe")
+      exception == null -> ProcessHandshakeBundle.message("dialog.message.process.handshake.failed.eof")
+      else -> ProcessHandshakeBundle.message("dialog.message.process.handshake.failed.ioe")
     }
     handshakeFailed(transport, processHandler, output, reason)
   }
