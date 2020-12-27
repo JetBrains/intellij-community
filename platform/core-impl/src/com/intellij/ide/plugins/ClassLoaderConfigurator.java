@@ -416,15 +416,18 @@ final class ClassLoaderConfigurator {
     String pluginPackagePrefix = dependent.packagePrefix;
     if (pluginPackagePrefix == null) {
       if (parentDescriptor.packagePrefix != null) {
-        throw new PluginException("Sub descriptor must specify package if it is specified for main plugin descriptor (descriptorFile=" + dependent.descriptorPath + ")",
-                                  parentDescriptor.id);
+        throw new PluginException("Sub descriptor must specify package if it is specified for main plugin descriptor " +
+                                  "(descriptorFile=" + dependent.descriptorPath + ")", parentDescriptor.id);
       }
     }
     else {
       if (pluginPackagePrefix.equals(parentDescriptor.packagePrefix)) {
         throw new PluginException("Sub descriptor must not specify the same package as main plugin descriptor", parentDescriptor.id);
       }
-      if (parentDescriptor.packagePrefix == null && !(parentDescriptor.id.getIdString().equals("Docker") || parentDescriptor.id.getIdString().equals("org.jetbrains.plugins.ruby"))) {
+      if (parentDescriptor.packagePrefix == null &&
+          !(parentDescriptor.id.getIdString().equals("Docker") ||
+            parentDescriptor.id.getIdString().equals("org.jetbrains.plugins.ruby") ||
+            parentDescriptor.id.getIdString().equals("JavaScript"))) {
         throw new PluginException("Sub descriptor must not specify package if one is not specified for main plugin descriptor",
                                   parentDescriptor.id);
       }
