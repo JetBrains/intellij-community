@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 
 class ElevationServiceImpl : ElevationService, Disposable {
-  private val clientManager = ProcessMediatorClientManager().also {
+  private val clientManager = ProcessMediatorClientManager(ElevationDaemonLauncher()::launchDaemon).also {
     Disposer.register(this, it)
   }
 

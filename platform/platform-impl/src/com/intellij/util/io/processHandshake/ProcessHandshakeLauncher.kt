@@ -8,9 +8,11 @@ import com.intellij.execution.process.*
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -24,8 +26,20 @@ import java.util.concurrent.ExecutionException
 private val LOG = logger<ProcessHandshakeLauncher<*, *, *>>()
 
 abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> {
-  fun launchDaemon(): R {
+  fun launchWithProgress(progressTitle: @NlsContexts.ProgressTitle String): R {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+      launchAsync().awaitWithCheckCanceled()
+    }, progressTitle, true, null)
+  }
+
+  fun launchAsync(): Deferred<R> {
     return GlobalScope.async(Dispatchers.IO) {
+      launch()
+    }
+  }
+
+  suspend fun launch(): R {
+    return coroutineScope {
       createHandshakeTransport().use { transport ->
         ensureActive()
 
@@ -57,7 +71,7 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
             handshakeSucceeded(handshake, transport, this)
           }
       }
-    }.awaitWithCheckCanceled()
+    }
   }
 
   protected abstract fun createHandshakeTransport(): T

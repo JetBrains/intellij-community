@@ -2,8 +2,6 @@
 package com.intellij.execution.process.mediator
 
 import com.intellij.application.subscribe
-import com.intellij.execution.process.elevation.ElevationBundle
-import com.intellij.execution.process.elevation.ElevationDaemonLauncher
 import com.intellij.execution.process.elevation.ElevationLogger
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
@@ -12,8 +10,6 @@ import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.grpc.ManagedChannel
 import io.grpc.inprocess.InProcessChannelBuilder
@@ -22,13 +18,14 @@ import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
 
-class ProcessMediatorClientManager : Disposable {
+class ProcessMediatorClientManager(private val launchDaemon: () -> ProcessMediatorDaemon) : Disposable {
   private var isDisposed = false  // synchronized on this
   private val parkedClients = mutableListOf<ProcessMediatorClient>()  // synchronized on this
 
   private val activeClientLazy = SynchronizedClearableLazy {
     launchDaemonAndConnectClient()
   }
+
   @get:JvmName("getOrCreateClient")
   private val activeClient: ProcessMediatorClient by activeClientLazy
 
@@ -73,12 +70,6 @@ class ProcessMediatorClientManager : Disposable {
     val daemon = if (debug) createInProcessDaemonForDebugging(coroutineScope) else launchDaemon()
     val channel = daemon.createChannel()
     return ProcessMediatorClient(coroutineScope, channel, ElevationSettings.getInstance().quotaOptions)
-  }
-
-  private fun launchDaemon(): ProcessMediatorDaemon {
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      ElevationDaemonLauncher().launchDaemon()
-    }, ElevationBundle.message("progress.title.starting.elevation.daemon"), true, null)
   }
 
   private fun createInProcessDaemonForDebugging(coroutineScope: CoroutineScope): ProcessMediatorDaemon {
