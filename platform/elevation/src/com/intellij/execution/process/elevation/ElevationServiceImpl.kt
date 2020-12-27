@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
+import com.intellij.application.subscribe
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ElevationService
@@ -11,6 +12,7 @@ import com.intellij.execution.process.mediator.ProcessMediatorClientManager
 import com.intellij.execution.process.mediator.client.MediatedProcess
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
+import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
@@ -21,7 +23,13 @@ import kotlin.coroutines.EmptyCoroutineContext
 class ElevationServiceImpl : ElevationService, Disposable {
   private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
   private val clientManager = ProcessMediatorClientManager(ElevationDaemonLauncher()::launchDaemon,
-                                                           ::createProcessMediatorClient).also {
+                                                           ::createProcessMediatorClient).apply {
+    ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
+      override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {
+        adjustQuota(newValue)
+      }
+    })
+  }.also {
     Disposer.register(this, it)
   }
 
