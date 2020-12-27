@@ -14,10 +14,19 @@ import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
+import io.grpc.ManagedChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.EmptyCoroutineContext
 
 class ElevationServiceImpl : ElevationService, Disposable {
-  private val clientManager = ProcessMediatorClientManager(ElevationDaemonLauncher()::launchDaemon).also {
+  private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+  private val clientManager = ProcessMediatorClientManager(ElevationDaemonLauncher()::launchDaemon,
+                                                           ::createProcessMediatorClient).also {
     Disposer.register(this, it)
+  }
+
+  private fun createProcessMediatorClient(channel: ManagedChannel): ProcessMediatorClient {
+    return ProcessMediatorClient(coroutineScope, channel, ElevationSettings.getInstance().quotaOptions)
   }
 
   override fun createProcessHandler(commandLine: GeneralCommandLine): MediatedProcessHandler {

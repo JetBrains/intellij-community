@@ -18,7 +18,8 @@ import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
 
-class ProcessMediatorClientManager(private val launchDaemon: () -> ProcessMediatorDaemon) : Disposable {
+class ProcessMediatorClientManager(private val launchDaemon: () -> ProcessMediatorDaemon,
+                                   private val createClient: (ManagedChannel) -> ProcessMediatorClient) : Disposable {
   private var isDisposed = false  // synchronized on this
   private val parkedClients = mutableListOf<ProcessMediatorClient>()  // synchronized on this
 
@@ -65,11 +66,10 @@ class ProcessMediatorClientManager(private val launchDaemon: () -> ProcessMediat
   private fun launchDaemonAndConnectClient(): ProcessMediatorClient = synchronized(this) {
     check(!isDisposed) { "Already disposed" }
 
-    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val debug = false
-    val daemon = if (debug) createInProcessDaemonForDebugging(coroutineScope) else launchDaemon()
+    val daemon = if (debug) createInProcessDaemonForDebugging(CoroutineScope(EmptyCoroutineContext)) else launchDaemon()
     val channel = daemon.createChannel()
-    return ProcessMediatorClient(coroutineScope, channel, ElevationSettings.getInstance().quotaOptions)
+    return createClient(channel)
   }
 
   private fun createInProcessDaemonForDebugging(coroutineScope: CoroutineScope): ProcessMediatorDaemon {
