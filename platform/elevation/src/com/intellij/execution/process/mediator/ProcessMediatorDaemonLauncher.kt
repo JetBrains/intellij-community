@@ -11,7 +11,6 @@ import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
-import com.intellij.execution.process.mediator.handshake.*
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.ApplicationNamesInfo

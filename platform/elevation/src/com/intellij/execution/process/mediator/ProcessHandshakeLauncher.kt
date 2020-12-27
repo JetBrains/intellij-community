@@ -6,8 +6,6 @@ package com.intellij.execution.process.mediator
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
 import com.intellij.execution.process.elevation.ElevationBundle
-import com.intellij.execution.process.mediator.handshake.HandshakeTransport
-import com.intellij.execution.process.mediator.handshake.ProcessStdoutHandshakeTransport
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger

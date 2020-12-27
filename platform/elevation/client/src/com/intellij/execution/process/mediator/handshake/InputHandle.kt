@@ -16,13 +16,13 @@ import java.util.concurrent.TimeUnit
  * An input stream which may have other resources associated that need to be closed / cleaned up when closing the stream.
  * For example, a temporary file may need to be deleted as soon as we are done reading from its input stream.
  */
-internal interface InputHandle : Closeable {
+interface InputHandle : Closeable {
   val inputStream: InputStream
   override fun close() = inputStream.close()
 }
 
 
-internal class SocketInputHandle(port: Int = 0) : InputHandle {
+class SocketInputHandle(port: Int = 0) : InputHandle {
   val localPort: Int get() = serverSocket.localPort
 
   private val cleanup = MultiCloseable()
@@ -32,12 +32,12 @@ internal class SocketInputHandle(port: Int = 0) : InputHandle {
   override fun close() = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.
 }
 
-internal class StreamInputHandle(override val inputStream: InputStream) : InputHandle
+class StreamInputHandle(override val inputStream: InputStream) : InputHandle
 
-internal abstract class FileInputHandle(val path: Path) : InputHandle
+abstract class FileInputHandle(val path: Path) : InputHandle
 
 @Suppress("SpellCheckingInspection")
-internal class UnixFifoInputHandle(path: Path) : FileInputHandle(path) {
+class UnixFifoInputHandle(path: Path) : FileInputHandle(path) {
   private val cleanup = MultiCloseable().apply {
     registerCloseable { super.close() }
   }
