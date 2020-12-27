@@ -3,6 +3,7 @@ package com.intellij.execution.process.mediator
 
 import com.intellij.application.subscribe
 import com.intellij.execution.process.elevation.ElevationBundle
+import com.intellij.execution.process.elevation.ElevationDaemonLauncher
 import com.intellij.execution.process.elevation.ElevationLogger
 import com.intellij.execution.process.elevation.settings.ElevationSettings
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
