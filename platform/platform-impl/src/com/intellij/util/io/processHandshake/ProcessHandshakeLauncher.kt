@@ -38,7 +38,7 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
     }
   }
 
-  suspend fun launch(): R = coroutineScope {
+  suspend fun launch(): R = supervisorScope {
     createHandshakeTransport().use { transport ->
       ensureActive()
 
