@@ -184,6 +184,34 @@ class WizardStatsService : CounterUsagesCollector() {
             ),
         )
 
+        private val allowedModuleTypes = listOf(
+            "androidNativeArm32Target",
+            "androidNativeArm64Target",
+            "iosArm32Target",
+            "iosArm64Target",
+            "iosX64Target",
+            "iosTarget",
+            "linuxArm32HfpTarget",
+            "linuxMips32Target",
+            "linuxMipsel32Target",
+            "linuxX64Target",
+            "macosX64Target",
+            "mingwX64Target",
+            "mingwX86Target",
+            "nativeForCurrentSystem",
+            "jsBrowser",
+            "jsNode",
+            "commonTarget",
+            "jvmTarget",
+            "androidTarget",
+            "multiplatform",
+            "JVM Module",
+            "android",
+            "IOS Module",
+            "jsBrowserSinglePlatform",
+            "jsNodeSinglePlatform",
+        )
+
 
         val settingIdField = EventFields.String("settingId", settings.allowedIds)
         val settingValueField = EventFields.String("settingValue", settings.possibleValues)
@@ -199,6 +227,8 @@ class WizardStatsService : CounterUsagesCollector() {
 
         val moduleTemplateField = EventFields.String("module_template", allowedModuleTemplates)
         val sessionIdField = EventFields.Int("session_id")
+
+        val moduleTypeField = EventFields.String("module_type", allowedModuleTypes)
 
         private val pluginInfoField = EventFields.PluginInfo.with(getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID))
 
@@ -257,6 +287,20 @@ class WizardStatsService : CounterUsagesCollector() {
             EventFields.PluginInfo,
         )
 
+        private val moduleCreatedEvent = GROUP.registerVarargEvent(
+            "module_created",
+            moduleTypeField,
+            sessionIdField,
+            EventFields.PluginInfo,
+        )
+
+        private val moduleRemovedEvent = GROUP.registerVarargEvent(
+            "module_removed",
+            moduleTypeField,
+            sessionIdField,
+            EventFields.PluginInfo,
+        )
+
         // Log functions
         fun logDataOnProjectGenerated(session: WizardLoggingSession?, project: Project?, projectCreationStats: ProjectCreationStats) {
             projectCreatedEvent.log(
@@ -308,6 +352,27 @@ class WizardStatsService : CounterUsagesCollector() {
             )
         }
 
+        fun logOnModuleCreated(
+            session: WizardLoggingSession,
+            moduleType: String,
+        ) {
+            moduleCreatedEvent.log(
+                sessionIdField with session.id,
+                moduleTypeField with moduleType,
+                pluginInfoField,
+            )
+        }
+
+        fun logOnModuleRemoved(
+            session: WizardLoggingSession,
+            moduleType: String,
+        ) {
+            moduleRemovedEvent.log(
+                sessionIdField with session.id,
+                moduleTypeField with moduleType,
+                pluginInfoField,
+            )
+        }
 
 
         fun logDataOnProjectGenerated(
