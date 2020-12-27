@@ -245,6 +245,12 @@ class WizardStatsService : CounterUsagesCollector() {
             EventFields.PluginInfo,
         )
 
+        private val nextClickedEvent = GROUP.registerVarargEvent(
+            "next_clicked",
+            sessionIdField,
+            EventFields.PluginInfo,
+        )
+
         // Log functions
         fun logDataOnProjectGenerated(session: WizardLoggingSession?, project: Project?, projectCreationStats: ProjectCreationStats) {
             projectCreatedEvent.log(
@@ -277,6 +283,16 @@ class WizardStatsService : CounterUsagesCollector() {
                 pluginInfoField,
             )
         }
+
+        fun logDataOnNextClicked(
+            session: WizardLoggingSession,
+        ) {
+            nextClickedEvent.log(
+                sessionIdField with session.id,
+                pluginInfoField,
+            )
+        }
+
 
 
         fun logDataOnProjectGenerated(
