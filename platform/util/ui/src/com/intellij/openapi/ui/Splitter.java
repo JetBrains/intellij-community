@@ -340,7 +340,7 @@ public class Splitter extends JPanel implements Splittable {
           double mSize2 = isVertical() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
           double pSize1 = isVertical() ? myFirstComponent.getPreferredSize().getHeight() : myFirstComponent.getPreferredSize().getWidth();
           double pSize2 = isVertical() ? mySecondComponent.getPreferredSize().getHeight() : mySecondComponent.getPreferredSize().getWidth();
-          if (myHonorPreferredSize && size1 + size2 > pSize1 + pSize2) {
+          if (myHonorPreferredSize && size1 + size2 > mSize1 + mSize2) {
             mSize1 = pSize1;
             mSize2 = pSize2;
           }
@@ -349,7 +349,7 @@ public class Splitter extends JPanel implements Splittable {
             switch (myLackOfSpaceStrategy) {
               case SIMPLE_RATIO:
                 double proportion = mSize1 / (mSize1 + mSize2);
-                size1 = proportion * total;
+                size1 = proportion * (size1 + size2);
                 break;
               case HONOR_THE_FIRST_MIN_SIZE:
                 size1 = mSize1;
