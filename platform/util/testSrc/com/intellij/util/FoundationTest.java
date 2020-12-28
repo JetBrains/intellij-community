@@ -4,7 +4,7 @@ package com.intellij.util;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.NSWorkspace;
-import com.intellij.util.io.jna.DisposableMemory;
+import com.intellij.jna.DisposableMemory;
 import com.intellij.util.system.CpuArch;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -169,14 +169,10 @@ public class FoundationTest {
   @Test
   public void testSprintf() {
     CLib cLib = Native.load("c", CLib.class);
-    DisposableMemory memory = new DisposableMemory(16);
-    try {
+    try (DisposableMemory memory = new DisposableMemory(16)) {
       int len = cLib.sprintf(memory, "%d plus %d is %d", 3, 5, 8);
       assertEquals(13, len);
       assertEquals("3 plus 5 is 8", memory.getString(0));
-    }
-    finally {
-      memory.dispose();
     }
   }
 }

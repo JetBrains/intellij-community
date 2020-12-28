@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.User32Ex;
-import com.intellij.util.io.jna.DisposableMemory;
+import com.intellij.jna.DisposableMemory;
 import com.intellij.util.ui.EDT;
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;
@@ -120,9 +120,7 @@ final class Win7TaskBar {
       return null;
     }
 
-    DisposableMemory memory = new DisposableMemory(ico.length);
-
-    try {
+    try (DisposableMemory memory = new DisposableMemory(ico.length)) {
       memory.write(0, ico, 0, ico.length);
 
       int nSize = 100;
@@ -132,9 +130,6 @@ final class Win7TaskBar {
       }
 
       return null;
-    }
-    finally {
-      memory.dispose();
     }
   }
 

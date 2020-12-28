@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.jna.DisposableMemory
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.io.jna.DisposableMemory
 import com.intellij.util.text.nullize
 import com.sun.jna.Library
 import com.sun.jna.Native
@@ -64,7 +64,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
         if (isNoSecretService(error)) return false
       }
       finally {
-        attr?.dispose()
+        attr?.close()
         dummySchema?.let { library.secret_schema_unref(it) }
       }
       return true
@@ -146,7 +146,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
         }
       }
       finally {
-        passwordPointer.dispose()
+        passwordPointer.close()
       }
     }
   }
