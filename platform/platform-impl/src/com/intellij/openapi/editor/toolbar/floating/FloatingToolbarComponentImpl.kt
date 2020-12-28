@@ -16,30 +16,12 @@ import javax.swing.JPanel
 
 @ApiStatus.Internal
 class FloatingToolbarComponentImpl(
-  override val providerId: String,
   parentComponent: JComponent,
   contextComponent: JComponent,
   actionGroup: ActionGroup,
   val autoHideable: Boolean,
   parentDisposable: Disposable
 ) : JPanel(), FloatingToolbarComponent {
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated("Use primary constructor instead")
-  constructor(
-    parentComponent: JComponent,
-    contextComponent: JComponent,
-    actionGroup: ActionGroup,
-    autoHideable: Boolean,
-    parentDisposable: Disposable
-  ) : this(
-    "",
-    parentComponent,
-    contextComponent,
-    actionGroup,
-    autoHideable,
-    parentDisposable
-  )
 
   private val actionToolbar: ActionToolbar
   private val visibilityController: VisibilityController

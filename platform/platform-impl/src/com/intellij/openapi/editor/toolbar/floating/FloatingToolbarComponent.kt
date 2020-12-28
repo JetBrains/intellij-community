@@ -6,8 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 
 interface FloatingToolbarComponent {
 
-  val providerId: String
-
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated("Floating toolbar component should have auto-update")
   fun update() {

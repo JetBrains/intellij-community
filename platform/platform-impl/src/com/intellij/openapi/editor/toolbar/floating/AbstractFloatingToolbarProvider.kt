@@ -2,32 +2,33 @@
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProviderBean.Companion.resolveActionGroup
-import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.reflect.jvm.jvmName
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.diagnostic.Logger
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-@Deprecated("Use FloatingToolbarProviderBean instead")
-abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : EditorFloatingToolbarProvider {
+abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : FloatingToolbarProvider {
 
-  override val id by lazy { this::class.jvmName }
+  override val actionGroup by lazy { resolveActionGroup(actionGroupId) }
 
-  override val actionGroup = resolveActionGroup(actionGroupId)
+  open fun register(component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 
-  private val toolbars = CopyOnWriteArrayList<FloatingToolbarComponent>()
-
-  override fun register(toolbar: FloatingToolbarComponent, parentDisposable: Disposable) {
-    toolbars.add(toolbar)
-    Disposer.register(parentDisposable, Disposable { toolbars.remove(toolbar) })
+  override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
+    register(component, parentDisposable)
   }
 
-  fun scheduleShowAllToolbarComponents() {
-    toolbars.forEach { it.scheduleShow() }
-  }
+  companion object {
+    private val LOG = Logger.getInstance("#com.intellij.openapi.editor.toolbar.floating")
 
-  fun scheduleHideAllToolbarComponents() {
-    toolbars.forEach { it.scheduleHide() }
+    fun resolveActionGroup(actionGroupId: String): ActionGroup {
+      val actionManager = ActionManager.getInstance()
+      val action = actionManager.getAction(actionGroupId)
+      if (action is ActionGroup) return action
+      LOG.warn("Cannot initialize action group using (${action::class.java})")
+      val defaultActionGroup = DefaultActionGroup()
+      actionManager.registerAction(actionGroupId, defaultActionGroup)
+      return defaultActionGroup
+    }
   }
 }

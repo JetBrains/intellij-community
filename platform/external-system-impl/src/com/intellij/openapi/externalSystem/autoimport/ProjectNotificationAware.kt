@@ -6,9 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar
-import com.intellij.openapi.editor.toolbar.floating.scheduleHideAllToolbarComponents
-import com.intellij.openapi.editor.toolbar.floating.scheduleShowAllToolbarComponents
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
@@ -43,11 +40,7 @@ class ProjectNotificationAware(private val project: Project) : Disposable {
   private fun setHideStatus(isHidden: Boolean) = runInEdt {
     this.isHidden = isHidden
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val toolbarProvider = EditorFloatingToolbar.getProvider("ExternalSystem.ProjectRefreshFloatingProvider")
-    when (isNotificationVisible()) {
-      true -> toolbarProvider.scheduleShowAllToolbarComponents(project)
-      else -> toolbarProvider.scheduleHideAllToolbarComponents(project)
-    }
+    ProjectRefreshFloatingProvider.updateToolbarComponents(project)
   }
 
   private fun revealNotification() = setHideStatus(false)
