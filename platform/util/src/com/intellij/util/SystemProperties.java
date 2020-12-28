@@ -68,6 +68,9 @@ public final class SystemProperties {
     return System.getProperty(key) != null;
   }
 
+  /** @deprecated moved to {@link com.intellij.openapi.editor.EditorCoreUtil} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean isTrueSmoothScrollingEnabled() {
     return getBooleanProperty("idea.true.smooth.scrolling", false);
   }

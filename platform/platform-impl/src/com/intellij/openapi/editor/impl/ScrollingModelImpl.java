@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
@@ -19,7 +20,6 @@ import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.components.Interpolable;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   public Rectangle getVisibleAreaOnScrollingFinished() {
     assertIsDispatchThread();
-    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+    if (EditorCoreUtil.isTrueSmoothScrollingEnabled()) {
       Rectangle viewRect = myEditor.getScrollPane().getViewport().getViewRect();
       return new Rectangle(getOffset(getHorizontalScrollBar()), getOffset(getVerticalScrollBar()), viewRect.width, viewRect.height);
     }

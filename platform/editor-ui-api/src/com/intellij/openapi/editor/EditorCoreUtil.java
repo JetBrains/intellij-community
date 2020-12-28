@@ -5,6 +5,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public final class EditorCoreUtil {
+  public static boolean isTrueSmoothScrollingEnabled() {
+    return Boolean.getBoolean("idea.true.smooth.scrolling");
+  }
+
   public static void indentLine(Project project, @NotNull Editor editor, int lineNumber, int indent, boolean shouldUseSmartTabs) {
     int caretOffset = editor.getCaretModel().getOffset();
     int newCaretOffset = indentLine(project, editor, lineNumber, indent, caretOffset, shouldUseSmartTabs);
