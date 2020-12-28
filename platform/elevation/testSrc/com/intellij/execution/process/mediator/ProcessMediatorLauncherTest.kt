@@ -2,6 +2,7 @@
 package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
+import com.intellij.execution.process.mediator.launcher.ProcessMediatorDaemonLauncher
 import com.intellij.execution.process.mediator.util.blockingGet
 import org.junit.jupiter.api.TestInfo
 

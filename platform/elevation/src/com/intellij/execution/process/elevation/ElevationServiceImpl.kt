@@ -6,12 +6,12 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ElevationService
 import com.intellij.execution.process.elevation.settings.ElevationSettings
-import com.intellij.execution.process.mediator.ProcessMediatorConnectionManager
 import com.intellij.execution.process.mediator.client.MediatedProcess
 import com.intellij.execution.process.mediator.client.MediatedProcessHandler
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
+import com.intellij.execution.process.mediator.launcher.ProcessMediatorConnectionManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
