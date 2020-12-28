@@ -2,6 +2,7 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
@@ -22,6 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Provides host-language specific ways to configure language injections to some host-specific places
+ * by adding comment, annotation (and so on) or configuring injection patterns in {@link org.intellij.plugins.intelliLang.InjectionsSettingsUI UI}
+ * and saving them in {@link Configuration}
+ *
+ * @see DefaultLanguageInjector
+ * @see Configuration
+ *
  * @author Gregory.Shrago
  */
 public abstract class LanguageInjectionSupport {
@@ -32,12 +40,28 @@ public abstract class LanguageInjectionSupport {
   public static final Key<LanguageInjectionSupport> INJECTOR_SUPPORT = Key.create("INJECTOR_SUPPORT");
   public static final Key<LanguageInjectionSupport> SETTINGS_EDITOR = Key.create("SETTINGS_EDITOR");
 
+  /**
+   * User visible Support ID name, usually is equal to the host language
+   */
   public abstract @NlsSafe @NotNull String getId();
 
+  /**
+   * @return classes which have methods, that returns {@link com.intellij.patterns.ElementPattern}.
+   * These methods will be used by reflection to build injection places patterns which will be stored in
+   * <a href="https://www.jetbrains.com/help/idea/language-injection-settings-generic-javascript.html">settings</a>
+   */
   public abstract Class<?> @NotNull [] getPatternClasses();
 
+  /**
+   * @return {@code true} if current LanguageInjectionSupport could handle the given {@code host}.
+   * Usually it should be done by checking that the given {@code host} belongs to the current host-language
+   */
   public abstract boolean isApplicableTo(PsiLanguageInjectionHost host);
 
+  /**
+   * @return {@code true} if {@link DefaultLanguageInjector} should be used to perform the injection configured for this support,
+   * or {@code false} if there is another {@link MultiHostInjector} implementation that does it for current LanguageInjectionSupport
+   */
   public abstract boolean useDefaultInjector(PsiLanguageInjectionHost host);
 
   public abstract boolean useDefaultCommentInjector();
