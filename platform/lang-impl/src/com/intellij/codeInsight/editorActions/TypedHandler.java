@@ -49,6 +49,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -447,10 +448,11 @@ public final class TypedHandler extends TypedActionHandlerBase {
     return true;
   }
 
-  private static boolean handleQuote(@NotNull Editor editor,
-                                     Project project,
-                                     char quote,
-                                     @NotNull PsiFile file) {
+  @ApiStatus.Internal
+  public static boolean handleQuote(@NotNull Editor editor,
+                                    Project project,
+                                    char quote,
+                                    @NotNull PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return false;
     final QuoteHandler quoteHandler = getQuoteHandler(file, editor);
     if (quoteHandler == null) return false;
