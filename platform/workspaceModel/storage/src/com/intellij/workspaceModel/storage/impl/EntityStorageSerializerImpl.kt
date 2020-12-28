@@ -339,6 +339,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
     catch (e: Exception) {
       output.clear()
+      LOG.error("Exception at project serialization", e)
       SerializationResult.Fail(e.message)
     }
     finally {
@@ -460,6 +461,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
         builder
       }
       catch (e: Exception) {
+        LOG.error("Exception at project deserialization", e)
         null
       }
     }
