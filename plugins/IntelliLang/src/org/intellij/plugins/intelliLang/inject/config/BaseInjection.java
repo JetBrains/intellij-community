@@ -71,8 +71,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   private String myIgnorePattern = "";
   private Pattern myCompiledIgnorePattern;
 
-  private boolean mySingleFile;
-
   public BaseInjection(@NotNull String id) {
     mySupportId = id;
   }
@@ -240,7 +238,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     if (!myPrefix.equals(that.myPrefix)) return false;
     if (!mySuffix.equals(that.mySuffix)) return false;
     if (!myValuePattern.equals(that.myValuePattern)) return false;
-    if (mySingleFile != that.mySingleFile) return false;
     return true;
   }
 
@@ -289,7 +286,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
     setValuePattern(other.getValuePattern());
     setIgnorePattern(other.getIgnorePattern());
-    mySingleFile = other.mySingleFile;
 
     myPlaces = other.getInjectionPlaces().clone();
     return this;
@@ -304,7 +300,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     mySuffix = StringUtil.notNullize(element.getChildText("suffix"));
     setValuePattern(element.getChildText("value-pattern"));
     setIgnorePattern(element.getChildText("ignore-pattern"));
-    mySingleFile = element.getChild("single-file") != null;
     readExternalImpl(element);
     final List<Element> placeElements = element.getChildren("place");
     myPlaces = InjectionPlace.ARRAY_FACTORY.create(placeElements.size());
@@ -346,9 +341,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
     if (StringUtil.isNotEmpty(myIgnorePattern)) {
       e.addContent(new Element("ignore-pattern").setText(myIgnorePattern));
-    }
-    if (mySingleFile) {
-      e.addContent(new Element("single-file"));
     }
     Arrays.sort(myPlaces, (o1, o2) -> Comparing.compare(o1.getText(), o2.getText()));
     for (InjectionPlace place : myPlaces) {
@@ -406,12 +398,21 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
   }
 
+  /**
+   * @deprecated always true
+   */
+  @Deprecated
   public boolean isSingleFile() {
-    return mySingleFile;
+    return true;
   }
 
+
+  /**
+   * @deprecated does nothing
+   */
+  @Deprecated
   public void setSingleFile(final boolean singleFile) {
-    mySingleFile = singleFile;
+
   }
 
   /**
