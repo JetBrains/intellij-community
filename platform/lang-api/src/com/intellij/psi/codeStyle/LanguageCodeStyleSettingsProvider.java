@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
@@ -257,7 +256,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
-    private final Set<String> myCollectedFields = new THashSet<>();
+    private final Set<String> myCollectedFields = new HashSet<>();
     private SettingsType myCurrSettingsType;
 
     public Set<String> collectFields() {

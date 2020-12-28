@@ -17,16 +17,14 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.util.SmartList
-import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
-import kotlin.collections.ArrayList
 
 private val RUN_EXTENSIONS = Key.create<List<Element>>("run.extension.elements")
 private const val EXT_ID_ATTR = "ID"
 private const val EXTENSION_ROOT_ATTR = "EXTENSION"
 
-open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : RunConfigurationExtensionBase<U>>(val extensionPoint: ExtensionPointName<T>) {
+open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : RunConfigurationExtensionBase<U>>(@PublishedApi internal val extensionPoint: ExtensionPointName<T>) {
   protected open val idAttrName = EXT_ID_ATTR
 
   protected open val extensionRootAttr = EXTENSION_ROOT_ATTR
@@ -37,7 +35,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
       return
     }
 
-    val extensions = THashMap<String, T>()
+    val extensions = HashMap<String, T>()
     processApplicableExtensions(configuration) {
       extensions.put(it.serializationId, it)
     }
