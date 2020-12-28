@@ -3,114 +3,82 @@ package com.intellij.credentialStore
 
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.ide.IdeEventQueue
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.IoTestUtil.assumeLinux
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AssumptionViolatedException
 import org.junit.Test
 import java.io.Closeable
-import java.util.*
-
-private val TEST_SERVICE_NAME = generateServiceName("Test", "test")
-
-inline fun macTest(task: () -> Unit) {
-  if (SystemInfo.isMacIntel64 && !UsefulTestCase.IS_UNDER_TEAMCITY) {
-    task()
-  }
-}
 
 internal class CredentialStoreTest {
-  @Test
-  fun linux() {
-    if (!SystemInfo.isLinux || UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return
-    }
+  private val TEST_SERVICE_NAME = generateServiceName("Test", "test")
 
-    val store = SecretCredentialStore.create("com.intellij.test")
-    if (store == null) throw AssumptionViolatedException("No secret service")
+  @Test fun linux() {
+    assumeLocalLinux()
+    val store = SecretCredentialStore.create("com.intellij.test") ?: throw AssumptionViolatedException("No secret service")
     doTest(store)
   }
 
-  @Test
-  fun linuxKWallet() {
-    if (!SystemInfo.isLinux || UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return
-    }
-    val kWallet = KWalletCredentialStore.create()
-    if (kWallet == null) {
-      throw AssumptionViolatedException("No KWallet")
-    }
-
+  @Test fun linuxKWallet() {
+    assumeLocalLinux()
+    val kWallet = KWalletCredentialStore.create() ?: throw AssumptionViolatedException("No KWallet")
     doTest(kWallet)
   }
 
-  @Test
-  fun mac() {
-    macTest { doTest(KeyChainCredentialStore()) }
+  @Test fun mac() {
+    assumeLocalMac()
+    doTest(KeyChainCredentialStore())
   }
 
-  @Test
-  fun keePass() {
+  @Test fun keePass() {
     doTest(InMemoryCredentialStore())
   }
 
-  @Test
-  fun `mac - testEmptyAccountName`() {
-    macTest { testEmptyAccountName(KeyChainCredentialStore()) }
+  @Test fun `mac - testEmptyAccountName`() {
+    assumeLocalMac()
+    testEmptyAccountName(KeyChainCredentialStore())
   }
 
-  @Test
-  fun `mac - changedAccountName`() {
-    macTest { testChangedAccountName(KeyChainCredentialStore()) }
+  @Test fun `mac - changedAccountName`() {
+    assumeLocalMac()
+    testChangedAccountName(KeyChainCredentialStore())
   }
 
-  @Test
-  fun `linux - testEmptyAccountName`() {
-    if (isLinuxSupported()) {
-      val store = SecretCredentialStore.create("com.intellij.test")
-      if (store != null) testEmptyAccountName(store)
-    }
+  @Test fun `linux - testEmptyAccountName`() {
+    assumeLinux()
+    val store = SecretCredentialStore.create("com.intellij.test") ?: throw AssumptionViolatedException("No store")
+    testEmptyAccountName(store)
   }
 
-  private fun isLinuxSupported() = SystemInfo.isLinux && !UsefulTestCase.IS_UNDER_TEAMCITY
-
-  @Test
-  fun `KeePass - testEmptyAccountName`() {
+  @Test fun `KeePass - testEmptyAccountName`() {
     testEmptyAccountName(InMemoryCredentialStore())
   }
 
-  @Test
-  fun `KeePass - testEmptyStrAccountName`() {
+  @Test fun `KeePass - testEmptyStrAccountName`() {
     testEmptyStrAccountName(InMemoryCredentialStore())
   }
 
-  @Test
-  fun `KeePass - changedAccountName`() {
+  @Test fun `KeePass - changedAccountName`() {
     testChangedAccountName(InMemoryCredentialStore())
   }
 
-  @Test
-  fun `KeePass - memoryOnlyPassword`() {
+  @Test fun `KeePass - memoryOnlyPassword`() {
     memoryOnlyPassword(InMemoryCredentialStore())
   }
 
-  @Test
-  fun `Keychain - memoryOnlyPassword`() {
-    macTest { memoryOnlyPassword(KeyChainCredentialStore()) }
+  @Test fun `Keychain - memoryOnlyPassword`() {
+    assumeLocalMac()
+    memoryOnlyPassword(KeyChainCredentialStore())
   }
 
-  @Test
-  fun `linux - memoryOnlyPassword`() {
-    if (isLinuxSupported()) {
-      val store = SecretCredentialStore.create("com.intellij.test")
-      if (store != null) memoryOnlyPassword(store)
-    }
+  @Test fun `linux - memoryOnlyPassword`() {
+    assumeLocalLinux()
+    val store = SecretCredentialStore.create("com.intellij.test") ?: throw AssumptionViolatedException("No store")
+    memoryOnlyPassword(store)
   }
 
-  @Test
-  fun `native wrapper - pending removal`() {
+  @Test fun `native wrapper - pending removal`() {
     val store = wrappedInMemory()
     val attributes = CredentialAttributes("attr")
     val c1 = Credentials("u1", "p1")
@@ -123,8 +91,7 @@ internal class CredentialStoreTest {
     }
   }
 
-  @Test
-  fun `native wrapper - removal attrs`() {
+  @Test fun `native wrapper - removal attrs`() {
     val store = wrappedInMemory()
     val attributes = CredentialAttributes("attr")
     val c1 = Credentials("u1", "p1")
@@ -138,9 +105,7 @@ internal class CredentialStoreTest {
     }
   }
 
-
-  @Test
-  fun `native wrapper - multiple`() {
+  @Test fun `native wrapper - multiple`() {
     val store = wrappedInMemory()
     val attributes = CredentialAttributes("attr")
     val c1 = Credentials("u1", "p1")
@@ -153,7 +118,6 @@ internal class CredentialStoreTest {
       assertThat(store.get(attributes)).isEqualTo(c2)
     }
   }
-
 
   private fun memoryOnlyPassword(store: CredentialStore) {
     val pass = randomString()
@@ -176,7 +140,7 @@ internal class CredentialStoreTest {
     store.set(CredentialAttributes(TEST_SERVICE_NAME, "test"), null)
     assertThat(store.get(CredentialAttributes(TEST_SERVICE_NAME, "test"))).isNull()
 
-    val unicodePassword = "Gr\u00FCnwald"
+    @Suppress("SpellCheckingInspection") val unicodePassword = "Grünwald"
     store.setPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"), unicodePassword)
     assertThat(store.getPassword(CredentialAttributes(TEST_SERVICE_NAME, "test"))).isEqualTo(unicodePassword)
 
@@ -248,5 +212,3 @@ internal class CredentialStoreTest {
     }
   }
 }
-
-internal fun randomString() = UUID.randomUUID().toString()
