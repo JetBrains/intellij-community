@@ -24,10 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -181,6 +178,62 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
       }
     }
   }
+
+  @Override
+  public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) return;//javac 9 has no such bug
+    if (ref.getParent() instanceof PsiTypeElement) {
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+      if (psiClass == null) return;
+      if (PsiTreeUtil.isAncestor(psiClass.getExtendsList(), ref, false) ||
+          PsiTreeUtil.isAncestor(psiClass.getImplementsList(), ref, false)) {
+        final PsiElement qualifier = ref.getQualifier();
+        if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() == psiClass) {
+          final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(ref, PsiJavaCodeReferenceElement.class);
+          if (referenceElement == null) return;
+          final PsiElement typeClass = referenceElement.resolve();
+          if (!(typeClass instanceof PsiClass)) return;
+          final PsiElement resolve = ref.resolve();
+          final PsiClass containingClass = resolve != null ? ((PsiClass)resolve).getContainingClass() : null;
+          if (containingClass == null) return;
+          PsiClass hiddenClass;
+          if (psiClass.isInheritor(containingClass, true)) {
+            hiddenClass = (PsiClass)resolve;
+          }
+          else {
+            hiddenClass = unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance((PsiClass)typeClass, ((PsiClass)resolve).getExtendsList());
+            if (hiddenClass == null) {
+              hiddenClass = unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance((PsiClass)typeClass, ((PsiClass)resolve).getImplementsList());
+            }
+          }
+          if (hiddenClass != null) {
+            myHolder.registerProblem(ref, JavaErrorBundle.message("text.class.is.not.accessible", hiddenClass.getName()));
+          }
+        }
+      }
+    }
+  }
+
+  private static PsiClass unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(@NotNull PsiClass containingClass,
+                                                                                               @Nullable PsiReferenceList referenceList) {
+    if (referenceList != null) {
+      for (PsiJavaCodeReferenceElement referenceElement : referenceList.getReferenceElements()) {
+        if (!referenceElement.isQualified()) {
+          final PsiElement superClass = referenceElement.resolve();
+          if (superClass instanceof PsiClass) {
+            final PsiClass superContainingClass = ((PsiClass)superClass).getContainingClass();
+            if (superContainingClass != null &&
+                InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true) &&
+                !PsiTreeUtil.isAncestor(superContainingClass, containingClass, true)) {
+              return (PsiClass)superClass;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
 
   private static class ReplaceAssignmentOperatorWithAssignmentFix implements LocalQuickFix {
     private final String myOperationSign;

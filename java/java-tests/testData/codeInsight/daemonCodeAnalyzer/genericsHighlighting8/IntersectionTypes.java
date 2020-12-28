@@ -160,7 +160,7 @@ Boolean.class, Boolean.TYPE /*,String[].class */ /*,BigDecimal.class*/);
 ///////////////////////
 class Axx {
   <T extends Runnable> T a() {
-    String s = a();
+    String s <warning descr="Though assignment is formal correct, it could lead to ClassCastException at runtime. Expected: 'String', actual: 'Runnable & String'">=</warning> a();
     s.hashCode();
     return null;
   }

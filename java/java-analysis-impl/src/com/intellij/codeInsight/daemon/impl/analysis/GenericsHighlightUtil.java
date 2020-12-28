@@ -1355,61 +1355,6 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkCannotPassInner(@NotNull PsiJavaCodeReferenceElement ref) {
-    if (ref.getParent() instanceof PsiTypeElement) {
-      final PsiClass psiClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-      if (psiClass == null) return null;
-      if (PsiTreeUtil.isAncestor(psiClass.getExtendsList(), ref, false) ||
-          PsiTreeUtil.isAncestor(psiClass.getImplementsList(), ref, false)) {
-        final PsiElement qualifier = ref.getQualifier();
-        if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() == psiClass) {
-          final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(ref, PsiJavaCodeReferenceElement.class);
-          if (referenceElement == null) return null;
-          final PsiElement typeClass = referenceElement.resolve();
-          if (!(typeClass instanceof PsiClass)) return null;
-          final PsiElement resolve = ref.resolve();
-          final PsiClass containingClass = resolve != null ? ((PsiClass)resolve).getContainingClass() : null;
-          if (containingClass == null) return null;
-          PsiClass hiddenClass;
-          if (psiClass.isInheritor(containingClass, true)) {
-            hiddenClass = (PsiClass)resolve;
-          }
-          else {
-            hiddenClass = unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance((PsiClass)typeClass, ((PsiClass)resolve).getExtendsList());
-            if (hiddenClass == null) {
-              hiddenClass = unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance((PsiClass)typeClass, ((PsiClass)resolve).getImplementsList());
-            }
-          }
-          if (hiddenClass != null) {
-            final String message = JavaErrorBundle.message("text.class.is.not.accessible", hiddenClass.getName());
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).description(message).range(ref).create();
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static PsiClass unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(@NotNull PsiClass containingClass,
-                                                                                               @Nullable PsiReferenceList referenceList) {
-    if (referenceList != null) {
-      for (PsiJavaCodeReferenceElement referenceElement : referenceList.getReferenceElements()) {
-        if (!referenceElement.isQualified()) {
-          final PsiElement superClass = referenceElement.resolve();
-          if (superClass instanceof PsiClass) {
-            final PsiClass superContainingClass = ((PsiClass)superClass).getContainingClass();
-            if (superContainingClass != null &&
-                InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true) &&
-                !PsiTreeUtil.isAncestor(superContainingClass, containingClass, true)) {
-              return (PsiClass)superClass;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   private static void registerVariableParameterizedTypeFixes(@Nullable HighlightInfo highlightInfo,
                                                              @NotNull PsiVariable variable,
                                                              @NotNull PsiReferenceParameterList parameterList,
