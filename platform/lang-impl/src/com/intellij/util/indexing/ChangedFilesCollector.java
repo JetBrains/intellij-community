@@ -12,8 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -33,12 +31,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
@@ -95,16 +91,16 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (VfsEventsMerger.LOG != null) {
       VfsEventsMerger.LOG.info("File " + file + " is scheduled for update");
     }
+    int fileId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
     if (!(file instanceof DeletedVirtualFileStub)) {
       IndexableFileSet setForFile = myManager.getIndexableSetForFile(file);
       if (setForFile == null) {
         if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.debug("index will not be updated for file = " + file + ", id = " + FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+          checkNotIndexedByContentBasedIndexes(file, fileId);
         }
         return;
       }
     }
-    final int fileId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
     final VirtualFile previousVirtualFile = myFilesToUpdate.put(fileId, file);
 
     if (previousVirtualFile instanceof DeletedVirtualFileStub &&
@@ -304,6 +300,30 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   private void processFilesInReadActionWithYieldingToWriteAction() {
     while (getEventMerger().hasChanges()) {
       ReadAction.nonBlocking(() -> processFilesToUpdateInReadAction()).executeSynchronously();
+    }
+  }
+
+  private void checkNotIndexedByContentBasedIndexes(VirtualFile file, int fileId) {
+    List<ID<?, ?>> indexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
+    RegisteredIndexes registeredIndexes = myManager.getRegisteredIndexes();
+    List<ID<?, ?>> contentDependentIndexes;
+    if (registeredIndexes == null) {
+      Set<? extends ID<?, ?>> allContentDependentIndexes =
+        FileBasedIndexExtension
+          .EXTENSION_POINT_NAME
+          .extensions()
+          .filter(ex -> ex.dependsOnFileContent())
+          .map(ex -> ex.getName())
+          .collect(Collectors.toSet());
+      contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> !allContentDependentIndexes.contains(id));
+    }
+    else {
+      contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> {
+        return registeredIndexes.isContentDependentIndex(id);
+      });
+    }
+    if (!contentDependentIndexes.isEmpty()) {
+      LOG.error("indexes " + contentDependentIndexes + " will not be updated for file = " + file + ", id = " + fileId);
     }
   }
 
