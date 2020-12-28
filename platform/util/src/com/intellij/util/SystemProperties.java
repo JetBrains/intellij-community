@@ -20,21 +20,14 @@ public final class SystemProperties {
     return System.getProperty("user.name");
   }
 
-  /** @deprecated please use {@link System#lineSeparator()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static String getLineSeparator() {
-    return System.lineSeparator();
-  }
-
-  public static String getJavaHome() {
+  public static @NotNull String getJavaHome() {
     return System.getProperty("java.home");
   }
 
   /**
-   * Returns the value of given property as integer, or {@code defaultValue} if the property is not specified or malformed.
+   * Returns a value of the given property as an integer, or {@code defaultValue} if the property is not specified or malformed.
    */
-  public static int getIntProperty(@NotNull final String key, final int defaultValue) {
+  public static int getIntProperty(@NotNull String key, int defaultValue) {
     String value = System.getProperty(key);
     if (value != null) {
       try { return Integer.parseInt(value); }
@@ -43,6 +36,9 @@ public final class SystemProperties {
     return defaultValue;
   }
 
+  /**
+   * Returns a value of the given property as a float, or {@code defaultValue} if the property is not specified or malformed.
+   */
   public static float getFloatProperty(@NotNull String key, float defaultValue) {
     String value = System.getProperty(key);
     if (value != null) {
@@ -53,7 +49,7 @@ public final class SystemProperties {
   }
 
   /**
-   * Returns the value of given property as a boolean, or {@code defaultValue} if the property is not specified or malformed.
+   * Returns a value of the given property as a boolean, or {@code defaultValue} if the property is not specified or malformed.
    */
   public static boolean getBooleanProperty(@NotNull String key, boolean defaultValue) {
     String value = System.getProperty(key);
@@ -68,10 +64,19 @@ public final class SystemProperties {
     return System.getProperty(key) != null;
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated please use {@link System#lineSeparator()} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static String getLineSeparator() {
+    return System.lineSeparator();
+  }
+
   /** @deprecated moved to {@link com.intellij.openapi.editor.EditorCoreUtil} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean isTrueSmoothScrollingEnabled() {
     return getBooleanProperty("idea.true.smooth.scrolling", false);
   }
+  //</editor-fold>
 }
