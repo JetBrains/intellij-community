@@ -78,7 +78,7 @@ public class NlsMessages {
 
   /**
    * @return a collector that collects a stream into the localized string that joins the stream elements using disjunction formatting.
-   * E.g. Stream.of("X", "Y", "Z").collect(joiningAnd()) will produce "X, Y, and Z" in English locale.
+   * E.g. Stream.of("X", "Y", "Z").collect(joiningOr()) will produce "X, Y, or Z" in English locale.
    */
   public static <T> @NotNull Collector<T, ?, @Nls String> joiningOr() {
     return Collectors.collectingAndThen(Collectors.toList(), NlsMessages::formatOrList);
