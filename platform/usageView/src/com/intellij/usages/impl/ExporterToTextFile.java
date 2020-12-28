@@ -5,7 +5,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -25,7 +24,7 @@ public class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   @Override
   public String getReportText() {
     StringBuilder buf = new StringBuilder();
-    appendNode(buf, myUsageView.getModelRoot(), SystemProperties.getLineSeparator(), "");
+    appendNode(buf, myUsageView.getModelRoot(), System.lineSeparator(), "");
     return buf.toString();
   }
 

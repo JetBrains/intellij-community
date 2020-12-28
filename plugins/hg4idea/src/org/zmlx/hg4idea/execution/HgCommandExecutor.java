@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +142,7 @@ public class HgCommandExecutor {
                                         boolean ignoreDefaultOptions,
                                         @NotNull HgLineProcessListener listener) {
     boolean success = executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions, listener);
-    List<String> errors = StringUtil.split(listener.getErrorOutput().toString(), SystemProperties.getLineSeparator());
+    List<String> errors = StringUtil.split(listener.getErrorOutput().toString(), System.lineSeparator());
     if (success && HgErrorUtil.isUnknownEncodingError(errors)) {
       setCharset(StandardCharsets.UTF_8);
       return executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions, listener);

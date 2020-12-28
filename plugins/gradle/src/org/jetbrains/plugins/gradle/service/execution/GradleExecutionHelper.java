@@ -185,7 +185,7 @@ public class GradleExecutionHelper {
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation), "GradleExecutionHelper cleanup"));
 
-            StringJoiner lines = new StringJoiner(SystemProperties.getLineSeparator());
+            StringJoiner lines = new StringJoiner(System.lineSeparator());
             lines.add("");
             lines.add("gradle.projectsEvaluated { gr ->");
             lines.add("  def wrapper = gr.rootProject.tasks[\"wrapper\"]");

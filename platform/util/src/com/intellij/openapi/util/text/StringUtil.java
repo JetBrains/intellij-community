@@ -93,7 +93,7 @@ public class StringUtil extends StringUtilRt {
 
     private void handleTag(@NotNull HTML.Tag tag) {
       if (tag.breaksFlow() && myBuffer.length() > 0) {
-        myBuffer.append(SystemProperties.getLineSeparator());
+        myBuffer.append(System.lineSeparator());
       }
     }
 

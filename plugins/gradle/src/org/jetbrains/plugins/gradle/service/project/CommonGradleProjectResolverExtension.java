@@ -31,7 +31,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
@@ -780,7 +779,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       lines.addAll(extension.initializationCode(dispatchPort, debugOptions));
     }
 
-    final String script = join(lines, SystemProperties.getLineSeparator());
+    final String script = join(lines, System.lineSeparator());
     initScriptConsumer.consume(script);
   }
 

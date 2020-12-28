@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +129,7 @@ public final class VMOptions {
           content = b.toString();
         }
         else if (!StringUtil.isEmptyOrSpaces(value)) {
-          content = StringUtil.trimTrailing(content) + SystemProperties.getLineSeparator() + value;
+          content = StringUtil.trimTrailing(content) + System.lineSeparator() + value;
         }
       }
       else {

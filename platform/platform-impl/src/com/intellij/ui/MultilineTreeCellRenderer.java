@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -518,7 +517,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
         StringBuilder sb = new StringBuilder();
         for (String aLine : myLines) {
           sb.append(aLine);
-          sb.append(SystemProperties.getLineSeparator());
+          sb.append(System.lineSeparator());
         }
         if (sb.length() > 0) name = sb.toString();
       }

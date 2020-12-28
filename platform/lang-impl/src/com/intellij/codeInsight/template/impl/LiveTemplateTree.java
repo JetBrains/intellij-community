@@ -15,7 +15,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +87,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
       new StringSelection(StringUtil.join(templates,
                                           template -> JDOMUtil.writeElement(
                                             TemplateSettings.serializeTemplate(template, templateSettings.getDefaultTemplate(template), TemplateContext.getIdToType())),
-                                          SystemProperties.getLineSeparator())));
+                                          System.lineSeparator())));
 
   }
 

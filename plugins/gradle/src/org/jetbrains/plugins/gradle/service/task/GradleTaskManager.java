@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.BuildLauncher;
@@ -200,7 +199,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     if (!initScripts.isEmpty()) {
       try {
         File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(
-          StringUtil.join(initScripts, SystemProperties.getLineSeparator()), "ijresolvers");
+          StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
         effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
       }
       catch (IOException e) {

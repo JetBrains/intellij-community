@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -177,7 +176,7 @@ public class CommandExecutor {
     List<String> targetsPaths = myCommand.getTargetsPaths();
 
     if (!ContainerUtil.isEmpty(targetsPaths)) {
-      String targetsValue = StringUtil.join(targetsPaths, SystemProperties.getLineSeparator());
+      String targetsValue = StringUtil.join(targetsPaths, System.lineSeparator());
 
       if (myCommandLine.getCommandLineString().length() + targetsValue.length() > VcsFileUtil.FILE_PATH_LIMIT) {
         ensureCommandFile("command-targets", targetsValue, "--targets");

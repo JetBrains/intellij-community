@@ -6,7 +6,6 @@ import com.intellij.conversion.ComponentManagerSettings;
 import com.intellij.conversion.WorkspaceSettings;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -78,7 +77,7 @@ class SettingsXmlFile implements ComponentManagerSettings, WorkspaceSettings {
 
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      JDOMUtil.writeDocument(getDocument(), writer, SystemProperties.getLineSeparator());
+      JDOMUtil.writeDocument(getDocument(), writer, System.lineSeparator());
     }
   }
 

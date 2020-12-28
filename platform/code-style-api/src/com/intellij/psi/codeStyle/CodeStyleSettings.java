@@ -21,7 +21,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.PresentableEnum;
@@ -209,7 +208,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   private final Map<FileType,IndentOptions> myAdditionalIndentOptions = new LinkedHashMap<>();
 
-  private static final String ourSystemLineSeparator = SystemProperties.getLineSeparator();
+  private static final String ourSystemLineSeparator = System.lineSeparator();
 
   /**
    * Line separator. It can be null if choosen line separator is "System-dependent"!

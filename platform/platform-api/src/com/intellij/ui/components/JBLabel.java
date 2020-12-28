@@ -8,7 +8,6 @@ import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
@@ -189,7 +188,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   private void checkMultiline() {
-    myMultiline = StringUtil.removeHtmlTags(getText()).contains(SystemProperties.getLineSeparator());
+    myMultiline = StringUtil.removeHtmlTags(getText()).contains(System.lineSeparator());
   }
 
   @Override
