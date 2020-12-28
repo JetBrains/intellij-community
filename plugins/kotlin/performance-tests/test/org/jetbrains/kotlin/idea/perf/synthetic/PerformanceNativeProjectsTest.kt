@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.idea.perf.live
+package org.jetbrains.kotlin.idea.perf.synthetic
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -23,9 +23,10 @@ import org.jetbrains.kotlin.idea.configuration.readGradleProperty
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.live.PerformanceNativeProjectsTest.TestProject.*
-import org.jetbrains.kotlin.idea.perf.live.PerformanceNativeProjectsTest.TestTarget.*
+import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestProject.*
+import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestTarget.*
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.WARM_UP
+import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
 import org.jetbrains.kotlin.idea.perf.util.TeamCity.suite
 import org.jetbrains.kotlin.idea.perf.util.logMessage
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.library.KOTLIN_STDLIB_NAME
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
 
 class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
@@ -173,7 +175,7 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
         enableCommonizer: Boolean,
         note: String = ""
     ): Project {
-        val nativeTestsRoot = File(TEST_DATA_PATH)
+        val nativeTestsRoot = File(KotlinRoot.DIR, TEST_DATA_PATH)
 
         val commonRoot = nativeTestsRoot.resolve("_common")
         val targetRoot = nativeTestsRoot.resolve("_${testTarget.alias}")
