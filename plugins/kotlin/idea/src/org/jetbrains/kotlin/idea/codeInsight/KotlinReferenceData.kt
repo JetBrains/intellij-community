@@ -63,6 +63,21 @@ data class KotlinReferenceData(
     }
 
     companion object {
+        val dataFlavor: DataFlavor? by lazy {
+            try {
+                val dataClass = KotlinReferenceData::class.java
+                DataFlavor(
+                    DataFlavor.javaJVMLocalObjectMimeType + ";class=" + dataClass.name,
+                    "KotlinReferenceData",
+                    dataClass.classLoader
+                )
+            } catch (e: NoClassDefFoundError) {
+                null
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
+
         fun isQualifiable(refElement: KtElement, descriptor: DeclarationDescriptor): Boolean {
             refElement.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference }?.let {
                 val receiverExpression = it.receiverExpression
