@@ -2,10 +2,7 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.idea.maven.model.MavenArtifact
-import org.jetbrains.idea.maven.model.MavenBuild
-import org.jetbrains.idea.maven.model.MavenModel
-import org.jetbrains.idea.maven.model.MavenResource
+import org.jetbrains.idea.maven.model.*
 import java.io.File
 
 class MavenBuildPathsChange(private val transformer: (String) -> String) {
@@ -13,6 +10,7 @@ class MavenBuildPathsChange(private val transformer: (String) -> String) {
 
   private fun MavenModel.transformPaths() {
     dependencies = dependencies.map { it.transformPaths() }
+    dependencyTree = dependencyTree.map { it.transformPaths(null) }
     build.transformPaths()
   }
 
@@ -38,4 +36,21 @@ class MavenBuildPathsChange(private val transformer: (String) -> String) {
     File(transformer(file.path)),
     null
   )
+
+  private fun MavenArtifactNode.transformPaths(parent: MavenArtifactNode?): MavenArtifactNode {
+    val result = MavenArtifactNode(
+      parent,
+      artifact.transformPaths(),
+      state,
+      relatedArtifact?.transformPaths(),
+      originalScope,
+      premanagedVersion,
+      premanagedScope
+    )
+    result.dependencies = dependencies.map { it.transformPaths(result) }
+    return result
+  }
 }
+
+
+
