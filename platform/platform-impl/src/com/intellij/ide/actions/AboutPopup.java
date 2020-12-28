@@ -362,7 +362,7 @@ public final class AboutPopup {
 
       Font labelFont = JBFont.label();
       if (SystemInfo.isWindows) {
-        labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
+        labelFont = JBUI.Fonts.create("Segoe UI", 14);
       }
 
       int startFontSize = 14;
@@ -403,7 +403,7 @@ public final class AboutPopup {
         g2.setFont(JBUI.Fonts.miniFont());
       }
       else {
-        g2.setFont(JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 12));
+        g2.setFont(JBUI.Fonts.create("Segoe UI", 12));
       }
 
       g2.setColor(createColor(appInfo.getAboutForeground()));

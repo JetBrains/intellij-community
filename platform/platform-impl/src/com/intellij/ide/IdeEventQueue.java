@@ -39,7 +39,10 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.EDT;
@@ -212,7 +215,7 @@ public final class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
-    if (SystemInfo.isWin7OrNewer && SystemProperties.getBooleanProperty("keymap.windows.up.to.maximize.dialogs", true)) {
+    if (SystemInfoRt.isWindows && Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
       // 'Windows+Up' shortcut would maximize active dialog under Win 7+
       addDispatcher(new WindowsUpMaximizer(), null);
     }
@@ -967,7 +970,6 @@ public final class IdeEventQueue extends EventQueue {
   private void defaultDispatchEvent(@NotNull AWTEvent e) {
     try {
       maybeReady();
-      fixStickyAlt(e);
       KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
       boolean consumed = ke == null || ke.isConsumed();
       super.dispatchEvent(e);
@@ -995,16 +997,6 @@ public final class IdeEventQueue extends EventQueue {
     }
     catch (Throwable t) {
       processException(t);
-    }
-  }
-
-  private static void fixStickyAlt(@NotNull AWTEvent e) {
-    if (SystemInfo.isWinXpOrNewer &&
-        !SystemInfo.isWinVistaOrNewer &&
-        e instanceof KeyEvent &&
-        ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT &&
-        !Registry.is("actionSystem.win.suppressAlt.new")) {
-      ((KeyEvent)e).consume();  // IDEA-17359
     }
   }
 

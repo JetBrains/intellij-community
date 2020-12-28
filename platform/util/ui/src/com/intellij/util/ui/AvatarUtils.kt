@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.Avatars.gradientInt
@@ -16,7 +15,6 @@ import kotlin.math.abs
 import kotlin.math.min
 
 object AvatarUtils {
-
   fun createRoundRectIcon(image: BufferedImage, targetSize: Int): ImageIcon {
     val size: Int = min(image.width, image.height)
     val baseArcSize = 6.0 * size / targetSize
@@ -39,7 +37,7 @@ object AvatarUtils {
                              size.toFloat(), size.toFloat(), color1)
     g2.fillRect(0, 0, size, size)
     g2.paint = JBColor.WHITE
-    g2.font = JBFont.create(Font(if (SystemInfo.isWinVistaOrNewer) "Segoe UI" else "Tahoma", Font.PLAIN, (size / 2.2).toInt()))
+    g2.font = JBFont.create(Font("Segoe UI", Font.PLAIN, (size / 2.2).toInt()))
     UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, size), shortName)
     g2.dispose()
 
@@ -73,7 +71,7 @@ private object ColorPalette {
   )
 }
 
-object Avatars {
+internal object Avatars {
   // "John Smith" -> "JS"
   fun initials(text: String): String {
     val words = text

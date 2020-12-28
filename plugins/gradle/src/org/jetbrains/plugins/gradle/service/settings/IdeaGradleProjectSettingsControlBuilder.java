@@ -52,7 +52,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -939,7 +938,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @NotNull
     private static SimpleTextAttributes getTextAttributes(boolean selected) {
-      return selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))
+      return selected && !(SystemInfoRt.isWindows && UIManager.getLookAndFeel().getName().contains("Windows"))
              ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES
              : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
     }

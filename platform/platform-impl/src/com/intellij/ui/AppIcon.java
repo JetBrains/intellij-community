@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -59,7 +58,7 @@ public abstract class AppIcon {
       else if (SystemInfoRt.isXWindow) {
         ourIcon = new XAppIcon();
       }
-      else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded()) {
+      else if (SystemInfoRt.isWindows && JnaLoader.isLoaded()) {
         ourIcon = new Win7AppIcon();
       }
       else {

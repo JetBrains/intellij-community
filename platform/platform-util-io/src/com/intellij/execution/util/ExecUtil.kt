@@ -150,16 +150,13 @@ object ExecUtil {
     command += commandLine.parametersList.list
 
     val sudoCommandLine = when {
-      SystemInfo.isWinVistaOrNewer -> {
+      SystemInfoRt.isWindows -> {
         val launcherExe = PathManager.findBinFileWithException("launcher.exe")
         GeneralCommandLine(listOf(launcherExe.toString(), commandLine.exePath) + commandLine.parametersList.parameters)
       }
-      SystemInfo.isWindows -> {
-        throw UnsupportedOperationException("Executing as Administrator is only available in Windows Vista or newer")
-      }
-      SystemInfo.isMac -> {
+      SystemInfoRt.isMac -> {
         val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
-        val messageArg = if (SystemInfoRt.isMac) " with prompt \"${StringUtil.escapeQuotes(prompt)}\"" else "" //NON-NLS
+        val messageArg = " with prompt \"${StringUtil.escapeQuotes(prompt)}\""
         val escapedScript =
           "tell current application\n" +
           "   activate\n" +
@@ -201,10 +198,7 @@ object ExecUtil {
       }
     }
 
-    val parentEnvType = if (SystemInfo.isWinVistaOrNewer)
-      GeneralCommandLine.ParentEnvironmentType.NONE
-    else
-      commandLine.parentEnvironmentType
+    val parentEnvType = GeneralCommandLine.ParentEnvironmentType.NONE
     return sudoCommandLine
       .withWorkDirectory(commandLine.workDirectory)
       .withEnvironment(commandLine.environment)

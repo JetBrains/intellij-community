@@ -8,12 +8,11 @@ import com.intellij.lang.ant.config.impl.AntClasspathEntry;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.AntReference;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -31,9 +30,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public final class AntUIUtil {
-
-  private static final Logger LOG = Logger.getInstance(AntUIUtil.class);
-
   private AntUIUtil() {
   }
 
@@ -45,7 +41,7 @@ public final class AntUIUtil {
     private final PropertiesEditor<AntInstallation> myEditor;
 
     public AntInstallationRenderer(PropertiesEditor<AntInstallation> editor) {
-      myEditor = editor != null ? editor : new PropertiesEditor<AntInstallation>(){
+      myEditor = editor != null ? editor : new PropertiesEditor<>() {
         @Override
         public AbstractProperty.AbstractPropertyContainer getProperties(AntInstallation antInstallation) {
           return antInstallation.getProperties();
@@ -159,7 +155,7 @@ public final class AntUIUtil {
         if (myProjectJdkName.length() > 0) {
           setIcon(AllIcons.Nodes.PpJdk);
           append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName),
-                 selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))
+                 selected && !(SystemInfoRt.isWindows && UIManager.getLookAndFeel().getName().contains("Windows"))
                  ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES
                  : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }

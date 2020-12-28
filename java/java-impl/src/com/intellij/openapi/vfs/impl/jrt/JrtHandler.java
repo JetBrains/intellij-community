@@ -2,17 +2,13 @@
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
@@ -56,14 +52,7 @@ public class JrtHandler extends ArchiveHandler {
     if (fs == null) {
       String path = getFile().getPath();
       try {
-        if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
-          fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
-        }
-        else {
-          File file = new File(path, "lib/jrt-fs.jar");
-          if (!file.exists()) throw new IOException("Missing provider: " + file);
-          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), new URLClassLoader(new URL[]{file.toURI().toURL()}, null));
-        }
+        fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
         myFileSystem = new SoftReference<>(fs);
       }
       catch (RuntimeException | Error e) {

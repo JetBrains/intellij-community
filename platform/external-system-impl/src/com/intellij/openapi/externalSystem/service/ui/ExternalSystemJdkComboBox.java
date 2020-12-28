@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
@@ -42,8 +43,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 /**
  * @author Sergey Evdokimov
  */
-public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
-
+public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
   private static final int MAX_PATH_LENGTH = 50;
 
   @Nullable
@@ -322,7 +322,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     if (!valid) {
       return SimpleTextAttributes.ERROR_ATTRIBUTES;
     }
-    else if (selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))) {
+    else if (selected && !(SystemInfoRt.isWindows && UIManager.getLookAndFeel().getName().contains("Windows"))) {
       return SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES;
     }
     else {

@@ -1,13 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.UtilBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -316,13 +313,13 @@ public final class DateFormatUtil {
   private static SyncDateFormat[] getDateTimeFormats() {
     DateFormat[] formats = null;
     try {
-      if (SystemInfo.isMac && JnaLoader.isLoaded()) {
+      if (SystemInfoRt.isMac && JnaLoader.isLoaded()) {
         formats = getMacFormats();
       }
-      else if (SystemInfo.isUnix) {
+      else if (SystemInfoRt.isUnix) {
         formats = getUnixFormats();
       }
-      else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded() ) {
+      else if (JnaLoader.isLoaded() ) {
         formats = getWindowsFormats();
       }
     }
