@@ -1,16 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -20,8 +15,6 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,12 +22,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import org.apache.commons.lang.SystemUtils;
-import org.apache.groovy.util.SystemUtil;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +40,6 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -119,11 +109,11 @@ public final class MavenServerManager implements Disposable {
       connector = myMultimoduleDirToConnectorMap.get(multimoduleDirectory);
     }
     if (connector == null) {
-      return registerNewConnectorOrFindCompatible(project, jdk, multimoduleDirectory);
+      return registerNewConnector(project, jdk, multimoduleDirectory);
     }
     if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
       connector.shutdown(false);
-      return registerNewConnectorOrFindCompatible(project, jdk, multimoduleDirectory);
+      return registerNewConnector(project, jdk, multimoduleDirectory);
     }
     return connector;
   }
@@ -146,37 +136,17 @@ public final class MavenServerManager implements Disposable {
     return MavenUtil.getVFileBaseDir(path).getPath();
   }
 
-  private MavenServerConnector registerNewConnectorOrFindCompatible(Project project,
-                                                                    Sdk jdk,
-                                                                    String multimoduleDirectory) {
-
-
-
-    MavenServerConnector existing;
-    synchronized (myMultimoduleDirToConnectorMap) {
-      existing =
-        ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> compatibleParameters(project, c, jdk, multimoduleDirectory));
-    }
-
-    if (existing != null) {
-      MavenLog.LOG.info("Using existing connector for " + project + " in " + multimoduleDirectory);
-      registerDisposable(project, existing);
-      existing.connect(project);
-      synchronized (myMultimoduleDirToConnectorMap) {
-        myMultimoduleDirToConnectorMap.put(multimoduleDirectory, existing);
-      }
-      return existing;
-    }
-
+  private MavenServerConnector registerNewConnector(Project project,
+                                                    Sdk jdk,
+                                                    String multimoduleDirectory) {
     MavenDistribution distribution = findMavenDistribution(project, multimoduleDirectory);
     String vmOptions = readVmOptions(project, multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
-    MavenServerConnector connector = new MavenServerConnector(this, jdk, vmOptions, debugPort, distribution);
+    MavenServerConnector connector = new MavenServerConnector(project, this, jdk, vmOptions, debugPort, distribution);
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector);
     }
     registerDisposable(project, connector);
-    connector.connect(project);
 
     return connector;
   }
@@ -538,7 +508,6 @@ public final class MavenServerManager implements Disposable {
           connector = myMultimoduleDirToConnectorMap.values().stream().findFirst().orElse(null);
         }
         if(connector!=null){
-          connector.connect(project);
           return connector.createIndexer();
         }
         return MavenServerManager.this.getConnector(project,
