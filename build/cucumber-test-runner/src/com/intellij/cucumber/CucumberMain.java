@@ -5,9 +5,8 @@ import com.intellij.TestCaseLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.TestRunnerUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.io.MultiLoader;
@@ -32,13 +31,20 @@ public final class CucumberMain {
     int exitStatus;
     try {
       ClassLoader original = Thread.currentThread().getContextClassLoader();
-      List<Path> files = ContainerUtil.mapNotNull(System.getProperty("java.class.path").split(File.pathSeparator),
-                                                          path -> new File(path).toPath());
-      UrlClassLoader loader = UrlClassLoader.build().files(files).parent(original.getParent()).useCache()
+      List<Path> files = new ArrayList<>();
+      for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
+        if (!path.isEmpty()) {
+          files.add(Path.of(path));
+        }
+      }
+      UrlClassLoader loader = UrlClassLoader.build().files(files).parent(original.getParent())
+        .useCache()
         .usePersistentClasspathIndexForLocalClassDirectories()
-        .autoAssignUrlsWithProtectionDomain().get();
+        .autoAssignUrlsWithProtectionDomain()
+        .get();
       Thread.currentThread().setContextClassLoader(loader);
-      exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName()).getMethod("run", String[].class, ClassLoader.class)
+      exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName())
+        .getMethod("run", String[].class, ClassLoader.class)
         .invoke(null, args, loader);
     }
     catch (InvocationTargetException e) {
@@ -64,23 +70,24 @@ public final class CucumberMain {
 
     try {
       TestRunnerUtil.replaceIdeEventQueueSafely();
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
         try {
           RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));
           MultiLoader resourceLoader = new MultiLoader(classLoader) {
             @Override
             public Iterable<Resource> resources(String path, String suffix) {
               Iterable<Resource> resources = super.resources(path, suffix);
-              if (TestCaseLoader.shouldBucketTests() && ".feature".equals(suffix)) {
-                List<Resource> filteredResource = new ArrayList<>();
-                resources.forEach(it -> {
-                  if (TestCaseLoader.matchesCurrentBucket(it.getPath())) {
-                    filteredResource.add(it);
-                  }
-                });
-                return filteredResource;
+              if (!TestCaseLoader.shouldBucketTests() || !".feature".equals(suffix)) {
+                return resources;
               }
-              return resources;
+
+              List<Resource> result = new ArrayList<>();
+              for (Resource resource : resources) {
+                if (TestCaseLoader.matchesCurrentBucket(resource.getPath())) {
+                  result.add(resource);
+                }
+              }
+              return result;
             }
           };
           ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
