@@ -17,8 +17,10 @@ public class CoroutineDebugConfigurationExtension extends RunConfigurationExtens
     private static final Logger log = Logger.getInstance(CoroutineDebugConfigurationExtension.class);
 
     @Override
-    public <T extends RunConfigurationBase> void updateJavaParameters(
-            @NotNull T configuration, @NotNull JavaParameters params, RunnerSettings runnerSettings
+    public <T extends RunConfigurationBase<?>> void updateJavaParameters(
+            @NotNull T configuration,
+            @NotNull JavaParameters params,
+            RunnerSettings runnerSettings
     ) {
         Project project = configuration.getProject();
         DebuggerListener listener = ServiceManager.getService(project, DebuggerListener.class);
