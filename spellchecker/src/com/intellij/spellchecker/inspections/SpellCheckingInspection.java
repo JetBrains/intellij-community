@@ -4,10 +4,12 @@ package com.intellij.spellchecker.inspections;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
@@ -99,6 +101,11 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
           else if (!processCode) {
             return;
           }
+        }
+
+        PsiFile containingFile = element.getContainingFile();
+        if (containingFile != null && Boolean.TRUE.equals(containingFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION))) {
+          return;
         }
 
         tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)));
