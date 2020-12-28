@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.*;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationExtension;
@@ -13,9 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
-public class ExternalSystemRunConfigurationJavaExtension implements ExternalSystemRunConfigurationExtension {
-  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfigurationJavaExtension.class);
-
+final class ExternalSystemRunConfigurationJavaExtension implements ExternalSystemRunConfigurationExtension {
   @Override
   public void readExternal(@NotNull ExternalSystemRunConfiguration configuration, @NotNull Element element) {
     JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstanceOrNull();

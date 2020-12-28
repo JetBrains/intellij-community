@@ -258,7 +258,7 @@
 
     <!--<extensionPoint qualifiedName="com.intellij.expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
-    <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor" interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/> 
+    <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor" interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector" dynamic="true"/>
 
     <!-- See com.intellij.execution.filters.ExceptionFilter -->
@@ -501,7 +501,7 @@
       <configurable instance="com.intellij.compiler.options.JavaCompilersTab" id="reference.projectsettings.compiler.javacompiler"
                     key="java.compiler.description" bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
-                    id="reference.projectsettings.compiler.annotationProcessors" 
+                    id="reference.projectsettings.compiler.annotationProcessors"
                     key="reference.projectsettings.compiler.annotationProcessors"
                     bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.ValidationConfigurable" id="project.validation" key="validation.display.name"
@@ -807,7 +807,6 @@
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector"
                               order="first"/>
 
-    <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
 
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
