@@ -148,7 +148,12 @@ final class InferenceCache {
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
     Set<Instruction> dependentOnSharedVariables = new LinkedHashSet<>();
-    List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions = getClosureInstructionsWithForeigns();
+    List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions;
+    if (FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
+      closureInstructions = getClosureInstructionsWithForeigns();
+    } else {
+      closureInstructions = emptyList();
+    }
 
     while (!queue.isEmpty()) {
       Pair<Instruction, VariableDescriptor> pair = queue.removeFirst();
@@ -190,8 +195,7 @@ final class InferenceCache {
         if (owner == null) {
           continue;
         }
-        Set<ResolvedVariableDescriptor> foreignVariables =
-          ControlFlowUtils.getForeignVariableDescriptors(owner, ReadWriteVariableInstruction::isWrite);
+        Set<ResolvedVariableDescriptor> foreignVariables = ControlFlowUtils.getOverwrittenForeignVariableDescriptors(owner);
         closureInstructions.add(Pair.create(closureInstruction, foreignVariables));
       }
     }

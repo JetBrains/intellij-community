@@ -775,6 +775,14 @@ public final class ControlFlowUtils {
   }
 
   public static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
+  getOverwrittenForeignVariableDescriptors(@NotNull GrControlFlowOwner owner) {
+    return CachedValuesManager.getCachedValue(owner, () -> {
+      Set<ResolvedVariableDescriptor> foreignDescriptors = getForeignVariableDescriptors(owner, ReadWriteVariableInstruction::isWrite);
+      return CachedValueProvider.Result.create(foreignDescriptors, owner);
+    });
+  }
+
+  private static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
   getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner,
                                 @NotNull Predicate<? super ReadWriteVariableInstruction> instructionFilter) {
     Set<ResolvedVariableDescriptor> usedDescriptors = new LinkedHashSet<>();
