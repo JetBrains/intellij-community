@@ -28,7 +28,7 @@ interface WorkspaceModel {
   /**
    * Get builder that can be updated in background and applied later and a project model.
    *
-   * This operation required read lock
+   * @see [WorkspaceModel.replaceProjectModel]
    */
   fun getBuilderSnapshot(): BuilderSnapshot
 
@@ -48,7 +48,7 @@ interface WorkspaceModel {
    *
    * Example:
    * ```
-   *   val builderSnapshot = readLock { projectModel.getBuilderSnapshot() }
+   *   val builderSnapshot = projectModel.getBuilderSnapshot()
    *
    *   update(builderSnapshot)
    *
@@ -59,6 +59,8 @@ interface WorkspaceModel {
    * ```
    *
    * Future plans: add some kind of ordering for async updates of the project model
+   *
+   * @see [WorkspaceModel.getBuilderSnapshot]
    */
   fun replaceProjectModel(replacement: StorageReplacement): Boolean
 
