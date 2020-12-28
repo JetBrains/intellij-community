@@ -108,6 +108,11 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
   @Override
   public void rename(Object requestor, @NotNull String newName) throws IOException {
     super.rename(requestor, newName);
+    BranchedVirtualFileImpl parent = getParent();
+    if (parent != null && parent.myChangedChildren == null) {
+      // findChild must search over changed children names, so we need to track children now
+      parent.myChangedChildren = Ref.create(parent.getChildren());
+    }
     myBranch.addVfsStructureChange(this);
   }
 
