@@ -3,7 +3,6 @@ package com.intellij.util.loader;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.util.system.CpuArch;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -11,7 +10,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 public final class NativeLibraryLoader {
-  public static void loadPlatformLibrary(@NotNull @NonNls String libName) {
+  public static void loadPlatformLibrary(@NotNull String libName) {
     String baseName = libName;
     if (CpuArch.CURRENT == CpuArch.X86_64) {
       baseName = baseName.replace("32", "") + "64";
