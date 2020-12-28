@@ -19,6 +19,12 @@
     <extensionPoint name="fileTypeDetector" interface="com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector" dynamic="true"/>
     <extensionPoint name="editorFactoryDocumentListener" interface="com.intellij.openapi.editor.event.DocumentListener" dynamic="true"/>
     <extensionPoint name="multiHostInjector" interface="com.intellij.lang.injection.MultiHostInjector" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="languageInjectionContributor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.injection.general.LanguageInjectionContributor"/>
+    </extensionPoint>
+    <extensionPoint name="languageInjectionPerformer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.injection.general.LanguageInjectionPerformer"/>
+    </extensionPoint>
     <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider" dynamic="true"/>
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage" dynamic="true"/>
     <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
