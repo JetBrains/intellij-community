@@ -1112,18 +1112,19 @@ public final class PluginManagerCore {
   // that's why nesting level is more than one
   private static boolean checkChildDeps(@NotNull List<PluginDependency> childDependencies, @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
     for (PluginDependency dependency : childDependencies) {
-      // ignore if optional
-      if (dependency.isOptional) {
-        continue;
-      }
-
       if (dependency.isDisabledOrBroken) {
+        if (dependency.isOptional) {
+          continue;
+        }
         return false;
       }
 
       IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(dependency.id);
       if (dependentDescriptor == null || !dependentDescriptor.isEnabled()) {
         dependency.isDisabledOrBroken = true;
+        if (dependency.isOptional) {
+          continue;
+        }
         return false;
       }
 
@@ -1131,6 +1132,9 @@ public final class PluginManagerCore {
         List<PluginDependency> list = dependency.subDescriptor.pluginDependencies;
         if (list != null && !checkChildDeps(list, idMap)) {
           dependency.isDisabledOrBroken = true;
+          if (dependency.isOptional) {
+            continue;
+          }
           return false;
         }
       }
