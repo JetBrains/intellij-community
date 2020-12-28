@@ -9,6 +9,8 @@ import java.util.Collection;
 /**
  * Register the implementation of this interface at {@code com.intellij.psi.declarationProvider} extension point
  * to provide symbol declarations by PsiElement.
+ * <p>
+ * TODO: consider more declarative API similar to {@link PsiSymbolReferenceProviderBean}.
  *
  * @see PsiSymbolDeclaration
  */
