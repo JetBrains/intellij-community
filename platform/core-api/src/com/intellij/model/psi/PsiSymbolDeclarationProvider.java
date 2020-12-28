@@ -22,6 +22,5 @@ public interface PsiSymbolDeclarationProvider {
    *                        The offset serves as a hint to avoid computing declarations, which cannot contain the offset.
    *                        The platform filters returned declarations by the offset later
    */
-  @NotNull
-  Collection<? extends PsiSymbolDeclaration> getDeclarations(@NotNull PsiElement element, int offsetInElement);
+  @NotNull Collection<? extends @NotNull PsiSymbolDeclaration> getDeclarations(@NotNull PsiElement element, int offsetInElement);
 }
