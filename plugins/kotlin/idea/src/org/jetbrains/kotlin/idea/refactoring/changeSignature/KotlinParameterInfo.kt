@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallab
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
+import org.jetbrains.kotlin.idea.util.isPrimaryConstructorOfDataClass
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
+import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.FlexibleType
@@ -253,7 +255,7 @@ class KotlinParameterInfo(
 }
 
 private fun defaultValOrVar(callableDescriptor: CallableDescriptor): KotlinValVar =
-    if (callableDescriptor is ConstructorDescriptor && callableDescriptor.isPrimary && callableDescriptor.constructedClass.isData)
+    if (callableDescriptor.isAnnotationConstructor() || callableDescriptor.isPrimaryConstructorOfDataClass)
         KotlinValVar.Val
     else
         KotlinValVar.None

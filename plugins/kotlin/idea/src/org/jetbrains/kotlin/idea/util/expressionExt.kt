@@ -13,6 +13,8 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -69,3 +71,6 @@ val KtExpression.isUnitLiteral: Boolean
 val PsiElement.isAnonymousFunction: Boolean get() = this is KtNamedFunction && isAnonymousFunction
 
 val KtNamedFunction.isAnonymousFunction: Boolean get() = nameIdentifier == null
+
+val DeclarationDescriptor.isPrimaryConstructorOfDataClass: Boolean
+    get() = this is ConstructorDescriptor && this.isPrimary && this.constructedClass.isData
