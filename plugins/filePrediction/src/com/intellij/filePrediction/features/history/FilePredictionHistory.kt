@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 
 class FilePredictionHistory(project: Project) {
   companion object {
+    private const val MAX_NGRAM_SEQUENCE = 3
     private const val RECENT_FILES_LIMIT = 50
 
     internal fun getInstanceIfCreated(project: Project) = project.serviceIfCreated<FilePredictionHistory>()
@@ -18,7 +19,8 @@ class FilePredictionHistory(project: Project) {
   private var manager: FileHistoryManager
 
   init {
-    manager = FileHistoryManager(FileHistoryPersistence.loadFileHistory(project), RECENT_FILES_LIMIT)
+    val model = FileHistoryPersistence.loadNGrams(project, MAX_NGRAM_SEQUENCE)
+    manager = FileHistoryManager(model, FileHistoryPersistence.loadFileHistory(project), RECENT_FILES_LIMIT)
   }
 
   fun saveFilePredictionHistory(project: Project) {
@@ -30,6 +32,8 @@ class FilePredictionHistory(project: Project) {
   fun onFileSelected(fileUrl: String) = manager.onFileOpened(fileUrl)
 
   fun calcHistoryFeatures(fileUrl: String) = manager.calcHistoryFeatures(fileUrl)
+
+  fun batchCalculateNGrams(candidates: List<String>) = manager.calcNGramFeatures(candidates)
 
   fun size() = manager.size()
 

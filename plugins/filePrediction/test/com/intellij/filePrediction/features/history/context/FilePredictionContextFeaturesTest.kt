@@ -9,6 +9,7 @@ import com.intellij.filePrediction.features.ConstFileFeaturesProducer
 import com.intellij.filePrediction.features.FileFeaturesProducer
 import com.intellij.filePrediction.features.FilePredictionFeaturesCache
 import com.intellij.filePrediction.features.history.FilePredictionHistoryBaseTest
+import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramFeatures
 import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.filePrediction.references.ExternalReferencesResult.Companion.FAILED_COMPUTATION
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -33,7 +34,7 @@ class FilePredictionContextFeaturesTest : FilePredictionHistoryBaseTest() {
     assertTrue("Cannot open main file because it's already opened", prevFile != file)
 
     val provider = FilePredictionContextFeatures()
-    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION)
+    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION, FilePredictionNGramFeatures(emptyMap()))
     val actual = provider.calculateFileFeatures(myFixture.project, file!!, prevFile, emptyCache)
     val expected = featuresProvider.produce(myFixture.project)
     for (feature in expected.entries) {

@@ -2,6 +2,7 @@ package com.intellij.filePrediction.features
 
 import com.intellij.filePrediction.FileReferencesComputationResult
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.OPEN
+import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramFeatures
 import com.intellij.filePrediction.predictor.FilePredictionCandidate
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
@@ -25,7 +26,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     val references: FileReferencesComputationResult = ApplicationManager.getApplication().executeOnPooledThread(Callable {
       FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile)
     }).get(1, TimeUnit.SECONDS)
-    val result = FilePredictionFeaturesCache(references.value)
+    val result = FilePredictionFeaturesCache(references.value, FilePredictionNGramFeatures(emptyMap()))
     val actual = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidate, result, prevFile)
     assertNotEmpty(actual.value.keys)
 
@@ -43,7 +44,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
       FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile)
     }).get(1, TimeUnit.SECONDS)
 
-    val result = FilePredictionFeaturesCache(references.value)
+    val result = FilePredictionFeaturesCache(references.value, FilePredictionNGramFeatures(emptyMap()))
     val features = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidateFile, result, prevFile)
     assertNotEmpty(features.value.keys)
 

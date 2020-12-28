@@ -44,6 +44,10 @@ internal class FilePredictionHistoryFeatures : FilePredictionFeatureProvider {
     }
     addNGramFeatures(uniGram, "uni", result)
     addNGramFeatures(biGram, "bi", result)
+
+    cache.nGrams.calculateFileFeatures(newFile.url)?.let {
+      addNGramFeatures(it, "tri", result)
+    }
     return result
   }
 
