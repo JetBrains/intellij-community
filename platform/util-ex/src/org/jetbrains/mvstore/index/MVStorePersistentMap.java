@@ -6,14 +6,14 @@ import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentMapBase;
+import org.h2.mvstore.MVMap;
+import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.mvstore.MVMap;
-import org.jetbrains.mvstore.MVStore;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import static org.jetbrains.mvstore.index.DataExternalizerDataTypeConverter.*;
+import static org.jetbrains.mvstore.index.DataExternalizerDataTypeConverter.convert;
 
 public class MVStorePersistentMap<Key, Value> implements PersistentMapBase<Key, Value> {
   private final MVStore myStore;

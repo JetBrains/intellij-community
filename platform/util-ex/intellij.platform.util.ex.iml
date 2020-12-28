@@ -19,5 +19,6 @@
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="roaringBitmap" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="library" name="com.h2database:h2-mvstore:1.4.200" level="project" />
   </component>
 </module>

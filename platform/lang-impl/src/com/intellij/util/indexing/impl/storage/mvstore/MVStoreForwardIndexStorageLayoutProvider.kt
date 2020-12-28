@@ -16,11 +16,10 @@ import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout
 import com.intellij.util.io.ByteSequenceDataExternalizer
 import com.intellij.util.io.EnumeratorIntegerDescriptor
-import org.jetbrains.mvstore.MVStore
+import org.h2.mvstore.MVStore
 import org.jetbrains.mvstore.index.MVStorePersistentMap
 import java.io.IOException
 import java.nio.file.Path
-import java.util.function.Consumer
 
 internal class MVStoreForwardIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
   override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
@@ -52,8 +51,10 @@ internal class MVStoreForwardIndexStorageLayout<K, V>(private val extension: Fil
       synchronized(lock) {
         if (store == null) {
           val initializationException = Ref.create<Exception>()
-          store = MVStore.Builder().openOrNewOnIoError(path.resolve("mv.forward.indexes"), true,
-                                                       Consumer { e -> initializationException.set(e) })
+          store = MVStore.Builder()
+            .autoCommitDisabled()
+            .fileName(path.resolve("mv.forward.indexes").toString())
+            .open()
           if (!initializationException.isNull) {
             throw RuntimeException(initializationException.get())
           }

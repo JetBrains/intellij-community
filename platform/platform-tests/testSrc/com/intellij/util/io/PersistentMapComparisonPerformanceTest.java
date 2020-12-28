@@ -5,9 +5,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.mvstore.MVStore;
 import org.jetbrains.mvstore.index.MVStorePersistentMap;
 
 import java.io.IOException;
@@ -44,9 +44,11 @@ public class PersistentMapComparisonPerformanceTest extends UsefulTestCase {
   public void testMVStoreMap() throws IOException {
     MVStore mvStore = new MVStore
       .Builder()
-      .autoCommitDelay(5_000)
       .compressHigh()
-      .openOrNewOnIoError(myTempDirectory.resolve("mvstore"), true, e -> LOG.error(e));
+      .fileName(myTempDirectory.resolve("mvstore").toString())
+      .open();
+
+    mvStore.setAutoCommitDelay(5_000);
 
     PersistentHashMap<Integer, String> map =
       new PersistentHashMap<>(

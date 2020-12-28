@@ -2,59 +2,114 @@
 package org.jetbrains.mvstore.index;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.io.*;
-import io.netty.buffer.ByteBuf;
+import com.intellij.util.io.ByteSequenceDataExternalizer;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.IntInlineKeyDescriptor;
+import org.h2.mvstore.WriteBuffer;
+import org.h2.mvstore.type.DataType;
+import org.h2.mvstore.type.StringDataType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.mvstore.DataUtil;
-import org.jetbrains.mvstore.type.*;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 class DataExternalizerDataTypeConverter {
-  @SuppressWarnings("unchecked")
   @NotNull
-  static <T> DataType<T> convert(@NotNull DataExternalizer<T> externalizer) {
+  static <T> DataType convert(@NotNull DataExternalizer<T> externalizer) {
     if (externalizer instanceof IntInlineKeyDescriptor) {
-      return (DataType<T>)IntDataType.INSTANCE;
+      return IntDataType.INSTANCE;
     }
     if (externalizer instanceof EnumeratorStringDescriptor) {
-      return (DataType<T>)StringDataType.INSTANCE;
+      return StringDataType.INSTANCE;
     }
     if (externalizer instanceof ByteSequenceDataExternalizer) {
-      return (DataType<T>)ByteSequenceDataType.INSTANCE;
+      return ByteSequenceDataType.INSTANCE;
     }
     throw new IllegalArgumentException("unsupported externalizer");
   }
 
-  @NotNull
-  static <T> KeyableDataType<T> convert(@NotNull KeyDescriptor<T> descriptor) {
-    DataType<T> dataType = convert((DataExternalizer<T>)descriptor);
-    return (KeyableDataType<T>)dataType;
+  private static final class ByteSequenceDataType implements DataType {
+    public static final ByteSequenceDataType INSTANCE = new ByteSequenceDataType();
+
+    @Override
+    public int compare(Object a, Object b) {
+      ByteArraySequence arrayA = (ByteArraySequence)a;
+      ByteArraySequence arrayB = (ByteArraySequence)b;
+      return Arrays.compare(arrayA.getInternalBuffer(), arrayA.getOffset(), arrayA.getOffset() + arrayA.getLength(),
+                            arrayB.getInternalBuffer(), arrayB.getOffset(), arrayB.getOffset() + arrayB.getLength());
+    }
+
+    @Override
+    public int getMemory(Object obj) {
+      return Integer.BYTES + ((ByteArraySequence)obj).getLength();
+    }
+
+    @Override
+    public void write(WriteBuffer buff, Object obj) {
+      ByteArraySequence bas = (ByteArraySequence)obj;
+      buff.putInt(bas.getLength());
+      buff.put(bas.getInternalBuffer(), bas.getOffset(), bas.getLength());
+    }
+
+    @Override
+    public void write(WriteBuffer buff, Object[] obj, int len, boolean key) {
+      for (int i = 0; i < len; i++) {
+        write(buff, obj[i]);
+      }
+    }
+
+    @Override
+    public Object read(ByteBuffer buff) {
+      int size = buff.getInt();
+      byte[] bytes = new byte[size];
+      buff.get(bytes);
+      return ByteArraySequence.create(bytes);
+    }
+
+    @Override
+    public void read(ByteBuffer buff, Object[] obj, int len, boolean key) {
+      for (int i = 0; i < len; i++) {
+        obj[i] = read(buff);
+      }
+    }
   }
 
-  private static final class ByteSequenceDataType implements DataType<ByteArraySequence> {
-    public static final ByteSequenceDataType INSTANCE = new ByteSequenceDataType();
+  private static class IntDataType implements DataType {
+    private static final IntDataType INSTANCE = new IntDataType();
+
     @Override
-    public int getMemory(ByteArraySequence obj) {
-      return DataUtil.VAR_INT_MAX_SIZE + obj.getLength();
+    public int compare(Object a, Object b) {
+      return Integer.compare((Integer)a, (Integer)b);
     }
 
     @Override
-    public int getFixedMemory() {
-      return -1;
+    public int getMemory(Object obj) {
+      return Integer.BYTES;
     }
 
     @Override
-    public void write(ByteBuf buf, ByteArraySequence obj) {
-      ByteArrayDataType.INSTANCE.write(buf, obj.toBytes());
+    public void write(WriteBuffer buff, Object obj) {
+      buff.putInt((Integer)obj);
     }
 
     @Override
-    public ByteArraySequence read(ByteBuf buff) {
-      return ByteArraySequence.create(ByteArrayDataType.INSTANCE.read(buff));
+    public void write(WriteBuffer buff, Object[] obj, int len, boolean key) {
+      for (int i = 0; i < len; i++) {
+        write(buff, obj[i]);
+      }
     }
 
     @Override
-    public ByteArraySequence[] createStorage(int size) {
-      return new ByteArraySequence[size];
+    public Object read(ByteBuffer buff) {
+      return buff.getInt();
+    }
+
+    @Override
+    public void read(ByteBuffer buff, Object[] obj, int len, boolean key) {
+      for (int i = 0; i < len; i++) {
+        obj[i] = read(buff);
+      }
     }
   }
 }
