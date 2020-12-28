@@ -17,7 +17,7 @@
 			"name": "comment log.verbose"
 		},
 		{
-			"match": "(?<=^[\\s\\d\\p]*)\\bV\\b",
+			"match": "(?<=^[\\s\\d\\p])\\bV\\b",
 			"name": "comment log.verbose"
 		},
 		{
@@ -29,7 +29,7 @@
 			"name": "markup.changed log.debug"
 		},
 		{
-			"match": "(?<=^[\\s\\d\\p]*)\\bD\\b",
+			"match": "(?<=^[\\s\\d])\\bD\\b",
 			"name": "markup.changed log.debug"
 		},
 		{
@@ -41,7 +41,7 @@
 			"name": "markup.inserted log.info"
 		},
 		{
-			"match": "(?<=^[\\s\\d\\p]*)\\bI\\b",
+			"match": "(?<=^[\\s\\d])\\bI\\b",
 			"name": "markup.inserted log.info"
 		},
 		{
@@ -53,7 +53,7 @@
 			"name": "markup.deleted log.warning"
 		},
 		{
-			"match": "(?<=^[\\s\\d\\p]*)\\bW\\b",
+			"match": "(?<=^[\\s\\d])\\bW\\b",
 			"name": "markup.deleted log.warning"
 		},
 		{
@@ -65,7 +65,7 @@
 			"name": "string.regexp, strong log.error"
 		},
 		{
-			"match": "(?<=^[\\s\\d\\p]*)\\bE\\b",
+			"match": "(?<=^[\\s\\d])\\bE\\b",
 			"name": "string.regexp, strong log.error"
 		},
 		{
@@ -73,7 +73,7 @@
 			"name": "comment log.date"
 		},
 		{
-			"match": "(?<=(^|\\s))\\d{2}[^\\w\\s]\\d{2}[^\\w\\s]\\d{4}\\b",
+			"match": "(?<=^|\\s)\\d{2}[^\\w\\s]\\d{2}[^\\w\\s]\\d{4}\\b",
 			"name": "comment log.date"
 		},
 		{
