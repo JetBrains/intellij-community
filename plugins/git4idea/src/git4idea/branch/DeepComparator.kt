@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBPoint
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
@@ -41,6 +40,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
 import org.jetbrains.annotations.NonNls
+import java.awt.Point
 
 class DeepComparator(private val project: Project,
                      private val repositoryManager: GitRepositoryManager,
@@ -162,7 +162,7 @@ class DeepComparator(private val project: Project,
         .setFadeoutTime(5000)
         .createBalloon()
       val component = ui.table
-      balloon.show(RelativePoint(component, JBPoint(component.width / 2, component.visibleRect.y)), Balloon.Position.below)
+      balloon.show(RelativePoint(component, Point(component.width / 2, component.visibleRect.y)), Balloon.Position.below)
       Disposer.register(this, balloon)
     }
   }
