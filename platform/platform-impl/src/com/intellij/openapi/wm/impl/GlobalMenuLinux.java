@@ -19,12 +19,12 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.StubItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.ImageUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
@@ -41,9 +41,11 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -805,9 +807,9 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
 
     try {
-      NativeLibraryLoader.loadPlatformLibrary("dbm");
-
-      return Native.load("dbm", GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
+      Path lib = PathManager.findBinFile("libdbm64.so");
+      assert lib != null : "DBM lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
+      return Native.load(lib.toString(), GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
     }
     catch (UnsatisfiedLinkError ule) {
       LOG.info("disable global-menu integration because some of shared libraries isn't installed: " + ule);
