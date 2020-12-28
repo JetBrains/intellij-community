@@ -50,7 +50,7 @@ public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
     myClickCount = allowDoubleClick ? 2 : 1;
     addMouseListener(myMouseListener);
     addMouseWheelListener(myMouseListener);
-    if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm) {
+    if (SystemInfo.isMac && SystemInfo.isIntel64 && SystemInfo.isJetBrainsJvm) {
       new MacGestureSupportForMouseShortcutPanel(this, () -> myMouseShortcut = null);
     }
     setBackground(BACKGROUND);
