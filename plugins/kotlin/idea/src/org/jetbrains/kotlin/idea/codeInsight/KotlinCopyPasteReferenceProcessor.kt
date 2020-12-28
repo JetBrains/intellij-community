@@ -77,7 +77,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
     override fun extractTransferableData(content: Transferable): List<BasicKotlinReferenceTransferableData> {
         if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
             try {
-                val flavor = KotlinReferenceData.dataFlavor ?: return listOf()
+                val flavor = BasicKotlinReferenceTransferableData.dataFlavor ?: return listOf()
                 val data = content.getTransferData(flavor) as? BasicKotlinReferenceTransferableData ?: return listOf()
                 // copy to prevent changing of original by convertLineSeparators
                 return listOf(data.clone())
@@ -107,6 +107,12 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         val offsetDelta = if (startOffsets.any { it <= endOfImportsOffset }) 0 else endOfImportsOffset
         val text = file.text.substring(offsetDelta)
         val ranges = startOffsets.indices.map { TextRange(startOffsets[it], endOffsets[it]) }
+        val references: List<KotlinReferenceData>? = run {
+            val anyMainReferenceTextRange = ranges.firstOrNull { textRange ->
+                file.elementsInRange(textRange).flatMap { it.collectDescendantsOfType<KtElement>() }.firstOrNull { it.mainReference != null } != null
+            }
+            if (anyMainReferenceTextRange != null) null else emptyList()
+        }
 
         val locationFqName = if (startOffsets.size == 1) {
             val fqName = file.namedDeclarationFqName(startOffsets[0] - 1)
@@ -121,6 +127,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 sourceTextOffset = offsetDelta,
                 sourceText = text,
                 textRanges = ranges,
+                references = references,
                 locationFqName = locationFqName
             )
         )
@@ -305,6 +312,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         blockStart: Int,
         transferableData: BasicKotlinReferenceTransferableData
     ) {
+        if (transferableData.references?.isEmpty() == true) return
+
         PsiDocumentManager.getInstance(project).commitAllDocuments()
 
         var startOffsetDelta = blockStart
