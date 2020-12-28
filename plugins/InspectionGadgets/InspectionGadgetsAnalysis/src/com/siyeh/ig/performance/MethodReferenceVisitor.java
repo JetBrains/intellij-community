@@ -16,7 +16,6 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,14 +72,8 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private boolean isMemberStaticallyAccessible(PsiMember member) {
-    if (m_method.equals(member)) {
-      return true;
-    }
-    if (member.hasModifierProperty(PsiModifier.STATIC)) {
-      return true;
-    }
-    final PsiClass referenceContainingClass = m_method.getContainingClass();
-    final PsiClass containingClass = member.getContainingClass();
-    return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass, containingClass, true);
+    if (m_method.equals(member)) return true;
+    return member.hasModifierProperty(PsiModifier.STATIC) || 
+           member instanceof PsiClass && member.getContainingClass() == null;
   }
 }
