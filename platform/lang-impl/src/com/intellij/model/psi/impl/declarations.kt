@@ -9,8 +9,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.util.elementsAroundOffsetUp
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.TestOnly
 
 /**
  * @return collection of declarations found around the given [offset][offsetInFile] in [file][this]
@@ -33,8 +35,25 @@ private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Co
   for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.iterable) {
     ProgressManager.checkCanceled()
     extension.getDeclarations(element, offsetInElement).filterTo(result) {
-      element === it.declaringElement && offsetInElement in it.declarationRange
+      element === it.declaringElement && (offsetInElement < 0 || offsetInElement in it.declarationRange)
     }
   }
   return result
+}
+
+@TestOnly
+fun PsiFile.allDeclarations(): Collection<PsiSymbolDeclaration> {
+  val declarations = ArrayList<PsiSymbolDeclaration>()
+  accept(DeclarationCollectingVisitor(declarations))
+  return declarations
+}
+
+private class DeclarationCollectingVisitor(
+  private val declarations: MutableList<PsiSymbolDeclaration>
+) : PsiRecursiveElementWalkingVisitor(true) {
+
+  override fun visitElement(element: PsiElement) {
+    super.visitElement(element)
+    declarations.addAll(declarationsInElement(element, -1))
+  }
 }
