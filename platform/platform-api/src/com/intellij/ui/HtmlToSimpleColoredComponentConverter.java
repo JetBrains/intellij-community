@@ -13,15 +13,16 @@ import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
+import java.awt.*;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-import static com.intellij.ui.SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.*;
+import static javax.swing.text.html.HTML.Attribute.STYLE;
 import static javax.swing.text.html.HTML.Tag.*;
 
 @ApiStatus.Experimental
@@ -29,14 +30,7 @@ public class HtmlToSimpleColoredComponentConverter {
 
   private static final Logger LOG = Logger.getInstance(HtmlToSimpleColoredComponentConverter.class);
 
-  public static final StyleTagHandler DEFAULT_TAG_HANDLER = (tag, attr) -> {
-    if (tag == B) return REGULAR_BOLD_ATTRIBUTES;
-    if (tag == I) return REGULAR_ITALIC_ATTRIBUTES;
-    if (tag == U) return new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null);
-    if (tag == S) return new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
-
-    return null;
-  };
+  public static final StyleTagHandler DEFAULT_TAG_HANDLER = new DefaultStyleTagHandler();
 
   private final StyleTagHandler myStyleTagHandler;
 
@@ -59,7 +53,7 @@ public class HtmlToSimpleColoredComponentConverter {
         String tagName = t.toString();
         SimpleTextAttributes attributesByTag = myStyleTagHandler.calcAttributes(t, a);
         if (attributesByTag != null) {
-          SimpleTextAttributes newAttributes = SimpleTextAttributes.merge(attributesByTag, attributesStack.peek());
+          SimpleTextAttributes newAttributes = merge(attributesByTag, attributesStack.peek());
           attributesStack.push(tagName, newAttributes);
         }
       }
@@ -139,6 +133,44 @@ public class HtmlToSimpleColoredComponentConverter {
 
     public SimpleTextAttributes peek() {
       return myStack.peek().second;
+    }
+  }
+
+  private static class DefaultStyleTagHandler implements StyleTagHandler {
+
+    @Override
+    public SimpleTextAttributes calcAttributes(javax.swing.text.html.HTML.Tag tag, MutableAttributeSet attr) {
+      if (tag == B) return REGULAR_BOLD_ATTRIBUTES;
+      if (tag == I) return REGULAR_ITALIC_ATTRIBUTES;
+      if (tag == U) return new SimpleTextAttributes(STYLE_UNDERLINE, null);
+      if (tag == S) return new SimpleTextAttributes(STYLE_STRIKEOUT, null);
+      if (tag == A) return LINK_PLAIN_ATTRIBUTES;
+
+      if (tag == DIV || tag == SPAN) return parseStyleIfPossible(attr);
+
+      return null;
+    }
+
+    private static SimpleTextAttributes parseStyleIfPossible(MutableAttributeSet attr) {
+      Object attribute = attr.getAttribute(STYLE);
+      if (attribute == null) return null;
+      String styleStr = attribute.toString();
+      Map<String, String> styles = Arrays.stream(styleStr.split("\\s*;\\s*"))
+        .map(s -> s.split("\\s*:\\s*"))
+        .collect(Collectors.toMap(s -> s[0], s -> s[1]));
+
+      String colorString = styles.get("color");
+      String backgroundString = styles.get("background-color");
+
+      return new SimpleTextAttributes(parseColor(backgroundString), parseColor(colorString), null, STYLE_PLAIN);
+    }
+
+    private static Color parseColor(String colorStr) {
+      if (colorStr == null) return null;
+
+      colorStr = StringUtil.trimStart(colorStr, "#");
+      if (colorStr.length() != 6) return null;
+      return ColorUtil.fromHex(colorStr);
     }
   }
 }
