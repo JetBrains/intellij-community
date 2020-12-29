@@ -26,8 +26,10 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.intelliLang.Configuration
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
+import org.intellij.plugins.intelliLang.inject.config.Injection
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
@@ -73,19 +75,14 @@ class KotlinLanguageInjector(
         Key.create<KotlinCachedInjection>("CACHED_INJECTION_WITH_MODIFICATION")
     )
 
-    override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
-        val ktHost: KtStringTemplateExpression = context as? KtStringTemplateExpression ?: return
-        if (!context.isValidHost) return
-
-        val support = kotlinSupport ?: return
-
-        if (!ProjectRootsUtil.isInProjectOrLibSource(ktHost.containingFile.originalFile)) return
+    private fun getBaseInjection(ktHost: KtStringTemplateExpression, support: LanguageInjectionSupport): Injection {
+        if (!ProjectRootsUtil.isInProjectOrLibSource(ktHost.containingFile.originalFile)) return absentKotlinInjection
 
         val needImmediateAnswer = with(ApplicationManager.getApplication()) { isDispatchThread && !isUnitTestMode }
         val kotlinCachedInjection = ktHost.cachedInjectionWithModification
         val modificationCount = PsiManager.getInstance(project).modificationTracker.modificationCount
 
-        val baseInjection = when {
+        return when {
             needImmediateAnswer -> {
                 // Can't afford long counting or typing will be laggy. Force cache reuse even if it's outdated.
                 kotlinCachedInjection?.baseInjection ?: absentKotlinInjection
@@ -110,10 +107,15 @@ class KotlinLanguageInjector(
                 }
             }
         }
+    }
 
-        if (baseInjection == absentKotlinInjection) {
-            return
-        }
+    override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
+        val ktHost: KtStringTemplateExpression = context as? KtStringTemplateExpression ?: return
+        if (!context.isValidHost) return
+
+        val support = kotlinSupport ?: return
+
+        val baseInjection = getBaseInjection(ktHost, support).takeIf { it != absentKotlinInjection } ?: return
 
         val language = InjectorUtils.getLanguageByString(baseInjection.injectedLanguageId) ?: return
 
@@ -139,7 +141,7 @@ class KotlinLanguageInjector(
     @Suppress("FoldInitializerAndIfToElvis")
     private fun computeBaseInjection(
         ktHost: KtStringTemplateExpression,
-        support: KotlinLanguageInjectionSupport
+        support: LanguageInjectionSupport
     ): BaseInjection? {
         val containingFile = ktHost.containingFile
 

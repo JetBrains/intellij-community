@@ -22,21 +22,21 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
-import org.intellij.plugins.intelliLang.inject.config.BaseInjection
+import com.intellij.lang.injection.general.Injection
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-typealias Injection = Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>
+typealias InjectionTrinity = Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>
 
-data class InjectionSplitResult(val isUnparsable: Boolean, val ranges: List<Injection>)
+data class InjectionSplitResult(val isUnparsable: Boolean, val ranges: List<InjectionTrinity>)
 
-fun splitLiteralToInjectionParts(injection: BaseInjection, literal: KtStringTemplateExpression): InjectionSplitResult? {
-    InjectorUtils.getLanguage(injection) ?: return null
+fun splitLiteralToInjectionParts(injection: Injection, literal: KtStringTemplateExpression): InjectionSplitResult? {
+    InjectorUtils.getLanguageByString(injection.injectedLanguageId) ?: return null
 
-    fun injectionRange(range: TextRange, prefix: String, suffix: String): Injection {
+    fun injectionRange(range: TextRange, prefix: String, suffix: String): InjectionTrinity {
         TextRange.assertProperRange(range, injection)
         val injectedLanguage = InjectedLanguage.create(injection.injectedLanguageId, prefix, suffix, true)!!
         return Trinity.create(literal, injectedLanguage, range)
@@ -46,7 +46,7 @@ fun splitLiteralToInjectionParts(injection: BaseInjection, literal: KtStringTemp
         children: List<PsiElement>,
         pendingPrefix: String,
         unparseable: Boolean,
-        collected: MutableList<Injection>
+        collected: MutableList<InjectionTrinity>
     ): InjectionSplitResult {
         val child = children.firstOrNull() ?: return InjectionSplitResult(unparseable, collected)
         val tail = children.subList(1, children.size)
