@@ -6,9 +6,8 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
+import com.intellij.util.system.CpuArch
 import git4idea.i18n.GitBundle
 import java.io.File
 
@@ -41,7 +40,11 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
       })
   }
 
-  private fun archMatches(arch: String) = if (SystemInfo.is32Bit) arch == "x86_32" else arch == "x86_64"
+  private fun archMatches(arch: String) = when (CpuArch.CURRENT) {
+    CpuArch.X86 -> arch == "x86_32"
+    CpuArch.X86_64 -> arch == "x86_64"
+    else -> false
+  }
 
   private fun installGit(exeFile: File, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     val commandLine = GeneralCommandLine()
