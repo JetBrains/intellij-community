@@ -99,7 +99,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/zip-signer-0.7.jar!/" />
+          <root url="jar://$USER_HOME$/Downloads/zip-signer-0.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
