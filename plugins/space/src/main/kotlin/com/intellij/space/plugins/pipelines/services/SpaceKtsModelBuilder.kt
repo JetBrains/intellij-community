@@ -201,12 +201,11 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
         _error.value = null
       }
       catch (th: Throwable) {
-        val errors = StringWriter()
-        th.printStackTrace(PrintWriter(errors))
-        val errorText = "${th.message}.\n$errors"
-        logData.error(errorText)
+        val stackTraceText = th.stackTraceToString()
+        val logMessage = "${th.message}.\n$stackTraceText"
+        logData.error(logMessage)
         // do not touch last config, just update the error state.
-        _error.value = errors.toString()
+        _error.value = stackTraceText
       }
       finally {
         outputDir.deleteRecursively()
