@@ -96,8 +96,12 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .around(DOT).spaces(0)
       .aroundInside(AT, DECORATOR_CALL).none()
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
+
       .betweenInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES)
-      .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
+      .afterInside(LPAR, ARGUMENT_LIST)
+      .spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES, commonSettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE)
+      .beforeInside(RPAR, ARGUMENT_LIST)
+      .spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES, commonSettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE)
 
       .betweenInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES)
       .afterInside(LPAR, PARAMETER_LIST)
