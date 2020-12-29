@@ -107,7 +107,6 @@
   <injection language="XPath" injector-id="java">
     <display-name>Matchers (org.hamcrest)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasXPath").definedInClass("org.hamcrest.Matchers"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasXPath").definedInClass("org.hamcrest.Matchers"))]]></place>
   </injection>
 
   <injection language="RegExp" injector-id="java">
@@ -116,5 +115,47 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("containsMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("doesNotMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("doesNotContainMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+  </injection>
+
+  <injection language="JSON" injector-id="java">
+    <display-name>JsonAssert (com.jayway.jsonassert)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("with").withParameters("java.lang.String").definedInClass("com.jayway.jsonassert.JsonAssert"))]]></place>
+  </injection>
+  <injection language="JSON" injector-id="java">
+    <display-name>JsonPath (com.jayway.jsonpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("parse").definedInClass("com.jayway.jsonpath.JsonPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("read").definedInClass("com.jayway.jsonpath.JsonPath"))]]></place>
+  </injection>
+  <injection language="JSON" injector-id="java">
+    <display-name>JsonProvider (com.jayway.jsonpath.spi.json)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("parse").definedInClass("com.jayway.jsonpath.spi.json.JsonProvider"))]]></place>
+  </injection>
+  <injection language="JSON" injector-id="java">
+    <display-name>ParseContext (com.jayway.jsonpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("parse").definedInClass("com.jayway.jsonpath.ParseContext"))]]></place>
+  </injection>
+
+  <injection language="JSONPath" injector-id="java">
+    <display-name>JsonPath (com.jayway.jsonpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").definedInClass("com.jayway.jsonpath.JsonPath"))]]></place>
+  </injection>
+  <injection language="JSONPath" injector-id="java">
+    <display-name>ReadContext (com.jayway.jsonpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("read").definedInClass("com.jayway.jsonpath.ReadContext"))]]></place>
+  </injection>
+  <injection language="JSONPath" injector-id="java">
+    <display-name>JsonPathMatchers (com.jayway.jsonpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasJsonPath").definedInClass("com.jayway.jsonpath.matchers.JsonPathMatchers"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasNoJsonPath").definedInClass("com.jayway.jsonpath.matchers.JsonPathMatchers"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("withJsonPath").definedInClass("com.jayway.jsonpath.matchers.JsonPathMatchers"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("withoutJsonPath").definedInClass("com.jayway.jsonpath.matchers.JsonPathMatchers"))]]></place>
+  </injection>
+  <injection language="JSONPath" injector-id="java">
+    <display-name>JsonAsserter (com.jayway.jsonpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("assertThat").definedInClass("com.jayway.jsonassert.JsonAsserter"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("assertEquals").definedInClass("com.jayway.jsonassert.JsonAsserter"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("assertNotDefined").definedInClass("com.jayway.jsonassert.JsonAsserter"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("assertNull").definedInClass("com.jayway.jsonassert.JsonAsserter"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("assertNotNull").definedInClass("com.jayway.jsonassert.JsonAsserter"))]]></place>
   </injection>
 </component>
