@@ -26,8 +26,8 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   private PsiField[] myFields;
   private PsiMethod[] myMethods;
 
-  private Supplier<Collection<PsiField>> fieldSupplier = Collections::emptyList;
-  private Supplier<Collection<PsiMethod>> methodSupplier = Collections::emptyList;
+  private Supplier<? extends Collection<PsiField>> fieldSupplier = Collections::emptyList;
+  private Supplier<? extends Collection<PsiMethod>> methodSupplier = Collections::emptyList;
 
   public LombokLightClassBuilder(@NotNull PsiElement context, @NotNull String simpleName, @NotNull String qualifiedName) {
     super(context, simpleName);
@@ -87,20 +87,20 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   }
 
   @Override
-  public @NotNull PsiField[] getFields() {
+  public PsiField @NotNull [] getFields() {
     if (null == myFields) {
       Collection<PsiField> generatedFields = fieldSupplier.get();
-      myFields = generatedFields.toArray(new PsiField[0]);
+      myFields = generatedFields.toArray(PsiField.EMPTY_ARRAY);
       fieldSupplier = Collections::emptyList;
     }
     return myFields;
   }
 
   @Override
-  public @NotNull PsiMethod[] getMethods() {
+  public PsiMethod @NotNull [] getMethods() {
     if (null == myMethods) {
       Collection<PsiMethod> generatedMethods = methodSupplier.get();
-      myMethods = generatedMethods.toArray(new PsiMethod[0]);
+      myMethods = generatedMethods.toArray(PsiMethod.EMPTY_ARRAY);
       methodSupplier = Collections::emptyList;
     }
     return myMethods;
@@ -121,12 +121,12 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     return Collections.emptyList();
   }
 
-  public LombokLightClassBuilder withFieldSupplier(final Supplier<Collection<PsiField>> fieldSupplier) {
+  public LombokLightClassBuilder withFieldSupplier(final Supplier<? extends Collection<PsiField>> fieldSupplier) {
     this.fieldSupplier = fieldSupplier;
     return this;
   }
 
-  public LombokLightClassBuilder withMethodSupplier(final Supplier<Collection<PsiMethod>> methodSupplier) {
+  public LombokLightClassBuilder withMethodSupplier(final Supplier<? extends Collection<PsiMethod>> methodSupplier) {
     this.methodSupplier = methodSupplier;
     return this;
   }
@@ -183,7 +183,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
       return false;
     }
 
-    LombokLightClassBuilder that = (LombokLightClassBuilder) o;
+    LombokLightClassBuilder that = (LombokLightClassBuilder)o;
 
     return myQualifiedName.equals(that.myQualifiedName);
   }
@@ -192,5 +192,4 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   public int hashCode() {
     return myQualifiedName.hashCode();
   }
-
 }

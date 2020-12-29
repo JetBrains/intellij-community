@@ -19,7 +19,7 @@ import java.util.List;
  */
 public interface Processor {
   @NotNull
-  String[] getSupportedAnnotationClasses();
+  String @NotNull[] getSupportedAnnotationClasses();
 
   @NotNull
   Class<? extends PsiElement> getSupportedClass();

@@ -309,10 +309,4 @@
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
   </actions>
-
-  <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
-  <!--<li>TODO: Add delombok action for @Cleanup, @Synchronized and other annotations</li>-->
-
-  <!--TODO @Builder requires specifying 'builderClassName' if used on methods with a type parameter as return type.-->
-  <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
 </idea-plugin>
