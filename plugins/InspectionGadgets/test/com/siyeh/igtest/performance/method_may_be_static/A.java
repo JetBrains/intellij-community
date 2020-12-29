@@ -76,3 +76,13 @@ class X {
 
   native void foo();
 }
+
+
+interface IntSupplier {
+  Object[] supply(int dim);
+}
+class WithArrayReference {
+  private void <warning descr="Method 'foo()' may be 'static'">foo</warning>() {
+    IntSupplier aNew = Object[]::new;
+  }
+}
