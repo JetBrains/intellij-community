@@ -1799,12 +1799,11 @@
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.FillPermitsListInspection"/>
-
-    <localInspection groupPath="Java" language="JAVA" shortName="ValueBasedWarnings"
+    <localInspection groupPath="Java" language="JAVA" suppressId="synchronization" shortName="SynchronizeOnValueBasedClass"
                      key="inspection.value.based.warnings" bundle="messages.JavaBundle"
                      groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.valuebased.ValueBasedWarningsInspection"/>
+                     implementationClass="com.intellij.codeInspection.valuebased.SynchronizeOnValueBasedClassInspection"/>
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"

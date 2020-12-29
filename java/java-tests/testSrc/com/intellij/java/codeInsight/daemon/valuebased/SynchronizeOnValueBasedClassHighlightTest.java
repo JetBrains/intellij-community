@@ -2,13 +2,13 @@
 package com.intellij.java.codeInsight.daemon.valuebased;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.valuebased.ValueBasedWarningsInspection;
+import com.intellij.codeInspection.valuebased.SynchronizeOnValueBasedClassInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ValueBasedWarningsTest extends LightJavaCodeInsightFixtureTestCase {
+public class SynchronizeOnValueBasedClassHighlightTest extends LightJavaCodeInsightFixtureTestCase {
   static final @NonNls String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/valuebased";
 
   @Override
@@ -21,7 +21,7 @@ public class ValueBasedWarningsTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.configureByFile(abstractValueBased);
     myFixture.configureByFile(ivalueBased);
     myFixture.configureByFile(openValueBased);
-    myFixture.enableInspections(new ValueBasedWarningsInspection());
+    myFixture.enableInspections(new SynchronizeOnValueBasedClassInspection());
   }
 
   public void testExtendValueBasedClass() { doTest(); }

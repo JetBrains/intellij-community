@@ -11,6 +11,8 @@ class AC extends AbstractValueBased {
     synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">localAc</warning>) {}
     synchronized (AC.class) {}
 
+    synchronized (new Object()) {}
+
     f(ac);
     g(ac);
   }
@@ -20,6 +22,11 @@ class AC extends AbstractValueBased {
   }
 
   void g(Object ac) {
+    synchronized (ac) {}
+  }
+
+  @SuppressWarnings("synchronization")
+  void h(AC ac) {
     synchronized (ac) {}
   }
 }

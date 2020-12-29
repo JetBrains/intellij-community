@@ -22,4 +22,9 @@ class IVB implements IValueBased {
   void g(Object vb) {
     synchronized (vb) {}
   }
+
+  @SuppressWarnings("synchronization")
+  void h(IVB vb) {
+    synchronized (vb) {}
+  }
 }

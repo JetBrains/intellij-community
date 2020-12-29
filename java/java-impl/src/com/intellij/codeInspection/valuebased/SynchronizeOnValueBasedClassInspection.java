@@ -14,8 +14,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public final class ValueBasedWarningsInspection extends LocalInspectionTool {
+public final class SynchronizeOnValueBasedClassInspection extends LocalInspectionTool {
   private static final @NonNls String ANNOTATION_NAME = "jdk.internal.ValueBased";
+
+  @Override
+  public @NotNull String getID() {
+    return "synchronization";
+  }
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
@@ -30,24 +35,38 @@ public final class ValueBasedWarningsInspection extends LocalInspectionTool {
         final PsiExpression monitor = statement.getLockExpression();
         if (monitor == null) return;
 
-        final TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(monitor));
+        final PsiType monitorType = monitor.getType();
+        if (monitorType == null) return;
 
-        final PsiType type = constraint.getPsiType(statement.getProject());
+        if (!isValueBasedClass(monitorType)) {
+          final TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(monitor));
+          final PsiType inferredType = constraint.getPsiType(statement.getProject());
 
-        if (!extendsValueBasedClass(type)) return;
+          if (monitorType.equals(inferredType)) return;
+
+          if (!isValueBasedClass(inferredType)) return;
+        }
 
         holder.registerProblem(monitor, JavaBundle.message("inspection.value.based.warnings.synchronization"));
       }
     };
   }
 
+  /**
+   * A class is considered a value-based class when it is annotated with <code>jdk.internal.ValueBased</code>.
+   * Wherever the annotation is applied to an abstract class or interface, it is also applied to all subclasses in the JDK,
+   * so all such subclasses are considered value-based classes
+   *
+   * @param type type to decide if it's of a value-based class
+   * @return true when the argument is of a value-based class
+   */
   @Contract(value = "null -> false", pure = true)
-  private static boolean extendsValueBasedClass(PsiType type) {
+  private static boolean isValueBasedClass(PsiType type) {
     final PsiClass classType = PsiTypesUtil.getPsiClass(type);
     if (classType == null) return false;
 
     if (classType.hasAnnotation(ANNOTATION_NAME)) return true;
 
-    return ContainerUtil.or(type.getSuperTypes(), superType -> extendsValueBasedClass(superType));
+    return ContainerUtil.or(type.getSuperTypes(), superType -> isValueBasedClass(superType));
   }
 }

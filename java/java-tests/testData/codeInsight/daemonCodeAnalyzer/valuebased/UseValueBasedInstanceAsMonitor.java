@@ -21,4 +21,9 @@ class Main {
   void g(Object vb) {
     synchronized (vb) {}
   }
+
+  @SuppressWarnings("synchronization")
+  void h(OpenValueBased vb) {
+    synchronized (vb) {}
+  }
 }
