@@ -100,8 +100,7 @@ class ExternalSystemModulePropertyManagerImpl(private val module: Module) : Exte
     store.unlinkExternalOptions()
   }
 
-  override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?,
-                                  modelsProvider: IdeModifiableModelsProvider?) {
+  override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) {
     // clear maven option, must be first
     store.isMavenized = false
 
@@ -126,7 +125,7 @@ class ExternalSystemModulePropertyManagerImpl(private val module: Module) : Exte
     store.rootProjectPath = path
   }
 
-  override fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider?) {
+  override fun setExternalModuleType(type: String?) {
     store.externalSystemModuleType = type
   }
 }

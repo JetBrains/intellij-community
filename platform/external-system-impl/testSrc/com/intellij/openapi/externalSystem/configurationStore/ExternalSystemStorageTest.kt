@@ -127,8 +127,8 @@ class ExternalSystemStorageTest {
 
             val modelsProvider = IdeModifiableModelsProviderImpl(project)
 
-            propertyManager.setExternalOptions(systemId, moduleData, projectData, modelsProvider)
-            propertyManager.setExternalOptions(systemId, moduleData, projectData, modelsProvider)
+            propertyManager.setExternalOptions(systemId, moduleData, projectData)
+            propertyManager.setExternalOptions(systemId, moduleData, projectData)
 
             val externalOptionsFromBuilder = modelsProvider.actualStorageBuilder
               .entities(ModuleEntity::class.java).singleOrNull()?.externalSystemOptions
