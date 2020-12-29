@@ -92,6 +92,7 @@ public class PyBlock implements ASTBlock {
   private Alignment myDictAlignment = null;
   private Wrap myDictWrapping = null;
   private Wrap myFromImportWrapping = null;
+  private Wrap myParameterListWrapping = null;
 
   public PyBlock(@Nullable PyBlock parent,
                  @NotNull ASTNode node,
@@ -107,6 +108,7 @@ public class PyBlock implements ASTBlock {
     myContext = context;
     myEmptySequence = isEmptySequence(node);
 
+    final CommonCodeStyleSettings settings = myContext.getSettings();
     final PyCodeStyleSettings pySettings = myContext.getPySettings();
     if (node.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION) {
       myDictAlignment = Alignment.createAlignment(true);
@@ -114,6 +116,9 @@ public class PyBlock implements ASTBlock {
     }
     else if (node.getElementType() == PyElementTypes.FROM_IMPORT_STATEMENT) {
       myFromImportWrapping = Wrap.createWrap(pySettings.FROM_IMPORT_WRAPPING, false);
+    }
+    else if (node.getElementType() == PyElementTypes.PARAMETER_LIST) {
+      myParameterListWrapping = Wrap.createWrap(settings.METHOD_PARAMETERS_WRAP, settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE);
     }
   }
 
@@ -397,6 +402,12 @@ public class PyBlock implements ASTBlock {
     }
     if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
       childWrap = myDictWrapping;
+    }
+    if (parentType == PyElementTypes.PARAMETER_LIST &&
+        childType != PyTokenTypes.COMMA &&
+        childType != PyTokenTypes.LPAR &&
+        childType != PyTokenTypes.RPAR) {
+      childWrap = myParameterListWrapping;
     }
 
     if (isAfterStatementList(child) &&
