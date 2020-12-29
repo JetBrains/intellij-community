@@ -5,7 +5,6 @@ package com.intellij.openapi.projectRoots.impl
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Bitness
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.util.io.exists
@@ -26,8 +25,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     private val javaHomePattern = Regex("""^\s+JavaHome\s+REG_SZ\s+(\S.+\S)\s*$""", setOf(MULTILINE, IGNORE_CASE))
 
     /**
-     * Whether the OS is 64-bit. Don't mix with JRE.
-     * SIC! it's not the same as [SystemInfo.is64Bit].
+     * Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]).
      */
     private val os64bit: Boolean = !System.getenv("ProgramFiles(x86)").isNullOrBlank()
 
