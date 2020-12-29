@@ -4,6 +4,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
 
+import java.util.Objects;
+
 /**
  * @author Plushnikov Michail
  */
@@ -12,7 +14,8 @@ public class LombokProblem {
 
   private final ProblemHighlightType highlightType;
   private final LocalQuickFix[] quickFixes;
-  @InspectionMessage private final String message;
+  @InspectionMessage
+  private final String message;
 
   public LombokProblem(@InspectionMessage String message) {
     this(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, EMPTY_QUICK_FIX);
@@ -56,11 +59,11 @@ public class LombokProblem {
 
     LombokProblem that = (LombokProblem) o;
 
-    return !(message != null ? !message.equals(that.message) : that.message != null);
+    return Objects.equals(message, that.message);
   }
 
   @Override
   public int hashCode() {
-    return message != null ? message.hashCode() : 0;
+    return Objects.hashCode(message);
   }
 }
