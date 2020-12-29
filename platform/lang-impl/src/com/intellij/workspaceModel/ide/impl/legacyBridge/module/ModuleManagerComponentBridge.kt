@@ -297,7 +297,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   private fun addModule(moduleEntity: ModuleEntity): ModuleBridge {
-    val module = createModuleInstance(moduleEntity, entityStore, diff = null, isNew = false)
+    val module = createModuleInstance(moduleEntity, entityStore, diff = null, isNew = true)
     WorkspaceModel.getInstance(project).updateProjectModelSilent {
       it.mutableModuleMap.addMapping(moduleEntity, module)
     }
