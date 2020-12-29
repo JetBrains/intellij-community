@@ -151,17 +151,17 @@ abstract class AnnotationTestFixtureBase(
         checkAfter = this::checkByText,
         testmark = testmark)
 
-    protected open fun check(
-        text: String,
+    protected open fun <T> check(
+        content: T,
         checkWarn: Boolean,
         checkInfo: Boolean,
         checkWeakWarn: Boolean,
         ignoreExtraHighlighting: Boolean,
-        configure: (String) -> Unit,
+        configure: (T) -> Unit,
         testmark: Testmark? = null
     ) {
         val action: () -> Unit = {
-            configure(text)
+            configure(content)
             codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
         }
         testmark?.checkHit(action) ?: action()
