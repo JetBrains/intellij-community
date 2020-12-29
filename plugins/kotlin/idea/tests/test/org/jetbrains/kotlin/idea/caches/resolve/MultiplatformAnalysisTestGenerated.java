@@ -175,7 +175,7 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
 
     @TestMetadata("multiplatformLibrary")
     public void testMultiplatformLibrary() throws Exception {
-        runTest("idea/testData/multiplatform/multiplatformLibrary/");
+        runTest("testData/multiplatform/multiplatformLibrary/");
     }
 
     @TestMetadata("overrideExpect")
@@ -240,7 +240,7 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
 
     @TestMetadata("unresolvedInMultiplatformLibrary")
     public void testUnresolvedInMultiplatformLibrary() throws Exception {
-        runTest("idea/testData/multiplatform/unresolvedInMultiplatformLibrary/");
+        runTest("testData/multiplatform/unresolvedInMultiplatformLibrary/");
     }
 
     @TestMetadata("useCorrectBuiltIns")
