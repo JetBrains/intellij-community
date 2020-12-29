@@ -48,7 +48,7 @@ internal class SpaceChatItemImpl private constructor(
   }
 
   override suspend fun delete() {
-    messageVm.delete()
+    chat.deleteMessage(id)
   }
 
   override fun equals(other: Any?): Boolean {

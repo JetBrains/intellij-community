@@ -2,7 +2,7 @@
 package com.intellij.space.utils
 
 import circlet.client.api.*
-import circlet.client.api.apps.ES_Service
+import circlet.client.api.apps.ES_App
 import com.intellij.space.settings.SpaceSettings
 import runtime.routing.Location
 
@@ -17,7 +17,7 @@ object SpaceUrls {
 
   fun revision(key: ProjectKey, repo: String, revision: String): String = p(key).revision(repo, revision).toUrl()
 
-  fun reviews(key: ProjectKey): String = p(key).reviews.toUrl()
+  fun reviews(key: ProjectKey): String = p(key).reviews().toUrl()
 
   fun review(key: ProjectKey, reviewNumber: Int): String = p(key).review(reviewNumber).toUrl()
 
@@ -48,7 +48,7 @@ object SpaceUrls {
   private fun im(): ChatsLocation = Navigator.im
 
   // manage
-  fun service(service: ES_Service): String = Navigator.manage.oauthServices.service(service).href
+  fun app(app: ES_App): String = Navigator.manage.apps.app(app).href
 
   private fun Location.toUrl(): String = absoluteHref(server())
 
