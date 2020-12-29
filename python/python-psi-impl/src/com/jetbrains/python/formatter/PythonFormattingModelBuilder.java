@@ -98,8 +98,13 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
       .betweenInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
+
       .betweenInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES)
-      .withinPairInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES)
+      .afterInside(LPAR, PARAMETER_LIST)
+      .spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES, commonSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE)
+      .beforeInside(RPAR, PARAMETER_LIST)
+      .spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES, commonSettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE)
+
       .withinPairInside(LPAR, RPAR, GENERATOR_EXPRESSION).spaces(0)
       .withinPairInside(LPAR, RPAR, PARENTHESIZED_EXPRESSION).spaces(0)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)
