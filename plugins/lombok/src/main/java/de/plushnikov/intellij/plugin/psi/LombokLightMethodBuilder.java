@@ -10,13 +10,11 @@ import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
 import com.intellij.util.IncorrectOperationException;
 import de.plushnikov.intellij.plugin.icon.LombokIcons;
-import de.plushnikov.intellij.plugin.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -32,7 +30,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
       new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
-      new LombokLightModifierList(manager, JavaLanguage.INSTANCE, Collections.emptySet()),
+      new LombokLightModifierList(manager),
       new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
       new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
     setBaseIcon(LombokIcons.METHOD_ICON);
@@ -255,7 +253,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    ReflectionUtil.setFinalFieldPerReflection(LightMethodBuilder.class, this, String.class, name);
+    setNameIntern(name);
     return this;
   }
 

@@ -34,7 +34,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     myIsEnum = false;
     myQualifiedName = qualifiedName;
     myBaseIcon = LombokIcons.CLASS_ICON;
-    myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage(), Collections.emptyList());
+    myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage());
   }
 
   @NotNull

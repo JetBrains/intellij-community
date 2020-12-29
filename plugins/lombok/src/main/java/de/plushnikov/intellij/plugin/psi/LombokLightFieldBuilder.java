@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.psi;
 
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
@@ -11,7 +10,6 @@ import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -27,7 +25,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     super(manager, name, type);
     myName = name;
     myNameIdentifier = new LombokLightIdentifier(manager, name);
-    myModifierList = new LombokLightModifierList(manager, JavaLanguage.INSTANCE, Collections.emptyList());
+    myModifierList = new LombokLightModifierList(manager);
     setBaseIcon(LombokIcons.FIELD_ICON);
   }
 
