@@ -4,7 +4,6 @@ package com.intellij.ui.jcef;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.jcef.JBCefJSQuery.JSQueryFunc;
 import com.intellij.util.ObjectUtils;
@@ -21,6 +20,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,18 +49,20 @@ public class JBCefClient implements JBCefDisposable {
    * requested via this property. The property should be added to a client before the first browser associated
    * with the client is added to a UI hierarchy, otherwise it will have no effect.
    *
-   * @see #addProperty(String, Object)
+   * @see #setProperty(String, Object)
    */
   @ApiStatus.Experimental
-  public static final String JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP = "JBCefClient.JSQuery.poolSize";
+  @NotNull public static final String JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP = "JBCefClient.JSQuery.poolSize";
+
+  @NotNull private final Map<String, Object> myProperties = Collections.synchronizedMap(new HashMap<>());
+  @NotNull private final PropertyChangeSupport PROPERTY_CHANGE_SUPPORT = new PropertyChangeSupport(this);
 
   private static final int JS_QUERY_SLOT_POOL_DEF_SIZE = RegistryManager.getInstance().intValue("ide.browser.jcef.jsQueryPoolSize");
   private static final int JS_QUERY_SLOT_POOL_MAX_SIZE = 10000;
 
   @NotNull private final CefClient myCefClient;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
-  @NotNull private final Map<String, Object> myProperties = Collections.synchronizedMap(new HashMap<>());
-  @Nullable private JSQueryPool myJSQueryPool;
+  @Nullable private volatile JSQueryPool myJSQueryPool;
   @NotNull private final AtomicInteger myJSQueryCounter = new AtomicInteger(0);
 
   private final HandlerSupport<CefContextMenuHandler> myContextMenuHandler = new HandlerSupport<>();
@@ -77,6 +80,12 @@ public class JBCefClient implements JBCefDisposable {
   JBCefClient(@NotNull CefClient client) {
     myCefClient = client;
     Disposer.register(JBCefApp.getInstance().getDisposable(), this);
+
+    addPropertyChangeListener(JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP, evt -> {
+      if (evt.getNewValue() != null) {
+        myJSQueryPool = JSQueryPool.create(this);
+      }
+    });
   }
 
   @NotNull
@@ -106,20 +115,31 @@ public class JBCefClient implements JBCefDisposable {
    * <ul>
    * <li> {@link #JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP}
    * </ul>
+   * <p></p>
+   * Null values are permitted.
    */
-  public void addProperty(@NotNull String name, @NotNull Object value) {
+  public void setProperty(@NotNull String name, @NotNull Object value) {
+    Object oldValue = myProperties.get(name);
     myProperties.put(name, value);
+    PROPERTY_CHANGE_SUPPORT.firePropertyChange(name, oldValue, value);
   }
 
   /**
-   * @see #addProperty(String, Object)
+   * @see #setProperty(String, Object)
    */
-  public void removeProperty(@NotNull String name) {
-    myProperties.remove(name);
+  void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
+    PROPERTY_CHANGE_SUPPORT.addPropertyChangeListener(name, listener);
   }
 
   /**
-   * @see #addProperty(String, Object)
+   * @see #setProperty(String, Object)
+   */
+  void removePropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
+    PROPERTY_CHANGE_SUPPORT.removePropertyChangeListener(name, listener);
+  }
+
+  /**
+   * @see #setProperty(String, Object)
    */
   @Nullable
   public Object getProperty(@NotNull String name) {
@@ -127,14 +147,8 @@ public class JBCefClient implements JBCefDisposable {
   }
 
   @Nullable
-  synchronized JSQueryPool getJSQueryPool() {
+  JSQueryPool getJSQueryPool() {
     return myJSQueryPool;
-  }
-
-  synchronized void notifyBrowserCreated(@NotNull JBCefBrowserBase browser) {
-    if (myJSQueryPool == null) {
-      myJSQueryPool = JSQueryPool.create(this);
-    }
   }
 
   int nextJSQueryIndex() {
