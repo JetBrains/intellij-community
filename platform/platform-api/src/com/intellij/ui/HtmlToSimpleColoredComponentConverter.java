@@ -38,6 +38,10 @@ public class HtmlToSimpleColoredComponentConverter {
     myStyleTagHandler = mapper;
   }
 
+  public HtmlToSimpleColoredComponentConverter() {
+    this(DEFAULT_TAG_HANDLER);
+  }
+
   public List<Fragment> convert(@NotNull @Nls String htmlString, SimpleTextAttributes defaultAttributes) {
     TextAttributesStack attributesStack = new TextAttributesStack(defaultAttributes);
     List<Fragment> res = new ArrayList<>();

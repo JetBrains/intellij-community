@@ -222,6 +222,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     appendTextPadding(padding, SwingConstants.LEFT);
   }
 
+  public void appendHTML(@Nls String html, SimpleTextAttributes defaultAttributes) {
+    new HtmlToSimpleColoredComponentConverter().appendHtml(this, html, defaultAttributes);
+  }
+
   /**
    * @param padding end offset that will be set after drawing current text fragment
    * @param align alignment of the current text fragment, if it is SwingConstants.RIGHT
