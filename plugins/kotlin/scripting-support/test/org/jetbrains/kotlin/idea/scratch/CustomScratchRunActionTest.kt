@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.idea.scratch
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.run.createLibraryWithLongPaths
 import org.jetbrains.kotlin.idea.test.runAll
@@ -65,7 +65,7 @@ class CustomScratchRunActionTest : AbstractScratchRunActionTest() {
 
     private fun removeLibraryWithLongPaths() {
         runWriteAction {
-            val modifiableModel = ProjectLibraryTable.getInstance(project).modifiableModel
+            val modifiableModel = LibraryTablesRegistrar.getInstance().getLibraryTable(project).modifiableModel
             try {
                 modifiableModel.removeLibrary(library)
             } finally {

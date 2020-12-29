@@ -337,7 +337,12 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
     private fun compileLibToDir(srcDir: File, classpath: List<File>): File {
         val outDir = KotlinTestUtils.tmpDirForReusableFolder("${getTestName(false)}${srcDir.name}Out")
-        KotlinCompilerStandalone(listOf(srcDir), target = outDir, classpath = classpath + listOf(outDir)).compile()
+        KotlinCompilerStandalone(
+            listOf(srcDir),
+            target = outDir,
+            classpath = classpath + listOf(outDir),
+            compileKotlinSourcesBeforeJava = false
+        ).compile()
         return outDir
     }
 

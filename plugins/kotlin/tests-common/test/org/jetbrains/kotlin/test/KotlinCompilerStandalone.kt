@@ -41,7 +41,8 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
     private val platform: Platform = Jvm(),
     private val options: List<String> = emptyList(),
     classpath: List<File> = emptyList(),
-    includeKotlinStdlib: Boolean = true
+    includeKotlinStdlib: Boolean = true,
+    private val compileKotlinSourcesBeforeJava: Boolean = true
 ) {
     sealed class Platform {
         class JavaScript(val moduleName: String, val packageName: String) : Platform() {
@@ -65,18 +66,26 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
     }
 
     private val classpath: List<File>
+    private val targetForJava: File?
 
     init {
         val completeClasspath = classpath.toMutableList()
+        var targetForJava: File? = null
 
         if (includeKotlinStdlib) {
             when (platform) {
-                is Jvm -> completeClasspath += listOf(KotlinArtifacts.instance.kotlinStdlib, KotlinArtifacts.instance.jetbrainsAnnotations)
-                is JavaScript -> completeClasspath += KotlinArtifacts.instance.kotlinStdlibJs
+                is Jvm -> {
+                    targetForJava = KotlinTestUtils.tmpDirForReusableFolder("java-lib")
+                    completeClasspath += listOf(KotlinArtifacts.instance.kotlinStdlib, KotlinArtifacts.instance.jetbrainsAnnotations, targetForJava)
+                }
+                is JavaScript -> {
+                    completeClasspath += KotlinArtifacts.instance.kotlinStdlibJs
+                }
             }
         }
 
         this.classpath = completeClasspath
+        this.targetForJava = targetForJava
     }
 
     fun compile(): File {
@@ -99,23 +108,34 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
 
         val compilerTargets = mutableListOf<File>()
 
-        if (ktFiles.isNotEmpty()) {
-            val targetForKotlin = KotlinTestUtils.tmpDirForReusableFolder("compile-kt")
-            when (platform) {
-                is Jvm -> compileKotlin(ktFiles, javaFiles.isNotEmpty(), targetForKotlin)
-                is JavaScript -> {
-                    val targetJsDir = File(targetForKotlin, platform.moduleName)
-                    val targetJsFile = File(targetJsDir, platform.packageName.substringAfterLast('.') + ".js")
-                    compileKotlin(ktFiles, javaFiles.isNotEmpty(), targetJsFile)
-                }
+        fun compileJava() {
+            if (javaFiles.isNotEmpty() && platform is Jvm) {
+                compileJava(javaFiles, compilerTargets, targetForJava!!, useJava9 = platform.target >= JvmTarget.JVM_9)
+                compilerTargets += targetForJava
             }
-            compilerTargets += targetForKotlin
         }
 
-        if (javaFiles.isNotEmpty() && platform is Jvm) {
-            val targetForJava = KotlinTestUtils.tmpDirForReusableFolder("java-lib")
-            compileJava(javaFiles, compilerTargets, targetForJava, useJava9 = platform.target >= JvmTarget.JVM_9)
-            compilerTargets += targetForJava
+        fun compileKotlin() {
+            if (ktFiles.isNotEmpty()) {
+                val targetForKotlin = KotlinTestUtils.tmpDirForReusableFolder("compile-kt")
+                when (platform) {
+                    is Jvm -> compileKotlin(ktFiles, javaFiles.isNotEmpty(), targetForKotlin)
+                    is JavaScript -> {
+                        val targetJsDir = File(targetForKotlin, platform.moduleName)
+                        val targetJsFile = File(targetJsDir, platform.packageName.substringAfterLast('.') + ".js")
+                        compileKotlin(ktFiles, javaFiles.isNotEmpty(), targetJsFile)
+                    }
+                }
+                compilerTargets += targetForKotlin
+            }
+        }
+
+        if (compileKotlinSourcesBeforeJava) {
+            compileKotlin()
+            compileJava()
+        } else {
+            compileJava()
+            compileKotlin()
         }
 
         val copyFun = if (target.extension.toLowerCase() == "jar") ::copyToJar else ::copyToDirectory
