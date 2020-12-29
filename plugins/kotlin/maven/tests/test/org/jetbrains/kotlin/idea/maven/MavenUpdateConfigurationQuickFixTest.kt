@@ -66,11 +66,6 @@ class MavenUpdateConfigurationQuickFixTest : KotlinMavenImportingTestCase() {
     }
 
     @Test
-    fun testEnableCoroutines() {
-        doTest("Enable coroutine support in the current module")
-    }
-
-    @Test
     fun testEnableInlineClasses() {
         doTest("Enable inline classes support in the current module")
     }
