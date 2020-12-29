@@ -98,6 +98,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES",
                                    "ALIGN_MULTILINE_PARAMETERS",
+                                   "METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
+                                   "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
       consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON",
                                 PyBundle.message("formatter.single.clause.statements"),
