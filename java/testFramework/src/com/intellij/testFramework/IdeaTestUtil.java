@@ -3,18 +3,17 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -216,33 +215,9 @@ public final class IdeaTestUtil {
     ModuleRootModificationUtil.updateModel(module, IdeaTestUtil::addWebJarsToModule);
   }
 
-  public static void removeWebJarsFromModule(@NotNull Module module) {
-    ModuleRootModificationUtil.updateModel(module, model -> {
-      boolean removed = false;
-      for (OrderEntry entry : model.getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry) {
-          LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-          if (libraryOrderEntry.isModuleLevel() && IdeaTestUtil.WEB_JARS_MODULE_LIBRARY_NAME.equals(libraryOrderEntry.getLibraryName())) {
-            model.removeOrderEntry(entry);
-            removed = true;
-            // do not break here to remove all matched entries
-          }
-        }
-      }
-      assertTrue("Module library " + IdeaTestUtil.WEB_JARS_MODULE_LIBRARY_NAME + " was not found in module " + module, removed);
-    });
-  }
-
-  public static final String WEB_JARS_MODULE_LIBRARY_NAME = "webjars";
-
   public static void addWebJarsToModule(@NotNull ModifiableRootModel model) {
-    LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(WEB_JARS_MODULE_LIBRARY_NAME);
-    LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
-
-    libraryModel.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
-    libraryModel.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
-
-    WriteAction.runAndWait(libraryModel::commit);
+    MavenDependencyUtil.addFromMaven(model, "javax.servlet.jsp:javax.servlet.jsp-api:2.3.3");
+    MavenDependencyUtil.addFromMaven(model, "javax.servlet:javax.servlet-api:3.1.0");
   }
 
   private static @NotNull VirtualFile findJar(@NotNull String name) {
