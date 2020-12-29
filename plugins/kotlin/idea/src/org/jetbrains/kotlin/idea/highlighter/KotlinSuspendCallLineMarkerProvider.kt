@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.actionSystem.AnAction
@@ -33,12 +32,12 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
         callElement,
         callElement.textRange,
         KotlinIcons.SUSPEND_CALL,
-        Pass.LINE_MARKERS,
         { message },
         null,
-        GutterIconRenderer.Alignment.RIGHT
+        GutterIconRenderer.Alignment.RIGHT,
+        { message }
     ) {
-        override fun createGutterRenderer(): GutterIconRenderer? {
+        override fun createGutterRenderer(): GutterIconRenderer {
             return object : LineMarkerInfo.LineMarkerGutterIconRenderer<PsiElement>(this) {
                 override fun getClickAction(): AnAction? = null
             }
