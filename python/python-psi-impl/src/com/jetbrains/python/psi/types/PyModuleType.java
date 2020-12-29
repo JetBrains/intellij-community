@@ -575,4 +575,17 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public @Nullable PyQualifiedNameOwner getDeclarationElement() {
     return ObjectUtils.doIfNotNull(getModuleClassType(), PyClassType::getPyClass);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PyModuleType)) return false;
+    PyModuleType type = (PyModuleType)o;
+    return myModule.equals(type.myModule);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myModule);
+  }
 }
