@@ -93,6 +93,7 @@ public class PyBlock implements ASTBlock {
   private Wrap myDictWrapping = null;
   private Wrap myFromImportWrapping = null;
   private Wrap myParameterListWrapping = null;
+  private Wrap myArgumentListWrapping = null;
 
   public PyBlock(@Nullable PyBlock parent,
                  @NotNull ASTNode node,
@@ -119,6 +120,9 @@ public class PyBlock implements ASTBlock {
     }
     else if (node.getElementType() == PyElementTypes.PARAMETER_LIST) {
       myParameterListWrapping = Wrap.createWrap(settings.METHOD_PARAMETERS_WRAP, settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE);
+    }
+    else if (node.getElementType() == PyElementTypes.ARGUMENT_LIST) {
+      myArgumentListWrapping = Wrap.createWrap(settings.CALL_PARAMETERS_WRAP, settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE);
     }
   }
 
@@ -408,6 +412,12 @@ public class PyBlock implements ASTBlock {
         childType != PyTokenTypes.LPAR &&
         childType != PyTokenTypes.RPAR) {
       childWrap = myParameterListWrapping;
+    }
+    if (parentType == PyElementTypes.ARGUMENT_LIST &&
+        childType != PyTokenTypes.COMMA &&
+        childType != PyTokenTypes.LPAR &&
+        childType != PyTokenTypes.RPAR) {
+      childWrap = myArgumentListWrapping;
     }
 
     if (isAfterStatementList(child) &&
