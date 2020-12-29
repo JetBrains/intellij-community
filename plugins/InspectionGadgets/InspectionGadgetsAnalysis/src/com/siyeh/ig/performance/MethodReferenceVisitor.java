@@ -16,7 +16,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -41,8 +44,7 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitReferenceElement(
-    PsiJavaCodeReferenceElement reference) {
+  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
     final PsiClass aClass = ObjectUtils.tryCast(reference.resolve(), PsiClass.class);
     if (aClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getScope() instanceof PsiClass) {
@@ -51,15 +53,23 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(
-    @NotNull PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     final PsiElement qualifier = expression.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiQualifiedExpression) {
       final PsiElement element = expression.resolve();
-      if (element instanceof PsiMember && isMemberStaticallyAccessible((PsiMember)element) ||
-          element != null && !(element instanceof PsiMember)) {
-        return;
+      if (element != null) {
+        if (!(element instanceof PsiMember)) return;
+        PsiMember member = (PsiMember)element;
+        if (member == m_method || member.hasModifierProperty(PsiModifier.STATIC) ||
+            member instanceof PsiClass && member.getContainingClass() == null) {
+          return;
+        }
+        PsiExpression effectiveQualifier = ExpressionUtils.getEffectiveQualifier(expression);
+        if (effectiveQualifier != null) {
+          PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(effectiveQualifier.getType());
+          if (aClass != null && PsiTreeUtil.isAncestor(m_method, aClass, false)) return;
+        }
       }
       m_referencesStaticallyAccessible = false;
     }
@@ -69,11 +79,5 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitThisExpression(@NotNull PsiThisExpression expression) {
     super.visitThisExpression(expression);
     m_referencesStaticallyAccessible = false;
-  }
-
-  private boolean isMemberStaticallyAccessible(PsiMember member) {
-    if (m_method.equals(member)) return true;
-    return member.hasModifierProperty(PsiModifier.STATIC) || 
-           member instanceof PsiClass && member.getContainingClass() == null;
   }
 }

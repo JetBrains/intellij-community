@@ -52,3 +52,27 @@ class V extends B implements Consumer<String> {}
 interface Consumer<T> {
   void accept(T t);
 }
+class Y {
+
+  private void <warning descr="Method 'x()' may be 'static'">x</warning>() {
+    new Object() {
+      String s;
+      void z() {
+        s.hashCode();
+      }
+    };
+  }
+}
+class X {
+  private void test() {
+    new X() {
+      void run() {
+        foo();
+        test();
+        X.this.test();
+      }
+    };
+  }
+
+  native void foo();
+}
