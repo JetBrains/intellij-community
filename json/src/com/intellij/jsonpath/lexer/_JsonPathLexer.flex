@@ -51,7 +51,9 @@ INDEX_LITERAL=0|[\-]?[1-9][0-9]*
 ESCAPE_SEQUENCE=\\[^\r\n]
 SINGLE_QUOTED_STRING=\'([^\\\'\r\n]|{ESCAPE_SEQUENCE})*(\'|\\)?
 DOUBLE_QUOTED_STRING=\"([^\\\"\r\n]|{ESCAPE_SEQUENCE})*(\"|\\)?
-REGEX_STRING="/"~"/"[a-zA-Z]*
+
+ESCAPED_SLASH=\\\/
+REGEX_STRING=\/([^/]|{ESCAPED_SLASH})*(\/)?[a-zA-Z]*
 
 DIGIT=[0-9]
 DOUBLE_LITERAL=(({FLOATING_POINT_LITERAL1})|({FLOATING_POINT_LITERAL2})|({FLOATING_POINT_LITERAL3}))
@@ -59,6 +61,8 @@ FLOATING_POINT_LITERAL1=({DIGIT})+"."({DIGIT})*({EXPONENT_PART})?
 FLOATING_POINT_LITERAL2="."({DIGIT})+({EXPONENT_PART})?
 FLOATING_POINT_LITERAL3=({DIGIT})+({EXPONENT_PART})
 EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
+
+IN_OP=[iI][nN]
 
 %eof{
   resetInternal();
@@ -115,7 +119,7 @@ EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
   "=="                                 { return JsonPathTypes.EQ_OP; }
   "!="                                 { return JsonPathTypes.NE_OP; }
   "=~"                                 { pushState(REGEX_EXPECTED); return JsonPathTypes.RE_OP; }
-  "in"                                 { return JsonPathTypes.IN_OP; } // todo nin, subsetof, anyof, noneof, size, empty
+  {IN_OP}                              { return JsonPathTypes.IN_OP; } // todo nin, subsetof, anyof, noneof, size, empty
   ">"                                  { return JsonPathTypes.GT_OP; }
   "<"                                  { return JsonPathTypes.LT_OP; }
   ">="                                 { return JsonPathTypes.GE_OP; }

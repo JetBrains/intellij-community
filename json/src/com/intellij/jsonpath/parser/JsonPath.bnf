@@ -14,20 +14,23 @@
   tokenTypeClass="com.intellij.jsonpath.psi.JsonPathTokenType"
 }
 
-private root ::= wildcardLiteral | functionCall | (head_ segments_*)
+private root ::= functionCall | (head_ segments_*)
 
-private head_ ::= rootSegment | evalSegment | idSegment | quotedSegment
-private segments_ ::= ((RECURSIVE_DESCENT | DOT) (functionCall | idSegment | wildcardLiteral | quotedSegment)) | quotedSegment
+private head_ ::= (rootSegment | evalSegment | idSegment | quotedSegment | wildcardSegment)
+private segments_ ::= dotExpr | scanExpr | dotSegment | quotedSegment
 
-rootSegment ::= ROOT_CONTEXT segmentExpression?
-evalSegment ::= EVAL_CONTEXT segmentExpression?
+rootSegment ::= ROOT_CONTEXT segmentExpression*
+evalSegment ::= EVAL_CONTEXT segmentExpression*
 
-wildcardLiteral ::= WILDCARD {
+private dotSegment ::= ((RECURSIVE_DESCENT | DOT) (functionCall | idSegment | wildcardSegment | quotedSegment))
+private dotExpr ::= DOT segmentExpression+
+private scanExpr ::= RECURSIVE_DESCENT segmentExpression+
+
+wildcardSegment ::= WILDCARD segmentExpression* {
   name="wildcard"
 }
-idSegment ::= (IDENTIFIER segmentExpression?)
-
-quotedSegment ::= LBRACKET quotedPathsList RBRACKET segmentExpression?
+idSegment ::= IDENTIFIER segmentExpression*
+quotedSegment ::= LBRACKET quotedPathsList RBRACKET segmentExpression*
 quotedPathsList ::= stringLiteral (COMMA stringLiteral)*
 
 functionCall ::= functionName LPARENTH functionArgsList? RPARENTH
@@ -41,7 +44,7 @@ functionArgsList ::= expression (COMMA expression)* {
 segmentExpression ::= LBRACKET nestedExpression_ RBRACKET
 
 private nestedExpression_ ::=
-  wildcardLiteral |
+  wildcardSegment |
   FILTER_OPERATOR (LPARENTH filterExpression RPARENTH)? | // standalone filter operator may be substituted by programmatic filter
   (LPARENTH indexExpression RPARENTH) | // supported only in some implementations
   spliceExpression |

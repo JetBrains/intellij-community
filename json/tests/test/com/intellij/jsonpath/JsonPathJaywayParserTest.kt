@@ -47,6 +47,10 @@ class JsonPathJaywayParserTest : JsonPathParsingTestCase("jayway") {
     doCodeTest("\$.regex[?(@ =~ /^\\w+\$/U)]")
   }
 
+  fun testRegexWithEscapedSlash() {
+    doCodeTest("\$[?(@ =~ /\\/|x/)]")
+  }
+
   fun testMultipleQuotedPaths() {
     doCodeTest("\$['a', 'x']")
   }
@@ -77,6 +81,26 @@ class JsonPathJaywayParserTest : JsonPathParsingTestCase("jayway") {
 
   fun testOrOperator() {
     doCodeTest("\$.text[?(@.name == 'name' || $.length() < 2)]")
+  }
+
+  fun testSubsequentArrayIndexes() {
+    doCodeTest("\$..[2][3]")
+  }
+
+  fun testScanWithFilter() {
+    doCodeTest("\$..*[?(@.length() > 5)]")
+  }
+
+  fun testMultiPropsInTheMiddle() {
+    doCodeTest("\$[*][*]['a', 'c'].v")
+  }
+
+  fun testInOperatorUpperCase() {
+    doCodeTest("$[?(@.a IN @.b)]")
+  }
+
+  fun testInOperatorLowerCase() {
+    doCodeTest("$[?('demo' in @.array)]")
   }
 
   fun testArrayLiterals() {

@@ -5,5 +5,5 @@ JsonPathFile
   JsonPathIdSegmentImpl(ID_SEGMENT)
     PsiElement(IDENTIFIER)('store')
   PsiElement(DOT)('.')
-  JsonPathWildcardLiteralImpl(WILDCARD_LITERAL)
+  JsonPathWildcardSegmentImpl(WILDCARD_SEGMENT)
     PsiElement(WILDCARD)('*')
