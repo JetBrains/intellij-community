@@ -63,7 +63,14 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     if (d != 0) {
       return d;
     }
-    return super.compareEqualStartIntervals(i1, i2);
+    int result = super.compareEqualStartIntervals(i1, i2);
+    if (result != 0) {
+      return result;
+    }
+
+    boolean persistent1 = o1.isFlagSet(RHNode.IS_PERSISTENT);
+    boolean persistent2 = o2.isFlagSet(RHNode.IS_PERSISTENT);
+    return persistent1 == persistent2 ? 0 : persistent1 ? -1 : 1;
   }
 
   @NotNull
@@ -75,6 +82,7 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
 
   static class RHNode extends RMNode<RangeHighlighterEx> {
     private static final byte RENDERED_IN_GUTTER_FLAG = STICK_TO_RIGHT_FLAG << 1;
+    static final byte IS_PERSISTENT = (byte)(RENDERED_IN_GUTTER_FLAG << 1);
 
     final int myLayer;
 
@@ -88,6 +96,7 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
            int layer) {
       super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
       myLayer = layer;
+      setFlag(IS_PERSISTENT, key.isPersistent());
     }
 
     private void recalculateRenderFlags() {

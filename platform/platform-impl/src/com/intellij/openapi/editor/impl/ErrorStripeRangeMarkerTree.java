@@ -18,7 +18,13 @@ class ErrorStripeRangeMarkerTree extends HardReferencingRangeMarkerTree<ErrorStr
     if (d != 0) {
       return d;
     }
-    return super.compareEqualStartIntervals(i1, i2);
+    int result = super.compareEqualStartIntervals(i1, i2);
+    if (result != 0) {
+      return result;
+    }
+    boolean persistent1 = o1.isFlagSet(RangeHighlighterTree.RHNode.IS_PERSISTENT);
+    boolean persistent2 = o2.isFlagSet(RangeHighlighterTree.RHNode.IS_PERSISTENT);
+    return persistent1 == persistent2 ? 0 : persistent1 ? -1 : 1;
   }
 
   @NotNull
@@ -41,6 +47,7 @@ class ErrorStripeRangeMarkerTree extends HardReferencingRangeMarkerTree<ErrorStr
          int layer) {
       super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
       myLayer = layer;
+      setFlag(RangeHighlighterTree.RHNode.IS_PERSISTENT, key.getHighlighter().isPersistent());
     }
 
   }
