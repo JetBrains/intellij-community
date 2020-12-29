@@ -122,6 +122,10 @@
       <category>JSON</category>
     </intentionAction>
     <notificationGroup id="JSON Schema" displayType="NONE"/>
+
+    <lang.parserDefinition language="JSONPath" implementationClass="com.intellij.jsonpath.psi.JsonPathParserDefinition"/>
+    <lang.braceMatcher language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathPairedBraceMatcher"/>
+    <lang.quoteHandler language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathQuoteHandler"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>
