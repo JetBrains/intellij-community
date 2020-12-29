@@ -4,8 +4,5 @@ class A {
         <caret>if (c) {
             foo();
         }
-        else {
-            return;
-        }
     }
 }
