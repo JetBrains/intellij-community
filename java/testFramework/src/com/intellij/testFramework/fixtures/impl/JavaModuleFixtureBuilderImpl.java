@@ -24,6 +24,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ArrayUtil;
@@ -39,6 +40,8 @@ import java.util.Map;
 
 public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
   private final List<Lib> myLibraries = new ArrayList<>();
+  private final List<MavenLib> myMavenLibraries = new ArrayList<>();
+
   private String myJdk;
   private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
   private LanguageLevel myLanguageLevel;
@@ -75,6 +78,12 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
   @Override
   public JavaModuleFixtureBuilder addLibrary(@NonNls final String libraryName, @NotNull final Map<OrderRootType, String[]> roots) {
     myLibraries.add(new Lib(libraryName, roots));
+    return this;
+  }
+
+  @Override
+  public @NotNull JavaModuleFixtureBuilder addMavenLibrary(@NotNull MavenLib lib) {
+    myMavenLibraries.add(lib);
     return this;
   }
 
@@ -137,6 +146,11 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
         }
 
         libraryModel.commit();
+      }
+
+      for (MavenLib mavenLib : myMavenLibraries) {
+        MavenDependencyUtil.addFromMaven(model, mavenLib.getCoordinates(), mavenLib.isIncludeTransitiveDependencies(),
+                                         mavenLib.getDependencyScope());
       }
 
       final Sdk jdk;
