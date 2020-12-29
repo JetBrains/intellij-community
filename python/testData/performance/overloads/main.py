@@ -1,3 +1,3 @@
 from overloads import func
 
-expr = func(999, 'foo')
+expr = fu<caret>nc(999, 'foo')
