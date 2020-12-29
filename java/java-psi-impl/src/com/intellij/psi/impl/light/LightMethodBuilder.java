@@ -33,7 +33,7 @@ import java.util.Objects;
  * @author peter
  */
 public class LightMethodBuilder extends LightElement implements PsiMethod, OriginInfoAwareElement {
-  private String myName;
+  private final String myName;
   private Computable<? extends PsiType> myReturnType;
   private final PsiModifierList myModifierList;
   private final PsiParameterList myParameterList;
@@ -127,10 +127,6 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   @NotNull
   public String getName() {
     return myName;
-  }
-
-  protected void setNameIntern(@NotNull String name) {
-    myName = name;
   }
 
   @Override

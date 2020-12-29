@@ -253,7 +253,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    setNameIntern(name);
+    //just do nothing here
     return this;
   }
 
