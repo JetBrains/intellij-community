@@ -1489,8 +1489,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final PyCollectionType genericType = as(coroutineOrGeneratorType, PyCollectionType.class);
     final PyClassType classType = as(coroutineOrGeneratorType, PyClassType.class);
 
-    if (genericType != null && classType != null && ArrayUtil.contains(classType.getClassQName(), COROUTINE, GENERATOR)) {
-      return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null));
+    if (genericType != null && classType != null) {
+      var qName = classType.getClassQName();
+
+      if ("typing.Awaitable".equals(qName)) {
+        return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 0, null));
+      }
+
+      if (ArrayUtil.contains(qName, COROUTINE, GENERATOR)) {
+        return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null));
+      }
     }
 
     return null;
