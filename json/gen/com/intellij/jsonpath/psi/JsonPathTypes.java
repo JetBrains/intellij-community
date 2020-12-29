@@ -40,7 +40,7 @@ public interface JsonPathTypes {
   IElementType STRING_LITERAL = new JsonPathElementType("STRING_LITERAL");
   IElementType UNARY_MINUS_EXPRESSION = new JsonPathElementType("UNARY_MINUS_EXPRESSION");
   IElementType UNARY_NOT_EXPRESSION = new JsonPathElementType("UNARY_NOT_EXPRESSION");
-  IElementType WILDCARD_LITERAL = new JsonPathElementType("WILDCARD_LITERAL");
+  IElementType WILDCARD_SEGMENT = new JsonPathElementType("WILDCARD_SEGMENT");
 
   IElementType AND_OP = new JsonPathTokenType("AND_OP");
   IElementType COLON = new JsonPathTokenType("COLON");
@@ -172,8 +172,8 @@ public interface JsonPathTypes {
       else if (type == UNARY_NOT_EXPRESSION) {
         return new JsonPathUnaryNotExpressionImpl(node);
       }
-      else if (type == WILDCARD_LITERAL) {
-        return new JsonPathWildcardLiteralImpl(node);
+      else if (type == WILDCARD_SEGMENT) {
+        return new JsonPathWildcardSegmentImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

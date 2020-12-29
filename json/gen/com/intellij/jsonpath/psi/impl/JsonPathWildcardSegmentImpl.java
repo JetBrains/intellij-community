@@ -11,20 +11,26 @@ import static com.intellij.jsonpath.psi.JsonPathTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.jsonpath.psi.*;
 
-public class JsonPathWildcardLiteralImpl extends ASTWrapperPsiElement implements JsonPathWildcardLiteral {
+public class JsonPathWildcardSegmentImpl extends ASTWrapperPsiElement implements JsonPathWildcardSegment {
 
-  public JsonPathWildcardLiteralImpl(@NotNull ASTNode node) {
+  public JsonPathWildcardSegmentImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull JsonPathVisitor visitor) {
-    visitor.visitWildcardLiteral(this);
+    visitor.visitWildcardSegment(this);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonPathVisitor) accept((JsonPathVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  @NotNull
+  public List<JsonPathSegmentExpression> getSegmentExpressionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathSegmentExpression.class);
   }
 
 }

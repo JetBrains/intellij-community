@@ -64,7 +64,68 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // EVAL_CONTEXT segmentExpression?
+  // DOT segmentExpression+
+  static boolean dotExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dotExpr")) return false;
+    if (!nextTokenIs(b, DOT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DOT);
+    r = r && dotExpr_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // segmentExpression+
+  private static boolean dotExpr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dotExpr_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = segmentExpression(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!segmentExpression(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "dotExpr_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // (RECURSIVE_DESCENT | DOT) (functionCall | idSegment | wildcardSegment | quotedSegment)
+  static boolean dotSegment(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dotSegment")) return false;
+    if (!nextTokenIs(b, "", DOT, RECURSIVE_DESCENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = dotSegment_0(b, l + 1);
+    r = r && dotSegment_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // RECURSIVE_DESCENT | DOT
+  private static boolean dotSegment_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dotSegment_0")) return false;
+    boolean r;
+    r = consumeToken(b, RECURSIVE_DESCENT);
+    if (!r) r = consumeToken(b, DOT);
+    return r;
+  }
+
+  // functionCall | idSegment | wildcardSegment | quotedSegment
+  private static boolean dotSegment_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "dotSegment_1")) return false;
+    boolean r;
+    r = functionCall(b, l + 1);
+    if (!r) r = idSegment(b, l + 1);
+    if (!r) r = wildcardSegment(b, l + 1);
+    if (!r) r = quotedSegment(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // EVAL_CONTEXT segmentExpression*
   public static boolean evalSegment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "evalSegment")) return false;
     if (!nextTokenIs(b, EVAL_CONTEXT)) return false;
@@ -76,10 +137,14 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // segmentExpression?
+  // segmentExpression*
   private static boolean evalSegment_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "evalSegment_1")) return false;
-    segmentExpression(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!segmentExpression(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "evalSegment_1", c)) break;
+    }
     return true;
   }
 
@@ -163,7 +228,7 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // rootSegment | evalSegment | idSegment | quotedSegment
+  // rootSegment | evalSegment | idSegment | quotedSegment | wildcardSegment
   static boolean head_(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "head_")) return false;
     boolean r;
@@ -171,11 +236,12 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
     if (!r) r = evalSegment(b, l + 1);
     if (!r) r = idSegment(b, l + 1);
     if (!r) r = quotedSegment(b, l + 1);
+    if (!r) r = wildcardSegment(b, l + 1);
     return r;
   }
 
   /* ********************************************************** */
-  // IDENTIFIER segmentExpression?
+  // IDENTIFIER segmentExpression*
   public static boolean idSegment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "idSegment")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
@@ -187,10 +253,14 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // segmentExpression?
+  // segmentExpression*
   private static boolean idSegment_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "idSegment_1")) return false;
-    segmentExpression(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!segmentExpression(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "idSegment_1", c)) break;
+    }
     return true;
   }
 
@@ -240,7 +310,7 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // wildcardLiteral |
+  // wildcardSegment |
   //   FILTER_OPERATOR (LPARENTH filterExpression RPARENTH)? | // standalone filter operator may be substituted by programmatic filter
   //   (LPARENTH indexExpression RPARENTH) | // supported only in some implementations
   //   spliceExpression |
@@ -249,7 +319,7 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "nestedExpression_")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = wildcardLiteral(b, l + 1);
+    r = wildcardSegment(b, l + 1);
     if (!r) r = nestedExpression__1(b, l + 1);
     if (!r) r = nestedExpression__2(b, l + 1);
     if (!r) r = spliceExpression(b, l + 1);
@@ -361,7 +431,7 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LBRACKET quotedPathsList RBRACKET segmentExpression?
+  // LBRACKET quotedPathsList RBRACKET segmentExpression*
   public static boolean quotedSegment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "quotedSegment")) return false;
     if (!nextTokenIs(b, LBRACKET)) return false;
@@ -375,10 +445,14 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // segmentExpression?
+  // segmentExpression*
   private static boolean quotedSegment_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "quotedSegment_3")) return false;
-    segmentExpression(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!segmentExpression(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "quotedSegment_3", c)) break;
+    }
     return true;
   }
 
@@ -395,42 +469,41 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // wildcardLiteral | functionCall | (head_ segments_*)
+  // functionCall | (head_ segments_*)
   static boolean root(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = wildcardLiteral(b, l + 1);
-    if (!r) r = functionCall(b, l + 1);
-    if (!r) r = root_2(b, l + 1);
+    r = functionCall(b, l + 1);
+    if (!r) r = root_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // head_ segments_*
-  private static boolean root_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "root_2")) return false;
+  private static boolean root_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "root_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = head_(b, l + 1);
-    r = r && root_2_1(b, l + 1);
+    r = r && root_1_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // segments_*
-  private static boolean root_2_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "root_2_1")) return false;
+  private static boolean root_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "root_1_1")) return false;
     while (true) {
       int c = current_position_(b);
       if (!segments_(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "root_2_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "root_1_1", c)) break;
     }
     return true;
   }
 
   /* ********************************************************** */
-  // ROOT_CONTEXT segmentExpression?
+  // ROOT_CONTEXT segmentExpression*
   public static boolean rootSegment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "rootSegment")) return false;
     if (!nextTokenIs(b, ROOT_CONTEXT)) return false;
@@ -442,11 +515,43 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // segmentExpression?
+  // segmentExpression*
   private static boolean rootSegment_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "rootSegment_1")) return false;
-    segmentExpression(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!segmentExpression(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "rootSegment_1", c)) break;
+    }
     return true;
+  }
+
+  /* ********************************************************** */
+  // RECURSIVE_DESCENT segmentExpression+
+  static boolean scanExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "scanExpr")) return false;
+    if (!nextTokenIs(b, RECURSIVE_DESCENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, RECURSIVE_DESCENT);
+    r = r && scanExpr_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // segmentExpression+
+  private static boolean scanExpr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "scanExpr_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = segmentExpression(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!segmentExpression(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "scanExpr_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -464,44 +569,13 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ((RECURSIVE_DESCENT | DOT) (functionCall | idSegment | wildcardLiteral | quotedSegment)) | quotedSegment
+  // dotExpr | scanExpr | dotSegment | quotedSegment
   static boolean segments_(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "segments_")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = segments__0(b, l + 1);
-    if (!r) r = quotedSegment(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (RECURSIVE_DESCENT | DOT) (functionCall | idSegment | wildcardLiteral | quotedSegment)
-  private static boolean segments__0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "segments__0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = segments__0_0(b, l + 1);
-    r = r && segments__0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // RECURSIVE_DESCENT | DOT
-  private static boolean segments__0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "segments__0_0")) return false;
-    boolean r;
-    r = consumeToken(b, RECURSIVE_DESCENT);
-    if (!r) r = consumeToken(b, DOT);
-    return r;
-  }
-
-  // functionCall | idSegment | wildcardLiteral | quotedSegment
-  private static boolean segments__0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "segments__0_1")) return false;
-    boolean r;
-    r = functionCall(b, l + 1);
-    if (!r) r = idSegment(b, l + 1);
-    if (!r) r = wildcardLiteral(b, l + 1);
+    r = dotExpr(b, l + 1);
+    if (!r) r = scanExpr(b, l + 1);
+    if (!r) r = dotSegment(b, l + 1);
     if (!r) r = quotedSegment(b, l + 1);
     return r;
   }
@@ -566,15 +640,27 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // WILDCARD
-  public static boolean wildcardLiteral(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "wildcardLiteral")) return false;
+  // WILDCARD segmentExpression*
+  public static boolean wildcardSegment(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "wildcardSegment")) return false;
     if (!nextTokenIs(b, "<wildcard>", WILDCARD)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, WILDCARD_LITERAL, "<wildcard>");
+    Marker m = enter_section_(b, l, _NONE_, WILDCARD_SEGMENT, "<wildcard>");
     r = consumeToken(b, WILDCARD);
+    r = r && wildcardSegment_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  // segmentExpression*
+  private static boolean wildcardSegment_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "wildcardSegment_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!segmentExpression(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "wildcardSegment_1", c)) break;
+    }
+    return true;
   }
 
   /* ********************************************************** */

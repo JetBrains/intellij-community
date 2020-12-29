@@ -10,7 +10,7 @@ public interface JsonPathQuotedSegment extends PsiElement {
   @NotNull
   JsonPathQuotedPathsList getQuotedPathsList();
 
-  @Nullable
-  JsonPathSegmentExpression getSegmentExpression();
+  @NotNull
+  List<JsonPathSegmentExpression> getSegmentExpressionList();
 
 }

@@ -23,6 +23,9 @@ public interface JsonPathPathExpression extends JsonPathExpression {
   JsonPathRootSegment getRootSegment();
 
   @NotNull
-  List<JsonPathWildcardLiteral> getWildcardLiteralList();
+  List<JsonPathSegmentExpression> getSegmentExpressionList();
+
+  @NotNull
+  List<JsonPathWildcardSegment> getWildcardSegmentList();
 
 }

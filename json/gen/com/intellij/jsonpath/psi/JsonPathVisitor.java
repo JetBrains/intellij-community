@@ -135,7 +135,7 @@ public class JsonPathVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
-  public void visitWildcardLiteral(@NotNull JsonPathWildcardLiteral o) {
+  public void visitWildcardSegment(@NotNull JsonPathWildcardSegment o) {
     visitPsiElement(o);
   }
 

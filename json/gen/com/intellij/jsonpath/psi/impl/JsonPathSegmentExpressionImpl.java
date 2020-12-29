@@ -53,8 +53,8 @@ public class JsonPathSegmentExpressionImpl extends ASTWrapperPsiElement implemen
 
   @Override
   @Nullable
-  public JsonPathWildcardLiteral getWildcardLiteral() {
-    return findChildByClass(JsonPathWildcardLiteral.class);
+  public JsonPathWildcardSegment getWildcardSegment() {
+    return findChildByClass(JsonPathWildcardSegment.class);
   }
 
 }

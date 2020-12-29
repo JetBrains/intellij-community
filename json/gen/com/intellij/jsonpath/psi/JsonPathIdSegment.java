@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface JsonPathIdSegment extends PsiElement {
 
-  @Nullable
-  JsonPathSegmentExpression getSegmentExpression();
+  @NotNull
+  List<JsonPathSegmentExpression> getSegmentExpressionList();
 
 }

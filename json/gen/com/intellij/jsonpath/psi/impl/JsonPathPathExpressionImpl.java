@@ -59,8 +59,14 @@ public class JsonPathPathExpressionImpl extends JsonPathExpressionImpl implement
 
   @Override
   @NotNull
-  public List<JsonPathWildcardLiteral> getWildcardLiteralList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathWildcardLiteral.class);
+  public List<JsonPathSegmentExpression> getSegmentExpressionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathSegmentExpression.class);
+  }
+
+  @Override
+  @NotNull
+  public List<JsonPathWildcardSegment> getWildcardSegmentList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathWildcardSegment.class);
   }
 
 }
