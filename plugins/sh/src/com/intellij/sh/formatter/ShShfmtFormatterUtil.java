@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ public final class ShShfmtFormatterUtil {
 
   private static final @NlsSafe String ARCH_i386 = "_386";
   private static final @NlsSafe String ARCH_x86_64 = "_amd64";
+  private static final @NlsSafe String ARCH_ARM64 = "_arm64";
   private static final @NlsSafe String WINDOWS = "_windows";
   private static final @NlsSafe String WINDOWS_EXTENSION = ".exe";
   private static final @NlsSafe String MAC = "_darwin";
@@ -235,24 +237,30 @@ public final class ShShfmtFormatterUtil {
     if (SystemInfo.isMac) {
       baseUrl.append(MAC);
     }
-    if (SystemInfo.isLinux) {
+    else if (SystemInfo.isLinux) {
       baseUrl.append(LINUX);
     }
-    if (SystemInfo.isWindows) {
+    else if (SystemInfo.isWindows) {
       baseUrl.append(WINDOWS);
     }
-    if (SystemInfo.isFreeBSD) {
+    else if (SystemInfo.isFreeBSD) {
       baseUrl.append(FREE_BSD);
     }
-    if (SystemInfo.is64Bit) {
+
+    if (CpuArch.isIntel64()) {
       baseUrl.append(ARCH_x86_64);
     }
-    else {
+    if (CpuArch.isIntel32()) {
       baseUrl.append(ARCH_i386);
     }
+    else if (CpuArch.isArm64()) {
+      baseUrl.append(ARCH_ARM64);
+    }
+
     if (SystemInfo.isWindows) {
       baseUrl.append(WINDOWS_EXTENSION);
     }
+
     return baseUrl.toString();
   }
 }
