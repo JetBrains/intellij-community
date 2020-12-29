@@ -35,7 +35,7 @@ private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Co
   for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.iterable) {
     ProgressManager.checkCanceled()
     extension.getDeclarations(element, offsetInElement).filterTo(result) {
-      element === it.declaringElement && (offsetInElement < 0 || offsetInElement in it.declarationRange)
+      element === it.declaringElement && (offsetInElement < 0 || it.declarationRange.containsOffset(offsetInElement))
     }
   }
   return result
