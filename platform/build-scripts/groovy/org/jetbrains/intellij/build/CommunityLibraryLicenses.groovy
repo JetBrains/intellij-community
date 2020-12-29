@@ -129,10 +129,6 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Zipflinger", libraryName: "precompiled-zipflinger",
                        license: "Apache 2.0", url: "http://source.android.com/"),
-    // for androidx-test-core-proto module library in intellij.android.core
-    new LibraryLicense(name: "AndroidX Test Library core protos", libraryName: "androidx-test-core-proto",
-                       license: "Android Software Development Kit License Agreement",
-                       licenseUrl: "https://developer.android.com/studio/terms"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime-4.1.jar", license: "BSD",
