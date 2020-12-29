@@ -1,0 +1,12 @@
+JsonPathFile
+  JsonPathRootSegmentImpl(ROOT_SEGMENT)
+    PsiElement(ROOT_CONTEXT)('$')
+  PsiElement(DOT)('.')
+  JsonPathFunctionCallImpl(FUNCTION_CALL)
+    JsonPathFunctionNameImpl(FUNCTION_NAME)
+      PsiElement(IDENTIFIER)('sum')
+    PsiElement(LPARENTH)('(')
+    JsonPathFunctionArgsListImpl(FUNCTION_ARGS_LIST)
+      JsonPathNumberLiteralImpl(NUMBER_LITERAL)
+        PsiElement(INTEGER_NUMBER)('50')
+    PsiElement(RPARENTH)(')')

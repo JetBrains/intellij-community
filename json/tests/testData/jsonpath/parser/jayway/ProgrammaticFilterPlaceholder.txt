@@ -1,0 +1,10 @@
+JsonPathFile
+  JsonPathRootSegmentImpl(ROOT_SEGMENT)
+    PsiElement(ROOT_CONTEXT)('$')
+  PsiElement(DOT)('.')
+  JsonPathIdSegmentImpl(ID_SEGMENT)
+    PsiElement(IDENTIFIER)('programmatic_filter')
+    JsonPathSegmentExpressionImpl(SEGMENT_EXPRESSION)
+      PsiElement(LBRACKET)('[')
+      PsiElement(FILTER_OPERATOR)('?')
+      PsiElement(RBRACKET)(']')
