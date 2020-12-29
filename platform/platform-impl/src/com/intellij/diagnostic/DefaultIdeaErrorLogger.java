@@ -17,6 +17,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +122,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   private static void processMappingFailed(IdeaLoggingEvent event) {
-    if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
+    if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && CpuArch.isIntel32()) {
       ourMappingFailedNotificationPosted = true;
       String exceptionMessage = event.getThrowable().getMessage();
       String text = DiagnosticBundle.message("notification.content.0.br.possible.cause.unable.to.allocate.memory", exceptionMessage);
