@@ -50,7 +50,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private final Set<String> myContextActionIdSet = new HashSet<>();
   private final Map<String, AnAction> myIdToAction = new HashMap<>();
   private final Map<String, AnAction> myContextActionIdToAction = new HashMap<>();
-  private final Map<String, AnAction> myRunDebugIdToAction = new HashMap<>();
+  private final Map<String, AnAction> myStateWidgetIdToAction = new HashMap<>();
 
   public ExecutorRegistryImpl() {
     Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
@@ -124,12 +124,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           presentation.setDescription(executor.getDescription());
 
           registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
-                                myRunDebugIdToAction);
+                                myStateWidgetIdToAction);
         }
         else {
           ExecutorAction wrappedAction = new StateWidget(executor, it);
           registerActionInGroup(actionManager, it.getActionId(), wrappedAction, STATE_WIDGET_GROUP,
-                                myRunDebugIdToAction);
+                                myStateWidgetIdToAction);
         }
       });
     }
@@ -170,7 +170,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     else {
       unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
     }
-    unregisterAction(StateWidgetProcess.generateActionID(executor.getId()), STATE_WIDGET_GROUP, myRunDebugIdToAction);
+    unregisterAction(StateWidgetProcess.generateActionID(executor.getId()), STATE_WIDGET_GROUP, myStateWidgetIdToAction);
   }
 
   private static void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {

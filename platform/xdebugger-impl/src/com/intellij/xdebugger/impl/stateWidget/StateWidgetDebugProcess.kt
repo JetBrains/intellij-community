@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.stateWidget
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess.Companion.generateActionID
+import com.intellij.execution.stateExecutionWidget.StateWidgetProcess.Companion.isRerunAvailable
 import com.intellij.openapi.wm.ToolWindowId
 
 class StateWidgetDebugProcess : StateWidgetProcess {
@@ -13,5 +14,5 @@ class StateWidgetDebugProcess : StateWidgetProcess {
   override val actionId: String = generateActionID(executorId)
 
   override val showInBar: Boolean = true
-  override fun rerunAvailable(): Boolean = true
+  override fun rerunAvailable(): Boolean = isRerunAvailable()
 }

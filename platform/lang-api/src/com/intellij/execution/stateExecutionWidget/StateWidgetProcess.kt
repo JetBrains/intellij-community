@@ -9,10 +9,15 @@ import org.jetbrains.annotations.Nls
 interface StateWidgetProcess {
   companion object {
     private const val runDebugKey = "ide.new.navbar"
+    private const val runDebugRerunAvailable = "ide.new.navbar.rerun.available"
 
     @JvmStatic
     fun isAvailable(): Boolean {
       return Registry.get(runDebugKey).asBoolean()
+    }
+
+    fun isRerunAvailable(): Boolean {
+      return Registry.get(runDebugRerunAvailable).asBoolean()
     }
 
     const val ACTION_PREFIX = "StateWidgetProcess_"

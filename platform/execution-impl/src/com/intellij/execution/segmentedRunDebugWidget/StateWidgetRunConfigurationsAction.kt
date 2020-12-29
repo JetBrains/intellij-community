@@ -8,6 +8,7 @@ import com.intellij.execution.compound.SettingsAndEffectiveTarget
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.FakeRerunAction
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
@@ -15,6 +16,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.popup.StateActionGroupPopup
 import java.awt.Dimension
 import java.util.function.Supplier
@@ -86,6 +88,8 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
       val actions = mutableListOf<AnAction>()
 
       if (executorRegistry is ExecutorRegistryImpl) {
+        actions.add(createRerunAction())
+
         stateWidgetManager.getExecutionBySettings(configuration)?.forEach { execution ->
           stateWidgetManager.getProcessByExecutionId(execution.executionId)?.let { process ->
             actions.add(createStopAction(process, execution))
@@ -146,6 +150,32 @@ class StateWidgetRunConfigurationsAction : RunConfigurationsComboBoxAction() {
 
         override fun update(e: AnActionEvent) {
           e.presentation.isEnabled = canRun(process, executor)
+        }
+      }
+    }
+
+    private fun createRerunAction(): AnAction {
+      return object : FakeRerunAction(), DumbAware {
+
+        override fun update(event: AnActionEvent) {
+          super.update(event)
+          event.presentation.text = ExecutionBundle.message("run.dashboard.rerun.action.name")
+          event.presentation.isEnabledAndVisible = event.presentation.isEnabled && event.presentation.isVisible && StateWidgetProcess.isRerunAvailable()
+        }
+
+        override fun getEnvironment(event: AnActionEvent): ExecutionEnvironment? {
+          event.project?.let { project ->
+            val stateWidgetManager = StateWidgetManager.getInstance(project)
+            val executions = stateWidgetManager.getExecutionBySettings(configuration)
+            if(executions?.count() == 1) {
+              return executions.firstOrNull()
+            }
+          }
+          return null
+        }
+
+        override fun getDescriptor(event: AnActionEvent): RunContentDescriptor? {
+          return getEnvironment(event)?.contentToReuse
         }
       }
     }
