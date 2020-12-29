@@ -882,7 +882,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final PyType type = Ref.deref(getType(expression, context));
     final PyClassType classType = as(type, PyClassType.class);
     if (classType != null && !classType.isDefinition()) {
-      return Ref.create(new PyClassTypeImpl(classType.getPyClass(), true));
+      return Ref.create(classType.toClass());
     }
     final PyGenericType typeVar = as(type, PyGenericType.class);
     if (typeVar != null && !typeVar.isDefinition()) {
