@@ -17,9 +17,6 @@ public abstract class AbstractLombokHighlightsTest extends LightJavaInspectionTe
   public void setUp() throws Exception {
     super.setUp();
 
-    myFixture.getProjectDisposable();
-    getModule();
-
     Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable());
   }
 
