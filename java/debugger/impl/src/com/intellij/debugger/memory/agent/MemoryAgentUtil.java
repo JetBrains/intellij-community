@@ -179,9 +179,9 @@ public final class MemoryAgentUtil {
   }
 
   public static boolean isPlatformSupported() {
-    return SystemInfo.isWindows && (CpuArch.CURRENT == CpuArch.X86_64 || CpuArch.CURRENT == CpuArch.X86) ||
-           SystemInfo.isMac && CpuArch.CURRENT == CpuArch.X86_64 ||
-           SystemInfo.isLinux && CpuArch.CURRENT == CpuArch.X86_64;
+    return SystemInfo.isWindows && (CpuArch.isIntel32() || CpuArch.isIntel64()) ||
+           SystemInfo.isMac && CpuArch.isIntel64() ||
+           SystemInfo.isLinux && CpuArch.isIntel64();
   }
 
   private static boolean isIbmJdk(@NotNull JavaParameters parameters) {
