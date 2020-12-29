@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.system.CpuArch
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
@@ -66,7 +67,7 @@ private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
   val name = "Python $version"
   val hashFunction = Hashing.md5()
 
-  return if (SystemInfo.is32Bit) {
+  return if (CpuArch.isIntel32()) {
     PySdkToInstallOnWindows(
       name,
       version,
@@ -95,7 +96,7 @@ private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
   val name = "Python $version"
   val hashFunction = Hashing.md5()
 
-  return if (SystemInfo.is32Bit) {
+  return if (CpuArch.isIntel32()) {
     PySdkToInstallOnWindows(
       name,
       version,
