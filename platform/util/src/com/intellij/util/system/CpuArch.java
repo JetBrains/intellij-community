@@ -2,11 +2,22 @@
 package com.intellij.util.system;
 
 /**
- * Represents a CPU architecture this Java VM is executed on.
- * May not correspond to the actual hardware if a JVM is "virtualized" (e.g. macOS/Intel binary under Rosetta 2).
+ * <p>Represents a CPU architecture this Java VM is executed on.</p>
+ *
+ * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (e.g. WoW64 or Rosetta 2).</p>
  */
 public enum CpuArch {
-  X86, X86_64, ARM64, OTHER, UNKNOWN;
+  X86(32), X86_64(64), ARM64(64), OTHER(0), UNKNOWN(0);
+
+  public final int width;
+
+  CpuArch(int width) {
+    if (width == 0) {
+      try { width = Integer.parseInt(System.getProperty("sun.arch.data.model", "32")); }
+      catch (NumberFormatException ignored) { }
+    }
+    this.width = width;
+  }
 
   public static final CpuArch CURRENT;
   static {
@@ -27,4 +38,8 @@ public enum CpuArch {
       CURRENT = OTHER;
     }
   }
+
+  public static boolean isIntel32() { return CURRENT == X86; }
+  public static boolean isIntel64() { return CURRENT == X86_64; }
+  public static boolean isArm64() { return CURRENT == ARM64; }
 }
