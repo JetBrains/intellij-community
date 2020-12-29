@@ -64,8 +64,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
       return text;
     }
 
-    String s = indentText(text, StringUtil.repeatSymbol(' ', indent), shouldInsertIndentAtTheEnd(caretOffset, document));
-    return s;
+    return indentText(text, StringUtil.repeatSymbol(' ', indent), shouldInsertIndentAtTheEnd(caretOffset, document));
   }
 
   private static boolean shouldInsertIndentAtTheEnd(int caretOffset, Document document) {
