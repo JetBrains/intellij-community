@@ -8,11 +8,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.module.EmptyModuleType
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.rd.attach
@@ -52,7 +49,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.io.PrintStream
 import java.nio.file.Files
+import kotlin.random.Random
 
 class ModuleBridgesTest {
   @Rule
@@ -237,6 +236,7 @@ class ModuleBridgesTest {
   @Test
   fun `test remove and add module with the same name`() =
     WriteCommandAction.runWriteCommandAction(project) {
+      startLog()
       val moduleManager = ModuleManager.getInstance(project)
       for (module in moduleManager.modules) {
         moduleManager.disposeModule(module)
@@ -259,6 +259,9 @@ class ModuleBridgesTest {
 
       assertEquals(1, moduleManager.modules.size)
       assertNotNull(moduleManager.findModuleByName("name"))
+      val caughtLogs = catchLog()
+      // Trying to assert that a particular warning isn't presented in logs
+      assertFalse("name.iml does not exist" in caughtLogs)
     }
 
   @Test
@@ -611,6 +614,7 @@ class ModuleBridgesTest {
 
   @Test
   fun `test remove module removes source roots`() = WriteCommandAction.runWriteCommandAction(project) {
+    startLog()
     val moduleName = "build"
     val antLibraryFolder = "ant-lib"
 
@@ -636,6 +640,10 @@ class ModuleBridgesTest {
     ModuleManager.getInstance(project).disposeModule(module)
     assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
     assertEmpty(entityStore.current.entities(JavaSourceRootEntity::class.java).toList())
+
+    val caughtLogs = catchLog()
+    // Trying to assert that a particular warning isn't presented in logs
+    assertFalse("name.iml does not exist" in caughtLogs)
   }
 
   @Test
@@ -747,6 +755,36 @@ class ModuleBridgesTest {
         modifiableModel.commit()
       }
     }
+
+  class OutCatcher(printStream: PrintStream) : PrintStream(printStream) {
+    var catcher = ""
+    override fun println(x: String?) {
+      catcher += "$x\n"
+    }
+  }
+
+  companion object {
+    val log = logger<ModuleBridgesTest>()
+    var logLine = ""
+    val rand = Random(0)
+
+    fun startLog() {
+      logLine = "Start logging " + rand.nextInt()
+      log.info(logLine)
+    }
+
+    fun catchLog(): String {
+      return try {
+        val outCatcher = OutCatcher(System.out)
+        System.setOut(outCatcher)
+        TestLoggerFactory.dumpLogToStdout(logLine)
+        outCatcher.catcher
+      }
+      finally {
+        System.setOut(System.out)
+      }
+    }
+  }
 }
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
