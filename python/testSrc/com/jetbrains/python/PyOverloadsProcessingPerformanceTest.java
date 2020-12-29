@@ -4,6 +4,11 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
@@ -18,30 +23,64 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
+  private static final int NUMBER_OF_OVERLOADS = 1000;
+
+  private VirtualFile myRoot;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    myRoot = StandardFileSystems.local().refreshAndFindFileByPath(getTestDataPath() + "/fixture");
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    final SdkModificator modificator = sdk.getSdkModificator();
+    assertNotNull(modificator);
+    modificator.addRoot(myRoot, OrderRootType.CLASSES);
+    modificator.commitChanges();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      modificator.removeRoot(myRoot, OrderRootType.CLASSES);
+      modificator.commitChanges();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
   public void testComputingResultTypeWithCodeAnalysisContext() {
-    PyCallExpression call = prepareTestDataAndGetCallExpr();
+    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
     TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
     assertType("int", call, context);
   }
 
   public void testComputingResultTypeWithUserInitiatedContext() {
-    PyCallExpression call = prepareTestDataAndGetCallExpr();
+    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
     TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile());
     assertType("int", call, context);
   }
 
   public void testNavigatingToDefinition() {
-    PyCallExpression call = prepareTestDataAndGetCallExpr();
+    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
     PsiElement element = GotoDeclarationAction.findTargetElement(myFixture.getProject(), myFixture.getEditor(), call.getTextOffset());
     assertInstanceOf(element, PyFunction.class);
   }
 
   public void testQuickDocumentationRendering() {
-    PyCallExpression call = prepareTestDataAndGetCallExpr();
+    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
     DocumentationProvider docProvider = new PythonDocumentationProvider();
     PsiElement leaf = PsiTreeUtil.getDeepestFirst(call);
     DocumentationManager docManager = DocumentationManager.getInstance(myFixture.getProject());
@@ -62,12 +101,20 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     });
   }
 
-  public void testOverloadsNotDuplicatedInMultiResolveResults() {
-    PyCallExpression call = prepareTestDataAndGetCallExpr();
+  public void testOverloadsNotDuplicatedInReferenceMultiResolveResults() {
+    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
     PyReferenceExpression refExpr = assertInstanceOf(call.getCallee(), PyReferenceExpression.class);
     ResolveResult[] resolveResults = refExpr.getReference().multiResolve(false);
-    assertTrue("Too many resolve results " + resolveResults.length,
-               resolveResults.length == 1000 || resolveResults.length == 1001);
+    // Overloads, lower-priority imported name and the function itself.
+    assertEquals(NUMBER_OF_OVERLOADS + 2, resolveResults.length);
+  }
+
+  public void testOverloadsNotDuplicatedInQualifiedReferenceMultiResolveResults() {
+    PyCallExpression call = configureAndGetCallExprUnderCaret(getTestName(true) + ".py");
+    PyReferenceExpression expr = assertInstanceOf(call.getCallee(), PyReferenceExpression.class);
+    ResolveResult[] resolveResults = expr.getReference().multiResolve(false);
+    // Overloads only.
+    assertEquals(NUMBER_OF_OVERLOADS, resolveResults.length);
   }
 
   private void doPerformanceTestResettingCaches(@NotNull String text, int expectedMs, ThrowableRunnable<Throwable> runnable) {
@@ -81,10 +128,11 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   }
 
   @NotNull
-  private PyCallExpression prepareTestDataAndGetCallExpr() {
-    myFixture.copyDirectoryToProject("", "");
-    myFixture.configureByFile("main.py");
-    PyCallExpression call = myFixture.findElementByText("func(999, 'foo')", PyCallExpression.class);
+  private PyCallExpression configureAndGetCallExprUnderCaret(@NotNull String fileName) {
+    myFixture.configureByFile(fileName);
+    PsiElement underCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(underCaret);
+    PyCallExpression call = PsiTreeUtil.getParentOfType(underCaret, PyCallExpression.class);
     assertNotNull(call);
     return call;
   }
