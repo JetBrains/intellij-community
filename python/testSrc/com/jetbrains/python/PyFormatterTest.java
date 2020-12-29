@@ -660,6 +660,17 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-33060
+  public void testContinuationIndentBeforeFunctionParameters() {
+    doTest();
+  }
+
+  // PY-33060
+  public void testNoContinuationIndentBeforeFunctionParameters() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_PARAMETERS = false;
+    doTest();
+  }
+
   // PY-17979, PY-13304
   public void testContinuationIndentBeforeFunctionArguments() {
     getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS = true;

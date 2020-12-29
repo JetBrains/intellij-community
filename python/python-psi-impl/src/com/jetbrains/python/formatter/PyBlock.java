@@ -358,8 +358,8 @@ public class PyBlock implements ASTBlock {
       if (childType == PyTokenTypes.RPAR && !settings.HANG_CLOSING_BRACKETS) {
         childIndent = Indent.getNoneIndent();
       }
-      else if (parentType == PyElementTypes.PARAMETER_LIST ||
-               settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS ||
+      else if ((parentType == PyElementTypes.PARAMETER_LIST && settings.USE_CONTINUATION_INDENT_FOR_PARAMETERS) ||
+               (parentType == PyElementTypes.ARGUMENT_LIST && settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS) ||
                argumentMayHaveSameIndentAsFollowingStatementList()) {
         childIndent = Indent.getContinuationIndent();
       }
@@ -1074,7 +1074,7 @@ public class PyBlock implements ASTBlock {
     final IElementType parentType = myNode.getElementType();
     // constructs that imply indent for their children
     final PyCodeStyleSettings settings = myContext.getPySettings();
-    if (parentType == PyElementTypes.PARAMETER_LIST ||
+    if ((parentType == PyElementTypes.PARAMETER_LIST && settings.USE_CONTINUATION_INDENT_FOR_PARAMETERS) ||
         (parentType == PyElementTypes.ARGUMENT_LIST && settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS)) {
       return Indent.getContinuationIndent();
     }
