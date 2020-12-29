@@ -1,4 +1,8 @@
 <idea-plugin>
+  <projectListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.JpsProjectLoadedListenerImpl"
+              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
+  </projectListeners>
   <extensionPoints>
     <extensionPoint name="workspaceModel.customModuleRootsSerializer"
                     interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer"
@@ -23,6 +27,11 @@
     <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl" />
 
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
+                    serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>
+
     <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
+
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.JpsProjectLoadedBridge"/>
   </extensions>
 </idea-plugin>

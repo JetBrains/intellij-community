@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
@@ -65,6 +66,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
               && !(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
             LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
             loadRealProject(project)
+            project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
           }
         }
       })
