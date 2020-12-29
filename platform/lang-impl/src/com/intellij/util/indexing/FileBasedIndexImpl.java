@@ -1481,10 +1481,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       boolean indexWasProvided = storageUpdate instanceof IndexInfrastructureExtensionUpdateComputation &&
                                  ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
 
-      if (myStorageBufferingHandler.runUpdate(false, () -> {
-        myStorageBufferingHandler.assertOnTheDiskMode();
-        return storageUpdate.compute();
-      })) {
+      if (myStorageBufferingHandler.runUpdate(false, storageUpdate)) {
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {
             if (!isMock(currentFC.getFile())) {

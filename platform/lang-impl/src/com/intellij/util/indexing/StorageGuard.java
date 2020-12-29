@@ -1,18 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
+@SuppressWarnings({"WhileLoopSpinsOnField", "SynchronizeOnThis"})
 final class StorageGuard {
-  private final Lock myLock = new ReentrantLock();
-  private final Condition myCondition = myLock.newCondition();
-
   private int myHolds;
+  private int myWaiters;
 
   public interface StorageModeExitHandler {
     void leave();
@@ -32,41 +26,39 @@ final class StorageGuard {
   };
 
   @NotNull
-  StorageModeExitHandler enter(boolean mode) {
-    ProgressManager progressManager = ProgressManager.getInstance();
-    assert !progressManager.isInNonCancelableSection();
-    myLock.lock();
-    try {
-      if (mode) {
-        while (myHolds < 0) {
-          myCondition.awaitUninterruptibly();
-        }
-        myHolds++;
-        return myTrueStorageModeExitHandler;
+  synchronized StorageModeExitHandler enter(boolean mode) {
+    if (mode) {
+      while (myHolds < 0) {
+        doWait();
       }
-      else {
-        while (myHolds > 0) {
-          myCondition.awaitUninterruptibly();
-        }
-        myHolds--;
-        return myFalseStorageModeExitHandler;
-      }
+      myHolds++;
+      return myTrueStorageModeExitHandler;
     }
-    finally {
-      myLock.unlock();
+    else {
+      while (myHolds > 0) {
+        doWait();
+      }
+      myHolds--;
+      return myFalseStorageModeExitHandler;
     }
   }
 
-  private void leave(boolean mode) {
-    myLock.lock();
+  private void doWait() {
     try {
-      myHolds += mode ? -1 : 1;
-      if (myHolds == 0) {
-        myCondition.signalAll();
-      }
+      ++myWaiters;
+      wait();
+    }
+    catch (InterruptedException ignored) {
     }
     finally {
-      myLock.unlock();
+      --myWaiters;
+    }
+  }
+
+  private synchronized void leave(boolean mode) {
+    myHolds += mode ? -1 : 1;
+    if (myHolds == 0 && myWaiters > 0) {
+      notifyAll();
     }
   }
 }
