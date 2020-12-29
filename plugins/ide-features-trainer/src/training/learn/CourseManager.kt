@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import training.lang.LangManager
 import training.lang.LangSupport
+import training.lang.excludedLanguages
+import training.lang.productName
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.Module
 import training.learn.lesson.LessonManager
@@ -79,7 +81,9 @@ class CourseManager internal constructor() : Disposable {
       .size
   }
 
-  private fun initAllModules(): List<Module> = COURSE_MODULES_EP.extensions.map { it.instance.modules() }.flatten()
+  private fun initAllModules(): List<Module> = COURSE_MODULES_EP.extensions
+    .filter { excludedLanguages[productName] != null && !excludedLanguages[productName]!!.contains(it.language) }
+    .map { it.instance.modules() }.flatten()
 
   private fun getAllModules(): List<Module> {
     if (currentConfiguration != switchOnExperimentalLessons) {
