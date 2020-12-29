@@ -21,7 +21,8 @@ import java.util.EnumSet;
 
 public enum ArtifactKind {
   ARTIFACT("", "jar"), SOURCES("sources", "jar"), JAVADOC("javadoc", "jar"),
-  ANNOTATIONS("annotations", "zip"), AAR_ARTIFACT("", "aar"), POM("", "pom");
+  ANNOTATIONS("annotations", "zip"), AAR_ARTIFACT("", "aar"), POM("", "pom"),
+  ZIP_ARCHIVE("", "zip");
 
   private final String myClassifier;
   private final String myExtension;
