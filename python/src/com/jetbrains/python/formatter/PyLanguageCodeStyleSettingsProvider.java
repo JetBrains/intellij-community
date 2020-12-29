@@ -97,6 +97,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "WRAP_ON_TYPING",
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES",
+                                   "CALL_PARAMETERS_LPAREN_ON_NEXT_LINE",
+                                   "CALL_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS",
                                    "METHOD_PARAMETERS_WRAP",
                                    "METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",

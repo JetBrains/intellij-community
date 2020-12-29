@@ -657,6 +657,22 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testForceNewLineAfterLeftParenInCallArguments() {  // PY-33060
+    getCommonCodeStyleSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testForceNewLineBeforeRightParenInCallArguments() {  // PY-33060
+    getCommonCodeStyleSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testForceNewLineBeforeRightParenNoAlignInCallArguments() {  // PY-33060
+    getCommonCodeStyleSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
+    doTest();
+  }
+
   // PY-17674
   public void testForceNewLineBeforeRightBraceInDictAfterColon() {
     getPythonCodeStyleSettings().DICT_NEW_LINE_BEFORE_RIGHT_BRACE = true;
