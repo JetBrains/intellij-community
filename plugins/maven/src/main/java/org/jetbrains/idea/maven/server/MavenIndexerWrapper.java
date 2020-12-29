@@ -34,14 +34,17 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   protected synchronized void onError() {
     super.onError();
     MavenLog.LOG.debug("MavenIndexerWrapper on error:");
-    for (IntIterator iterator = myDataMap.keySet().iterator(); iterator.hasNext(); ) {
-      int each = iterator.nextInt();
-      MavenLog.LOG.debug("clear remote id for " + each);
-      myDataMap.get(each).remoteId = -1;
+    synchronized (myDataMap){
+      for (IntIterator iterator = myDataMap.keySet().iterator(); iterator.hasNext(); ) {
+        int each = iterator.nextInt();
+        MavenLog.LOG.debug("clear remote id for " + each);
+        myDataMap.get(each).remoteId = -1;
+      }
     }
+
   }
 
-  public synchronized int createIndex(@NotNull final String indexId,
+  public int createIndex(@NotNull final String indexId,
                                       @NotNull final String repositoryId,
                                       @Nullable final File file,
                                       @Nullable final String url,
@@ -49,16 +52,23 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     IndexData data = new IndexData(indexId, repositoryId, file, url, indexDir);
     final int localId = System.identityHashCode(data);
     MavenLog.LOG.debug("addIndex " + localId);
-    myDataMap.put(localId, data);
+    synchronized (myDataMap){
+      myDataMap.put(localId, data);
+    }
+
 
     perform(() -> getRemoteId(localId));
 
     return localId;
   }
 
-  public synchronized void releaseIndex(int localId) throws MavenServerIndexerException {
+  public void releaseIndex(int localId) throws MavenServerIndexerException {
     MavenLog.LOG.debug("releaseIndex " + localId);
-    IndexData data = myDataMap.remove(localId);
+    IndexData data = null;
+    synchronized (myDataMap){
+      data = myDataMap.remove(localId);
+    }
+
     if (data == null) {
       MavenLog.LOG.warn("index " + localId + " not found");
       return;
@@ -78,7 +88,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     }
   }
 
-  public synchronized boolean indexExists(File dir) {
+  public boolean indexExists(File dir) {
     try {
       return getOrCreateWrappee().indexExists(dir, ourToken);
     }
@@ -129,8 +139,12 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     return perform(() -> getOrCreateWrappee().search(getRemoteId(localId), query, maxResult, ourToken));
   }
 
-  private synchronized int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
-    IndexData result = myDataMap.get(localId);
+  private int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
+    IndexData result = null;
+    synchronized (myDataMap){
+      result = myDataMap.get(localId);
+    }
+
     if(result == null) {
       MavenLog.LOG.error("index " + localId + " not found, known ids are:" + myDataMap.keySet());
     }

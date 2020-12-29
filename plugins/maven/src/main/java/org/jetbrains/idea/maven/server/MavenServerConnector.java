@@ -106,6 +106,9 @@ public class MavenServerConnector implements @NotNull Disposable {
       synchronized (myServerPromise) {
         while (!myServerPromise.isDone()) {
           myServerPromise.wait(100);
+          if(myProject.isDisposed()){
+            throw new CannotStartServerException("Project already disposed");
+          }
           ProgressManager.checkCanceled();
         }
         return myServerPromise.get();
