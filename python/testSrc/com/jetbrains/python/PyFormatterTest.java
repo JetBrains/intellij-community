@@ -153,6 +153,34 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testDefaultWrappingForMethodParameters() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    doTest();
+  }
+
+  public void testDefaultWrappingWithNewLineParensForMethodParameters() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = false;
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testWrappingChopDownIfLongForMethodParameters() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_WRAP = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    doTest();
+  }
+
+  public void testWrappingChopDownIfLongWithNewLineParensForMethodParameters() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_WRAP = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = false;
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
   public void testNoAlignForMethodArguments() {  // PY-3995
     getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
     doTest();

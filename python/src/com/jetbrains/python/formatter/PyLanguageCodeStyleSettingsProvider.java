@@ -98,6 +98,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES",
                                    "ALIGN_MULTILINE_PARAMETERS",
+                                   "METHOD_PARAMETERS_WRAP",
                                    "METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
                                    "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
@@ -157,6 +158,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     // e.g. in SpacingBuilder#blankLines(), and can lead to unexpected side-effects in formatter's
     // behavior
     commonSettings.KEEP_BLANK_LINES_IN_CODE = 1;
+    commonSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }
 
   @Nullable
@@ -206,8 +208,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                       "\n" +
                                                       "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
                                                       "\n" +
-                                                      "def xyzzy(long_parameter_1,\n" +
-                                                      "long_parameter_2):\n" +
+                                                      "def xyzzy(a1, a2, long_parameter_1, a3, a4, long_parameter_2):\n" +
                                                       "    pass\n" +
                                                       "\n" +
                                                       "xyzzy('long_string_constant1',\n" +
