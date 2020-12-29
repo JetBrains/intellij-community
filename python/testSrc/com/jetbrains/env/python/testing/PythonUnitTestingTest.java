@@ -32,7 +32,6 @@ import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
-import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -45,6 +44,8 @@ import java.util.List;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -194,8 +195,11 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        Assert.assertThat("No expected", stdout, Matchers.containsString("expected='1'"));
-        Assert.assertThat("No actual", stdout, Matchers.containsString("actual='2'"));
+        Assert.assertThat("No expected", stdout, containsString("expected='1'"));
+        Assert.assertThat("No actual", stdout, containsString("actual='2'"));
+        var consoleError = MockPrinter.fillPrinter(runner.getTestProxy()).getStdErr();
+        Assert.assertThat("No stacktrace", consoleError, containsString("test_test.py\", line 4,"));
+        Assert.assertThat("Garbage in stack trace", consoleError, not(containsString("diff_tools.py")));
       }
     });
   }
@@ -373,7 +377,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-       var printer = MockPrinter.fillPrinter(runner.findTestByName("[test]"));
+        var printer = MockPrinter.fillPrinter(runner.findTestByName("[test]"));
         assertThat(printer.getStdErr())
           .describedAs("Subtest assertEquals broken")
           .contains("AssertionError: 'D' != 'a'");

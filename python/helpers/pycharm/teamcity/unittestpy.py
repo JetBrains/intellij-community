@@ -208,8 +208,7 @@ class TeamcityTestResult(TestResult):
             try:
                 details = err.getTraceback()
             except AttributeError:
-                frames_to_skip_from_tail = 2 if diff_failed else 0
-                details = convert_error_to_string(err, frames_to_skip_from_tail)
+                details = convert_error_to_string(err, ["diff_tools", "case.py"])
 
         subtest_failures = self.get_subtest_failure(test_id)
         if subtest_failures:

@@ -123,7 +123,11 @@ def get_class_fullname(something):
     return module + '.' + cls.__name__
 
 
-def convert_error_to_string(err, frames_to_skip_from_tail=0):
+def convert_error_to_string(err, frames_to_skip_from_tail=None):
+    """
+
+    :param frames_to_skip_from_tail: may be int or list of str. In latter case frames with these strings are skipped
+    """
     try:
         if hasattr(err, "type") and hasattr(err, "value") and hasattr(err, "tb"):
             exctype, value, tb = err.type, err.value, err.tb
@@ -131,7 +135,16 @@ def convert_error_to_string(err, frames_to_skip_from_tail=0):
             exctype, value, tb = err
         trace = traceback.format_exception(exctype, value, tb)
         if frames_to_skip_from_tail:
-            trace = trace[:-frames_to_skip_from_tail]
+            if isinstance(frames_to_skip_from_tail, list):
+                new_trace = []
+                for line in trace:
+                    if len([w for w in frames_to_skip_from_tail if w in line]) > 0:
+                        continue
+                    else:
+                        new_trace += line
+                trace = new_trace
+            if isinstance(frames_to_skip_from_tail, int):
+                trace = trace[:-frames_to_skip_from_tail]
         return ''.join(trace)
     except Exception:
         tb = traceback.format_exc()
