@@ -130,6 +130,12 @@
     <annotator language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathFunctionCallAnnotator"/>
     <colorSettingsPage implementation="com.intellij.jsonpath.JsonPathColorSettingsPage"/>
     <completion.contributor language="JSONPath" order="last" implementationClass="com.intellij.jsonpath.JsonPathCompletionContributor"/>
+
+    <localInspection language="JSONPath" shortName="JsonPathUnknownFunction"
+                     implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownFunctionInspection"
+                     bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.function"
+                     groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
+                     level="WARNING" enabledByDefault="true"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>
