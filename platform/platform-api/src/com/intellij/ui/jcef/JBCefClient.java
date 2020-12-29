@@ -54,8 +54,8 @@ public class JBCefClient implements JBCefDisposable {
   @ApiStatus.Experimental
   @NotNull public static final String JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP = "JBCefClient.JSQuery.poolSize";
 
-  @NotNull private final Map<String, Object> myProperties = Collections.synchronizedMap(new HashMap<>());
-  @NotNull private final PropertyChangeSupport PROPERTY_CHANGE_SUPPORT = new PropertyChangeSupport(this);
+  @NotNull private final Map<String, Object> myProperties = new HashMap<>();
+  @NotNull private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private static final int JS_QUERY_SLOT_POOL_DEF_SIZE = RegistryManager.getInstance().intValue("ide.browser.jcef.jsQueryPoolSize");
   private static final int JS_QUERY_SLOT_POOL_MAX_SIZE = 10000;
@@ -115,27 +115,12 @@ public class JBCefClient implements JBCefDisposable {
    * <ul>
    * <li> {@link #JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP}
    * </ul>
-   * <p></p>
-   * Null values are permitted.
    */
-  public void setProperty(@NotNull String name, @NotNull Object value) {
-    Object oldValue = myProperties.get(name);
-    myProperties.put(name, value);
-    PROPERTY_CHANGE_SUPPORT.firePropertyChange(name, oldValue, value);
-  }
-
-  /**
-   * @see #setProperty(String, Object)
-   */
-  void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
-    PROPERTY_CHANGE_SUPPORT.addPropertyChangeListener(name, listener);
-  }
-
-  /**
-   * @see #setProperty(String, Object)
-   */
-  void removePropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
-    PROPERTY_CHANGE_SUPPORT.removePropertyChangeListener(name, listener);
+  public void setProperty(@NotNull String name, @Nullable Object value) {
+    synchronized (myProperties) {
+      Object oldValue = myProperties.put(name, value);
+      myPropertyChangeSupport.firePropertyChange(name, oldValue, value);
+    }
   }
 
   /**
@@ -143,7 +128,23 @@ public class JBCefClient implements JBCefDisposable {
    */
   @Nullable
   public Object getProperty(@NotNull String name) {
-    return myProperties.get(name);
+    synchronized (myProperties) {
+      return myProperties.get(name);
+    }
+  }
+
+  /**
+   * @see #setProperty(String, Object)
+   */
+  void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
+    myPropertyChangeSupport.addPropertyChangeListener(name, listener);
+  }
+
+  /**
+   * @see #setProperty(String, Object)
+   */
+  void removePropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
+    myPropertyChangeSupport.removePropertyChangeListener(name, listener);
   }
 
   @Nullable
