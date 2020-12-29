@@ -3,7 +3,6 @@ package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ImageLoader;
 import com.sun.jna.*;
@@ -100,8 +99,6 @@ public final class Foundation {
   }
 
   public static double invoke_fpret(ID receiver, Pointer selector, Object... args) {
-    // calling objc_msgSend_fpret is exclusively needed on 32bit for double return values
-    if (SystemInfo.is32Bit) return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args);
     return myObjcMsgSend.invokeDouble(prepInvoke(receiver, selector, args));
   }
 
