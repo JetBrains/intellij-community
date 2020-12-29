@@ -118,7 +118,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         tailrec fun KtExpression.findFlowOnCall(): ResolvedCall<out CallableDescriptor>? {
             val dotQualifiedExpression = this.getStrictParentOfType<KtDotQualifiedExpression>() ?: return null
             val candidate = dotQualifiedExpression
-                .siblings(withItself = false)
+                .children
                 .asSequence()
                 .filterIsInstance<KtCallExpression>()
                 .mapNotNull { it.resolveToCall(BodyResolveMode.PARTIAL) }
