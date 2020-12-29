@@ -186,7 +186,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   protected void processInputMethodEvent(InputMethodEvent e) {
-    // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
+    if (EditorImpl.EVENT_LOG.isDebugEnabled()) {
+      EditorImpl.EVENT_LOG.debug(e.toString());
+    }
+    // Don't dispatch to super first; now that EdditorComponentImpl is a JTextComponent,
     // this would have the side effect of invoking Swing document machinery which relies
     // on creating Document positions etc (and won't update the document in an IntelliJ safe
     // way, such as running through all the carets etc.

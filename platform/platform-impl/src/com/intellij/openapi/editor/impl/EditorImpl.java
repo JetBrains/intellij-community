@@ -127,6 +127,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance(EditorImpl.class);
+  static final Logger EVENT_LOG = Logger.getInstance("editor.input.events");
   private static final Object DND_COMMAND_GROUP = ObjectUtils.sentinel("DndCommand");
   private static final Object MOUSE_DRAGGED_COMMAND_GROUP = ObjectUtils.sentinel("MouseDraggedGroup");
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
@@ -1100,6 +1101,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
       public void keyPressed(@NotNull KeyEvent e) {
+        if (EVENT_LOG.isDebugEnabled()) {
+          EVENT_LOG.debug(e.toString());
+        }
         if (e.getKeyCode() >= KeyEvent.VK_A && e.getKeyCode() <= KeyEvent.VK_Z) {
           myCharKeyPressed = true;
         }
@@ -1107,6 +1111,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       @Override
       public void keyTyped(@NotNull KeyEvent event) {
+        if (EVENT_LOG.isDebugEnabled()) {
+          EVENT_LOG.debug(event.toString());
+        }
         myNeedToSelectPreviousChar = false;
         if (event.isConsumed()) {
           return;
@@ -1118,6 +1125,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       @Override
       public void keyReleased(KeyEvent e) {
+        if (EVENT_LOG.isDebugEnabled()) {
+          EVENT_LOG.debug(e.toString());
+        }
         myCharKeyPressed = false;
       }
     });
@@ -3740,12 +3750,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyMouseAdapter extends MouseAdapter {
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
+      if (EVENT_LOG.isDebugEnabled()) {
+        EVENT_LOG.debug(e.toString());
+      }
       requestFocus();
       runMousePressedCommand(e);
     }
 
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
+      if (EVENT_LOG.isDebugEnabled()) {
+        EVENT_LOG.debug(e.toString());
+      }
       myMousePressArea = null;
       myLastMousePressedLocation = null;
       runMouseReleasedCommand(e);
@@ -3758,11 +3774,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void mouseEntered(@NotNull MouseEvent e) {
+      if (EVENT_LOG.isDebugEnabled()) {
+        EVENT_LOG.debug(e.toString());
+      }
       runMouseEnteredCommand(e);
     }
 
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
+      if (EVENT_LOG.isDebugEnabled()) {
+        EVENT_LOG.debug(e.toString());
+      }
       runMouseExitedCommand(e);
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
@@ -4236,6 +4258,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @DirtyUI
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
+      if (EVENT_LOG.isDebugEnabled()) {
+        EVENT_LOG.debug(e.toString());
+      }
       if (myDraggedRange != null || myGutterComponent.myDnDInProgress) {
         // on Mac we receive events even if drag-n-drop is in progress
         return;
@@ -4256,6 +4281,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @DirtyUI
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
+      if (EVENT_LOG.isDebugEnabled()) {
+        EVENT_LOG.debug(e.toString());
+      }
       EditorMouseEvent event = createEditorMouseEvent(e);
 
       if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
@@ -4854,6 +4882,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     protected void processMouseWheelEvent(@NotNull MouseWheelEvent e) {
+      if (EVENT_LOG.isDebugEnabled()) {
+        EVENT_LOG.debug(e.toString());
+      }
       if (mySettings.isWheelFontChangeEnabled()) {
         if (EditorUtil.isChangeFontSize(e)) {
           int size = myScheme.getEditorFontSize() - e.getWheelRotation();
