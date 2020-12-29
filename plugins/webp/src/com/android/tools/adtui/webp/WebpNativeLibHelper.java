@@ -18,6 +18,7 @@ package com.android.tools.adtui.webp;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.system.CpuArch;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,11 +83,8 @@ public final class WebpNativeLibHelper {
     sJniLibLoaded = true;
   }
 
-  /**
-   * Copied from {@link com.intellij.util.lang.UrlClassLoader}.
-   */
   public static String getLibName() {
-    String baseName = SystemInfo.is64Bit ? "webp_jni64" : "webp_jni";
+    String baseName = CpuArch.isIntel64() || SystemInfo.isMac && CpuArch.isArm64() ? "webp_jni64" : "webp_jni";
     String fileName = System.mapLibraryName(baseName);
     if (SystemInfo.isMac) {
       fileName = fileName.replace(".jnilib", ".dylib");
