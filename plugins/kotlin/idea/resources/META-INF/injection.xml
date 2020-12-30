@@ -1,13 +1,16 @@
 <idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
-        <multiHostInjector implementation="org.jetbrains.kotlin.idea.injection.KotlinLanguageInjector" order="first,before TemporaryPlacesInjector"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <languageInjectionContributor language="kotlin"
+                                  implementationClass="org.jetbrains.kotlin.idea.injection.KotlinLanguageInjectionContributor"/>
+    <languageInjectionPerformer language="kotlin"
+                                implementationClass="org.jetbrains.kotlin.idea.injection.KotlinLanguageInjectionPerformer"/>
 
-        <regExpLanguageHost forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
-                            implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
-    </extensions>
+    <regExpLanguageHost forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
+                        implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
+  </extensions>
 
-    <extensions defaultExtensionNs="org.intellij.intelliLang">
-        <languageSupport implementation="org.jetbrains.kotlin.idea.injection.KotlinLanguageInjectionSupport"/>
-        <injectionConfig config="injection/kotlinInjections.xml"/>
-    </extensions>
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <languageSupport implementation="org.jetbrains.kotlin.idea.injection.KotlinLanguageInjectionSupport"/>
+    <injectionConfig config="injection/kotlinInjections.xml"/>
+  </extensions>
 </idea-plugin>
