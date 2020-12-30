@@ -34,7 +34,7 @@ public enum CpuArch {
     else if ("aarch64".equals(arch) || "arm64".equals(arch)) {
       CURRENT = ARM64;
     }
-    else if (arch == null || arch.isEmpty()) {
+    else if (arch == null || arch.trim().isEmpty()) {
       CURRENT = UNKNOWN;
     }
     else {
