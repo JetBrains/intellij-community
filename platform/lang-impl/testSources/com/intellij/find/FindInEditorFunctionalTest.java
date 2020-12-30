@@ -4,7 +4,6 @@ package com.intellij.find;
 import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
 import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
 import com.intellij.find.editorHeaderActions.ToggleSelectionOnlyAction;
-import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -28,8 +27,6 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
   @Override
   protected void setUp() throws Exception {
     TestApplicationManager.getInstance();
-    // Necessary to properly update button states
-    HeadlessDataManager.fallbackToProductionDataManager(getTestRootDisposable());
     super.setUp();
   }
 
