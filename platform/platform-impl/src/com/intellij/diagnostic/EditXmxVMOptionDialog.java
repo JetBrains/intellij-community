@@ -76,7 +76,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
       myHeapSizeField.setText(String.valueOf(newMemory));
     }
     else {
-      myMessageLabel.setText(DiagnosticBundle.message("change.memory.nofile"));
+      myMessageLabel.setText(DiagnosticBundle.message("change.memory.no.file"));
       mySettingsFileHintLabel.setVisible(false);
       myHeapSizeField.setEnabled(false);
       myShutdownAction.setEnabled(false);

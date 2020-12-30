@@ -47,7 +47,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
   private static final String DISPLAY_ID = "System Health";
-  private static final int MIN_RESERVED_CODE_CACHE_SIZE = PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.CURRENT.width == 32 ? 384 : 512;
+  private static final int MIN_RESERVED_CODE_CACHE_SIZE = PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
