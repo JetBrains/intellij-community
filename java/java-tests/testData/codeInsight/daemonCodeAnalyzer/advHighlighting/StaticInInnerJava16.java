@@ -1,4 +1,4 @@
-//statics in inner
+//statics in inner -- in Java 16 allowed everywhere
 public class a {
 
   static final Number x = null;
@@ -18,7 +18,6 @@ public class a {
 
     static int a_ic_m(String s) { return 0; }
 
-    // static initializer
     static {}
   }
 
@@ -26,7 +25,6 @@ public class a {
   interface ii {
     static int i = 9;
     void f();
-    // since nested interface is implicitly static:
     static class ii_c {}
   }
 
