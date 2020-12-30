@@ -9,12 +9,14 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
 import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
 
 public class ContainerUtilTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(ContainerUtilTest.class);
@@ -184,13 +186,13 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
-  private static void assertReallyEmpty(List<Object> my) {
+  private static void assertReallyEmpty(List<?> my) {
     assertEquals(0, my.size());
 
     Object[] objects = my.toArray();
     assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, objects);
 
-    Iterator<Object> iterator = my.iterator();
+    Iterator<?> iterator = my.iterator();
     assertSame(Collections.emptyIterator(), iterator);
   }
 
@@ -239,6 +241,22 @@ public class ContainerUtilTest extends TestCase {
     }
     catch (NoSuchElementException ignore) {
     }
+  }
+
+  public void testLockFreeListStreamMustNotCMEOnParallelModifications() throws Exception {
+    List<String> list = ContainerUtil.createLockFreeCopyOnWriteList();
+    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(
+      () -> {
+        for (int i = 0; i < 100_000_000; i++) {
+          list.add("");
+          list.remove("");
+        }
+      });
+    for (int i = 0; i < 100_000_000; i++) {
+      assertNotNull(list.stream().findFirst());
+    }
+    future.get();
+    assertReallyEmpty(list);
   }
 
   public void testImmutableListEquals() {

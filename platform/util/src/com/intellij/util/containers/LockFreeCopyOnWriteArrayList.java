@@ -919,4 +919,9 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
   public @NotNull List<E> subList(int fromIndex, int toIndex) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public Spliterator<E> spliterator() {
+    return Spliterators.spliterator(get(), 0);
+  }
 }
