@@ -106,7 +106,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
   private fun initApp() {
     val application = ApplicationManager.getApplication()
 
-    mutableUiDispatch = ApplicationDispatcher(application)
+    mutableUiDispatch = ApplicationDispatcher(this, application)
 
     initCircletArenas()
     registerArenaTombstones(ExtendableSerializationRegistry.global)

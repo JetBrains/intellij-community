@@ -1,29 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.runtime
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.*
 import libraries.klogging.logger
 import runtime.Cancellable
 import runtime.CoroutineExceptionLogger
 import runtime.Dispatcher
 import runtime.TaskCancellable
-import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
-val log = logger<ApplicationDispatcher>()
+private val log = logger<ApplicationDispatcher>()
 
-class ApplicationDispatcher(private val application: Application) : Dispatcher {
-  private val executor = Executors.newSingleThreadScheduledExecutor { runnable ->
-    val thread = Thread(runnable, "Application Auxiliary Scheduler")
-
-    thread.isDaemon = true
-    thread
-  }
+internal class ApplicationDispatcher(disposable: Disposable, private val application: Application) : Dispatcher {
+  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("Application Auxiliary Scheduler", 1)
 
   private val context = ApplicationCoroutineContext(application, executor)
 
@@ -31,6 +28,18 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
 
   override val coroutineContext: CoroutineContext
     get() = contextWithLog
+
+  init {
+    Disposer.register(disposable, Disposable {
+      executor.shutdown()
+      try {
+        executor.awaitTermination(5, TimeUnit.SECONDS)
+      }
+      catch (e: InterruptedException) {
+        log.warn { "Executor was not properly terminated" }
+      }
+    })
+  }
 
   override fun dispatch(fn: () -> Unit) {
     application.invokeLater(fn, ModalityState.any())

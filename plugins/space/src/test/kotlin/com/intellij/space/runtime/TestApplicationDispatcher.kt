@@ -5,6 +5,7 @@ import com.intellij.mock.MockApplication
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
 import junit.framework.TestCase
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.Runnable
@@ -21,7 +22,7 @@ class TestApplicationDispatcher : TestCase() {
 
   init {
     ApplicationManager.setApplication(TestApplication()) {}
-    dispatcher = ApplicationDispatcher(ApplicationManager.getApplication())
+    dispatcher = ApplicationDispatcher(Disposer.newDisposable(), ApplicationManager.getApplication())
   }
 
   fun testCoroutineDispatched() = runBlocking {
