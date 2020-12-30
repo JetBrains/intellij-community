@@ -7,11 +7,18 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Symbol declaration in PSI tree.
- * <p>
+ * Symbol declaration in PSI tree,
+ * which is a way to convey host element and range in host element to the platform, e.g., for highlighting and navigation.
+ * <p/>
  * To provide symbol declarations by a PsiElement,
  * you can either implement this interface in PsiElement directly
  * or create a {@link PsiSymbolDeclarationProvider} extension.
+ * <p/>
+ * <h4>Lifecycle</h4>
+ * The PsiSymbolDeclaration instance is expected to stay valid within a single read action.
+ * <p/>
+ * <h4>Equality</h4>
+ * There are no restrictions on whether implementations must provide {@link #equals}/{@link #hashCode}.
  */
 public interface PsiSymbolDeclaration extends SymbolDeclaration {
 

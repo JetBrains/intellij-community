@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * which means it's safe to pass the instance to different APIs.<br/>
  * Symbol instance should not be referenced between read actions.
  * Please use {@link #createPointer() Pointer}'s {@link Pointer#dereference dereference}
- * to obtain new Symbol instance (or the same instance if it's still valid)
- * in the next read action.
+ * to obtain a new Symbol instance (or the same instance if it's still valid, this is up to the Pointer)
+ * in the subsequent read action.
  * <p/>
  * <h4>Equality</h4>
  * There are no restrictions on whether implementations must provide {@link #equals}/{@link #hashCode}.
