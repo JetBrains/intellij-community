@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
 import com.intellij.openapi.application.Application;
@@ -31,8 +31,7 @@ public interface Pointer<T> {
   /**
    * @return value or {@code null} if the value was invalidated or cannot be restored
    */
-  @Nullable
-  T dereference();
+  @Nullable T dereference();
 
   boolean equals(Object o);
 
@@ -44,8 +43,7 @@ public interface Pointer<T> {
    * Hard pointers should be used only for values that cannot be invalidated.
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  static <T> Pointer<T> hardPointer(@NotNull T value) {
+  static <T> @NotNull Pointer<T> hardPointer(@NotNull T value) {
     return new HardPointer<>(value);
   }
 }
