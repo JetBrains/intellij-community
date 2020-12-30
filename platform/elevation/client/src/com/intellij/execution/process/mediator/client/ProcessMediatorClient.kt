@@ -134,11 +134,11 @@ class ProcessMediatorClient(
       .setTimeLimitMs(newOptions.timeLimitMs)
       .setIsRefreshable(newOptions.isRefreshable)
       .build()
-    daemonStub.adjustQuota(request)
+    ExceptionAsStatus.unwrap { daemonStub.adjustQuota(request) }
   }
 
   private suspend fun shutdown() {
-    daemonStub.shutdown(Empty.getDefaultInstance())
+    ExceptionAsStatus.unwrap { daemonStub.shutdown(Empty.getDefaultInstance()) }
   }
 
   fun adjustQuotaBlocking(newOptions: QuotaOptions) {

@@ -78,7 +78,9 @@ open class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
     }
 
     override suspend fun shutdown(request: Empty): Empty {
-      requestShutdown()
+      ExceptionAsStatus.wrap {
+        requestShutdown()
+      }
       return Empty.getDefaultInstance()
     }
   }
