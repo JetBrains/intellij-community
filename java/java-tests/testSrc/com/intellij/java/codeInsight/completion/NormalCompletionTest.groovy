@@ -2349,4 +2349,12 @@ class Abc {
                           "  }\n" +
                           "}")
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test no final library classes in extends"() {
+    myFixture.configureByText("X.java", "class X extends Stri<caret>")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException",
+                                              "StringReader", "StringWriter", "StringBufferInputStream"]
+  }
 }

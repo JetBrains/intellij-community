@@ -74,7 +74,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
           parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           JavaCompletionContributor.isClassNamePossible(parameters) &&
-          !JavaCompletionContributor.isInPermitsList(parameters.getPosition())) {
+          !JavaCompletionContributor.IN_PERMITS_LIST.accepts(parameters.getPosition())) {
         suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)), tracker.session);
       }
     }

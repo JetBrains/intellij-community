@@ -33,12 +33,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
+import com.intellij.psi.filters.classes.NoFinalLibraryClassesFilter;
+import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
@@ -87,6 +90,9 @@ public class JavaCompletionContributor extends CompletionContributor implements 
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
     or(psiElement(PsiIdentifier.class).withParent(NAME_VALUE_PAIR),
        psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
+  private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
+    psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
+      psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
 
   public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
     psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
@@ -114,19 +120,43 @@ public class JavaCompletionContributor extends CompletionContributor implements 
   private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
     psiElement().inside(PsiTypeElement.class).afterLeaf(
       psiElement().inside(true, psiElement(PsiEnumConstant.class), psiElement(PsiClass.class, PsiExpressionList.class)));
+  static final ElementPattern<PsiElement> IN_EXTENDS_OR_IMPLEMENTS = psiElement().afterLeaf(
+    psiElement()
+      .withText(string().oneOf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&"))
+      .withParent(PsiReferenceList.class));
+  static final ElementPattern<PsiElement> IN_PERMITS_LIST = psiElement().afterLeaf(
+    psiElement()
+      .withText(string().oneOf(PsiKeyword.PERMITS, ","))
+      .withParent(psiElement(PsiReferenceList.class).withFirstChild(psiElement(PsiKeyword.class).withText(PsiKeyword.PERMITS))));
+  private static final ElementPattern<PsiElement> IN_VARIABLE_TYPE = psiElement()
+    .withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiDeclarationStatement.class)
+    .afterLeaf(psiElement().inside(psiAnnotation()));
 
+  /**
+   * @param position completion invocation position
+   * @return filter for acceptable references; if null then no references are accepted at a given position
+   */
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false,
                                                            PsiCodeBlock.class, PsiMethod.class,
                                                            PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
     if (containingClass != null) {
-      if (isInPermitsList(position)) {
+      if (IN_PERMITS_LIST.accepts(position)) {
         return createPermitsListFilter();
       }
 
-      if (isInExtendsOrImplementsList(position)) {
-        return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
+      if (IN_EXTENDS_OR_IMPLEMENTS.accepts(position)) {
+        AndFilter filter = new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()),
+                                         new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class)));
+        PsiElement cls = position.getParent().getParent().getParent();
+        if (cls instanceof PsiClass && !(cls instanceof PsiTypeParameter)) {
+          filter = new AndFilter(filter, new NoFinalLibraryClassesFilter());
+        }
+        return filter;
+      }
+      if (IN_TYPE_PARAMETER.accepts(position)) {
+        return new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class));
       }
     }
 
@@ -138,7 +168,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
         JavaKeywordCompletion.isInsideParameterList(position) ||
         isInsideAnnotationName(position) ||
         PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class, false, PsiAnnotation.class) != null ||
-        isDefinitelyVariableType(position)) {
+        IN_VARIABLE_TYPE.accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
@@ -221,26 +251,6 @@ public class JavaCompletionContributor extends CompletionContributor implements 
     }));
   }
 
-  private static boolean isDefinitelyVariableType(PsiElement position) {
-    return psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiDeclarationStatement.class).afterLeaf(psiElement().inside(psiAnnotation())).accepts(position);
-  }
-
-  private static boolean isInExtendsOrImplementsList(PsiElement position) {
-    return psiElement().afterLeaf(
-      psiElement()
-        .withText(string().oneOf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&"))
-        .withParent(PsiReferenceList.class)
-    ).accepts(position);
-  }
-
-  static boolean isInPermitsList(PsiElement position) {
-    return psiElement().afterLeaf(
-      psiElement()
-        .withText(string().oneOf(PsiKeyword.PERMITS, ","))
-        .withParent(psiElement(PsiReferenceList.class).withFirstChild(psiElement(PsiKeyword.class).withText(PsiKeyword.PERMITS)))
-    ).accepts(position);
-  }
-
   private static boolean isInsideAnnotationName(PsiElement position) {
     PsiAnnotation anno = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class, true, PsiMember.class);
     return anno != null && PsiTreeUtil.isAncestor(anno.getNameReferenceElement(), position, true);
@@ -318,8 +328,8 @@ public class JavaCompletionContributor extends CompletionContributor implements 
       List<LookupElement> refSuggestions = Collections.emptyList();
       if (parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference) {
         PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)parent;
-        if (isInPermitsList(parent) && parameters.getInvocationCount() <= 1) {
-            refSuggestions = completePermitsListReference(parameters, parentRef, matcher);
+        if (IN_PERMITS_LIST.accepts(parent) && parameters.getInvocationCount() <= 1) {
+          refSuggestions = completePermitsListReference(parameters, parentRef, matcher);
         }
         else {
           refSuggestions = completeReference(parameters, parentRef, session, expectedInfos, matcher::prefixMatches);
