@@ -23,7 +23,7 @@ final class HighlightersRecycler {
   }
 
   @Nullable // null means no highlighter found in the cache
-  RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer){
+  RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
     TextRange range = new TextRange(startOffset, endOffset);
     Collection<RangeHighlighter> collection = incinerator.get(range);
     for (RangeHighlighter highlighter : collection) {

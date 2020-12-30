@@ -94,7 +94,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   /**
    * @deprecated please use {@link HyperlinkLabel#setTextWithHyperlink(String) with "beforeLinkText<hyperlink>linkText</hyperlink>" instead}
    */
-  @Deprecated()
+  @Deprecated
   public void setHyperlinkText(@LinkLabel String beforeLinkText, @LinkLabel String linkText, @LinkLabel String afterLinkText) {
     doSetHyperLinkText(beforeLinkText, linkText, afterLinkText);
   }
