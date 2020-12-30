@@ -3,6 +3,7 @@ package com.intellij.java.refactoring
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.refactoring.actions.InheritanceToDelegationAction
 import com.intellij.refactoring.actions.PullUpAction
 import com.intellij.refactoring.actions.RefactoringQuickListPopupAction
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
@@ -21,6 +22,22 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
 
   fun testPullMembersUpFiltered() {
     assertFalse(doActionExists<PullUpAction>())
+  }
+
+  fun testInheritanceToDelegationWithExtends() {
+    assertTrue(doActionExists<InheritanceToDelegationAction>())
+  }
+
+  fun testInheritanceToDelegationWithImplements() {
+    assertTrue(doActionExists<InheritanceToDelegationAction>())
+  }
+
+  fun testInheritanceToDelegationNoSuperClass() {
+    assertFalse(doActionExists<InheritanceToDelegationAction>())
+  }
+
+  fun testInheritanceToDelegationOutsideDeclaration() {
+    assertFalse(doActionExists<InheritanceToDelegationAction>())
   }
 
   private inline fun <reified A> doActionExists(): Boolean {

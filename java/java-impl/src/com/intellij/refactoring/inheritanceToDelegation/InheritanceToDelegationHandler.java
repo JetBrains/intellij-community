@@ -25,12 +25,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -38,6 +41,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -61,7 +65,16 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !PsiUtil.isModuleFile(file);
+    final int caretOffset = editor.getCaretModel().getOffset();
+    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(file, caretOffset, PsiClass.class, false);
+    return psiClass != null && JavaPullUpHandler.isClassWithExtendsOrImplements(psiClass) && findDeclarationRange(psiClass).contains(caretOffset);
+  }
+
+  private static TextRange findDeclarationRange(PsiClass psiClass) {
+    int start = psiClass.getTextRange().getStartOffset();
+    final PsiElement brace = psiClass.getLBrace();
+    int end = (brace != null) ? brace.getTextRange().getEndOffset() : psiClass.getTextRange().getEndOffset();
+    return new TextRange(start, end);
   }
 
   @Override
