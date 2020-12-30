@@ -81,7 +81,7 @@ internal class TimeQuotaManager(
   }
 
   override fun close() {
-    cancel("Closed")
+    job.cancel("Closed")
   }
 }
 
