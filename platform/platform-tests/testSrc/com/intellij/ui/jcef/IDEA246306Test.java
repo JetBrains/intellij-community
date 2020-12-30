@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.After;
@@ -28,14 +27,9 @@ public class IDEA246306Test {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
-  @Before
-  public void before() {
-    RegistryManager.getInstance().get("ide.browser.jcef.headless.enabled").setValue("true");
-  }
-
   @After
   public void after() {
-    TestScaleHelper.restoreSystemProperties();
+    TestScaleHelper.restoreProperties();
   }
 
   @Test

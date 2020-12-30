@@ -24,8 +24,7 @@ public class JBCefTestModeTest {
 
   @After
   public void after() {
-    restoreSystemProperties();
-    restoreRegistryProperties();
+    restoreProperties();
   }
 
   @Test

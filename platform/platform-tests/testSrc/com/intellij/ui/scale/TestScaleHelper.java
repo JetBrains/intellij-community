@@ -79,6 +79,11 @@ public final class TestScaleHelper {
     }
   }
 
+  public static void restoreProperties() {
+    restoreSystemProperties();
+    restoreRegistryProperties();
+  }
+
   public static void restoreSystemProperties() {
     for (Map.Entry<String, String> entry : originalSysProps.entrySet()) {
       _setProperty(entry.getKey(), entry.getValue());

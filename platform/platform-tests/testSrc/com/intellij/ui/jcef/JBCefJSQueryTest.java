@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
@@ -38,13 +37,12 @@ public class JBCefJSQueryTest {
 
   @Before
   public void before() {
-    RegistryManager.getInstance().get("ide.browser.jcef.headless.enabled").setValue("true");
     TestScaleHelper.setSystemProperty("ide.browser.jcef.jsQueryPoolSize", "0");
   }
 
   @After
   public void after() {
-    TestScaleHelper.restoreSystemProperties();
+    TestScaleHelper.restoreProperties();
   }
 
   @Test
