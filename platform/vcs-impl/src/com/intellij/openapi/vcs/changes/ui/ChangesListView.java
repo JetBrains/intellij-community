@@ -472,10 +472,11 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   private static class DistinctChangePredicate extends JBIterable.SCond<Change> {
-    private final Set<Object> seen = new ObjectOpenCustomHashSet<>(ChangeListChange.HASHING_STRATEGY);
+    private Set<Object> seen;
 
     @Override
     public boolean value(Change change) {
+      if (seen == null) seen = new ObjectOpenCustomHashSet<>(ChangeListChange.HASHING_STRATEGY);
       return seen.add(change);
     }
   }
