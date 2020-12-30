@@ -476,6 +476,7 @@ final class PaintersHelper implements Painter.Listener {
       boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
       boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        Image image = null;
         try {
           InputStream stream;
           boolean isSvg = filePath.endsWith(".svg");
@@ -490,7 +491,7 @@ final class PaintersHelper implements Painter.Listener {
             path.normalize();
             stream = Files.newInputStream(path.normalize());
           }
-          Image image;
+
           try (stream) {
             if (isSvg) {
               image = SVGLoader.load(stream, 1);
@@ -501,21 +502,23 @@ final class PaintersHelper implements Painter.Listener {
           }
 
           BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-          Image finalImage = ImageLoader.convertImage(image,
-                                                      flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
-                                                      ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
-                                                      true,
-                                                      !isSvg, 1,
-                                                      isSvg,
-                                                      new ImageLoader.Dimension2DDouble(image.getWidth(null), image.getHeight(null)));
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            resetImage(propertyValue, finalImage, newAlpha, newFillType, newAnchor);
-          }, modalityState);
+          image = ImageLoader.convertImage(
+            image,
+            flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
+            ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
+            true,
+            !isSvg, 1,
+            isSvg,
+            new ImageLoader.Dimension2DDouble(image.getWidth(null), image.getHeight(null)));
         }
         catch (Exception e) {
           LOG.warn(e);
-          resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
+        }
+        finally {
+          Image finalImage = image;
+          ApplicationManager.getApplication().invokeLater(() -> {
+            resetImage(propertyValue, finalImage, newAlpha, newFillType, newAnchor);
+          }, modalityState);
         }
       });
     }
