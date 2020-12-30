@@ -75,11 +75,13 @@ public class DataManagerImpl extends DataManager {
     return null;
   }
 
+  @ApiStatus.Internal
   public @Nullable Object getDataFromProvider(final @NotNull DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
     return getDataFromProvider(provider, dataId, alreadyComputedIds, getDataRule(dataId));
   }
 
-  private @Nullable Object getDataFromProvider(@NotNull DataProvider provider,
+  @ApiStatus.Internal
+  public @Nullable Object getDataFromProvider(@NotNull DataProvider provider,
                                                @NotNull String dataId,
                                                @Nullable Set<String> alreadyComputedIds,
                                                @Nullable GetDataRule dataRule) {
@@ -116,6 +118,10 @@ public class DataManagerImpl extends DataManager {
     }
     else if (component instanceof JComponent) {
       dataProvider = getDataProvider((JComponent)component);
+    }
+
+    if (dataProvider instanceof BackgroundableDataProvider) {
+      dataProvider = ((BackgroundableDataProvider)dataProvider).createBackgroundDataProvider();
     }
 
     return dataProvider;

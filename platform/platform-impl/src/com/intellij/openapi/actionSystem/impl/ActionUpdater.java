@@ -116,6 +116,9 @@ final class ActionUpdater {
     if (myDataContext instanceof AsyncDataContext) { // it's very expensive to create async-context for each custom component
       return myDataContext;                          // and such actions (with custom components, i.e. buttons from dialogs) updates synchronously now
     }
+    if (myDataContext instanceof PreCachedDataContext) {
+      return myDataContext;
+    }
     final Component component = myVisitor.getCustomComponent(action);
     return component != null ? DataManager.getInstance().getDataContext(component) : myDataContext;
   }

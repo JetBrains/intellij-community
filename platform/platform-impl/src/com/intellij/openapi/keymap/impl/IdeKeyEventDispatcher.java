@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -218,7 +219,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    DataContext dataContext = dataManager.getDataContext();
+    DataContext dataContext = Utils.wrapDataContext(dataManager.getDataContext());
 
     myContext.setDataContext(dataContext);
     myContext.setFocusOwner(focusOwner);
