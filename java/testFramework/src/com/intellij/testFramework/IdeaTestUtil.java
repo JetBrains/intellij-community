@@ -26,6 +26,8 @@ import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,7 +92,7 @@ public final class IdeaTestUtil {
     }
 
     String homePath = PathUtil.toSystemIndependentName(path);
-    File jdkHomeFile = new File(homePath);
+    Path jdkHomeFile = Paths.get(homePath);
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
     SdkModificator sdkModificator = new SdkModificator() {

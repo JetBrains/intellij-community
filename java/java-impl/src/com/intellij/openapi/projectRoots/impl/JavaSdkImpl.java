@@ -51,9 +51,11 @@ import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -221,11 +223,11 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public String adjustSelectedSdkHome(@NotNull String homePath) {
     if (SystemInfo.isMac) {
-      File home = new File(homePath, "/Home");
-      if (home.exists()) return home.getPath();
+      Path home = Paths.get(homePath, "/Home");
+      if (Files.exists(home)) return home.toString();
 
-      home = new File(homePath, "Contents/Home");
-      if (home.exists()) return home.getPath();
+      home = Paths.get(homePath, "Contents/Home");
+      if (Files.exists(home)) return home.toString();
     }
 
     return homePath;
@@ -279,7 +281,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public void setupSdkPaths(@NotNull Sdk sdk) {
     String homePath = sdk.getHomePath();
     assert homePath != null : sdk;
-    File jdkHome = new File(homePath);
+    Path jdkHome = Paths.get(homePath);
     SdkModificator sdkModificator = sdk.getSdkModificator();
 
     List<String> classes = findClasses(jdkHome, false);
@@ -440,9 +442,9 @@ public final class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public Sdk createJdk(@NotNull String jdkName, @NotNull String home, boolean isJre) {
-    File jdkHomeFile = new File(home);
-    if (!jdkHomeFile.exists()) {
-      throw new IllegalArgumentException(jdkHomeFile.getAbsolutePath() + " doesn't exist");
+    Path jdkHomePath = Paths.get(home);
+    if (!Files.exists(jdkHomePath)) {
+      throw new IllegalArgumentException(jdkHomePath.toAbsolutePath().toString() + " doesn't exist");
     }
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
@@ -452,9 +454,9 @@ public final class JavaSdkImpl extends JavaSdk {
       sdkModificator.setVersionString(jdkName);  // must be set after home path, otherwise setting home path clears the version string
     }
 
-    addClasses(jdkHomeFile, sdkModificator, isJre);
-    addSources(jdkHomeFile, sdkModificator);
-    addDocs(jdkHomeFile, sdkModificator, null);
+    addClasses(jdkHomePath, sdkModificator, isJre);
+    addSources(jdkHomePath, sdkModificator);
+    addDocs(jdkHomePath, sdkModificator, null);
     attachJdkAnnotations(sdkModificator);
 
     sdkModificator.commitChanges();
@@ -463,7 +465,7 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @ApiStatus.Internal
-  public static void addClasses(@NotNull File file, @NotNull SdkModificator sdkModificator, boolean isJre) {
+  public static void addClasses(@NotNull Path file, @NotNull SdkModificator sdkModificator, boolean isJre) {
     for (String url : findClasses(file, isJre)) {
       sdkModificator.addRoot(url, OrderRootType.CLASSES);
     }
@@ -474,10 +476,10 @@ public final class JavaSdkImpl extends JavaSdk {
    * or doesn't contain the expected information.
    */
   @Nullable
-  private static List<String> readModulesFromReleaseFile(File jrtBaseDir) {
-    File releaseFile = new File(jrtBaseDir, "release");
-    if (releaseFile.isFile()) {
-      try (FileInputStream stream = new FileInputStream(releaseFile)) {
+  private static List<String> readModulesFromReleaseFile(Path jrtBaseDir) {
+    Path releaseFile = jrtBaseDir.resolve("release");
+    if (Files.isRegularFile(releaseFile)) {
+      try (InputStream stream = Files.newInputStream(releaseFile)) {
         Properties p = new Properties();
         p.load(stream);
         String modules = p.getProperty("MODULES");
@@ -493,18 +495,20 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @NotNull
-  private static List<String> findClasses(@NotNull File jdkHome, boolean isJre) {
+  private static List<String> findClasses(@NotNull Path jdkHome, boolean isJre) {
     List<String> result = new ArrayList<>();
 
-    if (JdkUtil.isExplodedModularRuntime(jdkHome.getPath())) {
-      File[] exploded = new File(jdkHome, "modules").listFiles();
-      if (exploded != null) {
-        for (File root : exploded) {
-          result.add(VfsUtil.getUrlForLibraryRoot(root));
+    if (JdkUtil.isExplodedModularRuntime(jdkHome.toString())) {
+      try {
+        Path[] exploded = Files.list(jdkHome.resolve("modules")).toArray(Path[]::new);
+        for (Path root : exploded) {
+          result.add(VfsUtil.getUrlForLibraryRoot(root.toFile()));
         }
       }
+      catch (IOException ignore){
+      }
     }
-    else if (JdkUtil.isModularRuntime(jdkHome)) {
+    else if (JdkUtil.isModularRuntime(jdkHome.toString())) {
       String jrtBaseUrl = JrtFileSystem.PROTOCOL_PREFIX + getPath(jdkHome) + JrtFileSystem.SEPARATOR;
       List<String> modules = readModulesFromReleaseFile(jdkHome);
       if (modules != null) {
@@ -522,8 +526,8 @@ public final class JavaSdkImpl extends JavaSdk {
       }
     }
     else {
-      for (File root : JavaSdkUtil.getJdkClassesRoots(jdkHome, isJre)) {
-        result.add(VfsUtil.getUrlForLibraryRoot(root));
+      for (Path root : JavaSdkUtil.getJdkClassesRoots(jdkHome, isJre)) {
+        result.add(VfsUtil.getUrlForLibraryRoot(root.toFile()));
       }
     }
 
@@ -532,7 +536,7 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @ApiStatus.Internal
-  public static void addSources(@NotNull File jdkHome, @NotNull SdkModificator sdkModificator) {
+  public static void addSources(@NotNull Path jdkHome, @NotNull SdkModificator sdkModificator) {
     VirtualFile jdkSrc = findSources(jdkHome, "src");
     if (jdkSrc != null) {
       if (jdkSrc.findChild("java.base") != null) {
@@ -552,25 +556,25 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Nullable
-  private static VirtualFile findSources(File jdkHome, String srcName) {
-    File srcArc = new File(jdkHome, srcName + ".jar");
-    if (!srcArc.exists()) srcArc = new File(jdkHome, srcName + ".zip");
-    if (!srcArc.exists()) srcArc = new File(jdkHome, "lib/" + srcName + ".zip");
-    if (srcArc.exists()) {
+  private static VirtualFile findSources(Path jdkHome, String srcName) {
+    Path srcArc = jdkHome.resolve(srcName + ".jar");
+    if (!Files.exists(srcArc)) srcArc = jdkHome.resolve(srcName + ".zip");
+    if (!Files.exists(srcArc)) srcArc = jdkHome.resolve("lib").resolve(srcName + ".zip");
+    if (Files.exists(srcArc)) {
       VirtualFile srcRoot = findInJar(srcArc, "src");
       if (srcRoot == null) srcRoot = findInJar(srcArc, "");
       return srcRoot;
     }
 
-    File srcDir = new File(jdkHome, "src");
-    if (srcDir.isDirectory()) {
+    Path srcDir = jdkHome.resolve("src");
+    if (Files.isDirectory(srcDir)) {
       return LocalFileSystem.getInstance().findFileByPath(getPath(srcDir));
     }
 
     return null;
   }
 
-  private void addDocs(File jdkHome, SdkModificator sdkModificator, @Nullable Sdk sdk) {
+  private void addDocs(Path jdkHome, SdkModificator sdkModificator, @Nullable Sdk sdk) {
     OrderRootType docRootType = JavadocOrderRootType.getInstance();
 
     VirtualFile apiDocs = findDocs(jdkHome, "docs/api");
@@ -579,14 +583,14 @@ public final class JavaSdkImpl extends JavaSdk {
     }
     else if (SystemInfo.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");
-      if (commonDocs == null) commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
-      if (commonDocs == null) commonDocs = findInJar(new File(jdkHome, "docs.jar"), "docs/api");
+      if (commonDocs == null) commonDocs = findInJar(jdkHome.resolve("docs.jar"), "doc/api");
+      if (commonDocs == null) commonDocs = findInJar(jdkHome.resolve("docs.jar"), "docs/api");
       if (commonDocs != null) {
         sdkModificator.addRoot(commonDocs, docRootType);
       }
 
       VirtualFile appleDocs = findDocs(jdkHome, "appledocs");
-      if (appleDocs == null) appleDocs = findInJar(new File(jdkHome, "appledocs.jar"), "appledoc/api");
+      if (appleDocs == null) appleDocs = findInJar(jdkHome.resolve("appledocs.jar"), "appledoc/api");
       if (appleDocs != null) {
         sdkModificator.addRoot(appleDocs, docRootType);
       }
@@ -612,19 +616,19 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Nullable
-  private static VirtualFile findDocs(@NotNull File jdkHome, @NotNull String relativePath) {
-    File docDir = new File(jdkHome.getAbsolutePath(), relativePath);
-    return docDir.isDirectory() ? LocalFileSystem.getInstance().findFileByPath(getPath(docDir)) : null;
+  private static VirtualFile findDocs(@NotNull Path jdkHome, @NotNull String relativePath) {
+    Path docDir = jdkHome.resolve(relativePath);
+    return Files.isDirectory(docDir) ? LocalFileSystem.getInstance().findFileByPath(getPath(docDir)) : null;
   }
 
-  private static VirtualFile findInJar(File jarFile, String relativePath) {
-    if (!jarFile.exists()) return null;
+  private static VirtualFile findInJar(Path jarFile, String relativePath) {
+    if (!Files.exists(jarFile)) return null;
     String url = JarFileSystem.PROTOCOL_PREFIX + getPath(jarFile) + JarFileSystem.JAR_SEPARATOR + relativePath;
     return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
-  private static String getPath(File jarFile) {
-    return FileUtil.toSystemIndependentName(jarFile.getAbsolutePath());
+  private static String getPath(Path jarFile) {
+    return FileUtil.toSystemIndependentName(jarFile.toAbsolutePath().toString());
   }
 
   @Override

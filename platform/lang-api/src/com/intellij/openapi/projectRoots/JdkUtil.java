@@ -121,15 +121,15 @@ public final class JdkUtil {
   }
 
   public static boolean isModularRuntime(@NotNull String homePath) {
-    return isModularRuntime(new File(FileUtil.toSystemDependentName(homePath)));
+    return isModularRuntime(Paths.get(FileUtil.toSystemDependentName(homePath)));
   }
 
-  public static boolean isModularRuntime(@NotNull File homePath) {
-    return new File(homePath, "lib/jrt-fs.jar").isFile() || isExplodedModularRuntime(homePath.getPath());
+  public static boolean isModularRuntime(@NotNull Path homePath) {
+    return Files.isRegularFile(homePath.resolve("lib/jrt-fs.jar")) || isExplodedModularRuntime(homePath.toString());
   }
 
   public static boolean isExplodedModularRuntime(@NotNull String homePath) {
-    return new File(homePath, "modules/java.base").isDirectory();
+    return Files.isDirectory(Paths.get(homePath, "modules/java.base"));
   }
 
   @ApiStatus.Internal

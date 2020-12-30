@@ -27,6 +27,8 @@ import org.jetbrains.jps.model.module.impl.JpsTestModulePropertiesImpl;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -130,10 +132,10 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     assert jdkInfo != null : homePath;
     String version = JdkVersionDetector.formatVersionString(jdkInfo.version);
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdk = global.addSdk(name, homePath, version, JpsJavaSdkType.INSTANCE);
-    File homeDir = new File(FileUtil.toSystemDependentName(homePath));
-    List<File> roots = JavaSdkUtil.getJdkClassesRoots(homeDir, false);
-    for (File root : roots) {
-      sdk.addRoot(root, JpsOrderRootType.COMPILED);
+    Path homeDir = Paths.get(FileUtil.toSystemDependentName(homePath));
+    List<Path> roots = JavaSdkUtil.getJdkClassesRoots(homeDir, false);
+    for (Path root : roots) {
+      sdk.addRoot(root.toFile(), JpsOrderRootType.COMPILED);
     }
     return sdk;
   }

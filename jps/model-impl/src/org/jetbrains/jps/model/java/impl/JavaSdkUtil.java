@@ -2,69 +2,77 @@
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.notNull;
+import java.util.function.Predicate;
 
 public final class JavaSdkUtil {
+  private static final Path[] EMPTY_PATH_ARRAY = new Path[0];
+
+  /**
+   * @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead
+   */
+  @Deprecated
   @NotNull
   public static List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
-    File[] jarDirs;
-    if (SystemInfo.isMac && !home.getName().startsWith("mockJDK")) {
-      File openJdkRtJar = new File(home, "jre/lib/rt.jar");
-      if (openJdkRtJar.isFile()) {
-        File libDir = new File(home, "lib");
-        File classesDir = openJdkRtJar.getParentFile();
-        File libExtDir = new File(openJdkRtJar.getParentFile(), "ext");
-        File libEndorsedDir = new File(libDir, "endorsed");
-        jarDirs = new File[]{libEndorsedDir, libDir, classesDir, libExtDir};
+    return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);
+  }
+
+  @NotNull
+  public static List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
+    Path[] jarDirs;
+    if (SystemInfo.isMac && !home.getFileName().startsWith("mockJDK")) {
+      Path openJdkRtJar = home.resolve("jre/lib/rt.jar");
+      if (Files.isReadable(openJdkRtJar)) {
+        Path libDir = home.resolve("lib");
+        Path classesDir = openJdkRtJar.getParent();
+        Path libExtDir = openJdkRtJar.resolveSibling("ext");
+        Path libEndorsedDir = libDir.resolve("endorsed");
+        jarDirs = new Path[]{libEndorsedDir, libDir, classesDir, libExtDir};
       }
       else {
-        File libDir = new File(home, "lib");
-        File classesDir = new File(home, "../Classes");
-        File libExtDir = new File(libDir, "ext");
-        File libEndorsedDir = new File(libDir, "endorsed");
-        jarDirs = new File[]{libEndorsedDir, libDir, classesDir, libExtDir};
+        Path libDir = home.resolve("lib");
+        Path classesDir = home.resolveSibling("Classes");
+        Path libExtDir = libDir.resolve("ext");
+        Path libEndorsedDir = libDir.resolve("endorsed");
+        jarDirs = new Path[]{libEndorsedDir, libDir, classesDir, libExtDir};
       }
     }
-    else if (new File(home, "lib/jrt-fs.jar").exists()) {
-      jarDirs = ArrayUtilRt.EMPTY_FILE_ARRAY;
+    else if (Files.exists(home.resolve("lib/jrt-fs.jar"))) {
+      jarDirs = EMPTY_PATH_ARRAY;
     }
     else {
-      File libDir = new File(home, isJre ? "lib" : "jre/lib");
-      File libExtDir = new File(libDir, "ext");
-      File libEndorsedDir = new File(libDir, "endorsed");
-      jarDirs = new File[]{libEndorsedDir, libDir, libExtDir};
+      Path libDir = home.resolve(isJre ? "lib" : "jre/lib");
+      Path libExtDir = libDir.resolve("ext");
+      Path libEndorsedDir = libDir.resolve("endorsed");
+      jarDirs = new Path[]{libEndorsedDir, libDir, libExtDir};
     }
 
-    FileFilter jarFileFilter = FileFilters.filesWithExtension("jar");
+    Predicate<Path> jarFileFilter = path -> FileUtilRt.extensionEquals(path.toString(), "jar");
     Set<String> pathFilter = CollectionFactory.createFilePathSet();
-    List<File> rootFiles = new ArrayList<>();
+    List<Path> rootFiles = new ArrayList<>();
     if (Registry.is("project.structure.add.tools.jar.to.new.jdk", false)) {
-      File toolsJar = new File(home, "lib/tools.jar");
-      if (toolsJar.isFile()) {
+      Path toolsJar = home.resolve("lib/tools.jar");
+      if (Files.isRegularFile(toolsJar)) {
         rootFiles.add(toolsJar);
       }
     }
-    for (File jarDir : jarDirs) {
-      if (jarDir != null && jarDir.isDirectory()) {
-        File[] jarFiles = listFiles(jarDir, jarFileFilter);
-        for (File jarFile : jarFiles) {
-          String jarFileName = jarFile.getName();
+    for (Path jarDir : jarDirs) {
+      if (jarDir != null && Files.isDirectory(jarDir)) {
+        for (Path jarFile : listFiles(jarDir, jarFileFilter)) {
+          String jarFileName = jarFile.getFileName().toString();
           if (jarFileName.equals("alt-rt.jar") || jarFileName.equals("alt-string.jar")) {
             continue;  // filter out alternative implementations
           }
@@ -77,26 +85,27 @@ public final class JavaSdkUtil {
       }
     }
 
-    List<File> ibmJdkLookupDirs = ContainerUtil.newArrayList(new File(home, isJre ? "bin" : "jre/bin"));
-    ContainerUtil.addAll(ibmJdkLookupDirs, listFiles(new File(home, isJre ? "lib" : "jre/lib"), FileUtilRt.ALL_DIRECTORIES));
-    for (File candidate : ibmJdkLookupDirs) {
-      File[] vmJarDirs = listFiles(new File(candidate, "default"), f -> f.getName().startsWith("jclSC") && f.isDirectory());
-      for (File dir : vmJarDirs) {
-        File vmJar = new File(dir, "vm.jar");
-        if (vmJar.isFile()) {
+    List<Path> ibmJdkLookupDirs = ContainerUtil.newArrayList(home.resolve(isJre ? "bin" : "jre/bin"));
+    ContainerUtil.addAll(ibmJdkLookupDirs, listFiles(home.resolve(isJre ? "lib" : "jre/lib"), path -> Files.isDirectory(path)));
+    for (Path candidate : ibmJdkLookupDirs) {
+      Path[] vmJarDirs =
+        listFiles(candidate.resolve("default"), f -> f.getFileName().toString().startsWith("jclSC") && Files.isDirectory(f));
+      for (Path dir : vmJarDirs) {
+        Path vmJar = dir.resolve("vm.jar");
+        if (Files.isRegularFile(vmJar)) {
           rootFiles.add(vmJar);
         }
       }
     }
 
-    File classesZip = new File(home, "lib/classes.zip");
-    if (classesZip.isFile()) {
+    Path classesZip = home.resolve("lib/classes.zip");
+    if (Files.isRegularFile(classesZip)) {
       rootFiles.add(classesZip);
     }
 
     if (rootFiles.isEmpty()) {
-      File classesDir = new File(home, "classes");
-      if (classesDir.isDirectory()) {
+      Path classesDir = home.resolve("classes");
+      if (Files.isDirectory(classesDir)) {
         rootFiles.add(classesDir);
       }
     }
@@ -104,14 +113,19 @@ public final class JavaSdkUtil {
     return rootFiles;
   }
 
-  private static File[] listFiles(File dir, FileFilter filter) {
-    return notNull(dir.listFiles(filter), ArrayUtilRt.EMPTY_FILE_ARRAY);
+  private static Path[] listFiles(Path dir, Predicate<Path> filter) {
+    try {
+      return Files.list(dir).filter(filter).toArray(Path[]::new);
+    }
+    catch (IOException e) {
+      return EMPTY_PATH_ARRAY;
+    }
   }
 
   @Nullable
-  private static String getCanonicalPath(File file) {
+  private static String getCanonicalPath(Path file) {
     try {
-      return file.getCanonicalPath();
+      return file.toRealPath().toString();
     }
     catch (IOException e) {
       return null;
