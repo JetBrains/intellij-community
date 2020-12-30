@@ -46,8 +46,9 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
     if (exported && isPrivateName(name) && !resolvingBuiltinPathLike(name)) return emptyList()
 
     val baseResults = super.multiResolveName(name, exported)
+    val dunderAll = dunderAll ?: emptyList()
     return if (exported)
-      baseResults.filterNot { isPrivateImport((it as? ImportedResolveResult)?.definer) }
+      baseResults.filterNot { isPrivateImport((it as? ImportedResolveResult)?.definer, dunderAll) }
     else
       baseResults
   }
@@ -56,9 +57,10 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
                                    resolveState: ResolveState,
                                    lastParent: PsiElement?,
                                    place: PsiElement): Boolean {
+    val dunderAll = dunderAll ?: emptyList()
     val wrapper = object : DelegatingScopeProcessor(processor) {
       override fun execute(element: PsiElement, state: ResolveState): Boolean = when {
-        isPrivateImport(element) -> true
+        isPrivateImport(element, dunderAll) -> true
         element is PsiNamedElement && isPrivateName(element.name) -> true
         else -> super.execute(element, state)
       }
@@ -68,7 +70,9 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   private fun isPrivateName(name: String?) = PyUtil.getInitialUnderscores(name) == 1
 
-  private fun isPrivateImport(element: PsiElement?) = element is PyImportElement && element.asName == null
+  private fun isPrivateImport(element: PsiElement?, dunderAll: List<String>): Boolean {
+    return element is PyImportElement && element.asName == null && element.visibleName !in dunderAll
+  }
 
   private fun resolvingBuiltinPathLike(name: String): Boolean {
     return name == PyNames.BUILTIN_PATH_LIKE && PyBuiltinCache.getInstance(this).builtinsFile == this
