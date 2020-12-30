@@ -10,6 +10,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -218,10 +219,18 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         close(CANCEL_EXIT_CODE);
       }
     });
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appClosing() {
+        close(CANCEL_EXIT_CODE);
+      }
+    });
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        close(CANCEL_EXIT_CODE);
+        if (project == getProject()) {
+          close(CANCEL_EXIT_CODE);
+        }
       }
     });
     myConfiguration = createConfiguration(null);
