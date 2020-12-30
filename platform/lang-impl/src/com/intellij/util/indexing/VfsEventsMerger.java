@@ -190,7 +190,7 @@ final class VfsEventsMerger {
 
     int getFileId() {
       int fileId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file);
-      if (fileId < 0) fileId = -fileId;
+      assert fileId >= 0;
       return fileId;
     }
   }

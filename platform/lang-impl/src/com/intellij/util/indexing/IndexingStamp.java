@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
@@ -203,7 +203,7 @@ public final class IndexingStamp {
   }
 
   private static final int INDEXING_STAMP_CACHE_CAPACITY = SystemProperties.getIntProperty("index.timestamp.cache.size", 100);
-  private static final IntObjectMap<IndexingStamp.Timestamps> ourTimestampsCache =
+  private static final ConcurrentIntObjectMap<Timestamps> ourTimestampsCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
@@ -233,10 +233,7 @@ public final class IndexingStamp {
   }
 
   private static Timestamps createOrGetTimeStamp(int id) {
-    boolean isValid = id > 0;
-    if (!isValid) {
-      id = -id;
-    }
+    assert id > 0;
     Timestamps timestamps = ourTimestampsCache.get(id);
     if (timestamps == null) {
       try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
@@ -246,7 +243,7 @@ public final class IndexingStamp {
         FSRecords.handleError(e);
         throw new RuntimeException(e);
       }
-      if (isValid) ourTimestampsCache.put(id, timestamps);
+      ourTimestampsCache.cacheOrGet(id, timestamps);
     }
     return timestamps;
   }

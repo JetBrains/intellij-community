@@ -5,7 +5,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import com.intellij.AppTopics;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -500,7 +499,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             dropNontrivialIndexedStates(fileId);
           }
           else {
-            removeDataFromIndicesForFile(Math.abs(fileId), file);
+            removeDataFromIndicesForFile(fileId, file);
           }
         }
         getChangedFilesCollector().clearFilesToUpdate();
@@ -548,6 +547,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private void removeFileDataFromIndices(@NotNull Collection<? extends ID<?, ?>> affectedIndices, int inputId, VirtualFile file) {
+    assert ProgressManager.getInstance().isInNonCancelableSection();
     try {
       // document diff can depend on previous value that will be removed
       removeTransientFileDataFromIndices(affectedIndices, inputId, file);
@@ -556,9 +556,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       for (ID<?, ?> indexId : affectedIndices) {
         try {
           updateSingleIndex(indexId, null, inputId, null);
-        }
-        catch (ProcessCanceledException pce) {
-          LOG.error(pce);
         }
         catch (Throwable e) {
           LOG.info(e);
@@ -971,7 +968,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       IndexedFileImpl indexedFile = new IndexedFileImpl(vFile, project);
       if (getAffectedIndexCandidates(indexedFile).contains(requestedIndexId) &&
           acceptsInput(requestedIndexId, indexedFile)) {
-        final int inputId = Math.abs(getFileId(vFile));
+        final int inputId = getFileId(vFile);
 
         if (!isTooLarge(vFile, (long)contentText.length())) {
           // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
@@ -1199,7 +1196,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public FileIndexingStatistics indexFileContent(@Nullable Project project, @NotNull CachedFileContent content) {
     ProgressManager.checkCanceled();
     VirtualFile file = content.getVirtualFile();
-    final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
+    final int fileId = getIdMaskingNonIdBasedFile(file);
 
     FileIndexingResult indexingResult;
     try {
@@ -1745,7 +1742,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   static int getIdMaskingNonIdBasedFile(@NotNull VirtualFile file) {
-    return file instanceof VirtualFileWithId ?((VirtualFileWithId)file).getId() : IndexingStamp.INVALID_FILE_ID;
+    return Math.abs(file instanceof VirtualFileWithId ? ((VirtualFileWithId)file).getId() : IndexingStamp.INVALID_FILE_ID);
   }
 
   FileIndexingState shouldIndexFile(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId) {
@@ -1804,7 +1801,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     ChangedFilesCollector changedFilesCollector = getChangedFilesCollector();
     for (VirtualFile file : changedFilesCollector.getAllFilesToUpdate()) {
-      final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
+      final int fileId = getIdMaskingNonIdBasedFile(file);
       if (!file.isValid()) {
         removeDataFromIndicesForFile(fileId, file);
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
@@ -1873,7 +1870,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         !(file instanceof VirtualFileSystemEntry) ||
         !(((VirtualFileSystemEntry)file).isFileIndexed())) return false;
 
-    return IndexingStamp.getNontrivialFileIndexedStates(((VirtualFileSystemEntry)file).getId()).contains(indexId);
+    int fileId = getIdMaskingNonIdBasedFile(file);
+    return IndexingStamp.getNontrivialFileIndexedStates(fileId).contains(indexId);
   }
 
   @Override

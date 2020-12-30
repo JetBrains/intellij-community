@@ -20,16 +20,13 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Maxim.Mossienko on 11/18/2015.
- */
 class DeletedVirtualFileStub extends LightVirtualFile implements VirtualFileWithId {
   private final int myFileId;
   private boolean myResurrected;
 
   DeletedVirtualFileStub(@NotNull VirtualFileWithId original) {
     setOriginalFile((VirtualFile)original);
-    myFileId = -original.getId();
+    myFileId = original.getId();
   }
 
   @Override

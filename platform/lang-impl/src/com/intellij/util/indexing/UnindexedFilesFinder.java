@@ -64,7 +64,7 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, myProject);
       if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
-        int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+        int inputId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file);
 
         boolean wasInvalidated = false;
         if (myRunExtensionsForFilesMarkedAsIndexed && myShouldProcessUpToDateFiles) {
@@ -100,7 +100,7 @@ final class UnindexedFilesFinder {
 
       FileBasedIndexImpl.getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
         boolean isDirectory = file.isDirectory();
-        int inputId = Math.abs(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+        int inputId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file);
         FileIndexingState fileTypeIndexState = null;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
