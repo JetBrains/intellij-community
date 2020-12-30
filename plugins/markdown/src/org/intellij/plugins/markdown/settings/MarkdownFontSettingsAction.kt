@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
@@ -11,6 +12,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.FontInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
@@ -39,16 +41,23 @@ class MarkdownFontSettingsAction() : ComboBoxAction() {
         cell {
           val fontNames = FontInfo.getAll(false).map { it.toString() }.toSortedSet().toTypedArray()
           val model = DefaultComboBoxModel(fontNames)
-          ComboboxSpeedSearch(
-            comboBox(model, fontFamilyProperty).component
-          )
+          comboBox(model, fontFamilyProperty).applyToComponent {
+            putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true)
+            ComboboxSpeedSearch(this)
+            font = JBUI.Fonts.smallFont()
+          }
         }
       }
       row(MarkdownBundle.message("markdown.preview.settings.font.size"), true) {
         cell {
-          val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet().toTypedArray()
-          val model = DefaultComboBoxModel(fontSizes)
-          comboBox(model, fontSizeProperty).applyToComponent { isEditable = true }
+          val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet()
+          fontSizes.add(fontSizeProperty.get())
+          val model = DefaultComboBoxModel(fontSizes.toTypedArray())
+          comboBox(model, fontSizeProperty).applyToComponent {
+            isEditable = true
+            putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true)
+            font = JBUI.Fonts.smallFont()
+          }
         }
       }
     }
