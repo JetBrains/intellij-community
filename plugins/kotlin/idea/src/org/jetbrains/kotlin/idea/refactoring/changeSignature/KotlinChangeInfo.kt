@@ -173,7 +173,7 @@ open class KotlinChangeInfo(
 
     override fun isGenerateDelegate(): Boolean = false
 
-    override fun getNewName(): String = name.quoteIfNeeded()
+    override fun getNewName(): String = name.takeIf { it != "<no name provided>" }?.quoteIfNeeded() ?: name
 
     fun setNewName(value: String) {
         name = value
