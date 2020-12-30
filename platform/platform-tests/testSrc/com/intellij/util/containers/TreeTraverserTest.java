@@ -10,6 +10,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
+import gnu.trove.TIntHashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -360,6 +361,21 @@ public class TreeTraverserTest extends TestCase {
         boolean b = integer > prev;
         if (b) prev = integer;
         return b;
+      }
+    });
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), it.toList());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), it.toList());
+  }
+
+  public void testStatefulFilterWithSet() {
+    Integer base = 5;
+    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(10).filter(new JBIterable.SCond<>() {
+      TIntHashSet visited; // MUST NOT be initialized here
+
+      @Override
+      public boolean value(Integer integer) {
+        if (visited == null) visited = new TIntHashSet();
+        return visited.add(integer % base);
       }
     });
     assertEquals(Arrays.asList(1, 2, 3, 4, 5), it.toList());
