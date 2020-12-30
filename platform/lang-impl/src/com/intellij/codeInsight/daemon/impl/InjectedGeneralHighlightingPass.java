@@ -262,7 +262,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
           new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey,
                             info.type, fixedTextRange.getStartOffset(),
                             fixedTextRange.getEndOffset(),
-                            info.getDescription(), info.getToolTip(), info.type.getSeverity(null),
+                            info.getDescription(), info.getToolTip(), info.getSeverity(),
                             info.isAfterEndOfLine(), null, false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup());
         patched.setFromInjection(true);
         outInfos.add(patched);
@@ -324,7 +324,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       HighlightInfo patched =
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
-                          info.getDescription(), info.getToolTip(), info.type.getSeverity(null), isAfterEndOfLine, null,
+                          info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
                           false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup());
       patched.setHint(info.hasHint());
 
