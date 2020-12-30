@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -16,6 +17,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -26,9 +28,12 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
@@ -654,6 +659,18 @@ public final class AnnotationsHighlightUtil {
       }
     }
 
+    @Nullable String missedAnnotationError = getMissedAnnotationError((PsiClass)target, container, Inherited.class.getName());
+    if (missedAnnotationError != null) {
+      return missedAnnotationError;
+    }
+    return getMissedAnnotationError((PsiClass)target, container, Documented.class.getName());
+  }
+
+  @Nls
+  private static String getMissedAnnotationError(PsiClass target, PsiClass container, String annotationFqn) {
+    if (AnnotationUtil.isAnnotated(target, annotationFqn, 0) && !AnnotationUtil.isAnnotated(container, annotationFqn, 0)) {
+      return JavaErrorBundle.message("annotation.container.missed.annotation", container.getQualifiedName(), StringUtil.getShortName(annotationFqn));
+    }
     return null;
   }
 

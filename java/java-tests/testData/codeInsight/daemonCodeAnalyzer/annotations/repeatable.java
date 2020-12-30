@@ -59,3 +59,9 @@ class C8 {
 
 @Repeatable(<error descr="Invalid container annotation 'java.lang.annotation.Annotation': no 'value' method declared">Annotation.class</error>)
 @interface A10 {}
+
+@interface AA11 { A11[] value();}
+
+@Documented
+@Repeatable(<error descr="Container annotation 'AA11' does not have required @Documented annotation">AA11.class</error>)
+@interface A11 {}
