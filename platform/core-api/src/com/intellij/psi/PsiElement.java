@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.model.psi.PsiSymbolDeclaration;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -437,6 +438,18 @@ public interface PsiElement extends UserDataHolder, Iconable {
   boolean isWritable();
 
   /**
+   * The contents of the returned collection are copied after the method returns,
+   * the platform doesn't store or modify the returned collection.
+   *
+   * @return collection of declarations in this element, or empty collection if there are no such declarations
+   * @see com.intellij.model.psi.PsiSymbolDeclarationProvider
+   */
+  @Experimental
+  default @NotNull Iterable<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
+    return Collections.emptyList();
+  }
+
+  /**
    * The returned references are expected to be used by language support,
    * for example in Java `foo` element in `foo = 42` expression has a reference,
    * which is used by Java language support to compute expected type of the assignment.
@@ -445,6 +458,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * and from Java language perspective it has no references,
    * but the framework support "knows" that this literal contains the reference to a file.
    * These are external references.
+   * <p/>
+   * The contents of the returned collection are copied after the method returns,
+   * the platform doesn't store or modify the returned collection.
    *
    * @return collection of references from this element, or empty collection if there are no such references
    * @see com.intellij.model.psi.PsiExternalReferenceHost
