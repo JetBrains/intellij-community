@@ -201,7 +201,9 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
               // Select "Console" tab in case of Debug console
               ContentManager contentManager = currentSession.getUI().getContentManager();
               Content content = contentManager.findContent("Console");
-              contentManager.setSelectedContent(content);
+              if (content != null) {
+                contentManager.setSelectedContent(content);
+              }
               // It's necessary to request focus again after tab selection
               if (requestFocusToConsole) {
                 ((PythonDebugLanguageConsoleView)console).getPydevConsoleView().requestFocus();
