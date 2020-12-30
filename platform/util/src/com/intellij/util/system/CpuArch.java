@@ -2,7 +2,9 @@
 package com.intellij.util.system;
 
 /**
- * <p>Represents a CPU architecture this Java VM is executed on.</p>
+ * <p>Represents a CPU architecture this Java VM is executed on.
+ * Here, {@link CpuArch#OTHER} is an architecture not (yet) officially supported by JetBrains Runtime,
+ * and {@link CpuArch#UNKNOWN} means the code was unable to detect an architecture.</p>
  *
  * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (e.g. WoW64 or Rosetta 2).</p>
  */
