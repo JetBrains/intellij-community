@@ -91,7 +91,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (VfsEventsMerger.LOG != null) {
       VfsEventsMerger.LOG.info("File " + file + " is scheduled for update");
     }
-    int fileId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file);
+    int fileId = FileBasedIndex.getFileId(file);
     if (!(file instanceof DeletedVirtualFileStub)) {
       IndexableFileSet setForFile = myManager.getIndexableSetForFile(file);
       if (setForFile == null) {
@@ -105,7 +105,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   void removeScheduledFileFromUpdate(VirtualFile file) {
-    final int fileId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file);
+    final int fileId = FileBasedIndexImpl.getFileId(file);
     VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
       myFilesToUpdate.remove(fileId);
@@ -182,7 +182,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   boolean isScheduledForUpdate(VirtualFile file) {
-    return myFilesToUpdate.containsKey(FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file));
+    return myFilesToUpdate.containsKey(FileBasedIndex.getFileId(file));
   }
 
   void ensureUpToDate() {

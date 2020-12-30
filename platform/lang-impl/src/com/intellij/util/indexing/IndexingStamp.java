@@ -43,8 +43,6 @@ public final class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
   private static final long HAS_NO_INDEXED_DATA_STAMP = 0L;
 
-  static final int INVALID_FILE_ID = 0;
-
   private IndexingStamp() {}
 
   @NotNull
@@ -249,7 +247,7 @@ public final class IndexingStamp {
   }
 
   public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {
-    if (fileId < 0 || fileId == INVALID_FILE_ID) return;
+    assert fileId > 0;
     Lock writeLock = getStripedLock(fileId).writeLock();
     writeLock.lock();
     try {
@@ -261,25 +259,23 @@ public final class IndexingStamp {
   }
 
   public static @NotNull List<ID<?,?>> getNontrivialFileIndexedStates(int fileId) {
-    if (fileId != INVALID_FILE_ID) {
-      Lock readLock = getStripedLock(fileId).readLock();
-      readLock.lock();
-      try {
-        Timestamps stamp = createOrGetTimeStamp(fileId);
-        if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
-          final SmartList<ID<?, ?>> retained = new SmartList<>();
-          stamp.myIndexStamps.forEach(object -> {
-            retained.add(object);
-            return true;
-          });
-          return retained;
-        }
+    Lock readLock = getStripedLock(fileId).readLock();
+    readLock.lock();
+    try {
+      Timestamps stamp = createOrGetTimeStamp(fileId);
+      if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
+        final SmartList<ID<?, ?>> retained = new SmartList<>();
+        stamp.myIndexStamps.forEach(object -> {
+          retained.add(object);
+          return true;
+        });
+        return retained;
       }
-      catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
-      }
-      finally {
-        readLock.unlock();
-      }
+    }
+    catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
+    }
+    finally {
+      readLock.unlock();
     }
     return Collections.emptyList();
   }

@@ -494,7 +494,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         PersistentIndicesConfiguration.saveConfiguration();
 
         for (VirtualFile file : getChangedFilesCollector().getAllPossibleFilesToUpdate()) {
-          int fileId = getIdMaskingNonIdBasedFile(file);
+          int fileId = getFileId(file);
           if (file.isValid()) {
             // TODO remove data otherwise it might be observed in invalid state on the next runs
             dropNontrivialIndexedStates(fileId);
@@ -1180,7 +1180,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public boolean isFileUpToDate(VirtualFile file) {
-    return !getChangedFilesCollector().isScheduledForUpdate(file);
+    return file instanceof VirtualFileWithId && !getChangedFilesCollector().isScheduledForUpdate(file);
   }
 
   // caller is responsible to ensure no concurrent same document processing
@@ -1197,7 +1197,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public FileIndexingStatistics indexFileContent(@Nullable Project project, @NotNull CachedFileContent content) {
     ProgressManager.checkCanceled();
     VirtualFile file = content.getVirtualFile();
-    final int fileId = getIdMaskingNonIdBasedFile(file);
+    final int fileId = getFileId(file);
 
     FileIndexingResult indexingResult;
     try {
@@ -1737,10 +1737,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  static int getIdMaskingNonIdBasedFile(@NotNull VirtualFile file) {
-    return Math.abs(file instanceof VirtualFileWithId ? ((VirtualFileWithId)file).getId() : IndexingStamp.INVALID_FILE_ID);
-  }
-
   FileIndexingState shouldIndexFile(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId) {
     if (!acceptsInput(indexId, file)) {
       return getIndexingState(file, indexId) == FileIndexingState.NOT_INDEXED
@@ -1797,7 +1793,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     ChangedFilesCollector changedFilesCollector = getChangedFilesCollector();
     for (VirtualFile file : changedFilesCollector.getAllFilesToUpdate()) {
-      final int fileId = getIdMaskingNonIdBasedFile(file);
+      final int fileId = getFileId(file);
       if (!file.isValid()) {
         removeDataFromIndicesForFile(fileId, file);
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
@@ -1866,7 +1862,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         !(file instanceof VirtualFileSystemEntry) ||
         !(((VirtualFileSystemEntry)file).isFileIndexed())) return false;
 
-    int fileId = getIdMaskingNonIdBasedFile(file);
+    int fileId = getFileId(file);
     return IndexingStamp.getNontrivialFileIndexedStates(fileId).contains(indexId);
   }
 
