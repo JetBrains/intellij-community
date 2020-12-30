@@ -3,7 +3,6 @@ package com.intellij.credentialStore
 
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.ide.IdeEventQueue
-import com.intellij.openapi.util.io.IoTestUtil.assumeLinux
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
@@ -46,7 +45,7 @@ internal class CredentialStoreTest {
   }
 
   @Test fun `linux - testEmptyAccountName`() {
-    assumeLinux()
+    assumeLocalLinux()
     val store = SecretCredentialStore.create("com.intellij.test") ?: throw AssumptionViolatedException("No store")
     testEmptyAccountName(store)
   }
