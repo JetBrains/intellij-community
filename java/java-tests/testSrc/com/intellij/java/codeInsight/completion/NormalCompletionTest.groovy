@@ -2352,9 +2352,12 @@ class Abc {
 
   @NeedsIndex.ForStandardLibrary
   void "test no final library classes in extends"() {
-    myFixture.configureByText("X.java", "class X extends Stri<caret>")
+    myFixture.configureByText("X.java", "class StriFoo{}final class StriBar{}class X extends Stri<caret>")
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ["StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException",
-                                              "StringReader", "StringWriter", "StringBufferInputStream"]
+    assert myFixture.lookupElementStrings == [
+      "StriFoo", // non-final project class
+      "StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException", "StringReader", "StringWriter", // non-final library classes
+      "StriBar", // final project class (red)
+      "StringBufferInputStream"] // deprecated library class
   }
 }
