@@ -35,6 +35,8 @@ interface WorkspaceEntity {
    * internal IDs of the corresponding entities.
    */
   fun hasEqualProperties(e: WorkspaceEntity): Boolean
+
+  fun <E : WorkspaceEntity> createReference(): EntityReference<E>
 }
 
 /**

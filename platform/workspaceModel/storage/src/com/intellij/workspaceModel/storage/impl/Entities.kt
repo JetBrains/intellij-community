@@ -123,6 +123,10 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
     }
   }
 
+  override fun <E : WorkspaceEntity> createReference(): EntityReference<E> {
+    return EntityReferenceImpl(this.id)
+  }
+
   override fun toString(): String = "$id"
 
   override fun equals(other: Any?): Boolean {

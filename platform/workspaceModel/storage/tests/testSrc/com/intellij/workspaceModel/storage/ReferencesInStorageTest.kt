@@ -1,16 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entities.ModifiableChildEntity
-import com.intellij.workspaceModel.storage.entities.ModifiableChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.ModifiableParentEntity
-import com.intellij.workspaceModel.storage.entities.ChildEntity
-import com.intellij.workspaceModel.storage.entities.ChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.DataClass
-import com.intellij.workspaceModel.storage.entities.ParentEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -169,6 +162,18 @@ class ReferencesInStorageTest {
   }
 
   @Test
+  fun `remove parent entity referenced via two paths via entity ref`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = builder.addParentEntity()
+    builder.addChildEntity(parent, "child", DataClass("data", parent.createReference()))
+    builder.assertConsistency()
+    builder.removeEntity(parent)
+    builder.assertConsistency()
+    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class.java).toList())
+    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class.java).toList())
+  }
+
+  @Test
   fun `modify parent property`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
     val child = builder.addChildEntity(builder.addParentEntity())
@@ -254,6 +259,26 @@ class ReferencesInStorageTest {
     builder.assertConsistency()
     val newChild = builder.modifyEntity(ModifiableChildEntity::class.java, child) {
       dataClass = DataClass("data2", builder.createReference(newParent))
+    }
+    builder.assertConsistency()
+    assertEquals("child", newChild.childProperty)
+    assertEquals("data2", newChild.dataClass!!.stringProperty)
+    assertEquals(setOf(oldParent, newParent, parent1), builder.entities(ParentEntity::class.java).toSet())
+    assertEquals(newChild, builder.singleChild())
+    assertEquals(newParent, newChild.dataClass.parent.resolve(builder))
+    assertEquals(oldParent, child.dataClass!!.parent.resolve(builder))
+  }
+
+  @Test
+  fun `modify reference to parent via data class via entity ref`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parent1 = builder.addParentEntity("parent1")
+    val oldParent = builder.addParentEntity("parent2")
+    val child = builder.addChildEntity(parent1, "child", DataClass("data", oldParent.createReference()))
+    val newParent = builder.addParentEntity("new")
+    builder.assertConsistency()
+    val newChild = builder.modifyEntity(ModifiableChildEntity::class.java, child) {
+      dataClass = DataClass("data2", newParent.createReference())
     }
     builder.assertConsistency()
     assertEquals("child", newChild.childProperty)
