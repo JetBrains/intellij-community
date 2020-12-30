@@ -1,13 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.system;
 
-/**
- * <p>Represents a CPU architecture this Java VM is executed on.
- * Here, {@link CpuArch#OTHER} is an architecture not (yet) officially supported by JetBrains Runtime,
- * and {@link CpuArch#UNKNOWN} means the code was unable to detect an architecture.</p>
- *
- * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (e.g. WoW64 or Rosetta 2).</p>
- */
 public enum CpuArch {
   X86(32), X86_64(64), ARM64(64), OTHER(0), UNKNOWN(0);
 
@@ -24,6 +17,13 @@ public enum CpuArch {
     this.width = width;
   }
 
+  /**
+   * <p>A CPU architecture this Java VM is executed on.
+   * Here, {@link CpuArch#OTHER} is an architecture not yet supported by JetBrains Runtime,
+   * and {@link CpuArch#UNKNOWN} means the code was unable to detect an architecture.</p>
+   *
+   * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (e.g. WoW64 or Rosetta 2).</p>
+   */
   public static final CpuArch CURRENT;
   static {
     String arch = System.getProperty("os.arch");
