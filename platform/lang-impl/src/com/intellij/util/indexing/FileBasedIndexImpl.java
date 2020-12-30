@@ -1593,17 +1593,22 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     clearUpToDateIndexesForUnsavedOrTransactedDocs();
 
     Document document = myFileDocumentManager.getCachedDocument(file);
-
     if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {   // will be reindexed in indexUnsavedDocuments
       myLastIndexedDocStamps.clearForDocument(document); // Q: non psi indices
       document.putUserData(ourFileContentKey, null);
+
+      return;
     }
-    else {
-      Collection<ID<?, ?>> indexes =
-        ContainerUtil.intersection(IndexingStamp.getNontrivialFileIndexedStates(fileId),
-                                   myRegisteredIndexes.getRequiringContentIndices());
-      removeTransientFileDataFromIndices(indexes, getFileId(file), file);
+
+    Collection<ID<?, ?>> contentDependentIndexes = ContainerUtil.intersection(IndexingStamp.getNontrivialFileIndexedStates(fileId),
+                                                                              myRegisteredIndexes.getRequiringContentIndices());
+    removeTransientFileDataFromIndices(contentDependentIndexes, fileId, file);
+    for (ID<?, ?> candidate : contentDependentIndexes) {
+      getIndex(candidate).invalidateIndexedStateForFile(fileId);
     }
+    IndexingStamp.flushCache(fileId);
+
+    getChangedFilesCollector().scheduleForUpdate(file);
   }
 
   void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
