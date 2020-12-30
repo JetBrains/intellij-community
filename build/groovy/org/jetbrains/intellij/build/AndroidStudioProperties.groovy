@@ -52,9 +52,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                   [
                                                     // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
                                                     "intellij.c.clangd",
-                                                    "intellij.c.plugin",
                                                     "intellij.c.testing",
-                                                    "intellij.cidr.base",
                                                     "intellij.cidr.common",
                                                     "intellij.cidr.debugger",
                                                     "intellij.cidr.debugger.backend",
