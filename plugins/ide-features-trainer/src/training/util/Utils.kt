@@ -9,6 +9,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -37,6 +38,13 @@ import javax.swing.JPanel
 
 fun createNamedSingleThreadExecutor(name: String): ExecutorService =
   Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())
+
+private val excludedLanguages: Map<String, Array<String>> = mapOf("AppCode" to arrayOf("JavaScript")) //IDE name to language id
+
+fun courseCanBeUsed(languageId: String): Boolean {
+  val excludedCourses = excludedLanguages[ApplicationNamesInfo.getInstance().productName]
+  return excludedCourses == null || !excludedCourses.contains(languageId)
+}
 
 fun findLanguageByID(id: String): Language? {
   val effectiveId = if (id.toLowerCase() == "cpp") {
