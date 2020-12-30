@@ -31,11 +31,12 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.builtins.isNonExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
+import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor.Kind
@@ -46,6 +47,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
@@ -385,6 +387,8 @@ open class KotlinChangeInfo(
             newReturnType: PsiType?,
             newParameters: Array<ParameterInfoImpl>
         ): JavaChangeInfo? {
+            if (!newName.unquote().isIdentifier()) return null
+
             val newVisibility = if (isPrimaryMethodUpdated)
                 VisibilityUtil.getVisibilityModifier(currentPsiMethod.modifierList)
             else
