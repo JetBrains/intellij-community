@@ -11,11 +11,15 @@ import org.jetbrains.annotations.NonNls
 class RefactorThisTest: LightJavaCodeInsightTestCase() {
   private val BASE_PATH: @NonNls String = "/refactoring/refactorThis"
 
-  fun testPullMembersUp() {
+  fun testPullMembersUpWithExtends() {
     assertTrue(doActionExists<PullUpAction>())
   }
 
-  fun testPullMembersUp1() {
+  fun testPullMembersUpWithImplements() {
+    assertTrue(doActionExists<PullUpAction>())
+  }
+
+  fun testPullMembersUpFiltered() {
     assertFalse(doActionExists<PullUpAction>())
   }
 
