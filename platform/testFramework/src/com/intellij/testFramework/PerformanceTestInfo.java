@@ -111,7 +111,7 @@ public class PerformanceTestInfo {
     boolean testPassed = false;
     String logMessage;
 
-    for (int iteration=0; iteration<=attempts; iteration++) {
+    for (int attempt = 1; attempt <= attempts; attempt++) {
       CpuUsageData data;
       try {
         if (setup != null) setup.run();
@@ -141,12 +141,12 @@ public class PerformanceTestInfo {
       }
 
       JitUsageResult jitUsage = null;
-      if (iteration == attempts || waitForJit && (jitUsage = updateJitUsage()) == JitUsageResult.DEFINITELY_LOW) {
+      if (attempt == attempts || waitForJit && (jitUsage = updateJitUsage()) == JitUsageResult.DEFINITELY_LOW) {
         if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
-      if (waitForJit && iterationResult == IterationResult.DISTRACTED && iteration < 20) attempts++;
-      String s = "  " + (attempts - iteration) + " " + StringUtil.pluralize("attempt", attempts - iteration) + " remain" + (waitForJit ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
+      if (waitForJit && iterationResult == IterationResult.DISTRACTED && attempt < 20) attempts++;
+      String s = "  " + (attempts - attempt) + " " + StringUtil.pluralize("attempt", attempts - attempt) + " remain" + (waitForJit ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         System.out.println(s);
