@@ -1200,11 +1200,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     FileIndexingResult indexingResult;
     try {
-      if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
-        file = ((DeletedVirtualFileStub)file).getOriginalFile();
-        content = new CachedFileContent(file);
-      }
-
       boolean isValid = file.isValid();
       // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
       // in this case we consider that current indexing (out of roots backed CacheUpdater) will cover its content

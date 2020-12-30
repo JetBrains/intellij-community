@@ -101,24 +101,14 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         return;
       }
     }
-    final VirtualFile previousVirtualFile = myFilesToUpdate.put(fileId, file);
-
-    if (previousVirtualFile instanceof DeletedVirtualFileStub &&
-        !previousVirtualFile.equals(file)) {
-      assert ((DeletedVirtualFileStub)previousVirtualFile).getOriginalFile().equals(file);
-      ((DeletedVirtualFileStub)previousVirtualFile).setResurrected(true);
-      myFilesToUpdate.put(fileId, previousVirtualFile);
-    }
+    myFilesToUpdate.put(fileId, file);
   }
 
   void removeScheduledFileFromUpdate(VirtualFile file) {
     final int fileId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file);
-    final VirtualFile previousVirtualFile = myFilesToUpdate.remove(fileId);
-
-    if (previousVirtualFile instanceof DeletedVirtualFileStub) {
-      assert ((DeletedVirtualFileStub)previousVirtualFile).getOriginalFile().equals(file);
-      ((DeletedVirtualFileStub)previousVirtualFile).setResurrected(false);
-      myFilesToUpdate.put(fileId, previousVirtualFile);
+    VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
+    if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
+      myFilesToUpdate.remove(fileId);
     }
   }
 

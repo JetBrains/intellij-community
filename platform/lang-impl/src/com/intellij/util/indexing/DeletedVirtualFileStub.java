@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 class DeletedVirtualFileStub extends LightVirtualFile implements VirtualFileWithId {
   private final int myFileId;
-  private boolean myResurrected;
 
   DeletedVirtualFileStub(@NotNull VirtualFileWithId original) {
     setOriginalFile((VirtualFile)original);
@@ -47,14 +46,6 @@ class DeletedVirtualFileStub extends LightVirtualFile implements VirtualFileWith
     return myFileId == stub.myFileId;
   }
 
-  public boolean isResurrected() {
-    return myResurrected;
-  }
-
-  public void setResurrected(boolean resurrected) {
-    myResurrected = resurrected;
-  }
-
   @Override
   public int hashCode() {
     return myFileId;
@@ -62,7 +53,7 @@ class DeletedVirtualFileStub extends LightVirtualFile implements VirtualFileWith
 
   @Override
   public String toString() {
-    return "invalid:" + getOriginalFile().toString() + ", resurrected:" + myResurrected;
+    return "invalid:" + getOriginalFile().toString();
   }
 
   @NotNull
