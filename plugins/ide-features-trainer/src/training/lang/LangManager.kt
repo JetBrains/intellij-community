@@ -11,19 +11,16 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
+import training.util.courseCanBeUsed
 import training.util.findLanguageByID
 import training.util.trainerPluginConfigName
-
-val excludedLanguages: Map<String, Array<String>>
-  get() = mapOf("AppCode" to arrayOf("JavaScript")) //IDE name to language id
-val productName: String = ApplicationNamesInfo.getInstance().productName
 
 @State(name = "LangManager", storages = [Storage(value = trainerPluginConfigName)])
 class LangManager : PersistentStateComponent<LangManager.State> {
 
   val supportedLanguagesExtensions: List<LanguageExtensionPoint<LangSupport>>
     get() = ExtensionPointName<LanguageExtensionPoint<LangSupport>>(LangSupport.EP_NAME).extensions
-      .filter { excludedLanguages[productName] != null && !excludedLanguages[productName]!!.contains(it.language) }
+      .filter { courseCanBeUsed(it.language) }
       .toList()
 
   private var myState = State(null)
@@ -32,6 +29,7 @@ class LangManager : PersistentStateComponent<LangManager.State> {
 
   init {
     val languages = supportedLanguagesExtensions.filter { Language.findLanguageByID(it.language) != null }
+    val productName = ApplicationNamesInfo.getInstance().productName
     val onlyLang = languages.singleOrNull() ?: languages.singleOrNull { it.instance.defaultProductName == productName }
     if (onlyLang != null) {
       myLangSupport = onlyLang.instance
