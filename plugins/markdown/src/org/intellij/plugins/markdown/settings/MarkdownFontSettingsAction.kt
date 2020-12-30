@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.FontInfo
@@ -19,22 +18,22 @@ import org.jetbrains.annotations.NotNull
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 
-class MarkdownFontSettingsAction : ComboBoxAction() {
+class MarkdownFontSettingsAction() : ComboBoxAction() {
 
   private val applicationSettings get() = MarkdownApplicationSettings.getInstance()
   private val markdownCssSettings get() = MarkdownApplicationSettings.getInstance().markdownCssSettings
-  private val fontSizeProperty = PropertyGraph().graphProperty { markdownCssSettings.fontSize }
-  private val fontFamilyProperty = PropertyGraph().graphProperty { markdownCssSettings.fontFamily }
+  private val propertyGraph = PropertyGraph()
+  private val fontSizeProperty = propertyGraph.graphProperty { markdownCssSettings.fontSize }
+  private val fontFamilyProperty = propertyGraph.graphProperty { markdownCssSettings.fontFamily }
+
+  init{
+    fontSizeProperty.afterChange { newFontSize -> updateFontSettings(newFontSize, markdownCssSettings.fontFamily) }
+    fontFamilyProperty.afterChange { newFontFamily -> updateFontSettings(markdownCssSettings.fontSize, newFontFamily) }
+  }
 
   override fun createPopupActionGroup(button: JComponent?) = DefaultActionGroup()
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    fontSizeProperty.afterChange({ newFontSize -> updateFontSettings(newFontSize, markdownCssSettings.fontFamily) },
-                                 Disposer.newDisposable())
-
-    fontFamilyProperty.afterChange({ newFontFamily -> updateFontSettings(markdownCssSettings.fontSize, newFontFamily) },
-                                   Disposer.newDisposable())
-
     return panel(LCFlags.noGrid) {
       row(MarkdownBundle.message("markdown.preview.settings.font.family"), true) {
         cell {
