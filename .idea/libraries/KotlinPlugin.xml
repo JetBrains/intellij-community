@@ -65,6 +65,8 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/sam-with-receiver-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/parcelize-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-parcelize.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler-plugin-for-ide.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-coroutines-experimental-compat.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
@@ -132,6 +134,8 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/sam-with-receiver-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/parcelize-compiler-plugin-for-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-parcelize.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-coroutines-experimental-compat.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler-plugin-for-ide.jar!/" />
     </excluded>
   </library>
 </component>
