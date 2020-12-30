@@ -91,14 +91,18 @@ public final class CpuUsageData {
 
   @NotNull
   PerformanceTestInfo.IterationResult getIterationResult(int expectedOnMyMachine) {
+    if (durationMs < expectedOnMyMachine) {
+      return PerformanceTestInfo.IterationResult.ACCEPTABLE;
+    }
+    // Allow 10% more in case of test machine is busy.
+    if (durationMs < expectedOnMyMachine * 1.1) {
+      return PerformanceTestInfo.IterationResult.BORDERLINE;
+    }
     if (myCompilationTimeMs >= durationMs) {
       // too much irrelevant activity (JITc), try again
       return PerformanceTestInfo.IterationResult.DISTRACTED;
     }
-    return durationMs < expectedOnMyMachine ? PerformanceTestInfo.IterationResult.ACCEPTABLE :
-           // Allow 10% more in case of test machine is busy.
-           durationMs < expectedOnMyMachine * 1.1 ? PerformanceTestInfo.IterationResult.BORDERLINE :
-           PerformanceTestInfo.IterationResult.SLOW;
+    return PerformanceTestInfo.IterationResult.SLOW;
   }
 
   @NotNull

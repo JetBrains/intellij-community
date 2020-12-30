@@ -108,11 +108,10 @@ public class PerformanceTestInfo {
       System.gc();
     }
 
-    boolean testShouldPass = false;
+    boolean testPassed = false;
     String logMessage;
 
-    while (true) {
-      attempts--;
+    for (int iteration=0; iteration<=attempts; iteration++) {
       CpuUsageData data;
       try {
         if (setup != null) setup.run();
@@ -127,7 +126,7 @@ public class PerformanceTestInfo {
       int expectedOnMyMachine = getExpectedTimeOnThisMachine();
       IterationResult iterationResult = data.getIterationResult(expectedOnMyMachine);
 
-      testShouldPass |= iterationResult != IterationResult.SLOW;
+      testPassed |= iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
 
       logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
 
@@ -142,12 +141,12 @@ public class PerformanceTestInfo {
       }
 
       JitUsageResult jitUsage = null;
-      if (attempts == 0 || waitForJit && (jitUsage = updateJitUsage()) == JitUsageResult.DEFINITELY_LOW) {
-        if (testShouldPass) return;
+      if (iteration == attempts || waitForJit && (jitUsage = updateJitUsage()) == JitUsageResult.DEFINITELY_LOW) {
+        if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
-
-      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain"+(waitForJit ? " (waiting for JITc; its usage was "+jitUsage+" in this iteration)" : "");
+      if (waitForJit && iterationResult == IterationResult.DISTRACTED && iteration < 20) attempts++;
+      String s = "  " + (attempts - iteration) + " " + StringUtil.pluralize("attempt", attempts - iteration) + " remain" + (waitForJit ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         System.out.println(s);
