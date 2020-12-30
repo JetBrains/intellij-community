@@ -922,6 +922,7 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
 
   @Override
   public Spliterator<E> spliterator() {
-    return Spliterators.spliterator(get(), 0);
+    //noinspection unchecked
+    return (Spliterator<E>)Arrays.spliterator(get());
   }
 }
