@@ -36,6 +36,7 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testTypeArgsFormatted() { doSingleTest(); }
   public void testInsideStaticInnerClass() { doSingleTest(); }
   public void testCreateFromEquals() { doSingleTest(); }
+  public void testCreateFromNestedPolyadic() { doSingleTest(); }
   public void testCreateFromEqualsToPrimitiveType() { doSingleTest(); }
   public void testInsideInterface() { doSingleTest(); }
   public void testReferenceInCall() { doSingleTest(); }
