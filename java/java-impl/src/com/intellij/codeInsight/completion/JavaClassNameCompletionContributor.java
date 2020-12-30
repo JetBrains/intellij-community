@@ -231,11 +231,11 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
   @NotNull
   private static String getClassNameWithContainers(@NotNull PsiClass psiClass) {
-    String name = Objects.requireNonNull(psiClass.getName());
+    StringBuilder name = new StringBuilder(Objects.requireNonNull(psiClass.getName()));
     for (PsiClass parent : JBIterable.generate(psiClass, PsiClass::getContainingClass)) {
-      name = parent.getName() + "." + name;
+      name.insert(0, parent.getName() + ".");
     }
-    return name;
+    return name.toString();
   }
 
   public static JavaPsiClassReferenceElement createClassLookupItem(final PsiClass psiClass, final boolean inJavaContext) {
