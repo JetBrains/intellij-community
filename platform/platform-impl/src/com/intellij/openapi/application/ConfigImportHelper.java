@@ -281,7 +281,7 @@ public final class ConfigImportHelper {
 
   @NotNull
   private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log, boolean smartDelete) throws IOException {
-    File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
+    File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup-" + UUID.randomUUID());
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
     FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.getName()));
 
