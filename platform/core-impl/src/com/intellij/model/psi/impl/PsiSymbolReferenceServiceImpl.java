@@ -83,8 +83,8 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
       result = ContainerUtil.filterIsInstance(result, referenceClass);
     }
 
-    Integer offsetInElement = hints.getOffsetInElement();
-    if (offsetInElement != null) {
+    int offsetInElement = hints.getOffsetInElement();
+    if (offsetInElement >= 0) {
       result = ContainerUtil.filter(result, it -> ReferenceRange.containsOffsetInElement(it, offsetInElement));
     }
     // consider checking SymbolReference.resolvesTo(target) here if all needed
