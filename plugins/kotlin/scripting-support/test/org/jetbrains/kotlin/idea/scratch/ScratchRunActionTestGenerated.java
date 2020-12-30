@@ -28,6 +28,11 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
             KotlinTestUtils.runTest(this::doScratchCompilingTest, this, testDataFilePath);
         }
 
+        @TestMetadata("destructuringDecls.kts")
+        public void testDestructuringDecls() throws Exception {
+            runTest("testData/scratch/destructuringDecls.kts");
+        }
+
         @TestMetadata("for.kts")
         public void testFor() throws Exception {
             runTest("testData/scratch/for.kts");
@@ -109,6 +114,11 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
     public static class ScratchRepl extends AbstractScratchRunActionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doScratchReplTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("destructuringDecls.kts")
+        public void testDestructuringDecls() throws Exception {
+            runTest("testData/scratch/destructuringDecls.kts");
         }
 
         @TestMetadata("for.kts")
