@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
+import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,10 +155,10 @@ public final class X11UiUtil {
           null, display, window, name, 0L, 65535L, (long)False, type, data, data + 8, data + 16, data + 24, data + 32);
         if (result == 0) {
           int format = unsafe.getInt(data + 8);
-          long pointer = SystemInfo.is64Bit ? unsafe.getLong(data + 32) : unsafe.getInt(data + 32);
+          long pointer = Native.LONG_SIZE == 4 ? unsafe.getInt(data + 32) : unsafe.getLong(data + 32);
 
           if (pointer != None && format == expectedFormat) {
-            int length = SystemInfo.is64Bit ? (int)unsafe.getLong(data + 16) : unsafe.getInt(data + 16);
+            int length = Native.LONG_SIZE == 4 ? unsafe.getInt(data + 16) : (int)unsafe.getLong(data + 16);
             if (format == FORMAT_BYTE) {
               byte[] bytes = new byte[length];
               for (int i = 0; i < length; i++) bytes[i] = unsafe.getByte(pointer + i);
@@ -166,7 +167,7 @@ public final class X11UiUtil {
             else if (format == FORMAT_LONG) {
               long[] values = newLongArray(length);
               for (int i = 0; i < length; i++) {
-                values[i] = SystemInfo.is64Bit ? unsafe.getLong(pointer + 8L * i) : unsafe.getInt(pointer + 4L * i);
+                values[i] = Native.LONG_SIZE == 4 ? unsafe.getInt(pointer + 4L * i) : unsafe.getLong(pointer + 8L * i);
               }
               return (T)values;
             }
@@ -195,7 +196,7 @@ public final class X11UiUtil {
         unsafe.setMemory(event, 128, (byte)0);
 
         unsafe.putInt(event, CLIENT_MESSAGE);
-        if (!SystemInfo.is64Bit) {
+        if (Native.LONG_SIZE == 4) {
           unsafe.putInt(event + 8, True);
           unsafe.putInt(event + 16, (int)window);
           unsafe.putInt(event + 20, (int)type);

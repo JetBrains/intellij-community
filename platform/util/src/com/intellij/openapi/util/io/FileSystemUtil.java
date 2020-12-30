@@ -324,8 +324,8 @@ public final class FileSystemUtil {
         boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
         boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
         long size = buffer.getLong(myOffsets[OFF_SIZE]);
-        long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
-        long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
+        long mTime1 = Native.LONG_SIZE == 4 ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
+        long mTime2 = myCoarseTs ? 0 : Native.LONG_SIZE == 4 ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
         long mTime = mTime1 * 1000 + mTime2 / 1000000;
 
         boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
@@ -697,7 +697,7 @@ public final class FileSystemUtil {
         if (LOG.isDebugEnabled()) LOG.debug("statfs(" + path + "): error");
       }
       else {
-        long fs = SystemInfo.is32Bit ? buf.getInt(0) : buf.getLong(0);
+        long fs = Native.LONG_SIZE == 4 ? buf.getInt(0) : buf.getLong(0);
         // Btrfs, XFS
         if (fs == 0x9123683e || fs == 0x58465342) {
           return FileAttributes.CaseSensitivity.SENSITIVE;
