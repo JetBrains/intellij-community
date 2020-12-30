@@ -244,7 +244,7 @@ open class KotlinChangeInfo(
         val isCustomizedVisibility = newVisibility != DescriptorVisibilities.DEFAULT_VISIBILITY
 
         if (kind == Kind.PRIMARY_CONSTRUCTOR) {
-            buffer.append(name)
+            buffer.append(newName)
 
             if (isCustomizedVisibility) {
                 buffer.append(' ').append(newVisibility).append(" constructor ")
@@ -266,7 +266,7 @@ open class KotlinChangeInfo(
                     }
                     buffer.append('.')
                 }
-                buffer.append(name)
+                buffer.append(newName)
             }
         }
 
