@@ -66,11 +66,11 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
 
     private data class KotlinCachedInjection(val modificationCount: Long, val baseInjection: BaseInjection)
 
-    private var KtStringTemplateExpression.cachedInjectionWithModification: KotlinCachedInjection? by UserDataProperty(
+    private var KtElement.cachedInjectionWithModification: KotlinCachedInjection? by UserDataProperty(
         Key.create<KotlinCachedInjection>("CACHED_INJECTION_WITH_MODIFICATION")
     )
 
-    private fun getBaseInjection(ktHost: KtStringTemplateExpression, support: LanguageInjectionSupport): Injection {
+    private fun getBaseInjection(ktHost: KtElement, support: LanguageInjectionSupport): Injection {
         if (!ProjectRootsUtil.isInProjectOrLibSource(ktHost.containingFile.originalFile)) return absentKotlinInjection
 
         val needImmediateAnswer = with(ApplicationManager.getApplication()) { isDispatchThread && !isUnitTestMode }
@@ -105,20 +105,26 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     }
 
     override fun getInjection(context: PsiElement): com.intellij.lang.injection.general.Injection? {
-        val ktHost: KtStringTemplateExpression = context as? KtStringTemplateExpression ?: return null
-        if (!context.isValidHost) return null
+        if (context !is KtElement) return null
+        if (!isSupportedElement(context)) return null
         val support = kotlinSupport ?: return null
-        return getBaseInjection(ktHost, support).takeIf { it != absentKotlinInjection }
+        return getBaseInjection(context, support).takeIf { it != absentKotlinInjection }
     }
 
     @Suppress("FoldInitializerAndIfToElvis")
     private fun computeBaseInjection(
-        ktHost: KtStringTemplateExpression,
+        ktHost: KtElement,
         support: LanguageInjectionSupport
     ): BaseInjection? {
         val containingFile = ktHost.containingFile
 
-        val tempInjectedLanguage = TemporaryPlacesRegistry.getInstance(ktHost.project).getLanguageFor(ktHost, containingFile)
+        val languageInjectionHost = when (ktHost) {
+            is PsiLanguageInjectionHost -> ktHost
+            is KtBinaryExpression -> flattenBinaryExpression(ktHost).firstIsInstanceOrNull<PsiLanguageInjectionHost>()
+            else -> null
+        } ?: return null
+
+        val tempInjectedLanguage = TemporaryPlacesRegistry.getInstance(ktHost.project).getLanguageFor(languageInjectionHost, containingFile)
         if (tempInjectedLanguage != null) {
             return BaseInjection(support.id).apply {
                 injectedLanguageId = tempInjectedLanguage.id
@@ -431,4 +437,11 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         return classNames
     }
 
+}
+
+internal fun isSupportedElement(context: KtElement): Boolean {
+    if (context.parent.isConcatenationExpression()) return false // we will handle the top concatenation only
+    if (context is KtStringTemplateExpression && context.isValidHost) return true
+    if (context.isConcatenationExpression()) return true
+    return false
 }
