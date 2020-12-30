@@ -34,8 +34,7 @@ private const val SERVER_PORT = 20854
 val skippedPluginModules = hashSetOf(
   // skip intellij.codeWithMe.plugin - quiche downloading should be implemented as a maven lib
   "intellij.codeWithMe.plugin",
-  // both these plugins wants Kotlin plugin - not installed in IDEA running from sources
-  "intellij.gradle.dsl.kotlin.impl",
+  // this plugin wants Kotlin plugin - not installed in IDEA running from sources
   "intellij.android.plugin"
 )
 
