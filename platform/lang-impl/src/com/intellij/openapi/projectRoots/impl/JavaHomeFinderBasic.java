@@ -179,17 +179,10 @@ public class JavaHomeFinderBasic {
     return Collections.singletonList(file);
   }
 
-  protected static @Nullable Path getJavaHome() {
-    String property = SystemProperties.getJavaHome();
-    if (property == null || property.isEmpty()) {
-      return null;
-    }
-
-    // actually java.home points to to jre home
-    Path javaHome = Path.of(property).getParent();
-    return javaHome == null || !isDirectory(javaHome) ? null : javaHome;
+  private static @Nullable Path getJavaHome() {
+    Path javaHome = Path.of(SystemProperties.getJavaHome());
+    return isDirectory(javaHome) ? javaHome : null;
   }
-
 
   /**
    * Finds Java home directories installed by SDKMAN: https://github.com/sdkman
