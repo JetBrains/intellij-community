@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
@@ -340,7 +341,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
       for (JavadocTagInfo info : JavadocManager.SERVICE.getInstance(position.getProject()).getTagInfos(parent)) {
         String tagName = info.getName();
         if (tagName.equals(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
-        if (isInline != info.isInline()) continue;
+        if (isInline != info.isInline() && !(PsiUtil.isLanguageLevel16OrHigher(comment) && tagName.equals("return"))) continue;
         ret.add(tagName);
         addSpecialTags(ret, comment, tagName);
       }

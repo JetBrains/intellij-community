@@ -10,6 +10,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.patterns.PlatformPatterns
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
@@ -18,6 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.javadoc.PsiDocTag
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
@@ -151,6 +153,12 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   void testInlineLookup() {
     configureByFile("InlineTagName.java")
     assertStringItems("code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "value")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testInlineLookup16() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_16, {configureByFile("InlineTagName16.java")})
+    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "return", "systemProperty","value")
   }
 
   void testFinishWithSharp() throws Throwable {
