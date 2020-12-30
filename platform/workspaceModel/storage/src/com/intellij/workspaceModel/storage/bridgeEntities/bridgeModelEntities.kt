@@ -80,7 +80,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ModuleEntityData) return false
-    if (!super.equals(other)) return false
 
     if (name != other.name) return false
     if (type != other.type) return false
@@ -92,7 +91,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ModuleEntityData) return false
-    if (!super.equals(other)) return false
 
     if (name != other.name) return false
     if (type != other.type) return false
@@ -103,8 +101,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun hashCode(): Int {
-    var result = super.hashCode()
-    result = 31 * result + name.hashCode()
+    var result = name.hashCode()
     result = 31 * result + (type?.hashCode() ?: 0)
     result = 31 * result + dependencies.hashCode()
     result = 31 * result + entitySource.hashCode()
@@ -417,7 +414,6 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAsse
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ContentRootEntityData) return false
-    if (!super.equals(other)) return false
 
     if (url != other.url) return false
     if (excludedUrls != other.excludedUrls) return false
@@ -429,7 +425,6 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAsse
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ContentRootEntityData) return false
-    if (!super.equals(other)) return false
 
     if (url != other.url) return false
     if (excludedUrls != other.excludedUrls) return false
@@ -440,8 +435,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAsse
   }
 
   override fun hashCode(): Int {
-    var result = super.hashCode()
-    result = 31 * result + url.hashCode()
+    var result = url.hashCode()
     result = 31 * result + excludedUrls.hashCode()
     result = 31 * result + excludedPatterns.hashCode()
     result = 31 * result + entitySource.hashCode()
