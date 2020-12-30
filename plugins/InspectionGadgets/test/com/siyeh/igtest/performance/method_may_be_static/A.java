@@ -76,6 +76,18 @@ class X {
 
   native void foo();
 }
+class Xx {
+  private void <warning descr="Method 'test()' may be 'static'">test</warning>() {
+    new Xx() {
+      void run() {
+        foo(); // super.foo(), not Xx.this.foo()
+        test();
+      }
+    };
+  }
+
+  native void foo();
+}
 
 
 interface IntSupplier {
