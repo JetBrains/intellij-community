@@ -258,7 +258,6 @@ public class JBCefBrowser implements JBCefDisposable {
           @Override
           public void onAfterCreated(CefBrowser browser) {
             myIsCefBrowserCreated = true;
-            myCefClient.notifyBrowserCreated(JBCefBrowser.this);
             LoadDeferrer loader = myLoadDeferrer;
             if (loader != null) {
               loader.load(browser);
