@@ -2,7 +2,11 @@
 package com.intellij.ide;
 
 import com.intellij.diagnostic.VMOptions;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
@@ -18,11 +22,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.JdkBundle;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +40,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -82,38 +85,48 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
-    JdkBundle bootJre = JdkBundle.createBoot();
-
-    if (!bootJre.isBundled() && !SystemInfo.isJetBrainsJvm) {
+    if (!(SystemInfo.isJetBrainsJvm || PathManager.isUnderHomeDirectory(SystemProperties.getJavaHome()))) {
       NotificationAction switchAction = null;
 
-      if (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) {
-        JdkBundle bundledJre = JdkBundle.createBundled();
-        if (bundledJre != null && bundledJre.isOperational()) {
-          String appName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
-          String configName = appName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
-          Path configFile = Paths.get(PathManager.getConfigPath(), configName);
-          if (Files.isRegularFile(configFile)) {
-            switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
-              @Override
-              public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                notification.expire();
-                try {
-                  Files.delete(configFile);
-                }
-                catch (IOException x) {
-                  LOG.warn("Can't delete JDK configuration file: " + configFile, x);
-                }
-                ApplicationManager.getApplication().restart();
+      if ((SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
+        String appName = ApplicationNamesInfo.getInstance().getScriptName();
+        String configName = appName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
+        Path configFile = Paths.get(PathManager.getConfigPath(), configName);
+        if (Files.isRegularFile(configFile)) {
+          switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+              notification.expire();
+              try {
+                Files.delete(configFile);
               }
-            };
-          }
+              catch (IOException x) {
+                LOG.warn("Can't delete JDK configuration file: " + configFile, x);
+              }
+              ApplicationManager.getApplication().restart();
+            }
+          };
         }
       }
 
-      String current = bootJre.getBundleVersion() + " by " + SystemInfo.JAVA_VENDOR;
+      String current = JavaVersion.current() + " by " + SystemInfo.JAVA_VENDOR;
       showNotification("bundled.jre.version.message", switchAction, current);
     }
+  }
+
+  private static boolean isJbrOperational() {
+    Path bin = Path.of(PathManager.getBundledRuntimePath(), SystemInfo.isWindows ? "bin/java.exe" : SystemInfo.isMac ? "Contents/Home/bin/java" : "bin/java");
+    if (Files.isRegularFile(bin) && (SystemInfo.isWindows || Files.isExecutable(bin))) {
+      try {
+        ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(bin.toString(), "-version"));
+        return output.getExitCode() == 0;
+      }
+      catch (ExecutionException e) {
+        LOG.debug(e);
+      }
+    }
+
+    return false;
   }
 
   private static void checkReservedCodeCacheSize() {

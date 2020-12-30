@@ -49,6 +49,7 @@ public final class PathManager {
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
   private static final String PROPERTY_VENDOR_NAME = "idea.vendor.name";
 
+  private static final String JRE_DIRECTORY = "jbr";
   private static final @NonNls String LIB_DIRECTORY = "lib";
   private static final @NonNls String PLUGINS_DIRECTORY = "plugins";
   private static final @NonNls String BIN_DIRECTORY = "bin";
@@ -248,6 +249,10 @@ public final class PathManager {
 
   public static @NotNull String getPreInstalledPluginsPath() {
     return getHomePath() + '/' + PLUGINS_DIRECTORY;
+  }
+
+  public static @NotNull String getBundledRuntimePath() {
+    return getHomePath() + '/' + JRE_DIRECTORY;
   }
 
   // config paths

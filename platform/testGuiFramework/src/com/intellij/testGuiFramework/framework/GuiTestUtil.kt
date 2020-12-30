@@ -36,7 +36,7 @@ import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher
 import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.KeyStrokeAdapter
-import com.intellij.util.JdkBundle
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil.getFirstItem
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EdtInvocationManager
@@ -110,10 +110,11 @@ object GuiTestUtil {
 
   val bundledJdkLocation: String
     get() {
-      var jdkBundle = JdkBundle.createBundled()
-      if (jdkBundle == null) jdkBundle = JdkBundle.createBoot()
-      val homeSubPath = if (SystemInfo.isMac) "/Contents/Home" else ""
-      return jdkBundle.location.absolutePath + homeSubPath
+      val bundled = Path.of(PathManager.getBundledRuntimePath())
+      if (Files.isDirectory(bundled)) {
+        return (if (SystemInfo.isMac) bundled.resolve("Contents/Home") else bundled).toString()
+      }
+      return SystemProperties.getJavaHome()
     }
 
   fun failIfIdeHasFatalErrors() {
