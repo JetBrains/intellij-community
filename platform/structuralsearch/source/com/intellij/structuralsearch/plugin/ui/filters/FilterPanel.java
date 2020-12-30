@@ -266,10 +266,8 @@ public class FilterPanel implements FilterTable {
                                      ? SSRBundle.message("add.filter.label")
                                      : SSRBundle.message("add.script.label"),
                                      SimpleTextAttributes.LINK_ATTRIBUTES,
-                                     e -> {
-                                       final JBTable table = myFilterTable.getTable();
-                                       showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
-                                     });
+                                     e -> showAddFilterPopup(myFilterTable.getTable(),
+                                                             new RelativePoint(MouseInfo.getPointerInfo().getLocation())));
     }
   }
 
