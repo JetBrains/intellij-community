@@ -486,6 +486,12 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
+  public List<VirtualFile> getProblemFiles() {
+    ArrayList<VirtualFile> problemFiles = new ArrayList<>(myProblems.keySet());
+    problemFiles.addAll(myProblemsFromExternalSources.keySet());
+    return problemFiles;
+  }
+
   @NotNull
   private static TextRange getTextRange(@NotNull VirtualFile virtualFile, int line, int column) {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
