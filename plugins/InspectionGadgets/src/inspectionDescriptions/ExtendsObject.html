@@ -1,8 +1,17 @@
 <html>
 <body>
-Reports any classes explicitly declared to extend <b>java.lang.Object</b>.
+Reports any classes explicitly declared to extend <b>java.lang.Object</b>. This declaration
+is redundant and can be safely removed.
+<p>Example:</p>
+<pre>
+  class MyClass extends Object {
+  }
+</pre>
+The quick-fix removes redundant <code>extends Object</code> clause:
+<pre>
+  class MyClass {
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

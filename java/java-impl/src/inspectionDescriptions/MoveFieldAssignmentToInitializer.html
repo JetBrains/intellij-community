@@ -4,6 +4,22 @@ Provides a quick fix to replace initialization of a field via assignment with a 
 The code is highlighted only if field initializer is located in the initializer
 and joining with the field declaration is likely to be safe.
 In other cases the inspection provides the quick fix without highlighting, as it may change the code semantics.
+<p>Example:</p>
+<pre>
+  class MyClass {
+    static final int intConstant;
+    
+    static {
+      intConstant = 10;
+    }
+  }
+</pre>
+The quick fix will move the assigned value to the field initializer removing the class initializer section if possible:
+<pre>
+  class MyClass {
+    static final int intConstant = 10;
+  }
+</pre>
 <!-- tooltip end -->
 <small>Since 2017.2</small>
 </body>
