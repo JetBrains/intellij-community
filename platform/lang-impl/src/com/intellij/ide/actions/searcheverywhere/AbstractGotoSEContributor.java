@@ -156,79 +156,64 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     return true;
   }
 
+  /** @deprecated override {@link #doGetActions(PersistentSearchEverywhereContributorFilter, ElementsChooser.StatisticsCollector, Runnable)} instead**/
+  @Deprecated
   @NotNull
-  protected List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String everywhereText,
+  protected List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String ignored,
                                             @Nullable PersistentSearchEverywhereContributorFilter<?> filter,
                                             @NotNull Runnable onChanged) {
-    return doGetActions(everywhereText, filter, null, onChanged);
+    return doGetActions(filter, null, onChanged);
   }
 
   @NotNull
-  protected <T> List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String everywhereText,
-                                        @Nullable PersistentSearchEverywhereContributorFilter<T> filter,
-                                        @Nullable ElementsChooser.StatisticsCollector<T> statisticsCollector,
-                                        @NotNull Runnable onChanged) {
+  protected <T> List<AnAction> doGetActions(@Nullable PersistentSearchEverywhereContributorFilter<T> filter,
+                                            @Nullable ElementsChooser.StatisticsCollector<T> statisticsCollector,
+                                            @NotNull Runnable onChanged) {
     if (myProject == null || filter == null) return Collections.emptyList();
     ArrayList<AnAction> result = new ArrayList<>();
-    if (Registry.is("search.everywhere.show.scopes")) {
-      result.add(new ScopeChooserAction() {
-        final boolean canToggleEverywhere = !myEverywhereScope.equals(myProjectScope);
+    result.add(new ScopeChooserAction() {
+      final boolean canToggleEverywhere = !myEverywhereScope.equals(myProjectScope);
 
-        @Override
-        void onScopeSelected(@NotNull ScopeDescriptor o) {
-          setSelectedScope(o);
-          onChanged.run();
-        }
+      @Override
+      void onScopeSelected(@NotNull ScopeDescriptor o) {
+        setSelectedScope(o);
+        onChanged.run();
+      }
 
-        @NotNull
-        @Override
-        ScopeDescriptor getSelectedScope() {
-          return myScopeDescriptor;
-        }
+      @NotNull
+      @Override
+      ScopeDescriptor getSelectedScope() {
+        return myScopeDescriptor;
+      }
 
-        @Override
-        void onProjectScopeToggled() {
-          setEverywhere(!myScopeDescriptor.scopeEquals(myEverywhereScope));
-        }
+      @Override
+      void onProjectScopeToggled() {
+        setEverywhere(!myScopeDescriptor.scopeEquals(myEverywhereScope));
+      }
 
-        @Override
-        boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
-          return ContainerUtil.process(createScopes(), processor);
-        }
+      @Override
+      boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
+        return ContainerUtil.process(createScopes(), processor);
+      }
 
-        @Override
-        public boolean isEverywhere() {
-          return myScopeDescriptor.scopeEquals(myEverywhereScope);
-        }
+      @Override
+      public boolean isEverywhere() {
+        return myScopeDescriptor.scopeEquals(myEverywhereScope);
+      }
 
-        @Override
-        public void setEverywhere(boolean everywhere) {
-          setSelectedScope(new ScopeDescriptor(everywhere ? myEverywhereScope : myProjectScope));
-          onChanged.run();
-        }
+      @Override
+      public void setEverywhere(boolean everywhere) {
+        setSelectedScope(new ScopeDescriptor(everywhere ? myEverywhereScope : myProjectScope));
+        onChanged.run();
+      }
 
-        @Override
-        public boolean canToggleEverywhere() {
-          if (!canToggleEverywhere) return false;
-          return myScopeDescriptor.scopeEquals(myEverywhereScope) ||
-                 myScopeDescriptor.scopeEquals(myProjectScope);
-        }
-      });
-    }
-    else {
-      result.add(new CheckBoxSearchEverywhereToggleAction(everywhereText) {
-        @Override
-        public boolean isEverywhere() {
-          return myEverywhere;
-        }
-
-        @Override
-        public void setEverywhere(boolean state) {
-          myEverywhere = state;
-          onChanged.run();
-        }
-      });
-    }
+      @Override
+      public boolean canToggleEverywhere() {
+        if (!canToggleEverywhere) return false;
+        return myScopeDescriptor.scopeEquals(myEverywhereScope) ||
+               myScopeDescriptor.scopeEquals(myProjectScope);
+      }
+    });
     result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
     return result;
   }
@@ -236,8 +221,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @NotNull
   private ScopeDescriptor getInitialSelectedScope(List<ScopeDescriptor> scopeDescriptors) {
     String selectedScope = myProject == null ? null : getSelectedScopes(myProject).get(getClass().getSimpleName());
-    if (Registry.is("search.everywhere.show.scopes") && Registry.is("search.everywhere.sticky.scopes") &&
-        StringUtil.isNotEmpty(selectedScope)) {
+    if (StringUtil.isNotEmpty(selectedScope)) {
       for (ScopeDescriptor descriptor : scopeDescriptors) {
         if (!selectedScope.equals(descriptor.getDisplayName()) || descriptor.scopeEquals(null)) continue;
         return descriptor;
@@ -278,14 +262,12 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
       PsiElement context = myPsiContext != null ? myPsiContext.getElement() : null;
       ChooseByNameItemProvider provider = ChooseByNameModelEx.getItemProvider(model, context);
-      GlobalSearchScope scope = Registry.is("search.everywhere.show.scopes")
-                                ? (GlobalSearchScope)Objects.requireNonNull(myScopeDescriptor.getScope())
-                                : null;
+      GlobalSearchScope scope = (GlobalSearchScope)Objects.requireNonNull(myScopeDescriptor.getScope());
 
-      boolean everywhere = scope == null ? myEverywhere : scope.isSearchInLibraries();
+      boolean everywhere = scope.isSearchInLibraries();
       ChooseByNameViewModel viewModel = new MyViewModel(myProject, model);
 
-      if (scope != null && provider instanceof ChooseByNameInScopeItemProvider) {
+      if (provider instanceof ChooseByNameInScopeItemProvider) {
         FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, scope);
         ((ChooseByNameInScopeItemProvider)provider).filterElementsWithWeights(viewModel, parameters, progressIndicator,
                                                                               item -> processElement(progressIndicator, consumer, model,
@@ -563,7 +545,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     @Override
     public void update(@NotNull AnActionEvent e) {
       ScopeDescriptor selection = getSelectedScope();
-      String name = StringUtil.trimMiddle(selection.getDisplayName(), 30);
+      String name = StringUtil.trimMiddle(StringUtil.notNullize(selection.getDisplayName()), 30);
       String text = StringUtil.escapeMnemonics(name).replaceFirst("(?i)([" + TOGGLE + CHOOSE + "])", "_$1");
       e.getPresentation().setText(text);
       e.getPresentation().setIcon(OffsetIcon.getOriginalIcon(selection.getIcon()));
@@ -582,8 +564,9 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     public void actionPerformed(@NotNull AnActionEvent e) {
       JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
       if (button == null || !button.isValid()) return;
-      ListCellRenderer<ScopeDescriptor> renderer = new ListCellRenderer<ScopeDescriptor>() {
+      ListCellRenderer<ScopeDescriptor> renderer = new ListCellRenderer<>() {
         final ListCellRenderer<ScopeDescriptor> delegate = ScopeChooserCombo.createDefaultRenderer();
+
         @Override
         public Component getListCellRendererComponent(JList<? extends ScopeDescriptor> list,
                                                       ScopeDescriptor value,
@@ -609,10 +592,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         }
         return true;
       });
-      BaseListPopupStep<ScopeDescriptor> step = new BaseListPopupStep<ScopeDescriptor>("", items) {
+      BaseListPopupStep<ScopeDescriptor> step = new BaseListPopupStep<>("", items) {
         @Nullable
         @Override
-        public PopupStep onChosen(ScopeDescriptor selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(ScopeDescriptor selectedValue, boolean finalChoice) {
           onScopeSelected(selectedValue);
           ActionToolbar toolbar = UIUtil.uiParents(button, true).filter(ActionToolbar.class).first();
           if (toolbar != null) toolbar.updateActionsImmediately();
@@ -627,7 +610,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         @NotNull
         @Override
         public String getTextFor(ScopeDescriptor value) {
-          return value.getScope() instanceof GlobalSearchScope ? value.getDisplayName() : "";
+          return value.getScope() instanceof GlobalSearchScope ? StringUtil.notNullize(value.getDisplayName()) : "";
         }
 
         @Override

@@ -12,14 +12,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,11 +45,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @Override
   public String getGroupName() {
     return IdeBundle.message("search.everywhere.group.name.files");
-  }
-
-  @NlsContexts.Checkbox
-  public String includeNonProjectItemsText() {
-    return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.files");
   }
 
   @Override
@@ -82,7 +75,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(includeNonProjectItemsText(), myFilter, new FileTypeFilterCollector(), onChanged);
+    return doGetActions(myFilter, new FileTypeFilterCollector(), onChanged);
   }
 
   @NotNull
