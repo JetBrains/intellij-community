@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -170,7 +171,7 @@ open class KotlinChangeInfo(
 
     override fun isGenerateDelegate(): Boolean = false
 
-    override fun getNewName(): String = name
+    override fun getNewName(): String = name.quoteIfNeeded()
 
     fun setNewName(value: String) {
         name = value

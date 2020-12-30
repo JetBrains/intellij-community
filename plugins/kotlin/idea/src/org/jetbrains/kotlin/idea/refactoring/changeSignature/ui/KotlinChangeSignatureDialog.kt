@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.idea.refactoring.validateElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
@@ -369,6 +370,8 @@ class KotlinChangeSignatureDialog(
         return null
     }
 
+    override fun getMethodName(): String = super.getMethodName().quoteIfNeeded()
+
     override fun canRun() {
         if (myNamePanel.isVisible && myMethod.canChangeName() && !methodName.isIdentifier()) {
             throw ConfigurationException(KotlinBundle.message("function.name.is.invalid"))
@@ -379,7 +382,7 @@ class KotlinChangeSignatureDialog(
         }
 
         for (item in parametersTableModel.items) {
-            val parameterName = item.parameter.name
+            val parameterName = item.parameter.name.quoteIfNeeded()
 
             if (item.parameter != parametersTableModel.receiver && !parameterName.isIdentifier()) {
                 throw ConfigurationException(KotlinBundle.message("parameter.name.is.invalid", parameterName))
