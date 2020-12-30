@@ -1303,7 +1303,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       FileContentImpl fc = null;
       PsiFile psiFile = null;
 
-      int inputId = Math.abs(getFileId(file));
+      int inputId = getFileId(file);
       Set<ID<?, ?>> currentIndexedStates = new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
       List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
       //noinspection ForLoopReplaceableByForEach
