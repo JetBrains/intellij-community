@@ -58,6 +58,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     new ClassFilter("javassist.*"),
     new ClassFilter("org.apache.webbeans.*"),
     new ClassFilter("com.ibm.ws.*"),
+    new ClassFilter("org.mockito.*")
   };
 
   public boolean TRACING_FILTERS_ENABLED = true;
