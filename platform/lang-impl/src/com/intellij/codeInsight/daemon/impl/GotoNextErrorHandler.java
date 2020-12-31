@@ -56,6 +56,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
     for (int idx = maxSeverity; idx >= SeverityRegistrar.SHOWN_SEVERITIES_OFFSET; idx--) {
       HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
+      if (minSeverity == null) continue;
       HighlightInfo infoToGo = findInfo(project, editor, caretOffset, minSeverity);
       if (infoToGo != null) {
         navigateToError(project, editor, infoToGo, () -> {
